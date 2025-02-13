@@ -454,9 +454,13 @@ func (uc *GameUsecase) markCompletedGame(ctx context.Context, game *model.Game) 
 
 	// there is no player winners, then refund to players
 	if game.HasNoPlayerWinners() {
-		err := uc.refundToPlayers(ctx, game)
-		if err != nil {
+		if err := uc.refundToPlayers(ctx, game); err != nil {
 			// if refund to players failed, then can not complete game
+			canCompleteGame = false
+			return err
+		}
+
+		if err := uc.refundToExpiredPlayers(ctx, game); err != nil {
 			canCompleteGame = false
 			return err
 		}

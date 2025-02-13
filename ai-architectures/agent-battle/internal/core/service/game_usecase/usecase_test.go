@@ -314,3 +314,28 @@ func updateResultAndPrizeToWinners(game *model.Game) (*model.Game, error) {
 		time.Sleep(10 * time.Second)
 	}
 }
+
+func TestGameUsecase_WatchGameState(t *testing.T) {
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Test Watch Game State",
+			args: args{
+				ctx: context.Background(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := gameUseCase.WatchGameState(tt.args.ctx); (err != nil) != tt.wantErr {
+				t.Errorf("WatchGameState() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
