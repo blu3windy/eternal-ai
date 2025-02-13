@@ -570,6 +570,30 @@ func (s *Service) AgentSnapshotPostCreate(ctx context.Context, missionID uint, o
 							},
 						)
 					}
+					{
+						if inferPost.AgentStoreMissionID > 0 {
+							_ = tx.Model(&models.AgentStoreMission{}).
+								Where("id = ?", inferPost.AgentStoreMissionID).
+								Updates(
+									map[string]interface{}{
+										"num_used": gorm.Expr("num_used + ?", 1),
+										"volume":   gorm.Expr("volume + ?", inferPost.AgentStoreMissionFee),
+									},
+								).
+								Error
+						}
+						if inferPost.AgentStoreID > 0 {
+							_ = tx.Model(&models.AgentStore{}).
+								Where("id = ?", inferPost.AgentStoreID).
+								Updates(
+									map[string]interface{}{
+										"num_usage": gorm.Expr("num_usage + ?", 1),
+										"volume":    gorm.Expr("volume + ?", inferPost.AgentStoreMissionFee),
+									},
+								).
+								Error
+						}
+					}
 					return nil
 				},
 			)
@@ -757,6 +781,30 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 								Status:  models.UserTransactionStatusDone,
 							},
 						)
+					}
+					{
+						if inferPost.AgentStoreMissionID > 0 {
+							_ = tx.Model(&models.AgentStoreMission{}).
+								Where("id = ?", inferPost.AgentStoreMissionID).
+								Updates(
+									map[string]interface{}{
+										"num_used": gorm.Expr("num_used + ?", 1),
+										"volume":   gorm.Expr("volume + ?", inferPost.AgentStoreMissionFee),
+									},
+								).
+								Error
+						}
+						if inferPost.AgentStoreID > 0 {
+							_ = tx.Model(&models.AgentStore{}).
+								Where("id = ?", inferPost.AgentStoreID).
+								Updates(
+									map[string]interface{}{
+										"num_usage": gorm.Expr("num_usage + ?", 1),
+										"volume":    gorm.Expr("volume + ?", inferPost.AgentStoreMissionFee),
+									},
+								).
+								Error
+						}
 					}
 					// add history
 					agentStoreTry, _ := s.dao.FirstAgentStoreTry(

@@ -28,7 +28,15 @@ func (a CryptoAmount) ToBigInt() *big.Int {
 	if a == 0 {
 		return nil
 	}
-	return big.NewInt(int64(a))
+
+	// Convert float64 to big.Float first to avoid precision loss
+	bigFloat := new(big.Float).SetFloat64(a.ToFloat64())
+
+	// Convert big.Float to big.Int (truncating decimal part)
+	bigInt := new(big.Int)
+	bigFloat.Int(bigInt) // This rounds down automatically
+
+	return bigInt
 }
 
 // ToString converts the CryptoAmount to a string with the given number of decimals.
