@@ -37,6 +37,10 @@ type UserResp struct {
 	TwitterAvatar   string                 `json:"twitter_avatar"`
 	TwitterUsername string                 `json:"twitter_username"`
 	TwitterName     string                 `json:"twitter_name"`
+	EthAddress      string                 `json:"eth_address"`
+	TronAddress     string                 `json:"tron_address"`
+	SolAddress      string                 `json:"sol_address"`
+	EaiBalance      numeric.BigFloat       `json:"sol_address"`
 }
 
 func NewUserResp(m *models.User) *UserResp {
@@ -69,6 +73,10 @@ func NewUserResp(m *models.User) *UserResp {
 		TwitterAvatar:   m.TwitterAvatar,
 		TwitterUsername: m.TwitterUsername,
 		TwitterName:     m.TwitterName,
+		EthAddress:      m.EthAddress,
+		TronAddress:     m.TronAddress,
+		SolAddress:      m.SolAddress,
+		EaiBalance:      m.EaiBalance,
 	}
 	return resp
 }
