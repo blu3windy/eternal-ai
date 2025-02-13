@@ -10,7 +10,8 @@ from .models import (
     EmbeddedItem,
     APIStatus,
     ResponseMessage,
-    FilecoinData
+    FilecoinData,
+    InsertProgressCallback
 )
 import requests
 import subprocess
@@ -88,7 +89,7 @@ DOCUMENT_FORMAT_OPTIONS = {
 }
 
 async def hook(
-    resp: ResponseMessage[InsertResponse],
+    resp: ResponseMessage[Union[InsertResponse, InsertProgressCallback]],
 ):
     body: dict = resp.model_dump()
     
@@ -254,11 +255,8 @@ async def inserting(_data: List[EmbeddedItem], model_use: EmbeddingModel, metada
     logger.info(f"Successfully inserted {insert_cnt} items to {metadata['kb']} (collection: {model_use.identity()});")
     return insert_cnt
 
-async def chunking_and_embedding(url_or_texts: Union[str, List[str], FilecoinData], model_use: EmbeddingModel) -> AsyncGenerator:
+async def chunking_and_embedding(url_or_texts: Union[str, List[str]], model_use: EmbeddingModel) -> AsyncGenerator:
     to_retry = []   
-    
-    if isinstance(url_or_texts, FilecoinData):
-        url_or_texts = url_or_texts.address
     
     if isinstance(url_or_texts, str):
         async for item in url_chunking(url_or_texts, model_use):
@@ -410,15 +408,20 @@ async def export_collection_data(
 _running_tasks = set([])
 
 
-async def smaller_task(url_or_texts: Union[List[str], str, FilecoinData], kb: str, model_use: EmbeddingModel):
+async def smaller_task(url_or_texts: Union[List[str], str], kb: str, model_use: EmbeddingModel, file_identifier:str = ""):
+    n_inserted_chunks, fails_count = 0, 0
 
-    n_chunks, fails_count = 0, 0
-    identifier = ""
-    
     if isinstance(url_or_texts, str):
-        identifier = url_or_texts
-    elif isinstance(url_or_texts, FilecoinData):
-        identifier = url_or_texts.identifier
+        await hook(
+            ResponseMessage[InsertProgressCallback](
+                result=InsertProgressCallback(
+                    kb=kb,
+                    identifier=file_identifier,
+                    message=f"Start processing file {file_identifier}",
+                ),
+                status=APIStatus.PROCESSING
+            )
+        )
 
     async for data in async_batching(
         chunking_and_embedding(url_or_texts, model_use), 
@@ -426,12 +429,12 @@ async def smaller_task(url_or_texts: Union[List[str], str, FilecoinData], kb: st
     ):
         data: List[EmbeddedItem]
 
-        n_chunks += await inserting(
+        n_inserted_chunks += await inserting(
             _data=data, 
             model_use=model_use, 
             metadata = {
                 'kb': kb, 
-                'reference': identifier
+                'reference': file_identifier
             }
         )
 
@@ -440,7 +443,19 @@ async def smaller_task(url_or_texts: Union[List[str], str, FilecoinData], kb: st
             if e.error is not None
         ])
 
-    return (n_chunks + fails_count, fails_count)
+    if isinstance(url_or_texts, str):
+        await hook(
+            ResponseMessage[InsertProgressCallback](
+                result=InsertProgressCallback(
+                    message=f"Completed processing file {file_identifier}",
+                    kb=kb,
+                    identifier=file_identifier
+                ),
+                status=APIStatus.OK if n_inserted_chunks > 0 else APIStatus.ERROR
+            )
+        )
+
+    return (n_inserted_chunks + fails_count, fails_count)
 
 @limit_asyncio_concurrency(4)
 async def download_file(
@@ -540,6 +555,9 @@ async def download_and_extract_from_filecoin(
     logger.info(f"List of files to be processed: {list_files}")
     return list_files
 
+async def inspect(identifiers: List[str] = []) -> List[Detail]:
+    pass
+
 @limit_asyncio_concurrency(4)
 async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
     if req.id in _running_tasks:
@@ -563,53 +581,53 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
 
         futures = []
         sqrt_length_texts = int(len(req.texts) ** 0.5)
+        filecoin_files = []
 
         if req.filecoin_metadata_url is not None:
             filecoin_files = await download_and_extract_from_filecoin(req.filecoin_metadata_url, tmp_dir)
 
-            for fc_file in filecoin_files:
-                futures.append(asyncio.ensure_future(smaller_task(fc_file, kb, model_use)))
+        for fc_file in filecoin_files:
+            futures.append(asyncio.ensure_future(
+                smaller_task(
+                    fc_file.address, kb, model_use, file_identifier=fc_file.identifier
+                )
+            ))
 
         if len(req.texts) > 0:
             for chunk_of_texts in batching(req.texts, sqrt_length_texts):
-                futures.append(asyncio.ensure_future(smaller_task(chunk_of_texts, kb, model_use)))
+                futures.append(asyncio.ensure_future(
+                    smaller_task(
+                        chunk_of_texts, kb, model_use, file_identifier=""
+                    )
+                ))
 
         for url in req.file_urls:
-            futures.append(asyncio.ensure_future(smaller_task(url, kb, model_use)))
+            futures.append(asyncio.ensure_future(
+                smaller_task(
+                    url, kb, model_use, file_identifier=url
+                )
+            ))
 
         if len(futures) > 0:
             results = await asyncio.gather(*futures)
+
             n_chunks = sum([r[0] for r in results])
             fails_count = sum([r[1] for r in results])
 
-        logger.info(f"(overall) Inserted {n_chunks} items to {kb} (collection: {model_use.identity()});\nCompleted handling task: {req.id}")
+        logger.info(f"(overall) Inserted {n_chunks - fails_count} items to {kb} (collection: {model_use.identity()});")
 
         if req.hook is not None:
-            response = InsertResponse(
-                ref=req.ref,
-                message=f"Inserted {n_chunks} (chunks); {fails_count} (fails); {len(req.file_urls)} (urls).",
-                kb=kb,
-                artifact_submitted=False
-            )
-
-            status = APIStatus.OK if n_chunks > 0 or len(futures) == 0 else APIStatus.ERROR
-            err_msg = None
-
-            if status == APIStatus.ERROR:
-                err_msg = "An error occured while processing data: " + (
-                    "No data extracted from the provided documents." 
-                    if n_chunks == 0
-                    else 
-                    f"Failed to insert {fails_count} items."
+            hook_result = await hook(
+                ResponseMessage[InsertResponse](
+                    result=InsertResponse(
+                        ref=req.ref,
+                        message=f"Inserted {n_chunks - fails_count} (chunks); Failed {fails_count} (chunks); Total: {n_chunks} (chunks); {len(req.file_urls) + len(filecoin_files)} (files).",
+                        kb=kb
+                    ),
+                    status=APIStatus.OK if (n_chunks - fails_count) > 0 or len(futures) == 0 else APIStatus.ERROR
                 )
-
-            body_model = ResponseMessage[InsertResponse](
-                result=response,
-                status=status,
-                error=err_msg
             )
 
-            hook_result = await hook(body_model)
             logger.info(f"Hook status: {hook_result};")
 
         await sync2async(get_insertion_request_handler().delete)(req.id)
@@ -618,6 +636,7 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
         _running_tasks.remove(req.id)
+        logger.info(f"Completed handling task: {req.id}")
 
 @schedule.every(5).minutes.do
 def resume_pending_tasks():

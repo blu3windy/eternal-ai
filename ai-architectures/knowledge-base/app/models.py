@@ -16,7 +16,7 @@ class InsertInputSchema(BaseModel):
     file_urls: List[str] = []
     texts: List[str] = [] 
     kb: Optional[str] = None
-    filecoin_metadata_url: str = None
+    filecoin_metadata_url: Optional[str] = None
 
     # ref and kb must not be both None
     ref: Optional[str] = None
@@ -49,7 +49,7 @@ class UpdateInputSchema(BaseModel):
     id: str = Field(default_factory=lambda: f"doc-{str(uuid.uuid4().hex)}")
     file_urls: List[str] = []
     texts: List[str] = [] 
-    filecoin_metadata_url: str = None
+    filecoin_metadata_url: Optional[str] = None
 
     # ref and kb must not be both None
     ref: Optional[str] = None
@@ -160,6 +160,11 @@ class InsertResponse(BaseModel):
     kb: Optional[str] = None
     message: Optional[str] = ""
     artifact_submitted: bool = False
+
+class InsertProgressCallback(BaseModel):
+    kb: str
+    identifier: str
+    message: Optional[str] = ""
 
 class QueryResult(BaseModel):
     content: str
