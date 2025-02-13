@@ -42,7 +42,7 @@ func initVars() {
 
 	gameRepo = mongo.NewGameRepo(db)
 	settingRepo = mongo.NewSettingRepo(db)
-	gameUseCase = NewGameUsecase(gameRepo, settingRepo, erc20Usecase)
+	gameUseCase = NewGameUsecaseInternal(gameRepo, settingRepo, erc20Usecase)
 }
 
 /*Test_gameUsecase_GameFullFlow tests the full flow of the game
