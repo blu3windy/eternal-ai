@@ -171,10 +171,7 @@ def execute_advance_tool(
                 execute_http_toolcall(
                     tool.method,
                     tool.executor,
-                    {
-                        **parse_toolcall_params(tool.params, inputs[l:r]),
-                        "request_id": request_id,
-                    },
+                    parse_toolcall_params(tool.params, inputs[l:r]),
                     tool.headers,
                 )
             )

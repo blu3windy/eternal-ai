@@ -27,7 +27,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type gameUsecase struct {
+type GameUsecase struct {
 	gameRepo     mongo.IGameRepo
 	settingRepo  mongo.ISettingRepo
 	erc20Usecase port.IContractErc20Usecase
@@ -35,9 +35,9 @@ type gameUsecase struct {
 	setting      *model.Setting
 }
 
-var _ port.IGameUsecase = (*gameUsecase)(nil)
+var _ port.IGameUsecase = (*GameUsecase)(nil)
 
-func (uc *gameUsecase) ListGame(ctx context.Context, req *model.ListGameRequest) (*model.ListGameResponse, error) {
+func (uc *GameUsecase) ListGame(ctx context.Context, req *model.ListGameRequest) (*model.ListGameResponse, error) {
 	result := []*model.Game{}
 	filters := make(bson.M)
 	if len(req.TweetIds) != 0 {
@@ -65,7 +65,7 @@ func (uc *gameUsecase) ListGame(ctx context.Context, req *model.ListGameRequest)
 	return &model.ListGameResponse{Games: result, TotalRecords: total}, nil
 }
 
-func (uc *gameUsecase) GameResult(ctx context.Context, req *model.GameResultRequest) (*model.Game, error) {
+func (uc *GameUsecase) GameResult(ctx context.Context, req *model.GameResultRequest) (*model.Game, error) {
 	game, err := uc.gameByTweetId(ctx, req.TweetId)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (uc *gameUsecase) GameResult(ctx context.Context, req *model.GameResultRequ
 	return game, nil
 }
 
-func (uc *gameUsecase) EndGame(ctx context.Context, tweetId string) (*model.Game, error) {
+func (uc *GameUsecase) EndGame(ctx context.Context, tweetId string) (*model.Game, error) {
 	game, err := uc.gameByTweetId(ctx, tweetId)
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (uc *gameUsecase) EndGame(ctx context.Context, tweetId string) (*model.Game
 	return game, nil
 }
 
-func (uc *gameUsecase) gameByTweetId(ctx context.Context, tweetId string) (*model.Game, error) {
+func (uc *GameUsecase) gameByTweetId(ctx context.Context, tweetId string) (*model.Game, error) {
 	game := &model.Game{}
 	if err := uc.gameRepo.FindOne(ctx, bson.M{"tweet_id": tweetId}, game); err != nil {
 		return nil, err
@@ -123,11 +123,11 @@ func (uc *gameUsecase) gameByTweetId(ctx context.Context, tweetId string) (*mode
 	return game, nil
 }
 
-func (uc *gameUsecase) DetailGame(ctx context.Context, tweetId string) (*model.Game, error) {
+func (uc *GameUsecase) DetailGame(ctx context.Context, tweetId string) (*model.Game, error) {
 	return uc.gameByTweetId(ctx, tweetId)
 }
 
-func (uc *gameUsecase) WatchGameState(ctx context.Context) error {
+func (uc *GameUsecase) WatchGameState(ctx context.Context) error {
 	games := []*model.Game{}
 	filters := make(bson.M)
 
@@ -151,7 +151,7 @@ func (uc *gameUsecase) WatchGameState(ctx context.Context) error {
 	for _, game := range games {
 		// If game result has been determined, then prize to winners
 		if game.Status == model.GameStatusResultUpdated {
-			if err := uc.prizeToWinners(ctx, game); err != nil {
+			if err := uc.markCompletedGame(ctx, game); err != nil {
 				logger.GetLoggerInstanceFromContext(ctx).Error("update_game", zap.Error(err))
 			}
 			continue
@@ -159,11 +159,6 @@ func (uc *gameUsecase) WatchGameState(ctx context.Context) error {
 
 		// If game end time has passed, then mark end game
 		if game.EndTime.Before(time.Now()) {
-			// check expired players for refund
-			if err := uc.checkExpiredPlayers(ctx, game); err != nil {
-				logger.GetLoggerInstanceFromContext(ctx).Error("check_expired_players", zap.Error(err))
-			}
-
 			if err := uc.markEndGame(ctx, game); err != nil {
 				logger.GetLoggerInstanceFromContext(ctx).Error("make_end_game", zap.Error(err))
 			}
@@ -171,7 +166,7 @@ func (uc *gameUsecase) WatchGameState(ctx context.Context) error {
 		}
 
 		// If game is running, then check game balance and update players
-		if game.BetEndTime.Before(time.Now()) {
+		if game.BetEndTime.After(time.Now()) {
 			if err := uc.checkGameBalance(ctx, game); err != nil {
 				logger.GetLoggerInstanceFromContext(ctx).Error("check_game_balance err", zap.Error(err))
 			}
@@ -180,7 +175,7 @@ func (uc *gameUsecase) WatchGameState(ctx context.Context) error {
 	return nil
 }
 
-func (uc *gameUsecase) RefundsExpiredPlayers(ctx context.Context, tweetId string) error {
+func (uc *GameUsecase) RefundsExpiredPlayers(ctx context.Context, tweetId string) error {
 	game, err := uc.gameByTweetId(ctx, tweetId)
 	if err != nil {
 		return err
@@ -188,16 +183,6 @@ func (uc *gameUsecase) RefundsExpiredPlayers(ctx context.Context, tweetId string
 
 	if game.Status != model.GameStatusCompleted {
 		return errors.New("game is not completed")
-	}
-
-	// scan expired players
-	if err := uc.checkExpiredPlayers(ctx, game); err != nil {
-		logger.GetLoggerInstanceFromContext(ctx).Error(
-			"[RefundsExpiredPlayers] check_expired_players",
-			zap.Error(err),
-			zap.String("tweet_id", tweetId),
-		)
-		return err
 	}
 
 	// run with go routine to refund to expired players
@@ -217,7 +202,7 @@ func (uc *gameUsecase) RefundsExpiredPlayers(ctx context.Context, tweetId string
 	return nil
 }
 
-func (uc *gameUsecase) markEndGame(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) markEndGame(ctx context.Context, game *model.Game) error {
 	if uc.setting == nil {
 		return errors.New("please configure the application setting first")
 	}
@@ -255,7 +240,7 @@ func (uc *gameUsecase) markEndGame(ctx context.Context, game *model.Game) error 
 }
 
 // handlerTransferTokenFromAgentToGame transfer token from agent to game address
-func (uc *gameUsecase) handlerTransferTokenFromAgentToGame(
+func (uc *GameUsecase) handlerTransferTokenFromAgentToGame(
 	ctx context.Context,
 	gameAddress string,
 	agent *model.AgentWallet,
@@ -303,7 +288,7 @@ func (uc *gameUsecase) handlerTransferTokenFromAgentToGame(
 }
 
 // faucetGasToGameWallet transfer eth fee from operation address to game address
-func (uc *gameUsecase) faucetGasToGameWallet(
+func (uc *GameUsecase) faucetGasToGameWallet(
 	ctx context.Context,
 	game *model.Game,
 ) error {
@@ -358,12 +343,94 @@ func (uc *gameUsecase) faucetGasToGameWallet(
 	return nil
 }
 
-func (uc *gameUsecase) prizeToWinners(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) prizeToWinners(ctx context.Context, game *model.Game) error {
+	if !game.CanPrizePlayerWinner() {
+		return nil
+	}
+
+	logger.GetLoggerInstanceFromContext(ctx).Info("prize_to_winners", zap.String("tweet_id", game.TweetId))
+	err := uc.faucetGasToGameWallet(ctx, game)
+	if err != nil {
+		return err
+	}
+
+	// transfer token from game to treasurer address
+	priKey, err := encrypt.DecryptToString(game.PrivKey, uc.secretKey)
+	if err != nil {
+		logger.GetLoggerInstanceFromContext(ctx).Error("decrypt_to_string", zap.Error(err))
+		return err
+	}
+
+	// transfer token from game to treasurer address
+	if game.GameFeeTxHash == "" {
+		tx, err := uc.erc20Usecase.TransferToken(ctx, uc.setting.TreasurerAddress, game.GameFee.ToBigInt(), priKey)
+		if err != nil {
+			logger.GetLoggerInstanceFromContext(ctx).Error(
+				"[prizeToWinners] transfer token from game to treasurer address failed",
+				zap.Error(err),
+				zap.String("fromAddress", game.Address),
+				zap.String("toAddress", uc.setting.TreasurerAddress),
+				zap.String("tweetId", game.TweetId),
+			)
+			return err
+		}
+
+		// update game fee tx hash
+		game.GameFeeTxHash = tx
+		// update current prize result to game
+		if err := uc.updateGame(ctx, game); err != nil {
+			logger.GetLoggerInstanceFromContext(ctx).Error("update_game", zap.Error(err))
+			return err
+		}
+	}
+
+	// wait for 1 second for the next transfer
+	time.Sleep(1 * time.Second)
+
+	// transfer token from game to player winners
+	for _, p := range game.Players {
+		if p.PrizeTxHash != "" {
+			continue
+		}
+
+		if !p.Win {
+			continue
+		}
+
+		tx, err := uc.erc20Usecase.TransferToken(ctx, p.Address, p.PrizeAmount.ToBigInt(), priKey)
+		if err != nil {
+			logger.GetLoggerInstanceFromContext(ctx).Error(
+				"[prizeToWinners] transfer token from game to player winner failed",
+				zap.Error(err),
+				zap.String("fromAddress", game.Address),
+				zap.String("toAddress", p.Address),
+				zap.String("tweetId", game.TweetId),
+			)
+			return err
+		}
+
+		p.Win = true
+		p.PrizeTxHash = tx
+
+		// update current prize result to game
+		if err := uc.updateGame(ctx, game); err != nil {
+			logger.GetLoggerInstanceFromContext(ctx).Error("[prizeToWinners] update_game failed", zap.Error(err))
+			return err
+		}
+
+		// wait for 1 second for the next transfer
+		time.Sleep(1 * time.Second)
+	}
+
+	return nil
+}
+
+func (uc *GameUsecase) markCompletedGame(ctx context.Context, game *model.Game) error {
 	if uc.setting == nil {
 		return errors.New("please configure the application setting first")
 	}
 
-	logger.GetLoggerInstanceFromContext(ctx).Info("prize_to_winners", zap.String("tweet_id", game.TweetId))
+	logger.GetLoggerInstanceFromContext(ctx).Info("markCompletedGame", zap.String("tweet_id", game.TweetId))
 	canCompleteGame := true
 	defer func() error {
 		if canCompleteGame {
@@ -380,6 +447,10 @@ func (uc *gameUsecase) prizeToWinners(ctx context.Context, game *model.Game) err
 	// determine player winner and calculate prize per player winner
 	game.DeterminePlayerWinner(uc.setting.GasFeePercentage).
 		CalculatePrizePerPlayerWinner()
+	if err := uc.updateGame(ctx, game); err != nil {
+		canCompleteGame = false
+		return err
+	}
 
 	// there is no player winners, then refund to players
 	if game.HasNoPlayerWinners() {
@@ -392,82 +463,9 @@ func (uc *gameUsecase) prizeToWinners(ctx context.Context, game *model.Game) err
 		return nil
 	}
 
-	err := uc.faucetGasToGameWallet(ctx, game)
-	if err != nil {
+	if err := uc.prizeToWinners(ctx, game); err != nil {
 		canCompleteGame = false
 		return err
-	}
-
-	// transfer token from game to treasurer address
-	priKey, err := encrypt.DecryptToString(game.PrivKey, uc.secretKey)
-	if err != nil {
-		canCompleteGame = false
-		logger.GetLoggerInstanceFromContext(ctx).Error("decrypt_to_string", zap.Error(err))
-		return err
-	}
-
-	// transfer token from game to treasurer address
-	if game.GameFeeTxHash == "" {
-		tx, err := uc.erc20Usecase.TransferToken(ctx, uc.setting.TreasurerAddress, game.GameFee.ToBigInt(), priKey)
-		if err != nil {
-			canCompleteGame = false
-			logger.GetLoggerInstanceFromContext(ctx).Error(
-				"[prizeToWinners] transfer token from game to treasurer address failed",
-				zap.Error(err),
-				zap.String("fromAddress", game.Address),
-				zap.String("toAddress", uc.setting.TreasurerAddress),
-				zap.String("tweetId", game.TweetId),
-			)
-			return err
-		}
-
-		// update game fee tx hash
-		game.GameFeeTxHash = tx
-		// update current prize result to game
-		if err := uc.updateGame(ctx, game); err != nil {
-			canCompleteGame = false
-			logger.GetLoggerInstanceFromContext(ctx).Error("update_game", zap.Error(err))
-			return err
-		}
-	}
-
-	// wait for 1 second for the next transfer
-	time.Sleep(1 * time.Second)
-
-	for _, p := range game.Players {
-		if p.PrizeTxHash != "" {
-			continue
-		}
-
-		if !p.Win {
-			continue
-		}
-
-		tx, err := uc.erc20Usecase.TransferToken(ctx, p.Address, p.PrizeAmount.ToBigInt(), priKey)
-		if err != nil {
-			canCompleteGame = false
-			logger.GetLoggerInstanceFromContext(ctx).Error(
-				"[prizeToWinners] transfer token from game to player winner failed",
-				zap.Error(err),
-				zap.String("fromAddress", game.Address),
-				zap.String("toAddress", p.Address),
-				zap.String("tweetId", game.TweetId),
-			)
-			return err
-		}
-
-		p.Win = true
-		p.PrizeTxHash = tx
-
-		// update current prize result to game
-		if err := uc.updateGame(ctx, game); err != nil {
-			canCompleteGame = false
-			logger.GetLoggerInstanceFromContext(ctx).Error("[prizeToWinners] update_game failed", zap.Error(err))
-			return err
-		}
-
-		// wait for 1 second for the next transfer
-		time.Sleep(1 * time.Second)
 	}
 
 	if err := uc.refundToExpiredPlayers(ctx, game); err != nil {
@@ -478,7 +476,7 @@ func (uc *gameUsecase) prizeToWinners(ctx context.Context, game *model.Game) err
 	return nil
 }
 
-func (uc *gameUsecase) refundToPlayers(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) refundToPlayers(ctx context.Context, game *model.Game) error {
 	refundAmountPerPlayer := game.CalculateRefundAmountPerPlayer()
 	for _, p := range refundAmountPerPlayer {
 		if p.RefundTxHash != "" {
@@ -506,14 +504,19 @@ func (uc *gameUsecase) refundToPlayers(ctx context.Context, game *model.Game) er
 	return nil
 }
 
-func (uc *gameUsecase) refundToExpiredPlayers(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) refundToExpiredPlayers(ctx context.Context, game *model.Game) error {
+	if err := uc.checkExpiredPlayers(ctx, game); err != nil {
+		return err
+	}
+
+	logger.GetLoggerInstanceFromContext(ctx).Info("refund_to_expired_players", zap.String("tweet_id", game.TweetId))
 	refundAmountPerPlayer := game.CalculateRefundAmountPerExpiredPlayer()
 	for _, p := range refundAmountPerPlayer {
 		if p.RefundTxHash != "" {
 			continue
 		}
 
-		err := uc.handlerRefundTokenFromGameToPlayer(ctx, game, p)
+		err := uc.handlerRefundTokenFromAgentToExpiredPlayer(ctx, game, p)
 		if err != nil {
 			logger.GetLoggerInstanceFromContext(ctx).Error(
 				"[refundToExpiredPlayers] refund token from game to player failed",
@@ -537,7 +540,7 @@ func (uc *gameUsecase) refundToExpiredPlayers(ctx context.Context, game *model.G
 }
 
 // handlerRefundTokenFromGameToPlayer transfer token from game to player address
-func (uc *gameUsecase) handlerRefundTokenFromGameToPlayer(
+func (uc *GameUsecase) handlerRefundTokenFromGameToPlayer(
 	ctx context.Context,
 	game *model.Game,
 	player *model.Player,
@@ -580,13 +583,62 @@ func (uc *gameUsecase) handlerRefundTokenFromGameToPlayer(
 	return nil
 }
 
-func (uc *gameUsecase) updateGame(ctx context.Context, game *model.Game) error {
+// handlerRefundTokenFromAgentToExpiredPlayer transfer token from agent to expired player address
+func (uc *GameUsecase) handlerRefundTokenFromAgentToExpiredPlayer(
+	ctx context.Context,
+	game *model.Game,
+	player *model.Player,
+) error {
+	amount := player.RefundAmount.ToBigInt()
+	agent := game.GetAgentByPlayer(player)
+
+	if agent == nil {
+		return errors.New("agent not found")
+	}
+
+	// decrypt agent private key
+	agentPrivateKey, err := encrypt.DecryptToString(agent.PrivKey, uc.secretKey)
+	if err != nil {
+		return err
+	}
+
+	// decrypt operation private key
+	operationPrivateKey, err := encrypt.DecryptToString(uc.setting.OperationPrivKey, uc.secretKey)
+	if err != nil {
+		return err
+	}
+
+	// estimate gas fee for transfer token then transfer eth fee from operation address to from address
+	gasFee, err := uc.erc20Usecase.EstimateGasFee(ctx, agent.Address, player.Address, amount)
+	if err != nil {
+		return err
+	}
+
+	// transfer eth fee from operation address to from address
+	ethTx, err := uc.erc20Usecase.TransferETH(ctx, agent.Address, gasFee, operationPrivateKey)
+	if err != nil {
+		return err
+	}
+	logger.GetLoggerInstanceFromContext(ctx).Info("transfer_eth_fee", zap.String("tx", ethTx))
+
+	// transfer token from agent to game address
+	tx, err := uc.erc20Usecase.TransferToken(ctx, player.Address, amount, agentPrivateKey)
+	if err != nil {
+		return err
+	}
+
+	// update player refund tx hash
+	player.RefundTxHash = tx
+	return nil
+}
+
+func (uc *GameUsecase) updateGame(ctx context.Context, game *model.Game) error {
 	lastUpdatedAt := game.DateModified
 	game.DateModified = time.Now()
 	return uc.gameRepo.Update(ctx, game, game.Id, lastUpdatedAt)
 }
 
-func (uc *gameUsecase) checkGameBalance(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) checkGameBalance(ctx context.Context, game *model.Game) error {
 	logger.GetLoggerInstanceFromContext(ctx).Info("check_game_balance", zap.String("tweet_id", game.TweetId))
 	currentBlock, err := uc.erc20Usecase.CurrentBlockNumber(ctx)
 	if err != nil {
@@ -648,7 +700,7 @@ func (uc *gameUsecase) checkGameBalance(ctx context.Context, game *model.Game) e
 	return uc.updateGame(ctx, game)
 }
 
-func (uc *gameUsecase) checkExpiredPlayers(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) checkExpiredPlayers(ctx context.Context, game *model.Game) error {
 	logger.GetLoggerInstanceFromContext(ctx).Info("check_expired_players", zap.String("tweet_id", game.TweetId))
 	currentBlock, err := uc.erc20Usecase.CurrentBlockNumber(ctx)
 	if err != nil {
@@ -707,7 +759,7 @@ func (uc *gameUsecase) checkExpiredPlayers(ctx context.Context, game *model.Game
 	return uc.updateGame(ctx, game)
 }
 
-func (uc *gameUsecase) StartGame(ctx context.Context, request *model.StartGameRequest) (*model.Game, error) {
+func (uc *GameUsecase) StartGame(ctx context.Context, request *model.StartGameRequest) (*model.Game, error) {
 	logger.GetLoggerInstanceFromContext(ctx).Info("start_game", zap.Any("request", request))
 	game, err := uc.gameByTweetId(ctx, request.TweetId)
 	if err != nil && !utils.IsErrNoDocuments(err) {
@@ -759,7 +811,7 @@ func (uc *gameUsecase) StartGame(ctx context.Context, request *model.StartGameRe
 	return game, nil
 }
 
-func (uc *gameUsecase) createSetting(ctx context.Context) {
+func (uc *GameUsecase) createSetting(ctx context.Context) {
 	uc.setApplicationSetting(ctx)
 	if uc.setting != nil {
 		return
@@ -790,7 +842,7 @@ func (uc *gameUsecase) createSetting(ctx context.Context) {
 	uc.setApplicationSetting(ctx)
 }
 
-func (uc *gameUsecase) findSetting(ctx context.Context) (*model.Setting, error) {
+func (uc *GameUsecase) findSetting(ctx context.Context) (*model.Setting, error) {
 	if uc.setting != nil {
 		return uc.setting, nil
 	}
@@ -814,7 +866,7 @@ func (uc *gameUsecase) findSetting(ctx context.Context) (*model.Setting, error) 
 	return setting, nil
 }
 
-func (uc *gameUsecase) setApplicationSetting(ctx context.Context) {
+func (uc *GameUsecase) setApplicationSetting(ctx context.Context) {
 	setting, err := uc.findSetting(ctx)
 	if err != nil {
 		logger.AtLog.Debug("Can not get setting %v", err)
@@ -836,6 +888,14 @@ func NewGameUsecase(
 	settingRepo mongo.ISettingRepo,
 	erc20Usecase port.IContractErc20Usecase,
 ) port.IGameUsecase {
+	return NewGameUsecaseInternal(gameRepo, settingRepo, erc20Usecase)
+}
+
+func NewGameUsecaseInternal(
+	gameRepo mongo.IGameRepo,
+	settingRepo mongo.ISettingRepo,
+	erc20Usecase port.IContractErc20Usecase,
+) *GameUsecase {
 	ctx := context.Background()
 	secretKey := viper.GetString("SECRET_KEY")
 	var googleSecretKey string
@@ -853,7 +913,7 @@ func NewGameUsecase(
 		googleSecretKey = string(decodedBase64)
 	}
 
-	uc := &gameUsecase{
+	uc := &GameUsecase{
 		gameRepo:     gameRepo,
 		settingRepo:  settingRepo,
 		secretKey:    googleSecretKey,
