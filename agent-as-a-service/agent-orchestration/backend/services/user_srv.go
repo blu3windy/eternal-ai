@@ -143,18 +143,16 @@ func (s *Service) GetListUserTransactions(ctx context.Context, userAddress strin
 		return nil, 0, errs.NewError(err)
 	}
 	filters := map[string][]interface{}{
-		"agent_id = ?": {user.ID},
-		"status = ?":   {models.UserTransactionStatusDone},
+		"user_id = ?": {user.ID},
+		"status = ?":  {models.UserTransactionStatusDone},
 	}
-	if typeStr == "" {
+	if typeStr != "" {
 		filters["type in (?)"] = []interface{}{strings.Split(typeStr, ",")}
 	}
 	ms, _, err := s.dao.FindUserTransaction4Page(
 		daos.GetDBMainCtx(ctx),
 		filters,
-		map[string][]interface{}{
-			"AgentInfo": {},
-		},
+		map[string][]interface{}{},
 		[]string{"id desc"},
 		page,
 		limit,

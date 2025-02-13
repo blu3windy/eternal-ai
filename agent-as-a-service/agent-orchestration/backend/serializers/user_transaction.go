@@ -27,6 +27,7 @@ func NewUserTransactionResp(m *models.UserTransaction) *UserTransactionResp {
 	resp := &UserTransactionResp{
 		ID:          m.ID,
 		CreatedAt:   m.CreatedAt,
+		NetworkID:   m.NetworkID,
 		UserID:      m.UserID,
 		Type:        m.Type,
 		FromAddress: m.FromAddress,
