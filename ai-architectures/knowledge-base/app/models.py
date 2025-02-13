@@ -75,7 +75,7 @@ class UpdateInputSchema(BaseModel):
         if isinstance(data['texts'], str):
             data['texts'] = [data['texts']]
         
-        return 
+        return data
 
 class CollectionInspection(BaseModel):
     file_ref: str # {cid}/{file_index}
@@ -146,7 +146,7 @@ class ChunkScore(BaseModel):
     chunk_id: str
 
 class ResponseMessage(BaseModel, Generic[_generic_type]):
-    result: Type[_generic_type]
+    result: _generic_type
     error: Optional[str] = None
     status: APIStatus = APIStatus.OK
 
@@ -162,7 +162,7 @@ class InsertResponse(BaseModel):
     """
 
     ref: str
-    kb: Optional[str] = None
+    kb: str
     message: Optional[str] = ""
     details: List[CollectionInspection] = []
 

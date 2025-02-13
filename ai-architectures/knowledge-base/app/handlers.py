@@ -102,14 +102,21 @@ async def hook(
         )
 
     msg = '''
-Hooking to {hook_url} with payload:
+Callback <a href="{hook_url}">{hook_url}</a>:
 
+Request:
 <pre>
 {json_log}
 </pre>
+
+Response:
+<pre>
+{response}
+</pre>
 '''.format(
     hook_url=const.ETERNALAI_RESULT_HOOK_URL,
-    json_log=json.dumps(body, indent=2)
+    json_log=json.dumps(body, indent=2),
+    response=response.text
 )
 
     telegram_kit.send_message(
@@ -540,9 +547,6 @@ async def download_filecoin_item(
         )
         
     return None
-
-async def get_kb_stat(kb: str) -> List[CollectionInspection]:
-    pass
 
 async def download_and_extract_from_filecoin(
     url: str, tmp_dir: str, ignore_inserted: bool=True
