@@ -200,7 +200,21 @@ func (uc *gameUsecase) RefundsExpiredPlayers(ctx context.Context, tweetId string
 		return err
 	}
 
-	return uc.refundToExpiredPlayers(ctx, game)
+	// run with go routine to refund to expired players
+	// with timeout 5 minutes
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	go func() {
+		if err := uc.refundToExpiredPlayers(ctx, game); err != nil {
+			logger.GetLoggerInstanceFromContext(ctx).Error(
+				"[RefundsExpiredPlayers] refund_to_expired_players",
+				zap.Error(err),
+				zap.String("tweet_id", tweetId),
+			)
+		}
+	}()
+
+	return nil
 }
 
 func (uc *gameUsecase) markEndGame(ctx context.Context, game *model.Game) error {
@@ -456,6 +470,11 @@ func (uc *gameUsecase) prizeToWinners(ctx context.Context, game *model.Game) err
 		time.Sleep(1 * time.Second)
 	}
 
+	if err := uc.refundToExpiredPlayers(ctx, game); err != nil {
+		canCompleteGame = false
+		return err
+	}
+
 	return nil
 }
 
@@ -510,6 +529,8 @@ func (uc *gameUsecase) refundToExpiredPlayers(ctx context.Context, game *model.G
 		if err := uc.updateGame(ctx, game); err != nil {
 			return err
 		}
+		// wait for 1 second for the next transfer
+		time.Sleep(1 * time.Second)
 	}
 
 	return nil
