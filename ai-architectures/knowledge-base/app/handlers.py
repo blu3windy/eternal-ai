@@ -434,13 +434,20 @@ async def export_collection_data(
 _running_tasks = set([])
 
 
-async def smaller_task(url_or_texts: Union[List[str], str], kb: str, model_use: EmbeddingModel, file_identifier:str = ""):
+async def smaller_task(
+    url_or_texts: Union[List[str], str], 
+    kb: str, 
+    model_use: EmbeddingModel, 
+    file_identifier:str = "",
+    request_identifier: Optional[str] = None
+):
     n_inserted_chunks, fails_count = 0, 0
 
-    if isinstance(url_or_texts, str):
+    if isinstance(url_or_texts, str) and request_identifier is not None:
         await hook(
             ResponseMessage[InsertProgressCallback](
                 result=InsertProgressCallback(
+                    ref=request_identifier,
                     kb=kb,
                     identifier=file_identifier,
                     message=f"Start processing file {file_identifier}",
@@ -469,10 +476,11 @@ async def smaller_task(url_or_texts: Union[List[str], str], kb: str, model_use: 
             if e.error is not None
         ])
 
-    if isinstance(url_or_texts, str):
+    if isinstance(url_or_texts, str) and request_identifier is not None:
         await hook(
             ResponseMessage[InsertProgressCallback](
                 result=InsertProgressCallback(
+                    ref=request_identifier,
                     message=f"Completed processing file {file_identifier}",
                     kb=kb,
                     identifier=file_identifier
@@ -645,7 +653,9 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
         for fc_file in filecoin_files:
             futures.append(asyncio.ensure_future(
                 smaller_task(
-                    fc_file.address, kb, model_use, file_identifier=fc_file.identifier
+                    fc_file.address, kb, model_use, 
+                    file_identifier=fc_file.identifier, 
+                    request_identifier=req.ref
                 )
             ))
             identifers.append(fc_file.identifier)
@@ -654,14 +664,18 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
             for chunk_of_texts in batching(req.texts, sqrt_length_texts):
                 futures.append(asyncio.ensure_future(
                     smaller_task(
-                        chunk_of_texts, kb, model_use, file_identifier=""
+                        chunk_of_texts, kb, model_use, 
+                        file_identifier="",
+                        request_identifier=req.ref
                     )
                 ))
 
         for url in req.file_urls:
             futures.append(asyncio.ensure_future(
                 smaller_task(
-                    url, kb, model_use, file_identifier=url
+                    url, kb, model_use, 
+                    file_identifier=url,
+                    request_identifier=req.ref
                 )
             ))
             identifers.append(url)
