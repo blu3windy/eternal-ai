@@ -72,7 +72,8 @@ func (s *Server) Routers() {
 		userAPI := rootAPI.Group("/users")
 		{
 			userAPI.POST("/upload", s.UserUploadFile)
-			userAPI.GET("/profile", s.GetUserProfileWithAuth)
+			userAPI.GET("/profile", s.authCheckTK1TokenMiddleware(), s.GetUserProfileWithAuth)
+			userAPI.GET("/transactions", s.authCheckTK1TokenMiddleware(), s.GetListUserTransactions)
 		}
 
 		adminAPI := rootAPI.Group("/admin")
@@ -359,6 +360,7 @@ func (s *Server) Routers() {
 			knowledgeApi.PATCH("/:id", s.updateKnowledge)
 			knowledgeApi.GET("/:id", s.detailKnowledge)
 			knowledgeApi.DELETE("/:id", s.deleteKnowledge)
+			knowledgeApi.POST("/:id/check_balance", s.checkBalance)
 			knowledgeApi.POST("/update-with-signature", s.updateKnowledgeBaseInContractWithSignature)
 		}
 

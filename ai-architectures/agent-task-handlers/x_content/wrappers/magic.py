@@ -4,7 +4,7 @@ import requests
 import httpx
 import time
 import traceback
-from typing import Callable
+from typing import Callable, Coroutine, List
 import asyncio
 from typing import Union
 

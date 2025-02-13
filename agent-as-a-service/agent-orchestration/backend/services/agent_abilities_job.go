@@ -106,6 +106,7 @@ func (s *Service) JobAgentSnapshotPostCreate(ctx context.Context) error {
 							models.DUCK_CHAIN_ID,
 							models.TRON_CHAIN_ID,
 							models.MODE_CHAIN_ID,
+							models.ZETA_CHAIN_ID,
 						},
 					},
 					`agent_snapshot_missions.infer_at is null
@@ -2074,7 +2075,7 @@ func (s *Service) getTaskToolSet(assistant *models.AgentInfo, taskReq string) (s
 }
 
 func (s *Service) callWakeup(logRequest *models.AgentSnapshotPost, assistant *models.AgentInfo) (string, error) {
-	if logRequest.AgentBaseModel == "" && assistant != nil {
+	if assistant != nil {
 		logRequest.AgentBaseModel = assistant.AgentBaseModel
 	}
 	var agentMetaDataRequest models.AgentMetadataRequest
@@ -2124,6 +2125,9 @@ func (s *Service) callWakeup(logRequest *models.AgentSnapshotPost, assistant *mo
 			}
 		}
 		request.MetaData.TwitterUsername = assistant.TwitterUsername
+	} else {
+		request.MetaData.ChainId = strconv.Itoa(int(logRequest.NetworkID))
+		request.MetaData.AgentContractId = "1"
 	}
 	body, err := helpers.CurlURLString(
 		s.conf.AgentOffchain.Url+"/async/enqueue",
@@ -2279,7 +2283,7 @@ func (s *Service) AgentSnapshotPostStatusInferRefund(ctx context.Context, snapsh
 										NetworkID: inferPost.NetworkID,
 										EventId:   fmt.Sprintf("agent_trigger_refund_%d", inferPost.ID),
 										UserID:    user.ID,
-										Type:      models.UserTransactionTypeAgentStoreFee,
+										Type:      models.UserTransactionTypeTriggerRefundFee,
 										Amount:    inferPost.Fee,
 										Status:    models.UserTransactionStatusDone,
 									},

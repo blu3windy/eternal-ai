@@ -241,6 +241,24 @@ func (s *Service) InfraTwitterAppExecuteRequest(ctx context.Context, address str
 				}
 				return resp, nil
 			}
+		case "searchUsers":
+			{
+				var req struct {
+					Params struct {
+						Query           string `json:"query"`
+						PaginationToken string `json:"pagination_token"`
+					} `json:"params"`
+				}
+				err := json.Unmarshal(rawReq, &req)
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				resp, err := s.SearchUsers(ctx, req.Params.Query, req.Params.PaginationToken)
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				return resp, nil
+			}
 		case "seachUserByQuery":
 			{
 				var req struct {
@@ -277,6 +295,25 @@ func (s *Service) InfraTwitterAppExecuteRequest(ctx context.Context, address str
 				}
 				return resp, nil
 			}
+		case "searchRecentTweet":
+			{
+				var req struct {
+					Params struct {
+						Query           string `json:"query"`
+						PaginationToken string `json:"pagination_token"`
+						MaxResults      int    `json:"max_results"`
+					} `json:"params"`
+				}
+				err := json.Unmarshal(rawReq, &req)
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				resp, err := s.SearchRecentTweet(ctx, req.Params.Query, req.Params.PaginationToken, req.Params.MaxResults)
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				return resp, nil
+			}
 		case "tweet":
 			{
 				if infraTwitterApp == nil {
@@ -291,7 +328,73 @@ func (s *Service) InfraTwitterAppExecuteRequest(ctx context.Context, address str
 				if err != nil {
 					return nil, errs.NewError(err)
 				}
-				tweetId, err := helpers.ReplyTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, req.Params.Content, "", "")
+				tweetId, err := helpers.PostTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, req.Params.Content, "")
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				return tweetId, nil
+			}
+		case "replyToTweet":
+			{
+				if infraTwitterApp == nil {
+					return "", errs.NewError(errs.ErrBadRequest)
+				}
+				var req struct {
+					Params struct {
+						TweetId string `json:"tweet_id"`
+						Content string `json:"content"`
+					} `json:"params"`
+				}
+				err := json.Unmarshal(rawReq, &req)
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				tweetId, err := helpers.ReplyTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, req.Params.Content, req.Params.TweetId, "")
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				return tweetId, nil
+			}
+		case "retweet":
+			{
+				if infraTwitterApp == nil {
+					return "", errs.NewError(errs.ErrBadRequest)
+				}
+				var req struct {
+					Params struct {
+						TweetId string `json:"tweet_id"`
+					} `json:"params"`
+				}
+				twitter, err := helpers.GetTwitterUserMe(infraTwitterApp.TwitterInfo.AccessToken)
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				err = json.Unmarshal(rawReq, &req)
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				tweetId, err := helpers.RepostTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, twitter.Data.ID, req.Params.TweetId)
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				return tweetId, nil
+			}
+		case "quoteTweet":
+			{
+				if infraTwitterApp == nil {
+					return "", errs.NewError(errs.ErrBadRequest)
+				}
+				var req struct {
+					Params struct {
+						TweetId string `json:"tweet_id"`
+						Content string `json:"content"`
+					} `json:"params"`
+				}
+				err = json.Unmarshal(rawReq, &req)
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				tweetId, err := helpers.QuoteTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, req.Params.Content, req.Params.TweetId)
 				if err != nil {
 					return nil, errs.NewError(err)
 				}
