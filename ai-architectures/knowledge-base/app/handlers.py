@@ -11,7 +11,8 @@ from .models import (
     APIStatus,
     ResponseMessage,
     FilecoinData,
-    InsertProgressCallback
+    InsertProgressCallback,
+    CollectionInspection
 )
 import requests
 import subprocess
@@ -61,6 +62,7 @@ from .wrappers import telegram_kit
 import schedule
 import traceback
 from pathlib import Path as PathL
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -467,18 +469,13 @@ async def download_file(
                 await f.write(chunk)
 
     logger.info(f"Downloaded {path}")
-
-async def get_filecoin_file_identifier(metadata: dict) -> str:
-    if metadata["is_part"]:
-        parts = sorted(metadata["files"], key=lambda x: x["index"])
-        return await sync2async(get_hash)(*[p['hash'] for p in parts])
-    
-    return metadata['files'][0]['hash']
     
 async def download_filecoin_item(
-    metadata: dict, tmp_dir: str, session: httpx.AsyncClient
+    metadata: dict, 
+    tmp_dir: str, 
+    session: httpx.AsyncClient,
+    identifier: str
 ) -> Optional[FilecoinData]:
-    identifier = await get_filecoin_file_identifier(metadata)
     
     if metadata["is_part"]:
         parts = sorted(metadata["files"], key=lambda x: x["index"])
@@ -527,10 +524,19 @@ async def download_filecoin_item(
         
     return None
 
+async def get_kb_stat(kb: str) -> List[CollectionInspection]:
+    pass
+
 async def download_and_extract_from_filecoin(
     url: str, tmp_dir: str, ignore_inserted: bool=True
 ) -> List[FilecoinData]:
     list_files: List[FilecoinData] = []
+
+    pat = re.compile(r"ipfs/(.+)")
+    cid = pat.search(url).group(1)
+    
+    if not cid:
+        raise ValueError(f"Invalid filecoin url: {url}")
 
     async with httpx.AsyncClient() as session:
         response = await session.get(url)
@@ -540,14 +546,19 @@ async def download_and_extract_from_filecoin(
 
         list_metadata = json.loads(response.content)
 
-        for metadata in list_metadata:
+        for file_index, metadata in enumerate(list_metadata):
             metadata: dict
             logger.info(metadata)
             
             if ignore_inserted and metadata.get("is_inserted", False):
                 continue
 
-            fcdata = await download_filecoin_item(metadata, tmp_dir, session)
+            fcdata = await download_filecoin_item(
+                metadata, 
+                tmp_dir, 
+                session, 
+                identifier=f"{cid}/{file_index}"
+            )
             
             if fcdata is not None:
                 list_files.append(fcdata)
@@ -555,8 +566,31 @@ async def download_and_extract_from_filecoin(
     logger.info(f"List of files to be processed: {list_files}")
     return list_files
 
-async def inspect(identifiers: List[str] = []) -> List[Detail]:
-    pass
+async def inspect_by_file_identifier(file_identifier: str) -> CollectionInspection:
+    milvus_cli = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)
+
+    it = milvus_cli.query_iterator(
+        collection_name=get_default_embedding_model().identity(),
+        filter=f"reference == {file_identifier!r}",
+        output_fields=["hash"]
+    )
+    
+    hashs = set([])
+
+    while True:
+        batch = await sync2async(it.next)()
+
+        if len(batch) == 0:
+            break
+
+        for item in batch:
+            hashs.add(item['hash'])
+
+    return CollectionInspection(
+        file_ref=file_identifier,
+        message=f"Has {len(hashs)} unique chunk(s)",
+        status=APIStatus.OK if len(hashs) > 0 else APIStatus.ERROR
+    )         
 
 @limit_asyncio_concurrency(4)
 async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
@@ -582,6 +616,7 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
         futures = []
         sqrt_length_texts = int(len(req.texts) ** 0.5)
         filecoin_files = []
+        identifers = []
 
         if req.filecoin_metadata_url is not None:
             filecoin_files = await download_and_extract_from_filecoin(req.filecoin_metadata_url, tmp_dir)
@@ -592,6 +627,7 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
                     fc_file.address, kb, model_use, file_identifier=fc_file.identifier
                 )
             ))
+            identifers.append(fc_file.identifier)
 
         if len(req.texts) > 0:
             for chunk_of_texts in batching(req.texts, sqrt_length_texts):
@@ -607,6 +643,7 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
                     url, kb, model_use, file_identifier=url
                 )
             ))
+            identifers.append(url)
 
         if len(futures) > 0:
             results = await asyncio.gather(*futures)
@@ -622,7 +659,11 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
                     result=InsertResponse(
                         ref=req.ref,
                         message=f"Inserted {n_chunks - fails_count} (chunks); Failed {fails_count} (chunks); Total: {n_chunks} (chunks); {len(req.file_urls) + len(filecoin_files)} (files).",
-                        kb=kb
+                        kb=kb,
+                        details=[
+                            inspect_by_file_identifier(identifier) 
+                            for identifier in identifers
+                        ]
                     ),
                     status=APIStatus.OK if (n_chunks - fails_count) > 0 or len(futures) == 0 else APIStatus.ERROR
                 )

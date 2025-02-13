@@ -10,6 +10,13 @@ class EmbeddedItem(BaseModel):
     embedding: Optional[List[float]] = None
     raw_text: str
     error: Optional[str] = None
+    
+class APIStatus(str, Enum):
+    OK = "ok"
+    ERROR = "error"
+
+    PENDING = "pending"
+    PROCESSING = "processing"
 
 class InsertInputSchema(BaseModel):
     id: str = Field(default_factory=lambda: f"doc-{str(uuid.uuid4().hex)}")
@@ -68,7 +75,12 @@ class UpdateInputSchema(BaseModel):
         if isinstance(data['texts'], str):
             data['texts'] = [data['texts']]
         
-        return data
+        return 
+
+class CollectionInspection(BaseModel):
+    file_ref: str # {cid}/{file_index}
+    status: APIStatus = APIStatus.OK
+    message: str = ""
 
 class QueryInputSchema(BaseModel):
     query: str
@@ -133,14 +145,6 @@ class ChunkScore(BaseModel):
     score: float
     chunk_id: str
 
-
-class APIStatus(str, Enum):
-    OK = "ok"
-    ERROR = "error"
-
-    PENDING = "pending"
-    PROCESSING = "processing"
-
 class ResponseMessage(BaseModel, Generic[_generic_type]):
     result: Type[_generic_type]
     error: Optional[str] = None
@@ -156,10 +160,11 @@ class InsertResponse(BaseModel):
         message (Optional[str]): Additional information about the insertion result.
         artifact_submitted (bool): Indicates whether the artifact was successfully submitted.
     """
+
     ref: str
     kb: Optional[str] = None
     message: Optional[str] = ""
-    artifact_submitted: bool = False
+    details: List[CollectionInspection] = []
 
 class InsertProgressCallback(BaseModel):
     kb: str
