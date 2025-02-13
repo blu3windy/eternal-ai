@@ -603,7 +603,7 @@ func (uc *knowledgeUsecase) insertFilesToRAG(ctx context.Context, kn *models.Kno
 	}{
 		FilecoinMetadataUrl: fmt.Sprintf("https://gateway.lighthouse.storage/ipfs/%s", hash),
 		Ref:                 fmt.Sprintf("%d", kn.ID),
-		Hook:                fmt.Sprintf("%s/%d", uc.webhookUrl, kn.ID),
+		Hook:                uc.webhookUrl,
 		Kb:                  kn.KbId,
 	}
 	logger.Info(categoryNameTracer, "insert_file_to_rag", zap.Any("body", body))
@@ -625,9 +625,9 @@ func (uc *knowledgeUsecase) insertFilesToRAG(ctx context.Context, kn *models.Kno
 
 	bBody, _ := json.Marshal(body)
 	kn.RagInsertFileRequest = string(bBody)
-
+	kn.Status = models.KnowledgeBaseStatusProcessing
 	updatedFields := make(map[string]interface{})
-	// updatedFields["status"] = kn.Status
+	updatedFields["status"] = kn.Status
 	updatedFields["rag_insert_file_request"] = kn.RagInsertFileRequest
 	updatedFields["filecoin_hash"] = kn.FilecoinHash
 	if err = uc.knowledgeBaseRepo.UpdateById(ctx, kn.ID, updatedFields); err != nil {
@@ -651,15 +651,6 @@ func (uc *knowledgeUsecase) GetManyKnowledgeBaseByQuery(ctx context.Context, que
 }
 
 func (uc *knowledgeUsecase) uploadKBFileToLighthouseAndProcess(ctx context.Context, kn *models.KnowledgeBase) (string, []uint, error) {
-	kn.Status = models.KnowledgeBaseStatusProcessing
-
-	updatedFields := make(map[string]interface{})
-	updatedFields["status"] = kn.Status
-	if err := uc.knowledgeBaseRepo.UpdateById(ctx, kn.ID, updatedFields); err != nil {
-		uc.SendMessage(ctx, fmt.Sprintf(" uc.knowledgeBaseRepo.UpdateById for agent %s (%d) - has error: %s ", kn.Name, kn.ID, err.Error()), uc.notiErrorChanId)
-		return "", nil, err
-	}
-
 	result := []*lighthouse.FileInLightHouse{}
 	kbFileIds := []uint{}
 	for _, f := range kn.KnowledgeBaseFiles {

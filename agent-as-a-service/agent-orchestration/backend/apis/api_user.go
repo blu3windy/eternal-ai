@@ -30,6 +30,10 @@ func (s *Server) VerifyLoginUserByWeb3(c *gin.Context) {
 func (s *Server) GetUserProfileWithAuth(c *gin.Context) {
 	ctx := s.requestContext(c)
 	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
 	user, err := s.nls.GetUserProfile(ctx, userAddress)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
@@ -41,6 +45,10 @@ func (s *Server) GetUserProfileWithAuth(c *gin.Context) {
 func (s *Server) UserUploadFile(c *gin.Context) {
 	ctx := s.requestContext(c)
 	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
@@ -93,4 +101,20 @@ func (s *Server) AgentVerifyShareTwitter(c *gin.Context) {
 		return
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: valid})
+}
+
+func (s *Server) GetListUserTransactions(c *gin.Context) {
+	ctx := s.requestContext(c)
+	page, limit := s.pagingFromContext(c)
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ms, count, err := s.nls.GetListUserTransactions(ctx, userAddress, s.stringFromContextQuery(c, "type"), page, limit)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewUserTransactionRespArry(ms), Count: &count})
 }

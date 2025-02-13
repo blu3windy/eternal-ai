@@ -48,6 +48,8 @@ Run the following command to start the whole system.
 ```
 sudo bash quickstart.sh
 ```
+Once the EternalAI system is up and running locally on your machine, you can start chatting with your agent in the terminal.
+
 
 ## Step-by-Step Setup (For Advanced Users)
 
