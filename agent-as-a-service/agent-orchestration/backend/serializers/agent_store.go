@@ -8,8 +8,8 @@ import (
 )
 
 type AgentStoreReq struct {
-	ID          uint `json:"id"`
-	Type        models.AgentStoreType
+	ID          uint                    `json:"id"`
+	Type        models.AgentStoreType   `json:"type"`
 	Name        string                  `json:"name"`
 	Description string                  `json:"description"`
 	AuthenUrl   string                  `json:"authen_url"`
