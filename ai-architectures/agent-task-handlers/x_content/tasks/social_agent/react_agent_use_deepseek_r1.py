@@ -134,7 +134,7 @@ class ReactAgentUsingDeepSeekR1(ReactAgent):
             len(log.scratchpad) > 0 and "final_answer" in log.scratchpad[-1]
         ) or len(log.scratchpad) > log.meta_data.params.get(
             "react_max_steps", const.DEFAULT_REACT_MAX_STEPS
-        )
+        ) + 1
 
     async def process_task(self, log: ReasoningLog) -> ReasoningLog:
         tools = self.toolcall.get_tools(log.toolset)
@@ -194,6 +194,12 @@ class ReactAgentUsingDeepSeekR1(ReactAgent):
                 )
 
                 log = await self.commit_log(log)
+
+            else:
+                if log.state == MissionChainState.RUNNING:
+                    log = await a_move_state(
+                        log, MissionChainState.DONE, "React task break"
+                    )
 
         return log
 
