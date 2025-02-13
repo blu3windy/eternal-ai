@@ -39,11 +39,10 @@ def get_chat_langgraph(llm: OpenAILLMBase) -> CompiledStateGraph:
     ):
         persona = config["configurable"]["persona"]
         user_id = config["configurable"]["user_id"]
-        memory_namespace = (user_id, "memories")
 
         messages = state["messages"]
         formatted_memories = await get_formatted_memories(
-            store, memory_namespace, messages
+            store, user_id, messages
         )
         formatted_tools = tools.get_formatted_tools(tool_list)
 
@@ -82,20 +81,6 @@ def get_chat_langgraph(llm: OpenAILLMBase) -> CompiledStateGraph:
             "messages": [AIMessage(content=content, tool_calls=tool_calls)],
             "tx_hash": infer_result.tx_hash,
         }
-
-    # async def tool_node(
-    #     state: State,
-    # ):
-    #     tools_by_name = {tool.name: tool for tool in tool_list}
-
-    #     """A node that parse and runs the tools requested in the last message."""
-    #     messages = state["messages"]
-    #     content = messages[-1].content
-    #     tool = repair_json(content, return_objects=True)
-    #     tool_name = tool["name"]
-    #     if tool_name not in tools_by_name[tool_name]:
-    #         raise Exception(f"Tool name not found: {tool_name}")
-    #     tools_by_name[tool_name] =
 
     graph_builder = StateGraph(State)
     graph_builder.add_node("chatbot", chatbot)

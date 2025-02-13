@@ -19,6 +19,7 @@ async def get_formatted_memories(
         query=str([m.content for m in messages[-3:]]),
         limit=10,
     )
+
     formatted_memories = "\n".join(
         f"[{mem.key}]: {mem.value} (similarity: {mem.score})"
         for mem in memories

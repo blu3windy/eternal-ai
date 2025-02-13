@@ -20,8 +20,8 @@ TOOL_TEMPLATE = """Use the function '{name}' to {description}
 {tool_json}"""
 
 TOOL_CALLING_TEMPLATE = """
-You have tool calling capabilities. When you receive a tool call response, use the output to format an answer to the orginal use question.
-If you are using tools, respond in the format {{"name": function name, "parameters": dictionary of function arguments}}. If multiple tools are used, use array format. Do not use variables.
+You have tool calling capabilities. When you receive a tool call response, use the output to format an answer to the orginal use question. 
+If you are using tools, respond in the format {{"name": function name, "parameters": dictionary of function arguments}}. Do not use variables.
 
 You have access to the following functions:
 
