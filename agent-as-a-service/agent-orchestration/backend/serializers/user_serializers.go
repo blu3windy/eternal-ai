@@ -40,7 +40,7 @@ type UserResp struct {
 	EthAddress      string                 `json:"eth_address"`
 	TronAddress     string                 `json:"tron_address"`
 	SolAddress      string                 `json:"sol_address"`
-	EaiBalance      numeric.BigFloat       `json:"sol_address"`
+	EaiBalance      numeric.BigFloat       `json:"eai_balance"`
 }
 
 func NewUserResp(m *models.User) *UserResp {

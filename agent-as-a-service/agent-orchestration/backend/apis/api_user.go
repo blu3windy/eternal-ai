@@ -30,6 +30,10 @@ func (s *Server) VerifyLoginUserByWeb3(c *gin.Context) {
 func (s *Server) GetUserProfileWithAuth(c *gin.Context) {
 	ctx := s.requestContext(c)
 	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
 	user, err := s.nls.GetUserProfile(ctx, userAddress)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
@@ -41,6 +45,10 @@ func (s *Server) GetUserProfileWithAuth(c *gin.Context) {
 func (s *Server) UserUploadFile(c *gin.Context) {
 	ctx := s.requestContext(c)
 	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
