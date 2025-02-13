@@ -255,7 +255,7 @@ func (uc *knowledgeUsecase) Webhook(ctx context.Context, req *models.RagHookResp
 					}
 					uc.SendMessage(ctx, fmt.Sprintf("process kb file  for kb agent via webhook DONE (kb_id: %d: %s : %v)", kn.ID, req.Result.Kb, req.Result.Identifier), uc.notiActChanId)
 
-				} else {
+				} else if req.Status == "error" {
 					file.Status = models.KnowledgeBaseFileStatusFail
 					file.LastErrorMessage = req.Result.Message
 					err = uc.knowledgeBaseFileRepo.UpdateByKnowledgeBaseId(
