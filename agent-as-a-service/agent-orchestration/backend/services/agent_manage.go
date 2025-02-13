@@ -1335,7 +1335,7 @@ func (s *Service) AgentCreateAgentAssistantForLocal(ctx context.Context, req *se
 	return agent, nil
 }
 
-func (s *Service) GetAgentChainFees(ctx context.Context) ([]map[string]interface{}, error) {
+func (s *Service) GetAgentChainFees(ctx context.Context) (map[string]interface{}, error) {
 	res, err := s.dao.FindAgentChainFee(
 		daos.GetDBMainCtx(ctx),
 		map[string][]interface{}{},
@@ -1347,14 +1347,14 @@ func (s *Service) GetAgentChainFees(ctx context.Context) ([]map[string]interface
 	if err != nil {
 		return nil, errs.NewError(err)
 	}
-	var chainFees []map[string]interface{}
+	chainFeeMap := map[string]interface{}{}
 	for _, v := range res {
-		chainFees = append(chainFees, map[string]interface{}{
+		chainFeeMap[strconv.Itoa(int(v.NetworkID))] = map[string]interface{}{
 			"network_id": v.NetworkID,
 			"mint_fee":   numeric.BigFloat2Text(&v.MintFee.Float),
 			"post_fee":   numeric.BigFloat2Text(&v.InferFee.Float),
 			"token_fee":  numeric.BigFloat2Text(&v.TokenFee.Float),
-		})
+		}
 	}
-	return chainFees, nil
+	return chainFeeMap, nil
 }
