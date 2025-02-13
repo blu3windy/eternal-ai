@@ -61,13 +61,14 @@ type KnowledgeBase struct {
 }
 
 type KnowledgeBaseFile struct {
-	Id              uint   `json:"id"`
-	KnowledgeBaseId uint   `json:"knowledge_base_id"`
-	FileUrl         string `json:"file_url"`
-	FileName        string `json:"file_name"`
-	FileSize        uint   `json:"file_size"`
-	FilecoinHash    string `json:"filecoin_hash"`
-	Status          int    `json:"status"`
+	Id               uint   `json:"id"`
+	KnowledgeBaseId  uint   `json:"knowledge_base_id"`
+	FileUrl          string `json:"file_url"`
+	FileName         string `json:"file_name"`
+	FileSize         uint   `json:"file_size"`
+	FilecoinHash     string `json:"filecoin_hash"`
+	Status           int    `json:"status"`
+	LastErrorMessage string `json:"last_error_message"`
 }
 
 type AgentUseKnowledgeBaseRequest struct {

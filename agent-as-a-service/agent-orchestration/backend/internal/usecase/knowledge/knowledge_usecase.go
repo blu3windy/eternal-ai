@@ -201,7 +201,7 @@ func (uc *knowledgeUsecase) WebhookFile(ctx context.Context, filename string, by
 	return kn, nil
 }
 
-func (uc *knowledgeUsecase) Webhook(ctx context.Context, req *models.RagResponse) (*models.KnowledgeBase, error) {
+func (uc *knowledgeUsecase) Webhook(ctx context.Context, req *models.RagHookResponse) (*models.KnowledgeBase, error) {
 	logger.Info(categoryNameTracer, "webhook_update_kb", zap.Any("data", req))
 	if req.Result == nil {
 		return nil, nil
@@ -216,35 +216,94 @@ func (uc *knowledgeUsecase) Webhook(ctx context.Context, req *models.RagResponse
 	if err != nil {
 		return nil, err
 	}
+	if len(req.Result.Identifier) > 0 {
+		// update status a file in kb list file
+		identifies := strings.Split(req.Result.Identifier, "/")
+		if len(identifies) < 2 {
+			return nil, fmt.Errorf("invalid identifier %s", req.Result.Identifier)
+		}
+		hash := identifies[0]
+		indexFile, err := strconv.Atoi(identifies[1])
+		if err != nil {
+			return nil, fmt.Errorf("invalid identifier index %s", identifies[1])
+		}
+		body, _, err := lighthouse.DownloadDataSimple(hash)
+		if err != nil {
+			return nil, fmt.Errorf("failed to download lighthouse %s", hash)
+		}
+		var listFileInfo []*lighthouse.FileInLightHouse
+		if err := json.Unmarshal(body, &listFileInfo); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal lighthouse %s", hash)
+		}
+		if len(listFileInfo) < indexFile {
+			return nil, fmt.Errorf("invalid file index len(listFile) %v , index file %v", len(listFileInfo), indexFile)
+		}
+		for _, file := range kn.KnowledgeBaseFiles {
+			var lighthouseFile lighthouse.FileInLightHouse
+			if err := json.Unmarshal([]byte(file.FilecoinHashRawData), &lighthouseFile); err != nil {
+				continue
+			}
+			if lighthouseFile.Name == listFileInfo[indexFile].Name {
+				if req.Status == "ok" {
+					file.Status = models.KnowledgeBaseFileStatusDone
+					err = uc.knowledgeBaseFileRepo.UpdateByKnowledgeBaseId(
+						ctx, file.ID,
+						map[string]interface{}{"status": file.Status},
+					)
+					if err != nil {
+						return nil, fmt.Errorf("failed to update knowledge base file status %s", file.Status)
+					}
+					uc.SendMessage(ctx, fmt.Sprintf("process kb file  for kb agent via webhook DONE (kb_id: %d: %s : %v)", kn.ID, req.Result.Kb, req.Result.Identifier), uc.notiActChanId)
 
-	updatedFields := make(map[string]interface{})
-	if req.Status == "ok" && req.Result.Kb == "" {
-		msg := "the kb_id is missing from the webhook API response."
-		uc.SendMessage(ctx, fmt.Sprintf("webhook update agent status failed: %s (%d) - error %s", kn.Name, kn.ID, msg), uc.notiActChanId)
+				} else if req.Status == "error" {
+					file.Status = models.KnowledgeBaseFileStatusFail
+					file.LastErrorMessage = req.Result.Message
+					err = uc.knowledgeBaseFileRepo.UpdateByKnowledgeBaseId(
+						ctx, file.ID,
+						map[string]interface{}{
+							"status":             file.Status,
+							"last_error_message": file.LastErrorMessage,
+						},
+					)
+					if err != nil {
+						return nil, fmt.Errorf("failed to update knowledge base file status %s", file.Status)
+					}
+					uc.SendMessage(ctx, fmt.Sprintf("webhook update kb file status failed: %s (%d) %s - error %s", kn.Name, kn.ID, req.Result.Identifier, file.LastErrorMessage), uc.notiActChanId)
+				}
+				break
+			}
+		}
+	} else {
+		// update kb status
+		updatedFields := make(map[string]interface{})
+		if req.Status == "ok" && req.Result.Kb == "" {
+			msg := "the kb_id is missing from the webhook API response."
+			uc.SendMessage(ctx, fmt.Sprintf("webhook update agent status failed: %s (%d) - error %s", kn.Name, kn.ID, msg), uc.notiActChanId)
 
-		updatedFields["status"] = models.KnowledgeBaseStatusProcessingFailed
-		updatedFields["last_error_message"] = msg
+			updatedFields["status"] = models.KnowledgeBaseStatusProcessingFailed
+			updatedFields["last_error_message"] = msg
+			if err := uc.knowledgeBaseRepo.UpdateById(ctx, kn.ID, updatedFields); err != nil {
+				return nil, err
+			}
+			return nil, errors.New(msg)
+		}
+
+		if req.Status != "ok" {
+			updatedFields["status"] = models.KnowledgeBaseStatusProcessingFailed
+			updatedFields["last_error_message"] = req.Result.Message
+			uc.SendMessage(ctx, fmt.Sprintf("webhook update agent status failed: %s (%d) - error %s", kn.Name, kn.ID, req.Result.Message), uc.notiActChanId)
+		} else if kn.KbId == "" {
+			updatedFields["kb_id"] = req.Result.Kb
+			updatedFields["status"] = models.KnowledgeBaseStatusDone
+			uc.SendMessage(ctx, fmt.Sprintf("Process update kb_id for agent via webhook DONE (kb_id: %d: %s)", kn.ID, req.Result.Kb), uc.notiActChanId)
+		} else {
+			updatedFields["status"] = models.KnowledgeBaseStatusProcessUpdate
+			uc.SendMessage(ctx, fmt.Sprintf("Process update kb_id for agent via webhook DONE (kb_id: %d: %s)", kn.ID, req.Result.Kb), uc.notiActChanId)
+		}
+
 		if err := uc.knowledgeBaseRepo.UpdateById(ctx, kn.ID, updatedFields); err != nil {
 			return nil, err
 		}
-		return nil, errors.New(msg)
-	}
-
-	if req.Status != "ok" {
-		updatedFields["status"] = models.KnowledgeBaseStatusProcessingFailed
-		updatedFields["last_error_message"] = req.Result.Message
-		uc.SendMessage(ctx, fmt.Sprintf("webhook update agent status failed: %s (%d) - error %s", kn.Name, kn.ID, req.Result.Message), uc.notiActChanId)
-	} else if kn.KbId == "" {
-		updatedFields["kb_id"] = req.Result.Kb
-		updatedFields["status"] = models.KnowledgeBaseStatusDone
-		uc.SendMessage(ctx, fmt.Sprintf("Process update kb_id for agent via webhook DONE (kb_id: %d: %s)", kn.ID, req.Result.Kb), uc.notiActChanId)
-	} else {
-		updatedFields["status"] = models.KnowledgeBaseStatusProcessUpdate
-		uc.SendMessage(ctx, fmt.Sprintf("Process update kb_id for agent via webhook DONE (kb_id: %d: %s)", kn.ID, req.Result.Kb), uc.notiActChanId)
-	}
-
-	if err := uc.knowledgeBaseRepo.UpdateById(ctx, kn.ID, updatedFields); err != nil {
-		return nil, err
 	}
 
 	return kn, nil
@@ -661,6 +720,9 @@ func (uc *knowledgeUsecase) uploadKBFileToLighthouseAndProcess(ctx context.Conte
 		if f.FilecoinHashRawData != "" {
 			r := &lighthouse.FileInLightHouse{}
 			if err := json.Unmarshal([]byte(f.FilecoinHashRawData), r); err == nil {
+				if f.Status == models.KnowledgeBaseFileStatusDone {
+					r.IsInserted = true
+				}
 				result = append(result, r)
 				continue
 			}
@@ -674,16 +736,15 @@ func (uc *knowledgeUsecase) uploadKBFileToLighthouseAndProcess(ctx context.Conte
 
 		rw, _ := json.Marshal(r)
 		f.FilecoinHashRawData = string(rw)
-		uc.knowledgeBaseFileRepo.UpdateByKnowledgeBaseId(
+		err = uc.knowledgeBaseFileRepo.UpdateByKnowledgeBaseId(
 			ctx, f.ID,
 			map[string]interface{}{"filecoin_hash_raw_data": f.FilecoinHashRawData},
 		)
-		kbFileIds = append(kbFileIds, f.ID)
-		if f.Status == models.KnowledgeBaseFileStatusDone {
-			r.IsInserted = true
-		} else {
-			r.IsInserted = false
+		if err != nil {
+			return "", nil, err
 		}
+		kbFileIds = append(kbFileIds, f.ID)
+		r.IsInserted = false
 		result = append(result, r)
 	}
 

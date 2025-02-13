@@ -167,6 +167,7 @@ class InsertResponse(BaseModel):
     details: List[CollectionInspection] = []
 
 class InsertProgressCallback(BaseModel):
+    ref: str
     kb: str
     identifier: str
     message: Optional[str] = ""
