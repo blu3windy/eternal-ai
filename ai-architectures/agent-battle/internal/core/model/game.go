@@ -164,6 +164,17 @@ func (a *Game) DeterminePlayerWinner(gasFeePercentage float64) *Game {
 	return a
 }
 
+// GetAgentByPlayer returns the agent wallet by the player
+func (a *Game) GetAgentByPlayer(player *Player) *AgentWallet {
+	for _, agent := range a.AgentWallets {
+		if agent.Address == player.BetToAgentAddress {
+			return agent
+		}
+	}
+
+	return nil
+}
+
 // HasNoParticipants returns true if the game has no participants
 func (a Game) HasNoParticipants() bool {
 	return len(a.Players) == 0
@@ -182,6 +193,17 @@ func (a Game) GetFirstPlayerWinner() *Player {
 		}
 	}
 	return nil
+}
+
+// CanPrizePlayerWinner returns true if the game can prize the player winner
+func (a Game) CanPrizePlayerWinner() bool {
+	for _, player := range a.Players {
+		if player.Win && player.PrizeTxHash == "" {
+			return true
+		}
+	}
+
+	return a.GameFeeTxHash == ""
 }
 
 type Player struct {
