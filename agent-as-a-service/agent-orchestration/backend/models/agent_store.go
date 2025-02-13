@@ -48,8 +48,9 @@ type AgentStore struct {
 	Status             AgentStoreStatus
 	Price              numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	AgentStoreMissions []*AgentStoreMission
-	NumInstall         uint
-	NumUsage           uint
+	NumInstall         uint             `gorm:"default:0"`
+	NumUsage           uint             `gorm:"default:0"`
+	Volume             numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 }
 
 type AgentStoreMission struct {
@@ -62,10 +63,11 @@ type AgentStoreMission struct {
 	OwnerAddress string
 	ToolList     string  `gorm:"type:longtext"`
 	Rating       float64 `gorm:"type:decimal(5,2);default:0"`
-	NumRating    uint
-	NumUsed      uint
+	NumRating    uint    `gorm:"default:0"`
+	NumUsed      uint    `gorm:"default:0"`
 	Status       AgentStoreStatus
-	Icon         string `gorm:"type:text"`
+	Icon         string           `gorm:"type:text"`
+	Volume       numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 }
 
 type AgentStoreInstall struct {
