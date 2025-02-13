@@ -1,8 +1,10 @@
 from pydantic import BaseModel, Field, model_validator
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Generic, TypeVar, Type
 from enum import Enum
 import uuid
 from pathlib import Path
+
+_generic_type = TypeVar('_generic_type')
 
 class EmbeddedItem(BaseModel):
     embedding: Optional[List[float]] = None
@@ -139,8 +141,8 @@ class APIStatus(str, Enum):
     PENDING = "pending"
     PROCESSING = "processing"
 
-class ResponseMessage(BaseModel):
-    result: Any
+class ResponseMessage(BaseModel, Generic[_generic_type]):
+    result: Type[_generic_type]
     error: Optional[str] = None
     status: APIStatus = APIStatus.OK
 

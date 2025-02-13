@@ -87,22 +87,22 @@ DOCUMENT_FORMAT_OPTIONS = {
     )
 }
 
-async def hook_result(
-    hook_url: str, 
-    file_path: str 
+async def hook(
+    resp: ResponseMessage[InsertResponse],
 ):
-    assert os.path.exists(file_path), f"File {file_path} not found"
-
-    with open(file_path, 'rb') as fp:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                hook_url,
-                files={'file': fp},
-                timeout=httpx.Timeout(60.0 * 10),
-            )
-
-    logger.info(f"Hook response: {response.status_code}; {response.text}")
-    return response.status_code == 200
+    body: dict = resp.model_dump()
+    
+    with httpx.AsyncClient() as client:
+        response = await client.post(
+            const.ETERNALAI_RESULT_HOOK_URL,
+            json=body
+        )
+        
+    if response.status_code != 200:
+        logger.error(f"Failed to send hook response: {response.text}")
+        return False
+    
+    return True
 
 @limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT)
 async def mk_embedding(text: str, model_use: EmbeddingModel) -> List[float]:
@@ -440,7 +440,7 @@ async def smaller_task(url_or_texts: Union[List[str], str, FilecoinData], kb: st
             if e.error is not None
         ])
 
-    return n_chunks, fails_count
+    return (n_chunks + fails_count, fails_count)
 
 @limit_asyncio_concurrency(4)
 async def download_file(
@@ -596,25 +596,21 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
             err_msg = None
 
             if status == APIStatus.ERROR:
-                err_msg = "An error occured while processing data: "
-
-                if n_chunks == 0:
-                    err_msg += "No data extracted from the provided documents."
-
-            body = ResponseMessage(
-                result=response.model_dump(),
-                status=status,
-                error=err_msg
-            ).model_dump()
-
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    const.ETERNALAI_RESULT_HOOK_URL,
-                    json=body,
-                    timeout=httpx.Timeout(60.0),
+                err_msg = "An error occured while processing data: " + (
+                    "No data extracted from the provided documents." 
+                    if n_chunks == 0
+                    else 
+                    f"Failed to insert {fails_count} items."
                 )
 
-            logger.info(f"Hook response: {response.status_code}; {response.text}; Body: {json.dumps(body, indent=2)}")
+            body_model = ResponseMessage[InsertResponse](
+                result=response,
+                status=status,
+                error=err_msg
+            )
+
+            hook_result = await hook(body_model)
+            logger.info(f"Hook status: {hook_result};")
 
         await sync2async(get_insertion_request_handler().delete)(req.id)
         return n_chunks
