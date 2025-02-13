@@ -39,7 +39,7 @@ func (s *Server) createKnowledge(c *gin.Context) {
 func (s *Server) webhookKnowledge(c *gin.Context) {
 	ctx := s.requestContext(c)
 
-	req := &models.RagResponse{}
+	req := &models.RagHookResponse{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return

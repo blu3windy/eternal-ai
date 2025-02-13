@@ -109,13 +109,13 @@ func (m *KnowledgeBase) CalcChargeMore() float64 {
 }
 
 type RagResult struct {
-	Ref          string `json:"ref"`
-	Kb           string `json:"kb"`
-	FilecoinHash string `json:"filecoin_hash"`
-	Message      string `json:"message"`
+	Ref        string `json:"ref"`
+	Kb         string `json:"kb"`
+	Identifier string `json:"identifier"`
+	Message    string `json:"message"`
 }
 
-type RagResponse struct {
+type RagHookResponse struct {
 	Result *RagResult `json:"result"`
 	Error  *string    `json:"error"`
 	Status string     `json:"status"`
