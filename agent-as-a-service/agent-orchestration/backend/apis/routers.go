@@ -72,7 +72,8 @@ func (s *Server) Routers() {
 		userAPI := rootAPI.Group("/users")
 		{
 			userAPI.POST("/upload", s.UserUploadFile)
-			userAPI.GET("/profile", s.GetUserProfileWithAuth)
+			userAPI.GET("/profile", s.authCheckTK1TokenMiddleware(), s.GetUserProfileWithAuth)
+			userAPI.GET("/transactions", s.authCheckTK1TokenMiddleware(), s.GetListUserTransactions)
 		}
 
 		adminAPI := rootAPI.Group("/admin")
@@ -278,8 +279,10 @@ func (s *Server) Routers() {
 		agentStoreAPI := rootAPI.Group("/agent-store")
 		{
 			agentStoreAPI.POST("/save", s.authCheckTK1TokenMiddleware(), s.SaveAgentStore)
+			agentStoreAPI.POST("/mint/:agent_store_id", s.authCheckTK1TokenMiddleware(), s.ScanAgentInfraMintHash)
 			agentStoreAPI.GET("/list", s.GetListAgentStore)
-			agentStoreAPI.GET("/install/list", s.GetListAgentStoreInstallByUser)
+			agentStoreAPI.GET("/list-by-owner", s.authCheckTK1TokenMiddleware(), s.GetListAgentStoreByOwner)
+			agentStoreAPI.GET("/install/list", s.GetListAgentStoreInstall)
 			agentStoreAPI.GET("/:id", s.GetAgentStoreDetail)
 			agentStoreAPI.POST("/:id/mission", s.authCheckTK1TokenMiddleware(), s.SaveMissionStore)
 			agentStoreAPI.GET("/:id/install-code/:agent_info_id", s.authCheckTK1TokenMiddleware(), s.GetAgentStoreInstallCode)
@@ -357,6 +360,7 @@ func (s *Server) Routers() {
 			knowledgeApi.PATCH("/:id", s.updateKnowledge)
 			knowledgeApi.GET("/:id", s.detailKnowledge)
 			knowledgeApi.DELETE("/:id", s.deleteKnowledge)
+			knowledgeApi.POST("/:id/check_balance", s.checkBalance)
 			knowledgeApi.POST("/update-with-signature", s.updateKnowledgeBaseInContractWithSignature)
 		}
 
@@ -371,6 +375,12 @@ func (s *Server) Routers() {
 			sampleTwitterApp.GET("/callback", s.SampleTwitterAppAuthenCallback)
 			sampleTwitterApp.GET("/get-bitcoin-price", s.SampleTwitterAppGetBTCPrice)
 			sampleTwitterApp.POST("/tweet-message", s.SampleTwitterAppTweetMessage)
+		}
+
+		infraTwitterApp := rootAPI.Group("/infra-twitter-app")
+		{
+			infraTwitterApp.GET("/install", s.InfraTwitterAppAuthenInstall)
+			infraTwitterApp.GET("/callback", s.InfraTwitterAppAuthenCallback)
 		}
 
 		// agentInfraAPI := rootAPI.Group("/infra")

@@ -239,14 +239,6 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 			return nil, err
 		}
 
-		// _, err = s.KnowledgeUsecase.CreateAgentInfoKnowledgeBase(ctx, &models.AgentInfoKnowledgeBase{
-		// 	AgentInfoId:     agent.ID,
-		// 	KnowledgeBaseId: kb.ID,
-		// })
-		// if err != nil {
-		// 	return nil, err
-		// }
-
 		agent.AgentKBId = kb.ID
 		if err := s.dao.Save(daos.GetDBMainCtx(ctx), agent); err != nil {
 			return nil, errs.NewError(err)
@@ -510,15 +502,31 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 		return nil, errs.NewError(err)
 	}
 
-	if updateKb {
-		if err := s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, agent.AgentKBId, updateMap); err != nil {
-			return nil, err
-		}
-		i, err := s.KnowledgeUsecase.GetKnowledgeBaseById(ctx, agent.AgentKBId)
+	if updateKb && len(req.CreateKnowledgeRequest.Files) > 0 {
+		updatedListFile, err := s.KnowledgeUsecase.UpdateListKnowledgeBaseFile(ctx, agent.AgentKBId, req.CreateKnowledgeRequest.Files)
 		if err != nil {
-			return nil, err
+			return nil, errs.NewError(err)
 		}
-		agent.KnowledgeBase = i
+		if updatedListFile {
+			i, err := s.KnowledgeUsecase.GetKnowledgeBaseById(ctx, agent.AgentKBId)
+			if err != nil {
+				return nil, err
+			}
+
+			i.Fee, _ = s.KnowledgeUsecase.CalcFeeByKnowledgeBaseId(ctx, agent.AgentKBId)
+			i.ChargeMore = i.CalcChargeMore()
+
+			updateMap["fee"] = i.Fee
+			updateMap["charge_more"] = i.ChargeMore
+			if i.ChargeMore != 0 {
+				updateMap["status"] = models.KnowledgeBaseStatusWaitingPayment
+			}
+
+			if err := s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, agent.AgentKBId, updateMap); err != nil {
+				return nil, err
+			}
+			agent.KnowledgeBase = i
+		}
 	}
 
 	agentInfoKbs := []*models.AgentInfoKnowledgeBase{}
@@ -971,7 +979,6 @@ func (s *Service) AgentCreateAgentStudio(ctx context.Context, address, graphData
 					}
 				default:
 					{
-
 					}
 				}
 			}
@@ -980,7 +987,7 @@ func (s *Service) AgentCreateAgentStudio(ctx context.Context, address, graphData
 				return nil, errs.NewError(errs.ErrBadRequest)
 			}
 
-			//gen token
+			// gen token
 			tokenInfo, _ := s.GenerateTokenInfoFromSystemPrompt(ctx, agent.AgentName, agent.SystemPrompt)
 			if tokenInfo != nil && tokenInfo.TokenSymbol != "" {
 				agent.TokenSymbol = tokenInfo.TokenSymbol
@@ -1271,7 +1278,6 @@ func (s *Service) AgentUpdateAgentStudio(ctx context.Context, address, agentID, 
 							}
 						default:
 							{
-
 							}
 						}
 					}
@@ -1285,7 +1291,6 @@ func (s *Service) AgentUpdateAgentStudio(ctx context.Context, address, agentID, 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, errs.NewError(err)
 	}

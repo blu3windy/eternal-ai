@@ -1,16 +1,22 @@
-import { FarcasterAgentSnapshotMission, IAgent, TwitterAgentSnapshotMission } from "../types/agent";
+import {
+  AgentApps,
+  FarcasterAgentSnapshotMission,
+  IAgent,
+  AgentSnapshotMissionVer2,
+  TwitterAgentSnapshotMission
+} from "../types";
 import {
   ChatCompletionType,
   IDeployAgentTokenParams,
   IGetAgentsParams,
   IUpdateAgentParams,
-  IGetAccessTokenParams, IGenerateText,
+  IGenerateText,
 } from "../types";
 import { IChainConnected } from "../types";
 import { ICharacter } from "../types";
 import { IAgentToken, IGetAgentTokensParams } from "../types/token";
 import BaseAPI from "./base";
-import {generationTextOpenAi} from "../utils/generation";
+import { generationTextOpenAi } from "../utils/generation";
 import dagentLogger from "../logger";
 
 export interface IAgentClient {
@@ -38,8 +44,10 @@ export interface IAgentClient {
   getChainList: () => Promise<IChainConnected[]>;
   /** Setup missions */
   setupMissions: (params: { agentId: string, missions: Array<TwitterAgentSnapshotMission | FarcasterAgentSnapshotMission> }) => Promise<void>;
-  /** Get access token */
-  getAccessToken: (params: IGetAccessTokenParams) => Promise<string>;
+
+  agentApps: () => Promise<AgentApps[]>;
+  appsInstalled: (params: { agentId: string }) => Promise<AgentApps[]>;
+  getInstallCode: (params: { agentId: string, appId: string }) => Promise<string>;
 }
 export class AgentClient extends BaseAPI implements IAgentClient {
   create = async (params: ICharacter): Promise<IAgent> => {
@@ -174,17 +182,12 @@ export class AgentClient extends BaseAPI implements IAgentClient {
     await this.api.post(`/agent/mission/update/${params.agentId}`, params.missions);
   };
 
-  getAccessToken = async (params: IGetAccessTokenParams): Promise<string> => {
-    try {
-      const signature = params.signature.startsWith("0x")
-          ? params.signature.replace("0x", "")
-          : params.signature;
-      const authenCode: string = await this.api.post('auth/verify', { ...params, signature });
-      return authenCode;
-    } catch (e) {
-      throw e;
-    }
-  };
+  setupMissionsVer2 = async (params: {
+    agentId: string, missions: Array<AgentSnapshotMissionVer2>
+  }) => {
+    dagentLogger.info(`Setting up missions for agent ${params.agentId}`, params.missions);
+    await this.api.post(`/agent/mission/update/${params.agentId}`, params.missions);
+  }
 
   generateText = async (params: IGenerateText): Promise<string> => {
     let generatedText: string = "";
@@ -194,5 +197,22 @@ export class AgentClient extends BaseAPI implements IAgentClient {
       }
     }
     return generatedText;
+  }
+
+  agentApps = async (): Promise<AgentApps[]> => {
+    const apps = (await this.api.get(`/agent-store/list`)) as AgentApps[];
+    return apps || [];
+  }
+
+  appsInstalled = async (params: { agentId: string }): Promise<AgentApps[]> => {
+    const res = (await this.api.get(`/agent-store/install/list?agent_info_id=${params.agentId}`)) as AgentApps[];
+    return res || [];
+  }
+
+  getInstallCode = async (params: { agentId: string, appId: string }): Promise<string> => {
+    const code = (await this.api.get(
+        `/agent-store/${params.appId}/install-code/${params.agentId}`,
+    )) as string;
+    return code;
   }
 }

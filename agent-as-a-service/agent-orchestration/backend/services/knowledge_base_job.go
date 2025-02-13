@@ -68,7 +68,7 @@ func (s *Service) DeployAgentKnowledgeBase(ctx context.Context, info *models.Kno
 		return fmt.Errorf("file coin hash is empty")
 	}
 	if len(info.KBTokenID) > 0 {
-		oldStatus := info.Status
+		/*oldStatus := info.Status
 		info.Status = models.KnowledgeBaseStatusMinted
 		err := s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, info.ID, map[string]interface{}{
 			"status": info.Status,
@@ -79,7 +79,7 @@ func (s *Service) DeployAgentKnowledgeBase(ctx context.Context, info *models.Kno
 		s.SendTeleMsgToKBChannel(ctx,
 			fmt.Sprintf("Update KB Status \n kb_id:%v \n old_status:%v \n new_status:%v \n mint id :%v \n tx:%v",
 				info.ID, oldStatus, info.Status, info.KBTokenID, info.KBTokenMintTx),
-			s.conf.KnowledgeBaseConfig.KBActivitiesTelegramAlert)
+			s.conf.KnowledgeBaseConfig.KBActivitiesTelegramAlert)*/
 		return nil
 	}
 	appConfig, err := s.AppConfigUseCase.GetAllNameValueInAppConfig(ctx, strconv.FormatUint(info.NetworkID, 10))
@@ -212,6 +212,11 @@ func (s *Service) UpdateKnowledgeBaseInContractWithSignature(ctx context.Context
 	if len(priKey) == 0 {
 		return nil, fmt.Errorf("updateKnowledgeBaseInContractWithSignature error: no priKey for network %v", request.NetworkID)
 	}
+	_, pubKey, err := eth.GetAccountInfo(priKey)
+	if err != nil {
+		return nil, fmt.Errorf("get account info: %v", err)
+	}
+
 	kbWorkerHubAddress := appConfig[models.KeyConfigNameKnowledgeBaseWorkerHubAddress]
 	if len(kbWorkerHubAddress) == 0 {
 		return nil, fmt.Errorf("updateKnowledgeBaseInContractWithSignature error: no KnowledgeBaseWorkerHubAddress for network %v", request.NetworkID)
@@ -227,7 +232,11 @@ func (s *Service) UpdateKnowledgeBaseInContractWithSignature(ctx context.Context
 	}
 	kbId, ok := new(big.Int).SetString(info.KBTokenID, 10)
 	if !ok {
-		return nil, fmt.Errorf("updateKnowledgeBaseInContractWithSignature error: knowledge_base_id is nnot big int")
+		return nil, fmt.Errorf("updateKnowledgeBaseInContractWithSignature error: knowledge_base_id is not big int")
+	}
+	randomNonceData, ok := new(big.Int).SetString(request.RandomNonceData, 10)
+	if !ok {
+		return nil, fmt.Errorf("updateKnowledgeBaseInContractWithSignature error: random_nonce_data is not big int")
 	}
 	// agentId *big.Int, sysPrompt []byte, promptKey string, promptIdx *big.Int, randomNonce *big.Int, signature []byte
 	signature := strings.TrimPrefix(request.SignatureData, "0x")
@@ -237,7 +246,7 @@ func (s *Service) UpdateKnowledgeBaseInContractWithSignature(ctx context.Context
 		[]byte(request.HashData),
 		request.PromptKeyData,
 		big.NewInt(0),
-		request.RandomNonceData,
+		randomNonceData,
 		common.Hex2Bytes(signature),
 	)
 	// to common.Address, data []byte,   promptScheduler common.Address, modelId uint32
@@ -245,21 +254,28 @@ func (s *Service) UpdateKnowledgeBaseInContractWithSignature(ctx context.Context
 		return nil, fmt.Errorf("updateKnowledgeBaseInContractWithSignature error: failed to pack ABI data: %v", err)
 	}
 
-	networkId, _ := strconv.ParseUint(request.NetworkID, 10, 64)
-	client := s.GetEVMClient(ctx, networkId)
-	tx, err := client.Transact(tokenContractAddress, priKey, dataBytes, big.NewInt(0))
+	rpc := s.conf.GetConfigKeyString(info.NetworkID, "rpc_url")
+	var paymasterAddress, paymasterToken string
+	var paymasterFeeZero bool
+	if s.conf.ExistsedConfigKey(info.NetworkID, "paymaster_address") &&
+		s.conf.ExistsedConfigKey(info.NetworkID, "paymaster_token") {
+		paymasterAddress = s.conf.GetConfigKeyString(info.NetworkID, "paymaster_address")
+		paymasterToken = s.conf.GetConfigKeyString(info.NetworkID, "paymaster_token")
+		paymasterFeeZero = s.conf.GetConfigKeyBool(info.NetworkID, "paymaster_fee_zero")
+	}
+	aiZkClient := zkclient.NewZkClient(rpc,
+		paymasterFeeZero,
+		paymasterAddress,
+		paymasterToken)
+	tx, err := aiZkClient.Transact(priKey, *pubKey, common.HexToAddress(tokenContractAddress), big.NewInt(0), dataBytes)
 	if err != nil {
 		return nil, fmt.Errorf("updateKnowledgeBaseInContractWithSignature error: failed to transact: %v", err)
 	}
-	txReceipt, err := s.GetEthereumClient(ctx, networkId).WaitMinedTxReceipt(ctx, common.HexToHash(tx))
-	if err != nil {
-		return nil, fmt.Errorf("updateKnowledgeBaseInContractWithSignature error: failed to wait tx receipt: %v", err)
-	}
 
-	if txReceipt.Status == types.ReceiptStatusFailed {
+	if tx.Status == types.ReceiptStatusFailed {
 		return nil, fmt.Errorf("updateKnowledgeBaseInContractWithSignature error: tx exucute with status fail: %v", tx)
 	}
-	info.Status = models.KnowledgeBaseStatusUpdated
+	info.Status = models.KnowledgeBaseStatusMinted
 	err = s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, info.ID, map[string]interface{}{
 		"status": info.Status,
 	})
@@ -267,4 +283,30 @@ func (s *Service) UpdateKnowledgeBaseInContractWithSignature(ctx context.Context
 		return nil, err
 	}
 	return info, nil
+}
+
+func (s *Service) TransferFund(priKeyFrom string, toAddress string, fund *big.Int, networkId uint64) (string, error) {
+	_, pubKey, err := eth.GetAccountInfo(priKeyFrom)
+	if err != nil {
+		return "", fmt.Errorf("get account info: %v", err)
+	}
+	rpc := s.conf.GetConfigKeyString(networkId, "rpc_url")
+	var paymasterAddress, paymasterToken string
+	var paymasterFeeZero bool
+	if s.conf.ExistsedConfigKey(networkId, "paymaster_address") &&
+		s.conf.ExistsedConfigKey(networkId, "paymaster_token") {
+		paymasterAddress = s.conf.GetConfigKeyString(networkId, "paymaster_address")
+		paymasterToken = s.conf.GetConfigKeyString(networkId, "paymaster_token")
+		paymasterFeeZero = s.conf.GetConfigKeyBool(networkId, "paymaster_fee_zero")
+	}
+	aiZkClient := zkclient.NewZkClient(rpc,
+		paymasterFeeZero,
+		paymasterAddress,
+		paymasterToken,
+	)
+	tx, err := aiZkClient.Transact(priKeyFrom, *pubKey, common.HexToAddress(toAddress), fund, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to transact: %v", err)
+	}
+	return tx.TxHash.Hex(), nil
 }

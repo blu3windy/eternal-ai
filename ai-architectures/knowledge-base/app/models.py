@@ -1,20 +1,29 @@
 from pydantic import BaseModel, Field, model_validator
-from typing import List, Optional, Any, Dict
+from typing import List, Optional, Any, Dict, Generic, TypeVar, Type
 from enum import Enum
 import uuid
 from pathlib import Path
+
+_generic_type = TypeVar('_generic_type')
 
 class EmbeddedItem(BaseModel):
     embedding: Optional[List[float]] = None
     raw_text: str
     error: Optional[str] = None
+    
+class APIStatus(str, Enum):
+    OK = "ok"
+    ERROR = "error"
+
+    PENDING = "pending"
+    PROCESSING = "processing"
 
 class InsertInputSchema(BaseModel):
     id: str = Field(default_factory=lambda: f"doc-{str(uuid.uuid4().hex)}")
     file_urls: List[str] = []
     texts: List[str] = [] 
     kb: Optional[str] = None
-    filecoin_metadata_url: str = None
+    filecoin_metadata_url: Optional[str] = None
 
     # ref and kb must not be both None
     ref: Optional[str] = None
@@ -47,7 +56,7 @@ class UpdateInputSchema(BaseModel):
     id: str = Field(default_factory=lambda: f"doc-{str(uuid.uuid4().hex)}")
     file_urls: List[str] = []
     texts: List[str] = [] 
-    filecoin_metadata_url: str = None
+    filecoin_metadata_url: Optional[str] = None
 
     # ref and kb must not be both None
     ref: Optional[str] = None
@@ -65,10 +74,13 @@ class UpdateInputSchema(BaseModel):
             
         if isinstance(data['texts'], str):
             data['texts'] = [data['texts']]
-
-        assert 'kb' in data, "Knowledge base must be provided"
         
         return data
+
+class CollectionInspection(BaseModel):
+    file_ref: str # {cid}/{file_index}
+    status: APIStatus = APIStatus.OK
+    message: str = ""
 
 class QueryInputSchema(BaseModel):
     query: str
@@ -133,16 +145,8 @@ class ChunkScore(BaseModel):
     score: float
     chunk_id: str
 
-
-class APIStatus(str, Enum):
-    OK = "ok"
-    ERROR = "error"
-
-    PENDING = "pending"
-    PROCESSING = "processing"
-
-class ResponseMessage(BaseModel):
-    result: Any
+class ResponseMessage(BaseModel, Generic[_generic_type]):
+    result: _generic_type
     error: Optional[str] = None
     status: APIStatus = APIStatus.OK
 
@@ -156,10 +160,16 @@ class InsertResponse(BaseModel):
         message (Optional[str]): Additional information about the insertion result.
         artifact_submitted (bool): Indicates whether the artifact was successfully submitted.
     """
+
     ref: str
-    kb: Optional[str] = None
+    kb: str
     message: Optional[str] = ""
-    artifact_submitted: bool = False
+    details: List[CollectionInspection] = []
+
+class InsertProgressCallback(BaseModel):
+    kb: str
+    identifier: str
+    message: Optional[str] = ""
 
 class QueryResult(BaseModel):
     content: str

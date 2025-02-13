@@ -164,3 +164,33 @@ export type InitAgent = {
   dagentCharacter: IAgentCharacter;
   environment: IENV;
 }
+
+export type AgentAppMission = {
+  agent_store_id: number;
+  id: number;
+  created_at: string;
+  name: string;
+  description: string;
+  user_prompt: string;
+  price: string;
+  tool_list: string;
+  icon: string;
+}
+
+export type AgentApps = {
+  id: number;
+  created_at: string;
+  name: string;
+  description: string;
+  authen_url: string;
+  icon: string;
+  agent_store_missions: AgentAppMission[];
+}
+
+export interface AgentSnapshotMissionVer2 {
+  user_prompt: string,
+  interval: number,
+  tool_set: string,
+  agent_base_model: string,
+  agent_store_mission_id?: number
+}

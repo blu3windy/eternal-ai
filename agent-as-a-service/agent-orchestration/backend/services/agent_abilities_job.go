@@ -105,6 +105,8 @@ func (s *Service) JobAgentSnapshotPostCreate(ctx context.Context) error {
 							models.BITTENSOR_CHAIN_ID,
 							models.DUCK_CHAIN_ID,
 							models.TRON_CHAIN_ID,
+							models.MODE_CHAIN_ID,
+							models.ZETA_CHAIN_ID,
 						},
 					},
 					`agent_snapshot_missions.infer_at is null
@@ -408,8 +410,10 @@ func (s *Service) AgentSnapshotPostCreate(ctx context.Context, missionID uint, o
 						agentStoreInstall, err := s.dao.FirstAgentStoreInstall(
 							tx,
 							map[string][]interface{}{
+								"type = ?":           {models.AgentStoreInstallTypeAgent},
 								"agent_store_id = ?": {mission.AgentStoreID},
 								"agent_info_id = ?":  {mission.AgentInfoID},
+								"status = ?":         {models.AgentStoreInstallStatusDone},
 							},
 							map[string][]interface{}{},
 							[]string{"id desc"},
@@ -419,6 +423,24 @@ func (s *Service) AgentSnapshotPostCreate(ctx context.Context, missionID uint, o
 						}
 						if agentStoreInstall == nil {
 							return errs.NewError(errs.ErrBadRequest)
+						}
+						//
+						agentStoreMission, err := s.dao.FirstAgentStoreMissionByID(
+							tx,
+							mission.AgentStoreMissionID,
+							map[string][]interface{}{},
+							false,
+						)
+						if err != nil {
+							return errs.NewError(err)
+						}
+						if agentStoreMission == nil {
+							return errs.NewError(errs.ErrBadRequest)
+						}
+						agentStoreMission.NumUsed++
+						err = s.dao.Save(tx, agentStoreMission)
+						if err != nil {
+							return errs.NewError(err)
 						}
 						params := map[string]interface{}{}
 						err = helpers.ConvertJsonObject(agentStoreInstall.CallbackParams, &params)
@@ -590,6 +612,7 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 					if err != nil {
 						return errs.NewError(err)
 					}
+					agentStoreMission.NumUsed++
 					var headSystemPrompt string
 					metaDataReq := &aidojo.AgentMetadataRequest{}
 					inferTxHash := helpers.RandomBigInt(12).Text(16)
@@ -614,8 +637,10 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 					agentStoreInstall, err := s.dao.FirstAgentStoreInstall(
 						tx,
 						map[string][]interface{}{
+							"type = ?":           {models.AgentStoreInstallTypeUser},
+							"user_id = ?":        {user.ID},
 							"agent_store_id = ?": {agentStoreMission.AgentStoreID},
-							"user_address = ?":   {strings.ToLower(user.Address)},
+							"status = ?":         {models.AgentStoreInstallStatusDone},
 						},
 						map[string][]interface{}{},
 						[]string{"id desc"},
@@ -1327,141 +1352,281 @@ func (s *Service) AgentSnapshotPostActionExecuted(ctx context.Context, twitterPo
 	return nil
 }
 
-// func (s *Service) RetryAgentSnapshotPostActionExecuted(ctx context.Context, twitterPostID uint) error {
-// 	err := s.JobRunCheck(
-// 		ctx,
-// 		fmt.Sprintf("RetryAgentSnapshotPostActionExecuted_%d", twitterPostID),
-// 		func() error {
-// 			var snapshotPostAction *models.AgentSnapshotPostAction
-// 			contentLines := []string{}
-// 			var accessToken, missionToolSet string
-// 			postIds := []string{}
-// 			err := daos.WithTransaction(
-// 				daos.GetDBMainCtx(ctx),
-// 				func(tx *gorm.DB) error {
-// 					var err error
-// 					snapshotPostAction, err = s.dao.FirstAgentSnapshotPostActionByID(
-// 						tx,
-// 						twitterPostID,
-// 						map[string][]interface{}{},
-// 						true,
-// 					)
-// 					if err != nil {
-// 						return errs.NewError(err)
-// 					}
-// 					if snapshotPostAction.Status == models.AgentSnapshotPostActionStatusDone {
-// 						agent, err := s.dao.FirstAgentInfoByID(
-// 							tx,
-// 							snapshotPostAction.AgentInfoID,
-// 							map[string][]interface{}{
-// 								"TwitterInfo": {},
-// 							},
-// 							false,
-// 						)
-// 						if err != nil {
-// 							return errs.NewError(err)
-// 						}
-// 						//
-// 						var refId, errText string
-// 						agentSnapshotMission, err := s.dao.FirstAgentSnapshotMissionByID(
-// 							tx,
-// 							snapshotPostAction.AgentSnapshotMissionID,
-// 							map[string][]interface{}{},
-// 							false,
-// 						)
-// 						if err != nil {
-// 							return errs.NewError(err)
-// 						}
-// 						missionToolSet = string(agentSnapshotMission.ToolSet)
-// 						accessToken = agent.TwitterInfo.AccessToken
-// 						switch snapshotPostAction.Type {
-// 						case models.AgentSnapshotPostActionTypeTradeHold, models.AgentSnapshotPostActionTypeTradeBuy, models.AgentSnapshotPostActionTypeTradeSell, models.AgentSnapshotPostActionTypeTradeAnalytic:
-// 							{
-// 								switch missionToolSet {
-// 								case string(models.ToolsetTypeTradeAnalyticsOnTwitter):
-// 									{
-// 										err = json.Unmarshal([]byte(snapshotPostAction.Content), &contentLines)
-// 										if err != nil {
-// 											return errs.NewError(err)
-// 										}
-// 										contentLines = helpers.SplitTextBySentenceAndCharLimitAndRemoveTrailingHashTag(strings.Join(contentLines, ". "), 250)
-// 										if len(contentLines) <= 0 {
-// 											return errs.NewError(errs.ErrBadRequest)
-// 										}
-// 										refId = snapshotPostAction.RefId
-// 										postIds = append(postIds, refId)
-// 									}
-// 								default:
-// 									{
-// 										return errs.NewError(errs.ErrBadRequest)
-// 									}
-// 								}
-// 							}
-// 						default:
-// 							{
-// 								return errs.NewError(errs.ErrBadRequest)
-// 							}
-// 						}
-// 						_ = errText
-// 					}
-// 					return nil
-// 				},
-// 			)
-// 			if err != nil {
-// 				return errs.NewError(err)
-// 			}
-// 			if len(postIds) > 0 && len(contentLines) > 1 {
-// 				for i := 1; i < len(contentLines); i++ {
-// 					var postId string
-// 					switch snapshotPostAction.Type {
-// 					case models.AgentSnapshotPostActionTypeTweet,
-// 						models.AgentSnapshotPostActionTypeQuoteTweet,
-// 						models.AgentSnapshotPostActionTypeCreateToken,
-// 						models.AgentSnapshotPostActionTypeTweetV2:
-// 						{
-// 							postId, err = helpers.ReplyTweetByToken(accessToken, contentLines[i], postIds[0])
-// 							if err != nil {
-// 								return errs.NewError(err)
-// 							}
-// 						}
-// 					case models.AgentSnapshotPostActionTypeReply,
-// 						models.AgentSnapshotPostActionTypeTweetMulti:
-// 						{
-// 							postId, _ = helpers.ReplyTweetByToken(accessToken, contentLines[i], postIds[len(postIds)-1])
-// 						}
-// 					case models.AgentSnapshotPostActionTypeTradeHold, models.AgentSnapshotPostActionTypeTradeBuy, models.AgentSnapshotPostActionTypeTradeSell, models.AgentSnapshotPostActionTypeTradeAnalytic:
-// 						{
-// 							switch missionToolSet {
-// 							case string(models.ToolsetTypeTradeAnalyticsOnTwitter):
-// 								{
-// 									postId, _ = helpers.ReplyTweetByToken(accessToken, contentLines[i], postIds[len(postIds)-1])
-// 								}
-// 							}
-// 						}
-// 					}
-// 					if postId != "" {
-// 						postIds = append(postIds, postId)
-// 						err = daos.
-// 							GetDBMainCtx(ctx).
-// 							Model(&models.AgentSnapshotPostAction{}).
-// 							Where("id = ?", twitterPostID).
-// 							UpdateColumn("ref_ids", strings.Join(postIds, ",")).
-// 							Error
-// 						if err != nil {
-// 							return errs.NewError(err)
-// 						}
-// 					}
-// 				}
-// 			}
-// 			return nil
-// 		},
-// 	)
-// 	if err != nil {
-// 		return errs.NewError(err)
-// 	}
-// 	_ = s.UpdateOffchainAutoOutputV2(ctx, twitterPostID)
-// 	return nil
-// }
+//	func (s *Service) RetryAgentSnapshotPostActionExecuted(ctx context.Context, twitterPostID uint) error {
+//		err := s.JobRunCheck(
+//			ctx,
+//			fmt.Sprintf("RetryAgentSnapshotPostActionExecuted_%d", twitterPostID),
+//			func() error {
+//				var snapshotPostAction *models.AgentSnapshotPostAction
+//				contentLines := []string{}
+//				var accessToken, missionToolSet string
+//				postIds := []string{}
+//				err := daos.WithTransaction(
+//					daos.GetDBMainCtx(ctx),
+//					func(tx *gorm.DB) error {
+//						var err error
+//						snapshotPostAction, err = s.dao.FirstAgentSnapshotPostActionByID(
+//							tx,
+//							twitterPostID,
+//							map[string][]interface{}{},
+//							true,
+//						)
+//						if err != nil {
+//							return errs.NewError(err)
+//						}
+//						if snapshotPostAction.Status == models.AgentSnapshotPostActionStatusDone {
+//							agent, err := s.dao.FirstAgentInfoByID(
+//								tx,
+//								snapshotPostAction.AgentInfoID,
+//								map[string][]interface{}{
+//									"TwitterInfo": {},
+//								},
+//								false,
+//							)
+//							if err != nil {
+//								return errs.NewError(err)
+//							}
+//							//
+//							var refId, errText string
+//							agentSnapshotMission, err := s.dao.FirstAgentSnapshotMissionByID(
+//								tx,
+//								snapshotPostAction.AgentSnapshotMissionID,
+//								map[string][]interface{}{},
+//								false,
+//							)
+//							if err != nil {
+//								return errs.NewError(err)
+//							}
+//							missionToolSet = string(agentSnapshotMission.ToolSet)
+//							accessToken = agent.TwitterInfo.AccessToken
+//							switch snapshotPostAction.Type {
+//							case models.AgentSnapshotPostActionTypeTradeHold, models.AgentSnapshotPostActionTypeTradeBuy, models.AgentSnapshotPostActionTypeTradeSell, models.AgentSnapshotPostActionTypeTradeAnalytic:
+//								{
+//									switch missionToolSet {
+//									case string(models.ToolsetTypeTradeAnalyticsOnTwitter):
+//										{
+//											err = json.Unmarshal([]byte(snapshotPostAction.Content), &contentLines)
+//											if err != nil {
+//												return errs.NewError(err)
+//											}
+//											contentLines = helpers.SplitTextBySentenceAndCharLimitAndRemoveTrailingHashTag(strings.Join(contentLines, ". "), 250)
+//											if len(contentLines) <= 0 {
+//												return errs.NewError(errs.ErrBadRequest)
+//											}
+//											refId = snapshotPostAction.RefId
+//											postIds = append(postIds, refId)
+//										}
+//									default:
+//										{
+//											return errs.NewError(errs.ErrBadRequest)
+//										}
+//									}
+//								}
+//							default:
+//								{
+//									return errs.NewError(errs.ErrBadRequest)
+//								}
+//							}
+//							_ = errText
+//						}
+//						return nil
+//					},
+//				)
+//				if err != nil {
+//					return errs.NewError(err)
+//				}
+//				if len(postIds) > 0 && len(contentLines) > 1 {
+//					for i := 1; i < len(contentLines); i++ {
+//						var postId string
+//						switch snapshotPostAction.Type {
+//						case models.AgentSnapshotPostActionTypeTweet,
+//							models.AgentSnapshotPostActionTypeQuoteTweet,
+//							models.AgentSnapshotPostActionTypeCreateToken,
+//							models.AgentSnapshotPostActionTypeTweetV2:
+//							{
+//								postId, err = helpers.ReplyTweetByToken(accessToken, contentLines[i], postIds[0])
+//								if err != nil {
+//									return errs.NewError(err)
+//								}
+//							}
+//						case models.AgentSnapshotPostActionTypeReply,
+//							models.AgentSnapshotPostActionTypeTweetMulti:
+//							{
+//								postId, _ = helpers.ReplyTweetByToken(accessToken, contentLines[i], postIds[len(postIds)-1])
+//							}
+//						case models.AgentSnapshotPostActionTypeTradeHold, models.AgentSnapshotPostActionTypeTradeBuy, models.AgentSnapshotPostActionTypeTradeSell, models.AgentSnapshotPostActionTypeTradeAnalytic:
+//							{
+//								switch missionToolSet {
+//								case string(models.ToolsetTypeTradeAnalyticsOnTwitter):
+//									{
+//										postId, _ = helpers.ReplyTweetByToken(accessToken, contentLines[i], postIds[len(postIds)-1])
+//									}
+//								}
+//							}
+//						}
+//						if postId != "" {
+//							postIds = append(postIds, postId)
+//							err = daos.
+//								GetDBMainCtx(ctx).
+//								Model(&models.AgentSnapshotPostAction{}).
+//								Where("id = ?", twitterPostID).
+//								UpdateColumn("ref_ids", strings.Join(postIds, ",")).
+//								Error
+//							if err != nil {
+//								return errs.NewError(err)
+//							}
+//						}
+//					}
+//				}
+//				return nil
+//			},
+//		)
+//		if err != nil {
+//			return errs.NewError(err)
+//		}
+//		_ = s.UpdateOffchainAutoOutputV2(ctx, twitterPostID)
+//		return nil
+//	}
+func (s *Service) UpdateOffchainAutoOutputV2ForId(ctx context.Context, snapshotPostID uint) error {
+	agentSnapshotPost, err := s.dao.FirstAgentSnapshotPostByID(
+		daos.GetDBMainCtx(ctx),
+		snapshotPostID,
+		map[string][]interface{}{
+			"AgentStore": {},
+		},
+		false,
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	if agentSnapshotPost != nil {
+		if agentSnapshotPost.ResponseId != "" {
+			if agentSnapshotPost.Status == models.AgentSnapshotPostStatusInferSubmitted {
+				if agentSnapshotPost.CreatedAt.Before(time.Now().Add(-30 * time.Hour)) {
+					err = daos.GetDBMainCtx(ctx).
+						Model(agentSnapshotPost).
+						UpdateColumn("status", models.AgentSnapshotPostStatusInferFailed).
+						Error
+					if err != nil {
+						return errs.NewError(err)
+					}
+					return nil
+				}
+				offchainAutoAgentOutput, err := s.dojoAPI.OffchainAutoAgentOutput(s.conf.AgentOffchain.Url, agentSnapshotPost.ResponseId, s.conf.AgentOffchain.ApiKey)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				aiOutput := map[string]interface{}{}
+				err = helpers.ConvertJsonObject(offchainAutoAgentOutput, &aiOutput)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				inferOutputData := helpers.ConvertJsonString(
+					struct {
+						Data struct {
+							ResponseId string                 `json:"response_id"`
+							Toolset    string                 `json:"toolset"`
+							Task       string                 `json:"task"`
+							AIOutput   map[string]interface{} `json:"ai_output"`
+						} `json:"data"`
+					}{
+						Data: struct {
+							ResponseId string                 "json:\"response_id\""
+							Toolset    string                 "json:\"toolset\""
+							Task       string                 "json:\"task\""
+							AIOutput   map[string]interface{} "json:\"ai_output\""
+						}{
+							ResponseId: agentSnapshotPost.ResponseId,
+							Toolset:    agentSnapshotPost.Toolset,
+							Task:       agentSnapshotPost.Task,
+							AIOutput:   aiOutput,
+						},
+					},
+				)
+				if len(inferOutputData) > len(agentSnapshotPost.InferOutputData) || !strings.EqualFold(inferOutputData, agentSnapshotPost.InferOutputData) {
+					err = daos.GetDBMainCtx(ctx).
+						Model(agentSnapshotPost).
+						UpdateColumn("infer_output_data", inferOutputData).
+						Error
+					if err != nil {
+						return errs.NewError(err)
+					}
+				}
+				state, ok := aiOutput["state"]
+				if ok {
+					if state.(string) == "done" {
+						err = daos.WithTransaction(
+							daos.GetDBMainCtx(ctx),
+							func(tx *gorm.DB) error {
+								err = tx.
+									Model(agentSnapshotPost).
+									UpdateColumn("status", models.AgentSnapshotPostStatusInferResolved).
+									Error
+								if err != nil {
+									return errs.NewError(err)
+								}
+								if agentSnapshotPost.AgentStore != nil &&
+									agentSnapshotPost.AgentStoreMissionFee.Float.Cmp(big.NewFloat(0)) > 0 {
+									user, err := s.GetUser(tx, models.GENERTAL_NETWORK_ID, agentSnapshotPost.AgentStore.OwnerAddress, false)
+									if err != nil {
+										return errs.NewError(err)
+									}
+									err = tx.Model(user).
+										UpdateColumn("eai_balance", gorm.Expr("eai_balance + ?", agentSnapshotPost.AgentStoreMissionFee)).
+										Error
+									if err != nil {
+										return errs.NewError(err)
+									}
+									_ = s.dao.Create(
+										tx,
+										&models.UserTransaction{
+											NetworkID: agentSnapshotPost.NetworkID,
+											EventId:   fmt.Sprintf("agent_store_fee_%d", agentSnapshotPost.ID),
+											UserID:    user.ID,
+											Type:      models.UserTransactionTypeAgentStoreFee,
+											Amount:    agentSnapshotPost.AgentStoreMissionFee,
+											Status:    models.UserTransactionStatusDone,
+										},
+									)
+								}
+								return nil
+							},
+						)
+						if err != nil {
+							return errs.NewError(err)
+						}
+						go s.UpdateDataMissionTradeAnalytics(context.Background(), agentSnapshotPost.ID)
+					} else if state.(string) == "error" {
+						err = daos.GetDBMainCtx(ctx).
+							Model(agentSnapshotPost).
+							UpdateColumn("status", models.AgentSnapshotPostStatusInferFailed).
+							Error
+						if err != nil {
+							return errs.NewError(err)
+						}
+					}
+				}
+			}
+		} else {
+			if agentSnapshotPost.Status == models.AgentSnapshotPostStatusInferSubmitted {
+				inferOutputData, err := s.dojoAPI.OffchainAgentOutput(agentSnapshotPost.InferTxHash)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				if len(inferOutputData) > len(agentSnapshotPost.InferOutputData) || !strings.EqualFold(inferOutputData, agentSnapshotPost.InferOutputData) {
+					err = daos.GetDBMainCtx(ctx).
+						Model(agentSnapshotPost).
+						UpdateColumn("infer_output_data", inferOutputData).
+						Error
+					if err != nil {
+						return errs.NewError(err)
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
 
 func (s *Service) UpdateOffchainAutoOutputV2(ctx context.Context, snapshotPostID uint) error {
 	err := s.JobRunCheck(
@@ -1476,142 +1641,9 @@ func (s *Service) UpdateOffchainAutoOutputV2(ctx context.Context, snapshotPostID
 				&rs,
 				func() (interface{}, error) {
 					err := func() error {
-						agentSnapshotPost, err := s.dao.FirstAgentSnapshotPostByID(
-							daos.GetDBMainCtx(ctx),
-							snapshotPostID,
-							map[string][]interface{}{
-								"AgentStore": {},
-							},
-							false,
-						)
+						err := s.UpdateOffchainAutoOutputV2ForId(ctx, snapshotPostID)
 						if err != nil {
 							return errs.NewError(err)
-						}
-						if agentSnapshotPost != nil {
-							if agentSnapshotPost.ResponseId != "" {
-								if agentSnapshotPost.Status == models.AgentSnapshotPostStatusInferSubmitted {
-									if agentSnapshotPost.CreatedAt.Before(time.Now().Add(-30 * time.Hour)) {
-										err = daos.GetDBMainCtx(ctx).
-											Model(agentSnapshotPost).
-											UpdateColumn("status", models.AgentSnapshotPostStatusInferFailed).
-											Error
-										if err != nil {
-											return errs.NewError(err)
-										}
-										return nil
-									}
-									offchainAutoAgentOutput, err := s.dojoAPI.OffchainAutoAgentOutput(s.conf.AgentOffchain.Url, agentSnapshotPost.ResponseId, s.conf.AgentOffchain.ApiKey)
-									if err != nil {
-										return errs.NewError(err)
-									}
-									aiOutput := map[string]interface{}{}
-									err = helpers.ConvertJsonObject(offchainAutoAgentOutput, &aiOutput)
-									if err != nil {
-										return errs.NewError(err)
-									}
-									inferOutputData := helpers.ConvertJsonString(
-										struct {
-											Data struct {
-												ResponseId string                 `json:"response_id"`
-												Toolset    string                 `json:"toolset"`
-												Task       string                 `json:"task"`
-												AIOutput   map[string]interface{} `json:"ai_output"`
-											} `json:"data"`
-										}{
-											Data: struct {
-												ResponseId string                 "json:\"response_id\""
-												Toolset    string                 "json:\"toolset\""
-												Task       string                 "json:\"task\""
-												AIOutput   map[string]interface{} "json:\"ai_output\""
-											}{
-												ResponseId: agentSnapshotPost.ResponseId,
-												Toolset:    agentSnapshotPost.Toolset,
-												Task:       agentSnapshotPost.Task,
-												AIOutput:   aiOutput,
-											},
-										},
-									)
-									if len(inferOutputData) > len(agentSnapshotPost.InferOutputData) || !strings.EqualFold(inferOutputData, agentSnapshotPost.InferOutputData) {
-										err = daos.GetDBMainCtx(ctx).
-											Model(agentSnapshotPost).
-											UpdateColumn("infer_output_data", inferOutputData).
-											Error
-										if err != nil {
-											return errs.NewError(err)
-										}
-									}
-									state, ok := aiOutput["state"]
-									if ok {
-										if state.(string) == "done" {
-											err = daos.WithTransaction(
-												daos.GetDBMainCtx(ctx),
-												func(tx *gorm.DB) error {
-													err = tx.
-														Model(agentSnapshotPost).
-														UpdateColumn("status", models.AgentSnapshotPostStatusInferResolved).
-														Error
-													if err != nil {
-														return errs.NewError(err)
-													}
-													if agentSnapshotPost.AgentStore != nil &&
-														agentSnapshotPost.AgentStoreMissionFee.Float.Cmp(big.NewFloat(0)) > 0 {
-														user, err := s.GetUser(tx, models.GENERTAL_NETWORK_ID, agentSnapshotPost.AgentStore.OwnerAddress, false)
-														if err != nil {
-															return errs.NewError(err)
-														}
-														err = tx.Model(user).
-															UpdateColumn("eai_balance", gorm.Expr("eai_balance + ?", agentSnapshotPost.AgentStoreMissionFee)).
-															Error
-														if err != nil {
-															return errs.NewError(err)
-														}
-														_ = s.dao.Create(
-															tx,
-															&models.UserTransaction{
-																NetworkID: agentSnapshotPost.NetworkID,
-																EventId:   fmt.Sprintf("agent_store_fee_%d", agentSnapshotPost.ID),
-																UserID:    user.ID,
-																Type:      models.UserTransactionTypeAgentStoreFee,
-																Amount:    agentSnapshotPost.AgentStoreMissionFee,
-																Status:    models.UserTransactionStatusDone,
-															},
-														)
-													}
-													return nil
-												},
-											)
-											if err != nil {
-												return errs.NewError(err)
-											}
-											go s.UpdateDataMissionTradeAnalytics(context.Background(), agentSnapshotPost.ID)
-										} else if state.(string) == "error" {
-											err = daos.GetDBMainCtx(ctx).
-												Model(agentSnapshotPost).
-												UpdateColumn("status", models.AgentSnapshotPostStatusInferFailed).
-												Error
-											if err != nil {
-												return errs.NewError(err)
-											}
-										}
-									}
-								}
-							} else {
-								if agentSnapshotPost.Status == models.AgentSnapshotPostStatusInferSubmitted {
-									inferOutputData, err := s.dojoAPI.OffchainAgentOutput(agentSnapshotPost.InferTxHash)
-									if err != nil {
-										return errs.NewError(err)
-									}
-									if len(inferOutputData) > len(agentSnapshotPost.InferOutputData) || !strings.EqualFold(inferOutputData, agentSnapshotPost.InferOutputData) {
-										err = daos.GetDBMainCtx(ctx).
-											Model(agentSnapshotPost).
-											UpdateColumn("infer_output_data", inferOutputData).
-											Error
-										if err != nil {
-											return errs.NewError(err)
-										}
-									}
-								}
-							}
 						}
 						return nil
 					}()
@@ -1847,7 +1879,7 @@ func (s *Service) JobUpdateOffchainAutoOutputForMission(ctx context.Context) err
 	var retErr error
 	joinFilters := map[string][]interface{}{
 		`
-				join agent_snapshot_missions on agent_snapshot_missions.id = agent_snapshot_posts.agent_snapshot_mission_id
+				left join agent_snapshot_missions on agent_snapshot_missions.id = agent_snapshot_posts.agent_snapshot_mission_id
 			`: {},
 	}
 
@@ -2043,7 +2075,9 @@ func (s *Service) getTaskToolSet(assistant *models.AgentInfo, taskReq string) (s
 }
 
 func (s *Service) callWakeup(logRequest *models.AgentSnapshotPost, assistant *models.AgentInfo) (string, error) {
-	logRequest.AgentBaseModel = assistant.AgentBaseModel
+	if assistant != nil {
+		logRequest.AgentBaseModel = assistant.AgentBaseModel
+	}
 	var agentMetaDataRequest models.AgentMetadataRequest
 	err := helpers.ConvertJsonObject(logRequest.AgentMetaData, &agentMetaDataRequest)
 	if err != nil {
@@ -2074,24 +2108,27 @@ func (s *Service) callWakeup(logRequest *models.AgentSnapshotPost, assistant *mo
 		request.MetaData.AgentContractId = assistant.AgentContractID
 		request.MetaData.ChainId = strconv.Itoa(int(assistant.NetworkID))
 		request.MetaData.KnowledgeBaseId = assistant.KnowledgeBaseID
-	}
-	knowledgeAgentsUsed, _ := s.KnowledgeUsecase.GetKBAgentsUsedOfSocialAgent(context.Background(), assistant.ID)
-	if len(knowledgeAgentsUsed) > 0 {
-		for _, item := range knowledgeAgentsUsed {
-			itemAdd := models.AgentWakeupKnowledgeBase{
-				KbId: item.KbId,
-			}
-			if item.AgentInfo != nil {
-				itemAdd.ChainId = fmt.Sprintf("%v", item.AgentInfo.NetworkID)
-			}
-			if request.AgentMetaData.KbAgents == nil {
-				request.AgentMetaData.KbAgents = []models.AgentWakeupKnowledgeBase{}
-			}
+		knowledgeAgentsUsed, _ := s.KnowledgeUsecase.GetKBAgentsUsedOfSocialAgent(context.Background(), assistant.ID)
+		if len(knowledgeAgentsUsed) > 0 {
+			for _, item := range knowledgeAgentsUsed {
+				itemAdd := models.AgentWakeupKnowledgeBase{
+					KbId: item.KbId,
+				}
+				if item.AgentInfo != nil {
+					itemAdd.ChainId = fmt.Sprintf("%v", item.AgentInfo.NetworkID)
+				}
+				if request.AgentMetaData.KbAgents == nil {
+					request.AgentMetaData.KbAgents = []models.AgentWakeupKnowledgeBase{}
+				}
 
-			request.AgentMetaData.KbAgents = append(request.AgentMetaData.KbAgents, itemAdd)
+				request.AgentMetaData.KbAgents = append(request.AgentMetaData.KbAgents, itemAdd)
+			}
 		}
+		request.MetaData.TwitterUsername = assistant.TwitterUsername
+	} else {
+		request.MetaData.ChainId = strconv.Itoa(int(logRequest.NetworkID))
+		request.MetaData.AgentContractId = "1"
 	}
-	request.MetaData.TwitterUsername = assistant.TwitterUsername
 	body, err := helpers.CurlURLString(
 		s.conf.AgentOffchain.Url+"/async/enqueue",
 		"POST",
@@ -2246,7 +2283,7 @@ func (s *Service) AgentSnapshotPostStatusInferRefund(ctx context.Context, snapsh
 										NetworkID: inferPost.NetworkID,
 										EventId:   fmt.Sprintf("agent_trigger_refund_%d", inferPost.ID),
 										UserID:    user.ID,
-										Type:      models.UserTransactionTypeAgentStoreFee,
+										Type:      models.UserTransactionTypeTriggerRefundFee,
 										Amount:    inferPost.Fee,
 										Status:    models.UserTransactionStatusDone,
 									},

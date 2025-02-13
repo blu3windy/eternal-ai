@@ -45,7 +45,12 @@ def make_response(content, success=True):
     }
 
 
-def execute_http_toolcall(method, endpoint, params, headers=None):
+def execute_http_toolcall(
+    method: str, 
+    endpoint: str,
+    params: dict, 
+    headers: dict=None
+):
     payload = dict(
         method=method,
         url=endpoint,
