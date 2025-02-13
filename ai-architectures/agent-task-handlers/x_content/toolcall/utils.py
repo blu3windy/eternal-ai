@@ -45,7 +45,12 @@ def make_response(content, success=True):
     }
 
 
-def execute_http_toolcall(method, endpoint, params, headers=None):
+def execute_http_toolcall(
+    method: str, 
+    endpoint: str,
+    params: dict, 
+    headers: dict=None
+):
     payload = dict(
         method=method,
         url=endpoint,
@@ -147,10 +152,7 @@ def execute_advance_tool(
             execute_http_toolcall(
                 tool.method,
                 tool.executor,
-                {
-                    **parse_toolcall_params(tool.params, []),
-                    "request_id": request_id,
-                },
+                parse_toolcall_params(tool.params, []),
                 tool.headers,
             )
         ]
