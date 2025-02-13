@@ -1,5 +1,6 @@
 from typing import Dict
 from queue import Queue
+from x_content.constants.chain import get_batching_time, FAST_CHAINS
 
 
 class TimeEstimation(Queue):
@@ -34,14 +35,20 @@ class ModelInferTimeEstimation:
     def __init__(self):
         self.models: Dict[str, TimeEstimation] = {}
 
-    def prepare(self, model_id: str, maxsize=1000, default_estimation=60):
-        if model_id not in self.models:
-            self.models[model_id] = TimeEstimation(maxsize, default_estimation)
+    def prepare(self, chain_id: str, maxsize=1000, default_estimation=60):
+        if chain_id not in self.models:
+            self.models[chain_id] = TimeEstimation(maxsize, default_estimation)
 
-    def estimate(self, model_id: str):
-        self.prepare(model_id)
-        return self.models[model_id].estimate()
+    def estimate(self, chain_id: str):
+        if chain_id in FAST_CHAINS:
+            return get_batching_time(chain_id)
 
-    def update(self, model_id: str, actual_time: float):
-        self.prepare(model_id)
-        self.models[model_id].put(actual_time)
+        self.prepare(chain_id)
+        return self.models[chain_id].estimate()
+
+    def update(self, chain_id: str, actual_time: float):
+        if chain_id in FAST_CHAINS:
+            return
+
+        self.prepare(chain_id)
+        self.models[chain_id].put(actual_time)
