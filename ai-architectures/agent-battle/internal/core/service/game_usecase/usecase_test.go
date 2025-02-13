@@ -19,7 +19,7 @@ var (
 	erc20Usecase port.IContractErc20Usecase
 	gameRepo     mongo.IGameRepo
 	settingRepo  mongo.ISettingRepo
-	gameUseCase  *gameUsecase
+	gameUseCase  *GameUsecase
 )
 
 func init() {

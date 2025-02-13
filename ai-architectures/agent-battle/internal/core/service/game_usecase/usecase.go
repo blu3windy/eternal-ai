@@ -27,7 +27,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type gameUsecase struct {
+type GameUsecase struct {
 	gameRepo     mongo.IGameRepo
 	settingRepo  mongo.ISettingRepo
 	erc20Usecase port.IContractErc20Usecase
@@ -35,9 +35,9 @@ type gameUsecase struct {
 	setting      *model.Setting
 }
 
-var _ port.IGameUsecase = (*gameUsecase)(nil)
+var _ port.IGameUsecase = (*GameUsecase)(nil)
 
-func (uc *gameUsecase) ListGame(ctx context.Context, req *model.ListGameRequest) (*model.ListGameResponse, error) {
+func (uc *GameUsecase) ListGame(ctx context.Context, req *model.ListGameRequest) (*model.ListGameResponse, error) {
 	result := []*model.Game{}
 	filters := make(bson.M)
 	if len(req.TweetIds) != 0 {
@@ -65,7 +65,7 @@ func (uc *gameUsecase) ListGame(ctx context.Context, req *model.ListGameRequest)
 	return &model.ListGameResponse{Games: result, TotalRecords: total}, nil
 }
 
-func (uc *gameUsecase) GameResult(ctx context.Context, req *model.GameResultRequest) (*model.Game, error) {
+func (uc *GameUsecase) GameResult(ctx context.Context, req *model.GameResultRequest) (*model.Game, error) {
 	game, err := uc.gameByTweetId(ctx, req.TweetId)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (uc *gameUsecase) GameResult(ctx context.Context, req *model.GameResultRequ
 	return game, nil
 }
 
-func (uc *gameUsecase) EndGame(ctx context.Context, tweetId string) (*model.Game, error) {
+func (uc *GameUsecase) EndGame(ctx context.Context, tweetId string) (*model.Game, error) {
 	game, err := uc.gameByTweetId(ctx, tweetId)
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (uc *gameUsecase) EndGame(ctx context.Context, tweetId string) (*model.Game
 	return game, nil
 }
 
-func (uc *gameUsecase) gameByTweetId(ctx context.Context, tweetId string) (*model.Game, error) {
+func (uc *GameUsecase) gameByTweetId(ctx context.Context, tweetId string) (*model.Game, error) {
 	game := &model.Game{}
 	if err := uc.gameRepo.FindOne(ctx, bson.M{"tweet_id": tweetId}, game); err != nil {
 		return nil, err
@@ -123,11 +123,11 @@ func (uc *gameUsecase) gameByTweetId(ctx context.Context, tweetId string) (*mode
 	return game, nil
 }
 
-func (uc *gameUsecase) DetailGame(ctx context.Context, tweetId string) (*model.Game, error) {
+func (uc *GameUsecase) DetailGame(ctx context.Context, tweetId string) (*model.Game, error) {
 	return uc.gameByTweetId(ctx, tweetId)
 }
 
-func (uc *gameUsecase) WatchGameState(ctx context.Context) error {
+func (uc *GameUsecase) WatchGameState(ctx context.Context) error {
 	games := []*model.Game{}
 	filters := make(bson.M)
 
@@ -175,7 +175,7 @@ func (uc *gameUsecase) WatchGameState(ctx context.Context) error {
 	return nil
 }
 
-func (uc *gameUsecase) RefundsExpiredPlayers(ctx context.Context, tweetId string) error {
+func (uc *GameUsecase) RefundsExpiredPlayers(ctx context.Context, tweetId string) error {
 	game, err := uc.gameByTweetId(ctx, tweetId)
 	if err != nil {
 		return err
@@ -202,7 +202,7 @@ func (uc *gameUsecase) RefundsExpiredPlayers(ctx context.Context, tweetId string
 	return nil
 }
 
-func (uc *gameUsecase) markEndGame(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) markEndGame(ctx context.Context, game *model.Game) error {
 	if uc.setting == nil {
 		return errors.New("please configure the application setting first")
 	}
@@ -240,7 +240,7 @@ func (uc *gameUsecase) markEndGame(ctx context.Context, game *model.Game) error 
 }
 
 // handlerTransferTokenFromAgentToGame transfer token from agent to game address
-func (uc *gameUsecase) handlerTransferTokenFromAgentToGame(
+func (uc *GameUsecase) handlerTransferTokenFromAgentToGame(
 	ctx context.Context,
 	gameAddress string,
 	agent *model.AgentWallet,
@@ -288,7 +288,7 @@ func (uc *gameUsecase) handlerTransferTokenFromAgentToGame(
 }
 
 // faucetGasToGameWallet transfer eth fee from operation address to game address
-func (uc *gameUsecase) faucetGasToGameWallet(
+func (uc *GameUsecase) faucetGasToGameWallet(
 	ctx context.Context,
 	game *model.Game,
 ) error {
@@ -343,7 +343,7 @@ func (uc *gameUsecase) faucetGasToGameWallet(
 	return nil
 }
 
-func (uc *gameUsecase) prizeToWinners(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) prizeToWinners(ctx context.Context, game *model.Game) error {
 	if !game.CanPrizePlayerWinner() {
 		return nil
 	}
@@ -425,7 +425,7 @@ func (uc *gameUsecase) prizeToWinners(ctx context.Context, game *model.Game) err
 	return nil
 }
 
-func (uc *gameUsecase) markCompletedGame(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) markCompletedGame(ctx context.Context, game *model.Game) error {
 	if uc.setting == nil {
 		return errors.New("please configure the application setting first")
 	}
@@ -476,7 +476,7 @@ func (uc *gameUsecase) markCompletedGame(ctx context.Context, game *model.Game) 
 	return nil
 }
 
-func (uc *gameUsecase) refundToPlayers(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) refundToPlayers(ctx context.Context, game *model.Game) error {
 	refundAmountPerPlayer := game.CalculateRefundAmountPerPlayer()
 	for _, p := range refundAmountPerPlayer {
 		if p.RefundTxHash != "" {
@@ -504,7 +504,7 @@ func (uc *gameUsecase) refundToPlayers(ctx context.Context, game *model.Game) er
 	return nil
 }
 
-func (uc *gameUsecase) refundToExpiredPlayers(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) refundToExpiredPlayers(ctx context.Context, game *model.Game) error {
 	if err := uc.checkExpiredPlayers(ctx, game); err != nil {
 		return err
 	}
@@ -540,7 +540,7 @@ func (uc *gameUsecase) refundToExpiredPlayers(ctx context.Context, game *model.G
 }
 
 // handlerRefundTokenFromGameToPlayer transfer token from game to player address
-func (uc *gameUsecase) handlerRefundTokenFromGameToPlayer(
+func (uc *GameUsecase) handlerRefundTokenFromGameToPlayer(
 	ctx context.Context,
 	game *model.Game,
 	player *model.Player,
@@ -584,7 +584,7 @@ func (uc *gameUsecase) handlerRefundTokenFromGameToPlayer(
 }
 
 // handlerRefundTokenFromAgentToExpiredPlayer transfer token from agent to expired player address
-func (uc *gameUsecase) handlerRefundTokenFromAgentToExpiredPlayer(
+func (uc *GameUsecase) handlerRefundTokenFromAgentToExpiredPlayer(
 	ctx context.Context,
 	game *model.Game,
 	player *model.Player,
@@ -632,13 +632,13 @@ func (uc *gameUsecase) handlerRefundTokenFromAgentToExpiredPlayer(
 	return nil
 }
 
-func (uc *gameUsecase) updateGame(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) updateGame(ctx context.Context, game *model.Game) error {
 	lastUpdatedAt := game.DateModified
 	game.DateModified = time.Now()
 	return uc.gameRepo.Update(ctx, game, game.Id, lastUpdatedAt)
 }
 
-func (uc *gameUsecase) checkGameBalance(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) checkGameBalance(ctx context.Context, game *model.Game) error {
 	logger.GetLoggerInstanceFromContext(ctx).Info("check_game_balance", zap.String("tweet_id", game.TweetId))
 	currentBlock, err := uc.erc20Usecase.CurrentBlockNumber(ctx)
 	if err != nil {
@@ -700,7 +700,7 @@ func (uc *gameUsecase) checkGameBalance(ctx context.Context, game *model.Game) e
 	return uc.updateGame(ctx, game)
 }
 
-func (uc *gameUsecase) checkExpiredPlayers(ctx context.Context, game *model.Game) error {
+func (uc *GameUsecase) checkExpiredPlayers(ctx context.Context, game *model.Game) error {
 	logger.GetLoggerInstanceFromContext(ctx).Info("check_expired_players", zap.String("tweet_id", game.TweetId))
 	currentBlock, err := uc.erc20Usecase.CurrentBlockNumber(ctx)
 	if err != nil {
@@ -759,7 +759,7 @@ func (uc *gameUsecase) checkExpiredPlayers(ctx context.Context, game *model.Game
 	return uc.updateGame(ctx, game)
 }
 
-func (uc *gameUsecase) StartGame(ctx context.Context, request *model.StartGameRequest) (*model.Game, error) {
+func (uc *GameUsecase) StartGame(ctx context.Context, request *model.StartGameRequest) (*model.Game, error) {
 	logger.GetLoggerInstanceFromContext(ctx).Info("start_game", zap.Any("request", request))
 	game, err := uc.gameByTweetId(ctx, request.TweetId)
 	if err != nil && !utils.IsErrNoDocuments(err) {
@@ -811,7 +811,7 @@ func (uc *gameUsecase) StartGame(ctx context.Context, request *model.StartGameRe
 	return game, nil
 }
 
-func (uc *gameUsecase) createSetting(ctx context.Context) {
+func (uc *GameUsecase) createSetting(ctx context.Context) {
 	uc.setApplicationSetting(ctx)
 	if uc.setting != nil {
 		return
@@ -842,7 +842,7 @@ func (uc *gameUsecase) createSetting(ctx context.Context) {
 	uc.setApplicationSetting(ctx)
 }
 
-func (uc *gameUsecase) findSetting(ctx context.Context) (*model.Setting, error) {
+func (uc *GameUsecase) findSetting(ctx context.Context) (*model.Setting, error) {
 	if uc.setting != nil {
 		return uc.setting, nil
 	}
@@ -866,7 +866,7 @@ func (uc *gameUsecase) findSetting(ctx context.Context) (*model.Setting, error) 
 	return setting, nil
 }
 
-func (uc *gameUsecase) setApplicationSetting(ctx context.Context) {
+func (uc *GameUsecase) setApplicationSetting(ctx context.Context) {
 	setting, err := uc.findSetting(ctx)
 	if err != nil {
 		logger.AtLog.Debug("Can not get setting %v", err)
@@ -887,7 +887,7 @@ func NewGameUsecase(
 	gameRepo mongo.IGameRepo,
 	settingRepo mongo.ISettingRepo,
 	erc20Usecase port.IContractErc20Usecase,
-) *gameUsecase {
+) *GameUsecase {
 	ctx := context.Background()
 	secretKey := viper.GetString("SECRET_KEY")
 	var googleSecretKey string
@@ -905,7 +905,7 @@ func NewGameUsecase(
 		googleSecretKey = string(decodedBase64)
 	}
 
-	uc := &gameUsecase{
+	uc := &GameUsecase{
 		gameRepo:     gameRepo,
 		settingRepo:  settingRepo,
 		secretKey:    googleSecretKey,
