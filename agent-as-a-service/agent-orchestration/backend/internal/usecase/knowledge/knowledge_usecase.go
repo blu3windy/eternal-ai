@@ -654,10 +654,9 @@ func (uc *knowledgeUsecase) uploadKBFileToLighthouseAndProcess(ctx context.Conte
 	result := []*lighthouse.FileInLightHouse{}
 	kbFileIds := []uint{}
 	for _, f := range kn.KnowledgeBaseFiles {
-		if f.FilecoinHashRawData != "" && f.Status == models.KnowledgeBaseFileStatusDone {
+		if f.FilecoinHashRawData != "" {
 			r := &lighthouse.FileInLightHouse{}
 			if err := json.Unmarshal([]byte(f.FilecoinHashRawData), r); err == nil {
-				r.IsInserted = true
 				result = append(result, r)
 				continue
 			}
@@ -665,10 +664,6 @@ func (uc *knowledgeUsecase) uploadKBFileToLighthouseAndProcess(ctx context.Conte
 
 		r, err := lighthouse.ZipAndUploadFileInMultiplePartsToLightHouseByUrl(f.FileUrl, "/tmp/data", uc.lighthouseKey)
 		if err != nil {
-			updatedFields := make(map[string]interface{})
-			updatedFields["status"] = models.KnowledgeBaseStatusProcessingFailed
-			updatedFields["last_error_message"] = err.Error()
-			_ = uc.knowledgeBaseRepo.UpdateById(ctx, kn.ID, updatedFields)
 			uc.SendMessage(ctx, fmt.Sprintf("uploadKBFileToLighthouseAndProcess for agent %s (%d) - has error: %s ", kn.Name, kn.ID, err.Error()), uc.notiErrorChanId)
 			return "", nil, err
 		}
@@ -677,20 +672,20 @@ func (uc *knowledgeUsecase) uploadKBFileToLighthouseAndProcess(ctx context.Conte
 		f.FilecoinHashRawData = string(rw)
 		uc.knowledgeBaseFileRepo.UpdateByKnowledgeBaseId(
 			ctx, f.ID,
-			map[string]interface{}{"filecoin_hash_raw_data": f.FilecoinHashRawData, "status": models.KnowledgeBaseFileStatusDone},
+			map[string]interface{}{"filecoin_hash_raw_data": f.FilecoinHashRawData},
 		)
 		kbFileIds = append(kbFileIds, f.ID)
-		r.IsInserted = false
+		if f.Status == models.KnowledgeBaseFileStatusDone {
+			r.IsInserted = true
+		} else {
+			r.IsInserted = false
+		}
 		result = append(result, r)
 	}
 
 	data, _ := json.Marshal(result)
 	hash, err := lighthouse.UploadData(uc.lighthouseKey, kn.Name, data)
 	if err != nil {
-		updatedFields := make(map[string]interface{})
-		updatedFields["status"] = models.KnowledgeBaseStatusProcessingFailed
-		updatedFields["last_error_message"] = err.Error()
-		_ = uc.knowledgeBaseRepo.UpdateById(ctx, kn.ID, updatedFields)
 		uc.SendMessage(ctx, fmt.Sprintf("uploadKBFileToLighthouseAndProcess for agent %s (%d) - has error: %s ", kn.Name, kn.ID, err.Error()), uc.notiErrorChanId)
 		return "", nil, err
 	}
