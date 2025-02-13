@@ -502,10 +502,8 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 		return nil, errs.NewError(err)
 	}
 
-	if updateKb {
-		if len(req.CreateKnowledgeRequest.Files) != 0 {
-			s.KnowledgeUsecase.UpdateListKnowledgeBaseFile(ctx, agent.AgentKBId, req.CreateKnowledgeRequest.Files)
-		}
+	if updateKb && len(req.CreateKnowledgeRequest.Files) > 0 {
+		s.KnowledgeUsecase.UpdateListKnowledgeBaseFile(ctx, agent.AgentKBId, req.CreateKnowledgeRequest.Files)
 
 		i, err := s.KnowledgeUsecase.GetKnowledgeBaseById(ctx, agent.AgentKBId)
 		if err != nil {

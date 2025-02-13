@@ -24,6 +24,7 @@ const (
 const (
 	KnowledgeBaseFileStatusPending KnowledgeBaseFileStatus = iota + 1
 	KnowledgeBaseFileStatusDone
+	KnowledgeBaseFileStatusFail
 )
 
 type KnowledgeBase struct {
@@ -67,6 +68,7 @@ type KnowledgeBaseFile struct {
 	FilecoinHash        string                  `json:"filecoin_hash"`
 	FilecoinHashRawData string                  `json:"filecoin_hash_raw_data"`
 	TransferHash        string                  `json:"transfer_hash"`
+	LastErrorMessage    string                  `json:"last_error_message"`
 }
 
 type ListKnowledgeBaseRequest struct {
