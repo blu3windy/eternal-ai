@@ -477,15 +477,22 @@ async def smaller_task(
         ])
 
     if isinstance(url_or_texts, str) and request_identifier is not None:
+        status = APIStatus.OK if n_inserted_chunks > 0 else APIStatus.ERROR
+        reason = "" if status == APIStatus.OK else "No data read from the provided file"
+
         await hook(
             ResponseMessage[InsertProgressCallback](
                 result=InsertProgressCallback(
                     ref=request_identifier,
-                    message=f"Completed processing file {file_identifier}",
+                    message=(
+                        f"Completed processing file {file_identifier}" 
+                        if n_inserted_chunks > 0 else 
+                        f"Failed to process file {file_identifier} (Reason: {reason})"
+                    ),
                     kb=kb,
                     identifier=file_identifier
                 ),
-                status=APIStatus.OK if n_inserted_chunks > 0 else APIStatus.ERROR
+                status=status
             )
         )
 
