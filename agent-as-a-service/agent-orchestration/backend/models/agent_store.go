@@ -90,3 +90,18 @@ type AgentStoreLog struct {
 	UrlPath             string           `gorm:"type:text"`
 	Status              int
 }
+
+type AgentStoreTry struct {
+	gorm.Model
+	UserID       uint `gorm:"unique_index:agent_store__try_history_main_idx"`
+	AgentStoreID uint `gorm:"unique_index:agent_store__try_history_main_idx"`
+}
+
+type AgentStoreTryDetail struct {
+	gorm.Model
+	AgentStoreTryID     uint `gorm:"index"`
+	FromUser            bool
+	Content             string `gorm:"type:text"`
+	AgentSnapshotPostID uint
+	AgentSnapshotPost   *AgentSnapshotPost
+}

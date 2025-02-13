@@ -681,7 +681,7 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 						SystemReminder:       "",
 						Toolset:              "mission_store",
 						AgentBaseModel:       agentBaseModel,
-						ReactMaxSteps:        1,
+						ReactMaxSteps:        3,
 						InferTxHash:          inferTxHash,
 						AgentStoreMissionID:  agentStoreMission.ID,
 						AgentStoreID:         agentStoreMission.AgentStoreID,
@@ -757,6 +757,29 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 								Status:  models.UserTransactionStatusDone,
 							},
 						)
+					}
+					// add history
+					agentStoreTry, _ := s.dao.FirstAgentStoreTry(
+						tx,
+						map[string][]interface{}{
+							"user_id = ?":        {user.ID},
+							"agent_store_id = ?": {agentStoreMission.AgentStoreID},
+						},
+						map[string][]interface{}{},
+						false,
+					)
+					if agentStoreTry == nil {
+						agentStoreTry = &models.AgentStoreTry{
+							UserID:       user.ID,
+							AgentStoreID: agentStoreMission.AgentStoreID,
+						}
+						s.dao.Create(
+							tx,
+							agentStoreTry,
+						)
+					}
+					if agentStoreTry != nil && agentStoreTry.ID > 0 {
+						// history := &models.AgentStoreTryDetail{}
 					}
 					return nil
 				},
