@@ -887,6 +887,14 @@ func NewGameUsecase(
 	gameRepo mongo.IGameRepo,
 	settingRepo mongo.ISettingRepo,
 	erc20Usecase port.IContractErc20Usecase,
+) port.IGameUsecase {
+	return NewGameUsecaseInternal(gameRepo, settingRepo, erc20Usecase)
+}
+
+func NewGameUsecaseInternal(
+	gameRepo mongo.IGameRepo,
+	settingRepo mongo.ISettingRepo,
+	erc20Usecase port.IContractErc20Usecase,
 ) *GameUsecase {
 	ctx := context.Background()
 	secretKey := viper.GetString("SECRET_KEY")
