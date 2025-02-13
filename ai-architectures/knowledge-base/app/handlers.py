@@ -95,12 +95,29 @@ async def hook(
 ):
     body: dict = resp.model_dump()
     
-    with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient() as client:
         response = await client.post(
             const.ETERNALAI_RESULT_HOOK_URL,
             json=body
         )
-        
+
+    msg = '''
+Hooking to {hook_url} with payload:
+
+<pre>
+{json_log}
+</pre>
+'''.format(
+    hook_url=const.ETERNALAI_RESULT_HOOK_URL,
+    json_log=json.dumps(body, indent=2)
+)
+
+    telegram_kit.send_message(
+        msg, 
+        room=const.TELEGRAM_ROOM,
+        schedule=True
+    )
+
     if response.status_code != 200:
         logger.error(f"Failed to send hook response: {response.text}")
         return False
