@@ -136,3 +136,31 @@ func (s *Service) VerifyLoginUserByWeb3(ctx context.Context, userIP, userAgent, 
 
 	return fmt.Sprintf("TK1 %s", encryptedAuthToken), nil
 }
+
+func (s *Service) GetListUserTransactions(ctx context.Context, userAddress string, typeStr string, page, limit int) ([]*models.UserTransaction, uint, error) {
+	user, err := s.GetUser(daos.GetDBMainCtx(ctx), models.GENERTAL_NETWORK_ID, userAddress, false)
+	if err != nil {
+		return nil, 0, errs.NewError(err)
+	}
+	filters := map[string][]interface{}{
+		"agent_id = ?": {user.ID},
+		"status = ?":   {models.UserTransactionStatusDone},
+	}
+	if typeStr == "" {
+		filters["type in (?)"] = []interface{}{strings.Split(typeStr, ",")}
+	}
+	ms, _, err := s.dao.FindUserTransaction4Page(
+		daos.GetDBMainCtx(ctx),
+		filters,
+		map[string][]interface{}{
+			"AgentInfo": {},
+		},
+		[]string{"id desc"},
+		page,
+		limit,
+	)
+	if err != nil {
+		return nil, 0, errs.NewError(err)
+	}
+	return ms, 0, nil
+}

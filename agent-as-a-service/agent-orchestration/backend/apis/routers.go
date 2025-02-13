@@ -73,6 +73,7 @@ func (s *Server) Routers() {
 		{
 			userAPI.POST("/upload", s.UserUploadFile)
 			userAPI.GET("/profile", s.authCheckTK1TokenMiddleware(), s.GetUserProfileWithAuth)
+			userAPI.GET("/transactions", s.authCheckTK1TokenMiddleware(), s.GetListUserTransactions)
 		}
 
 		adminAPI := rootAPI.Group("/admin")

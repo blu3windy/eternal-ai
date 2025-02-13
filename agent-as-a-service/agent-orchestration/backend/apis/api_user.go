@@ -102,3 +102,19 @@ func (s *Server) AgentVerifyShareTwitter(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: valid})
 }
+
+func (s *Server) GetListUserTransactions(c *gin.Context) {
+	ctx := s.requestContext(c)
+	page, limit := s.pagingFromContext(c)
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ms, count, err := s.nls.GetListUserTransactions(ctx, userAddress, s.stringFromContextQuery(c, "type"), page, limit)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewUserTransactionRespArry(ms), Count: &count})
+}
