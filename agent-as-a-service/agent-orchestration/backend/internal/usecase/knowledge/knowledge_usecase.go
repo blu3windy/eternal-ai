@@ -680,7 +680,7 @@ func (uc *knowledgeUsecase) uploadKBFileToLighthouseAndProcess(ctx context.Conte
 			map[string]interface{}{"filecoin_hash_raw_data": f.FilecoinHashRawData, "status": models.KnowledgeBaseFileStatusDone},
 		)
 		kbFileIds = append(kbFileIds, f.ID)
-		r.git = false
+		r.IsInserted = false
 		result = append(result, r)
 	}
 
