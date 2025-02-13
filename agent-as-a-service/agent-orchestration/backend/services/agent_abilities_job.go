@@ -779,7 +779,26 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 						)
 					}
 					if agentStoreTry != nil && agentStoreTry.ID > 0 {
-						// history := &models.AgentStoreTryDetail{}
+						history := &models.AgentStoreTryDetail{
+							AgentStoreTryID: agentStoreTry.ID,
+							FromUser:        true,
+							Content:         systemPrompt,
+						}
+						s.dao.Create(
+							tx,
+							history,
+						)
+
+						history = &models.AgentStoreTryDetail{
+							AgentStoreTryID:     agentStoreTry.ID,
+							FromUser:            false,
+							Content:             "",
+							AgentSnapshotPostID: inferPost.ID,
+						}
+						s.dao.Create(
+							tx,
+							history,
+						)
 					}
 					return nil
 				},
