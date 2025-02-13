@@ -736,10 +736,13 @@ func (uc *knowledgeUsecase) uploadKBFileToLighthouseAndProcess(ctx context.Conte
 
 		rw, _ := json.Marshal(r)
 		f.FilecoinHashRawData = string(rw)
-		uc.knowledgeBaseFileRepo.UpdateByKnowledgeBaseId(
+		err = uc.knowledgeBaseFileRepo.UpdateByKnowledgeBaseId(
 			ctx, f.ID,
 			map[string]interface{}{"filecoin_hash_raw_data": f.FilecoinHashRawData},
 		)
+		if err != nil {
+			return "", nil, err
+		}
 		kbFileIds = append(kbFileIds, f.ID)
 		r.IsInserted = false
 		result = append(result, r)
