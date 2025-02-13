@@ -5,3 +5,4 @@ from .telegram import *
 from .models import *
 from .trading import *
 from .twin import *
+from .chain import *

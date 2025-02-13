@@ -13,6 +13,8 @@ from typing import Dict
 from functools import lru_cache
 from .utils import check_and_get_infer_result, ServerInferenceResult
 from x_content.wrappers.log_decorators import log_function_call
+from x_content import constants as C
+
 
 logger = logging.getLogger(__name__)
 
@@ -189,11 +191,11 @@ class ASyncBasedEternalAI(OpenAILLMBase):
         )
         try:
             result: dict = await self.wait(
-                receipt, estimation.estimate(self.model_name)
+                receipt, estimation.estimate(self.chain_id)
             )
 
         finally:
-            estimation.update(self.model_name, time.time() - submit_time)
+            estimation.update(self.chain_id, time.time() - submit_time)
 
         if "message" not in result:
             raise ValueError(f"Unexpected response from OpenAI: {result}")
