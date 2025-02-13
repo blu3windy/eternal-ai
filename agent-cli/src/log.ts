@@ -1,6 +1,8 @@
 // import chalk from 'chalk';
 import chalk from 'chalk';
 import Table from 'cli-table3';
+import { AgentStatus } from './manager';
+import { validateHeaderName } from 'http';
 
 function getTimestamp() {
     return new Date().toLocaleTimeString();
@@ -81,12 +83,13 @@ function logTable(data: Array<Record<string, any>>): void {
     // Get the table headers from the keys of the first object
     const headers = Object.keys(data[0]);
 
+
     // Calculate the width for each column (max length of header or data)
     const colWidths = headers.map(header =>
         Math.max(...data.map(item => item[header].toString().length), header.length)
     );
 
-    console.log("colWidths: ", colWidths);
+    // console.log("colWidths: ", colWidths);
 
     // Create the table's horizontal border line
     const borderLine = `+${colWidths.map(width => '-'.repeat(width + 2)).join('+')}+`;
@@ -94,8 +97,18 @@ function logTable(data: Array<Record<string, any>>): void {
     // Create a function to format each row
     const formatRow = (row: any) => {
         return `| ${headers.map((header, index) => {
-            const value = row[header].toString();
-            const padding = ' '.repeat(colWidths[index] - value.length);
+            let value = row[header] ?? "";
+            const valueLen = value.length;
+            if (header.toLowerCase() == "status") {
+                switch (value) {
+                    case AgentStatus.RUNNING:
+                        value = chalk.green(value);
+                    case AgentStatus.STOPPED:
+                        value = chalk.red(value);
+                }
+            }
+
+            const padding = ' '.repeat(colWidths[index] - valueLen);
             return value + padding;
         }).join(' | ')} |`;
     };
@@ -111,20 +124,36 @@ function logTable(data: Array<Record<string, any>>): void {
     };
 
     // Create a new table instance with the headers
-    const table = new Table({
-        head: headers.map(header => chalk.bold(header)),  // Bold headers
-        colWidths: colWidths,  // Set a default width for columns
-        style: {
-            head: ['bold', 'cyan'],  // Style for the headers
-            border: ['grey'],  // Style for the borders
-        }
-    });
+    // const table = new Table({
+    //     head: headers.map(header => chalk.bold(header)),  // Bold headers
+    //     colWidths: colWidths,  // Set a default width for columns
+    //     style: {
+    //         head: ['bold', 'cyan'],  // Style for the headers
+    //         border: ['grey'],  // Style for the borders
+    //     }
+    // });
 
-    // Add each row of data to the table
-    data.forEach(row => {
-        const rowData = headers.map(header => row[header] ?? 'N/A');
-        table.push(rowData);
-    });
+    // // Add each row of data to the table
+    // data.forEach(row => {
+    //     const rowData = headers.map(header => {
+    //         let value = row[header] ?? '';
+    //         console.log(`header ${header} - value ${value}`);
+    //         if (header.toLowerCase() == "status") {
+    //             console.log("Found status: ", value);
+    //             switch (value) {
+    //                 case AgentStatus.RUNNING:
+    //                     value = chalk.green(value);
+    //                     console.log("green");
+    //                 case AgentStatus.STOPPED:
+    //                     value = chalk.red(value);
+    //                     console.log("red");
+    //             }
+    //         }
+    //         return value
+
+    //     });
+    //     table.push(rowData);
+    // });
 
     // Print the formatted table
     // console.log(table.toString());

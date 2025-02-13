@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Starting new agent with Eliza framework"
+echo "Starting new agent with Rig framework"
 
 agent_uid=$1 
 ETERNALAI_URL=$2
@@ -64,22 +64,6 @@ TWITTER_TARGET_USERS=$TWITTER_TARGET_USERS
 EOL
 
 
-### create config.json and custom agent name
-
-cp $current_dir/src/eliza/config.json .
-jq --arg new_name "$AGENT_NAME" '.name = $new_name' "config.json" > tmp.json && mv tmp.json "config.json"
-
-
 ### docker run to start agent
 
-docker run -d --env-file $env_file_name --name $agent_uid  -v ./config.json:/app/eliza/agents/config.json eliza
-
-
-
-
-
-
-
-
-
-
+docker run -d --env-file $env_file_name --name $agent_uid rig

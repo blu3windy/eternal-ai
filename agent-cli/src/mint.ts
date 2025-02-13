@@ -51,7 +51,7 @@ const mintAgent = async ({
 }) => {
 
     // TODO: 2525 hard code to test
-    // return 3;
+    // return 4;
 
 
     // Get default config
