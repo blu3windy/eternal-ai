@@ -69,12 +69,27 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/redis:/data
 
   embedding:
-    container_name: kb-embedding
-    image: james123454321/cogembeddings:latest
+    container_name: kb-emb
+    image: james123454321/cogembeddings:latest 
     volumes:
-      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/embedding:/root/.cache
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/kb-emb-cache:/root/.cache
     ports:
-      - "5000:5000"
+      - "9010:5000"
+    devices:
+      - /dev/nvidia0
+    runtime: nvidia
+
+  llm:
+    container_name: kb-lm
+    image: vllm/vllm-openai:latest
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/kb-lm-cache:/root/.cache
+    command:  --model unsloth/Hermes-3-Llama-3.1-8B-bnb-4bit --load-format "bitsandbytes" --quantization "bitsandbytes" --max_model_len 16384 --max_num_seqs 1 --disable_log_requests --uvicorn_log_level error
+    ports:
+      - "9011:8000"
+    devices:
+      - /dev/nvidia0
+    runtime: nvidia
 
   server:
     image: kb-service:latest
@@ -82,20 +97,29 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: kb-server
+
     depends_on:
       - "standalone"
       - "redis"
       - "embedding"
+      - "llm"
+
     environment:
       MILVUS_HOST: http://standalone:19530
+
+      # set these three k/v to enable telegram alert
       TELEGRAM_ROOM: null
       TELEGRAM_ALERT_ROOM: null
       TELEGRAM_API_KEY: null
-      SELF_HOSTED_LLAMA_API_KEY: null
-      SELF_HOSTED_EMBEDDING_URL: http://embedding:5000
+
+      SELF_HOSTED_EMBEDDING_URL: http://embedding:9010
       SELF_HOSTED_EMBEDDING_MODEL_ID: jinaai/jina-embeddings-v3
       TOKENIZER_MODEL_ID: jinaai/jina-embeddings-v3
       MODEL_DIMENSION: 1024
+
+      SELF_HOSTED_LM_URL: http://llm:9011
+      SELF_HOSTED_LM_MODEL_ID: unsloth/Hermes-3-Llama-3.1-8B-bnb-4bit
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/"]
       interval: 30s
