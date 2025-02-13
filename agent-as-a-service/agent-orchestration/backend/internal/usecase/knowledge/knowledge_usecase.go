@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -359,14 +358,11 @@ func (uc *knowledgeUsecase) GetKnowledgeBaseByStatus(ctx context.Context, status
 	return uc.knowledgeBaseRepo.GetByStatus(ctx, status, offset, limit)
 }
 
-func (uc *knowledgeUsecase) UpdateListKnowledgeBaseFile(ctx context.Context, kbId uint, files []*serializers.File) error {
-	currentFiles, err := uc.knowledgeBaseFileRepo.ListByKbId(ctx, kbId)
-	if err != nil {
-		return err
-	}
+func (uc *knowledgeUsecase) UpdateListKnowledgeBaseFile(ctx context.Context, kbId uint, files []*serializers.File) (bool, error) {
 
 	fileIds := []uint{}
 	grFileId := time.Now().Unix()
+	updated := false
 	for _, f := range files {
 		if f.KbFileId != 0 {
 			fileIds = append(fileIds, f.KbFileId)
@@ -383,10 +379,16 @@ func (uc *knowledgeUsecase) UpdateListKnowledgeBaseFile(ctx context.Context, kbI
 		}
 		_, err := uc.knowledgeBaseFileRepo.Create(ctx, file)
 		if err != nil {
-			return err
+			return false, err
 		}
+		updated = true
 	}
 
+	// still not support delete
+	/*currentFiles, err := uc.knowledgeBaseFileRepo.ListByKbId(ctx, kbId)
+	if err != nil {
+		return err
+	}
 	mapFiles := make(map[uint]*models.KnowledgeBaseFile)
 	for _, f := range currentFiles {
 		mapFiles[f.ID] = f
@@ -403,6 +405,8 @@ func (uc *knowledgeUsecase) UpdateListKnowledgeBaseFile(ctx context.Context, kbI
 	}
 
 	return uc.knowledgeBaseFileRepo.DeleteByIds(ctx, deletedIds)
+	*/
+	return updated, nil
 }
 
 func (uc *knowledgeUsecase) UpdateKnowledgeBaseById(ctx context.Context, id uint, updatedFields map[string]interface{}) error {
