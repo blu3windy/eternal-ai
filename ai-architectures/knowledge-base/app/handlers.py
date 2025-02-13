@@ -682,7 +682,7 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
                         message=f"Inserted {n_chunks - fails_count} (chunks); Failed {fails_count} (chunks); Total: {n_chunks} (chunks); {len(req.file_urls) + len(filecoin_files)} (files).",
                         kb=kb,
                         details=[
-                            inspect_by_file_identifier(identifier) 
+                            await inspect_by_file_identifier(identifier) 
                             for identifier in identifers
                         ]
                     ),
