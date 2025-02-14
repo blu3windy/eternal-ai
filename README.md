@@ -42,181 +42,46 @@ Here are the key ongoing research projects.
 * [Go 1.23.0+](https://go.dev/doc/install)
 * [Ollama 0.5.7+](https://ollama.com/download)
 
-## Quickstart (Recommended for Beginners)
+
+## Installation
 
 Run the following command to start the whole system.
 ```
 sudo bash quickstart.sh
 ```
-Once the EternalAI system is up and running locally on your machine, you can start chatting with your agent in the terminal.
 
+Install the `eai` CLI tool to interact with your local system.
 
-## Step-by-Step Setup (For Advanced Users)
-
-### Step 1: Deploy a local AI-powered blockchain on your computer
-
-We provide a CLI `eai` to simplify the process.
-
-To install `eai`
 ```bash
 sudo ./install.sh
 ```
 
-Then, you can use the following command and follow its interactive instructions.
-```bash
-eai miner setup
-```
+## `eai` CLI
 
-Press `1` (Setup local cluster). Press `1` again for a full auto-install.
-
-<img width="1231" alt="image" src="https://github.com/user-attachments/assets/e997351a-ff00-4207-b969-7036c6c04497" />
-
-Suppose you want to custom-install, press `2`. This will give you the option to install specific packages.
-
-```bash
-- 1. Create `./env/local_contracts.json` # create a default config file
-- 2. Start HardHat as your local chain
-- 3. Deploy Eternal AI Kernel smart contracts
-- 4. Start Eternal AI Compute Nodes/Miners
-- 5. Start System APIs
-```
-
-### Step 2: Deploy Decentralized Compute
-
-For this tutorial, we'll simplify the process by having the three local miners on the same compute node. In production, each miner should have their own compute.
-
-The miners serve DeepSeek-R1-Distill-Qwen-1.5B-Q8_0. However, you should be able to use any models.
-
-DeepSeek-R1 is stored on Filecoin, a decentralized storage network. Its hash is [`ipfs://bafkreieglfaposr5fggc7ebfcok7dupfoiwojjvrck6hbzjajs6nywx6qi`](https://gateway.lighthouse.storage/ipfs/bafkreieglfaposr5fggc7ebfcok7dupfoiwojjvrck6hbzjajs6nywx6qi).
-
-The miners first fetch the model weights stored in multiple chunks on Filecoin and combine them into one complete model.
-
-For MacOS:
-```bash
-cd decentralized-compute/models
-sudo bash download_model_macos.sh bafkreieglfaposr5fggc7ebfcok7dupfoiwojjvrck6hbzjajs6nywx6qi 
-```
-
-For Ubuntu:
-```bash
-cd decentralized-compute/models
-sudo bash download_model_linux.sh bafkreieglfaposr5fggc7ebfcok7dupfoiwojjvrck6hbzjajs6nywx6qi 
-```
-
-Create and start an Ollama instance.
-```bash
-ollama create DeepSeek-R1-Distill-Qwen-1.5B-Q8 -f Modelfile
-```
-
-You can try the following quick test to ensure your miner is ready. This will send an onchain prompt to your local blockchain and see if the miners respond.
-
-```bash
-curl -X POST "http://localhost:8004/v1/chat/completions" -H "Content-Type: application/json"  -d '{
-    "model": "DeepSeek-R1-Distill-Qwen-1.5B-Q8",
-    "messages": [
-        {
-            "role": "system",
-            "content": "You are a deep thinker."
-        },
-        {
-            "role": "user",
-            "content": "Design a DeFAI agent that trades autonomously on Uniswap."
-        }
-  ]
-}'
-```
-
-Note that the model info is stored in the `Modelfile` file. In the future, if you want to change the model, update the file.
-```bash
-FROM DeepSeek-R1-Distill-Qwen-1.5B-Q8_0/DeepSeek-R1-Distill-Qwen-1.5B-Q8_0.gguf 
-```
-
-### Step 3: Deploy your production-grade Agent as a Service infrastructure
-
-In this step, we'll deploy a production-grade agent orchestration platform in one single line of code. It provides powerful tools for you to deploy, manage, and scale your agents onchain.
-
-Run the following command:
-```bash
-eai aaas start
-```
-
-### Step 4: Deploy your Decentralized Inference API
-
-In this step, we'll deploy Eternal AI Decentralized Inference API that can be used instead of centralized OpenAI API. There are a lot of things to like about Decentralized Inference API. It's permissionless, trustless, censorship-resistant, tamper-proof, and onchain verifiable.
-
-Run the following command:
-```bash
-eai apis start
-```
-
-### Step 5: Deploy your first Decentralized Agent with AI-721
-
-#### Step 5.1. Deploy contract AI-721
-
-Eternal AI treats each agent as a non-fungible. [AI-721](https://github.com/eternalai-org/eternal-ai/blob/master/decentralized-agents/contracts/standards/AI721.sol) inherits ERC-721 and adds AI features.
-
-Run the following script to install dependencies and deploy the AI-721 contract:
-```bash
-eai aaas deploy-contract
-```
-
-#### Step 5.2. Mint an agent
-
-Let's create an agent who is a Donald Trump twin.
-
-Run the following script to mint an agent:
+### Create an agent 
 
 ```bash
 eai agent create $(pwd)/decentralized-agents/characters/donald_trump.txt
 ```
+We are creating an agent who is a Donald Trump twin. The `.txt` file is the system prompt for your agent. It will be used to set the initial behavior for your agent. You can modify the content of the prompt file to adjust your agent's personality.
 
-The .txt file is the system prompt for your agent. It will be used to set the initial behavior for your agent. You can modify the content of the prompt file to adjust your agent's personality.
 
-Fetch agent info from the AI-721 contract:
+### Fetch agent info by agent id
 ```
 eai agent info <agent_id>
 ```
 
-Also, to list out all agents on your machine, run this:
+
+### List out all agents on your machine
 ```bash
 eai agent list
 ```
 
-### Step 6: Interact with the agent 
 
-#### 6.1. Chat with the agent
-
+### Chat with an agent
 ```bash
 eai agent chat <agent_id>
 ```
-
-#### 6.2. Set up Twitter for the agent with the Eliza Engine
-
-Navigate to the `./developer-guides/run-an-end-to-end-decentralized-for-ai-agents/5.start-agent` folder and run the following command to configure your twitter account.
-
-```
-node setup.js --TWITTER_USERNAME <TWITTER_USERNAME> --TWITTER_PASSWORD <TWITTER_PASSWORD> --TWITTER_EMAIL <TWITTER_EMAIL>
-```
-
-Then build a Docker image for the Eliza runtime.
-
-```
-docker build -t eliza .
-```
-
-And start an Eliza agent by running the following command.
-
-```
-docker run --env-file .env  -v ./config.json:/app/eliza/agents/config.json eliza
-```
-
-### Step 7 (Optional): Enter the 10,000 EAI Raffle 🎁 
-
-Congrats! You made it! You've deployed a decentralized operating system for AI agents on your computer. 
-
-We have a little gift for you: share your agent character file to be entered into a 10,000 EAI raffle.
-
-It's simple. Create a pull request and add your agent character file to the folder `decentralized-agents/characters/` folder. Name the file in this format `<agent-name>-by-<your-name>.txt`.
 
 
 # Design Principles
