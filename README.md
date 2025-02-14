@@ -58,22 +58,25 @@ sudo ./install.sh
 
 ## `eai` CLI
 
-### Create an agent. (here we are creating an agent who is a Donald Trump twin)
+### Create an agent (here we are creating an agent who is a Donald Trump twin)
 
 ```bash
 eai agent create $(pwd)/decentralized-agents/characters/donald_trump.txt
 ```
 The .txt file is the system prompt for your agent. It will be used to set the initial behavior for your agent. You can modify the content of the prompt file to adjust your agent's personality.
 
-### Fetch agent info from the AI-721 contract.
+
+### Fetch agent info by agent id
 ```
 eai agent info <agent_id>
 ```
 
-### List out all agents on your machine.
+
+### List out all agents on your machine
 ```bash
 eai agent list
 ```
+
 
 ### Chat with an agent
 ```bash
