@@ -53,6 +53,7 @@ type AgentStore struct {
 	Volume             numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	MemeID             uint
 	Meme               *Meme
+	TokkenAddress      string
 }
 
 type AgentStoreMission struct {

@@ -494,3 +494,46 @@ func (s *Service) AgentStoreCreateTokenInfo(ctx context.Context, userAddress str
 	}
 	return meme, nil
 }
+
+func (s *Service) AgentStoreCreateToken(ctx context.Context, userAddress string, agentStoreID uint, tokenNetworkID uint64, name string, symbol string) (*models.Meme, error) {
+	user, err := s.GetUser(daos.GetDBMainCtx(ctx), 0, userAddress, false)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	res, err := s.dao.FirstAgentStoreByID(
+		daos.GetDBMainCtx(ctx),
+		agentStoreID,
+		map[string][]interface{}{},
+		false,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	if res.OwnerID != user.ID {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	if res.MemeID <= 0 {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	meme, err := s.dao.FirstMemeByID(daos.GetDBMainCtx(ctx), res.MemeID, map[string][]interface{}{}, false)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	agentChainFee, err := s.GetAgentChainFee(
+		daos.GetDBMainCtx(ctx),
+		meme.NetworkID,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	meme.Ticker = symbol
+	meme.Name = name
+	meme.Fee = agentChainFee.TokenFee
+	meme.NetworkID = tokenNetworkID
+	meme.Status = models.MemeStatusNew
+	err = s.dao.Save(daos.GetDBMainCtx(ctx), meme)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return meme, nil
+}

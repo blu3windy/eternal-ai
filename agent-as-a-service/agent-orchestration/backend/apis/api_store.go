@@ -290,3 +290,28 @@ func (s *Server) AgentStoreCreateTokenInfo(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewMemeResp(res)})
 }
+
+func (s *Server) AgentStoreCreateToken(c *gin.Context) {
+	ctx := s.requestContext(c)
+	agentStoreID := s.uintFromContextParam(c, "id")
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+	var req struct {
+		NetworkID uint64 `json:"network_id"`
+		Name      string `json:"name"`
+		Symbol    string `json:"symbol"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	res, err := s.nls.AgentStoreCreateToken(ctx, userAddress, agentStoreID, req.NetworkID, req.Name, req.Symbol)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewMemeResp(res)})
+}
