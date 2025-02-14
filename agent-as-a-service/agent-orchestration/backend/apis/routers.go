@@ -294,6 +294,8 @@ func (s *Server) Routers() {
 			agentStoreAPI.GET("/mission-result", s.authCheckTK1TokenMiddleware(), s.MissionStoreResult)
 
 			agentStoreAPI.GET("/install/info", s.GetInstallInfo)
+
+			agentStoreAPI.GET("/token-info/:id", s.authCheckTK1TokenMiddleware(), s.AgentStoreCreateTokenInfo)
 		}
 
 		missionStoreAPI := rootAPI.Group("/mission-store")
