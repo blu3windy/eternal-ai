@@ -1901,17 +1901,31 @@ func (s *Service) UpdateDataMissionTradeAnalytics(ctx context.Context, snapshotP
 	return nil
 }
 
+func (s *Service) JobUpdateOffchainAutoOutputForMission(ctx context.Context) error {
+	err := s.JobRunCheck(
+		ctx, "JobUpdateOffchainAutoOutputForMission",
+		func() error {
+			var retErr error
+			{
+				err := s.UpdateOffchainAutoOutputForMission(ctx)
+				if err != nil {
+					retErr = errs.MergeError(retErr, err)
+				}
+			}
+			return retErr
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
+
 func (s *Service) JobUpdateOffchainAutoOutput(ctx context.Context) error {
 	err := s.JobRunCheck(
 		ctx, "JobUpdateOffchainAutoOutput",
 		func() error {
 			var retErr error
-			{
-				err := s.JobUpdateOffchainAutoOutputForMission(ctx)
-				if err != nil {
-					retErr = errs.MergeError(retErr, err)
-				}
-			}
 			{
 				ms, err := s.dao.FindAgentSnapshotPostAction(daos.GetDBMainCtx(ctx),
 					map[string][]interface{}{
@@ -1965,7 +1979,7 @@ func (s *Service) JobUpdateOffchainAutoOutput(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) JobUpdateOffchainAutoOutputForMission(ctx context.Context) error {
+func (s *Service) UpdateOffchainAutoOutputForMission(ctx context.Context) error {
 	var retErr error
 	joinFilters := map[string][]interface{}{
 		`
@@ -1979,7 +1993,6 @@ func (s *Service) JobUpdateOffchainAutoOutputForMission(ctx context.Context) err
 	ms, err := s.dao.FindAgentSnapshotPostJoinSelect(daos.GetDBMainCtx(ctx),
 		selected, joinFilters,
 		map[string][]interface{}{
-			"agent_snapshot_posts.created_at <= adddate(now(), interval -5 minute)":                      {},
 			"agent_snapshot_posts.created_at >= adddate(now(), interval -12 hour)":                       {},
 			"agent_snapshot_missions.tool_set in (?) or agent_snapshot_posts.agent_store_mission_id > 0": {[]models.ToolsetType{models.ToolsetTypeTradeAnalyticsOnTwitter, models.ToolsetTypeTradeAnalyticsMentions, models.ToolsetTypeLuckyMoneys, models.ToolsetTypeMissionStore}},
 			"agent_snapshot_posts.status = ?":                                                            {models.AgentSnapshotPostStatusInferSubmitted},
@@ -2002,15 +2015,9 @@ func (s *Service) JobUpdateOffchainAutoOutputForMission(ctx context.Context) err
 
 func (s *Service) JobUpdateOffchainAutoOutput3Hour(ctx context.Context) error {
 	err := s.JobRunCheck(
-		ctx, "JobUpdateOffchainAutoOutput",
+		ctx, "JobUpdateOffchainAutoOutput3Hour",
 		func() error {
 			var retErr error
-			{
-				err := s.JobUpdateOffchainAutoOutputForMission(ctx)
-				if err != nil {
-					retErr = errs.MergeError(retErr, err)
-				}
-			}
 			{
 				ms, err := s.dao.FindAgentSnapshotPost(daos.GetDBMainCtx(ctx),
 					map[string][]interface{}{
