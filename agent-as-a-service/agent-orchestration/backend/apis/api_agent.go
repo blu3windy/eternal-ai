@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"github.com/sashabaranov/go-openai"
 	"net/http"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
@@ -267,24 +268,32 @@ func (s *Server) PreviewAgentSystemPromp(c *gin.Context) {
 
 func (s *Server) PreviewAgentSystemPrompV1(c *gin.Context) {
 	ctx := s.requestContext(c)
-	var req struct {
-		Messages  string  `json:"messages"`
-		AgentID   *uint   `json:"agent_id"`
-		KbId      *string `json:"kb_id"`
-		ModelName *string `json:"model_name"`
-	}
-
+	var req serializers.PreviewRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
 	}
 
-	resp, err := s.nls.PreviewAgentSystemPrompV1(ctx, req.Messages, req.AgentID, req.KbId, req.ModelName)
-	if err != nil {
-		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
-		return
+	if !req.Stream {
+		resp, err := s.nls.PreviewAgentSystemPrompV1(ctx, req.Messages, req.AgentID, req.KbId, req.ModelName)
+		if err != nil {
+			ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+			return
+		}
+		ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+	} else {
+		c.Writer.Header().Set("Content-Type", "text/event-stream")
+		c.Writer.Header().Set("Connection", "keep-alive")
+		c.Writer.Header().Set("Cache-Control", "no-cache")
+		c.Writer.WriteHeader(http.StatusOK)
+		c.Writer.WriteHeaderNow()
+		outputChan := make(chan *openai.ChatCompletionStreamResponse)
+		errChan := make(chan error)
+		doneChan := make(chan bool)
+		go s.nls.ProcessStreamAgentSystemPromptV1(c, &req, outputChan, errChan, doneChan)
+		s.nls.PreviewStreamAgentSystemPromptV1(c, c.Writer, outputChan, errChan, doneChan)
 	}
-	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+
 }
 
 func (s *Server) AgentChatSupport(c *gin.Context) {
