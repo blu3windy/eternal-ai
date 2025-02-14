@@ -1642,6 +1642,14 @@ func (s *Service) UpdateOffchainAutoOutputV2ForId(ctx context.Context, snapshotP
 						return errs.NewError(err)
 					}
 				}
+
+				//cache result
+				agentSnapshotPost.InferOutputData = inferOutputData
+				err = s.CacheAgentSnapshotPost(agentSnapshotPost)
+				if err != nil {
+					return errs.NewError(err)
+				}
+
 				state, ok := aiOutput["state"]
 				if ok {
 					if state.(string) == "done" {
