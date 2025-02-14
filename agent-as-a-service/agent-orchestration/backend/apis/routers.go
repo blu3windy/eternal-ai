@@ -292,6 +292,8 @@ func (s *Server) Routers() {
 
 			agentStoreAPI.POST("/run-mission", s.authCheckTK1TokenMiddleware(), s.RunMission)
 			agentStoreAPI.GET("/mission-result", s.authCheckTK1TokenMiddleware(), s.MissionStoreResult)
+
+			agentStoreAPI.GET("/install/info", s.GetInstallInfo)
 		}
 
 		missionStoreAPI := rootAPI.Group("/mission-store")

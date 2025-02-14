@@ -798,10 +798,15 @@ func (s *Service) GetTokenInfoByContract(ctx context.Context, tokenAddress strin
 								twiterPostIDArry := strings.Split(item.Url, "/")
 								if len(twiterPostIDArry) > 0 {
 									twitteUserName := twiterPostIDArry[len(twiterPostIDArry)-1]
-									twitterUser, _ := s.twitterWrapAPI.GetTwitterByUserName(twitteUserName)
-									if twitterUser != nil {
-										tokenDescription = twitterUser.Description
+									twiterPostIDArry = strings.Split(twitteUserName, "?")
+									if len(twiterPostIDArry) > 0 {
+										twitteUserName = twiterPostIDArry[0]
+										twitterUser, _ := s.twitterWrapAPI.GetTwitterByUserName(twitteUserName)
+										if twitterUser != nil {
+											tokenDescription = twitterUser.Description
+										}
 									}
+
 								}
 							}
 						}

@@ -216,6 +216,9 @@ func (s *Service) SaveAgentStoreCallback(ctx context.Context, req *serializers.A
 			if err != nil {
 				return errs.NewError(err)
 			}
+			if obj == nil {
+				return errs.NewError(errs.ErrBadRequest)
+			}
 			agentStore, err := s.dao.FirstAgentStoreByID(tx, obj.AgentStoreID, map[string][]interface{}{}, true)
 			if err != nil {
 				return errs.NewError(err)
@@ -224,12 +227,10 @@ func (s *Service) SaveAgentStoreCallback(ctx context.Context, req *serializers.A
 				return errs.NewError(errs.ErrBadRequest)
 			}
 			params, _ := json.Marshal(req.CallbackParams)
-			if obj == nil {
-				return errs.NewError(errs.ErrBadRequest)
-			} else {
+			if string(params) != "" {
 				obj.CallbackParams = string(params)
-				obj.Status = models.AgentStoreInstallStatusDone
 			}
+			obj.Status = models.AgentStoreInstallStatusDone
 
 			err = s.dao.Save(tx, obj)
 			if err != nil {
@@ -303,13 +304,17 @@ func (s *Service) CreateAgentStoreInstallCode(ctx context.Context, userAddress s
 		return nil, errs.NewError(err)
 	}
 	if agentStoreInstall == nil {
+		code := helpers.RandomStringWithLength(64)
+		params := map[string]string{"code": code}
+		paramstr, _ := json.Marshal(params)
 		agentStoreInstall = &models.AgentStoreInstall{
-			Code:         helpers.RandomStringWithLength(64),
-			AgentStoreID: agentStoreID,
-			AgentInfoID:  agentInfoID,
-			Status:       models.AgentStoreInstallStatusNew,
-			Type:         models.AgentStoreInstallTypeAgent,
-			UserID:       user.ID,
+			Code:           code,
+			AgentStoreID:   agentStoreID,
+			AgentInfoID:    agentInfoID,
+			Status:         models.AgentStoreInstallStatusNew,
+			Type:           models.AgentStoreInstallTypeAgent,
+			UserID:         user.ID,
+			CallbackParams: string(paramstr),
 		}
 		if agentInfoID == 0 {
 			agentStoreInstall.Type = models.AgentStoreInstallTypeUser
@@ -400,6 +405,22 @@ func (s *Service) CacheAgentSnapshotPost(snapshotPost *models.AgentSnapshotPost)
 		}
 	}
 	return nil
+}
+
+func (s *Service) GetAgentStoreInstall(ctx context.Context, code string) (*models.AgentStoreInstall, error) {
+	res, err := s.dao.FirstAgentStoreInstall(daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"code = ?": {code},
+		},
+		map[string][]interface{}{
+			"User": {},
+		},
+		[]string{},
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return res, nil
 }
 
 func (s *Service) AgentStoreCreateTokenInfo(ctx context.Context, userAddress string, agentStoreID uint) (*models.Meme, error) {
