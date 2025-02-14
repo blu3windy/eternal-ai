@@ -303,7 +303,7 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 										NetworkID: m.NetworkID,
 										EventId:   fmt.Sprintf("meme_create_token_%d", m.ID),
 										UserID:    agentStore.OwnerID,
-										Type:      models.UserTransactionTypeTriggerFee,
+										Type:      models.UserTransactionTypeTokenFee,
 										Amount:    numeric.NewBigFloatFromFloat(models.NegativeBigFloat(&m.Fee.Float)),
 										Status:    models.UserTransactionStatusDone,
 									},
