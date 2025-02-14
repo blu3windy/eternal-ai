@@ -13,6 +13,7 @@ type AgentStoreReq struct {
 	Name        string                  `json:"name"`
 	Description string                  `json:"description"`
 	AuthenUrl   string                  `json:"authen_url"`
+	ApiUrl      string                  `json:"api_url"`
 	Icon        string                  `json:"icon"`
 	Docs        string                  `json:"docs"`
 	Price       numeric.BigFloat        `json:"price"`

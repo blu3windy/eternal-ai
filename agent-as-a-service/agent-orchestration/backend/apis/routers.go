@@ -375,6 +375,11 @@ func (s *Server) Routers() {
 			knowledgeBasePublicApi.POST("/retrieve", s.retrieveKnowledge)
 		}
 
+		// agentInfraAPI := rootAPI.Group("/infra")
+		// {
+		// 	agentInfraAPI.Any("/:infra_id/*path", s.proxyAgentStoreMiddleware("/api/infra"))
+		// }
+
 		sampleTwitterApp := rootAPI.Group("/sample-twitter-app")
 		{
 			sampleTwitterApp.GET("/install", s.SampleTwitterAppAuthenInstall)

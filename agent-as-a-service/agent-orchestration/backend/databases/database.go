@@ -112,6 +112,8 @@ func MigrateDBMain(db *gorm.DB) error {
 		(*models.AgentStoreMission)(nil),
 		(*models.AgentStoreInstall)(nil),
 
+		(*models.AgentStoreLog)(nil),
+
 		(*models.SampleTwitterApp)(nil),
 
 		(*models.InfraTwitterApp)(nil),

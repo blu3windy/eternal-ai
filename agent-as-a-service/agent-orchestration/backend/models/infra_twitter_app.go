@@ -6,9 +6,8 @@ import (
 
 type InfraTwitterApp struct {
 	gorm.Model
-	Address       string
 	InstallCode   string
-	Signature     string
+	ApiKey        string
 	TwitterInfoID uint
 	TwitterInfo   *TwitterInfo
 }

@@ -4,29 +4,18 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"strings"
 	"time"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/lighthouse"
 )
 
-func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, address string, installUri string, installCode string, signature string) (string, error) {
+func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installUri string, installCode string) (string, error) {
 	err := func() error {
-		if address == "" || installCode == "" || signature == "" {
+		if installCode == "" {
 			return errs.NewError(errs.ErrBadRequest)
-		}
-		err := helpers.ValidateMessageSignature(
-			installCode,
-			address,
-			signature,
-		)
-		if err != nil {
-			return errs.NewError(err)
 		}
 		infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 			daos.GetDBMainCtx(ctx),
@@ -40,13 +29,8 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, address stri
 		}
 		if infraTwitterApp == nil {
 			infraTwitterApp = &models.InfraTwitterApp{
-				Address:     address,
 				InstallCode: installCode,
-				Signature:   signature,
-			}
-		} else {
-			if !strings.EqualFold(infraTwitterApp.Address, address) {
-				return errs.NewError(errs.ErrBadRequest)
+				ApiKey:      helpers.RandomStringWithLength(64),
 			}
 		}
 		err = s.dao.Save(daos.GetDBMainCtx(ctx), infraTwitterApp)
@@ -89,7 +73,7 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 	if installCode == "" || code == "" {
 		return "", errs.NewError(errs.ErrBadRequest)
 	}
-	address, err := func() (string, error) {
+	apiKey, err := func() (string, error) {
 		redirectUri := helpers.BuildUri(
 			s.conf.InfraTwitterApp.RedirectUri,
 			map[string]string{
@@ -154,7 +138,7 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 			if infraTwitterApp == nil {
 				return "", errs.NewError(errs.ErrBadRequest)
 			}
-			return infraTwitterApp.Address, nil
+			return infraTwitterApp.ApiKey, nil
 		}
 		return "", errs.NewError(errs.ErrBadRequest)
 	}()
@@ -168,7 +152,7 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 		), nil
 	}
 	params := map[string]string{
-		"address": address,
+		"api_key": apiKey,
 	}
 	returnData := base64.StdEncoding.EncodeToString([]byte(helpers.ConvertJsonString(params)))
 	return helpers.BuildUri(
@@ -180,16 +164,27 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 	), nil
 }
 
-func (s *Service) InfraTwitterAppExecuteRequest(ctx context.Context, address string, ipfsReq string) (string, error) {
-	rawReq, _, err := lighthouse.DownloadDataSimple(ipfsReq)
-	if err != nil {
-		return "", errs.NewError(err)
-	}
+func (s *Service) InfraTwitterAppExecuteRequest(ctx context.Context, infraCode string, apiKey string, rawStr string) (string, error) {
+	rawReq := []byte(rawStr)
 	resp, err := func() (interface{}, error) {
+		obj, err := s.dao.FirstAgentStoreInstall(
+			daos.GetDBMainCtx(ctx),
+			map[string][]interface{}{
+				"code = ?": {infraCode},
+			},
+			map[string][]interface{}{},
+			[]string{},
+		)
+		if err != nil {
+			return "", errs.NewError(err)
+		}
+		if obj == nil {
+			return "", errs.NewError(errs.ErrBadRequest)
+		}
 		infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 			daos.GetDBMainCtx(ctx),
 			map[string][]interface{}{
-				"address = ?": {address},
+				"api_key = ?": {apiKey},
 			},
 			map[string][]interface{}{
 				"TwitterInfo": {},
@@ -406,15 +401,8 @@ func (s *Service) InfraTwitterAppExecuteRequest(ctx context.Context, address str
 			}
 		}
 	}()
-	var rawData string
-	if err != nil {
-		rawData = helpers.ConvertJsonString(&serializers.Resp{Error: errs.NewError(err)})
-	} else {
-		rawData = helpers.ConvertJsonString(&serializers.Resp{Result: resp})
-	}
-	ipfsHash, err := s.IpfsUploadDataForName(ctx, "data", []byte(rawData))
 	if err != nil {
 		return "", errs.NewError(err)
 	}
-	return ipfsHash, nil
+	return helpers.ConvertJsonString(resp), nil
 }
