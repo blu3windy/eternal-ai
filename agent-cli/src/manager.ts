@@ -2,11 +2,12 @@ import * as fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import { logError, logInfo } from './log';
+import { execCmd } from './utils';
 
 enum AgentStatus {
-    RUNNING = "Running",
-    STOPPED = "Stopped",
-
+    CREATED = "Created",  // minted agent id on the contract, but haven't started agent container yet
+    RUNNING = "Running",  // agent container is running
+    STOPPED = "Stopped",  // agent container is exited
 }
 
 interface Agent {
@@ -18,6 +19,7 @@ interface Agent {
     Model: string
     Status: string
     CreateAt: string
+    ContainerID: string,
 }
 
 const FilePath = "./agents/list.json";
@@ -47,7 +49,7 @@ const getAgents = async (): Promise<Agent[]> => {
     // console.log("currentAgents: ", currentAgents);
 
     const containers = await listRunningContainers();
-    console.log("containers: ", containers);
+    // console.log("containers: ", containers);
 
     for (let i = 0; i < currentAgents.length; i++) {
         let agent = currentAgents[i];
@@ -62,7 +64,8 @@ const getAgents = async (): Promise<Agent[]> => {
 
             // TODO: check more state
 
-            agent.CreateAt = containerInfo.CreatedAt
+            agent.CreateAt = containerInfo.CreatedAt;
+            agent.ContainerID = containerInfo.ID;
         }
         currentAgents[i] = agent;
     }
@@ -108,45 +111,22 @@ interface DockerContainer {
 // ]
 
 
-const listRunningContainers = async (): Promise<any> => {
-    return new Promise((resolve, reject) => {
-        exec('docker ps -a --format "{{json .}}"', (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Error: ${error.message}`);
-                reject(error);
-                // return;
-            }
-            if (stderr) {
-                console.error(`Stderr: ${stderr}`);
-                reject(stderr);
-                // return;
-            }
-            console.log('Running Containers stdout:', stdout);
+const listRunningContainers = async (): Promise<Record<string, DockerContainer>> => {
+    const stdout = await execCmd('docker ps -a --format "{{json .}}"');
+    if (stdout.length == 0) {
+        return {};
+    }
 
-            if (stdout.length == 0) {
-                resolve([]);
-            }
-
-            // Split the output into JSON objects (one per line)
-            const containers = stdout
-                .trim()
-                .split('\n')
-                .map(line => JSON.parse(line));
+    // Split the output into JSON objects (one per line)
+    const containers: DockerContainer[] = stdout
+        .trim()
+        .split('\n')
+        .map((line: any) => JSON.parse(line));
 
 
-            const m = Object.fromEntries(containers.map(c => [c.Names, c]));
-
-            console.log('Running Containers:', containers);
-            resolve(m);
-
-        });
-    })
+    const m = Object.fromEntries(containers.map((c: DockerContainer) => [c.Names, c]));
+    return m;
 }
-
-// const getAgentStatus = () => {
-
-// }
-
 
 export {
     Agent,

@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { Framework, Model, Network } from './const';
-import { createAgent, listAgents } from './handler';
+import { createAgent, listAgents, startAgent, stopAgent } from './handler';
 
 // Initialize the commander object
 const program = new Command();
@@ -12,13 +12,13 @@ program
     .version('1.0.0');
 
 
-// Define a command with parameters
+// Define a parent command: agent
 const agentCmd = program
     .command('agent')
     .description('Deploy and manage agents');
 
 
-// Define a command with parameters
+// cmd: agent create
 agentCmd
     .command('create')
     .description('Create a new agent')
@@ -29,14 +29,36 @@ agentCmd
     .option('-n, --name <name>', 'The agent\'s name.')
     .action((options) => {
         createAgent(options);
-    })
+    });
 
+
+// cmd: agent ls
 agentCmd
     .command('ls')
     .description('See list of agents')
     .action(() => {
         listAgents();
     });
+
+// cmd: agent stop
+agentCmd
+    .command('stop')
+    .description('Stop the agent')
+    .requiredOption('-n, --name <name>', 'The agent\'s name.')
+    .action((options) => {
+        stopAgent(options);
+    });
+
+
+// cmd: agent start
+agentCmd
+    .command('start')
+    .description('Start the agent')
+    .requiredOption('-n, --name <name>', 'The agent\'s name.')
+    .action((options) => {
+        startAgent(options);
+    });
+
 
 
 

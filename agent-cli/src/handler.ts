@@ -3,10 +3,10 @@ import { ChainIDMap, Framework, Network, NetworkConfig, ETERNALAI_URL } from "./
 
 // for dev
 import dotenv from 'dotenv';
-import { getSupportedModels } from "./utils";
+import { execCmd, getSupportedModels } from "./utils";
 import { mintAgent } from "./mint";
-import { Agent, getAgents, insertAgent } from "./manager";
-import { logTable } from "./log";
+import { Agent, AgentStatus, getAgents, insertAgent } from "./manager";
+import { logError, logInfo, logSuccess, logTable } from "./log";
 dotenv.config();
 
 const validateParams = async ({
@@ -106,47 +106,56 @@ const createAgent = async ({
 
 
     // const randomId = randomID();
-    const AGENT_UID = `${chain}_${agentID}`;
+    const AGENT_UID = getAgentUID(chain, agentID.toString());
     const agentName = name || AGENT_UID;
 
+    let scriptPath = "";
     switch (framework) {
         case Framework.Eliza: {
             // Path to your Bash script
-            const scriptPath = `sh src/eliza/start.sh ${AGENT_UID} ${ETERNALAI_URL} ${ETERNALAI_API_KEY} ${chainID} ${ETERNALAI_RPC_URL} ${ETERNALAI_AGENT_CONTRACT_ADDRESS} ${agentID} ${model} ${TWITTER_USERNAME} ${TWITTER_PASSWORD} ${TWITTER_EMAIL} ${TWITTER_TARGET_USERS} ${agentName}`;
+            scriptPath = `sh src/eliza/start.sh ${AGENT_UID} ${ETERNALAI_URL} ${ETERNALAI_API_KEY} ${chainID} ${ETERNALAI_RPC_URL} ${ETERNALAI_AGENT_CONTRACT_ADDRESS} ${agentID} ${model} ${TWITTER_USERNAME} ${TWITTER_PASSWORD} ${TWITTER_EMAIL} ${TWITTER_TARGET_USERS} ${agentName}`;
 
             // Run the Bash script
-            exec(scriptPath, (error: any, stdout: any, stderr: any) => {
-                if (error) {
-                    console.error(`Error executing script: ${error.message}`);
-                    // throw error;
-                }
-                if (stderr) {
-                    console.error(`stderr: ${stderr}`);
-                }
-                console.log(`stdout: ${stdout}`);
-            });
+
+            // exec(scriptPath, (error: any, stdout: any, stderr: any) => {
+            //     if (error) {
+            //         console.error(`Error executing script: ${error.message}`);
+            //         // throw error;
+            //     }
+            //     if (stderr) {
+            //         console.error(`stderr: ${stderr}`);
+            //     }
+            //     console.log(`stdout: ${stdout}`);
+            // });
             break;
 
         }
         case Framework.Rig: {
             // Path to your Bash script
-            const scriptPath = `sh src/rig/start.sh ${AGENT_UID} ${ETERNALAI_URL} ${ETERNALAI_API_KEY} ${chainID} ${ETERNALAI_RPC_URL} ${ETERNALAI_AGENT_CONTRACT_ADDRESS} ${agentID} ${model} ${TWITTER_USERNAME} ${TWITTER_PASSWORD} ${TWITTER_EMAIL} ${TWITTER_TARGET_USERS} ${agentName}`;
+            scriptPath = `sh src/rig/start.sh ${AGENT_UID} ${ETERNALAI_URL} ${ETERNALAI_API_KEY} ${chainID} ${ETERNALAI_RPC_URL} ${ETERNALAI_AGENT_CONTRACT_ADDRESS} ${agentID} ${model} ${TWITTER_USERNAME} ${TWITTER_PASSWORD} ${TWITTER_EMAIL} ${TWITTER_TARGET_USERS} ${agentName}`;
 
             // Run the Bash script
-            exec(scriptPath, (error: any, stdout: any, stderr: any) => {
-                if (error) {
-                    console.error(`Error executing script: ${error.message}`);
-                    // throw error;
-                }
-                if (stderr) {
-                    console.error(`stderr: ${stderr}`);
-                }
-                console.log(`stdout: ${stdout}`);
-            });
+            // exec(scriptPath, (error: any, stdout: any, stderr: any) => {
+            //     if (error) {
+            //         console.error(`Error executing script: ${error.message}`);
+            //         // throw error;
+            //     }
+            //     if (stderr) {
+            //         console.error(`stderr: ${stderr}`);
+            //     }
+            //     console.log(`stdout: ${stdout}`);
+            // });
             break;
-
         }
     }
+
+    try {
+        const stdout = await execCmd(scriptPath);
+    } catch (e) {
+        logError(`Start agent error ${e}`);
+    }
+
+
     const newAgent: Agent = {
         AgentID: agentID.toString(),
         Name: agentName,
@@ -154,8 +163,9 @@ const createAgent = async ({
         Network: chain,
         ChainID: chainID,
         Model: model,
-        Status: "",
+        Status: AgentStatus.CREATED,
         CreateAt: "",
+        ContainerID: "",
     }
 
     // insert into the file to manage agents
@@ -165,10 +175,84 @@ const createAgent = async ({
 const listAgents = async () => {
     const agents = await getAgents();
     logTable(agents);
-
 }
 
+
+const stopAgent = async ({
+    name,
+}: {
+    name: string,
+}) => {
+    const agents = await getAgents();
+    const agentMap = Object.fromEntries(agents.map((a: Agent) => [a.Name, a]));
+    const agentInfo = agentMap[name];
+    if (!agentInfo) {
+        logError(`Agent name ${name} is not found.`);
+        return;
+    }
+    if (agentInfo.Status == AgentStatus.STOPPED) {
+        logInfo(`Agent name ${name} was stopped.`);
+        return;
+    }
+    if (agentInfo.Status == AgentStatus.CREATED) {
+        logInfo(`Agent name ${name} is not running.`);
+        return;
+    }
+
+    const agentUID = getAgentUID(agentInfo.Network, agentInfo.AgentID);
+
+    try {
+        const stdout = await exec(`docker stop ${agentUID}`);
+        // console.log(stdout);
+        logSuccess(`Agent ${name} is stopped successfully.`);
+    } catch (e) {
+        logError(`Stop agent ${name} error ${e}`);
+    }
+}
+
+const startAgent = async ({
+    name,
+}: {
+    name: string,
+}) => {
+    const agents = await getAgents();
+    const agentMap = Object.fromEntries(agents.map((a: Agent) => [a.Name, a]));
+    const agentInfo = agentMap[name];
+    if (!agentInfo) {
+        logError(`Agent ${name} is not found.`);
+        return;
+    }
+    if (agentInfo.Status == AgentStatus.RUNNING) {
+        logInfo(`Agent ${name} is running.`);
+        return;
+    }
+    if (!agentInfo.ContainerID) {
+        logInfo(`No docker container for agent ${name}.`);
+        // TODO: create and start docker container for agent.
+    }
+
+    // console.log("ContainerID: ", agentInfo.ContainerID);
+
+    try {
+        const stdout = await exec(`docker start ${agentInfo.ContainerID}`);
+        // console.log(stdout);
+        logSuccess(`Agent ${name} is started successfully.`);
+    } catch (e) {
+        logError(`Start agent ${name} error ${e}`);
+    }
+}
+
+
+
+// agentUID is a unique key to identify the agent
+// it is also used as the agent's docker container name
+const getAgentUID = (chain: string, agentID: string): string => {
+    return `${chain}_${agentID}`;
+
+}
 export {
     createAgent,
-    listAgents
+    listAgents,
+    stopAgent,
+    startAgent,
 }

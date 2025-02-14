@@ -1,5 +1,6 @@
 import { ETERNALAI_URL } from "./const";
 import axios from 'axios';
+import { exec } from 'child_process';
 
 
 
@@ -15,6 +16,25 @@ const getSupportedModels = async (chainID: string) => {
     return response.data.data?.support_model_names;
 }
 
+const execCmd = async (cmd: string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        exec(cmd, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Exec script ${cmd} error: ${error.message}`);
+                reject(error);
+            }
+            if (stderr) {
+                console.error(`Exec script ${cmd} stderr: ${stderr}`);
+                reject(stderr);
+            }
+            resolve(stdout);
+        });
+    })
+}
+
+
+
 export {
-    getSupportedModels
+    getSupportedModels,
+    execCmd,
 }
