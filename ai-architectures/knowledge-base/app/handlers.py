@@ -970,6 +970,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
 
     # Extract named entities from the query
     ner_query_list, _ = await GK.extract_named_entities(req.query)
+
     if len(ner_query_list) > 0:
         query_ner_embeddings = [
             await mk_cog_embedding(ner_query, embedding_model) for ner_query in ner_query_list
@@ -978,91 +979,58 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
             collection_name=model_identity,
             data=query_ner_embeddings,
             kb_filter=f"kb in {entity_kb}",
-            limit=min(req.top_k, row_count),
             anns_field="embedding",
-            output_fields=["id", "content", "head", "tail", "reference", "hash"],
-            search_params={"params": {"radius": req.threshold}},
+            output_fields=["head", "tail"],
         )
 
-    relations_res = cli.search(
-        collection_name=model_identity,
-        data=[query_embedding],
-        filter=f"kb in {relation_kb}",
-        limit=min(req.top_k, row_count),
-        anns_field="embedding",
-        output_fields=["id", "content", "head", "tail", "reference", "hash"],
-        search_params={"params": {"radius": req.threshold}},
-    )
-
-    contents = []
-    scores = []
-    original_nodes = []
-    min_score = 1.0
+    nodes = []
 
     for ner_entities_result in entities_res:
         for result in ner_entities_result:
             entity = result["entity"]
-            score = result["distance"]
             head = entity["head"]
             tail = entity["tail"]
-            content = entity["content"]
-            if score < min_score:
-                min_score = score
-            if head not in original_nodes:
-                original_nodes.append(head)
-            if content not in contents:
-                scores.append(score)
-                contents.append(content)
-            
-    for relation_result in relations_res:
-        for result in relation_result:
-            entity = result["entity"]
-            score = result["distance"]
-            head = entity["head"]
-            tail = entity["tail"]
-            content = entity["content"]
-            if head not in original_nodes:
-                original_nodes.append(head)
-            if tail not in original_nodes:
-                original_nodes.append(tail)
-            if score < min_score:
-                min_score = score
-            if content not in contents:
-                scores.append(score)
-                contents.append(content)
+            if head not in nodes:
+                nodes.append(head)
+            if tail not in nodes:
+                nodes.append(tail)
 
+    filter_str = f"kb in {relation_kb}"
     if len(entities_res) > 0:
-        expanded_entities_res = cli.query(
-            collection_name=model_identity,
-            filter=f"kb in {entity_kb} and (head in {original_nodes} or tail in {original_nodes})",
-            output_fields=["content"]
-        )
-        for entity in expanded_entities_res:
-            content = entity["content"]
-            if content not in contents:
-                contents.append(content)
-                scores.append(min_score)
-    
-    if len(relations_res) > 0:
-        expanded_relations_res = cli.query(
-            collection_name=model_identity,
-            filter=f"kb in {relation_kb} and (head in {original_nodes} or tail in {original_nodes})",
-            output_fields=["content"]
-        )
-        for relation in expanded_relations_res:
-            content = relation["content"]
-            if content not in contents:
-                contents.append(content)
-                scores.append(min_score)
+        filter_str += f" and (head in {nodes} or tail in {nodes})"
 
-    print(len(contents), len(scores))
-    pairs = [(contents[i], scores[i]) for i in range(len(contents))]
-    hits = sorted(pairs, key=lambda x: x[1], reverse=True)[:req.top_k]
-    
+    res = cli.search(
+        collection_name=model_identity,
+        data=[query_embedding],
+        filter=filter_str,
+        limit=min(req.top_k, row_count),
+        anns_field="embedding",
+        output_fields=["id", "content", "reference", "hash"],
+        search_params={"params": {"radius": req.threshold}},
+    )
+
+    print(res)
+
+    hits = list(
+        {
+            item['entity']['hash']: item 
+            for item in res[0]
+        }.values()
+    )
+
+    for i in range(len(hits)):
+        hits[i]['score'] = estimate_ip_from_distance(
+            hits[i]['distance'], 
+            embedding_model
+        )
+
+    hits = sorted(hits, key=lambda e: e['score'], reverse=True)
+
     return [
         QueryResult(
-            content=hit[0],
-            score=hit[1]
+            content=hit['entity']['content'],
+            reference=hit['entity']['reference'],
+            score=hit['score']
         )
         for hit in hits
     ]
