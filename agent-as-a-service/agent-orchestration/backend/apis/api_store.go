@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
 	"github.com/gin-gonic/gin"
 )
@@ -235,7 +236,7 @@ func (s *Server) RunMission(c *gin.Context) {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
 		return
 	}
-	obj, err := s.nls.AgentSnapshotPostCreateForUser(ctx, req.NetworkID, userAddress, req.Prompt, req.Model, req.ID)
+	obj, err := s.nls.AgentSnapshotPostCreateForUser(ctx, models.HERMES_CHAIN_ID, userAddress, req.Prompt, req.Model, req.ID)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
