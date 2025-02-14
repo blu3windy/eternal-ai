@@ -415,7 +415,9 @@ func (s *Service) AgentSnapshotPostCreate(ctx context.Context, missionID uint, o
 								"agent_info_id = ?":  {mission.AgentInfoID},
 								"status = ?":         {models.AgentStoreInstallStatusDone},
 							},
-							map[string][]interface{}{},
+							map[string][]interface{}{
+								"User": {},
+							},
 							[]string{"id desc"},
 						)
 						if err != nil {
@@ -447,9 +449,19 @@ func (s *Service) AgentSnapshotPostCreate(ctx context.Context, missionID uint, o
 						if err != nil {
 							return errs.NewError(err)
 						}
+						params["install_code"] = agentStoreInstall.Code
+						if agentStoreInstall.User != nil {
+							params["user_address"] = agentStoreInstall.User.Address
+						}
 						inferItems[0].Content, err = helpers.GenerateTemplateContent(mission.AgentStoreMission.UserPrompt, params)
 						if err != nil {
 							return errs.NewError(err)
+						}
+						if mission.UserPrompt != "" {
+							inferItems[0].Content, err = helpers.GenerateTemplateContent(mission.UserPrompt, params)
+							if err != nil {
+								return errs.NewError(err)
+							}
 						}
 						toolList, err = helpers.GenerateTemplateContent(mission.AgentStoreMission.ToolList, params)
 						if err != nil {
@@ -666,7 +678,9 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 							"agent_store_id = ?": {agentStoreMission.AgentStoreID},
 							"status = ?":         {models.AgentStoreInstallStatusDone},
 						},
-						map[string][]interface{}{},
+						map[string][]interface{}{
+							"User": {},
+						},
 						[]string{"id desc"},
 					)
 					if err != nil {
@@ -676,6 +690,10 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 						err = helpers.ConvertJsonObject(agentStoreInstall.CallbackParams, &params)
 						if err != nil {
 							return errs.NewError(err)
+						}
+						params["install_code"] = agentStoreInstall.Code
+						if agentStoreInstall.User != nil {
+							params["user_address"] = agentStoreInstall.User.Address
 						}
 					}
 					inferItems[0].Content, err = helpers.GenerateTemplateContent(agentStoreMission.UserPrompt, params)
