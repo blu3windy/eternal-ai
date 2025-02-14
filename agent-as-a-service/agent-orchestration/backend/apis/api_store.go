@@ -259,3 +259,19 @@ func (s *Server) MissionStoreResult(c *gin.Context) {
 	}
 	ctxSTRING(c, http.StatusOK, resp)
 }
+
+func (s *Server) GetInstallInfo(c *gin.Context) {
+	ctx := s.requestContext(c)
+
+	obj, err := s.nls.GetAgentStoreInstall(ctx, s.stringFromContextQuery(c, "code"))
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	if obj != nil && obj.User != nil && obj.Type == models.AgentStoreInstallTypeUser {
+		ctxJSON(c, http.StatusOK, &serializers.Resp{Result: obj.User.Address})
+	} else {
+		ctxJSON(c, http.StatusOK, &serializers.Resp{Result: ""})
+	}
+
+}
