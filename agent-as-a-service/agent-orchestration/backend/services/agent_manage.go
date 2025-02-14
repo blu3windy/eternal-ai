@@ -502,30 +502,30 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 		return nil, errs.NewError(err)
 	}
 
-	if updateKb && len(req.CreateKnowledgeRequest.Files) > 0 {
-		updatedListFile, err := s.KnowledgeUsecase.UpdateListKnowledgeBaseFile(ctx, agent.AgentKBId, req.CreateKnowledgeRequest.Files)
+	if updateKb {
+		i, err := s.KnowledgeUsecase.GetKnowledgeBaseById(ctx, agent.AgentKBId)
 		if err != nil {
-			return nil, errs.NewError(err)
+			return nil, err
 		}
-		if updatedListFile {
-			i, err := s.KnowledgeUsecase.GetKnowledgeBaseById(ctx, agent.AgentKBId)
+		if len(req.CreateKnowledgeRequest.Files) > 0 {
+			updatedListFile, err := s.KnowledgeUsecase.UpdateListKnowledgeBaseFile(ctx, agent.AgentKBId, req.CreateKnowledgeRequest.Files)
 			if err != nil {
-				return nil, err
+				return nil, errs.NewError(err)
 			}
-
-			i.ChargeMore = i.CalcChargeMore()
-			i.Fee = i.Fee + i.ChargeMore
-			updateMap["fee"] = i.Fee
-			updateMap["charge_more"] = i.ChargeMore
-			if i.ChargeMore != 0 {
-				updateMap["status"] = models.KnowledgeBaseStatusWaitingPayment
+			if updatedListFile {
+				i.ChargeMore = i.CalcChargeMore()
+				if i.ChargeMore != 0 {
+					i.Fee = i.Fee + i.ChargeMore
+					updateMap["fee"] = i.Fee
+					updateMap["charge_more"] = i.ChargeMore
+					updateMap["status"] = models.KnowledgeBaseStatusWaitingPayment
+				}
 			}
-
-			if err := s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, agent.AgentKBId, updateMap); err != nil {
-				return nil, err
-			}
-			agent.KnowledgeBase = i
 		}
+		if err := s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, agent.AgentKBId, updateMap); err != nil {
+			return nil, err
+		}
+		agent.KnowledgeBase = i
 	}
 
 	agentInfoKbs := []*models.AgentInfoKnowledgeBase{}
