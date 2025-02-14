@@ -385,9 +385,10 @@ func (s *Server) Routers() {
 			infraTwitterApp.GET("/callback", s.InfraTwitterAppAuthenCallback)
 		}
 
-		// agentInfraAPI := rootAPI.Group("/infra")
-		// {
-		// 	agentInfraAPI.Any("/:infra_id/*path", s.proxyAgentStoreMiddleware("/api/infra"))
-		// }
+		storeTradingApp := rootAPI.Group("/store-defi-app")
+		{
+			storeTradingApp.GET("/install", s.StoreDefiAppAuthenInstall)
+			storeTradingApp.GET("/wallet", s.StoreDefiAppGetWallet)
+		}
 	}
 }
