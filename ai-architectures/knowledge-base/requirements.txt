@@ -13,4 +13,5 @@ langchain_community==0.3.14
 langchain==0.3.14
 aiofiles
 orjson==3.10.14
+json_repair==0.36.1
 git+https://github.com/eai1111/docling-core
