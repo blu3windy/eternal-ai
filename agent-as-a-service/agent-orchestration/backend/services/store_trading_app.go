@@ -10,7 +10,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 )
 
-func (s *Service) StoreDefiAppAuthenInstall(ctx context.Context, installUri string, installCode string) (string, error) {
+func (s *Service) StoreDefiAppAuthenInstall(ctx context.Context, installCode string, installUri string) (string, error) {
 	if installCode == "" {
 		return "", errs.NewError(errs.ErrBadRequest)
 	}
