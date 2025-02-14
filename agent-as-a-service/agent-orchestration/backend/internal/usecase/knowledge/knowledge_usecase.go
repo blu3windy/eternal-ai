@@ -356,7 +356,7 @@ func (uc *knowledgeUsecase) CreateKnowledgeBase(ctx context.Context, req *serial
 
 	model.KnowledgeBaseFiles = files
 	model.Fee, _ = uc.knowledgeBaseFileRepo.CalcTotalFee(ctx, model.ID)
-	model.ChargeMore = model.CalcChargeMore()
+	model.ChargeMore = model.Fee
 
 	updatedFields := make(map[string]interface{})
 	updatedFields["fee"] = model.Fee
@@ -553,12 +553,7 @@ func (uc *knowledgeUsecase) ScanKnowledgeBaseStatusPaymentReceipt(ctx context.Co
 }
 
 func (uc *knowledgeUsecase) CheckBalance(ctx context.Context, kn *models.KnowledgeBase) error {
-	price, err := uc.knowledgeBaseFileRepo.CalcTotalFee(ctx, kn.ID)
-	if err != nil {
-		return err
-	}
-
-	knPrice := new(big.Float).SetFloat64(price)
+	knPrice := new(big.Float).SetFloat64(kn.Fee)
 	knPrice = knPrice.Mul(knPrice, big.NewFloat(1e18))
 	_knPrice := new(big.Int)
 	_knPrice, _ = knPrice.Int(_knPrice)

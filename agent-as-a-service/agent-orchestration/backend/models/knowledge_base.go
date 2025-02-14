@@ -43,8 +43,8 @@ type KnowledgeBase struct {
 	KBTokenID              string               `json:"kb_token_id" gorm:"index"`
 	KBTokenMintTx          string               `json:"kb_token_mint_tx" gorm:"index"`
 	KnowledgeBaseFiles     []*KnowledgeBaseFile `json:"knowledge_base_files"`
-	Fee                    float64              `json:"fee"`
-	ChargeMore             float64              `json:"charge_more"`
+	Fee                    float64              `json:"fee"`         // total fee user need pay (all time)
+	ChargeMore             float64              `json:"charge_more"` // fee user need pay current (last update or create)
 	SolanaDepositAddress   string               `json:"solana_deposit_address"`
 	SolanaDepositPrivKey   string               `json:"-"`
 	FilecoinHash           string               `json:"filecoin_hash"`

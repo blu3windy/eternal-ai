@@ -514,9 +514,8 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				return nil, err
 			}
 
-			i.Fee, _ = s.KnowledgeUsecase.CalcFeeByKnowledgeBaseId(ctx, agent.AgentKBId)
 			i.ChargeMore = i.CalcChargeMore()
-
+			i.Fee = i.Fee + i.ChargeMore
 			updateMap["fee"] = i.Fee
 			updateMap["charge_more"] = i.ChargeMore
 			if i.ChargeMore != 0 {
