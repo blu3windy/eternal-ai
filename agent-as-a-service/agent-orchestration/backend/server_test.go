@@ -66,7 +66,7 @@ func Test_JOB(t *testing.T) {
 
 func Test_UTIL(t *testing.T) {
 	// ts.JobScanRepliesByLaunchpadTweetID(context.Background())
-	ts.UpdateOffchainAutoOutputV2ForId(context.Background(), 210823)
+	ts.AgentStoreCreateTokenInfo(context.Background(), "", 9)
 }
 
 func Test_SRV(t *testing.T) {

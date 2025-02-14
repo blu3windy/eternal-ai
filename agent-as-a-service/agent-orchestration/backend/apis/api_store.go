@@ -259,3 +259,19 @@ func (s *Server) MissionStoreResult(c *gin.Context) {
 	}
 	ctxSTRING(c, http.StatusOK, resp)
 }
+
+func (s *Server) AgentStoreCreateTokenInfo(c *gin.Context) {
+	ctx := s.requestContext(c)
+	agentStoreID := s.uintFromContextParam(c, "id")
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+	res, err := s.nls.AgentStoreCreateTokenInfo(ctx, userAddress, agentStoreID)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewMemeResp(res)})
+}

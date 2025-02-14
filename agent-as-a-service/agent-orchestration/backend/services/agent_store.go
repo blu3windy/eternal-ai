@@ -12,6 +12,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 	"github.com/jinzhu/gorm"
 )
 
@@ -246,7 +247,6 @@ func (s *Service) SaveAgentStoreCallback(ctx context.Context, req *serializers.A
 	if err != nil {
 		return errs.NewError(err)
 	}
-
 	return nil
 }
 
@@ -400,4 +400,76 @@ func (s *Service) CacheAgentSnapshotPost(snapshotPost *models.AgentSnapshotPost)
 		}
 	}
 	return nil
+}
+
+func (s *Service) AgentStoreCreateTokenInfo(ctx context.Context, userAddress string, agentStoreID uint) (*models.Meme, error) {
+	user, err := s.GetUser(daos.GetDBMainCtx(ctx), 0, userAddress, false)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	res, err := s.dao.FirstAgentStoreByID(
+		daos.GetDBMainCtx(ctx),
+		agentStoreID,
+		map[string][]interface{}{},
+		false,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	if res.OwnerID != user.ID {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	var meme *models.Meme
+	if res.MemeID <= 0 {
+		tokenInfo, err := s.GenerateTokenInfoFromSystemPrompt(ctx, res.Name, res.Description)
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+		err = daos.WithTransaction(
+			daos.GetDBMainCtx(ctx),
+			func(tx *gorm.DB) error {
+				meme = &models.Meme{
+					AgentStoreID:    res.ID,
+					NetworkID:       0,
+					OwnerID:         res.OwnerID,
+					OwnerAddress:    res.OwnerAddress,
+					TokenAddress:    "",
+					Name:            tokenInfo.TokenName,
+					Description:     res.Description,
+					Ticker:          tokenInfo.TokenSymbol,
+					Image:           tokenInfo.TokenImageUrl,
+					Status:          models.MemeStatusPending,
+					TotalSuply:      numeric.NewBigFloatFromString("1000000000"),
+					Supply:          numeric.NewBigFloatFromString("1000000000"),
+					Decimals:        18,
+					BaseTokenSymbol: string(models.BaseTokenSymbolEAI),
+					ReqSyncAt:       helpers.TimeNow(),
+					SyncAt:          helpers.TimeNow(),
+					TokenId:         helpers.RandomBigInt(32).String(),
+				}
+				err = s.dao.Create(tx, meme)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				err = tx.Model(res).Updates(
+					map[string]interface{}{
+						"meme_id": meme.ID,
+					},
+				).Error
+				if err != nil {
+					return errs.NewError(err)
+				}
+				return nil
+			},
+		)
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+	} else {
+		meme, err = s.dao.FirstMemeByID(daos.GetDBMainCtx(ctx), res.MemeID, map[string][]interface{}{}, false)
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+	}
+	return meme, nil
 }
