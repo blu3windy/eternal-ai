@@ -919,7 +919,7 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 		return "", errs.NewError(errors.New("knowledge bases is empty"))
 	}
 	if agentModel == "" {
-		agentModel = "Llama3.3"
+		agentModel = "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
 	}
 	systemPrompt := openai.GetSystemPromptFromLLMMessage(messages)
 	isKbAgent := false
@@ -1031,7 +1031,7 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 }
 
 func (s *Service) GenerateKnowledgeQuery(systemPrompt, textUserInput string) (*string, error) {
-	baseModel := "Llama3.3"
+	baseModel := "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
 	url := s.conf.AgentOffchainChatUrl
 	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
