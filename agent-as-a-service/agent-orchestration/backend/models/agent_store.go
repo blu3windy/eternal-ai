@@ -48,8 +48,9 @@ type AgentStore struct {
 	Status             AgentStoreStatus
 	Price              numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	AgentStoreMissions []*AgentStoreMission
-	NumInstall         uint
-	NumUsage           uint
+	NumInstall         uint             `gorm:"default:0"`
+	NumUsage           uint             `gorm:"default:0"`
+	Volume             numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 }
 
 type AgentStoreMission struct {
@@ -62,10 +63,11 @@ type AgentStoreMission struct {
 	OwnerAddress string
 	ToolList     string  `gorm:"type:longtext"`
 	Rating       float64 `gorm:"type:decimal(5,2);default:0"`
-	NumRating    uint
-	NumUsed      uint
+	NumRating    uint    `gorm:"default:0"`
+	NumUsed      uint    `gorm:"default:0"`
 	Status       AgentStoreStatus
-	Icon         string `gorm:"type:text"`
+	Icon         string           `gorm:"type:text"`
+	Volume       numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 }
 
 type AgentStoreInstall struct {
@@ -89,4 +91,19 @@ type AgentStoreLog struct {
 	Price               numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	UrlPath             string           `gorm:"type:text"`
 	Status              int
+}
+
+type AgentStoreTry struct {
+	gorm.Model
+	UserID       uint `gorm:"unique_index:agent_store__try_history_main_idx"`
+	AgentStoreID uint `gorm:"unique_index:agent_store__try_history_main_idx"`
+}
+
+type AgentStoreTryDetail struct {
+	gorm.Model
+	AgentStoreTryID     uint `gorm:"index"`
+	FromUser            bool
+	Content             string `gorm:"type:text"`
+	AgentSnapshotPostID uint
+	AgentSnapshotPost   *AgentSnapshotPost
 }

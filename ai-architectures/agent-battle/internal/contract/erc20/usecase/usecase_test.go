@@ -117,8 +117,7 @@ func Test_contractErc20Usecase_FilterTransfer(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	currentBlock = 26238476
-
+	currentBlock = 26239149
 	fromBlock := currentBlock - 10_000
 
 	type args struct {

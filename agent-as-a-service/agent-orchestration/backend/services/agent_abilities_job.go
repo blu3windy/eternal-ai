@@ -106,6 +106,7 @@ func (s *Service) JobAgentSnapshotPostCreate(ctx context.Context) error {
 							models.DUCK_CHAIN_ID,
 							models.TRON_CHAIN_ID,
 							models.MODE_CHAIN_ID,
+							models.ZETA_CHAIN_ID,
 						},
 					},
 					`agent_snapshot_missions.infer_at is null
@@ -569,6 +570,30 @@ func (s *Service) AgentSnapshotPostCreate(ctx context.Context, missionID uint, o
 							},
 						)
 					}
+					{
+						if inferPost.AgentStoreMissionID > 0 {
+							_ = tx.Model(&models.AgentStoreMission{}).
+								Where("id = ?", inferPost.AgentStoreMissionID).
+								Updates(
+									map[string]interface{}{
+										"num_used": gorm.Expr("num_used + ?", 1),
+										"volume":   gorm.Expr("volume + ?", inferPost.AgentStoreMissionFee),
+									},
+								).
+								Error
+						}
+						if inferPost.AgentStoreID > 0 {
+							_ = tx.Model(&models.AgentStore{}).
+								Where("id = ?", inferPost.AgentStoreID).
+								Updates(
+									map[string]interface{}{
+										"num_usage": gorm.Expr("num_usage + ?", 1),
+										"volume":    gorm.Expr("volume + ?", inferPost.AgentStoreMissionFee),
+									},
+								).
+								Error
+						}
+					}
 					return nil
 				},
 			)
@@ -680,7 +705,7 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 						SystemReminder:       "",
 						Toolset:              "mission_store",
 						AgentBaseModel:       agentBaseModel,
-						ReactMaxSteps:        1,
+						ReactMaxSteps:        3,
 						InferTxHash:          inferTxHash,
 						AgentStoreMissionID:  agentStoreMission.ID,
 						AgentStoreID:         agentStoreMission.AgentStoreID,
@@ -755,6 +780,72 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 								Amount:  numeric.NewBigFloatFromFloat(models.NegativeBigFloat(&inferPost.Fee.Float)),
 								Status:  models.UserTransactionStatusDone,
 							},
+						)
+					}
+					{
+						if inferPost.AgentStoreMissionID > 0 {
+							_ = tx.Model(&models.AgentStoreMission{}).
+								Where("id = ?", inferPost.AgentStoreMissionID).
+								Updates(
+									map[string]interface{}{
+										"num_used": gorm.Expr("num_used + ?", 1),
+										"volume":   gorm.Expr("volume + ?", inferPost.AgentStoreMissionFee),
+									},
+								).
+								Error
+						}
+						if inferPost.AgentStoreID > 0 {
+							_ = tx.Model(&models.AgentStore{}).
+								Where("id = ?", inferPost.AgentStoreID).
+								Updates(
+									map[string]interface{}{
+										"num_usage": gorm.Expr("num_usage + ?", 1),
+										"volume":    gorm.Expr("volume + ?", inferPost.AgentStoreMissionFee),
+									},
+								).
+								Error
+						}
+					}
+					// add history
+					agentStoreTry, _ := s.dao.FirstAgentStoreTry(
+						tx,
+						map[string][]interface{}{
+							"user_id = ?":        {user.ID},
+							"agent_store_id = ?": {agentStoreMission.AgentStoreID},
+						},
+						map[string][]interface{}{},
+						false,
+					)
+					if agentStoreTry == nil {
+						agentStoreTry = &models.AgentStoreTry{
+							UserID:       user.ID,
+							AgentStoreID: agentStoreMission.AgentStoreID,
+						}
+						s.dao.Create(
+							tx,
+							agentStoreTry,
+						)
+					}
+					if agentStoreTry != nil && agentStoreTry.ID > 0 {
+						history := &models.AgentStoreTryDetail{
+							AgentStoreTryID: agentStoreTry.ID,
+							FromUser:        true,
+							Content:         systemPrompt,
+						}
+						s.dao.Create(
+							tx,
+							history,
+						)
+
+						history = &models.AgentStoreTryDetail{
+							AgentStoreTryID:     agentStoreTry.ID,
+							FromUser:            false,
+							Content:             "",
+							AgentSnapshotPostID: inferPost.ID,
+						}
+						s.dao.Create(
+							tx,
+							history,
 						)
 					}
 					return nil

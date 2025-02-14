@@ -8,7 +8,6 @@ from x_content.wrappers.api.twitter_v2.models.objects import (
     TweetObject,
 )
 from x_content.wrappers.llm_tasks import choose_suitable_language
-from x_content.wrappers.knowledge_base.base import KnowledgeBase
 from x_content.wrappers.magic import sync2async
 
 logging.basicConfig(level=logging.INFO if not __debug__ else logging.DEBUG)

@@ -1,26 +1,25 @@
 package game_usecase
 
 import (
-
-"agent-battle/internal/adapters/repository/mongo"
-"agent-battle/internal/contract/erc20/usecase"
-"agent-battle/internal/core/model"
-"agent-battle/internal/core/port"
-"agent-battle/pkg/cryptoamount"
-"agent-battle/pkg/drivers/mongodb"
-"agent-battle/pkg/logger"
-"context"
-"fmt"
-"github.com/spf13/viper"
-"testing"
-"time"
+	"agent-battle/internal/adapters/repository/mongo"
+	"agent-battle/internal/contract/erc20/usecase"
+	"agent-battle/internal/core/model"
+	"agent-battle/internal/core/port"
+	"agent-battle/pkg/cryptoamount"
+	"agent-battle/pkg/drivers/mongodb"
+	"agent-battle/pkg/logger"
+	"context"
+	"fmt"
+	"github.com/spf13/viper"
+	"testing"
+	"time"
 )
 
 var (
 	erc20Usecase port.IContractErc20Usecase
 	gameRepo     mongo.IGameRepo
 	settingRepo  mongo.ISettingRepo
-	gameUseCase  port.IGameUsecase
+	gameUseCase  *GameUsecase
 )
 
 func init() {
@@ -43,7 +42,7 @@ func initVars() {
 
 	gameRepo = mongo.NewGameRepo(db)
 	settingRepo = mongo.NewSettingRepo(db)
-	gameUseCase = NewGameUsecase(gameRepo, settingRepo, erc20Usecase)
+	gameUseCase = NewGameUsecaseInternal(gameRepo, settingRepo, erc20Usecase)
 }
 
 /*Test_gameUsecase_GameFullFlow tests the full flow of the game
@@ -59,7 +58,7 @@ end the game, update the result and prize to winners.
  - The total bet amount winners is 2 EAI tokens
  - The first winner player will get 1.425 EAI tokens
  - The second winner player will get 1.425 EAI tokens
- */
+*/
 func Test_gameUsecase_GameFullFlow(t *testing.T) {
 	ctx := context.Background()
 
@@ -82,6 +81,10 @@ func Test_gameUsecase_GameFullFlow(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// game := &model.Game{
+	// 	TweetId: "1739425197",
+	// }
+
 	// check if there are three players in the game
 	latestGame, err := gameUseCase.DetailGame(ctx, game.TweetId)
 	if err != nil {
@@ -90,6 +93,18 @@ func Test_gameUsecase_GameFullFlow(t *testing.T) {
 
 	if len(latestGame.Players) != 3 {
 		t.Fatal("There should be three players in the game")
+	}
+
+	// Set bet expired
+	err = setBetExpired(latestGame)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Bet after bet time out
+	err = betAfterBetTimeOut(latestGame)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	// End game
@@ -107,7 +122,6 @@ func Test_gameUsecase_GameFullFlow(t *testing.T) {
 		}
 	}
 	t.Log(fmt.Sprintf("Game ended: %s", endedGame.TweetId))
-
 
 	// Update result and prize to winners
 	updatedGame, err := updateResultAndPrizeToWinners(endedGame)
@@ -149,15 +163,32 @@ func Test_gameUsecase_GameFullFlow(t *testing.T) {
 			t.Fatal("The winner should get 1.425 EAI tokens")
 		}
 	}
+
+	// there should be one expired players
+	if len(updatedGame.ExpiredPlayers) != 1 {
+		t.Fatal("There should be one expired player")
+	}
+
+	for _, player := range updatedGame.ExpiredPlayers {
+		if player.RefundTxHash == "" {
+			t.Fatal("The expired player should have a refund transaction hash")
+		}
+
+		// expired player will get 1 EAI token
+		if player.RefundAmount != cryptoamount.CryptoAmount(1e18) {
+			t.Fatal("The expired player should get 1 EAI token")
+		}
+	}
 }
 
 // Start game
-func startGame() (*model.Game, error){
+func startGame() (*model.Game, error) {
 	randTweetId := fmt.Sprintf("%d", time.Now().Unix())
 
 	game, err := gameUseCase.StartGame(context.Background(), &model.StartGameRequest{
-		TimeOut: 6000, // 6000 seconds = 100 minutes
-		TweetId: randTweetId,
+		TimeOut:    6000, // 6000 seconds = 100 minutes
+		BetTimeOut: 3000, // 3000 seconds = 50 minutes
+		TweetId:    randTweetId,
 		Usernames: []string{
 			"test1",
 			"test2",
@@ -190,6 +221,29 @@ func betToGame(game *model.Game) error {
 	}
 
 	err = transferFundsFromPlayerToAgent(secondAgent, "SECOND_")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setBetExpired(game *model.Game) error {
+	game.BetEndTime = time.Now()
+	err := gameUseCase.updateGame(context.Background(), game)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func betAfterBetTimeOut(game *model.Game) error {
+	// Bet after bet time out
+	firstAgent := game.AgentWallets[0]
+
+	// Transfer funds from player to agent
+	err := transferFundsFromPlayerToAgent(firstAgent, "FIRST_")
 	if err != nil {
 		return err
 	}
@@ -232,7 +286,7 @@ func updateResultAndPrizeToWinners(game *model.Game) (*model.Game, error) {
 
 	// Update result and prize to winners
 	gameResultRequest := &model.GameResultRequest{
-		TweetId: game.TweetId,
+		TweetId:  game.TweetId,
 		Username: "test1", // The first agent wins the game
 	}
 	_, err := gameUseCase.GameResult(ctx, gameResultRequest)
@@ -246,7 +300,7 @@ func updateResultAndPrizeToWinners(game *model.Game) (*model.Game, error) {
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// get the latest game
 		latestGame, err := gameUseCase.DetailGame(ctx, game.TweetId)
 		if err != nil {
@@ -256,7 +310,32 @@ func updateResultAndPrizeToWinners(game *model.Game) (*model.Game, error) {
 		if latestGame.TotalPlayerWinners > 0 && latestGame.Status == model.GameStatusCompleted {
 			return latestGame, nil
 		}
-		
+
 		time.Sleep(10 * time.Second)
+	}
+}
+
+func TestGameUsecase_WatchGameState(t *testing.T) {
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Test Watch Game State",
+			args: args{
+				ctx: context.Background(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := gameUseCase.WatchGameState(tt.args.ctx); (err != nil) != tt.wantErr {
+				t.Errorf("WatchGameState() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }

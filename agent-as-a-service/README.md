@@ -42,9 +42,10 @@ yarn && yarn build
    - `yarn start:agent`
 
 
-### Register your app on Shop apps and run your service
+### Register your app on Shop apps and run your service 
+
+[Example service code](https://github.com/eternalai-org/eternal-ai/blob/master/agent-as-a-service/dagent/src/direct/index.ts)
 
 ```bash
 yarn start:direct
 ```
-[Example service code](https://github.com/eternalai-org/eternal-ai/blob/master/agent-as-a-service/dagent/src/direct/index.ts)

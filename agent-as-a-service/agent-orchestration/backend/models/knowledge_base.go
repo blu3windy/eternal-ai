@@ -24,6 +24,7 @@ const (
 const (
 	KnowledgeBaseFileStatusPending KnowledgeBaseFileStatus = iota + 1
 	KnowledgeBaseFileStatusDone
+	KnowledgeBaseFileStatusFail
 )
 
 type KnowledgeBase struct {
@@ -42,8 +43,8 @@ type KnowledgeBase struct {
 	KBTokenID              string               `json:"kb_token_id" gorm:"index"`
 	KBTokenMintTx          string               `json:"kb_token_mint_tx" gorm:"index"`
 	KnowledgeBaseFiles     []*KnowledgeBaseFile `json:"knowledge_base_files"`
-	Fee                    float64              `json:"fee"`
-	ChargeMore             float64              `json:"charge_more"`
+	Fee                    float64              `json:"fee"`         // total fee user need pay (all time)
+	ChargeMore             float64              `json:"charge_more"` // fee user need pay current (last update or create)
 	SolanaDepositAddress   string               `json:"solana_deposit_address"`
 	SolanaDepositPrivKey   string               `json:"-"`
 	FilecoinHash           string               `json:"filecoin_hash"`
@@ -67,6 +68,7 @@ type KnowledgeBaseFile struct {
 	FilecoinHash        string                  `json:"filecoin_hash"`
 	FilecoinHashRawData string                  `json:"filecoin_hash_raw_data"`
 	TransferHash        string                  `json:"transfer_hash"`
+	LastErrorMessage    string                  `json:"last_error_message"`
 }
 
 type ListKnowledgeBaseRequest struct {
@@ -107,13 +109,13 @@ func (m *KnowledgeBase) CalcChargeMore() float64 {
 }
 
 type RagResult struct {
-	Ref          string `json:"ref"`
-	Kb           string `json:"kb"`
-	FilecoinHash string `json:"filecoin_hash"`
-	Message      string `json:"message"`
+	Ref        string `json:"ref"`
+	Kb         string `json:"kb"`
+	Identifier string `json:"identifier"`
+	Message    string `json:"message"`
 }
 
-type RagResponse struct {
+type RagHookResponse struct {
 	Result *RagResult `json:"result"`
 	Error  *string    `json:"error"`
 	Status string     `json:"status"`

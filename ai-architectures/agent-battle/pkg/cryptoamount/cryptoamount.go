@@ -12,6 +12,13 @@ const (
 	defaultRoundOn        = 0.5
 )
 
+var (
+	// bigNumberRoundingFactor is the factor for rounding the big number.
+	// For example, 1e5 is used for rounding the big number to 5 decimal places.
+	// This will be used for rounding down the last digit.
+	bigNumberRoundingFactor = big.NewInt(1e5)
+)
+
 // CryptoAmount is a type for representing a cryptocurrency amount.
 // It represents the uint256 value in the smart contract.
 // For example, 1 USDC is represented as 1 * 10^6 = 1000000. So the CryptoAmount is 1000000.
@@ -21,7 +28,15 @@ func (a CryptoAmount) ToBigInt() *big.Int {
 	if a == 0 {
 		return nil
 	}
-	return big.NewInt(int64(a))
+
+	// Convert float64 to big.Float first to avoid precision loss
+	bigFloat := new(big.Float).SetFloat64(a.ToFloat64())
+
+	// Convert big.Float to big.Int (truncating decimal part)
+	bigInt := new(big.Int)
+	bigFloat.Int(bigInt) // This rounds down automatically
+
+	return bigInt
 }
 
 // ToString converts the CryptoAmount to a string with the given number of decimals.
@@ -65,10 +80,23 @@ func round(floatValue float64, roundOn float64, places int) float64 {
 }
 
 // NewCryptoAmountFromBigInt creates a new CryptoAmount from the given big.Int.
+// The big.Int is rounded to the nearest number with the bigNumberRoundingFactor.
+// For example, if the big.Int is 1000001 and the bigNumberRoundingFactor is 1e5, the result is 1000000.
 func NewCryptoAmountFromBigInt(a *big.Int) CryptoAmount {
 	if a == nil {
 		return 0
 	}
-	floatValue, _ := a.Float64()
+
+	// Calculate the remainder: remainder = num % bigNumberRoundingFactor
+	remainder := new(big.Int)
+	remainder.Mod(a, bigNumberRoundingFactor)
+
+	// Calculate the rounded number: rounded = num - remainder
+	rounded := new(big.Int)
+	rounded.Sub(a, remainder)
+
+	// Convert the rounded number to float64
+	floatValue, _ := new(big.Float).SetInt(rounded).Float64()
+
 	return CryptoAmount(floatValue).Round(0)
 }

@@ -72,7 +72,8 @@ func (s *Server) Routers() {
 		userAPI := rootAPI.Group("/users")
 		{
 			userAPI.POST("/upload", s.UserUploadFile)
-			userAPI.GET("/profile", s.GetUserProfileWithAuth)
+			userAPI.GET("/profile", s.authCheckTK1TokenMiddleware(), s.GetUserProfileWithAuth)
+			userAPI.GET("/transactions", s.authCheckTK1TokenMiddleware(), s.GetListUserTransactions)
 		}
 
 		adminAPI := rootAPI.Group("/admin")
@@ -106,6 +107,8 @@ func (s *Server) Routers() {
 			agentAPI.POST("/preview", s.PreviewAgentSystemPromp)
 			agentAPI.POST("/preview/v1", s.PreviewAgentSystemPrompV1)
 			agentAPI.POST("/chats", s.AgentChatSupport)
+
+			agentAPI.GET("/network-fees", s.GetAgentChainFees)
 
 			twitterAPI := agentAPI.Group("/twitter")
 			{
@@ -382,9 +385,10 @@ func (s *Server) Routers() {
 			infraTwitterApp.GET("/callback", s.InfraTwitterAppAuthenCallback)
 		}
 
-		// agentInfraAPI := rootAPI.Group("/infra")
-		// {
-		// 	agentInfraAPI.Any("/:infra_id/*path", s.proxyAgentStoreMiddleware("/api/infra"))
-		// }
+		storeTradingApp := rootAPI.Group("/store-defi-app")
+		{
+			storeTradingApp.GET("/install", s.StoreDefiAppAuthenInstall)
+			storeTradingApp.GET("/wallet", s.StoreDefiAppGetWallet)
+		}
 	}
 }

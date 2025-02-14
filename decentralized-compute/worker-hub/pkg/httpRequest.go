@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"solo/internal/model"
 	"strings"
+	"time"
 )
 
 type AllowedCode struct {
@@ -149,7 +150,11 @@ func HttpStreamRequest(fullUrl string, method string, headers map[string]string,
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{
+		Timeout: 120 * time.Second, // Set the timeout duration
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, nil, 0, err
 	}

@@ -20,6 +20,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/lighthouse"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/magiceden"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/trxapi"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -502,29 +503,30 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 		return nil, errs.NewError(err)
 	}
 
-	if updateKb {
-		if len(req.CreateKnowledgeRequest.Files) != 0 {
-			s.KnowledgeUsecase.UpdateListKnowledgeBaseFile(ctx, agent.AgentKBId, req.CreateKnowledgeRequest.Files)
-		}
-
-		i, err := s.KnowledgeUsecase.GetKnowledgeBaseById(ctx, agent.AgentKBId)
+	if updateKb && len(req.CreateKnowledgeRequest.Files) > 0 {
+		updatedListFile, err := s.KnowledgeUsecase.UpdateListKnowledgeBaseFile(ctx, agent.AgentKBId, req.CreateKnowledgeRequest.Files)
 		if err != nil {
-			return nil, err
+			return nil, errs.NewError(err)
 		}
+		if updatedListFile {
+			i, err := s.KnowledgeUsecase.GetKnowledgeBaseById(ctx, agent.AgentKBId)
+			if err != nil {
+				return nil, err
+			}
 
-		i.Fee, _ = s.KnowledgeUsecase.CalcFeeByKnowledgeBaseId(ctx, agent.AgentKBId)
-		i.ChargeMore = i.CalcChargeMore()
+			i.ChargeMore = i.CalcChargeMore()
+			i.Fee = i.Fee + i.ChargeMore
+			updateMap["fee"] = i.Fee
+			updateMap["charge_more"] = i.ChargeMore
+			if i.ChargeMore != 0 {
+				updateMap["status"] = models.KnowledgeBaseStatusWaitingPayment
+			}
 
-		updateMap["fee"] = i.Fee
-		updateMap["charge_more"] = i.ChargeMore
-		if i.ChargeMore != 0 {
-			updateMap["status"] = models.KnowledgeBaseStatusWaitingPayment
+			if err := s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, agent.AgentKBId, updateMap); err != nil {
+				return nil, err
+			}
+			agent.KnowledgeBase = i
 		}
-
-		if err := s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, agent.AgentKBId, updateMap); err != nil {
-			return nil, err
-		}
-		agent.KnowledgeBase = i
 	}
 
 	agentInfoKbs := []*models.AgentInfoKnowledgeBase{}
@@ -1330,4 +1332,28 @@ func (s *Service) AgentCreateAgentAssistantForLocal(ctx context.Context, req *se
 		return nil, errs.NewError(err)
 	}
 	return agent, nil
+}
+
+func (s *Service) GetAgentChainFees(ctx context.Context) (map[string]interface{}, error) {
+	res, err := s.dao.FindAgentChainFee(
+		daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{},
+		map[string][]interface{}{},
+		[]string{"id desc"},
+		0,
+		999999,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	chainFeeMap := map[string]interface{}{}
+	for _, v := range res {
+		chainFeeMap[strconv.Itoa(int(v.NetworkID))] = map[string]interface{}{
+			"network_id": v.NetworkID,
+			"mint_fee":   numeric.BigFloat2Text(&v.MintFee.Float),
+			"post_fee":   numeric.BigFloat2Text(&v.InferFee.Float),
+			"token_fee":  numeric.BigFloat2Text(&v.TokenFee.Float),
+		}
+	}
+	return chainFeeMap, nil
 }
