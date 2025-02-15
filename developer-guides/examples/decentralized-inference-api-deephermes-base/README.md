@@ -19,37 +19,20 @@ It's free.
 
 ## Step 2: Send your first Onchain DeepHermes-R1 call
 
-We will ask DeepHermes to design a DeFAI agent that can autonomously trade on Uniswap and Raydium for us.
+We will ask DeepHermes to tell you about an overview of P2P system.
 
-Let's run this ```curl``` command.
+Let's run the `chat.js` script.
 
 1. Enter your API key
-2. Set Chain ID as ```8453``` (Base)
-3. Set the model as ```DeepSeek-R1-Distill-Llama-70B```
-4. Set the system prompt as ```You are a 10x engineer.```
-5. Set the user prompt as ```Design an autonomous DeFi agent that can trade on Uniswap and Raydium. Explain your design in 500 characters or less.```
- 
+2. Set the system prompt as ```You are a 10x engineer.```
+3. Set the user prompt as ```Give a short overview of p2p system```
+
+
 ```
-curl --location 'https://api.eternalai.org/v1/chat/completions' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer $ETERNALAI_API_KEY' \
---data '{
-    "chain_id": "8453",
-    "model": "DeepSeek-R1-Distill-Llama-70B",
-    "messages": [
-        {
-            "role": "system",
-            "content": "You are a 10x engineer."
-        },
-        {
-            "role": "user",
-            "content": "Design an autonomous DeFi agent that can trade on Uniswap and Raydium. Explain your design in 500 characters or less."
-        }
-    ]
-}'
+ETERNALAI_API_KEY="YOUR-API-KEY" SYSTEM_PROMPT="YOUR-SYSTEM-PROMPT" USER_PROMPT="YOUR-USER-PROMPT" node chat-api.js
 ```
 
-For those curious about how decentralized inference works: once the prompt is sent onchain, miners are randomly selected into a pBFT committee. They will first fetch the [DeepSeek-R1 model stored on BNB Greenfield](https://greenfield-sp.bnbchain.org/view/eai-agents/DeepSeek-R1-Distill-Llama-70B-Q8), a decentralized storage network, and then run inference. ```2/3+1``` of the miners must provide the same deterministic response.
+For those curious about how decentralized inference works: once the prompt is sent onchain, miners are randomly selected into a pBFT committee. They will first fetch the [DeepSeek-R1 model stored on Filecoin](https://gateway.lighthouse.storage/ipfs/bafkreigq7yhawmvs7x3hs366wwdkkimvf26admql3sqtl6a4o2nwrbdvka), a decentralized storage network, and then run inference. ```2/3+1``` of the miners must provide the same deterministic response.
 
 ## Step 3: Receive the Onchain DeepSeek-R1 response
 
