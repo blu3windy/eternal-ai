@@ -1,5 +1,9 @@
 const https = require("https");
 
+const API_KEY = process.env.ETERNALAI_API_KEY;
+const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT;
+const USER_PROMPT = process.env.USER_PROMPT;
+
 function chat() {
   const options = {
     hostname: "api.eternalai.org",
@@ -7,7 +11,7 @@ function chat() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": "Bearer $ETERNALAI_API_KEY",
+      "Authorization": `Bearer ${API_KEY}`,
       "Accept": "text/event-stream"
     }
   };
@@ -77,8 +81,8 @@ function chat() {
       chain_id: "8453",
       max_tokens: 1024,
       messages: [
-        { role: "system", content: "You are a 10x blockchain engineer." },
-        { role: "user", content: "Give a short overview of p2p system" }
+        { role: "system", content: `${SYSTEM_PROMPT}` },
+        { role: "user", content: `${USER_PROMPT}` }
       ]
     })
   );
@@ -87,3 +91,5 @@ function chat() {
 }
 
 chat();
+
+
