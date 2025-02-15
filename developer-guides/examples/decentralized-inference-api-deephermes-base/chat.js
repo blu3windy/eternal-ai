@@ -7,7 +7,7 @@ function chat() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": "Bearer d50b6ba5169ea538a71fe7b0685b755823a3746934fa3cc4",
+      "Authorization": "Bearer $ETERNALAI_API_KEY",
       "Accept": "text/event-stream"
     }
   };
