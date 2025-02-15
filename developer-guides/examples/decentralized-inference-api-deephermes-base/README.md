@@ -67,7 +67,7 @@ Onchain Data: {
 
 With Eternal AI's Decentralized Inference, everything is onchain-verifiable.
 
-Let's look at the onchain prompt transaction on Base Explorer. You can verify that the prompt ran on DeepSeek R1. You can also verify the system prompt and the user prompt.
+Let's look at the onchain prompt transaction on Base Explorer. You can verify that the prompt ran on DeepHermes. You can also verify the system prompt and the user prompt.
 
 https://basescan.org/tx/0x90a18461a0bb4db0f1b8348de72b29c4f9253c96713e1b445614ff74ae5d1791
 
