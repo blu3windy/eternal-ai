@@ -34,7 +34,7 @@ ETERNALAI_API_KEY="YOUR-API-KEY" SYSTEM_PROMPT="YOUR-SYSTEM-PROMPT" USER_PROMPT=
 
 For those curious about how decentralized inference works: once the prompt is sent onchain, miners are randomly selected into a pBFT committee. They will first fetch the [DeepSeek-R1 model stored on Filecoin](https://gateway.lighthouse.storage/ipfs/bafkreigq7yhawmvs7x3hs366wwdkkimvf26admql3sqtl6a4o2nwrbdvka), a decentralized storage network, and then run inference. ```2/3+1``` of the miners must provide the same deterministic response.
 
-## Step 3: Receive the Onchain DeepSeek-R1 response
+## Step 3: Receive the Onchain DeepHermes response
 
 You'll find the following info in the response.
 
@@ -45,127 +45,47 @@ You'll find the following info in the response.
 5. The response
 
 ```
-{
-    "id": "chatcmpl-yj89clO65GMubbjIrYCQXQuwSHTBGqsI",
-    "object": "chat.completion",
-    "created": 1737507976,
-    "model": "DeepSeek-R1-Distill-Llama-70B",
-    "choices": 
-    [
-        {
-            "index": 0,
-            "message": 
-            {
-                "role": "assistant",
-                "content": "<think>\nAlright, so I need to design an autonomous DeFi agent that can trade on Uniswap and Raydium. Hmm, okay, where to start?\n\nFirst, I should figure out what an autonomous DeFi agent does. It's a bot that can execute trades without human intervention, right? So, it needs to be able to interact with these platforms automatically.\n\nUniswap and Raydium are both DEXs, but they're on different blockchains. Uniswap is on Ethereum, and Raydium is on Solana. That means the agent will need to handle cross-chain transactions, which can be tricky because of differences in consensus mechanisms and transaction speeds.\n\nNext, the core components. I think it should have a strategy module. This module decides when to buy or sell. Maybe it uses technical indicators like moving averages or RSI. Or perhaps it's based on on-chain data, like liquidity pool stats or trading volume. I should make sure it's flexible so users can plug in different strategies.\n\nThen, the execution engine. This part interacts with the DEXs' smart contracts. It needs to send buy and sell orders, manage slippage, and handle gas fees on Ethereum. On Solana, transactions are faster and cheaper, so maybe the engine can optimize for speed there. Also, error handling is crucial—what if a transaction fails or times out?\n\nCross-chain interoperability is another big piece. How will the agent move assets between Ethereum and Solana? Maybe through bridges like Wormhole or Synapse. The agent needs to monitor bridge transactions to ensure they complete successfully and handle any issues that arise.\n\nRisk management can't be overlooked. The agent should have stop-loss mechanisms to prevent big losses. Position sizing is important too—how much to invest in each trade to manage overall portfolio risk. Also, monitoring the agent's performance over time to adjust strategies as needed.\n\nOn-chain data analytics will help the strategy module make informed decisions. It can look at liquidity pool data, trading volumes, and recent transactions to spot trends or potential opportunities. Maybe it can also analyze wallet movements to anticipate market moves.\n\nFor the user interface, a dashboard where users can track performance, adjust settings, and monitor active trades would be useful. Alerts for important events, like a trade execution or a bridge transfer, should be part of this.\n\nSmart contract integrations are necessary for interacting with the DEXs. I'll need to make sure the agent can read from and write to these contracts efficiently. Auditing these integrations regularly is important to maintain security.\n\nCompliance is another consideration. DeFi regulations are still evolving, so the agent should have KYC/AML features, especially if it's used by institutions. Privacy is also key, ensuring that user data and trade strategies aren't exposed.\n\nTesting is going to be a challenge. I'll need to set up a test environment where I can simulate trades on both Uniswap and Raydium without risking real funds. Maybe use testnets for Ethereum and Solana to see how the agent performs under different conditions.\n\nScalability is important too. As more users adopt the agent, it should be able to handle increased trade volumes without lagging. Optimizing the execution engine for speed and efficiency will be necessary.\n\nSecurity can't be an afterthought. The agent will handle private keys and potentially large amounts of funds, so it needs robust security measures. Maybe implement multi-sig wallets or hardware security modules to protect user assets.\n\nFinally, documentation and community support will help users understand how to use the agent and troubleshoot issues. Building a community around the project can also lead to collaborative improvements and new features.\n\nPutting it all together, the agent needs to be modular, secure, and capable of handling multiple DEXs across different chains. It should provide a seamless experience for users, allowing them to automate their DeFi trading strategies effectively.\n</think>\n\nAn autonomous DeFi agent for Uniswap (Ethereum) and Raydium (Solana) would include: strategy modules (e.g., based on on-chain data or technical indicators), execution engines to interact with DEX smart contracts, cross-chain interoperability via bridges, risk management mechanisms, and on-chain analytics. It would operate 24/7, optimizing trades while minimizing slippage and gas fees."
-            },
-            "finish_reason": "stop"
-        }
-    ],
-    "usage": 
-    {
-        "prompt_tokens": 39,
-        "completion_tokens": 876,
-        "total_tokens": 915
-    },
-    "system_fingerprint": "b4519-80d0d6b4",
-    "message": "",
-    "type": "",
-    "param": null,
-    "code": 0,
-    "onchain_data": 
-    {
-        "infer_id": "13280",
-        "pbft_committee": 
-        [
-            "0xc557e228d2443b437e5297a8266b0f3257b2109a",
-            "0xb9deb8db9724e2cb551164cdab0dd03a484cb9da",
-            "0xfe5598e12532c8fe8fa586f8f6d2e12e82bb2825"
-        ],
-        "proposer": "0xb9deb8db9724e2cb551164cdab0dd03a484cb9da",
-        "infer_tx": "0xac900d098cd27217378ba7e714cf708bb65e2491f6854a6a4d53444a944a85e5",
-        "propose_tx": "0x9a3eb2a23ee7668df30b4a63f0750596c0809740ab267de4fdc6ce534985f6bc",
-        "input_cid": "",
-        "output_cid": ""
-    }
+A peer-to-peer (P2P) system is a network model where individual data providers and data consumers operate in ad hoc and decentralized global mesh, which means nodes in the network communicate and coordinate with each other without the need for a central server or intermediary. In Blockchain terms: 1. Nodes participate in the network, sharing, and maintaining a distributed consensus of the ledger (blockchain).  2. Through a series of algorithmic checks and balances, especially the Proof of Work mechanism in Bitcoin, the network ensures that only valid blocks are added to the chain.  3. Nodes exchange blocks and transactions with each other, ensuring that no single node controls the entire network. 4. This network ensures transnational trust between parties, also known as 'trustless' transactions. Without trust in the central authority, the parties can engage in the transaction on the network without fear of fraud. 5. Benefits can include greater security, anonymity, and efficiency.  By leveraging decentralized infrastructure and new technologies, P2P systems provide an innovative alternative to traditional centralized structures.
+
+Onchain Data: {
+  "infer_id": "25096",
+  "pbft_committee": [
+    "0xcdd1e241b24d705161db488a8bddee985f12339f",
+    "0x0b52eb20a41decdcb1a513dec7db8ef427485419",
+    "0x37b00fa2ed4c6cb4b1ca92939942aac297abd1e0"
+  ],
+  "proposer": "0x37b00fa2ed4c6cb4b1ca92939942aac297abd1e0",
+  "infer_tx": "0x90a18461a0bb4db0f1b8348de72b29c4f9253c96713e1b445614ff74ae5d1791",
+  "propose_tx": "0x0201e7b84dbfcf7df1ede96059ccfe5b36a1819e90eb4d9337b1f24a1666ba76",
+  "input_cid": "",
+  "output_cid": ""
 }
 ```
 
-## Step 4: Let's see how the DeepSeek-R1 thinks
 
-When DeepSeek-R1 receives a prompt, it first thinks about the reasoning process in its mind.
-
-```
-<think>
-
-> Alright, so I need to design an autonomous DeFi agent that can trade on Uniswap and Raydium. Hmm, okay, where to start?
- 
-> First, I should figure out what an autonomous DeFi agent does. It's a bot that can execute trades without human intervention, right? So, it needs to be able to interact with these platforms automatically.
- 
-> Uniswap and Raydium are both DEXs, but they're on different blockchains. Uniswap is on Ethereum, and Raydium is on Solana. That means the agent will need to handle cross-chain transactions, which can be tricky because of differences in consensus mechanisms and transaction speeds.
-
-> Next, the core components. I think it should have a strategy module. This module decides when to buy or sell. Maybe it uses technical indicators like moving averages or RSI. Or perhaps it's based on on-chain data, like liquidity pool stats or trading volume. I should make sure it's flexible so users can plug in different strategies.
-
-> Then, the execution engine. This part interacts with the DEXs' smart contracts. It needs to send buy and sell orders, manage slippage, and handle gas fees on Ethereum. On Solana, transactions are faster and cheaper, so maybe the engine can optimize for speed there. Also, error handling is crucial—what if a transaction fails or times out?
-
-> Cross-chain interoperability is another big piece. How will the agent move assets between Ethereum and Solana? Maybe through bridges like Wormhole or Synapse. The agent needs to monitor bridge transactions to ensure they complete successfully and handle any issues that arise.
-
-> Risk management can't be overlooked. The agent should have stop-loss mechanisms to prevent big losses. Position sizing is important too—how much to invest in each trade to manage overall portfolio risk. Also, monitoring the agent's performance over time to adjust strategies as needed.
-
-> On-chain data analytics will help the strategy module make informed decisions. It can look at liquidity pool data, trading volumes, and recent transactions to spot trends or potential opportunities. Maybe it can also analyze wallet movements to anticipate market moves.
-
-> For the user interface, a dashboard where users can track performance, adjust settings, and monitor active trades would be useful. Alerts for important events, like a trade execution or a bridge transfer, should be part of this.
-
-> Smart contract integrations are necessary for interacting with the DEXs. I'll need to make sure the agent can read from and write to these contracts efficiently. Auditing these integrations regularly is important to maintain security.
-
-> Compliance is another consideration. DeFi regulations are still evolving, so the agent should have KYC/AML features, especially if it's used by institutions. Privacy is also key, ensuring that user data and trade strategies aren't exposed.
-
-> Testing is going to be a challenge. I'll need to set up a test environment where I can simulate trades on both Uniswap and Raydium without risking real funds. Maybe use testnets for Ethereum and Solana to see how the agent performs under different conditions.
-
-> Scalability is important too. As more users adopt the agent, it should be able to handle increased trade volumes without lagging. Optimizing the execution engine for speed and efficiency will be necessary.
-
-> Security can't be an afterthought. The agent will handle private keys and potentially large amounts of funds, so it needs robust security measures. Maybe implement multi-sig wallets or hardware security modules to protect user assets.
-
-> Finally, documentation and community support will help users understand how to use the agent and troubleshoot issues. Building a community around the project can also lead to collaborative improvements and new features.
-
-> Putting it all together, the agent needs to be modular, secure, and capable of handling multiple DEXs across different chains. It should provide a seamless experience for users, allowing them to automate their DeFi trading strategies effectively.
-
-</think>
-```
-
-## Step 5: Let's see how DeepSeek-R1 answers
-
-Based on its prior reasoning in Step 4, DeepSeek-R1 provides the final answer.
-
-```
-<answer>
- 
-An autonomous DeFi agent for Uniswap (Ethereum) and Raydium (Solana) would include: strategy modules (e.g., based on on-chain data or technical indicators), execution engines to interact with DEX smart contracts, cross-chain interoperability via bridges, risk management mechanisms, and on-chain analytics. It would operate 24/7, optimizing trades while minimizing slippage and gas fees.
-
-</answer>
-```
-
-## Step 6: Let's verify the onchain prompt transaction
+## Step 4: Let's verify the onchain prompt transaction
 
 With Eternal AI's Decentralized Inference, everything is onchain-verifiable.
 
 Let's look at the onchain prompt transaction on Base Explorer. You can verify that the prompt ran on DeepSeek R1. You can also verify the system prompt and the user prompt.
 
-https://basescan.org/tx/0xac900d098cd27217378ba7e714cf708bb65e2491f6854a6a4d53444a944a85e5
+https://basescan.org/tx/0x90a18461a0bb4db0f1b8348de72b29c4f9253c96713e1b445614ff74ae5d1791
 
-<img width="1015" alt="image" src="https://github.com/user-attachments/assets/fff46f60-733d-4976-bf82-9b164f3a591b" />
+<img width="1359" alt="image" src="https://github.com/user-attachments/assets/065be66a-c660-47db-b70f-14b4239cc85b" />
 
 
-## Step 7: Let's verify the onchain response transaction
+
+## Step 5: Let's verify the onchain response transaction
 
 Now, let's see the onchain response transaction on Base Explorer. You can see the actual response content with the thinking process and the final answer. Everything is onchain and verifiable.
 
-https://basescan.org/tx/0x9a3eb2a23ee7668df30b4a63f0750596c0809740ab267de4fdc6ce534985f6bc
+https://basescan.org/tx/0x0201e7b84dbfcf7df1ede96059ccfe5b36a1819e90eb4d9337b1f24a1666ba76
 
-<img width="1019" alt="image" src="https://github.com/user-attachments/assets/80f9c15b-3083-4be0-80ca-2fa78ce3b972" />
+<img width="1047" alt="image" src="https://github.com/user-attachments/assets/0b6212d8-4e4f-4d9b-b59b-5d45a6d519b1" />
+
 
 ## Conclusion
 
-Congrats! You've finished making the first decentralized inference call with DeepSeek-R1.
+Congrats! You've finished making the first decentralized inference call with DeepHermes.
 
 We can't wait to see what AI-powered dapps and AI agents you'll build next.
