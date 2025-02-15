@@ -1,13 +1,13 @@
 
-# Decentralized Inference API with DeepSeek-R1 on Base
+# Decentralized Inference API with DeepHermes-3 on Base
 
-This developer guide shows you how to use Decentralized Inference API with DeepSeek-R1 on Base.
+This developer guide shows you how to use Decentralized Inference API with DeepHermes-R1 on Base.
 
 * **Decentralized**: Use Eternal AI's Decentralized Inference API instead of OpenAI's Centralized API.
 * **Onchain-verifiable AI**: Don't trust AI, verify them. All inferences are recorded onchain and verifiable by anyone.
 * **Unstoppable**: All inference runs exactly as coded on Base without any possibility of censorship, fraud, or third-party interference.
 * **Permissionless**: Anyone can call the Decentralized Inference API at any time without a KYC or permission.
-* **SOTA model**: DeepSeek R1 is the state-of-the-art AI model for reasoning.
+* **SOTA model**: DeepHermes R1 is the state-of-the-art AI model for reasoning.
 
 ## Step 1: Get your Decentralized Inference API key
 
@@ -17,9 +17,9 @@ This developer guide shows you how to use Decentralized Inference API with DeepS
 
 It's free.
 
-## Step 2: Send your first Onchain DeepSeek-R1 call
+## Step 2: Send your first Onchain DeepHermes-R1 call
 
-We will ask DeepSeek to design a DeFAI agent that can autonomously trade on Uniswap and Raydium for us.
+We will ask DeepHermes to design a DeFAI agent that can autonomously trade on Uniswap and Raydium for us.
 
 Let's run this ```curl``` command.
 
