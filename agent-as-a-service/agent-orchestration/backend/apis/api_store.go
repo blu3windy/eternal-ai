@@ -315,3 +315,36 @@ func (s *Server) AgentStoreCreateToken(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewMemeResp(res)})
 }
+
+func (s *Server) GetTryHistory(c *gin.Context) {
+	ctx := s.requestContext(c)
+	agentStoreID, _ := s.uint64FromContextQuery(c, "agent_store_id")
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+	res, err := s.nls.GetTryHistory(ctx, userAddress, uint(agentStoreID))
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: res.ID})
+}
+
+func (s *Server) GetTryHistoryDetail(c *gin.Context) {
+	ctx := s.requestContext(c)
+	historyID := s.uintFromContextParam(c, "id")
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+	page, limit := s.pagingFromContext(c)
+	res, err := s.nls.GetTryHistoryDetail(ctx, userAddress, historyID, page, limit)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentStoreTryDetailRespArray(res)})
+}
