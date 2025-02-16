@@ -79,7 +79,7 @@ function chat() {
       stream: true,
       model: "NousResearch/DeepHermes-3-Llama-3-8B-Preview",
       chain_id: "8453",
-      max_tokens: 1024,
+      max_tokens: 10000,
       messages: [
         { role: "system", content: `${SYSTEM_PROMPT}` },
         { role: "user", content: `${USER_PROMPT}` }
