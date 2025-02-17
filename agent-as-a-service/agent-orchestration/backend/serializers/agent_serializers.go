@@ -364,8 +364,9 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 				resp.Meme.TradeUrl = fmt.Sprintf("https://pump.fun/coin/%s", m.TokenAddress)
 				resp.Meme.MarketCap = numeric.NewBigFloatFromString("6740")
 				resp.UsdMarketCap = float64(6740)
+			} else if m.TokenNetworkID == models.BSC_CHAIN_ID {
+				resp.Meme.TradeUrl = fmt.Sprintf(`https://four.meme/token/%s`, m.TokenAddress)
 			}
-
 		}
 	}
 
