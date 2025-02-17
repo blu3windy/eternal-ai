@@ -7,5 +7,7 @@
     "db": "decentralized-inference"
   },
   "file_path_infer": "/tmp/eternal-data",
-  "submit_file_path": false
+  "submit_file_path": false,
+  "chat_completion_url": "",
+  "api_key_chat_completion": ""
 }
