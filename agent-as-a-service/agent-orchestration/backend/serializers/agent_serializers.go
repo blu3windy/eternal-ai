@@ -338,7 +338,10 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 	} else {
 		if m.TokenInfo != nil && m.TokenAddress != "" && m.TokenInfo.PriceUsd.Cmp(big.NewFloat(0)) > 0 {
 			resp.Meme = NewMemeFromTokenInfoResp(m.TokenInfo, m)
-			if m.Meme != nil {
+			if m.TokenMode == string(models.CreateTokenModeTypeLinkExisting) {
+				resp.Meme.Status = string(models.MemeStatusAddPoolExternal)
+				// resp.Meme.TradeUrl =
+			} else if m.Meme != nil {
 				resp.Meme.Supply = m.Meme.Supply
 				if m.Meme.Status == models.MemeStatusAddPoolExternal {
 					resp.Meme.Status = string(models.MemeStatusAddPoolExternal)
