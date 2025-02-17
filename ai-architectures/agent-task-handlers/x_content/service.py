@@ -5,7 +5,7 @@ from x_content.constants import MissionChainState
 from x_content.tasks.base import ChatTaskBase
 from x_content.tasks.utils import create_llm
 
-from .constants import REACT_MODELS_BLACKLIST, REPLY_MODELS_BLACKLIST
+from .constants import REACT_MODELS_BLACKLIST, REPLY_MODELS_BLACKLIST, API_SECRET_TOKEN
 from x_content.models import ChatRequest, ReasoningLog
 from x_content.tasks import MultiStepTaskBase
 from typing import Optional
@@ -234,7 +234,8 @@ def scan_db_and_resume_tasks():
 
         requests.post(
             f"http://{SERVER_HOST}:{SERVER_PORT}/async/enqueue",
-            json=payload
+            json=payload,
+            headers={"X-Token": API_SECRET_TOKEN},
         )
 
 
@@ -289,7 +290,8 @@ def scan_db_and_resume_chat_requests():
 
         requests.post(
             f"http://{SERVER_HOST}:{SERVER_PORT}/async/chat/enqueue", 
-            json=payload
+            json=payload,
+            headers={"X-Token": API_SECRET_TOKEN},
         )
 
 def handle_pod_shutdown(signum, frame):
