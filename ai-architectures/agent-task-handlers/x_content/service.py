@@ -25,6 +25,7 @@ from .constants import ToolSet, ModelName, SERVER_HOST, SERVER_PORT
 import datetime
 import redis
 from x_content.wrappers.redis_wrapper import get_redis_connection_pool
+import time
 
 
 # TODO: bad designed here, refactor it
@@ -195,9 +196,10 @@ def scan_db_and_resume_tasks():
 
     if len(undone_task) == 0:
         logger.info("No undone task found")
-        return schedule.CancelJob
 
     current_time = datetime.datetime.now()
+    undone_task = sorted(undone_task, key=lambda x: x.created_at)
+    cnt = 0
 
     for log in undone_task:
         if log.id in _running_tasks:
@@ -237,9 +239,12 @@ def scan_db_and_resume_tasks():
             json=payload,
             headers={"X-Token": API_SECRET_TOKEN},
         )
-    
-    return schedule.CancelJob
 
+        time.sleep(2)
+        cnt += 1
+        
+        if cnt >= 10:
+            break
 
 def scan_db_and_resume_chat_requests():
     logger.info("Scanning DB for resumable chat requests")
@@ -249,9 +254,11 @@ def scan_db_and_resume_chat_requests():
 
     if len(undone_request) == 0:
         logger.info("No undone chat request found")
-        return schedule.CancelJob
 
     current_time = datetime.datetime.now()
+    cnt = 0
+    
+    undone_request = sorted(undone_request, key=lambda x: x.created_at)
 
     for request in undone_request:
         if request.id in _running_tasks:
@@ -296,7 +303,13 @@ def scan_db_and_resume_chat_requests():
             headers={"X-Token": API_SECRET_TOKEN},
         )
         
-    return schedule.CancelJob
+        time.sleep(2)
+        
+        cnt += 1
+        
+        if cnt >= 10:
+            break
+        
 
 def handle_pod_shutdown(signum, frame):
     global _running_tasks, _task_handled_key, logger
@@ -310,11 +323,12 @@ def handle_pod_shutdown(signum, frame):
         redis_cli.delete(_task_handled_key.format(task_id))
 
     _running_tasks = set([])
-    from x_content.wrappers.telegram import send_message
-
+    from x_content.wrappers.telegram import send_message, TELEGRAM_ALERT_ROOM
+    
     send_message(
         'junk_notifications', 
         'Pod is being shut down, all running tasks are stopped (signum: {})'.format(signum), 
+        room=TELEGRAM_ALERT_ROOM,
         fmt='HTML'
     )
     sys.exit(0)
