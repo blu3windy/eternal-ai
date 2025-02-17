@@ -73,7 +73,7 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 	if installCode == "" || code == "" {
 		return "", errs.NewError(errs.ErrBadRequest)
 	}
-	apiKey, err := func() (string, error) {
+	infraTwitterApp, err := func() (*models.InfraTwitterApp, error) {
 		redirectUri := helpers.BuildUri(
 			s.conf.InfraTwitterApp.RedirectUri,
 			map[string]string{
@@ -84,12 +84,12 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 		respOauth, err := s.twitterAPI.TwitterOauthCallbackForSampleApp(
 			s.conf.InfraTwitterApp.OauthClientId, s.conf.InfraTwitterApp.OauthClientSecret, code, redirectUri)
 		if err != nil {
-			return "", errs.NewError(err)
+			return nil, errs.NewError(err)
 		}
 		if respOauth != nil && respOauth.AccessToken != "" {
 			twitterUser, err := s.twitterAPI.GetTwitterMe(respOauth.AccessToken)
 			if err != nil {
-				return "", errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 			twitterInfo, err := s.dao.FirstTwitterInfo(
 				daos.GetDBMainCtx(ctx),
@@ -100,7 +100,7 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 				false,
 			)
 			if err != nil {
-				return "", errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 			if twitterInfo == nil {
 				twitterInfo = &models.TwitterInfo{
@@ -115,15 +115,15 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 			twitterInfo.ExpiresIn = respOauth.ExpiresIn
 			twitterInfo.Scope = respOauth.Scope
 			twitterInfo.TokenType = respOauth.TokenType
-			twitterInfo.OauthClientId = s.conf.Twitter.OauthClientIdForTwitterData
-			twitterInfo.OauthClientSecret = s.conf.Twitter.OauthClientSecretForTwitterData
+			twitterInfo.OauthClientId = s.conf.InfraTwitterApp.OauthClientId
+			twitterInfo.OauthClientSecret = s.conf.InfraTwitterApp.OauthClientSecret
 			twitterInfo.Description = twitterUser.Description
 			twitterInfo.RefreshError = "OK"
 			expiredAt := time.Now().Add(time.Second * time.Duration(respOauth.ExpiresIn-(60*20)))
 			twitterInfo.ExpiredAt = &expiredAt
 			err = s.dao.Save(daos.GetDBMainCtx(ctx), twitterInfo)
 			if err != nil {
-				return "", errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 			infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 				daos.GetDBMainCtx(ctx),
@@ -133,14 +133,20 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 				map[string][]interface{}{}, []string{},
 			)
 			if err != nil {
-				return "", errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 			if infraTwitterApp == nil {
-				return "", errs.NewError(errs.ErrBadRequest)
+				return nil, errs.NewError(errs.ErrBadRequest)
 			}
-			return infraTwitterApp.ApiKey, nil
+			infraTwitterApp.TwitterInfoID = twitterInfo.ID
+			infraTwitterApp.TwitterInfo = twitterInfo
+			err = s.dao.Save(daos.GetDBMainCtx(ctx), infraTwitterApp)
+			if err != nil {
+				return nil, errs.NewError(err)
+			}
+			return infraTwitterApp, nil
 		}
-		return "", errs.NewError(errs.ErrBadRequest)
+		return nil, errs.NewError(errs.ErrBadRequest)
 	}()
 	if err != nil {
 		return helpers.BuildUri(
@@ -152,7 +158,10 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 		), nil
 	}
 	params := map[string]string{
-		"api_key": apiKey,
+		"api_key":          infraTwitterApp.ApiKey,
+		"twitter_id":       infraTwitterApp.TwitterInfo.TwitterID,
+		"twitter_username": infraTwitterApp.TwitterInfo.TwitterUsername,
+		"twitter_name":     infraTwitterApp.TwitterInfo.TwitterName,
 	}
 	returnData := base64.StdEncoding.EncodeToString([]byte(helpers.ConvertJsonString(params)))
 	return helpers.BuildUri(

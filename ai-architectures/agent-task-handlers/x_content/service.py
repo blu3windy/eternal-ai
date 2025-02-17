@@ -71,7 +71,6 @@ def task_cls_resolver(log: ReasoningLog) -> Optional[MultiStepTaskBase]:
 
         if log.model in [
             ModelName.DEEPSEEK_R1,
-            ModelName.DEEPSEEK_V3,
             ModelName.DEEPSEEK_R1_DISTILL_LLAMA_70B,
         ]:
             return (
