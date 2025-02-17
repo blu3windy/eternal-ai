@@ -176,7 +176,7 @@ async def mk_cog_embedding(text: str, model_use: EmbeddingModel) -> List[float]:
     }
     
     data = {
-        'input': {"texts": [text], "dimension": 256},
+        'input': {"texts": [text], "dimension": const.MODEL_DIMENSION},
     }
     
     async with httpx.AsyncClient() as client:
@@ -345,10 +345,28 @@ async def chunking_and_embedding(url_or_texts: Union[str, List[str]], model_use:
 
         for item in to_retry:
             try:
-                yield EmbeddedItem(
-                    embedding=await mk_cog_embedding(item, model_use), 
-                    raw_text=item
-                )
+                chunk, triplet = item
+                relation = ' '.join(triplet)
+                head, _, tail = triplet
+                yield (GraphEmbeddedItem(
+                    embedding=await mk_cog_embedding(head, model_use), 
+                    raw_text=chunk,
+                    kb_postfix="-entities",
+                    head = hash(head),
+                    tail = hash(tail)
+                ), GraphEmbeddedItem(
+                    embedding=await mk_cog_embedding(tail, model_use), 
+                    raw_text=chunk,
+                    kb_postfix="-entities",
+                    head = hash(tail),
+                    tail = hash(head)
+                ), GraphEmbeddedItem(
+                    embedding=await mk_cog_embedding(relation, model_use), 
+                    raw_text=chunk,
+                    kb_postfix="-relations",
+                    head = hash(tail),
+                    tail = hash(head)
+                ))
             except Exception as e:
                 logger.error(f"(again) Failed to get embedding for {item[:100] + '...'!r} Reason: {str(e)}")
                 yield EmbeddedItem(
@@ -1008,9 +1026,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
         output_fields=["id", "content", "reference", "hash"],
         search_params={"params": {"radius": req.threshold}},
     )
-
-    print(res)
-
+    
     hits = list(
         {
             item['entity']['hash']: item 
