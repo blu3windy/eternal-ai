@@ -34,7 +34,15 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 					"join agent_chain_fees on agent_chain_fees.network_id = agent_infos.network_id": {},
 				},
 				map[string][]interface{}{
-					"agent_infos.agent_id != ''":        {},
+					"agent_infos.agent_id != ''": {},
+					"agent_infos.agent_type in (?)": {
+						[]models.AgentInfoAgentType{
+							models.AgentInfoAgentTypeNormal,
+							models.AgentInfoAgentTypeReasoning,
+							models.AgentInfoAgentTypeEliza,
+							models.AgentInfoAgentTypeZerepy,
+						},
+					},
 					"agent_infos.agent_type <> ?":       {models.AgentInfoAgentTypeKnowledgeBase},
 					"agent_infos.agent_contract_id = ?": {""},
 					"agent_infos.agent_nft_minted = ?":  {false},

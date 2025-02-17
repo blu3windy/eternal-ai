@@ -60,6 +60,7 @@ Content to follow: {}
             )(log),
         }
     )
+
     conversational_chat.append(
         {
             "role": "user",
@@ -145,9 +146,7 @@ class PostSearchTask(MultiStepTaskBase):
 
             if len(postprocessed_tweet) >= MINIMUM_POST_LENGTH:
                 await sync2async(twitter_v2.tweet)(
-                    auth=await sync2async(
-                        create_twitter_auth_from_reasoning_log
-                    )(log),
+                    auth=create_twitter_auth_from_reasoning_log(log),
                     content=postprocessed_tweet,
                     tx_hash=infer_result.tx_hash,
                 )

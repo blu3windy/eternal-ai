@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import time
-from .telegram import send_message, TELEGRAM_ALERT_ROOM
+from .telegram import a_send_message, TELEGRAM_ALERT_ROOM
 import traceback
 from x_content import constants as const
 
@@ -94,7 +94,7 @@ def log_on_error_and_raise_alert(func):
                 func.__name__, e, args, kwargs, traceback.format_exc()
             )
 
-            const.DISABLE_LOG_FUNCTION_CALL or send_message(
+            const.DISABLE_LOG_FUNCTION_CALL or a_send_message(
                 "junk_notifications", msg, room=TELEGRAM_ALERT_ROOM
             )
             raise

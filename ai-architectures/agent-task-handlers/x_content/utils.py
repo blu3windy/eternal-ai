@@ -35,7 +35,7 @@ def send_log_alert_to_telegram(log: ReasoningLog, error):
 <b>Ref-ID</b>: {log.meta_data.ref_id};
 """
 
-    return telegram.send_message(
+    return telegram.a_send_message(
         log.meta_data.twitter_username,
         telegram_message_html,
         {},

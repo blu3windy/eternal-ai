@@ -93,7 +93,7 @@ handle_agent_commands() {
     case "$1" in
         "chat")
           cd "$current_dir"  && \
-          ./eai-chat start $2
+          ./eai-chat server & && \
           ./eai-chat chat $2
         ;;
        "create")

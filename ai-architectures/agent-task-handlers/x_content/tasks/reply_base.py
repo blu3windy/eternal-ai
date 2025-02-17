@@ -1,7 +1,7 @@
 from abc import abstractmethod
 import logging
 import traceback
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from x_content.constants import MissionChainState
 from x_content.tasks.reply_subtask_base import ReplySubtaskBase
 from x_content.wrappers.api import twitter_v2
@@ -47,6 +47,7 @@ class ReplyTaskBase(MultiStepTaskBase):
                 logger.info(
                     f"[{self.__class__.__name__}.process_task] Initializing new reply task with log ID {log.id}"
                 )
+
                 response: Response[ExtendedTweetInfosDto] = await sync2async(
                     twitter_v2.get_recent_mentioned_tweets_by_username_v2
                 )(
@@ -57,6 +58,7 @@ class ReplyTaskBase(MultiStepTaskBase):
                     preserve_img=True,
                     get_all=True,
                 )
+
                 if response.is_error():
                     raise Exception(response.error)
 
@@ -85,6 +87,7 @@ class ReplyTaskBase(MultiStepTaskBase):
                 for idx, future in enumerate(asyncio.as_completed(futures)):
                     task = await future
                     og_idx: int = task.idx
+
                     try:
                         specialties: List[TweetSpecialty] = task.result()
                         mentioned_data.append(
