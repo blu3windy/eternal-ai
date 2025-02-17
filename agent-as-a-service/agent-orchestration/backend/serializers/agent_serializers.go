@@ -340,7 +340,9 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 			resp.Meme = NewMemeFromTokenInfoResp(m.TokenInfo, m)
 			if m.TokenMode == string(models.CreateTokenModeTypeLinkExisting) {
 				resp.Meme.Status = string(models.MemeStatusAddPoolExternal)
-				// resp.Meme.TradeUrl =
+				if m.TokenNetworkID == models.BSC_CHAIN_ID {
+					resp.Meme.TradeUrl = fmt.Sprintf(`https://four.meme/token/%s`, m.TokenAddress)
+				}
 			} else if m.Meme != nil {
 				resp.Meme.Supply = m.Meme.Supply
 				if m.Meme.Status == models.MemeStatusAddPoolExternal {
