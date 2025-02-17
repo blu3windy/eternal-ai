@@ -338,6 +338,8 @@ class AutoAgentTask(BaseModel):
 
         return md5(data).hexdigest()
 
+    is_resubmit: bool = False
+
 
 class ReasoningLog(AutoAgentTask):
     # for request

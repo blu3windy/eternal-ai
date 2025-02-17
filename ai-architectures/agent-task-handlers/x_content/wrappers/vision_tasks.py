@@ -6,9 +6,11 @@ from x_content.wrappers.llm_tasks import logger
 import requests
 
 
+# @TODO: rewrite this
 @redis_wrapper.cache_for(3600 * 24 * 30)
 def get_image_description(image_url: str):
     response = requests.get(image_url)
+
     if response.status_code == 200:
         image_data = response.content
         encoded_data = base64.b64encode(image_data).decode("utf-8")

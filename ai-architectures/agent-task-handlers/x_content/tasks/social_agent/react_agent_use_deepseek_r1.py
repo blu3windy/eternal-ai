@@ -5,7 +5,6 @@ from x_content.models import ReasoningLog, ToolDef, MissionChainState
 from typing import List
 from x_content.tasks.utils import a_move_state
 from x_content.toolcall.utils import execute_tool
-from x_content.wrappers.magic import sync2async
 from x_content.llm.base import OnchainInferResult
 from x_content import constants as const
 import logging
@@ -157,18 +156,14 @@ class ReactAgentUsingDeepSeekR1(ReactAgent):
 
         if log.state == MissionChainState.RUNNING:
             while not await self.is_react_complete(log):
-                conversation = await sync2async(render_conversation)(
-                    log, tools
-                )
+                conversation = render_conversation(log, tools)
                 log.execute_info["conversation"].append(conversation)
                 infer_result: OnchainInferResult = await self.llm.agenerate(
                     conversation, temperature=0.7
                 )
 
                 result = infer_result.generations[0].message.content
-                pad: dict = await sync2async(
-                    parse_conversational_react_response
-                )(result)
+                pad: dict = parse_conversational_react_response(result)
 
                 if len(pad) == 0:
                     return await a_move_state(

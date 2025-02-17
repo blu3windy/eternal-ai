@@ -11,7 +11,6 @@ from x_content.wrappers.api import twitter_v2
 from x_content.wrappers.api.twitter_v2.models.response import (
     GenerateActionDto,
     Response,
-    ExtendedTweetInfosDto,
 )
 from x_content.wrappers.game import (
     GameAPIClient,

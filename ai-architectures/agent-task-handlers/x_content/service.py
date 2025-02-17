@@ -10,7 +10,8 @@ from x_content.models import ChatRequest, ReasoningLog
 from x_content.tasks import MultiStepTaskBase
 from typing import Optional
 import sys
-
+import httpx
+import requests
 import traceback
 
 logging.basicConfig(level=logging.INFO if not __debug__ else logging.DEBUG)
@@ -20,9 +21,8 @@ from .constants import AgentTask
 from .tasks.utils import create_kn_base, magic_toolset_from_reasoning_log, notify_status_chat_request, notify_status_reasoning_log, send_alert
 
 from . import tasks
-from .constants import ToolSet, ModelName
+from .constants import ToolSet, ModelName, SERVER_HOST, SERVER_PORT
 import datetime
-import asyncio
 import redis
 from x_content.wrappers.redis_wrapper import get_redis_connection_pool
 
@@ -126,7 +126,7 @@ async def service_v2_handle_request(log: ReasoningLog) -> ReasoningLog:
 
     except Exception as err:
         traceback_str = traceback.format_exc()
-        send_alert(log, traceback_str)
+        await send_alert(log, traceback_str)
         log = await tasks.utils.a_move_state(
             log,
             MissionChainState.ERROR,
@@ -135,7 +135,7 @@ async def service_v2_handle_request(log: ReasoningLog) -> ReasoningLog:
         MissionStateHandler().commit(log)
 
     finally:
-        notify_status_reasoning_log(log)
+        await notify_status_reasoning_log(log)
         _running_tasks.remove(log.id)
 
     logger.info(f"Completed handling task {log.id}")
@@ -172,7 +172,7 @@ async def handle_chat_request(request: ChatRequest) -> ChatRequest:
 
     except Exception as err:
         traceback_str = traceback.format_exc()
-        send_alert(request, traceback_str)
+        await send_alert(request, traceback_str)
         request = await tasks.utils.a_move_state(
             request,
             MissionChainState.ERROR,
@@ -181,24 +181,23 @@ async def handle_chat_request(request: ChatRequest) -> ChatRequest:
         await ChatRequestStateHandler().acommit(request)
 
     finally:
-        notify_status_chat_request(request)
+        await notify_status_chat_request(request)
         _running_tasks.remove(request.id)
 
     logger.info(f"Completed handling task {request.id}")
     return request
 
 
-async def scan_db_and_resume_tasks():
+def scan_db_and_resume_tasks():
     logger.info("Scanning DB for resumable tasks")
 
     handler = MissionStateHandler()
-    undone_task = await handler.get_undone()
+    undone_task = handler.get_undone()
 
     if len(undone_task) == 0:
         logger.info("No undone task found")
         return
 
-    futures = []
     current_time = datetime.datetime.now()
 
     for log in undone_task:
@@ -210,37 +209,46 @@ async def scan_db_and_resume_tasks():
         )
 
         if (current_time - created_dtime).total_seconds() > 60 * 60 * 6:
-            logger.info(f"Task {log.id} is too old, skipping")
+            log = tasks.utils.move_state(
+                log,
+                MissionChainState.ERROR,
+                "Task expired",
+            )
+            handler.commit(log)
             continue
 
         task_cls = task_cls_resolver(log)
 
-        if not task_cls.resumable:
-            logger.info(f"Task {log.id} is not resumable, skipping")
+        if task_cls is None or not task_cls.resumable:
+            log = tasks.utils.move_state(
+                log,
+                MissionChainState.ERROR,
+                "Task is paused but not resumable",
+            )
+            handler.commit(log)
             continue
 
         logger.info(f"Resuming task {log.id}")
-        futures.append(asyncio.ensure_future(service_v2_handle_request(log)))
+        
+        payload = log.model_dump()
+        payload["is_resubmit"] = True
 
-    logger.info(f"Resuming {len(futures)} tasks")
-
-    if len(futures) > 0:
-        await asyncio.gather(*futures)
-
-    logger.info("Scanning DB for resumable tasks completed")
+        requests.post(
+            f"http://{SERVER_HOST}:{SERVER_PORT}/async/enqueue",
+            json=payload
+        )
 
 
-async def scan_db_and_resume_chat_requests():
+def scan_db_and_resume_chat_requests():
     logger.info("Scanning DB for resumable chat requests")
 
     handler = ChatRequestStateHandler()
-    undone_request = await handler.get_undone()
+    undone_request = handler.get_undone()
 
     if len(undone_request) == 0:
         logger.info("No undone chat request found")
         return
 
-    futures = []
     current_time = datetime.datetime.now()
 
     for request in undone_request:
@@ -253,26 +261,37 @@ async def scan_db_and_resume_chat_requests():
 
         if (current_time - created_dtime).total_seconds() > 60 * 60 * 6:
             logger.info(f"Chat request {request.id} is too old, skipping")
+            log = tasks.utils.move_state(
+                request,
+                MissionChainState.ERROR,
+                "Request expired",
+            )
+            handler.commit(log)
             continue
 
-        task_cls = task_cls_resolver(request)
+        task_cls = chat_request_cls_resolver(request)
 
-        if not task_cls.resumable:
+        if task_cls is None or not task_cls.resumable:
             logger.info(
                 f"Chat request {request.id} is not resumable, skipping"
             )
+            log = tasks.utils.move_state(
+                request,
+                MissionChainState.ERROR,
+                "Request is paused but not resumable",
+            )
+            handler.commit(log)
             continue
 
         logger.info(f"Resuming chat request {request.id}")
-        futures.append(asyncio.ensure_future(handle_chat_request(request)))
+        
+        payload = request.model_dump()
+        payload["is_resubmit"] = True
 
-    logger.info(f"Resuming {len(futures)} chat requests")
-
-    if len(futures) > 0:
-        await asyncio.gather(*futures)
-
-    logger.info("Scanning DB for resumable chat requests completed")
-
+        requests.post(
+            f"http://{SERVER_HOST}:{SERVER_PORT}/async/chat/enqueue", 
+            json=payload
+        )
 
 def handle_pod_shutdown(signum, frame):
     global _running_tasks, _task_handled_key, logger
@@ -287,3 +306,6 @@ def handle_pod_shutdown(signum, frame):
 
     _running_tasks = set([])
     sys.exit(0)
+
+import schedule
+schedule.every(3).minutes.do(scan_db_and_resume_tasks)
