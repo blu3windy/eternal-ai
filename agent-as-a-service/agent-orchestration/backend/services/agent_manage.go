@@ -230,6 +230,9 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	}
 
 	if agent.ID > 0 {
+		if req.CreateTokenMode == models.CreateTokenModeTypeLinkExisting {
+			go s.UpdateTokenPriceInfo(context.Background(), agent.ID)
+		}
 		go s.AgentCreateMissionDefault(context.Background(), agent.ID)
 	}
 
