@@ -1,1 +1,1 @@
-# EternalAI.js is a library for decentralized AI in JavaScript
+# eai.js is a library for decentralized AI in JavaScript
