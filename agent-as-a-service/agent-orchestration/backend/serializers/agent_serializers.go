@@ -338,7 +338,10 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 	} else {
 		if m.TokenInfo != nil && m.TokenAddress != "" && m.TokenInfo.PriceUsd.Cmp(big.NewFloat(0)) > 0 {
 			resp.Meme = NewMemeFromTokenInfoResp(m.TokenInfo, m)
-			if m.Meme != nil {
+			if m.TokenMode == string(models.CreateTokenModeTypeLinkExisting) {
+				resp.Meme.Status = string(models.MemeStatusAddPoolExternal)
+				// resp.Meme.TradeUrl =
+			} else if m.Meme != nil {
 				resp.Meme.Supply = m.Meme.Supply
 				if m.Meme.Status == models.MemeStatusAddPoolExternal {
 					resp.Meme.Status = string(models.MemeStatusAddPoolExternal)
@@ -349,14 +352,18 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 			resp.Meme = NewMemeRespWithToken(m.Meme)
 			resp.Meme.Percent = m.MemePercent
 			resp.Meme.MarketCap = m.MemeMarketCap
-		} else if m.TokenAddress != "" && m.TokenNetworkID == models.SOLANA_CHAIN_ID {
+		} else if m.TokenAddress != "" && (m.TokenNetworkID == models.SOLANA_CHAIN_ID || m.TokenMode == string(models.CreateTokenModeTypeLinkExisting)) {
 			resp.Meme = &MemeResp{
 				Status:       string(models.MemeStatusAddPoolExternal),
-				TradeUrl:     fmt.Sprintf("https://pump.fun/coin/%s", m.TokenAddress),
 				TokenAddress: m.TokenAddress,
-				MarketCap:    numeric.NewBigFloatFromString("6740"),
 			}
-			resp.UsdMarketCap = float64(6740)
+
+			if m.TokenNetworkID == models.SOLANA_CHAIN_ID {
+				resp.Meme.TradeUrl = fmt.Sprintf("https://pump.fun/coin/%s", m.TokenAddress)
+				resp.Meme.MarketCap = numeric.NewBigFloatFromString("6740")
+				resp.UsdMarketCap = float64(6740)
+			}
+
 		}
 	}
 
