@@ -377,7 +377,7 @@ func (s *Server) Routers() {
 
 		// agentInfraAPI := rootAPI.Group("/infra")
 		// {
-		// 	agentInfraAPI.Any("/:infra_id/*path", s.proxyAgentStoreMiddleware("/api/infra"))
+		// 	agentInfraAPI.Any("/:store_id/*path", s.proxyAgentStoreMiddleware("/api/infra"))
 		// }
 
 		sampleTwitterApp := rootAPI.Group("/sample-twitter-app")

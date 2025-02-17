@@ -26,7 +26,8 @@ func (s *Server) proxyAgentStoreMiddleware(prefixPath string) gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 			return
 		}
-		if agenStore.Status != models.AgentStoreStatusActived {
+		if agenStore.Status != models.AgentStoreStatusActived ||
+			agenStore.Type != models.AgentStoreTypeInfra {
 			c.AbortWithStatusJSON(http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrBadRequest)})
 			return
 		}
