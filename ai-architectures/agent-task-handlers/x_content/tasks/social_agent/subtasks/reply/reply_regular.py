@@ -17,11 +17,8 @@ from x_content.wrappers.conversation import (
     get_reply_tweet_conversation,
 )
 from x_content.wrappers.postprocess import (
-    post_process_tweet,
     postprocess_tweet_by_prompts,
 )
-from x_content.wrappers.postprocess import remove_emojis
-
 from x_content.tasks.reply_subtask_base import ReplySubtaskBase
 
 from x_content.llm.base import OnchainInferResult
@@ -41,9 +38,11 @@ class ReplyRegularSubtask(ReplySubtaskBase):
         self.tweet_info: ExtendedTweetInfo = await sync2async(
             twitter_v2.get_tweet_with_image_description_appended_to_text
         )(self.tweet_info)
+
         context_resp: Response[ExtendedTweetInfosDto] = await sync2async(
             twitter_v2.get_full_context_of_tweet
         )(self.tweet_info)
+
         if context_resp.is_error():
             tweets_context = []
         else:
@@ -152,9 +151,7 @@ class ReplyRegularSubtask(ReplySubtaskBase):
 
         if len(postprocessed_reply) >= MINIMUM_REPLY_LENGTH:
             await sync2async(twitter_v2.reply)(
-                auth=await sync2async(create_twitter_auth_from_reasoning_log)(
-                    self.log
-                ),
+                auth=create_twitter_auth_from_reasoning_log(self.log),
                 tweet_id=self.tweet_info.tweet_object.tweet_id,
                 reply_content=postprocessed_reply,
                 tx_hash=base_reply_tx_hash,

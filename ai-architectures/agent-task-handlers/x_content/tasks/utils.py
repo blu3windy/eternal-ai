@@ -24,12 +24,12 @@ from x_content.wrappers.api import twitter_v2
 
 logger = logging.getLogger(__name__)
 
-
-def a_move_state(log: AutoAgentTask, state: MissionChainState, reason: str):
+def move_state(
+    log: AutoAgentTask, state: MissionChainState, reason: str
+):
     log.system_message = reason
     log.state = state
     return log
-
 
 async def a_move_state(
     log: AutoAgentTask, state: MissionChainState, reason: str
@@ -39,10 +39,10 @@ async def a_move_state(
     return log
 
 
-def notify_status_reasoning_log(log: ReasoningLog):
+async def notify_status_reasoning_log(log: ReasoningLog):
     nav = f"<b>Request-ID</b>: {log.id};</i>"
 
-    if log.state == MissionChainState.NEW:
+    if log.state == MissionChainState.NEW and not log.is_resubmit:
         info = f"<i><b>Ref-ID</b>: {log.meta_data.ref_id};\n{nav}"
         msg = f"<strong>Received a new task {log.task} using toolset {log.toolset} for {log.meta_data.twitter_username}</strong>\nTraceback info:\n{info}"
 
@@ -54,7 +54,7 @@ def notify_status_reasoning_log(log: ReasoningLog):
     else:
         return
 
-    telegram.send_message(
+    await telegram.a_send_message(
         twitter_username="junk_notifications",
         message_to_send=msg,
         schedule=True,
@@ -63,11 +63,11 @@ def notify_status_reasoning_log(log: ReasoningLog):
     )
 
 
-def notify_status_chat_request(request: ChatRequest):
+async def notify_status_chat_request(request: ChatRequest):
     nav = f"<b>Request-ID</b>: {request.id};</i>"
 
     task_name = "chat"
-    if request.state == MissionChainState.NEW:
+    if request.state == MissionChainState.NEW and not request.is_resubmit:
         info = f"<i><b>Ref-ID</b>: {request.meta_data.ref_id};\n{nav}"
         msg = f"<strong>Received a new task {task_name} for {request.meta_data.twitter_username}</strong>\nTraceback info:\n{info}"
 
@@ -79,7 +79,7 @@ def notify_status_chat_request(request: ChatRequest):
     else:
         return
 
-    telegram.send_message(
+    await telegram.a_send_message(
         twitter_username="junk_notifications",
         message_to_send=msg,
         schedule=True,
@@ -97,14 +97,14 @@ _alert_template = """
 """
 
 
-def send_alert(task: AutoAgentTask, reason: str):
+async def send_alert(task: AutoAgentTask, reason: str):
     global _alert_template
 
     nav = f"<b>Request-ID</b>: {task.id};</i>"
     info = f"<i><b>Ref-ID</b>: {task.meta_data.ref_id};\n{nav}"
 
     msg = _alert_template.format(log=task, info=info, reason=reason)
-    telegram.send_message(
+    await telegram.a_send_message(
         twitter_username="junk_notifications",
         message_to_send=msg,
         schedule=True,
@@ -150,9 +150,11 @@ def get_system_prompt(log: ReasoningLog):
 def get_system_prompt_with_random_example_tweets(log: ReasoningLog):
     system_prompt = get_system_prompt(log)
     example_tweets = get_random_example_tweets(log.meta_data.knowledge_base_id)
+
     if len(example_tweets) > 0:
         tweets_str = "\n".join([f"- {x}" for x in example_tweets])
         system_prompt += f"\n\nHere are example tweets written in the defined style:\n{tweets_str}"
+
     return system_prompt
 
 

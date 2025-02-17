@@ -38,3 +38,12 @@ class StatusHandlerBase(ABC, Generic[T]):
                 self.__class__.__name__
             )
         )
+        
+    @abstractmethod
+    async def a_get(self, _id: str, none_if_error: bool = False) -> Optional[T]:
+        raise NotImplementedError(
+            "get method not implemented; cls: {}".format(
+                self.__class__.__name__
+            )
+        )
+

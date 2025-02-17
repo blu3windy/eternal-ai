@@ -22,20 +22,8 @@ import logging
 import datetime
 import random
 import re
-import httpx
 import asyncio
 from x_content.wrappers.postprocess import postprocess_tweet_by_prompts, remove_urls
-
-
-async def split_urls(text: str) -> List[str]:
-    return re.findall(r"(https?://[^\s]+)", text)
-
-
-async def resolve_headers(url: str) -> str:
-    async with httpx.AsyncClient() as client:
-        resp = await client.head(url)
-        return resp.headers
-
 
 logger = logging.getLogger(__name__)
 

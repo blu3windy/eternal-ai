@@ -73,16 +73,17 @@ User query:
 {question}
 """
 
-                prompt = PROMPT_TEMPLATE.invoke(
+                prompt = await PROMPT_TEMPLATE.ainvoke(
                     {"system_prompt": system_prompt, "question": user_prompt}
                 )
-                resp = await sync2async(self.hermes.invoke)(prompt)
+
+                resp = await self.hermes.ainvoke(prompt)
                 parsed_content = repair_json(resp.content, return_objects=True)
                 return parsed_content["topic"]
             except Exception as err:
                 if attempt + 1 == retry:
                     try:
-                        resp = await sync2async(self.llama.invoke)(prompt)
+                        resp = await self.llama.ainvoke(prompt)
                         parsed_content = repair_json(resp.content, True)
                         return parsed_content["topic"]
                     except Exception as llama_err:
@@ -98,9 +99,14 @@ User query:
         retry: int = RETRY,
     ) -> str:
         context_tweets, err = await sync2async(get_random_from_collections)(
-            kn_base.get_kn_ids(), n=10
+            kn_base.get_kn_ids(), 
+            n=10
         )
-        debug_data = {"context_tweets": context_tweets}
+
+        debug_data = {
+            "context_tweets": context_tweets
+        }
+
         for attempt in range(retry):
             try:
                 query = await self._generate_topic_from_question(
@@ -113,7 +119,12 @@ User query:
                     knowledge = await search_from_db(
                         kn_base, query, top_k=5, threshold=0.85
                     )
-                    news = await sync2async(search_from_bing)(query, top_k=10)
+
+                    news = await sync2async(search_from_bing)(
+                        query, 
+                        top_k=10
+                    )
+
                     random_news = random.sample(news, min(1, len(news)))
                     structured_information["knowledge"] = knowledge
                     structured_information["news"] = random_news
@@ -149,10 +160,12 @@ Provided information:
                     "system_prompt": system_prompt,
                     "question": user_prompt,
                 }
-                prompt = PROMPT_TEMPLATE.invoke(
+
+                prompt = await PROMPT_TEMPLATE.ainvoke(
                     {"system_prompt": system_prompt, "question": user_prompt}
                 )
-                resp = await sync2async(self.hermes.invoke)(prompt)
+
+                resp = await self.hermes.ainvoke(prompt)
                 parsed_content = repair_json(resp.content, return_objects=True)
                 debug_data["content"] = parsed_content["tweet"]
                 return parsed_content["tweet"], debug_data
@@ -162,7 +175,7 @@ Provided information:
                 )
                 if attempt + 1 == retry:
                     try:
-                        resp = await sync2async(self.llama.invoke)(prompt)
+                        resp = await self.llama.ainvoke(prompt)
                         parsed_content = repair_json(
                             resp.content, return_objects=True
                         )

@@ -12,8 +12,6 @@ from x_content.tasks.utils import a_move_state
 from x_content.llm.base import OnchainInferResult
 
 from x_content.wrappers.conversation import get_llm_result_by_model_name
-from x_content.wrappers.magic import sync2async
-
 import json_repair
 
 logging.basicConfig(level=logging.INFO if not __debug__ else logging.DEBUG)
@@ -170,9 +168,7 @@ class ReactAgent(MultiStepTaskBase):
 
         if log.state == MissionChainState.RUNNING:
             while not await self.is_react_complete(log):
-                conversation = await sync2async(render_conversation)(
-                    log, tools
-                )
+                conversation = render_conversation(log, tools)
                 log.execute_info["conversation"].append(conversation)
                 infer_result: OnchainInferResult = await self.llm.agenerate(
                     conversation, temperature=0.7
@@ -180,9 +176,7 @@ class ReactAgent(MultiStepTaskBase):
 
                 result = infer_result.generations[0].message.content
                 result = get_llm_result_by_model_name(result, log.model)
-                pad: dict = await sync2async(
-                    parse_conversational_react_response
-                )(result)
+                pad: dict = parse_conversational_react_response(result)
 
                 if len(pad) == 0:
                     return await a_move_state(
