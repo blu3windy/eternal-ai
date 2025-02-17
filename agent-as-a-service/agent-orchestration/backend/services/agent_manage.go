@@ -99,7 +99,14 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		}
 	}
 
-	if req.TokenChainId != "" {
+	if req.CreateTokenMode == models.CreateTokenModeTypeLinkExisting {
+		agent.TokenMode = string(models.CreateTokenModeTypeLinkExisting)
+		agent.TokenAddress = req.TokenAddress
+		agent.TokenSymbol = req.Ticker
+		agent.TokenName = req.TokenName
+		tokenChainId, _ := strconv.ParseUint(req.TokenChainId, 0, 64)
+		agent.TokenNetworkID = tokenChainId
+	} else if req.TokenChainId != "" {
 		tokenChainId, _ := strconv.ParseUint(req.TokenChainId, 0, 64)
 		if !(tokenChainId == models.POLYGON_CHAIN_ID || tokenChainId == models.ZKSYNC_CHAIN_ID) {
 			agent.TokenNetworkID = tokenChainId
