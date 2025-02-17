@@ -62,9 +62,9 @@ func (c ChatConfig) VerifyBeforeChat() error {
 	if c.Rpc == "" {
 		return fmt.Errorf("Chain RPC is empty")
 	}
-	if c.PrivateKey == "" {
-		return fmt.Errorf("Private key to create infer onchain is empty")
-	}
+	//if c.PrivateKey == "" {
+	//	return fmt.Errorf("Private key to create infer onchain is empty")
+	//}
 	if c.AgentID == "" {
 		return fmt.Errorf("Agent ID is empty")
 	}
