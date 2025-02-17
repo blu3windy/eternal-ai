@@ -10,4 +10,17 @@ if [ -e "$alias" ]; then
 fi
 ln -s $file $alias
 
+
+# Step 1: Build eai-chat bin
+cd ..
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    echo "Running on Linux"
+    make build_decentralize_server_linux
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "Running on macOS"
+    make build_decentralize_server_osx
+else
+    echo "Unknown operating system: $OSTYPE"
+fi
+
 echo "eai has been installed!!!"

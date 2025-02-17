@@ -4,7 +4,7 @@ echo "Starting new agent with EternalAI framework"
 
 agent_uid=$1 
 ETERNALAI_URL=$2
-ETERNALAI_API_KEY=$3
+ETERNALAI_API_KEY=$3g
 ETERNALAI_CHAIN_ID=$4
 ETERNALAI_RPC_URL=$5
 ETERNALAI_AGENT_CONTRACT_ADDRESS=$6
@@ -89,6 +89,11 @@ cat <<EOL > "$s_service_config_file"
   "server": {
     "port": 8484
   },
+  "mongodb": {
+    "uri": "mongodb://localhost:27017",
+    "db": "decentralized-inference"
+  },
+  "file_path_infer": "/tmp/eternal-data",
   "submit_file_path": false,
   "chat_completion_url": "$ETERNALAI_URL",
   "api_key_chat_completion": "$ETERNALAI_API_KEY"
@@ -97,26 +102,30 @@ EOL
 
 
 # Step 1: Build eai-chat bin
-cd ..
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    echo "Running on Linux"
-    make build_decentralize_server_linux
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "Running on macOS"
-    make build_decentralize_server_osx
-else
-    echo "Unknown operating system: $OSTYPE"
-fi
+# cd ..
+# if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+#     echo "Running on Linux"
+#     make build_decentralize_server_linux
+# elif [[ "$OSTYPE" == "darwin"* ]]; then
+#     echo "Running on macOS"
+#     make build_decentralize_server_osx
+# else
+#     echo "Unknown operating system: $OSTYPE"
+# fi
 
 # Step 2: create config.json and local_contract.json
 
 
 # Step 3: start small service port 8484
 cd $current_dir && cd ..
-./eai-chat start $ETERNALAI_AGENT_ID
+# ./eai-chat server &
+# ./eai-chat chat $ETERNALAI_AGENT_ID
+
+./eai-chat server > server.log 2>&1 &
 
 # Step 4: start chat command 
 ./eai-chat chat $ETERNALAI_AGENT_ID
+
 
 # cp $current_dir/src/eliza/config.json .
 # jq --arg new_name "$AGENT_NAME" '.name = $new_name' "config.json" > tmp.json && mv tmp.json "config.json"

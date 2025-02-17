@@ -336,7 +336,8 @@ const startAgent = async ({
     }
 
     try {
-        const stdout = await execCmd(scriptPath);
+        execCmd(scriptPath);
+        // console.log(stdout);
     } catch (e) {
         logError(`Start agent error ${e}`);
     }

@@ -27,6 +27,7 @@ const execCmd = async (cmd: string): Promise<any> => {
                 console.error(`Exec script ${cmd} stderr: ${stderr}`);
                 reject(stderr);
             }
+            console.log(stdout);
             resolve(stdout);
         });
     })
