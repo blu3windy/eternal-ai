@@ -9,7 +9,6 @@ from .constants import REACT_MODELS_BLACKLIST, REPLY_MODELS_BLACKLIST
 from x_content.models import ChatRequest, ReasoningLog
 from x_content.tasks import MultiStepTaskBase
 from typing import Optional
-from x_content.wrappers.redis_wrapper import reusable_redis_connection
 import sys
 
 import traceback
@@ -24,6 +23,8 @@ from . import tasks
 from .constants import ToolSet, ModelName
 import datetime
 import asyncio
+import redis
+from x_content.wrappers.redis_wrapper import get_redis_connection_pool
 
 
 # TODO: bad designed here, refactor it
@@ -94,11 +95,6 @@ async def service_v2_handle_request(log: ReasoningLog) -> ReasoningLog:
     global _running_tasks
 
     do_job = log.id not in _running_tasks
-    # and atomic_check_and_set_flag(
-    #     reusable_redis_connection(),
-    #     _task_handled_key.format(log.id),
-    #     "1", 6 * 3600
-    # )
 
     if not do_job:
         logger.info(f"Task {log.id} is already handled (by someone else)")
@@ -136,13 +132,11 @@ async def service_v2_handle_request(log: ReasoningLog) -> ReasoningLog:
             MissionChainState.ERROR,
             f"An error occurred: {err} (unhandled)",
         )
-        MissionStateHandler(reusable_redis_connection()).commit(log)
+        MissionStateHandler().commit(log)
 
     finally:
         notify_status_reasoning_log(log)
         _running_tasks.remove(log.id)
-        # redis_cli = reusable_redis_connection()
-        # redis_cli.expire(_task_handled_key.format(log.id), 3)
 
     logger.info(f"Completed handling task {log.id}")
     return log
@@ -184,7 +178,7 @@ async def handle_chat_request(request: ChatRequest) -> ChatRequest:
             MissionChainState.ERROR,
             f"An error occurred: {err} (unhandled)",
         )
-        ChatRequestStateHandler(reusable_redis_connection()).commit(request)
+        await ChatRequestStateHandler().acommit(request)
 
     finally:
         notify_status_chat_request(request)
@@ -197,8 +191,8 @@ async def handle_chat_request(request: ChatRequest) -> ChatRequest:
 async def scan_db_and_resume_tasks():
     logger.info("Scanning DB for resumable tasks")
 
-    handler = MissionStateHandler(reusable_redis_connection())
-    undone_task = handler.get_undone()
+    handler = MissionStateHandler()
+    undone_task = await handler.get_undone()
 
     if len(undone_task) == 0:
         logger.info("No undone task found")
@@ -239,8 +233,8 @@ async def scan_db_and_resume_tasks():
 async def scan_db_and_resume_chat_requests():
     logger.info("Scanning DB for resumable chat requests")
 
-    handler = ChatRequestStateHandler(reusable_redis_connection())
-    undone_request = handler.get_undone()
+    handler = ChatRequestStateHandler()
+    undone_request = await handler.get_undone()
 
     if len(undone_request) == 0:
         logger.info("No undone chat request found")
@@ -284,7 +278,8 @@ def handle_pod_shutdown(signum, frame):
     global _running_tasks, _task_handled_key, logger
 
     logger.info("Pod is being shut down")
-    redis_cli = reusable_redis_connection()
+    
+    redis_cli = redis.Redis(connection_pool=get_redis_connection_pool())
 
     for task_id in _running_tasks:
         logger.info(f"Removing task {task_id} from running tasks")
