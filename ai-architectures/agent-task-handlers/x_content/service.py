@@ -195,7 +195,7 @@ def scan_db_and_resume_tasks():
 
     if len(undone_task) == 0:
         logger.info("No undone task found")
-        return
+        return schedule.CancelJob
 
     current_time = datetime.datetime.now()
 
@@ -237,6 +237,8 @@ def scan_db_and_resume_tasks():
             json=payload,
             headers={"X-Token": API_SECRET_TOKEN},
         )
+    
+    return schedule.CancelJob
 
 
 def scan_db_and_resume_chat_requests():
@@ -247,7 +249,7 @@ def scan_db_and_resume_chat_requests():
 
     if len(undone_request) == 0:
         logger.info("No undone chat request found")
-        return
+        return schedule.CancelJob
 
     current_time = datetime.datetime.now()
 
@@ -293,6 +295,8 @@ def scan_db_and_resume_chat_requests():
             json=payload,
             headers={"X-Token": API_SECRET_TOKEN},
         )
+        
+    return schedule.CancelJob
 
 def handle_pod_shutdown(signum, frame):
     global _running_tasks, _task_handled_key, logger
@@ -306,6 +310,13 @@ def handle_pod_shutdown(signum, frame):
         redis_cli.delete(_task_handled_key.format(task_id))
 
     _running_tasks = set([])
+    from x_content.wrappers.telegram import send_message
+
+    send_message(
+        'junk_notifications', 
+        'Pod is being shut down, all running tasks are stopped (signum: {})'.format(signum), 
+        fmt='HTML'
+    )
     sys.exit(0)
 
 import schedule
