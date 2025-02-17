@@ -73,6 +73,25 @@ const getAgents = async (): Promise<Agent[]> => {
     return currentAgents;
 }
 
+const getAgentByName = async (name: string): Promise<Agent> => {
+    const agents = await getAgents();
+    const agentMap = Object.fromEntries(agents.map((a: Agent) => [a.Name, a]));
+    const agentInfo = agentMap[name];
+    return agentInfo;
+}
+
+const updateAgentByName = async (name: string, updatedAgent: Agent) => {
+    const agents = await getAgents();
+    agents.map(agent => {
+        agent.Name == name ? updatedAgent : agent
+    });
+    try {
+        fs.writeFileSync(FilePath, JSON.stringify(agents, null, 2))
+    } catch (e) {
+        logError(`Update agent ${name} error ${e}`);
+    }
+}
+
 interface DockerContainer {
     Command: string
     CreatedAt: string
@@ -134,4 +153,6 @@ export {
     getAgents,
     listRunningContainers,
     AgentStatus,
+    getAgentByName,
+    updateAgentByName,
 }

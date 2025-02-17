@@ -7,7 +7,7 @@ import { exec } from 'child_process';
 const getSupportedModels = async (chainID: string) => {
     const url = "https://api.eternalai.org/api/chain-config/get";
     const response = await axios.get(url, { params: { chain_id: chainID } });
-    console.log('Filtered API Data:', response.data);
+    // console.log('Filtered API Data:', response.data);
 
     if (response.data.status != 1) {
         throw new Error("get supported models status invalid");

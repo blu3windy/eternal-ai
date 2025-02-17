@@ -64,22 +64,36 @@ EOL
 
 # custom env
 # file config for api chat
-cd $current_dir/decentralized-compute/worker-hub/env
+cd $current_dir && cd ..
+cd decentralized-compute/worker-hub/env
 api_config_file="local_contracts.json"
 
 cat <<EOL > "$api_config_file"
 {
-  "rpc": $ETERNALAI_RPC_URL,
-  "model_name": $ETERNALAI_MODEL, 
-  "chain_id": $ETERNALAI_CHAIN_ID,
-  "agent_contract_address": $ETERNALAI_AGENT_CONTRACT_ADDRESS
+  "rpc": "$ETERNALAI_RPC_URL",
+  "model_name": "$ETERNALAI_MODEL", 
+  "chain_id": "$ETERNALAI_CHAIN_ID",
+  "agent_contract_address": "$ETERNALAI_AGENT_CONTRACT_ADDRESS"
 }
 EOL
 
 
 
+# file config for small service
+cd $current_dir && cd ..
+cd decentralized-inference
+s_service_config_file="config.json"
 
-
+cat <<EOL > "$s_service_config_file"
+{
+  "server": {
+    "port": 8484
+  },
+  "submit_file_path": false,
+  "chat_completion_url": "$ETERNALAI_URL",
+  "api_key_chat_completion": "$ETERNALAI_API_KEY"
+}
+EOL
 
 
 # Step 1: Build eai-chat bin
@@ -98,7 +112,8 @@ fi
 
 
 # Step 3: start small service port 8484
-
+cd $current_dir && cd ..
+./eai-chat start $ETERNALAI_AGENT_ID
 
 # Step 4: start chat command 
 ./eai-chat chat $ETERNALAI_AGENT_ID

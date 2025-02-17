@@ -58,29 +58,50 @@ sudo ./install.sh
 
 ## `eai` CLI
 
+Navigate to `./agent-cli` to install and use <b>eai CLI</b>.
+
+Run the command to install:
+
+```
+sh install.sh
+```
+
 ### Create an agent 
 
 ```bash
-eai agent create $(pwd)/decentralized-agents/characters/donald_trump.txt
+eai agent create 
+    -p <system_prompt_file_path> 
+    -n <agent_name> -c <chain_name> -f <framework> -m <model_name> 
 ```
+Only the param `-p` is required, and others are optional. 
+
+Example: 
+```
+eai agent create 
+    -p $(pwd)/decentralized-agents/characters/donald_trump.txt 
+    -n trump_agent -c base -f eternalai -m DeepSeek-R1-Distill-Llama-70B
+```
+
 We are creating an agent who is a Donald Trump twin. The `.txt` file is the system prompt for your agent. It will be used to set the initial behavior for your agent. You can modify the content of the prompt file to adjust your agent's personality.
 
-
-### Fetch agent info by agent id
-```
-eai agent info <agent_id>
-```
 
 
 ### List out all agents on your machine
 ```bash
-eai agent list
+eai agent ls
 ```
 
+Example output: 
+<img width="2704" alt="eternal-kernel-new-7" src="./media-kit/images/ls.png" />
+
+### Fetch agent info by agent id
+```
+eai agent info -n <agent_name>
+```
 
 ### Chat with an agent
 ```bash
-eai agent chat <agent_id>
+eai agent chat -n <agent_name>
 ```
 
 

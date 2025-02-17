@@ -23,7 +23,7 @@ agentCmd
     .command('create')
     .description('Create a new agent')
     .option('-c, --chain <chain>', 'The blockchain which the new agent will be deployed on.', Network.Base)
-    .option('-f, --framework <framework>', 'The framework is used for new agent.', Framework.Eliza)
+    .option('-f, --framework <framework>', 'The framework is used for new agent.', Framework.EternalAI)
     .option('-m, --model <model>', 'The agent\'s model.')
     .requiredOption('-p, --path <path>', 'The path of the agent\'s character file.')
     .option('-n, --name <name>', 'The agent\'s name.')
