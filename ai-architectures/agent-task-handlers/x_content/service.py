@@ -41,8 +41,8 @@ def task_cls_resolver(log: ReasoningLog) -> Optional[MultiStepTaskBase]:
     if log.task == AgentTask.POST_V2:
         return tasks.social_agent.post_v2.PostV2
 
-    # if log.task == AgentTask.CREATE_GAME or log.task == AgentTask.JUDGE_GAME:
-    #     return tasks.others.FallbackTask
+    if log.task == AgentTask.CREATE_GAME or log.task == AgentTask.JUDGE_GAME:
+        return tasks.others.FallbackTask
 
     if log.task == AgentTask.CREATE_GAME:
         return tasks.game_agent.create_gamev2.GameReplyTask
