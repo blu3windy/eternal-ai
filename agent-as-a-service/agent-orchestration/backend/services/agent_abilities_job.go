@@ -621,7 +621,7 @@ func (s *Service) AgentSnapshotPostCreate(ctx context.Context, missionID uint, o
 	return nil
 }
 
-func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID uint64, userAddress string, systemPrompt string, agentBaseModel string, agentStoreMissionID uint) (*models.AgentSnapshotPost, error) {
+func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID uint64, userAddress string, userPrompt string, agentBaseModel string, agentStoreMissionID uint) (*models.AgentSnapshotPost, error) {
 	var inferPost *models.AgentSnapshotPost
 	err := s.JobRunCheck(
 		ctx,
@@ -708,18 +708,23 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 					if err != nil {
 						return errs.NewError(err)
 					}
+					prompt := inferItems[0].Content
+					if userPrompt != "" {
+						prompt = userPrompt
+					}
+
 					inferPost = &models.AgentSnapshotPost{
-						NetworkID:            networkID,
-						UserID:               user.ID,
-						InferData:            string(inferData),
-						InferAt:              helpers.TimeNow(),
-						Status:               models.AgentSnapshotPostStatusInferSubmitted,
-						Fee:                  inferFee,
-						UserPrompt:           inferItems[0].Content,
-						HeadSystemPrompt:     headSystemPrompt,
-						AgentMetaData:        helpers.ConvertJsonString(metaDataReq),
-						ToolList:             toolList,
-						SystemPrompt:         systemPrompt,
+						NetworkID:        networkID,
+						UserID:           user.ID,
+						InferData:        string(inferData),
+						InferAt:          helpers.TimeNow(),
+						Status:           models.AgentSnapshotPostStatusInferSubmitted,
+						Fee:              inferFee,
+						UserPrompt:       prompt,
+						HeadSystemPrompt: headSystemPrompt,
+						AgentMetaData:    helpers.ConvertJsonString(metaDataReq),
+						ToolList:         toolList,
+						// SystemPrompt:         systemPrompt,
 						SystemReminder:       "",
 						Toolset:              "mission_store",
 						AgentBaseModel:       agentBaseModel,
@@ -848,7 +853,7 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 						history := &models.AgentStoreTryDetail{
 							AgentStoreTryID: agentStoreTry.ID,
 							FromUser:        true,
-							Content:         systemPrompt,
+							Content:         userPrompt,
 						}
 						s.dao.Create(
 							tx,

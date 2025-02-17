@@ -554,3 +554,57 @@ func (s *Service) AgentStoreCreateToken(ctx context.Context, userAddress string,
 	}
 	return meme, nil
 }
+
+func (s *Service) GetTryHistory(ctx context.Context, userAddress string, agentStoreID uint) (*models.AgentStoreTry, error) {
+	user, err := s.GetUser(daos.GetDBMainCtx(ctx), 0, userAddress, false)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	history, err := s.dao.FirstAgentStoreTry(
+		daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"user_id = ?":        {user.ID},
+			"agent_store_id = ?": {agentStoreID},
+		},
+		map[string][]interface{}{},
+		false,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return history, nil
+}
+
+func (s *Service) GetTryHistoryDetail(ctx context.Context, userAddress string, historyID uint, page, limit int) ([]*models.AgentStoreTryDetail, error) {
+	user, err := s.GetUser(daos.GetDBMainCtx(ctx), 0, userAddress, false)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+
+	history, err := s.dao.FirstAgentStoreTryByID(
+		daos.GetDBMainCtx(ctx), historyID,
+		map[string][]interface{}{},
+		false,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	if history == nil {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	if history.UserID != user.ID {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+
+	res, _, err := s.dao.FindAgentStoreTryDetail4Page(daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"agent_store_try_id = ?": {historyID},
+		},
+		map[string][]interface{}{
+			"AgentSnapshotPost": {},
+		}, []string{"id desc"}, page, limit)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return res, nil
+}
