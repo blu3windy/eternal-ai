@@ -9,6 +9,8 @@ type (
 	AgentStoreType   string
 	AgentStoreStatus string
 
+	AgentStoreMissionStatus string
+
 	AgentStoreInstallStatus string
 	AgentStoreInstallType   string
 )
@@ -22,12 +24,16 @@ const (
 	AgentStoreTypeStore AgentStoreType = "store"
 	AgentStoreTypeInfra AgentStoreType = "infra"
 
-	AgentStoreStatusNew     AgentStoreStatus = "new"
-	AgentStoreStatusActived AgentStoreStatus = "actived"
+	AgentStoreStatusNew       AgentStoreStatus = "new"
+	AgentStoreStatusActived   AgentStoreStatus = "actived"
+	AgentStoreStatusInActived AgentStoreStatus = "inactived"
 )
 
 type AgentStore struct {
 	gorm.Model
+	NetworkID          uint64 `gorm:"default:0"`
+	ContractAddress    string
+	TokenId            uint64 `gorm:"default:0"`
 	StoreId            string `gorm:"unique_index"`
 	Type               AgentStoreType
 	Name               string
@@ -42,6 +48,12 @@ type AgentStore struct {
 	Status             AgentStoreStatus
 	Price              numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	AgentStoreMissions []*AgentStoreMission
+	NumInstall         uint             `gorm:"default:0"`
+	NumUsage           uint             `gorm:"default:0"`
+	Volume             numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	MemeID             uint
+	Meme               *Meme
+	TokkenAddress      string
 }
 
 type AgentStoreMission struct {
@@ -54,19 +66,21 @@ type AgentStoreMission struct {
 	OwnerAddress string
 	ToolList     string  `gorm:"type:longtext"`
 	Rating       float64 `gorm:"type:decimal(5,2);default:0"`
-	NumRating    uint
-	NumUsed      uint
-	Icon         string `gorm:"type:text"`
+	NumRating    uint    `gorm:"default:0"`
+	NumUsed      uint    `gorm:"default:0"`
+	Status       AgentStoreStatus
+	Icon         string           `gorm:"type:text"`
+	Volume       numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 }
 
 type AgentStoreInstall struct {
 	gorm.Model
 	Type           AgentStoreInstallType
 	Code           string `gorm:"unique_index"`
-	UserID         uint   `gorm:"index"`
+	UserID         uint   `gorm:"unique_index:agent_store_main_idx"`
 	User           *User
-	AgentStoreID   uint `gorm:"index"`
-	AgentInfoID    uint `gorm:"index"`
+	AgentStoreID   uint `gorm:"unique_index:agent_store_main_idx"`
+	AgentInfoID    uint `gorm:"unique_index:agent_store_main_idx"`
 	AgentStore     *AgentStore
 	CallbackParams string `gorm:"type:longtext"` //{"user_id" : "123", "authen_token" : "xxx",...}
 	Status         AgentStoreInstallStatus
@@ -80,4 +94,19 @@ type AgentStoreLog struct {
 	Price               numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	UrlPath             string           `gorm:"type:text"`
 	Status              int
+}
+
+type AgentStoreTry struct {
+	gorm.Model
+	UserID       uint `gorm:"unique_index:agent_store__try_history_main_idx"`
+	AgentStoreID uint `gorm:"unique_index:agent_store__try_history_main_idx"`
+}
+
+type AgentStoreTryDetail struct {
+	gorm.Model
+	AgentStoreTryID     uint `gorm:"index"`
+	FromUser            bool
+	Content             string `gorm:"type:text"`
+	AgentSnapshotPostID uint
+	AgentSnapshotPost   *AgentSnapshotPost
 }

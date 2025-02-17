@@ -48,6 +48,7 @@ const (
 	DUCK_CHAIN_ID             = uint64(5545)
 	TRON_CHAIN_ID             = uint64(728126428)
 	MODE_CHAIN_ID             = uint64(34443)
+	ZETA_CHAIN_ID             = uint64(7000)
 )
 
 var CHAIN_NAME_MAP = map[uint64]string{
@@ -70,6 +71,7 @@ var CHAIN_NAME_MAP = map[uint64]string{
 	TRON_CHAIN_ID:             "TRON",
 	MODE_CHAIN_ID:             "MODE",
 	LOCAL_CHAIN_ID:            "LOCAL",
+	ZETA_CHAIN_ID:             "ZETA",
 }
 
 var MAP_TOOLSET_NAME = map[string]string{

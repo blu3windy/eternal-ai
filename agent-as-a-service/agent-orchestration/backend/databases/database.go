@@ -112,7 +112,15 @@ func MigrateDBMain(db *gorm.DB) error {
 		(*models.AgentStoreMission)(nil),
 		(*models.AgentStoreInstall)(nil),
 
+		(*models.AgentStoreLog)(nil),
+
 		(*models.SampleTwitterApp)(nil),
+
+		(*models.InfraTwitterApp)(nil),
+
+		(*models.StoreDefiApp)(nil),
+		(*models.AgentStoreTry)(nil),
+		(*models.AgentStoreTryDetail)(nil),
 	}
 
 	if err := db.AutoMigrate(allTables...).Error; err != nil {

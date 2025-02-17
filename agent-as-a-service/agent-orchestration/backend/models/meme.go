@@ -50,8 +50,10 @@ type Meme struct {
 	OwnerAddress      string `gorm:"index"`
 	OwnerID           uint   `gorm:"index"`
 	Owner             *User
-	AgentInfoID       uint `gorm:"unique_index"`
+	AgentInfoID       uint `gorm:"unique_index:memes_main_uidx;default:0"`
 	AgentInfo         *AgentInfo
+	AgentStoreID      uint `gorm:"unique_index:memes_main_uidx;default:0"`
+	AgentStore        *AgentStore
 	TokenAddress      string           `gorm:"index"`
 	TokenId           string           `gorm:"index"`
 	TotalSuply        numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`

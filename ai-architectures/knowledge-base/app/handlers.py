@@ -3,14 +3,26 @@ from app.utils import estimate_ip_from_distance
 from .models import (
     EmbeddingModel, 
     InsertInputSchema, 
+    UpdateInputSchema,
     InsertResponse, 
     QueryInputSchema, 
     QueryResult,
     EmbeddedItem,
     APIStatus,
-    ResponseMessage
+    ResponseMessage,
+    FilecoinData,
+    InsertProgressCallback,
+    CollectionInspection
 )
 import requests
+import subprocess
+import os
+import aiofiles
+import asyncio
+import json
+import os
+import shutil
+import subprocess
 
 from docling.datamodel.base_models import InputFormat, DocItemLabel
 from docling.datamodel.pipeline_options import PdfPipelineOptions
@@ -21,7 +33,7 @@ import logging
 from docling.chunking import HybridChunker
 from docling.document_converter import DocumentConverter, FormatOption, ConversionResult
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
-from typing import List, Union
+from typing import List, Union, Optional
 import random
 
 from . import constants as const
@@ -29,7 +41,15 @@ from .embedding import get_embedding_models, get_default_embedding_model, get_to
 from pymilvus import MilvusClient, FieldSchema, CollectionSchema, DataType, Collection
 from .wrappers import milvus_kit, redis_kit
 import httpx
-from .utils import async_batching, get_content_checksum, sync2async, limit_asyncio_concurrency, get_tmp_directory, batching
+from .utils import (
+    async_batching, 
+    get_content_checksum,
+    sync2async,
+    limit_asyncio_concurrency, 
+    get_tmp_directory,
+    batching,
+    get_hash
+)
 import json
 import os
 import numpy as np
@@ -42,6 +62,7 @@ from .wrappers import telegram_kit
 import schedule
 import traceback
 from pathlib import Path as PathL
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +77,7 @@ SUPORTED_DOCUMENT_FORMATS = [
     InputFormat.XML_PUBMED,
     InputFormat.PDF
 ]
+GATEWAY_IPFS_PREFIX = "https://gateway.lighthouse.storage/ipfs"
 
 DOCUMENT_FORMAT_OPTIONS = {
     InputFormat.PDF: FormatOption(
@@ -68,22 +90,46 @@ DOCUMENT_FORMAT_OPTIONS = {
     )
 }
 
-async def hook_result(
-    hook_url: str, 
-    file_path: str 
+async def hook(
+    resp: ResponseMessage[Union[InsertResponse, InsertProgressCallback]],
 ):
-    assert os.path.exists(file_path), f"File {file_path} not found"
+    body: dict = resp.model_dump()
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            const.ETERNALAI_RESULT_HOOK_URL,
+            json=body
+        )
 
-    with open(file_path, 'rb') as fp:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                hook_url,
-                files={'file': fp},
-                timeout=httpx.Timeout(60.0 * 10),
-            )
+    msg = '''
+Callback <a href="{hook_url}">{hook_url}</a>:
 
-    logger.info(f"Hook response: {response.status_code}; {response.text}")
-    return response.status_code == 200
+Request:
+<pre>
+{json_log}
+</pre>
+
+Response:
+<pre>
+{response}
+</pre>
+'''.format(
+    hook_url=const.ETERNALAI_RESULT_HOOK_URL,
+    json_log=json.dumps(body, indent=2),
+    response=response.text
+)
+
+    telegram_kit.send_message(
+        msg, 
+        room=const.TELEGRAM_ROOM,
+        schedule=True
+    )
+
+    if response.status_code != 200:
+        logger.error(f"Failed to send hook response: {response.text}")
+        return False
+    
+    return True
 
 @limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT)
 async def mk_embedding(text: str, model_use: EmbeddingModel) -> List[float]:
@@ -160,6 +206,21 @@ async def url_chunking(url: str, model_use: EmbeddingModel) -> AsyncGenerator:
     try:
         doc: ConversionResult = await get_doc_from_url(url) 
     except Exception as e:
+        fmt_exec = traceback.format_exc(limit=8)
+        msg = '''
+<strong>Error while reading file from {file_url}</strong>
+<strong>Reason:</strong> {reason}
+<strong>Traceback:</strong>
+<pre>
+{traceback}
+</pre>
+'''.format(
+    file_url=f'<a href="{url}">{PathL(url).name}</a>',
+    reason=str(e),
+    traceback=fmt_exec
+)
+        await notify_action(msg)
+
         logger.error(f"Failed to convert document from {url} to docling format. Reason: {str(e)}")
         
         traceback.print_exc()
@@ -221,8 +282,8 @@ async def inserting(_data: List[EmbeddedItem], model_use: EmbeddingModel, metada
     return insert_cnt
 
 async def chunking_and_embedding(url_or_texts: Union[str, List[str]], model_use: EmbeddingModel) -> AsyncGenerator:
-    to_retry = []
-
+    to_retry = []   
+    
     if isinstance(url_or_texts, str):
         async for item in url_chunking(url_or_texts, model_use):
             try:
@@ -275,7 +336,13 @@ async def chunking_and_embedding(url_or_texts: Union[str, List[str]], model_use:
     else:
         raise ValueError("Invalid input type; Expecting str or list of str, got {}".format(type(url_or_texts)))
 
-async def export_collection_data(collection: str, workspace_directory: str, filter_expr='', include_embedding=True, include_identity=False) -> str:
+async def export_collection_data(
+    collection: str, 
+    workspace_directory: str, 
+    filter_expr='', 
+    include_embedding=True, 
+    include_identity=False
+) -> str:
     fields_output = ['content', 'reference', 'hash']
 
     if include_embedding:   
@@ -367,10 +434,27 @@ async def export_collection_data(collection: str, workspace_directory: str, filt
 _running_tasks = set([])
 
 
+async def smaller_task(
+    url_or_texts: Union[List[str], str], 
+    kb: str, 
+    model_use: EmbeddingModel, 
+    file_identifier:str = "",
+    request_identifier: Optional[str] = None
+):
+    n_inserted_chunks, fails_count = 0, 0
 
-async def smaller_task(url_or_texts: Union[List[str], str], kb: str, model_use: EmbeddingModel):
-
-    n_chunks, fails_count = 0, 0
+    if isinstance(url_or_texts, str) and request_identifier is not None:
+        await hook(
+            ResponseMessage[InsertProgressCallback](
+                result=InsertProgressCallback(
+                    ref=request_identifier,
+                    kb=kb,
+                    identifier=file_identifier,
+                    message=f"Start processing file {file_identifier}",
+                ),
+                status=APIStatus.PROCESSING
+            )
+        )
 
     async for data in async_batching(
         chunking_and_embedding(url_or_texts, model_use), 
@@ -378,18 +462,171 @@ async def smaller_task(url_or_texts: Union[List[str], str], kb: str, model_use: 
     ):
         data: List[EmbeddedItem]
 
-        n_chunks += await inserting(
+        n_inserted_chunks += await inserting(
             _data=data, 
             model_use=model_use, 
-            metadata={
+            metadata = {
                 'kb': kb, 
-                'reference': url_or_texts if isinstance(url_or_texts, str) else ""
+                'reference': file_identifier
             }
         )
 
-        fails_count += len([e for e in data if e.error is not None])
+        fails_count += len([
+            e for e in data 
+            if e.error is not None
+        ])
 
-    return n_chunks, fails_count
+    if isinstance(url_or_texts, str) and request_identifier is not None:
+        status = APIStatus.OK if n_inserted_chunks > 0 else APIStatus.ERROR
+        reason = "" if status == APIStatus.OK else "No data read from the provided file"
+
+        await hook(
+            ResponseMessage[InsertProgressCallback](
+                result=InsertProgressCallback(
+                    ref=request_identifier,
+                    message=(
+                        f"Completed processing file {file_identifier}" 
+                        if n_inserted_chunks > 0 else 
+                        f"Failed to process file {file_identifier} (Reason: {reason})"
+                    ),
+                    kb=kb,
+                    identifier=file_identifier
+                ),
+                status=status
+            )
+        )
+
+    return (n_inserted_chunks + fails_count, fails_count)
+
+@limit_asyncio_concurrency(4)
+async def download_file(
+    session: httpx.AsyncClient, url: str, path: str
+):
+    async with session.stream("GET", url) as response:
+        async with aiofiles.open(path, 'wb') as f:
+            async for chunk in response.aiter_bytes(8192):
+                await f.write(chunk)
+
+    logger.info(f"Downloaded {path}")
+    
+async def download_filecoin_item(
+    metadata: dict, 
+    tmp_dir: str, 
+    session: httpx.AsyncClient,
+    identifier: str
+) -> Optional[FilecoinData]:
+    
+    if metadata["is_part"]:
+        parts = sorted(metadata["files"], key=lambda x: x["index"])
+        zip_parts, tasks = [], []
+
+        for part in parts:
+            part_url = f"{GATEWAY_IPFS_PREFIX}/{part['hash']}"
+            part_path = PathL(tmp_dir) / part['name']
+            tasks.append(download_file(session, part_url, part_path))
+            zip_parts.append(part_path)
+
+        await asyncio.gather(*tasks)
+
+        name = metadata['name']
+        destination = PathL(tmp_dir) / name
+        command = f"cat {tmp_dir}/{name}.zip.part-* | pigz -p 2 -d | tar -xf - -C {tmp_dir}"
+
+        await sync2async(subprocess.run)(
+            command, shell=True, check=True
+        )
+
+        logger.info(f"Successfully extracted files to {destination}")
+        afiles = []
+
+        for root, dirs, files in os.walk(destination):
+            for file in files:
+                afiles.append(os.path.join(root, file))
+
+        if len(afiles) > 0:
+            return FilecoinData(
+                identifier=identifier,
+                address=afiles[0]
+            )
+
+        logger.warning(f"No files extracted from {destination}")
+
+    else:
+        url = f"{GATEWAY_IPFS_PREFIX}/{metadata['files'][0]['hash']}"
+        path = PathL(tmp_dir) / metadata['files'][0]['name']
+        await download_file(session, url, path)
+
+        return FilecoinData(
+            identifier=identifier,
+            address=path
+        )
+        
+    return None
+
+async def download_and_extract_from_filecoin(
+    url: str, tmp_dir: str, ignore_inserted: bool=True
+) -> List[FilecoinData]:
+    list_files: List[FilecoinData] = []
+
+    pat = re.compile(r"ipfs/(.+)")
+    cid = pat.search(url).group(1)
+    
+    if not cid:
+        raise ValueError(f"Invalid filecoin url: {url}")
+
+    async with httpx.AsyncClient() as session:
+        response = await session.get(url)
+
+        if response.status_code != 200:
+            raise ValueError(f"Failed to get metadata from {url}; Reason: {response.text}")
+
+        list_metadata = json.loads(response.content)
+
+        for file_index, metadata in enumerate(list_metadata):
+            metadata: dict
+            logger.info(metadata)
+            
+            if ignore_inserted and metadata.get("is_inserted", False):
+                continue
+
+            fcdata = await download_filecoin_item(
+                metadata, 
+                tmp_dir, 
+                session, 
+                identifier=f"{cid}/{file_index}"
+            )
+            
+            if fcdata is not None:
+                list_files.append(fcdata)
+
+    logger.info(f"List of files to be processed: {list_files}")
+    return list_files
+
+async def inspect_by_file_identifier(file_identifier: str) -> CollectionInspection:
+    milvus_cli = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)
+
+    it = milvus_cli.query_iterator(
+        collection_name=get_default_embedding_model().identity(),
+        filter=f"reference == {file_identifier!r}",
+        output_fields=["hash"]
+    )
+    
+    hashs = set([])
+
+    while True:
+        batch = await sync2async(it.next)()
+
+        if len(batch) == 0:
+            break
+
+        for item in batch:
+            hashs.add(item['hash'])
+
+    return CollectionInspection(
+        file_ref=file_identifier,
+        message=f"Has {len(hashs)} unique chunk(s)",
+        status=APIStatus.OK if len(hashs) > 0 else APIStatus.ERROR
+    )         
 
 @limit_asyncio_concurrency(4)
 async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
@@ -397,6 +634,10 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
         return
 
     try:
+        # tmp dir preparation
+        tmp_dir = get_tmp_directory()
+        os.makedirs(tmp_dir, exist_ok=True)
+
         _running_tasks.add(req.id)
         kb = req.kb
         n_chunks, fails_count = 0, 0
@@ -408,16 +649,43 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
 
         logger.info(f"Received {json.dumps(verbosed_info_for_logging, indent=2)};\nStart handling task: {req.id}")
 
-
         futures = []
         sqrt_length_texts = int(len(req.texts) ** 0.5)
+        filecoin_files = []
+        identifers = []
+
+        if req.filecoin_metadata_url is not None:
+            filecoin_files = await download_and_extract_from_filecoin(req.filecoin_metadata_url, tmp_dir)
+
+        for fc_file in filecoin_files:
+            futures.append(asyncio.ensure_future(
+                smaller_task(
+                    fc_file.address, kb, model_use, 
+                    file_identifier=fc_file.identifier, 
+                    request_identifier=req.ref
+                )
+            ))
+            identifers.append(fc_file.identifier)
 
         if len(req.texts) > 0:
             for chunk_of_texts in batching(req.texts, sqrt_length_texts):
-                futures.append(asyncio.ensure_future(smaller_task(chunk_of_texts, kb, model_use)))
+                futures.append(asyncio.ensure_future(
+                    smaller_task(
+                        chunk_of_texts, kb, model_use, 
+                        file_identifier="",
+                        request_identifier=req.ref
+                    )
+                ))
 
         for url in req.file_urls:
-            futures.append(asyncio.ensure_future(smaller_task(url, kb, model_use)))
+            futures.append(asyncio.ensure_future(
+                smaller_task(
+                    url, kb, model_use, 
+                    file_identifier=url,
+                    request_identifier=req.ref
+                )
+            ))
+            identifers.append(url)
 
         if len(futures) > 0:
             results = await asyncio.gather(*futures)
@@ -425,68 +693,33 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
             n_chunks = sum([r[0] for r in results])
             fails_count = sum([r[1] for r in results])
 
-        logger.info(f"(overall) Inserted {n_chunks} items to {kb} (collection: {model_use.identity()});\nCompleted handling task: {req.id}")
+        logger.info(f"(overall) Inserted {n_chunks - fails_count} items to {kb} (collection: {model_use.identity()});")
 
         if req.hook is not None:
-            file_submitted = False
-
-            if n_chunks > 0:
-                wspace = get_tmp_directory()
-                os.makedirs(wspace, exist_ok=True)
-
-                try:
-                    result_file = await export_collection_data(
-                        model_use.identity(), 
-                        wspace,
-                        f'kb == {kb!r}'
-                    )
-
-                    file_submitted = await hook_result(req.hook, result_file)
-
-                    if not file_submitted:
-                        logger.error("Failed to send the result back to hook url: {}".format(req.hook))
-
-                except Exception as e:
-                    logger.error(f"Internal server error: {e}")
-
-                finally:
-                    shutil.rmtree(wspace, ignore_errors=True)
-
-            response = InsertResponse(
-                ref=req.ref,
-                message=f"Inserted {n_chunks} (chunks); {fails_count} (fails); {len(req.file_urls)} (urls).",
-                kb=kb,
-                artifact_submitted=file_submitted
+            hook_result = await hook(
+                ResponseMessage[InsertResponse](
+                    result=InsertResponse(
+                        ref=req.ref,
+                        message=f"Inserted {n_chunks - fails_count} (chunks); Failed {fails_count} (chunks); Total: {n_chunks} (chunks); {len(req.file_urls) + len(filecoin_files)} (files).",
+                        kb=kb,
+                        details=[
+                            await inspect_by_file_identifier(identifier) 
+                            for identifier in identifers
+                        ]
+                    ),
+                    status=APIStatus.OK if (n_chunks - fails_count) > 0 or len(futures) == 0 else APIStatus.ERROR
+                )
             )
 
-            status = APIStatus.OK if n_chunks > 0 and file_submitted else APIStatus.ERROR
-            err_msg = None
-
-            if status == APIStatus.ERROR:
-                err_msg = "An error occured while processing data: "
-                if n_chunks == 0:
-                    err_msg += "No data extracted from the provided documents."
-                elif not file_submitted:
-                    err_msg += "Failed to send the result back to the hook url."
-
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    const.ETERNALAI_RESULT_HOOK_URL,
-                    json=ResponseMessage(
-                        result=response.model_dump(),
-                        status=status,
-                        error=err_msg
-                    ).model_dump(),
-                    timeout=httpx.Timeout(60.0),
-                )
-
-            logger.info(f"Hook response: {response.status_code}; {response.text}")
+            logger.info(f"Hook status: {hook_result};")
 
         await sync2async(get_insertion_request_handler().delete)(req.id)
         return n_chunks
 
     finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
         _running_tasks.remove(req.id)
+        logger.info(f"Completed handling task: {req.id}")
 
 @schedule.every(5).minutes.do
 def resume_pending_tasks():
@@ -720,13 +953,14 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
         for hit in hits
     ]
 
-async def notify_action(req: Union[InsertInputSchema, QueryInputSchema, str]):
+async def notify_action(req: Union[InsertInputSchema, UpdateInputSchema, QueryInputSchema, str]):
     if isinstance(req, InsertInputSchema):
         msg = '''<strong>Received a request to insert:</strong>\n
 <i>
 <b>ID:</b> {id}
 <b>Texts:</b> {texts} (items)
 <b>Files:</b> {files} (files)
+<b>Filecoin metadata url:</b> {filecoin_metadata_url}
 <b>Knowledge Base:</b> {kb}
 <b>Reference:</b> {ref}
 <b>Hook:</b> <a href="{hook}">{hook}</a>
@@ -735,6 +969,28 @@ async def notify_action(req: Union[InsertInputSchema, QueryInputSchema, str]):
         id=req.id,
         texts=len(req.texts),
         files=len(req.file_urls),
+        filecoin_metadata_url=req.filecoin_metadata_url,
+        kb=req.kb,
+        ref=req.ref,
+        hook=req.hook
+    )
+    
+    elif isinstance(req, UpdateInputSchema):
+        msg = '''<strong>Received a request to update:</strong>\n
+<i>
+<b>ID:</b> {id}
+<b>Texts:</b> {texts} (items)
+<b>Files:</b> {files} (files)
+<b>Filecoin metadata url:</b> {filecoin_metadata_url}
+<b>Knowledge Base:</b> {kb}
+<b>Reference:</b> {ref}
+<b>Hook:</b> <a href="{hook}">{hook}</a>
+</i>
+'''.format(
+        id=req.id,
+        texts=len(req.texts),
+        files=len(req.file_urls),
+        filecoin_metadata_url=req.filecoin_metadata_url,
         kb=req.kb,
         ref=req.ref,
         hook=req.hook

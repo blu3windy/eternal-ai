@@ -2,15 +2,14 @@ package apis
 
 import (
 	"errors"
-	"io"
-	"net/http"
-
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/pkg/utils"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
 	"github.com/gin-gonic/gin"
 	openai2 "github.com/sashabaranov/go-openai"
+	"io"
+	"net/http"
 )
 
 func (s *Server) createKnowledge(c *gin.Context) {
@@ -40,7 +39,7 @@ func (s *Server) createKnowledge(c *gin.Context) {
 func (s *Server) webhookKnowledge(c *gin.Context) {
 	ctx := s.requestContext(c)
 
-	req := &models.RagResponse{}
+	req := &models.RagHookResponse{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
@@ -279,8 +278,7 @@ func (s *Server) updateKnowledgeBaseInContractWithSignature(c *gin.Context) {
 		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
 	}
-
-	info, err := s.nls.KnowledgeUsecase.GetKnowledgeBaseById(ctx, req.KnowledgeId)
+	info, err := s.nls.KnowledgeUsecase.GetKnowledgeBaseByKBTokenId(ctx, req.KnowledgeBaseId)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: err})
 		return
@@ -334,5 +332,33 @@ func (s *Server) retrieveKnowledge(c *gin.Context) {
 		return
 	}
 
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+}
+
+func (s *Server) checkBalance(c *gin.Context) {
+	ctx := s.requestContext(c)
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: err})
+		return
+	}
+
+	id := s.uintFromContextParam(c, "id")
+	resp, err := s.nls.KnowledgeUsecase.GetKnowledgeBaseById(ctx, id)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: err})
+		return
+	}
+
+	if resp.UserAddress != userAddress {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errors.New("You not owner")})
+		return
+	}
+	if resp.Status == models.KnowledgeBaseStatusWaitingPayment {
+		if err := s.nls.KnowledgeUsecase.CheckBalance(ctx, resp); err != nil {
+			ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errors.New("You not owner")})
+			return
+		}
+	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
 }

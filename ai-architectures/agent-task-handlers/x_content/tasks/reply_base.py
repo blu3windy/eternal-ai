@@ -67,36 +67,41 @@ class ReplyTaskBase(MultiStepTaskBase):
                     f"[{self.__class__.__name__}.process_task] Retrieved {len(mentioned_tweets)} recent mentions for {log.meta_data.twitter_username}"
                 )
 
-                async def get_specialties(tweet_info: ExtendedTweetInfo):
-                    return tweet_info, await sync2async(
-                        detect_tweet_specialties
-                    )(tweet_info)
+                futures = []
+                for idx, tweet_info in enumerate(mentioned_tweets):
+                    task = asyncio.create_task(
+                        sync2async(detect_tweet_specialties)(tweet_info)
+                    )
+                    task.idx = idx
 
-                futures = [
-                    asyncio.ensure_future(get_specialties(tweet_info))
-                    for tweet_info in mentioned_tweets
-                ]
+                    loop = asyncio.get_event_loop()
+                    wrapper = loop.create_future()
+                    task.add_done_callback(wrapper.set_result)
+                    futures.append(wrapper)
 
                 mentioned_data = []
 
                 totals = len(futures)
                 for idx, future in enumerate(asyncio.as_completed(futures)):
+                    task = await future
+                    og_idx: int = task.idx
                     try:
-                        tweet_info, specialties = await future
+                        specialties: List[TweetSpecialty] = task.result()
+                        mentioned_data.append(
+                            {
+                                "tweet_info": mentioned_tweets[
+                                    og_idx
+                                ].to_dict(),
+                                "specialties": [
+                                    specialty.name for specialty in specialties
+                                ],
+                            }
+                        )
                     except Exception as err:
                         logger.info(
                             f"[{log.id}] Error while processing index {idx+1} (out of {totals}): {err} (getting tweet specialties fail)."
                         )
                         continue
-
-                    mentioned_data.append(
-                        {
-                            "tweet_info": tweet_info.to_dict(),
-                            "specialties": [
-                                specialty.name for specialty in specialties
-                            ],
-                        }
-                    )
             except Exception as err:
                 traceback.print_exc()
                 logger.error(
@@ -141,7 +146,9 @@ class ReplyTaskBase(MultiStepTaskBase):
                     for specialty in mentioned_data[i]["specialties"]
                 ]
 
-                subtask_cls = self.get_subtask_cls(log, specialties)
+                subtask_cls = self.get_subtask_cls(
+                    log, specialties, tweet_info
+                )
                 if subtask_cls is not None:
                     subtasks.append(
                         subtask_cls(
@@ -156,18 +163,23 @@ class ReplyTaskBase(MultiStepTaskBase):
                 f"[{self.__class__.__name__}.process_task] Start processing {len(subtasks)} subtasks"
             )
 
-            async def execute_subtask(subtask: ReplySubtaskBase):
-                return subtask.tweet_info, await subtask.run()
+            futures = []
+            for idx, subtask in enumerate(subtasks):
+                task = asyncio.create_task(subtask.run())
+                task.idx = idx
 
-            futures = [
-                asyncio.ensure_future(execute_subtask(subtask))
-                for subtask in subtasks
-            ]
+                loop = asyncio.get_event_loop()
+                wrapper = loop.create_future()
+                task.add_done_callback(wrapper.set_result)
+                futures.append(wrapper)
 
             totals = len(futures)
             for idx, future in enumerate(asyncio.as_completed(futures)):
+                task = await future
+                og_idx: int = task.idx
+                tweet_info = subtasks[og_idx].tweet_info
                 try:
-                    tweet_info, result = await future
+                    result = task.result()
                     log.execute_info["task_result"].append(result)
                     logger.info(
                         f"[{log.id}] Successfully processed subtask index {idx+1} (out of {totals}) (tweet_id={tweet_info.tweet_object.tweet_id})"
@@ -177,7 +189,7 @@ class ReplyTaskBase(MultiStepTaskBase):
                     log.execute_info["task_failed"].append(
                         {
                             "tweet_id": tweet_info.tweet_object.tweet_id,
-                            "error": err,
+                            "error": str(err),
                         }
                     )
                     logger.info(

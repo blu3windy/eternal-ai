@@ -19,6 +19,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/memenonfungiblepositionmanager"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/polygonnonfungiblepositionmanager"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/zksyncnonfungiblepositionmanager"
+	blockchainutils "github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/blockchain_utils"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 	"github.com/jinzhu/gorm"
 )
@@ -92,7 +93,8 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 				daos.GetDBMainCtx(ctx),
 				memeID,
 				map[string][]interface{}{
-					"AgentInfo": {},
+					"AgentInfo":  {},
+					"AgentStore": {},
 				},
 				false,
 			)
@@ -108,9 +110,10 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 					models.ARBITRUM_CHAIN_ID,
 					models.BSC_CHAIN_ID,
 					models.APE_CHAIN_ID,
-					models.AVALANCHE_C_CHAIN_ID:
+					models.AVALANCHE_C_CHAIN_ID,
+					models.SOLANA_CHAIN_ID:
 					{
-						if m.Fee.Float.Cmp(big.NewFloat(0)) > 0 {
+						if m.AgentInfoID > 0 && m.Fee.Float.Cmp(big.NewFloat(0)) > 0 {
 							agent, err := s.dao.FirstAgentInfoByID(
 								daos.GetDBMainCtx(ctx),
 								m.AgentInfoID,
@@ -136,6 +139,22 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 								return errs.NewError(errs.ErrBadRequest)
 							}
 						}
+						if m.AgentStoreID > 0 && m.Fee.Float.Cmp(big.NewFloat(0)) > 0 {
+							agentStore, err := s.dao.FirstAgentStoreByID(
+								daos.GetDBMainCtx(ctx),
+								m.AgentStoreID,
+								map[string][]interface{}{
+									"Owner": {},
+								},
+								false,
+							)
+							if err != nil {
+								return errs.NewError(err)
+							}
+							if agentStore.Owner.EaiBalance.Float.Cmp(&m.Fee.Float) < 0 {
+								return errs.NewError(errs.ErrBadRequest)
+							}
+						}
 					}
 				default:
 					{
@@ -147,64 +166,150 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 					models.ARBITRUM_CHAIN_ID,
 					models.BSC_CHAIN_ID,
 					models.APE_CHAIN_ID,
-					models.AVALANCHE_C_CHAIN_ID:
+					models.AVALANCHE_C_CHAIN_ID,
+					models.SOLANA_CHAIN_ID:
 					{
 						tokenSupply := &m.TotalSuply.Float
 						if tokenSupply.Cmp(big.NewFloat(1)) <= 0 {
 							return errs.NewError(errs.ErrBadRequest)
 						}
-						memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(m.NetworkID, "meme_pool_address"))
-						tokenAddress, _, err := s.GetEthereumClient(ctx, m.NetworkID).
-							DeployAGENTToken(
-								s.GetAddressPrk(memePoolAddress),
-								m.Name,
-								m.Ticker,
-								models.ConvertBigFloatToWei(tokenSupply, 18),
-								memePoolAddress,
-							)
-						if err != nil {
-							return errs.NewError(err)
+						var tokenAddress string
+						status := models.MemeStatusCreated
+						switch m.NetworkID {
+						case models.BASE_CHAIN_ID,
+							models.ARBITRUM_CHAIN_ID,
+							models.BSC_CHAIN_ID,
+							models.APE_CHAIN_ID,
+							models.AVALANCHE_C_CHAIN_ID:
+							{
+								memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(m.NetworkID, "meme_pool_address"))
+								tokenAddress, _, err = s.GetEthereumClient(ctx, m.NetworkID).
+									DeployAGENTToken(
+										s.GetAddressPrk(memePoolAddress),
+										m.Name,
+										m.Ticker,
+										models.ConvertBigFloatToWei(tokenSupply, 18),
+										memePoolAddress,
+									)
+								if err != nil {
+									return errs.NewError(err)
+								}
+								status = models.MemeStatusCreated
+							}
+						case models.SOLANA_CHAIN_ID:
+							{
+								agentTokenAdminAddress := s.conf.GetConfigKeyString(models.GENERTAL_NETWORK_ID, "agent_token_admin_address")
+								base64Str, err := helpers.CurlBase64String(models.GetImageUrl(m.Image))
+								if err != nil {
+									return errs.NewError(err)
+								}
+								pumfunResp, err := s.blockchainUtils.SolanaCreatePumpfunToken(
+									&blockchainutils.SolanaCreatePumpfunTokenReq{
+										Address:     agentTokenAdminAddress,
+										Name:        m.Name,
+										Symbol:      m.Ticker,
+										Description: m.Description,
+										Telegram:    "",
+										Website:     "",
+										Amount:      0,
+										ImageBase64: base64Str,
+									},
+								)
+								if err != nil {
+									return errs.NewError(err)
+								}
+								tokenAddress = pumfunResp.Mint
+								status = models.MemeStatusAddPoolLevel2
+							}
 						}
 						err = daos.GetDBMainCtx(ctx).Model(&m).
 							Updates(
 								map[string]interface{}{
 									"token_address": strings.ToLower(tokenAddress),
 									"total_suply":   numeric.NewBigFloatFromFloat(tokenSupply),
-									"status":        models.MemeStatusCreated,
+									"status":        status,
 									"num_retries":   0,
 								},
 							).Error
 						if err != nil {
 							return errs.NewError(err)
 						}
-						err = daos.GetDBMainCtx(ctx).
-							Model(m.AgentInfo).
-							Updates(
-								map[string]interface{}{
-									"token_address": strings.ToLower(tokenAddress),
-									"eai_balance":   gorm.Expr("eai_balance - ?", m.Fee),
-								},
-							).Error
-						if err != nil {
-							return errs.NewError(err)
+						if m.AgentInfoID > 0 {
+							err = daos.GetDBMainCtx(ctx).
+								Model(m.AgentInfo).
+								Updates(
+									map[string]interface{}{
+										"token_address": strings.ToLower(tokenAddress),
+										"eai_balance":   gorm.Expr("eai_balance - ?", m.Fee),
+									},
+								).Error
+							if err != nil {
+								return errs.NewError(err)
+							}
+							if m.Fee.Cmp(big.NewFloat(0)) > 0 {
+								_ = s.dao.Create(
+									daos.GetDBMainCtx(ctx),
+									&models.AgentEaiTopup{
+										NetworkID:      m.AgentInfo.NetworkID,
+										EventId:        fmt.Sprintf("agent_token_fee_%d", m.ID),
+										AgentInfoID:    m.AgentInfoID,
+										Type:           models.AgentEaiTopupTypeSpent,
+										Amount:         m.Fee,
+										Status:         models.AgentEaiTopupStatusDone,
+										DepositAddress: m.AgentInfo.ETHAddress,
+										ToAddress:      m.AgentInfo.ETHAddress,
+										Toolset:        "token_fee",
+									},
+								)
+							}
+							_ = s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), m.AgentInfo.RefTweetID, m.AgentInfo.ID)
 						}
-						if m.Fee.Cmp(big.NewFloat(0)) > 0 {
-							_ = s.dao.Create(
-								daos.GetDBMainCtx(ctx),
-								&models.AgentEaiTopup{
-									NetworkID:      m.AgentInfo.NetworkID,
-									EventId:        fmt.Sprintf("agent_token_fee_%d", m.ID),
-									AgentInfoID:    m.AgentInfoID,
-									Type:           models.AgentEaiTopupTypeSpent,
-									Amount:         m.Fee,
-									Status:         models.AgentEaiTopupStatusDone,
-									DepositAddress: m.AgentInfo.ETHAddress,
-									ToAddress:      m.AgentInfo.ETHAddress,
-									Toolset:        "token_fee",
-								},
-							)
+						if m.AgentStoreID > 0 {
+							err = daos.GetDBMainCtx(ctx).
+								Model(m.AgentStore).
+								Updates(
+									map[string]interface{}{
+										"token_address": strings.ToLower(tokenAddress),
+									},
+								).Error
+							if err != nil {
+								return errs.NewError(err)
+							}
+							if m.Fee.Cmp(big.NewFloat(0)) > 0 {
+								agentStore, err := s.dao.FirstAgentStoreByID(
+									daos.GetDBMainCtx(ctx),
+									m.AgentStoreID,
+									map[string][]interface{}{
+										"Owner": {},
+									},
+									false,
+								)
+								if err != nil {
+									return errs.NewError(err)
+								}
+								err = daos.GetDBMainCtx(ctx).
+									Model(agentStore.Owner).
+									Updates(
+										map[string]interface{}{
+											"eai_balance": gorm.Expr("eai_balance - ?", m.Fee),
+										},
+									).Error
+								if err != nil {
+									return errs.NewError(err)
+								}
+								_ = s.dao.Create(
+									daos.GetDBMainCtx(ctx),
+									&models.UserTransaction{
+										NetworkID: m.NetworkID,
+										EventId:   fmt.Sprintf("meme_create_token_%d", m.ID),
+										UserID:    agentStore.OwnerID,
+										Type:      models.UserTransactionTypeTokenFee,
+										Amount:    numeric.NewBigFloatFromFloat(models.NegativeBigFloat(&m.Fee.Float)),
+										Status:    models.UserTransactionStatusDone,
+									},
+								)
+							}
 						}
-						_ = s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), m.AgentInfo.RefTweetID, m.AgentInfo.ID)
 					}
 				}
 			}

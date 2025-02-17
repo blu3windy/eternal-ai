@@ -20,6 +20,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/lighthouse"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/magiceden"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/trxapi"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -98,7 +99,14 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		}
 	}
 
-	if req.TokenChainId != "" {
+	if req.CreateTokenMode == models.CreateTokenModeTypeLinkExisting {
+		agent.TokenMode = string(models.CreateTokenModeTypeLinkExisting)
+		agent.TokenAddress = req.TokenAddress
+		agent.TokenSymbol = req.Ticker
+		agent.TokenName = req.TokenName
+		tokenChainId, _ := strconv.ParseUint(req.TokenChainId, 0, 64)
+		agent.TokenNetworkID = tokenChainId
+	} else if req.TokenChainId != "" {
 		tokenChainId, _ := strconv.ParseUint(req.TokenChainId, 0, 64)
 		if !(tokenChainId == models.POLYGON_CHAIN_ID || tokenChainId == models.ZKSYNC_CHAIN_ID) {
 			agent.TokenNetworkID = tokenChainId
@@ -222,6 +230,9 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	}
 
 	if agent.ID > 0 {
+		if req.CreateTokenMode == models.CreateTokenModeTypeLinkExisting {
+			go s.UpdateTokenPriceInfo(context.Background(), agent.ID)
+		}
 		go s.AgentCreateMissionDefault(context.Background(), agent.ID)
 	}
 
@@ -238,14 +249,6 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 			s.KnowledgeUsecase.SendMessage(ctx, fmt.Sprintf("CreateKnowledgeBase for agent %s (%d) - has error: %s ", agent.AgentName, agent.ID, err.Error()), -1)
 			return nil, err
 		}
-
-		// _, err = s.KnowledgeUsecase.CreateAgentInfoKnowledgeBase(ctx, &models.AgentInfoKnowledgeBase{
-		// 	AgentInfoId:     agent.ID,
-		// 	KnowledgeBaseId: kb.ID,
-		// })
-		// if err != nil {
-		// 	return nil, err
-		// }
 
 		agent.AgentKBId = kb.ID
 		if err := s.dao.Save(daos.GetDBMainCtx(ctx), agent); err != nil {
@@ -511,11 +514,26 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 	}
 
 	if updateKb {
-		if err := s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, agent.AgentKBId, updateMap); err != nil {
-			return nil, err
-		}
 		i, err := s.KnowledgeUsecase.GetKnowledgeBaseById(ctx, agent.AgentKBId)
 		if err != nil {
+			return nil, err
+		}
+		if len(req.CreateKnowledgeRequest.Files) > 0 {
+			updatedListFile, err := s.KnowledgeUsecase.UpdateListKnowledgeBaseFile(ctx, agent.AgentKBId, req.CreateKnowledgeRequest.Files)
+			if err != nil {
+				return nil, errs.NewError(err)
+			}
+			if updatedListFile {
+				i.ChargeMore = i.CalcChargeMore()
+				if i.ChargeMore != 0 {
+					i.Fee = i.Fee + i.ChargeMore
+					updateMap["fee"] = i.Fee
+					updateMap["charge_more"] = i.ChargeMore
+					updateMap["status"] = models.KnowledgeBaseStatusWaitingPayment
+				}
+			}
+		}
+		if err := s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, agent.AgentKBId, updateMap); err != nil {
 			return nil, err
 		}
 		agent.KnowledgeBase = i
@@ -971,7 +989,6 @@ func (s *Service) AgentCreateAgentStudio(ctx context.Context, address, graphData
 					}
 				default:
 					{
-
 					}
 				}
 			}
@@ -980,7 +997,7 @@ func (s *Service) AgentCreateAgentStudio(ctx context.Context, address, graphData
 				return nil, errs.NewError(errs.ErrBadRequest)
 			}
 
-			//gen token
+			// gen token
 			tokenInfo, _ := s.GenerateTokenInfoFromSystemPrompt(ctx, agent.AgentName, agent.SystemPrompt)
 			if tokenInfo != nil && tokenInfo.TokenSymbol != "" {
 				agent.TokenSymbol = tokenInfo.TokenSymbol
@@ -1271,7 +1288,6 @@ func (s *Service) AgentUpdateAgentStudio(ctx context.Context, address, agentID, 
 							}
 						default:
 							{
-
 							}
 						}
 					}
@@ -1285,7 +1301,6 @@ func (s *Service) AgentUpdateAgentStudio(ctx context.Context, address, agentID, 
 			return nil
 		},
 	)
-
 	if err != nil {
 		return nil, errs.NewError(err)
 	}
@@ -1327,4 +1342,28 @@ func (s *Service) AgentCreateAgentAssistantForLocal(ctx context.Context, req *se
 		return nil, errs.NewError(err)
 	}
 	return agent, nil
+}
+
+func (s *Service) GetAgentChainFees(ctx context.Context) (map[string]interface{}, error) {
+	res, err := s.dao.FindAgentChainFee(
+		daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{},
+		map[string][]interface{}{},
+		[]string{"id desc"},
+		0,
+		999999,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	chainFeeMap := map[string]interface{}{}
+	for _, v := range res {
+		chainFeeMap[strconv.Itoa(int(v.NetworkID))] = map[string]interface{}{
+			"network_id": v.NetworkID,
+			"mint_fee":   numeric.BigFloat2Text(&v.MintFee.Float),
+			"post_fee":   numeric.BigFloat2Text(&v.InferFee.Float),
+			"token_fee":  numeric.BigFloat2Text(&v.TokenFee.Float),
+		}
+	}
+	return chainFeeMap, nil
 }

@@ -310,6 +310,7 @@ class GameAPIClient:
             "tweet_id": tweet_id,
             "usernames": agent_usernames,
             "time_out": time_out,
+            "bet_time_out": time_out,
         }
 
         response_data, err = GameAPIClient.request(
@@ -347,7 +348,7 @@ class GameAPIClient:
         """
 
         endpoint = f"/v1/game/{tweet_id}/result"
-        payload = {"usernames": agent_username}
+        payload = {"username": agent_username}
 
         response_data, err = GameAPIClient.request(
             method="POST",

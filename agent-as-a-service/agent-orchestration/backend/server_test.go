@@ -66,7 +66,7 @@ func Test_JOB(t *testing.T) {
 
 func Test_UTIL(t *testing.T) {
 	// ts.JobScanRepliesByLaunchpadTweetID(context.Background())
-	ts.LuckyMoneyGetPostContent(daos.GetDBMainCtx(context.Background()), 12390, 50118)
+	ts.AgentStoreCreateTokenInfo(context.Background(), "", 9)
 }
 
 func Test_SRV(t *testing.T) {

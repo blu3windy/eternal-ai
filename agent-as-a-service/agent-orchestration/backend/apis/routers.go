@@ -72,7 +72,8 @@ func (s *Server) Routers() {
 		userAPI := rootAPI.Group("/users")
 		{
 			userAPI.POST("/upload", s.UserUploadFile)
-			userAPI.GET("/profile", s.GetUserProfileWithAuth)
+			userAPI.GET("/profile", s.authCheckTK1TokenMiddleware(), s.GetUserProfileWithAuth)
+			userAPI.GET("/transactions", s.authCheckTK1TokenMiddleware(), s.GetListUserTransactions)
 		}
 
 		adminAPI := rootAPI.Group("/admin")
@@ -106,6 +107,8 @@ func (s *Server) Routers() {
 			agentAPI.POST("/preview", s.PreviewAgentSystemPromp)
 			agentAPI.POST("/preview/v1", s.PreviewAgentSystemPrompV1)
 			agentAPI.POST("/chats", s.AgentChatSupport)
+
+			agentAPI.GET("/network-fees", s.GetAgentChainFees)
 
 			twitterAPI := agentAPI.Group("/twitter")
 			{
@@ -278,8 +281,10 @@ func (s *Server) Routers() {
 		agentStoreAPI := rootAPI.Group("/agent-store")
 		{
 			agentStoreAPI.POST("/save", s.authCheckTK1TokenMiddleware(), s.SaveAgentStore)
+			agentStoreAPI.POST("/mint/:agent_store_id", s.authCheckTK1TokenMiddleware(), s.ScanAgentInfraMintHash)
 			agentStoreAPI.GET("/list", s.GetListAgentStore)
-			agentStoreAPI.GET("/install/list", s.GetListAgentStoreInstallByUser)
+			agentStoreAPI.GET("/list-by-owner", s.authCheckTK1TokenMiddleware(), s.GetListAgentStoreByOwner)
+			agentStoreAPI.GET("/install/list", s.GetListAgentStoreInstall)
 			agentStoreAPI.GET("/:id", s.GetAgentStoreDetail)
 			agentStoreAPI.POST("/:id/mission", s.authCheckTK1TokenMiddleware(), s.SaveMissionStore)
 			agentStoreAPI.GET("/:id/install-code/:agent_info_id", s.authCheckTK1TokenMiddleware(), s.GetAgentStoreInstallCode)
@@ -287,6 +292,14 @@ func (s *Server) Routers() {
 
 			agentStoreAPI.POST("/run-mission", s.authCheckTK1TokenMiddleware(), s.RunMission)
 			agentStoreAPI.GET("/mission-result", s.authCheckTK1TokenMiddleware(), s.MissionStoreResult)
+
+			agentStoreAPI.GET("/install/info", s.GetInstallInfo)
+
+			agentStoreAPI.GET("/token-info/:id", s.authCheckTK1TokenMiddleware(), s.AgentStoreCreateTokenInfo)
+
+			agentStoreAPI.GET("/try-history/", s.authCheckTK1TokenMiddleware(), s.GetTryHistory)
+			agentStoreAPI.GET("/try-history/:id", s.authCheckTK1TokenMiddleware(), s.GetTryHistoryDetail)
+
 		}
 
 		missionStoreAPI := rootAPI.Group("/mission-store")
@@ -357,6 +370,7 @@ func (s *Server) Routers() {
 			knowledgeApi.PATCH("/:id", s.updateKnowledge)
 			knowledgeApi.GET("/:id", s.detailKnowledge)
 			knowledgeApi.DELETE("/:id", s.deleteKnowledge)
+			knowledgeApi.POST("/:id/check_balance", s.checkBalance)
 			knowledgeApi.POST("/update-with-signature", s.updateKnowledgeBaseInContractWithSignature)
 		}
 
@@ -364,6 +378,11 @@ func (s *Server) Routers() {
 		{
 			knowledgeBasePublicApi.POST("/retrieve", s.retrieveKnowledge)
 		}
+
+		// agentInfraAPI := rootAPI.Group("/infra")
+		// {
+		// 	agentInfraAPI.Any("/:store_id/*path", s.proxyAgentStoreMiddleware("/api/infra"))
+		// }
 
 		sampleTwitterApp := rootAPI.Group("/sample-twitter-app")
 		{
@@ -373,9 +392,16 @@ func (s *Server) Routers() {
 			sampleTwitterApp.POST("/tweet-message", s.SampleTwitterAppTweetMessage)
 		}
 
-		// agentInfraAPI := rootAPI.Group("/infra")
-		// {
-		// 	agentInfraAPI.Any("/:infra_id/*path", s.proxyAgentStoreMiddleware("/api/infra"))
-		// }
+		infraTwitterApp := rootAPI.Group("/infra-twitter-app")
+		{
+			infraTwitterApp.GET("/install", s.InfraTwitterAppAuthenInstall)
+			infraTwitterApp.GET("/callback", s.InfraTwitterAppAuthenCallback)
+		}
+
+		storeTradingApp := rootAPI.Group("/store-defi-app")
+		{
+			storeTradingApp.GET("/install", s.StoreDefiAppAuthenInstall)
+			storeTradingApp.GET("/wallet", s.StoreDefiAppGetWallet)
+		}
 	}
 }
