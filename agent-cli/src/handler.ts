@@ -4,7 +4,7 @@ import { ChainIDMap, Framework, Network, NetworkConfig, ETERNALAI_URL } from "./
 // for dev
 import dotenv from 'dotenv';
 import { execCmd, getSupportedModels } from "./utils";
-import { mintAgent } from "./mint";
+import { mintAgent } from "./mintv1";
 import { Agent, AgentStatus, getAgents, insertAgent } from "./manager";
 import { logError, logInfo, logSuccess, logTable } from "./log";
 dotenv.config();
@@ -87,8 +87,9 @@ const createAgent = async ({
         privKey: process.env.PRIVATE_KEY || "",
         agentSystemPrompPath: path,
         agentContractAddress: ETERNALAI_AGENT_CONTRACT_ADDRESS,
-        promptSchedulerAddress: networkInfo.promptSchedulerAddress,
-        gpuManagerAddress: networkInfo.gpuManagerAddress
+        modelID: model,
+        // promptSchedulerAddress: networkInfo.promptSchedulerAddress,
+        // gpuManagerAddress: networkInfo.gpuManagerAddress
     });
 
     if (!agentID) {
@@ -131,6 +132,23 @@ const createAgent = async ({
 
         }
         case Framework.Rig: {
+            // Path to your Bash script
+            scriptPath = `sh src/rig/start.sh ${AGENT_UID} ${ETERNALAI_URL} ${ETERNALAI_API_KEY} ${chainID} ${ETERNALAI_RPC_URL} ${ETERNALAI_AGENT_CONTRACT_ADDRESS} ${agentID} ${model} ${TWITTER_USERNAME} ${TWITTER_PASSWORD} ${TWITTER_EMAIL} ${TWITTER_TARGET_USERS} ${agentName}`;
+
+            // Run the Bash script
+            // exec(scriptPath, (error: any, stdout: any, stderr: any) => {
+            //     if (error) {
+            //         console.error(`Error executing script: ${error.message}`);
+            //         // throw error;
+            //     }
+            //     if (stderr) {
+            //         console.error(`stderr: ${stderr}`);
+            //     }
+            //     console.log(`stdout: ${stdout}`);
+            // });
+            break;
+        }
+        case Framework.EternalAI: {
             // Path to your Bash script
             scriptPath = `sh src/rig/start.sh ${AGENT_UID} ${ETERNALAI_URL} ${ETERNALAI_API_KEY} ${chainID} ${ETERNALAI_RPC_URL} ${ETERNALAI_AGENT_CONTRACT_ADDRESS} ${agentID} ${model} ${TWITTER_USERNAME} ${TWITTER_PASSWORD} ${TWITTER_EMAIL} ${TWITTER_TARGET_USERS} ${agentName}`;
 
