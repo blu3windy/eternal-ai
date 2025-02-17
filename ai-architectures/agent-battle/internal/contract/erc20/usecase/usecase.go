@@ -1,18 +1,17 @@
 package usecase
 
 import (
-
-"agent-battle/pkg/constants"
-"context"
-"crypto/ecdsa"
-"errors"
-"fmt"
-"github.com/ethereum/go-ethereum"
-"github.com/ethereum/go-ethereum/core/types"
-"golang.org/x/crypto/sha3"
-"math/big"
-"strings"
-"time"
+	"agent-battle/pkg/constants"
+	"context"
+	"crypto/ecdsa"
+	"errors"
+	"fmt"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/core/types"
+	"golang.org/x/crypto/sha3"
+	"math/big"
+	"strings"
+	"time"
 
 	"agent-battle/internal/contract/erc20"
 	"agent-battle/internal/core/port"
@@ -39,6 +38,14 @@ type contractErc20Usecase struct {
 }
 
 func NewContractErc20Usecase() (port.IContractErc20Usecase, error) {
+	uc, err := NewContractErc20UseCaseInternal()
+	if err != nil {
+		return nil, err
+	}
+	return uc, nil
+}
+
+func NewContractErc20UseCaseInternal() (*contractErc20Usecase, error) {
 	uc := &contractErc20Usecase{
 		contractRpc:     viper.GetString("CONTRACT_RPC"),
 		contractAddress: common.HexToAddress(viper.GetString("CONTRACT_ERC20_ADDRESS")),
@@ -147,7 +154,7 @@ func (uc *contractErc20Usecase) TransferToken(ctx context.Context, toAddress str
 	tx := types.NewTx(txParams)
 
 	// Sign transaction
-	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainId), privateKeyBytes)
+	signedTx, err := types.SignTx(tx, types.NewLondonSigner(chainId), privateKeyBytes)
 	if err != nil {
 		return "", err
 	}
@@ -212,7 +219,7 @@ func (uc *contractErc20Usecase) sendTransaction(
 	}
 
 	// Sign transaction
-	signer := types.NewEIP155Signer(chainId)
+	signer := types.NewLondonSigner(chainId)
 	signedTx, err := types.SignTx(tx, signer, privateKeyBytes)
 	if err != nil {
 		return "", err
@@ -270,7 +277,7 @@ func (uc *contractErc20Usecase) EstimateGasFee(
 		return nil, err
 	}
 
-	gasFee := txParams.Gas * txParams.GasPrice.Uint64()
+	gasFee := txParams.Gas * txParams.GasFeeCap.Uint64()
 	return new(big.Int).SetUint64(gasFee), nil
 }
 
@@ -280,7 +287,7 @@ func (uc *contractErc20Usecase) createNativeTxParams(
 	fromAddress,
 	toAddress common.Address,
 	amount *big.Int,
-) (*types.LegacyTx, error) {
+) (types.TxData, error) {
 	// get nonce of fromAddress
 	nonce, err := uc.contractClient.NonceAt(ctx, fromAddress, nil)
 	if err != nil {
@@ -328,12 +335,13 @@ func (uc *contractErc20Usecase) createNativeTxParams(
 		return nil, err
 	}
 
-	txParams := &types.LegacyTx{
-		Nonce:    nonce,
-		Gas:      gas,
-		GasPrice: gasPrice,
-		To:       &toAddress,
-		Value:    callMsg.Value,
+	txParams := &types.DynamicFeeTx{
+		Nonce:     nonce,
+		Gas:       gas * 12 / 10, // buffer 20%
+		GasFeeCap: gasPrice,
+		GasTipCap: tipCap,
+		To:        &toAddress,
+		Value:     callMsg.Value,
 	}
 
 	return txParams, nil
@@ -346,7 +354,7 @@ func (uc *contractErc20Usecase) createTokenTxParams(
 	toAddress common.Address,
 	amount *big.Int,
 	doNotNeedCheckBalance ...bool,
-) (*types.LegacyTx, error) {
+) (*types.DynamicFeeTx, error) {
 	// estimate gas
 	value := big.NewInt(0) // for token transfer, the value always equals 0
 	nonce, err := uc.contractClient.NonceAt(ctx, fromAddress, nil)
@@ -396,13 +404,14 @@ func (uc *contractErc20Usecase) createTokenTxParams(
 		}
 	}
 
-	txParams := &types.LegacyTx{
-		Nonce:    nonce,
-		Gas:      gas,
-		GasPrice: gasPrice,
-		To:       &uc.contractAddress, // for token transfer, to is the contract address
-		Value:    value,
-		Data:     callMsg.Data,
+	txParams := &types.DynamicFeeTx{
+		Nonce:     nonce,
+		Gas:       gas * 12 / 10, // buffer 20%
+		GasFeeCap: gasPrice,
+		GasTipCap: tipCap,
+		To:        &uc.contractAddress, // for token transfer, to is the contract address
+		Value:     value,
+		Data:      callMsg.Data,
 	}
 
 	return txParams, nil
