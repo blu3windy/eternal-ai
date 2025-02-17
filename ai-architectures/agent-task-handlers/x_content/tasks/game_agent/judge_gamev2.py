@@ -1,10 +1,14 @@
+import asyncio
 import logging
+import random
 import traceback
+from typing import List
 
 from json_repair import repair_json
 from x_content.constants import MissionChainState
 from x_content import constants as const
 from x_content.llm.base import OnchainInferResult
+from x_content.llm.local import SyncBasedEternalAI
 from x_content.models import ReasoningLog
 from x_content.tasks.base import MultiStepTaskBase
 from x_content.wrappers.api import twitter_v2
@@ -27,9 +31,9 @@ from x_content.services.fact.fact_check import SearchResponse
 from x_content.tasks.utils import a_move_state, create_twitter_auth_from_reasoning_log
 
 from x_content.wrappers.vision_tasks import get_image_description
-from x_content.wrappers.magic import sync2async
+from x_content.wrappers.magic import get_llm_tasks_first_interval, retry, sync2async
 
-from x_content.tasks.game_agent.prompts import JUDGE_GAME_PROMPT_TEMPLATE, JUDGE_FACT_PROMPT_TEMPLATE
+from x_content.tasks.game_agent.prompts import FACT_QUERY_PROMPT_TEMPLATE, JUDGE_GAME_PROMPT_TEMPLATE, JUDGE_FACT_PROMPT_TEMPLATE, JUDGE_GAME_WITH_FACTS_PROMPT_TEMPLATE
 from x_content.wrappers.tweet_specialty import is_create_game_tweet, is_find_fact_tweet
 from x_content.wrappers.postprocess import StringProcessor
 
@@ -167,6 +171,122 @@ def _try_acquire_judge_game_lock(_tweet_id):
                 logger.error(
                     f"Error releasing lock for tweet {_tweet_id}: {str(e)}"
                 )
+
+
+def _get_facts_search_query_conversation(
+    question: str, content_images: List[str]
+) -> List[dict]:
+    system_message = "You are a helpful assistant."
+
+    content_images_str = "\n\n".join([f"- {x}" for x in content_images])
+
+    conversation_thread = [
+        {
+            "role": "system",
+            "content": system_message,
+        },
+        {
+            "role": "user",
+            "content": FACT_QUERY_PROMPT_TEMPLATE.format(
+                question=question, content_images=content_images_str
+            ),
+        },
+    ]
+
+    logger.info(
+        f"[_get_facts_search_query_conversation] Successfully built conversation: {conversation_thread}"
+    )
+
+    return conversation_thread
+
+
+def _get_facts_search_query(question: str, content_images: List[str]) -> str:
+    messages = _get_facts_search_query_conversation(question, content_images)
+
+    def run_llm():
+        model = SyncBasedEternalAI(
+            max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
+            temperature=0.7,
+            base_url=const.SELF_HOSTED_LLAMA_405B_URL + "/v1",
+            api_key=const.SELF_HOSTED_LLAMA_API_KEY,
+            model=const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
+            seed=random.randint(1, int(1e9)),
+        )
+        result = model.generate(messages).generations[0].text
+        result = repair_json(result, return_objects=True)
+
+        return result["query"]
+
+    query = retry(
+        run_llm,
+        max_retry=3,
+        first_interval=get_llm_tasks_first_interval(),
+        interval_multiply=2,
+    )()
+    return query
+
+
+async def _get_judge_game_with_facts_conversation(
+    game_tweet_object: dict,
+    answers: List[dict],
+):
+    """
+    Return conversation to judge the winning agent from given game tweet and participating agents' answers
+    :param game_tweet_object: tweet object with schema { "full_text": str, "img_url": str }
+    :param answers: list of objects with schema { "username": str, "answer": str } representing the answer from participating agents
+    :return conversation to submit LLM inference
+    """
+    logger.info(
+        "[_get_judge_game_with_facts_conversation] Building conversation for judging"
+    )
+
+    system_message = "You are a helpful assistant."
+
+    answers_content = ""
+    for answer in answers:
+        answers_content += (
+            f"- Agent {answer['username']}: {answer['answer']}\n"
+        )
+
+    content_images = []
+    if game_tweet_object.get("image_urls"):
+        for img_url in game_tweet_object.get("image_urls"):
+            try:
+                content_images.append(
+                    sync2async(get_image_description)(img_url)
+                )
+            except Exception as err:
+                logger.error(
+                    f"[_get_judge_game_with_facts_conversation] Failed to get image description at {img_url}: {err}"
+                )
+
+    query = _get_facts_search_query(
+        game_tweet_object.get("full_text"), content_images
+    )
+    response: SearchResponse = await fact_service.search(query)
+
+    content_images_str = "\n\n".join([f"- {x}" for x in content_images])
+    user_prompt = JUDGE_GAME_WITH_FACTS_PROMPT_TEMPLATE.format(
+        full_text=game_tweet_object.get("full_text"),
+        content_images=content_images_str,
+        given_facts=response.results,
+        answers_content=answers_content,
+    )
+
+    conversation_thread = [
+        {
+            "role": "system",
+            "content": system_message,
+        },
+        {
+            "role": "user",
+            "content": user_prompt,
+        },
+    ]
+    logger.info(
+        f"[_get_judge_game_with_facts_conversation] Successfully built conversation: {conversation_thread}"
+    )
+    return conversation_thread
 
 
 async def _get_judge_fact_conversation(tweet_object, answers):
