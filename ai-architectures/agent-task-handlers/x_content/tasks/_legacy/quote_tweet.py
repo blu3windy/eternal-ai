@@ -114,17 +114,16 @@ class QuoteTweetTask(MultiStepTaskBase):
             ]
 
             # TODO: rewrite this
-            for i, task in enumerate(asyncio.as_completed(futures)):
-                try:
-                    infer_result: OnchainInferResult = await task
-                except Exception as err:
+            for i, infer in enumerate(await asyncio.gather(*futures, return_exceptions=True)):
+                if isinstance(infer, Exception):
                     logger.info(
-                        f"[{log.id}] Error while processing index {i} (out of {totals}): {err} (inference fails)."
+                        f"[{log.id}] Error while processing index {i} (out of {totals}): {infer} (inference fails)."
                     )
                     continue
 
+                infer: OnchainInferResult
                 result = await sync2async(post_process_tweet)(
-                    infer_result.generations[0].message.content.strip('" ')
+                    infer.generations[0].message.content.strip('" ')
                 )
                 liked_tweet = log.execute_info["tweets"][i]["tweet_object"]
                 liked_tweet_id = liked_tweet["tweet_id"]
@@ -133,19 +132,19 @@ class QuoteTweetTask(MultiStepTaskBase):
                     auth=create_twitter_auth_from_reasoning_log(log),
                     tweet_id=liked_tweet_id,
                     comment=result,
-                    tx_hash=infer_result.tx_hash,
+                    tx_hash=infer.tx_hash,
                 )
 
                 log.execute_info["task_result"].append(
                     {
                         "tweet_id": liked_tweet_id,
                         "reply_content": result,
-                        "tx_hash": infer_result.tx_hash,
+                        "tx_hash": infer.tx_hash,
                     }
                 )
 
             return await a_move_state(
-                log, MissionChainState.DONE, "Final answer found"
+                log, MissionChainState.DONE, "Quote tweet task completed"
             )
 
         return log

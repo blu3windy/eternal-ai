@@ -89,13 +89,6 @@ def _get_shadow_reply_redis_cache():
 def _get_tweet_inscription_redis_cache():
     return TweetInscriptionRedisCache()
 
-
-def _preprocess_twitter_id(twitter_id: str):
-    if twitter_id.startswith("twitter_id="):
-        twitter_id = twitter_id.split("=")[1].strip(' "')
-    return twitter_id
-
-
 def _preprocess_username(username: str):
     username = username.lstrip("@")
     if username.startswith("username="):
@@ -525,61 +518,6 @@ def get_recent_mentioned_tweets_by_username_v2(
         )
         return Response(error=f"An unexpected error occured")
 
-
-# TODO: Is this function really unused?
-def get_user_info_by_twitter_id(
-    twitter_id: str,
-) -> Response[TwitterUserObjectDto]:
-    try:
-        twitter_id = _preprocess_twitter_id(twitter_id)
-
-        url = f"{const.TWITTER_API_URL}/user/{twitter_id}"
-        resp = requests.get(url, headers=_get_api_headers())
-
-        if resp.status_code != 200:
-            logger.error(
-                f"[get_user_info_by_twitter_id] Something went wrong (status code: {resp.status_code}, resp: {resp.json()}, url: {resp.url})"
-            )
-            return Response(
-                error=f"Something went wrong (status code: {resp.status_code})"
-            )
-
-        resp = resp.json()
-
-        if resp["error"] is not None:
-            logger.error(
-                "[get_user_info_by_twitter_id] Error occurred when calling api: "
-                + resp["error"]["message"]
-            )
-            return Response(
-                error="Error occurred when calling api",
-            )
-
-        info = resp["result"]
-
-        if info["id"] == "":
-            logger.error(
-                "[get_user_info_by_twitter_id] No user found with id: "
-                + twitter_id
-            )
-            return Response(
-                error="No user found with id: " + twitter_id,
-            )
-
-        user = TwitterUserObject(
-            twitter_id=info["id"],
-            username=info["username"],
-            name=info["name"],
-            followers_count=info["public_metrics"]["followers_count"],
-            followings_count=info["public_metrics"]["following_count"],
-            is_blue_verified=info["verified"],
-        )
-        return Response(data=TwitterUserObjectDto(user=user))
-    except Exception as err:
-        logger.error(
-            f"[get_user_info_by_twitter_id] An unexpected error occured: {err}"
-        )
-        return Response(error=f"An unexpected error occured")
 
 
 # TODO: Combine this and get_tweets_by_username_v2

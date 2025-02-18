@@ -17,6 +17,33 @@ import (
 	"go.uber.org/zap"
 )
 
+type parsedObject struct {
+	Id      string `json:"id"`
+	Object  string `json:"object"`
+	Created int64  `json:"created"`
+	Model   string `json:"model"`
+	Choices []struct {
+		Index int `json:"index"`
+		Delta struct {
+			Content string `json:"content"`
+		} `json:"delta"`
+		FinishReason         interface{} `json:"finish_reason"`
+		ContentFilterResults interface{} `json:"content_filter_results"`
+	} `json:"choices"`
+	SystemFingerprint string `json:"system_fingerprint"`
+	Message           string `json:"message"`
+	Code              int    `json:"code"`
+	OnchainData       struct {
+		InferId       string      `json:"infer_id"`
+		PbftCommittee interface{} `json:"pbft_committee"`
+		Proposer      string      `json:"proposer"`
+		InferTx       string      `json:"infer_tx"`
+		ProposeTx     string      `json:"propose_tx"`
+		InputCid      string      `json:"input_cid"`
+		OutputCid     string      `json:"output_cid"`
+	} `json:"onchain_data"`
+}
+
 func (rt *Server) CreateDecentralizeInfer(c *gin.Context) {
 	rest.StreamResponseJSON(
 		func(ctx *gin.Context) (interface{}, error) {
@@ -50,6 +77,33 @@ func (rt *Server) CreateDecentralizeInfer(c *gin.Context) {
 
 				if err := json.Unmarshal(v.Data, &response); err != nil {
 					continue
+				}
+
+				if response.Data.Choices == nil || len(response.Data.Choices) == 0 {
+					//parse again with the other object
+					//note: this is used by live api, not local.
+					respData := &parsedObject{}
+					if err := json.Unmarshal(v.Data, &respData); err != nil {
+						continue
+					}
+
+					response.Data.ID = respData.Id
+					response.Data.Object = respData.Object
+					response.Data.Created = respData.Created
+					response.Data.Model = respData.Model
+					response.Data.Choices = []openai.ChatCompletionChoice{}
+
+					if len(respData.Choices) > 0 {
+						for _, choice := range respData.Choices {
+							response.Data.Choices = append(response.Data.Choices, openai.ChatCompletionChoice{
+								Message: openai.ChatCompletionMessage{Content: choice.Delta.Content},
+								//FinishReason:         choice.FinishReason.(openai.FinishReason),
+								Index: choice.Index,
+								//ContentFilterResults: choice.ContentFilterResults.(openai.ContentFilterResults),
+							})
+						}
+					}
+
 				}
 
 				stdata := rest.Response{

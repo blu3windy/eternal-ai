@@ -124,7 +124,9 @@ func (s *Service) CreateDecentralizeInferV2(ctx context.Context, info *models.De
 	fullUrl := "http://localhost:8004/v1/chat/completions"
 	input, _ := json.Marshal(chatRequest)
 
-	fmt.Println("Full request to LLM :", string(input))
+	fmt.Println("fullUrl:", fullUrl)
+	fmt.Println("Full request to LLM:", string(input))
+
 	chatCompletionResp, statusCode, err := http_client.RequestHttp(fullUrl, http.MethodPost, map[string]string{}, bytes.NewBuffer(input), 10)
 	if err != nil {
 		return nil, err
@@ -460,6 +462,17 @@ func (s *Service) CreateDecentralizeInferV2WithStream(ctx context.Context, info 
 			systemPromptStr = string(systemPromptContract[0])
 		}
 
+		if strings.Contains(systemPromptStr, "ipfs") {
+			cid := strings.ReplaceAll(systemPromptStr, "ipfs://", "")
+			url := fmt.Sprintf("https://ipfs.io/ipfs/%s", cid)
+			_byte, _, err := http_client.RequestHttp(url, "GET", map[string]string{}, nil, 10)
+			if _err != nil {
+				return "", fmt.Errorf("get agent system prompt err: %w", err)
+			}
+
+			return string(_byte), nil
+		}
+
 		return systemPromptStr, nil
 	}()
 
@@ -496,12 +509,15 @@ func (s *Service) CreateDecentralizeInferV2WithStream(ctx context.Context, info 
 
 	input, _ := json.Marshal(chatRequest)
 
-	fmt.Println("Full request to LLM :", string(input))
-
 	header := map[string]string{}
 	if s.conf.APIKeyChatCompletion != "" {
 		header["Authorization"] = fmt.Sprintf("Bearer %v", s.conf.APIKeyChatCompletion)
+		header["Accept"] = "text/event-stream"
 	}
+
+	fmt.Println("fullUrl:", fullUrl)
+	fmt.Println("Full request to LLM:", string(input))
+	fmt.Println("Headers", header)
 
 	go http_client.RequestHttpWithStream(fullUrl, http.MethodPost, header, bytes.NewBuffer(input), 10, printChan)
 

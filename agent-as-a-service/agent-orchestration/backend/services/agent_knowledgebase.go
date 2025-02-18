@@ -55,6 +55,5 @@ func (s *Service) AgentUseKnowledgeBase(ctx context.Context, request *serializer
 	if err := s.dao.CreateAgentInfoKnowledgeBase(daos.GetDBMainCtx(ctx), newKnowledgeBase); err != nil {
 		return nil, err
 	}
-
 	return newKnowledgeBase, nil
 }

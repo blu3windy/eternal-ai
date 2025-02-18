@@ -32,6 +32,7 @@ from .tasks import utils as task_utils
 import time
 from functools import lru_cache
 import logging
+from x_content.wrappers.log_decorators import compress_kwargs
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,7 +51,6 @@ def get_chat_request_state_handler():
 
 
 router = APIRouter()
-
 
 @router.get(
     "/api/twitter-news",
@@ -140,13 +140,17 @@ async def twin_task_submit(
     request: TwinTaskSubmitRequest, background_tasks: BackgroundTasks
 ) -> TwinTaskSubmitResponse:
     task_id = f"task_{int(time.time())}"
-    logger.info(
-        f"[twin_task_submit] Received request: task_id {task_id}, request={json.dumps(request.model_dump())}"
+
+    background_tasks.add_task(
+        logger.info, 
+        f"[twin_task_submit] Received request: task_id {task_id}, request={compress_kwargs(**request.model_dump())}"
     )
 
     background_tasks.add_task(
-        twin_service.generate_twin, request.agent_id, request.twitter_ids
+        twin_service.generate_twin, 
+        request.agent_id, request.twitter_ids
     )
+
     return TwinTaskSubmitResponse(status="success", task_id=task_id)
 
 
@@ -154,16 +158,25 @@ async def twin_task_submit(
 async def enqueue_api(
     request: ReasoningLog, background_tasks: BackgroundTasks
 ) -> ReasoningLog:
-    logger.info(
-        f"[enqueue_api] Received request: {json.dumps(request.model_dump())}"
+
+    background_tasks.add_task(
+        logger.info, 
+        f"[enqueue_api] Received request: {compress_kwargs(**request.model_dump())}"
     )
+
     if request.state == MissionChainState.NEW:
-        await task_utils.notify_status_reasoning_log(request)
+        background_tasks.add_task(
+            task_utils.notify_status_reasoning_log, 
+            request
+        )
+
+    background_tasks.add_task(
+        service_v2_handle_request, 
+        request
+    )
 
     await get_state_handler().acommit(request)
-    background_tasks.add_task(service_v2_handle_request, request)
     return request
-
 
 @router.get("/async/get", dependencies=[Depends(verify_x_token)])
 async def get_result_api(id: str, thought_only: bool = False) -> JSONResponse:
@@ -202,9 +215,9 @@ async def get_result_api(id: str, thought_only: bool = False) -> JSONResponse:
 async def enqueue_chat(
     request: ChatRequest, background_tasks: BackgroundTasks
 ) -> ChatRequest:
-    logger.info(
-        f"[enqueue_chat] Received request: {json.dumps(request.model_dump())}"
-    )
+    # logger.info(
+    #     f"[enqueue_chat] Received request: {json.dumps(request.model_dump())}"
+    # )
     if request.state == MissionChainState.NEW:
         await task_utils.notify_status_chat_request(request)
 

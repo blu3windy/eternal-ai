@@ -41,8 +41,8 @@ def task_cls_resolver(log: ReasoningLog) -> Optional[MultiStepTaskBase]:
     if log.task == AgentTask.POST_V2:
         return tasks.social_agent.post_v2.PostV2
 
-    if log.task == AgentTask.CREATE_GAME or log.task == AgentTask.JUDGE_GAME:
-        return tasks.others.FallbackTask
+    # if log.task == AgentTask.CREATE_GAME or log.task == AgentTask.JUDGE_GAME:
+    #     return tasks.others.FallbackTask
 
     if log.task == AgentTask.CREATE_GAME:
         return tasks.game_agent.create_gamev2.GameReplyTask
@@ -311,7 +311,20 @@ def scan_db_and_resume_chat_requests():
         
         if cnt >= 10:
             break
-        
+    
+def handle_pod_ready():
+    from x_content.wrappers.telegram import send_message, TELEGRAM_ALERT_ROOM
+    from . import __version__
+    from x_content.wrappers import magic
+    
+    magic.is_local_env() or send_message(
+        'junk_notifications', 
+        'Pod is ready to serve. Version: {}'.format(__version__),
+        room=TELEGRAM_ALERT_ROOM,
+        fmt='HTML'
+    )
+
+    logger.info("Pod is ready to serve")
 
 def handle_pod_shutdown(signum, frame):
     global _running_tasks, _task_handled_key, logger
@@ -326,10 +339,12 @@ def handle_pod_shutdown(signum, frame):
 
     _running_tasks = set([])
     from x_content.wrappers.telegram import send_message, TELEGRAM_ALERT_ROOM
+    from . import __version__
+    from x_content.wrappers import magic
     
-    send_message(
+    magic.is_local_env() or send_message(
         'junk_notifications', 
-        'Pod is being shut down, all running tasks are stopped (signum: {})'.format(signum), 
+        'Pod is being shut down, all running tasks are stopped (signum: {}). Version: {}'.format(signum, __version__), 
         room=TELEGRAM_ALERT_ROOM,
         fmt='HTML'
     )
