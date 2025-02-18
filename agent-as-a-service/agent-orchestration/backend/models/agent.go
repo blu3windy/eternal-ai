@@ -630,3 +630,22 @@ type AgentStudioTwitterInfo struct {
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
 }
+
+type (
+	AgenInfoInstallStatus string
+)
+
+const (
+	AgenInfoInstallStatusNew  AgenInfoInstallStatus = "new"
+	AgenInfoInstallStatusDone AgenInfoInstallStatus = "done"
+)
+
+type AgentInfoInstall struct {
+	gorm.Model
+	Code           string `gorm:"unique_index"`
+	UserID         uint   `gorm:"unique_index:agent_info_main_idx"`
+	AgentInfoID    uint   `gorm:"unique_index:agent_info_main_idx"`
+	User           *User
+	CallbackParams string `gorm:"type:longtext"` //{"user_id" : "123", "authen_token" : "xxx",...}
+	Status         AgenInfoInstallStatus
+}
