@@ -1,7 +1,6 @@
-from typing import Annotated, TypedDict
-from langgraph.graph import StateGraph, START, END
+from typing import TypedDict
+from langgraph.graph import StateGraph, START
 from langgraph.graph.state import CompiledStateGraph
-from langgraph.graph.message import add_messages
 from langchain.schema import ChatMessage
 from x_content.llm.base import OpenAILLMBase
 
@@ -19,8 +18,13 @@ def get_chat_langgraph(llm: OpenAILLMBase) -> CompiledStateGraph:
         messages = state["messages"]
         infer_result = await llm.agenerate(messages)
         content = infer_result.generations[0].message.content
+        messages.append(
+            ChatMessage(
+                role="assistant", 
+                content=content
+            )
+        )
 
-        messages.append(ChatMessage(role="assistant", content=content))
         return {
             "messages": messages,
             "tx_hash": infer_result.tx_hash,

@@ -115,8 +115,8 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 			twitterInfo.ExpiresIn = respOauth.ExpiresIn
 			twitterInfo.Scope = respOauth.Scope
 			twitterInfo.TokenType = respOauth.TokenType
-			twitterInfo.OauthClientId = s.conf.Twitter.OauthClientIdForTwitterData
-			twitterInfo.OauthClientSecret = s.conf.Twitter.OauthClientSecretForTwitterData
+			twitterInfo.OauthClientId = s.conf.InfraTwitterApp.OauthClientId
+			twitterInfo.OauthClientSecret = s.conf.InfraTwitterApp.OauthClientSecret
 			twitterInfo.Description = twitterUser.Description
 			twitterInfo.RefreshError = "OK"
 			expiredAt := time.Now().Add(time.Second * time.Duration(respOauth.ExpiresIn-(60*20)))

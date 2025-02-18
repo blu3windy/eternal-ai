@@ -21,12 +21,12 @@ from .models import (
 )
 
 from x_content.wrappers.api import twitter_v2
-from x_content.wrappers.magic import sync2async
 from x_content.tasks.social_agent import post_v3
 from x_content.wrappers import bing_search
 from x_content.wrappers.magic import sync2async
 from .service import MissionStateHandler, handle_chat_request, service_v2_handle_request
 from .wrappers import redis_wrapper
+from redis import asyncio as aredis
 from .legacy_services.twin import twin_service
 from .tasks import utils as task_utils
 import time
@@ -39,17 +39,13 @@ logger = logging.getLogger(__name__)
 
 @lru_cache(maxsize=1)
 def get_state_handler():
-    state_handler = MissionStateHandler(
-        redis_wrapper.reusable_redis_connection()
-    )
+    state_handler = MissionStateHandler()
     return state_handler
 
 
 @lru_cache(maxsize=1)
 def get_chat_request_state_handler():
-    state_handler = ChatRequestStateHandler(
-        redis_wrapper.reusable_redis_connection()
-    )
+    state_handler = ChatRequestStateHandler()
     return state_handler
 
 
@@ -68,6 +64,7 @@ async def get_twitter_news(query: str) -> JSONResponse:
     result: Response[SearchTweetDto] = await sync2async(
         twitter_v2.search_recent_tweets
     )(query, limit_observation=10)
+
     if result.is_error():
         return APIResponse(
             status=APIStatus.ERROR,
@@ -90,9 +87,13 @@ async def get_twitter_news(query: str) -> JSONResponse:
 )
 async def get_bing_news(query: str) -> JSONResponse:
 
+    result = await sync2async(bing_search.search_from_bing)(
+        query, top_k=10
+    )
+
     return APIResponse(
         status=APIStatus.SUCCESS,
-        data=await sync2async(bing_search.search_from_bing)(query, top_k=10),
+        data=result,
     ).model_dump()
 
 
@@ -118,15 +119,17 @@ async def get_post_v3_sample_content(
 
 
 @router.get("/debug/redis", dependencies=[Depends(verify_x_token)])
-def get_redis_by_key(key: str):
-    redis_client = redis_wrapper.reusable_redis_connection()
-    res = redis_client.get(key)
+async def get_redis_by_key(key: str):
+    
+    async with aredis.Redis(
+        connection_pool=redis_wrapper.get_aio_redis_connection_pool()
+    ) as client:
+        res = await client.get(key)
 
     if res is not None:
         return res
     else:
         return ""
-
 
 @router.post(
     "/v1/twin/submit",
@@ -155,16 +158,16 @@ async def enqueue_api(
         f"[enqueue_api] Received request: {json.dumps(request.model_dump())}"
     )
     if request.state == MissionChainState.NEW:
-        task_utils.notify_status_reasoning_log(request)
+        await task_utils.notify_status_reasoning_log(request)
 
-    get_state_handler().commit(request)
+    await get_state_handler().acommit(request)
     background_tasks.add_task(service_v2_handle_request, request)
     return request
 
 
 @router.get("/async/get", dependencies=[Depends(verify_x_token)])
 async def get_result_api(id: str, thought_only: bool = False) -> JSONResponse:
-    log = get_state_handler().get(id, none_if_error=True)
+    log = await get_state_handler().a_get(id, none_if_error=True)
 
     if log is None:
         return JSONResponse(
@@ -203,16 +206,16 @@ async def enqueue_chat(
         f"[enqueue_chat] Received request: {json.dumps(request.model_dump())}"
     )
     if request.state == MissionChainState.NEW:
-        task_utils.notify_status_chat_request(request)
+        await task_utils.notify_status_chat_request(request)
 
-    get_chat_request_state_handler().commit(request)
+    await get_chat_request_state_handler().acommit(request)
     background_tasks.add_task(handle_chat_request, request)
     return request
 
 
 @router.get("/async/chat/get", dependencies=[Depends(verify_x_token)])
 async def get_chat_result_api(id: str) -> JSONResponse:
-    request = get_chat_request_state_handler().get(id, none_if_error=True)
+    request = await get_chat_request_state_handler().a_get(id, none_if_error=True)
 
     if request is None:
         return JSONResponse(

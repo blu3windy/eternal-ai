@@ -457,6 +457,7 @@ class IncludeExcludeInfo(BaseModel):
 
 @redis_wrapper.cache_for(3600 * 24 * 30)
 @log_function_call
+# @TODO: rewrite this
 def detect_included_excluded_items(
     system_prompt, task_prompt
 ) -> IncludeExcludeInfo:

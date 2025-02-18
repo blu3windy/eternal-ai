@@ -8,6 +8,7 @@ from x_content.cache.entity_cache import (
 from x_content.wrappers.magic import helpful_raise_for_status
 from x_content.wrappers import telegram
 from x_content import constants as const
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +183,7 @@ class GameAPIClient:
             )
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nGame API request failed (status code: {e.response.status_code if hasattr(e, 'response') else 'N/A'}; url: {url}; error: {str(e)})\n```",
+                f"<pre>\nGame API request failed (status code: {e.response.status_code if hasattr(e, 'response') else 'N/A'}; url: {url}; error: {str(e)})\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
             return None, e

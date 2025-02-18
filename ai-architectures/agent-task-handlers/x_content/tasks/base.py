@@ -1,5 +1,4 @@
 from abc import abstractmethod, ABC
-from typing import List
 from x_content.cache.base_state_handler import StatusHandlerBase
 from x_content.cache.chat_request_state_handler import ChatRequestStateHandler
 from x_content.constants import MissionChainState
@@ -7,7 +6,7 @@ from x_content.models import AgentKnowledgeBase, AutoAgentTask, ChatRequest, Rea
 from x_content.llm import OpenAILLMBase
 from x_content.cache import mission_state_handler
 from x_content.wrappers import redis_wrapper
-from x_content.toolcall.toolcall import ToolListWrapper, IToolCall
+from x_content.toolcall.toolcall import IToolCall
 from .utils import a_move_state
 import traceback
 
@@ -53,9 +52,7 @@ class BaseTask(ABC, Generic[T]):
 
 
 class MultiStepTaskBase(BaseTask[ReasoningLog]):
-    handler = mission_state_handler.MissionStateHandler(
-        connection=redis_wrapper.reusable_redis_connection()
-    )
+    handler = mission_state_handler.MissionStateHandler()
 
     def __init__(
         self,
@@ -73,9 +70,7 @@ class MultiStepTaskBase(BaseTask[ReasoningLog]):
 
 
 class ChatTaskBase(BaseTask[ChatRequest]):
-    handler = ChatRequestStateHandler(
-        connection=redis_wrapper.reusable_redis_connection()
-    )
+    handler = ChatRequestStateHandler()
 
     def __init__(
         self,

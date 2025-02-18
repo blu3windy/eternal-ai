@@ -687,7 +687,7 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, networkID uint64, 
 
 	filters := map[string][]interface{}{
 		`	
-			((agent_infos.agent_contract_address is not null and agent_infos.agent_contract_address != "") or (agent_infos.agent_type=2 and agent_infos.status="ready"))
+			((agent_infos.agent_contract_address is not null and agent_infos.agent_contract_address != "") or (agent_infos.agent_type=2 and agent_infos.status="ready") or agent_infos.token_address != "")
 			and ifnull(agent_infos.priority, 0) >= 0
 			and agent_infos.id != 15
 		`: {},

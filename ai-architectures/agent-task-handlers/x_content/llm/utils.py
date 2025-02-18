@@ -13,10 +13,9 @@ class ServerInferenceResult(BaseModel):
 async def check_and_get_infer_result(
     url: str, headers: Dict[str, str]
 ) -> ServerInferenceResult:
+
     async with httpx.AsyncClient() as client:
-        response = await client.get(
-            url, headers=headers, timeout=httpx.Timeout(60.0)
-        )
+        response = await client.get(url, headers=headers)
 
     if response.status_code != 200:
         return ServerInferenceResult(skipped=True)

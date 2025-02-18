@@ -275,7 +275,7 @@ func (s *Server) GetInstallInfo(c *gin.Context) {
 	}
 }
 
-func (s *Server) AgentStoreCreateTokenInfo(c *gin.Context) {
+func (s *Server) AgentStoreGetTokenInfo(c *gin.Context) {
 	ctx := s.requestContext(c)
 	agentStoreID := s.uintFromContextParam(c, "id")
 	userAddress, err := s.getUserAddressFromTK1Token(c)
@@ -283,7 +283,7 @@ func (s *Server) AgentStoreCreateTokenInfo(c *gin.Context) {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
 		return
 	}
-	res, err := s.nls.AgentStoreCreateTokenInfo(ctx, userAddress, agentStoreID)
+	res, err := s.nls.AgentStoreGetTokenInfo(ctx, userAddress, agentStoreID)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return

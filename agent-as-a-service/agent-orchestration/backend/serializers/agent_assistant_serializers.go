@@ -40,6 +40,7 @@ type AssistantsReq struct {
 	SystemContent        string                     `json:"system_content"`
 	Ticker               string                     `json:"ticker"`
 	TokenName            string                     `json:"token_name"`
+	TokenAddress         string                     `json:"token_address"`
 	TokenImageUrl        string                     `json:"token_image_url"`
 	TokenDesc            string                     `json:"token_desc"`
 	AssistantCharacter   `json:",inline"`

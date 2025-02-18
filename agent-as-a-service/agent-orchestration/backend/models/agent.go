@@ -61,35 +61,6 @@ const (
 	AgentInfoAgentTypeZerepy        AgentInfoAgentType = 4
 )
 
-func GetAgentFee(networkID uint64) numeric.BigFloat {
-	switch networkID {
-	case SHARDAI_CHAIN_ID:
-		{
-			return numeric.NewBigFloatFromString("600")
-		}
-	case ETHEREUM_CHAIN_ID:
-		{
-			return numeric.NewBigFloatFromString("1330")
-		}
-	case SOLANA_CHAIN_ID:
-		{
-			return numeric.NewBigFloatFromString("50")
-		}
-	case BITTENSOR_CHAIN_ID:
-		{
-			return numeric.NewBigFloatFromString("100")
-		}
-	case TRON_CHAIN_ID:
-		{
-			return numeric.NewBigFloatFromString("50")
-		}
-	default:
-		{
-			return numeric.NewBigFloatFromString("1")
-		}
-	}
-}
-
 type (
 	AssistantStatus     string
 	CreateTokenModeType string

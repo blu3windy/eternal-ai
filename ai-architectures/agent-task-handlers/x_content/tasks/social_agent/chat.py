@@ -37,10 +37,12 @@ Using the information above to generate a concise and effective response to the 
                     ),
                 }
             ]
+
             log.execute_info = {
                 "question": log.prompt,
                 "generate_query_messages": messages,
             }
+
             return await a_move_state(
                 log, MissionChainState.RUNNING, "Task started"
             )

@@ -235,9 +235,7 @@ class TradingTask(ReactAgent):
 
                 result = infer_result.generations[0].message.content
                 result = get_llm_result_by_model_name(result, log.model)
-                pad: dict = await sync2async(
-                    parse_conversational_react_response
-                )(result)
+                pad = parse_conversational_react_response(result)
 
                 if len(pad) == 0:
                     return await a_move_state(

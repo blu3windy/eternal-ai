@@ -440,7 +440,7 @@ func (s *Service) GetAgentStoreInstall(ctx context.Context, code string) (*model
 	return res, nil
 }
 
-func (s *Service) AgentStoreCreateTokenInfo(ctx context.Context, userAddress string, agentStoreID uint) (*models.Meme, error) {
+func (s *Service) AgentStoreGetTokenInfo(ctx context.Context, userAddress string, agentStoreID uint) (*models.Meme, error) {
 	user, err := s.GetUser(daos.GetDBMainCtx(ctx), 0, userAddress, false)
 	if err != nil {
 		return nil, errs.NewError(err)

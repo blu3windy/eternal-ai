@@ -6,13 +6,12 @@ from x_content.models import (
     AdvanceToolDef,
     ToolParam,
 )
-from x_content import constants as const
 from typing import List, Any, Union
-import requests
+import httpx
 import json
-import asyncio
 from x_content import wrappers
 from x_content.wrappers.magic import sync2async
+import asyncio
 
 logger = logging.getLogger(__name__)
 LIMIT_TOTAL_TOKENS_PER_OBSERVATION = 700 * 3
@@ -45,7 +44,7 @@ def make_response(content, success=True):
     }
 
 
-def execute_http_toolcall(
+async def execute_http_toolcall(
     method: str, 
     endpoint: str,
     params: dict, 
@@ -65,7 +64,9 @@ def execute_http_toolcall(
         payload["json"] = params
 
     logger.info(f"Calling API with payload: {json.dumps(payload, indent=2)}")
-    resp = requests.request(**payload)
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.request(**payload)
 
     if resp.status_code != 200:
         pre_formated = (
@@ -90,7 +91,7 @@ def execute_http_toolcall(
 
         task_id = params.get("request_id", None)
 
-        wrappers.telegram.send_message(
+        await wrappers.telegram.a_send_message(
             "junk_nofitications",
             f"Request {task_id} (dynamic toolcall): Failed to call API\n\n{pre_formated}",
             room=wrappers.telegram.TELEGRAM_ALERT_ROOM,
@@ -141,7 +142,7 @@ def parse_toolcall_params(params: List[ToolParam], inputs):
     return res
 
 
-def execute_advance_tool(
+async def execute_advance_tool(
     tool: AdvanceToolDef, action_input: str, request_id: str = None
 ):
     inputs = [e.strip() for e in action_input.split("|")]
@@ -149,7 +150,7 @@ def execute_advance_tool(
 
     if len(no_default_params) == 0:
         return [
-            execute_http_toolcall(
+            await execute_http_toolcall(
                 tool.method,
                 tool.executor,
                 parse_toolcall_params(tool.params, []),
@@ -168,7 +169,7 @@ def execute_advance_tool(
                 break
 
             res.append(
-                execute_http_toolcall(
+                await execute_http_toolcall(
                     tool.method,
                     tool.executor,
                     parse_toolcall_params(tool.params, inputs[l:r]),
@@ -206,17 +207,15 @@ async def execute_tool(
     request_id: str = None,
 ):
     if isinstance(tool, AdvanceToolDef):
-        return await sync2async(execute_advance_tool)(
+        return await execute_advance_tool(
             tool, action_input, request_id
         )
 
     inputs = action_input.split("|")
+    async_fn = sync2async(tool.executor)
 
     if len(tool.params) == 0:
-        if asyncio.iscoroutinefunction(tool.executor):
-            return [await tool.executor()]
-        else:
-            return [await sync2async(tool.executor)()]
+            return [await async_fn()]
 
     try:
         n_params = len(tool.params)
@@ -227,10 +226,7 @@ async def execute_tool(
                 break
 
             l, r = i, i + n_params
-            if asyncio.iscoroutinefunction(tool.executor):
-                result = await tool.executor(*inputs[l:r])
-            else:
-                result = await sync2async(tool.executor)(*inputs[l:r])
+            result = await async_fn(*inputs[l:r])
             res.append(result)
 
             if not tool.allow_multiple:
