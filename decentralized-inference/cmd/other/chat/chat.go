@@ -55,10 +55,9 @@ func AgentTerminalChat(ctx context.Context, agentID string) error {
 		index := 0
 		for v := range streamData {
 
-			if index == 0 {
+			if index >= 0 {
 				//stop the loading
 				stopChan <- true
-				close(stopChan)
 				fmt.Print("Your agent: ")
 			}
 
@@ -92,6 +91,7 @@ func AgentTerminalChat(ctx context.Context, agentID string) error {
 			index++
 		}
 
+		close(stopChan)
 		fmt.Print("\n")
 
 	}

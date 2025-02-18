@@ -134,7 +134,7 @@ async def service_v2_handle_request(log: ReasoningLog) -> ReasoningLog:
             MissionChainState.ERROR,
             f"An error occurred: {err} (unhandled)",
         )
-        MissionStateHandler().commit(log)
+        await MissionStateHandler().acommit(log)
 
     finally:
         await notify_status_reasoning_log(log)

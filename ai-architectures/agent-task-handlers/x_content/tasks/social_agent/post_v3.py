@@ -355,11 +355,19 @@ Content to use:
             if mask[tweet.tweet_id]
         ]
 
-        image_descriptions = await asyncio.gather(*futures)
+        image_descriptions = await asyncio.gather(*futures, return_exceptions=True)
 
         for i, (tweet, image_description) in enumerate(
             zip(response_tweets, image_descriptions)
         ):
+            if isinstance(image_description, Exception):
+                logger.warning(
+                    "Error while retrieving image description for tweet %s: %s",
+                    tweet.tweet_id,
+                    image_description,
+                )
+                continue
+
             if len(image_description) > 0:
                 response_tweets[i].full_text += "\n\n" + "\n\n".join(
                     image_description
