@@ -1,5 +1,5 @@
 from x_content.wrappers import redis_wrapper
-from redis import asyncio as aredis, Redis 
+from redis import asyncio as aredis, Redis
 import json
 from functools import reduce
 from x_content import constants as const
@@ -20,8 +20,10 @@ class ConversationRedisCache(object):
         self, username, root_conversation_id, max_num_tweets_in_conversation=1
     ):
         mentioned_tweets_redis_key = self._get_key(username)
-        
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:    
+
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             if not cli.exists(mentioned_tweets_redis_key):
                 return False
 
@@ -31,7 +33,7 @@ class ConversationRedisCache(object):
                 )
             except Exception as e:
                 cli.delete(mentioned_tweets_redis_key)
-                return False 
+                return False
 
         cached_tweets_by_root_conversation = conversation_dict.get(
             root_conversation_id, []
@@ -48,7 +50,9 @@ class ConversationRedisCache(object):
     ):
         mentioned_tweets_redis_key = self._get_key(username)
 
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             if not cli.exists(mentioned_tweets_redis_key):
                 cli.set(
                     mentioned_tweets_redis_key,
@@ -82,27 +86,31 @@ class GameRedisCache(object):
     GAMES_LOCK_PREFIX = f"{GAMES_PREFIX}locks/"
     GAMES_STATUS_PREFIX = f"{GAMES_PREFIX}status/"
     GAMES_RUNNING_PREFIX = f"{GAMES_PREFIX}running/"
+    GAMES_FACT_CHECK_PREFIX = f"{GAMES_PREFIX}fact_check/"
 
     def __init__(self):
         self.cache_expiry = const.GAME_REDIS_CACHE  # Using existing constant
+        self.fact_check_expiry = 3600  # 60 minutes in seconds
 
     def get_game_status(self, tweet_id: str) -> str | None:
         key = f"{self.GAMES_STATUS_PREFIX}{tweet_id}"
-    
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             value: bytes = cli.get(key)
 
         return "" if value == None else value.decode()
 
     def set_game_status(self, tweet_id: str, status: str) -> bool:
         key = f"{self.GAMES_STATUS_PREFIX}{tweet_id}"
-        
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
-            return cli.set(key, status, ex=self.cache_expiry)
+        return self.redis_client.set(key, status, ex=self.cache_expiry)
 
     def add_running_game(self, tweet_id: str, status: str) -> bool:
         try:
-            with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+            with Redis(
+                connection_pool=redis_wrapper.get_redis_connection_pool()
+            ) as cli:
                 with cli.pipeline() as pipe:
                     pipe.multi()
                     pipe.set(
@@ -119,7 +127,9 @@ class GameRedisCache(object):
 
     def remove_running_game(self, tweet_id: str, status: str) -> bool:
         try:
-            with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+            with Redis(
+                connection_pool=redis_wrapper.get_redis_connection_pool()
+            ) as cli:
 
                 with cli.pipeline() as pipe:
                     pipe.multi()
@@ -136,35 +146,55 @@ class GameRedisCache(object):
             raise err
 
     def get_running_games(self) -> set[str]:
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             return cli.smembers(f"{self.GAMES_RUNNING_PREFIX}list")
 
     def acquire_create_game_lock(self, _tweet_id, expiry_ms: int) -> bool:
         return self._acquire_lock(
-            f"{self.GAMES_LOCK_PREFIX}create/{_tweet_id}", 
-            expiry_ms
+            f"{self.GAMES_LOCK_PREFIX}create/{_tweet_id}", expiry_ms
         )
 
     def acquire_judge_game_lock(self, _tweet_id, expiry_ms: int) -> bool:
         return self._acquire_lock(
-            f"{self.GAMES_LOCK_PREFIX}judge/{_tweet_id}", 
-            expiry_ms
+            f"{self.GAMES_LOCK_PREFIX}judge/{_tweet_id}", expiry_ms
         )
 
     def release_create_game_lock(self, tweet_id: str) -> bool:
         lock_key = f"{self.GAMES_LOCK_PREFIX}create/{tweet_id}"
-        
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             return cli.delete(lock_key) > 0
 
     def release_judge_game_lock(self, tweet_id: str) -> bool:
         lock_key = f"{self.GAMES_LOCK_PREFIX}judge/{tweet_id}"
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             return cli.delete(lock_key) > 0
 
     def _acquire_lock(self, lock_key: str, expiry_ms: int) -> bool:
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             cli.set(lock_key, "1", nx=True, px=expiry_ms)
+
+    def get_fact_check(self, tweet_id: str) -> dict | None:
+        """Get cached fact check response for a tweet."""
+        key = f"{self.GAMES_FACT_CHECK_PREFIX}{tweet_id}"
+        value = self.redis_client.get(key)
+        return json.loads(value) if value else None
+
+    def set_fact_check(self, tweet_id: str, response_dict: dict) -> bool:
+        """Cache fact check response for a tweet."""
+        key = f"{self.GAMES_FACT_CHECK_PREFIX}{tweet_id}"
+        return self.redis_client.set(
+            key, json.dumps(response_dict), ex=self.fact_check_expiry
+        )
+
 
 class ShadowReplyRedisCache(object):
 
@@ -177,7 +207,9 @@ class ShadowReplyRedisCache(object):
     def is_threshold_exceeded(self, username, tweet_id, max_num_reply=1):
         shadow_replied_redis_key = self._get_key(username)
 
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             if not cli.exists(shadow_replied_redis_key):
                 return False
             shadow_reply_dict = json.loads(cli.get(shadow_replied_redis_key))
@@ -187,15 +219,17 @@ class ShadowReplyRedisCache(object):
 
     def add_reply(self, username, tweet_id):
         shadow_replied_redis_key = self._get_key(username)
-        
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             if not cli.exists(shadow_replied_redis_key):
                 cli.set(
-                    shadow_replied_redis_key, json.dumps({}), ex=self.cache_expiry
+                    shadow_replied_redis_key,
+                    json.dumps({}),
+                    ex=self.cache_expiry,
                 )
-            shadow_reply_dict = json.loads(
-                cli.get(shadow_replied_redis_key)
-            )
+            shadow_reply_dict = json.loads(cli.get(shadow_replied_redis_key))
 
             replies_count = shadow_reply_dict.get(tweet_id, 0)
             shadow_reply_dict[tweet_id] = replies_count + 1
@@ -217,16 +251,18 @@ class TweetInfoRedisCache(object):
     def commit(self, tweet_info):
         tweet_id = tweet_info["tweet_object"]["tweet_id"]
         key = self._get_key(tweet_id)
-        
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
-            cli.set(
-                key, json.dumps(tweet_info), ex=self.cache_expiry
-            )
+
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
+            cli.set(key, json.dumps(tweet_info), ex=self.cache_expiry)
 
     def get(self, tweet_id):
         key = self._get_key(tweet_id)
-        
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             return cli.get(key)
 
 
@@ -240,15 +276,20 @@ class FollowingListRedisCache(object):
 
     def commit(self, username, following):
         key = self._get_key(username)
-        
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             cli.set(key, json.dumps(following), ex=self.cache_expiry)
 
     def get(self, username):
         key = self._get_key(username)
-        
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             cli.get(key)
+
 
 class TweetInscriptionRedisCache(object):
 
@@ -261,13 +302,13 @@ class TweetInscriptionRedisCache(object):
 
     def add_inscription(self, username, request_id, tweet_id):
         inscribe_redis_key = self._get_key(username)
-        
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             if not cli.exists(inscribe_redis_key):
                 cli.set(
-                    inscribe_redis_key, 
-                    json.dumps({}), 
-                    ex=self.cache_expiry
+                    inscribe_redis_key, json.dumps({}), ex=self.cache_expiry
                 )
 
             inscribe_dict = json.loads(cli.get(inscribe_redis_key))
@@ -277,15 +318,17 @@ class TweetInscriptionRedisCache(object):
             inscribe_dict[request_id] = inscription_list
 
             cli.set(
-                inscribe_redis_key, 
-                json.dumps(inscribe_dict), 
-                ex=self.cache_expiry
+                inscribe_redis_key,
+                json.dumps(inscribe_dict),
+                ex=self.cache_expiry,
             )
 
     def is_threshold_exceeded(self, username, request_id):
         inscribe_redis_key = self._get_key(username)
-        
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             if not cli.exists(inscribe_redis_key):
                 return False
 
@@ -299,8 +342,10 @@ class TweetInscriptionRedisCache(object):
 
     def get_inscribed_tweets_ids(self, username):
         inscribe_redis_key = self._get_key(username)
-        
-        with Redis(connection_pool=redis_wrapper.get_redis_connection_pool()) as cli:
+
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
             if not cli.exists(inscribe_redis_key):
                 return []
 
