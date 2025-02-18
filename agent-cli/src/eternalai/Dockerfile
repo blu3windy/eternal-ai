@@ -1,5 +1,14 @@
-FROM ubuntu:20.04
-COPY ./eai-chat /app/eternal-ai/eai-chat
+FROM ubuntu:22.04
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+  build-essential \
+  wget \
+  curl \
+  ca-certificates \
+  && apt-get clean
+
+COPY ./eai-chat-linux /app/eternal-ai/eai-chat
 RUN cat /app/eternal-ai/eai-chat
 COPY config.json /app/eternal-ai/decentralized-inference/config.json
 COPY local_contracts.json /app/eternal-ai/decentralized-compute/worker-hub/env/local_contracts.json
