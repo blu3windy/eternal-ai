@@ -114,7 +114,7 @@ class QuoteTweetTask(MultiStepTaskBase):
             ]
 
             # TODO: rewrite this
-            for i, infer in enumerate(asyncio.gather(*futures, return_exceptions=True)):
+            for i, infer in enumerate(await asyncio.gather(*futures, return_exceptions=True)):
                 if isinstance(infer, Exception):
                     logger.info(
                         f"[{log.id}] Error while processing index {i} (out of {totals}): {infer} (inference fails)."

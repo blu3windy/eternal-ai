@@ -88,7 +88,7 @@ class ReplyTaskBase(MultiStepTaskBase):
             mentioned_data = []
             totals = len(futures)
 
-            for idx, specialties in enumerate(asyncio.gather(*futures, return_exceptions=True)):
+            for idx, specialties in enumerate(await asyncio.gather(*futures, return_exceptions=True)):
                 if isinstance(specialties, Exception):
                     logger.info(
                         f"[{log.id}] Error while processing index {idx+1} (out of {totals}): {err} (getting tweet specialties fail)."

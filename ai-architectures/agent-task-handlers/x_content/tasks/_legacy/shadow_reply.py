@@ -107,7 +107,7 @@ class ShadowReplyTask(MultiStepTaskBase):
                 for conversation_thread in log.execute_info["conversation"]
             ]
 
-            for idx, infer in enumerate(asyncio.gather(*futures, return_exceptions=True)):
+            for idx, infer in enumerate(await asyncio.gather(*futures, return_exceptions=True)):
                 if isinstance(infer, Exception):
                     logger.info(
                         f"[{log.id}] Error while processing index {idx}: {infer} (inference fails)."
