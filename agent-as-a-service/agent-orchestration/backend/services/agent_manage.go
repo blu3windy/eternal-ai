@@ -198,16 +198,16 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		}
 	}
 
+	if req.AgentType > 0 {
+		agent.AgentType = req.AgentType
+	}
+
 	if req.CreateKnowledgeRequest != nil {
 		agent.AgentType = models.AgentInfoAgentTypeKnowledgeBase
 	}
 
 	if agent.AgentName == "" && req.CreateKnowledgeRequest != nil {
 		agent.AgentName = req.CreateKnowledgeRequest.Name
-	}
-
-	if req.AgentType > 0 {
-		agent.AgentType = req.AgentType
 	}
 
 	if err := s.dao.Create(daos.GetDBMainCtx(ctx), agent); err != nil {
