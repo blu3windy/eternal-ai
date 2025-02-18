@@ -418,7 +418,6 @@ func (uc *knowledgeUsecase) GetKnowledgeBaseByStatus(ctx context.Context, status
 }
 
 func (uc *knowledgeUsecase) UpdateListKnowledgeBaseFile(ctx context.Context, kbId uint, files []*serializers.File) (bool, error) {
-
 	fileIds := []uint{}
 	grFileId := time.Now().Unix()
 	updated := false

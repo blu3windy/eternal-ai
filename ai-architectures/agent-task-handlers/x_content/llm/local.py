@@ -61,9 +61,6 @@ class SyncBasedEternalAI(OpenAILLMBase):
                     timeout=httpx.Timeout(120.0),
                 ) as response:
                     if response.status_code != 200:
-                        logger.info(
-                            f"Failed to send request to '{url}'; code: {response.status_code}"
-                        )
                         raise ValueError(
                             f"Failed to send request to '{url}'; code: {response.status_code}"
                         )

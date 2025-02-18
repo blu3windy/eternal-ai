@@ -11,12 +11,10 @@ import json
 import pytest
 from tests.unit.mock.sleep import a_mock_sleep
 from x_content.constants.main import AgentTask
-from x_content.llm.base import OpenAILLMBase
 from x_content.models import AgentMetadata, ReactAgentReasoningMeta, ReasoningLog
 from x_content.wrappers.conversation import ENHANCE_TWEET_PROMPT_TEMPLATE
 from x_content.wrappers.knowledge_base.base import KnowledgeBase
 from x_content.wrappers.api import twitter_v2
-from x_content.wrappers import postprocess, twin_agent
 import time
 import x_content
 
@@ -75,6 +73,7 @@ class TestPostV2:
             ],
             response="Testing base tweet",
         )
+
         llm.add_mock_response(
             messages=[
                 Message(role="system", content="Testing system prompt"),
@@ -94,9 +93,9 @@ class TestPostV2:
         )
 
         log: ReasoningLog = task_fixture["log"]
+
         while not log.is_done() and not log.is_error():
             log = await post_v2_task.process_task(log)
-        print(log.model_dump_json(indent=2))
 
         task_result = log.execute_info["task_result"]
 

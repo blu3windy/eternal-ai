@@ -75,6 +75,7 @@ func AgentTerminalChat(ctx context.Context, agentID string) error {
 
 			respBytes := v.Data
 			if len(respBytes) == 0 {
+				index++
 				continue
 			}
 
@@ -84,6 +85,7 @@ func AgentTerminalChat(ctx context.Context, agentID string) error {
 			}
 
 			if len(response.Data.Data.Choices) == 0 {
+				index++
 				continue
 			}
 

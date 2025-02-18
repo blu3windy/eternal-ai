@@ -4,7 +4,7 @@ import requests
 import httpx
 import time
 import traceback
-from typing import Callable, Coroutine, List
+from typing import Callable
 import asyncio
 from typing import Union
 
@@ -92,15 +92,10 @@ def helpful_raise_for_status(resp: requests.Response | httpx.Response):
 # to fake the async to sync
 from starlette.concurrency import run_in_threadpool
 
-
-def sync2async(sync_func: Callable):
+def sync2async(sync_func: Callable) -> Callable:
     async def async_func(*args, **kwargs):
-        res = await run_in_threadpool(partial(sync_func, *args, **kwargs))
-        if asyncio.iscoroutinefunction(sync_func):
-            res = await res
-        return res
-
-    return async_func
+        return await run_in_threadpool(partial(sync_func, *args, **kwargs))
+    return async_func if not asyncio.iscoroutinefunction(sync_func) else sync_func
 
 
 def get_response_content(response: requests.Response) -> Union[str, dict]:

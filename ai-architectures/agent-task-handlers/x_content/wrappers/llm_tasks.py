@@ -277,14 +277,14 @@ def choose_suitable_language(chat_history: list) -> str:
         {"role": "user", "content": chat_history},
     ]
 
-    url = const.SELF_HOSTED_LLAMA_405B_URL + "/v1/chat/completions"
+    url = const.SELF_HOSTED_HERMES_70B_URL + "/v1/chat/completions"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {const.SELF_HOSTED_LLAMA_API_KEY}",
     }
 
     data = {
-        "model": const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
+        "model": const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY,
         "messages": conversation,
         "max_tokens": 100,
         "temperature": 0,
@@ -323,9 +323,9 @@ Your response **must** be in stringified JSON format, with the following structu
         {"role": "user", "content": formatted_chat_history},
     ]
 
-    llama_url = const.SELF_HOSTED_LLAMA_405B_URL
+    llama_url = const.SELF_HOSTED_HERMES_70B_URL
     llama_api_key = const.SELF_HOSTED_LLAMA_API_KEY
-    llama_model_identity = const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY
+    llama_model_identity = const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY
 
     if not all([llama_url, llama_api_key, llama_model_identity]):
         logger.error(
@@ -414,9 +414,9 @@ Here is the input tweet: {}
         model = SyncBasedEternalAI(
             max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
             temperature=0.7,
-            base_url=const.SELF_HOSTED_LLAMA_405B_URL + "/v1",
+            base_url=const.SELF_HOSTED_HERMES_70B_URL + "/v1",
             api_key=const.SELF_HOSTED_LLAMA_API_KEY,
-            model=const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
+            model=const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY,
             seed=random.randint(1, int(1e9)),
         )
 
@@ -457,6 +457,7 @@ class IncludeExcludeInfo(BaseModel):
 
 @redis_wrapper.cache_for(3600 * 24 * 30)
 @log_function_call
+# @TODO: rewrite this
 def detect_included_excluded_items(
     system_prompt, task_prompt
 ) -> IncludeExcludeInfo:
@@ -531,9 +532,9 @@ Task prompt: {task_prompt}
         model = SyncBasedEternalAI(
             max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
             temperature=0.7,
-            base_url=const.SELF_HOSTED_LLAMA_405B_URL + "/v1",
+            base_url=const.SELF_HOSTED_HERMES_70B_URL + "/v1",
             api_key=const.SELF_HOSTED_LLAMA_API_KEY,
-            model=const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
+            model=const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY,
             seed=random.randint(1, int(1e9)),
         )
         result = model.generate(messages).generations[0].text
@@ -559,7 +560,7 @@ def clean_text(crawled_text: str):
         "cleaned_text": "Your cleaned and summarized text here"
     }
     """
-    url = os.path.join(const.SELF_HOSTED_LLAMA_405B_URL, "v1/chat/completions")
+    url = os.path.join(const.SELF_HOSTED_HERMES_70B_URL, "v1/chat/completions")
 
     headers = {
         "Content-Type": "application/json",
@@ -567,7 +568,7 @@ def clean_text(crawled_text: str):
     }
 
     data = {
-        "model": const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
+        "model": const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": crawled_text[: const.MAX_TEXT_LENGTH]},

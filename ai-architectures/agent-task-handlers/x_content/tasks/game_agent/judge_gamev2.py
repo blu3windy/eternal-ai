@@ -38,8 +38,10 @@ async def _get_ready_to_judge_games():
         logger.info(
             "[_get_ready_to_judge_games] Getting running games from Redis"
         )
+
         game_redis = _get_game_redis_cache()
-        running_games = game_redis.get_running_games()
+        running_games = await sync2async(game_redis.get_running_games)()
+
         if not running_games:
             logger.info("[_get_ready_to_judge_games] No running games found")
             return []
@@ -237,9 +239,11 @@ async def _get_judge_game_conversation(game_tweet_object, answers):
             "content": user_prompt,
         },
     ]
+
     logger.info(
         f"[_get_judge_game_conversation] Successfully built conversation: {conversation_thread}"
     )
+
     return conversation_thread
 
 
@@ -259,8 +263,10 @@ async def _get_child_tweets(tweet_id):
         resp: Response[TweetsDto] = await sync2async(
             twitter_v2.search_recent_tweet_by_tweetid
         )(tweet_id)
+
         if resp.is_error():
             raise Exception(resp.error)
+
         recent_replies = resp.data.tweets
 
         logger.info(
@@ -302,6 +308,7 @@ async def _get_final_answers(log: ReasoningLog, _tweet_id):
         child_tweets, game_data, err = await _get_game_data_and_tweets(
             _tweet_id
         )
+
         if err is not None:
             return None, err
 
@@ -309,11 +316,14 @@ async def _get_final_answers(log: ReasoningLog, _tweet_id):
         participants_answers, err = _get_participant_answers_from_tweets(
             game_data, child_tweets
         )
+
         if err is not None:
             return None, err
+
         answers = _format_answers_within_time_limit(
             game_data, participants_answers
         )
+
         logger.info(
             f"[_get_final_answers] Successfully got {len(answers)} final answers"
         )
@@ -365,6 +375,7 @@ def _get_participant_answers_from_tweets(game_data: GameInfo, child_tweets):
     # Take first tweet from each participant
     seen_usernames = set()
     participants_answers = []
+
     for tweet in sorted_child_tweets:
         if (
             tweet["username"] in participants
@@ -376,6 +387,7 @@ def _get_participant_answers_from_tweets(game_data: GameInfo, child_tweets):
     logger.info(
         f"[_get_participant_answers_from_tweets] Found {len(participants_answers)} participant answers"
     )
+
     return participants_answers, None
 
 
@@ -394,9 +406,11 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
     """Handle case when there are multiple participants, calling LLM to determine the winner"""
     # Create conversation for judging
     logger.info("[_handle_winner_with_llm] Creating conversation for judging")
+
     resp: Response[ExtendedTweetInfoDto] = await sync2async(
         twitter_v2.get_tweet_info_from_tweet_id
     )(game_id, True)
+
     if resp.is_error():
         return None, resp.error
 
@@ -499,6 +513,7 @@ async def _post_game_result(log: ReasoningLog, game_id, winning_agent):
     _, err = await sync2async(GameAPIClient.submit_game_result)(
         game_id, winning_agent
     )
+
     if err is not None:
         logger.error(f"[_post_game_result] Error posting to API: {err}")
         return None, err
@@ -578,6 +593,7 @@ class JudgeGameTask(MultiStepTaskBase):
             resp: Response[ExtendedTweetInfoDto] = await sync2async(
                 twitter_v2.get_tweet_info_from_tweet_id
             )(game_id)
+
             if (
                 resp.is_error()
                 or resp.data is None

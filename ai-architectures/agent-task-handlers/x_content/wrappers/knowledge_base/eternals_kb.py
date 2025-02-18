@@ -75,7 +75,9 @@ class EternalKnowledgeBase(KnowledgeBase):
 
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    url, headers=headers, timeout=httpx.Timeout(60.0)
+                    url, 
+                    headers=headers, 
+                    timeout=httpx.Timeout(60.0)
                 )
 
             if response.status_code != 200:
