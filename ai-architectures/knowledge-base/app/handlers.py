@@ -13,7 +13,8 @@ from .models import (
     ResponseMessage,
     FilecoinData,
     InsertProgressCallback,
-    CollectionInspection
+    CollectionInspection,
+    InsertionCounter
 )
 import requests
 import subprocess
@@ -41,7 +42,7 @@ from . import constants as const
 from .embedding import get_embedding_models, get_default_embedding_model, get_tokenizer, get_embedding_model_api_key
 from pymilvus import MilvusClient, FieldSchema, CollectionSchema, DataType, Collection
 from .wrappers import milvus_kit, redis_kit
-from .graph_handlers import GRAPH_KNOWLEDGE as GK
+from .graph_handlers import get_gk, Triplet
 import httpx
 from .utils import (
     async_batching, 
@@ -50,7 +51,7 @@ from .utils import (
     limit_asyncio_concurrency, 
     get_tmp_directory,
     batching,
-    get_hash
+    retry
 )
 import json
 import os
@@ -168,15 +169,21 @@ async def mk_embedding(text: str, model_use: EmbeddingModel) -> List[float]:
     return response_json['data'][0]['embedding'] 
 
 @limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT)
-async def mk_cog_embedding(text: str, model_use: EmbeddingModel) -> List[float]:
+async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingModel) -> List[List[float]]:
     url = model_use.base_url
 
     headers = {
         # 'Authorization': 'Bearer {}'.format(get_embedding_model_api_key(model_use))
     }
     
+    if isinstance(text, str):
+        text = [text]
+    
     data = {
-        'input': {"texts": [text], "dimension": const.MODEL_DIMENSION},
+        'input': {
+            "texts": text, 
+            "dimension": model_use.dimension
+        },
     }
     
     async with httpx.AsyncClient() as client:
@@ -191,9 +198,7 @@ async def mk_cog_embedding(text: str, model_use: EmbeddingModel) -> List[float]:
         raise ValueError(f"Failed to get embedding from {url}; Reason: {response.text}")
 
     response_json = response.json()
-    response_json['output']['result'][0] = response_json['output']['result'][0][:model_use.dimension]
-
-    return response_json['output']['result'][0] 
+    return response_json['output']['result']
 
 @limit_asyncio_concurrency(2)
 async def get_doc_from_url(url):
@@ -250,32 +255,28 @@ async def url_chunking(url: str, model_use: EmbeddingModel) -> AsyncGenerator:
 
 
 async def url_graph_chunking(url_or_texts: str, model_use: EmbeddingModel) -> AsyncGenerator:
+    gk = get_gk()
+
     async for item in url_chunking(url_or_texts, model_use):
-        try:
-            graph_result, err = await GK.construct_graph_from_chunk(item)
-            if err is None:
-                _, triplets = graph_result
-                for idx, triplet in enumerate(triplets):
-                    if len(triplet) == 3:
-                        yield item, triplet
-        except Exception as e:
-            logger.error(f"Failed to construct graph from {item}. Reason: {e}")
-            traceback.print_exc()
-            return
+        graph_result = await gk.construct_graph_from_chunk(item)
 
-async def inserting(_data: Optional[Union[List[EmbeddedItem], List[tuple]]], model_use: EmbeddingModel, metadata: dict):
-    assert all([k in metadata for k in ['kb', 'reference']]), "Missing required fields"
-
-    d = []
-    for item in _data:
-        if isinstance(item, tuple):
-            head, tail, relation = item
-            for obj in [head, tail, relation]:
-                if obj.error is None:
-                    d.append(obj)
+        if graph_result.status != APIStatus.OK:
+            logger.error(f"Failed to construct graph from {item}. Reason: {graph_result.error}")
         else:
-            if item.error is None:
-                d.append(item)
+            for triplet in graph_result.result:
+                yield item, triplet
+
+async def inserting(
+    _data: List[GraphEmbeddedItem], 
+    model_use: EmbeddingModel, 
+    metadata: dict
+):
+    assert all([k in metadata for k in ['kb', 'reference']]), "Missing required fields in metadata"
+
+    d: List[GraphEmbeddedItem] = []
+
+    for item in _data:
+        d.append(item)
 
     if len(d) == 0:
         logger.error("No valid data to insert")
@@ -285,9 +286,9 @@ async def inserting(_data: Optional[Union[List[EmbeddedItem], List[tuple]]], mod
     raw_texts = [e.raw_text for e in d]
     heads = [0 or e.head for e in d]
     tails = [0 or e.tail for e in d]
-    kb_postfixes = ["" or e.kb_postfix for e in d]
-    print("Total items to insert: ", len(vectors))
+    kb_postfixes = [e.kb_postfix for e in d]
     kb = metadata.pop('kb')
+
     data = [
         {
             **metadata,
@@ -298,10 +299,12 @@ async def inserting(_data: Optional[Union[List[EmbeddedItem], List[tuple]]], mod
             'hash': await sync2async(get_content_checksum)(text),
             'embedding': vec
         }
-        for vec, text, head, tail, kb_postfix in zip(vectors, raw_texts, heads, tails, kb_postfixes)
+        for vec, text, head, tail, kb_postfix in 
+        zip(vectors, raw_texts, heads, tails, kb_postfixes)
     ]
 
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)
+
     res = await sync2async(cli.insert)(
         collection_name=model_use.identity(),
         data=data
@@ -311,95 +314,86 @@ async def inserting(_data: Optional[Union[List[EmbeddedItem], List[tuple]]], mod
     logger.info(f"Successfully inserted {insert_cnt} items to {kb} (collection: {model_use.identity()});")
     return insert_cnt
 
-async def chunking_and_embedding(url_or_texts: Union[str, List[str]], model_use: EmbeddingModel) -> AsyncGenerator:
-    to_retry = []   
+async def embedd_triplet(
+    chunk: str, 
+    triplet: Triplet, 
+    model_use: EmbeddingModel, 
+) -> Optional[tuple]:
+    head_e, tail_e, relation_e = await retry(
+        mk_cog_embedding, 
+        max_retry=2,
+        first_interval=2, 
+        interval_multiply=2
+    )
+    (
+        [triplet.s1, triplet.s2, triplet.fact()], 
+        model_use
+    )
 
+    head_h, tail_h = hash(triplet.s1), hash(triplet.s2)
+
+    return (
+        GraphEmbeddedItem(
+            embedding=head_e, 
+            raw_text=chunk,
+            kb_postfix=const.ENTITY_SUFFIX,
+            head = head_h,
+            tail = tail_h
+        ), GraphEmbeddedItem(
+            embedding=tail_e, 
+            raw_text=chunk,
+            kb_postfix=const.ENTITY_SUFFIX,
+            head = tail_h,
+            tail = head_h
+        ), GraphEmbeddedItem(
+            embedding=relation_e, 
+            raw_text=chunk,
+            kb_postfix=const.RELATION_SUFFIX,
+            head = head_h,
+            tail = tail_h
+        )
+    )
+
+
+async def chunking_and_embedding(
+    url_or_texts: Union[str, List[str]], 
+    model_use: EmbeddingModel,     
+    counter: Optional[InsertionCounter]=None
+) -> AsyncGenerator:
+    futures = []
+    counter = counter or InsertionCounter()
+    
     if isinstance(url_or_texts, str):
-        async for item in url_graph_chunking(url_or_texts, model_use):
-            try:
-                chunk, triplet = item
-                relation = ' '.join(triplet)
-                head, _, tail = triplet
-                yield (GraphEmbeddedItem(
-                    embedding=await mk_cog_embedding(head, model_use), 
-                    raw_text=chunk,
-                    kb_postfix="-entities",
-                    head = hash(head),
-                    tail = hash(tail)
-                ), GraphEmbeddedItem(
-                    embedding=await mk_cog_embedding(tail, model_use), 
-                    raw_text=chunk,
-                    kb_postfix="-entities",
-                    head = hash(tail),
-                    tail = hash(head)
-                ), GraphEmbeddedItem(
-                    embedding=await mk_cog_embedding(relation, model_use), 
-                    raw_text=chunk,
-                    kb_postfix="-relations",
-                    head = hash(tail),
-                    tail = hash(head)
-                ))
-            except Exception as e:
-                logger.error(f"Failed to get embedding, Reason: {str(e)}")
-                to_retry.append(item)
+        async for chunk, triplet in url_graph_chunking(url_or_texts, model_use):
+            futures.append(asyncio.ensure_future(embedd_triplet(chunk, triplet, model_use)))
 
-        for item in to_retry:
-            try:
-                chunk, triplet = item
-                relation = ' '.join(triplet)
-                head, _, tail = triplet
-                yield (GraphEmbeddedItem(
-                    embedding=await mk_cog_embedding(head, model_use), 
-                    raw_text=chunk,
-                    kb_postfix="-entities",
-                    head = hash(head),
-                    tail = hash(tail)
-                ), GraphEmbeddedItem(
-                    embedding=await mk_cog_embedding(tail, model_use), 
-                    raw_text=chunk,
-                    kb_postfix="-entities",
-                    head = hash(tail),
-                    tail = hash(head)
-                ), GraphEmbeddedItem(
-                    embedding=await mk_cog_embedding(relation, model_use), 
-                    raw_text=chunk,
-                    kb_postfix="-relations",
-                    head = hash(tail),
-                    tail = hash(head)
-                ))
-            except Exception as e:
-                logger.error(f"(again) Failed to get embedding for {item[:100] + '...'!r} Reason: {str(e)}")
-                yield EmbeddedItem(
-                    embedding=None,
-                    raw_text=item,
-                    error=str(e)
-                )
     elif isinstance(url_or_texts, list):
-        for item in url_or_texts:
-            try:
-                yield EmbeddedItem(
-                    embedding=await mk_cog_embedding(item, model_use), 
-                    raw_text=item
-                )
-            except Exception as e:
-                logger.error(f"Failed to get embedding for {item[:100] + '...'!r} Reason: {str(e)}")
-                to_retry.append(item)
+        gk = get_gk()
 
-        for item in to_retry:
-            try:
-                yield EmbeddedItem(
-                    embedding=await mk_cog_embedding(item, model_use), 
-                    raw_text=item
-                )
-            except Exception as e:
-                logger.error(f"(again) Failed to get embedding for {item[:100] + '...'!r} Reason: {str(e)}")
-                yield EmbeddedItem(
-                    embedding=None,
-                    raw_text=item,
-                    error=str(e)
-                )
+        for item in url_or_texts:
+            resp = await gk.construct_graph_from_chunk(item)
+
+            if resp.status != APIStatus.OK:
+                logger.error(f"Failed to get embedding for {item[:100] + '...'!r} Reason: {resp.error}")
+
+            else:
+                futures.extend([
+                    asyncio.ensure_future(embedd_triplet(item, e))
+                    for e in resp.result
+                ])
+
     else:
         raise ValueError("Invalid input type; Expecting str or list of str, got {}".format(type(url_or_texts)))
+
+    counter.total = len(futures)
+    results = await asyncio.gather(*futures, return_exceptions=True)
+
+    for item in results:
+        if isinstance(item, Exception):
+            counter.fails += 1
+        else:
+            for element in item:
+                yield element
 
 async def export_collection_data(
     collection: str, 
@@ -498,7 +492,6 @@ async def export_collection_data(
 
 _running_tasks = set([])
 
-
 async def smaller_task(
     url_or_texts: Union[List[str], str], 
     kb: str, 
@@ -506,8 +499,6 @@ async def smaller_task(
     file_identifier:str = "",
     request_identifier: Optional[str] = None
 ):
-    n_inserted_chunks, fails_count = 0, 0
-
     if isinstance(url_or_texts, str) and request_identifier is not None:
         await hook(
             ResponseMessage[InsertProgressCallback](
@@ -521,12 +512,17 @@ async def smaller_task(
             )
         )
 
+    counter = InsertionCounter()
     async for data in async_batching(
-        chunking_and_embedding(url_or_texts, model_use), 
+        chunking_and_embedding(
+            url_or_texts, 
+            model_use,
+            counter
+        ), 
         const.DEFAULT_MILVUS_INSERT_BATCH_SIZE
     ):
-        data: Optional[Union[List[EmbeddedItem], List[tuple]]]
-        n_inserted_chunks += await inserting(
+        data: List[EmbeddedItem]
+        inserted = await inserting(
             _data=data, 
             model_use=model_use, 
             metadata = {
@@ -535,14 +531,11 @@ async def smaller_task(
             }
         )
 
-        for item in data:
-            if isinstance(item, tuple):
-                fails_count += sum(1 for obj in item if obj.error is not None)
-            else:
-                if item.error is not None:
-                    fails_count += 1
+        counter.fails += len(data) - inserted
 
     if isinstance(url_or_texts, str) and request_identifier is not None:
+        n_inserted_chunks = counter.total - counter.fails
+
         status = APIStatus.OK if n_inserted_chunks > 0 else APIStatus.ERROR
         reason = "" if status == APIStatus.OK else "No data read from the provided file"
 
@@ -562,7 +555,7 @@ async def smaller_task(
             )
         )
 
-    return (n_inserted_chunks + fails_count, fails_count)
+    return (counter.total, counter.fails)
 
 @limit_asyncio_concurrency(4)
 async def download_file(
@@ -982,42 +975,41 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
     row_count = get_collection_num_entities(model_identity)
     
-    entity_kb = [kb + "-entities" for kb in req.kb]
-    relation_kb = [kb + "-relations" for kb in req.kb]
-    entities_res = []
+    entity_kb = [
+        kb + const.ENTITY_SUFFIX 
+        for kb in req.kb
+    ]
+
+    relation_kb = [
+        kb + const.RELATION_SUFFIX 
+        for kb in req.kb
+    ]
+
+    nodes = []
 
     # Extract named entities from the query
-    ner_query_list, _ = await GK.extract_named_entities(req.query)
+    ner_query_list  = await get_gk().extract_named_entities(req.query)
 
     if len(ner_query_list) > 0:
-        query_ner_embeddings = [
-            await mk_cog_embedding(ner_query, embedding_model) for ner_query in ner_query_list
-        ]
-        entities_res = cli.search(
+        res = await sync2async(cli.search)(
             collection_name=model_identity,
-            data=query_ner_embeddings,
+            data=await mk_cog_embedding(ner_query_list, embedding_model),
             kb_filter=f"kb in {entity_kb}",
             anns_field="embedding",
             output_fields=["head", "tail"],
         )
 
-    nodes = []
-
-    for ner_entities_result in entities_res:
-        for result in ner_entities_result:
-            entity = result["entity"]
-            head = entity["head"]
-            tail = entity["tail"]
-            if head not in nodes:
-                nodes.append(head)
-            if tail not in nodes:
-                nodes.append(tail)
+        for ee in res:
+            for e in ee:
+                nodes.extend([e['head'], e['tail']])
 
     filter_str = f"kb in {relation_kb}"
-    if len(entities_res) > 0:
+
+    if len(nodes) > 0:
+        nodes = list(set(nodes))
         filter_str += f" and (head in {nodes} or tail in {nodes})"
 
-    res = cli.search(
+    res = await sync2async(cli.search)(
         collection_name=model_identity,
         data=[query_embedding],
         filter=filter_str,
@@ -1092,25 +1084,6 @@ async def notify_action(req: Union[InsertInputSchema, UpdateInputSchema, QueryIn
         kb=req.kb,
         ref=req.ref,
         hook=req.hook
-    )
-
-    elif isinstance(req, QueryInputSchema):
-        url = 'https://rag-api.eternalai.org/api/query?query={}&top_k={}&kb={}&threshold={}'.format(
-            req.query, req.top_k, req.kb, req.threshold
-        )
-
-        msg = '''<strong>Received a request to query:</strong>\n
-<i> 
-<b>Query:</b> {query}
-<b>Top_K:</b> {top_k}
-<b>KB:</b> {kb}
-<b>Threshold:</b> {threshold}
-</i>
-'''.format(
-        query=req.query,
-        top_k=req.top_k,
-        kb=req.kb,
-        threshold=req.threshold
     )
 
     elif isinstance(req, str):
