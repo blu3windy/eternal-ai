@@ -54,7 +54,7 @@ def send_message(
 ):
     twitter_username = twitter_username or "junk_notifications"
 
-    if (
+    if room is None or message_to_send is None(
         twitter_username == "junk_nofitications"
         and const.DISABLE_JUNK_NOTIFICATIONS
     ):
