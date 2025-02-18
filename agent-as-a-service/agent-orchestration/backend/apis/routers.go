@@ -275,7 +275,6 @@ func (s *Server) Routers() {
 			subcriptionAPI.GET("/usages", s.GetApiUsage)
 			subcriptionAPI.GET("/packages", s.GetApiPackages)
 			subcriptionAPI.GET("/info", s.GetApiSubscriptionInfo)
-			subcriptionAPI.POST("/create-test", s.CreateAcctForTest)
 		}
 
 		// agentStoreAPI := rootAPI.Group("/agent-store")
