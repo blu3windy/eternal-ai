@@ -59,6 +59,7 @@ class ShadowReplyTask(MultiStepTaskBase):
                         tweet_info["tweet_object"]["tweet_id"]
                     )
                 )
+
                 if context_resp.is_error():
                     tweets_context = []
                 else:
@@ -106,18 +107,15 @@ class ShadowReplyTask(MultiStepTaskBase):
                 for conversation_thread in log.execute_info["conversation"]
             ]
 
-            # TODO: rewrite this part
-            for idx, infer in enumerate(asyncio.as_completed(futures)):
-
-                try:
-                    infer_result: OnchainInferResult = await infer
-                except Exception as err:
+            for idx, infer in enumerate(asyncio.gather(*futures, return_exceptions=True)):
+                if isinstance(infer, Exception):
                     logger.info(
-                        f"[{log.id}] Error while processing index {idx}: {err} (inference fails)."
+                        f"[{log.id}] Error while processing index {idx}: {infer} (inference fails)."
                     )
                     continue
 
-                result = post_process_tweet(infer_result.generations[0].message.content)
+                infer: OnchainInferResult
+                result = post_process_tweet(infer.generations[0].message.content)
                 liked_tweet = log.execute_info["tweets"][idx]["tweet_object"]
                 liked_tweet_id = liked_tweet["tweet_id"]
 
@@ -125,21 +123,19 @@ class ShadowReplyTask(MultiStepTaskBase):
                     create_twitter_auth_from_reasoning_log(log),
                     tweet_id=liked_tweet_id,
                     reply_content=result,
-                    tx_hash=infer_result.tx_hash,
+                    tx_hash=infer.tx_hash,
                 )
 
                 log.execute_info["task_result"].append(
                     {
                         "tweet_id": liked_tweet_id,
                         "reply_content": result,
-                        "tx_hash": infer_result.tx_hash,
+                        "tx_hash": infer.tx_hash,
                     }
                 )
 
-                log = await self.commit_log(log)
-
             return await a_move_state(
-                log, MissionChainState.DONE, "Replied to all {} liked tweets"
+                log, MissionChainState.DONE, f"Replied to all {len(futures)} liked tweets"
             )
 
         return log
