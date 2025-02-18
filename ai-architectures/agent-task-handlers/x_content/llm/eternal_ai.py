@@ -187,7 +187,7 @@ class ASyncBasedEternalAI(OpenAILLMBase):
         ]
 
         logger.info(
-            f"Submitted async request; Receipt: {receipt}; Messages: {json.dumps(openai_messages)}"
+            f"Submitted async request; Receipt: {receipt}; Messages: {json.dumps(openai_messages)[:100]}"
         )
         try:
             result: dict = await self.wait(

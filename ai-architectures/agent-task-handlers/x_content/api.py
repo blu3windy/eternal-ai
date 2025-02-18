@@ -154,9 +154,11 @@ async def twin_task_submit(
 async def enqueue_api(
     request: ReasoningLog, background_tasks: BackgroundTasks
 ) -> ReasoningLog:
-    logger.info(
-        f"[enqueue_api] Received request: {json.dumps(request.model_dump())}"
+    background_tasks.add_task(
+        logger.info, 
+        f"[enqueue_api] Received request: {json.dumps(request.model_dump())[:100]}"
     )
+
     if request.state == MissionChainState.NEW:
         await task_utils.notify_status_reasoning_log(request)
 
@@ -202,9 +204,9 @@ async def get_result_api(id: str, thought_only: bool = False) -> JSONResponse:
 async def enqueue_chat(
     request: ChatRequest, background_tasks: BackgroundTasks
 ) -> ChatRequest:
-    logger.info(
-        f"[enqueue_chat] Received request: {json.dumps(request.model_dump())}"
-    )
+    # logger.info(
+    #     f"[enqueue_chat] Received request: {json.dumps(request.model_dump())}"
+    # )
     if request.state == MissionChainState.NEW:
         await task_utils.notify_status_chat_request(request)
 

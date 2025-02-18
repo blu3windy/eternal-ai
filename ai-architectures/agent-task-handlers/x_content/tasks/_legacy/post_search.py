@@ -73,7 +73,7 @@ Content to follow: {}
 
 class PostSearchTask(MultiStepTaskBase):
 
-    async def process_task(self, log):
+    async def process_task(self, log: ReasoningLog):
         if log.state == MissionChainState.NEW:
             log.execute_info = {
                 "news_and_knowledge": [],
