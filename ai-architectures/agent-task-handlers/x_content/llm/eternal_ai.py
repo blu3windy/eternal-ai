@@ -12,7 +12,7 @@ from .base import OpenAILLMBase
 from typing import Dict
 from functools import lru_cache
 from .utils import check_and_get_infer_result, ServerInferenceResult
-from x_content.wrappers.log_decorators import log_function_call
+from x_content.wrappers.log_decorators import log_function_call, compress_kwargs
 from x_content import constants as C
 
 
@@ -80,9 +80,6 @@ class ASyncBasedEternalAI(OpenAILLMBase):
             )
 
         if response.status_code != 200:
-            logger.error(
-                f"Failed to send request to '{url}'; code: {response.status_code}"
-            )
             raise ValueError(
                 f"Failed to send request to '{url}'; code: {response.status_code}"
             )
@@ -96,6 +93,11 @@ class ASyncBasedEternalAI(OpenAILLMBase):
             raise Exception("Inference request submission failed")
 
         receipt = response_json["data"]["id"]
+
+        logger.info(
+            f"Submitted async request; Receipt: {receipt}; Calldata: {compress_kwargs(**json_data)}"
+        )
+
         return receipt
 
     async def wait(self, receipt: str, eta_seconds: float = 60):
@@ -181,14 +183,8 @@ class ASyncBasedEternalAI(OpenAILLMBase):
         submit_time = time.time()
         estimation = get_time_estimation()
 
-        openai_messages = [
-            convert_message_to_dict(m) if not isinstance(m, dict) else m
-            for m in messages
-        ]
 
-        logger.info(
-            f"Submitted async request; Receipt: {receipt}; Messages: {json.dumps(openai_messages)[:100]}"
-        )
+
         try:
             result: dict = await self.wait(
                 receipt, estimation.estimate(self.chain_id)

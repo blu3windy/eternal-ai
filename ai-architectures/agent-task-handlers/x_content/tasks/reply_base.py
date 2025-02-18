@@ -179,11 +179,11 @@ class ReplyTaskBase(MultiStepTaskBase):
                         f"[{log.id}] Error while processing index {idx+1} (out of {totals}): {err} (subtask fail) (tweet_id={tweet_info.tweet_object.tweet_id})"
                     )
                     continue
-            
-            log.execute_info["task_result"].append(result)
-            logger.info(
-                f"[{log.id}] Successfully processed subtask index {idx+1} (out of {totals}) (tweet_id={tweet_info.tweet_object.tweet_id})"
-            )
+
+                log.execute_info["task_result"].append(result)
+                logger.info(
+                    f"[{log.id}] Successfully processed subtask index {idx+1} (out of {totals}) (tweet_id={tweet_info.tweet_object.tweet_id})"
+                )
 
             n_success = len(log.execute_info["task_result"])
             n_failed = len(log.execute_info["task_failed"])

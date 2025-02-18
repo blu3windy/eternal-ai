@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 from typing import Optional
 import threading
-from x_content.service import handle_pod_shutdown
+from x_content.service import handle_pod_shutdown, handle_pod_ready
 from x_content import constants as const
 from x_content import __version__
 import uvicorn
@@ -87,6 +87,7 @@ if __name__ == "__main__":
 
     signal.signal(signal.SIGTERM, handle_pod_shutdown)
     signal.signal(signal.SIGINT, handle_pod_shutdown)
+    # signal.signal(signal.SIGKILL, handle_pod_shutdown)
 
     scheduler_thread = threading.Thread(target=scheduler_job, daemon=True)
 
@@ -109,6 +110,7 @@ if __name__ == "__main__":
 
     from x_content.api import router
     app.include_router(router)
+    app.add_event_handler("startup", handle_pod_ready)
 
     scheduler_thread.start()
 
