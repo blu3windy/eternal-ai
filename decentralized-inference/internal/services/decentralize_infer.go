@@ -462,6 +462,17 @@ func (s *Service) CreateDecentralizeInferV2WithStream(ctx context.Context, info 
 			systemPromptStr = string(systemPromptContract[0])
 		}
 
+		if strings.Contains(systemPromptStr, "ipfs") {
+			cid := strings.ReplaceAll(systemPromptStr, "ipfs://", "")
+			url := fmt.Sprintf("https://ipfs.io/ipfs/%s", cid)
+			_byte, _, err := http_client.RequestHttp(url, "GET", map[string]string{}, nil, 10)
+			if _err != nil {
+				return "", fmt.Errorf("get agent system prompt err: %w", err)
+			}
+
+			return string(_byte), nil
+		}
+
 		return systemPromptStr, nil
 	}()
 
