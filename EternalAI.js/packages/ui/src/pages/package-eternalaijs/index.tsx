@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { sum } from "@eternalai.js/eternalaijs";
+import { sum, subtract } from "@eternalai.js/eternalaijs";
 import "./Styles.css";
 
 function PackageEternalAiJs() {
@@ -14,7 +14,7 @@ function PackageEternalAiJs() {
             const a = Math.floor(Math.random() * 1000);
             const b = Math.ceil(Math.random() * 1000);
             console.log(a, b);
-            setNum(sum(a, b));
+            setNum(subtract(a, b));
           }}
         >
           sum of two random numbers is {num}

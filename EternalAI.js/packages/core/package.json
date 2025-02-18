@@ -1,7 +1,9 @@
 {
+  "name": "@eternalai.js/core",
   "version": "0.1.0",
   "license": "MIT",
-  "main": "dist/index.js",
+  "main": "dist/bundle.cjs.js",
+  "module": "dist/bundle.esm.js",
   "typings": "dist/index.d.ts",
   "files": [
     "dist",
@@ -11,20 +13,18 @@
     "node": ">=10"
   },
   "scripts": {
-    "start": "tsdx watch",
-    "dev": "tsdx watch",
-    "build": "rm -rf dist & tsdx build",
-    "build-umd": "rm -rf dist & tsdx build --format umd --name Core",
-    "test": "tsdx test",
-    "lint": "tsdx lint",
-    "prepare": "tsdx build",
+    "build": "rollup -c",
+    "build:watch": "rollup -c -w",
+    "test": "vitest",
+    "lint": "eslint . --ext .ts,.tsx",
+    "prepare": "rollup -c",
     "size": "size-limit",
     "analyze": "size-limit --why"
   },
   "peerDependencies": {},
   "husky": {
     "hooks": {
-      "pre-commit": "tsdx lint"
+      "pre-commit": "eslint . --ext .ts,.tsx"
     }
   },
   "prettier": {
@@ -33,16 +33,14 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "@eternalai.js/core",
   "author": "Peter",
-  "module": "dist/core.esm.js",
   "size-limit": [
     {
-      "path": "dist/core.cjs.production.min.js",
+      "path": "dist/bundle.cjs.js",
       "limit": "10 KB"
     },
     {
-      "path": "dist/core.esm.js",
+      "path": "dist/bundle.esm.js",
       "limit": "10 KB"
     }
   ],
@@ -50,8 +48,11 @@
     "@size-limit/preset-small-lib": "^11.1.6",
     "husky": "^9.1.7",
     "size-limit": "^11.1.6",
-    "tsdx": "^0.14.1",
-    "tslib": "^2.8.1",
+    "rollup": "^2.56.3",
+    "@rollup/plugin-node-resolve": "^13.0.6",
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-typescript": "^8.3.3",
+    "rollup-plugin-terser": "^7.0.2",
     "typescript": "^5.7.3"
   }
 }
