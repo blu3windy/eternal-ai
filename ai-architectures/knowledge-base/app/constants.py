@@ -13,6 +13,9 @@ MODEL_DIMENSION=int(os.getenv("MODEL_DIMENSION", "4096"))
 MODEL_NAME=os.getenv("MODEL_NAME")
 LLM_API_BASE=os.getenv("LLM_API_BASE", "").rstrip("/")
 LLM_API_KEY=os.getenv("LLM_API_KEY")
+DEFAULT_LLM_MAX_TOKENS = os.getenv("DEFAULT_LLM_MAX_TOKENS") or 512
+DEFAULT_LLM_SEED = os.getenv("DEFAULT_LLM_SEED") or 42
+DEFAULT_LLM_TEMPERATURE = os.getenv("DEFAULT_LLM_TEMPERATURE") or 0.7
 
 CREATE_NEW_IF_NOT_EXISTS=os.getenv("CREATE_NEW_IF_NOT_EXISTS", "true").lower() == "true"
 
@@ -40,3 +43,65 @@ if isinstance(DEFAULT_MILVUS_INSERT_BATCH_SIZE, str):
     
 API_SECRET_TOKEN = os.getenv("API_SECRET_TOKEN", "dummy_secret_token")
 ETERNALAI_RESULT_HOOK_URL = os.getenv("ETERNALAI_RESULT_HOOK_URL")
+
+GRAPH_SYSTEM_PROMPT = """You are a helpful assistant that can extract relationships from a given text.
+
+### Output Format:
+Provide a JSON object with a `"triplets"` key containing a list of extracted relationships. Each relationship should be represented as a triple in the following format:  
+`(subject, relation, object)`
+
+### Extraction Guidelines:
+- **Meaningful and Factual**: Each relationship must capture a specific and meaningful connection between entities or concepts.
+- **Clarity**: Subjects and objects should be clearly defined, either as named entities (e.g., "Jakob Bernoulli") or distinct concepts (e.g., "calculus").
+- **Concise Relations**: Relations should be succinct but adequately descriptive of the connection.
+- **Avoid Redundancy**: Refrain from repeating relationships or including vague, overly generic, or ambiguous connections.
+- **Structured and Valid**: Ensure the output is in correct JSON format and that relationships are logically structured.
+
+### Example:
+
+**Passage:**  
+Jakob Bernoulli (1654-1705): Jakob was one of the earliest members of the Bernoulli family to gain prominence in mathematics. He made significant contributions to calculus, particularly in the development of the theory of probability. He is known for the Bernoulli numbers and the Bernoulli theorem, a precursor to the law of large numbers. He was the older brother of Johann Bernoulli, another influential mathematician, and the two had a complex relationship that involved both collaboration and rivalry.
+
+**Output:**
+```json
+{
+    "triplets": [
+        ["Jakob Bernoulli", "made significant contributions to", "calculus"],
+        ["Jakob Bernoulli", "made significant contributions to", "the theory of probability"],
+        ["Jakob Bernoulli", "is known for", "the Bernoulli numbers"],
+        ["Jakob Bernoulli", "is known for", "the Bernoulli theorem"],
+        ["The Bernoulli theorem", "is a precursor to", "the law of large numbers"],
+        ["Jakob Bernoulli", "was the older brother of", "Johann Bernoulli"]
+    ]
+}```"""
+
+NER_SYSTEM_PROMPT = """You are an expert in extracting named entities from text.
+
+### Instructions:
+- Identify and extract named entities such as **persons, locations, organizations, dates, and key concepts**.
+- The output must be in **stringified JSON format** with a single key `"entities"`, containing a list of extracted entities.
+- Maintain the **exact wording** from the passage—do **not** modify or rephrase.
+- Ensure **clarity and accuracy** in identifying entities.
+- **No additional text, comments, or explanations**—only the JSON output.
+- The output should **not include empty entities**.
+
+### Example:
+
+**Text:**  
+"Albert Einstein was a German-born theoretical physicist who developed the theory of relativity, one of the two pillars of modern physics. He worked at the Institute for Advanced Study in Princeton, New Jersey."
+
+**Output:**  
+```json
+{
+    "entities": [
+        "Albert Einstein",
+        "German-born",
+        "theoretical physicist",
+        "theory of relativity",
+        "modern physics",
+        "Institute for Advanced Study",
+        "Princeton",
+        "New Jersey"
+    ]
+}
+```"""

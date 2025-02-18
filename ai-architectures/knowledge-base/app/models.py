@@ -10,6 +10,11 @@ class EmbeddedItem(BaseModel):
     embedding: Optional[List[float]] = None
     raw_text: str
     error: Optional[str] = None
+
+class GraphEmbeddedItem(EmbeddedItem):
+    head: int
+    tail: int
+    kb_postfix: str
     
 class APIStatus(str, Enum):
     OK = "ok"

@@ -8,6 +8,7 @@ from .models import (
     QueryInputSchema, 
     QueryResult,
     EmbeddedItem,
+    GraphEmbeddedItem,
     APIStatus,
     ResponseMessage,
     FilecoinData,
@@ -40,6 +41,7 @@ from . import constants as const
 from .embedding import get_embedding_models, get_default_embedding_model, get_tokenizer, get_embedding_model_api_key
 from pymilvus import MilvusClient, FieldSchema, CollectionSchema, DataType, Collection
 from .wrappers import milvus_kit, redis_kit
+from .graph_handlers import GRAPH_KNOWLEDGE as GK
 import httpx
 from .utils import (
     async_batching, 
@@ -174,7 +176,7 @@ async def mk_cog_embedding(text: str, model_use: EmbeddingModel) -> List[float]:
     }
     
     data = {
-        'input': {"texts": [text]},
+        'input': {"texts": [text], "dimension": const.MODEL_DIMENSION},
     }
     
     async with httpx.AsyncClient() as client:
@@ -246,13 +248,34 @@ async def url_chunking(url: str, model_use: EmbeddingModel) -> AsyncGenerator:
             and any([k in item_labels for k in captured_items]):
             yield text
 
-async def inserting(_data: List[EmbeddedItem], model_use: EmbeddingModel, metadata: dict):
+
+async def url_graph_chunking(url_or_texts: str, model_use: EmbeddingModel) -> AsyncGenerator:
+    async for item in url_chunking(url_or_texts, model_use):
+        try:
+            graph_result, err = await GK.construct_graph_from_chunk(item)
+            if err is None:
+                _, triplets = graph_result
+                for idx, triplet in enumerate(triplets):
+                    if len(triplet) == 3:
+                        yield item, triplet
+        except Exception as e:
+            logger.error(f"Failed to construct graph from {item}. Reason: {e}")
+            traceback.print_exc()
+            return
+
+async def inserting(_data: Optional[Union[List[EmbeddedItem], List[tuple]]], model_use: EmbeddingModel, metadata: dict):
     assert all([k in metadata for k in ['kb', 'reference']]), "Missing required fields"
 
-    d = [
-        e for e in _data 
-        if e.error is None
-    ] 
+    d = []
+    for item in _data:
+        if isinstance(item, tuple):
+            head, tail, relation = item
+            for obj in [head, tail, relation]:
+                if obj.error is None:
+                    d.append(obj)
+        else:
+            if item.error is None:
+                d.append(item)
 
     if len(d) == 0:
         logger.error("No valid data to insert")
@@ -260,15 +283,22 @@ async def inserting(_data: List[EmbeddedItem], model_use: EmbeddingModel, metada
 
     vectors = [e.embedding for e in d]
     raw_texts = [e.raw_text for e in d]
-
+    heads = [0 or e.head for e in d]
+    tails = [0 or e.tail for e in d]
+    kb_postfixes = ["" or e.kb_postfix for e in d]
+    print("Total items to insert: ", len(vectors))
+    kb = metadata.pop('kb')
     data = [
         {
             **metadata,
+            'kb': kb + kb_postfix,
+            'head': head,
+            'tail': tail,
             'content': text,
             'hash': await sync2async(get_content_checksum)(text),
             'embedding': vec
         }
-        for vec, text in zip(vectors, raw_texts)
+        for vec, text, head, tail, kb_postfix in zip(vectors, raw_texts, heads, tails, kb_postfixes)
     ]
 
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)
@@ -278,29 +308,65 @@ async def inserting(_data: List[EmbeddedItem], model_use: EmbeddingModel, metada
     )
 
     insert_cnt = res['insert_count']
-    logger.info(f"Successfully inserted {insert_cnt} items to {metadata['kb']} (collection: {model_use.identity()});")
+    logger.info(f"Successfully inserted {insert_cnt} items to {kb} (collection: {model_use.identity()});")
     return insert_cnt
 
 async def chunking_and_embedding(url_or_texts: Union[str, List[str]], model_use: EmbeddingModel) -> AsyncGenerator:
     to_retry = []   
-    
+
     if isinstance(url_or_texts, str):
-        async for item in url_chunking(url_or_texts, model_use):
+        async for item in url_graph_chunking(url_or_texts, model_use):
             try:
-                yield EmbeddedItem(
-                    embedding=await mk_cog_embedding(item, model_use), 
-                    raw_text=item
-                )
+                chunk, triplet = item
+                relation = ' '.join(triplet)
+                head, _, tail = triplet
+                yield (GraphEmbeddedItem(
+                    embedding=await mk_cog_embedding(head, model_use), 
+                    raw_text=chunk,
+                    kb_postfix="-entities",
+                    head = hash(head),
+                    tail = hash(tail)
+                ), GraphEmbeddedItem(
+                    embedding=await mk_cog_embedding(tail, model_use), 
+                    raw_text=chunk,
+                    kb_postfix="-entities",
+                    head = hash(tail),
+                    tail = hash(head)
+                ), GraphEmbeddedItem(
+                    embedding=await mk_cog_embedding(relation, model_use), 
+                    raw_text=chunk,
+                    kb_postfix="-relations",
+                    head = hash(tail),
+                    tail = hash(head)
+                ))
             except Exception as e:
-                logger.error(f"Failed to get embedding for {item[:100] + '...'!r} Reason: {str(e)}")
+                logger.error(f"Failed to get embedding, Reason: {str(e)}")
                 to_retry.append(item)
 
         for item in to_retry:
             try:
-                yield EmbeddedItem(
-                    embedding=await mk_cog_embedding(item, model_use), 
-                    raw_text=item
-                )
+                chunk, triplet = item
+                relation = ' '.join(triplet)
+                head, _, tail = triplet
+                yield (GraphEmbeddedItem(
+                    embedding=await mk_cog_embedding(head, model_use), 
+                    raw_text=chunk,
+                    kb_postfix="-entities",
+                    head = hash(head),
+                    tail = hash(tail)
+                ), GraphEmbeddedItem(
+                    embedding=await mk_cog_embedding(tail, model_use), 
+                    raw_text=chunk,
+                    kb_postfix="-entities",
+                    head = hash(tail),
+                    tail = hash(head)
+                ), GraphEmbeddedItem(
+                    embedding=await mk_cog_embedding(relation, model_use), 
+                    raw_text=chunk,
+                    kb_postfix="-relations",
+                    head = hash(tail),
+                    tail = hash(head)
+                ))
             except Exception as e:
                 logger.error(f"(again) Failed to get embedding for {item[:100] + '...'!r} Reason: {str(e)}")
                 yield EmbeddedItem(
@@ -308,7 +374,6 @@ async def chunking_and_embedding(url_or_texts: Union[str, List[str]], model_use:
                     raw_text=item,
                     error=str(e)
                 )
-
     elif isinstance(url_or_texts, list):
         for item in url_or_texts:
             try:
@@ -460,8 +525,7 @@ async def smaller_task(
         chunking_and_embedding(url_or_texts, model_use), 
         const.DEFAULT_MILVUS_INSERT_BATCH_SIZE
     ):
-        data: List[EmbeddedItem]
-
+        data: Optional[Union[List[EmbeddedItem], List[tuple]]]
         n_inserted_chunks += await inserting(
             _data=data, 
             model_use=model_use, 
@@ -471,10 +535,12 @@ async def smaller_task(
             }
         )
 
-        fails_count += len([
-            e for e in data 
-            if e.error is not None
-        ])
+        for item in data:
+            if isinstance(item, tuple):
+                fails_count += sum(1 for obj in item if obj.error is not None)
+            else:
+                if item.error is not None:
+                    fails_count += 1
 
     if isinstance(url_or_texts, str) and request_identifier is not None:
         status = APIStatus.OK if n_inserted_chunks > 0 else APIStatus.ERROR
@@ -767,6 +833,8 @@ def prepare_milvus_collection():
                 FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
                 FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=1024 * 8),
                 FieldSchema(name="hash", dtype=DataType.VARCHAR, max_length=64), 
+                FieldSchema(name="head", dtype=DataType.INT64, Default=-1),
+                FieldSchema(name="tail", dtype=DataType.INT64, Default=-1),
                 FieldSchema(name="reference", dtype=DataType.VARCHAR, max_length=1024), 
                 FieldSchema(name="kb", dtype=DataType.VARCHAR, max_length=64),
                 FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=model.dimension),
@@ -909,26 +977,56 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
 
     embedding_model = get_default_embedding_model()
     model_identity = embedding_model.identity()
-
-    embedding = await mk_cog_embedding(req.query, embedding_model)
-
+    query_embedding = await mk_cog_embedding(req.query, embedding_model)
+    
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
     row_count = get_collection_num_entities(model_identity)
+    
+    entity_kb = [kb + "-entities" for kb in req.kb]
+    relation_kb = [kb + "-relations" for kb in req.kb]
+    entities_res = []
+
+    # Extract named entities from the query
+    ner_query_list, _ = await GK.extract_named_entities(req.query)
+
+    if len(ner_query_list) > 0:
+        query_ner_embeddings = [
+            await mk_cog_embedding(ner_query, embedding_model) for ner_query in ner_query_list
+        ]
+        entities_res = cli.search(
+            collection_name=model_identity,
+            data=query_ner_embeddings,
+            kb_filter=f"kb in {entity_kb}",
+            anns_field="embedding",
+            output_fields=["head", "tail"],
+        )
+
+    nodes = []
+
+    for ner_entities_result in entities_res:
+        for result in ner_entities_result:
+            entity = result["entity"]
+            head = entity["head"]
+            tail = entity["tail"]
+            if head not in nodes:
+                nodes.append(head)
+            if tail not in nodes:
+                nodes.append(tail)
+
+    filter_str = f"kb in {relation_kb}"
+    if len(entities_res) > 0:
+        filter_str += f" and (head in {nodes} or tail in {nodes})"
 
     res = cli.search(
         collection_name=model_identity,
-        data=[embedding],
-        filter=f"kb in {req.kb}",
-        search_params= {
-            "params": {
-                "radius": req.threshold,
-            }
-        },
+        data=[query_embedding],
+        filter=filter_str,
         limit=min(req.top_k, row_count),
         anns_field="embedding",
-        output_fields=["content", "reference", "hash"],
+        output_fields=["id", "content", "reference", "hash"],
+        search_params={"params": {"radius": req.threshold}},
     )
-
+    
     hits = list(
         {
             item['entity']['hash']: item 
@@ -941,7 +1039,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
             hits[i]['distance'], 
             embedding_model
         )
-    
+
     hits = sorted(hits, key=lambda e: e['score'], reverse=True)
 
     return [
