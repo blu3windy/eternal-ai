@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"net/http"
 	"time"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
@@ -14,23 +15,15 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/lighthouse"
 )
 
-func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, address string, installUri string, signature string) (string, error) {
+func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installCode string, installUri string) (string, error) {
 	err := func() error {
-		if address == "" || signature == "" {
+		if installCode == "" {
 			return errs.NewError(errs.ErrBadRequest)
-		}
-		err := helpers.ValidateMessageSignature(
-			address,
-			address,
-			signature,
-		)
-		if err != nil {
-			return errs.NewError(err)
 		}
 		infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 			daos.GetDBMainCtx(ctx),
 			map[string][]interface{}{
-				"address = ?": {address},
+				"install_code = ?": {installCode},
 			},
 			map[string][]interface{}{}, []string{},
 		)
@@ -38,8 +31,17 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, address stri
 			return errs.NewError(err)
 		}
 		if infraTwitterApp == nil {
+			// TODO get addres from instal code
+			var res struct {
+				Address string
+			}
+			err = helpers.CurlURL(s.conf.InfraTwitterApp.InfraAuthUri+"?install_code="+installCode, http.MethodGet, nil, nil, &res)
+			if err != nil {
+				return errs.NewError(err)
+			}
 			infraTwitterApp = &models.InfraTwitterApp{
-				Address: address,
+				Address:     res.Address,
+				InstallCode: installCode,
 			}
 		}
 		err = s.dao.Save(daos.GetDBMainCtx(ctx), infraTwitterApp)
@@ -59,8 +61,8 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, address stri
 	redirectUri := helpers.BuildUri(
 		s.conf.InfraTwitterApp.RedirectUri,
 		map[string]string{
-			"address":     address,
-			"install_uri": installUri,
+			"install_code": installCode,
+			"install_uri":  installUri,
 		},
 	)
 	return helpers.BuildUri(
@@ -77,16 +79,16 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, address stri
 	), nil
 }
 
-func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri string, address string, code string) (string, error) {
-	if address == "" || code == "" {
+func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installCode string, installUri string, code string) (string, error) {
+	if installCode == "" || code == "" {
 		return "", errs.NewError(errs.ErrBadRequest)
 	}
 	infraTwitterApp, err := func() (*models.InfraTwitterApp, error) {
 		redirectUri := helpers.BuildUri(
 			s.conf.InfraTwitterApp.RedirectUri,
 			map[string]string{
-				"address":     address,
-				"install_uri": installUri,
+				"install_code": installCode,
+				"install_uri":  installUri,
 			},
 		)
 		respOauth, err := s.twitterAPI.TwitterOauthCallbackForSampleApp(
@@ -136,7 +138,7 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 			infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 				daos.GetDBMainCtx(ctx),
 				map[string][]interface{}{
-					"address = ?": {address},
+					"install_code = ?": {installCode},
 				},
 				map[string][]interface{}{}, []string{},
 			)
@@ -160,13 +162,12 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 		return helpers.BuildUri(
 			installUri,
 			map[string]string{
-				"address": address,
-				"error":   err.Error(),
+				"install_code": installCode,
+				"error":        err.Error(),
 			},
 		), nil
 	}
 	params := map[string]string{
-		"address":          address,
 		"twitter_id":       infraTwitterApp.TwitterInfo.TwitterID,
 		"twitter_username": infraTwitterApp.TwitterInfo.TwitterUsername,
 		"twitter_name":     infraTwitterApp.TwitterInfo.TwitterName,
@@ -175,8 +176,8 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 	return helpers.BuildUri(
 		installUri,
 		map[string]string{
-			"address":     address,
-			"return_data": returnData,
+			"install_code": installCode,
+			"return_data":  returnData,
 		},
 	), nil
 }
