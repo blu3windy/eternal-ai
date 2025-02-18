@@ -12,7 +12,8 @@
   },
   "scripts": {
     "start": "tsdx watch",
-    "build": "tsdx build",
+    "build": "rm -rf dist & tsdx build",
+    "build-umd": "rm -rf dist & tsdx build --format umd --name EternalAIJs",
     "test": "tsdx test",
     "lint": "tsdx lint",
     "prepare": "tsdx build",
