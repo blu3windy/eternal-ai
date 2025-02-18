@@ -26,10 +26,10 @@ logger = logging.getLogger(__name__)
 
 
 # Update the existing functions to use the Redis cache class
-def is_create_game_pending(_tweet_id):
+async def is_create_game_pending(_tweet_id):
     try:
         game_redis = _get_game_redis_cache()
-        status = game_redis.get_game_status(_tweet_id)
+        status = await game_redis.get_game_status(_tweet_id)
         logger.info(
             f"[is_create_game_pending] Retrieved game status for tweet {_tweet_id}: {status}"
         )
@@ -41,13 +41,13 @@ def is_create_game_pending(_tweet_id):
         return False
 
 
-def _mark_create_game_running(_tweet_id):
+async def _mark_create_game_running(_tweet_id):
     try:
         game_redis = _get_game_redis_cache()
         logger.info(
             f"[_mark_create_game_running] Attempting to mark game for tweet {_tweet_id} as running"
         )
-        result = game_redis.set_game_status(
+        result = await game_redis.set_game_status(
             _tweet_id, GameStatus.CREATE_RUNNING
         )
         logger.info(
@@ -61,13 +61,13 @@ def _mark_create_game_running(_tweet_id):
         return False
 
 
-def _mark_create_game_pending(_tweet_id):
+async def _mark_create_game_pending(_tweet_id):
     try:
         game_redis = _get_game_redis_cache()
         logger.info(
             f"[_mark_create_game_pending] Attempting to mark game for tweet {_tweet_id} as pending"
         )
-        result = game_redis.set_game_status(
+        result = await game_redis.set_game_status(
             _tweet_id, GameStatus.CREATE_PENDING
         )
         logger.info(
@@ -81,13 +81,13 @@ def _mark_create_game_pending(_tweet_id):
         return False
 
 
-def _mark_create_game_done(_tweet_id):
+async def _mark_create_game_done(_tweet_id):
     try:
         game_redis = _get_game_redis_cache()
         logger.info(
             f"[_mark_create_game_done] Attempting to mark game for tweet {_tweet_id} as done"
         )
-        game_redis.add_running_game(_tweet_id, GameStatus.CREATE_DONE)
+        await game_redis.add_running_game(_tweet_id, GameStatus.CREATE_DONE)
         logger.info(
             f"[_mark_create_game_done] Successfully marked game for tweet {_tweet_id} as done"
         )
@@ -97,7 +97,7 @@ def _mark_create_game_done(_tweet_id):
         )
 
 
-def _try_acquire_create_game_lock(_tweet_id):
+async def _try_acquire_create_game_lock(_tweet_id):
     # Initialize lock variable
     lock = None
 
@@ -107,35 +107,31 @@ def _try_acquire_create_game_lock(_tweet_id):
             f"[_try_acquire_create_game_lock] Attempting to acquire lock for tweet {_tweet_id} with {const.CREATE_GAME_LOCK_EXPIRY}s expiry"
         )
         # Attempt to acquire the lock with an expiry time
-        lock = game_redis.acquire_create_game_lock(
-            _tweet_id, const.CREATE_GAME_LOCK_EXPIRY  # e.g., 300 seconds
+        lock = await game_redis.acquire_create_game_lock(
+            _tweet_id, const.CREATE_GAME_LOCK_EXPIRY
         )
         logger.info(
             f"[_try_acquire_create_game_lock] Lock acquisition {'successful' if lock else 'failed'} for tweet {_tweet_id}"
         )
-        return lock  # Returns True if acquired, False if already locked
+        return lock
 
     except Exception as e:
-        # Log any errors during lock acquisition
         logger.error(
             f"[_try_acquire_create_game_lock] Failed to acquire lock for tweet {_tweet_id}: {str(e)}"
         )
         return False
 
     finally:
-        # Always execute this block, even if an exception occurs
-        if not lock:  # If lock wasn't acquired
+        if not lock:
             try:
                 logger.info(
                     f"[_try_acquire_create_game_lock] Attempting to release lock for tweet {_tweet_id}"
                 )
-                # Attempt to release the lock
-                game_redis.release_create_game_lock(_tweet_id)
+                await game_redis.release_create_game_lock(_tweet_id)
                 logger.info(
                     f"[_try_acquire_create_game_lock] Successfully released lock for tweet {_tweet_id}"
                 )
             except Exception as e:
-                # Log any errors during lock release
                 logger.error(
                     f"[_try_acquire_create_game_lock] Failed to release lock for tweet {_tweet_id}: {str(e)}"
                 )
@@ -263,7 +259,7 @@ async def _handle_create_game_request(log: ReasoningLog, _tweet_object):
         )
 
         # Try to acquire lock before processing
-        if not _try_acquire_create_game_lock(tweet_id):
+        if not await _try_acquire_create_game_lock(tweet_id):
             logger.info(
                 f"[_handle_create_game_request] Tweet {tweet_id} is locked by another process, skipping..."
             )
@@ -313,7 +309,7 @@ class CreateGameSubtask(ReplySubtaskBase):
         tweet_id = self.tweet_info.tweet_object.tweet_id
         tweet_object = self.tweet_info.tweet_object.to_dict()
 
-        if not is_create_game_pending(tweet_id):
+        if not await is_create_game_pending(tweet_id):
             logger.info(
                 f"[CreateGameSubtask.run] Game {tweet_id} is not in pending state, skipping"
             )
@@ -321,7 +317,7 @@ class CreateGameSubtask(ReplySubtaskBase):
                 f"Game {tweet_id} is not in pending state, skipping"
             )
 
-        _mark_create_game_running(tweet_id)
+        await _mark_create_game_running(tweet_id)
         task_result, err = await _handle_create_game_request(
             self.log, tweet_object
         )
@@ -329,12 +325,12 @@ class CreateGameSubtask(ReplySubtaskBase):
             logger.error(
                 f"[CreateGameSubtask.run] Game creation failed for tweet {tweet_id}: {err}"
             )
-            _mark_create_game_pending(tweet_id)
+            await _mark_create_game_pending(tweet_id)
         else:
             logger.info(
                 f"[CreateGameSubtask.run] Successfully created game for tweet {tweet_id}"
             )
-            _mark_create_game_done(tweet_id)
+            await _mark_create_game_done(tweet_id)
 
         return {
             "tweet_id": tweet_id,

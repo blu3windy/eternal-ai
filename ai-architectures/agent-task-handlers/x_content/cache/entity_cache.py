@@ -4,6 +4,8 @@ import json
 from functools import reduce
 from x_content import constants as const
 from x_content.wrappers.log_decorators import log_function_call
+from redis import Redis, asyncio as aredis
+from x_content.wrappers.redis_wrapper import get_redis_connection_pool, get_aio_redis_connection_pool
 
 # TODO: reduce code duplication here
 
@@ -21,8 +23,8 @@ class ConversationRedisCache(object):
     ):
         mentioned_tweets_redis_key = self._get_key(username)
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             if not cli.exists(mentioned_tweets_redis_key):
                 return False
@@ -50,8 +52,8 @@ class ConversationRedisCache(object):
     ):
         mentioned_tweets_redis_key = self._get_key(username)
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             if not cli.exists(mentioned_tweets_redis_key):
                 cli.set(
@@ -92,24 +94,26 @@ class GameRedisCache(object):
         self.cache_expiry = const.GAME_REDIS_CACHE  # Using existing constant
         self.fact_check_expiry = 3600  # 60 minutes in seconds
 
-    def get_game_status(self, tweet_id: str) -> str | None:
+    async def get_game_status(self, tweet_id: str) -> str | None:
         key = f"{self.GAMES_STATUS_PREFIX}{tweet_id}"
-
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             value: bytes = cli.get(key)
 
         return "" if value == None else value.decode()
 
-    def set_game_status(self, tweet_id: str, status: str) -> bool:
+    async def set_game_status(self, tweet_id: str, status: str) -> bool:
         key = f"{self.GAMES_STATUS_PREFIX}{tweet_id}"
-        return self.redis_client.set(key, status, ex=self.cache_expiry)
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
+        ) as cli:
+            return cli.set(key, status, ex=self.cache_expiry)
 
-    def add_running_game(self, tweet_id: str, status: str) -> bool:
+    async def add_running_game(self, tweet_id: str, status: str) -> bool:
         try:
-            with Redis(
-                connection_pool=redis_wrapper.get_redis_connection_pool()
+            async with aredis.Redis(
+                connection_pool=get_aio_redis_connection_pool()
             ) as cli:
                 with cli.pipeline() as pipe:
                     pipe.multi()
@@ -125,12 +129,11 @@ class GameRedisCache(object):
         except Exception as err:
             raise err
 
-    def remove_running_game(self, tweet_id: str, status: str) -> bool:
+    async def remove_running_game(self, tweet_id: str, status: str) -> bool:
         try:
-            with Redis(
-                connection_pool=redis_wrapper.get_redis_connection_pool()
+            async with aredis.Redis(
+                connection_pool=get_aio_redis_connection_pool()
             ) as cli:
-
                 with cli.pipeline() as pipe:
                     pipe.multi()
                     pipe.set(
@@ -145,55 +148,69 @@ class GameRedisCache(object):
         except Exception as err:
             raise err
 
-    def get_running_games(self) -> set[str]:
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+    async def get_running_games(self) -> set[str]:
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             return cli.smembers(f"{self.GAMES_RUNNING_PREFIX}list")
 
-    def acquire_create_game_lock(self, _tweet_id, expiry_ms: int) -> bool:
-        return self._acquire_lock(
-            f"{self.GAMES_LOCK_PREFIX}create/{_tweet_id}", expiry_ms
-        )
+    async def acquire_create_game_lock(
+        self, _tweet_id, expiry_ms: int
+    ) -> bool:
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
+        ) as cli:
+            return cli._acquire_lock(
+                f"{self.GAMES_LOCK_PREFIX}create/{_tweet_id}", expiry_ms
+            )
 
-    def acquire_judge_game_lock(self, _tweet_id, expiry_ms: int) -> bool:
-        return self._acquire_lock(
-            f"{self.GAMES_LOCK_PREFIX}judge/{_tweet_id}", expiry_ms
-        )
+    async def acquire_judge_game_lock(self, _tweet_id, expiry_ms: int) -> bool:
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
+        ) as cli:
+            return cli._acquire_lock(
+                f"{self.GAMES_LOCK_PREFIX}judge/{_tweet_id}", expiry_ms
+            )
 
-    def release_create_game_lock(self, tweet_id: str) -> bool:
+    async def release_create_game_lock(self, tweet_id: str) -> bool:
         lock_key = f"{self.GAMES_LOCK_PREFIX}create/{tweet_id}"
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             return cli.delete(lock_key) > 0
 
-    def release_judge_game_lock(self, tweet_id: str) -> bool:
+    async def release_judge_game_lock(self, tweet_id: str) -> bool:
         lock_key = f"{self.GAMES_LOCK_PREFIX}judge/{tweet_id}"
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             return cli.delete(lock_key) > 0
 
-    def _acquire_lock(self, lock_key: str, expiry_ms: int) -> bool:
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+    async def _acquire_lock(self, lock_key: str, expiry_ms: int) -> bool:
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             cli.set(lock_key, "1", nx=True, px=expiry_ms)
 
-    def get_fact_check(self, tweet_id: str) -> dict | None:
+    async def get_fact_check(self, tweet_id: str) -> dict | None:
         """Get cached fact check response for a tweet."""
         key = f"{self.GAMES_FACT_CHECK_PREFIX}{tweet_id}"
-        value = self.redis_client.get(key)
-        return json.loads(value) if value else None
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
+        ) as cli:
+            value = cli.get(key)
+            return json.loads(value) if value else None
 
-    def set_fact_check(self, tweet_id: str, response_dict: dict) -> bool:
+    async def set_fact_check(self, tweet_id: str, response_dict: dict) -> bool:
         """Cache fact check response for a tweet."""
         key = f"{self.GAMES_FACT_CHECK_PREFIX}{tweet_id}"
-        return self.redis_client.set(
-            key, json.dumps(response_dict), ex=self.fact_check_expiry
-        )
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
+        ) as cli:
+            return cli.set(
+                key, json.dumps(response_dict), ex=self.fact_check_expiry
+            )
 
 
 class ShadowReplyRedisCache(object):
@@ -207,8 +224,8 @@ class ShadowReplyRedisCache(object):
     def is_threshold_exceeded(self, username, tweet_id, max_num_reply=1):
         shadow_replied_redis_key = self._get_key(username)
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             if not cli.exists(shadow_replied_redis_key):
                 return False
@@ -220,8 +237,8 @@ class ShadowReplyRedisCache(object):
     def add_reply(self, username, tweet_id):
         shadow_replied_redis_key = self._get_key(username)
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             if not cli.exists(shadow_replied_redis_key):
                 cli.set(
@@ -252,16 +269,16 @@ class TweetInfoRedisCache(object):
         tweet_id = tweet_info["tweet_object"]["tweet_id"]
         key = self._get_key(tweet_id)
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             cli.set(key, json.dumps(tweet_info), ex=self.cache_expiry)
 
     def get(self, tweet_id):
         key = self._get_key(tweet_id)
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             return cli.get(key)
 
@@ -277,16 +294,16 @@ class FollowingListRedisCache(object):
     def commit(self, username, following):
         key = self._get_key(username)
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             cli.set(key, json.dumps(following), ex=self.cache_expiry)
 
     def get(self, username):
         key = self._get_key(username)
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             cli.get(key)
 
@@ -303,8 +320,8 @@ class TweetInscriptionRedisCache(object):
     def add_inscription(self, username, request_id, tweet_id):
         inscribe_redis_key = self._get_key(username)
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             if not cli.exists(inscribe_redis_key):
                 cli.set(
@@ -326,8 +343,8 @@ class TweetInscriptionRedisCache(object):
     def is_threshold_exceeded(self, username, request_id):
         inscribe_redis_key = self._get_key(username)
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             if not cli.exists(inscribe_redis_key):
                 return False
@@ -343,8 +360,8 @@ class TweetInscriptionRedisCache(object):
     def get_inscribed_tweets_ids(self, username):
         inscribe_redis_key = self._get_key(username)
 
-        with Redis(
-            connection_pool=redis_wrapper.get_redis_connection_pool()
+        async with aredis.Redis(
+            connection_pool=get_aio_redis_connection_pool()
         ) as cli:
             if not cli.exists(inscribe_redis_key):
                 return []

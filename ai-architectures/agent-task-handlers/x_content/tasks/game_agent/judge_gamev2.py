@@ -94,9 +94,9 @@ async def _get_ready_to_judge_games():
         return []
 
 
-def _is_judge_game_pending(tweet_id):
+async def _is_judge_game_pending(tweet_id):
     game_redis = _get_game_redis_cache()
-    status = game_redis.get_game_status(tweet_id)
+    status = await game_redis.get_game_status(tweet_id)
     is_pending = (
         status == GameStatus.CREATE_DONE or status == GameStatus.JUDGE_PENDING
     )
@@ -106,64 +106,58 @@ def _is_judge_game_pending(tweet_id):
     return is_pending
 
 
-def _mark_judge_game_pending(tweet_id):
+async def _mark_judge_game_pending(tweet_id):
     logger.info(
         f"[_mark_judge_game_pending] Marking game {tweet_id} as pending"
     )
     game_redis = _get_game_redis_cache()
-    return game_redis.set_game_status(tweet_id, GameStatus.JUDGE_PENDING)
+    return await game_redis.set_game_status(tweet_id, GameStatus.JUDGE_PENDING)
 
 
-def _mark_judge_game_running(tweet_id):
+async def _mark_judge_game_running(tweet_id):
     logger.info(
         f"[_mark_judge_game_running] Marking game {tweet_id} as running"
     )
     game_redis = _get_game_redis_cache()
-    return game_redis.set_game_status(tweet_id, GameStatus.JUDGE_RUNNING)
+    return await game_redis.set_game_status(tweet_id, GameStatus.JUDGE_RUNNING)
 
 
-def _mark_judge_game_done(tweet_id):
+async def _mark_judge_game_done(tweet_id):
     logger.info(f"[_mark_judge_game_done] Marking game {tweet_id} as done")
     try:
         game_redis = _get_game_redis_cache()
-        game_redis.remove_running_game(tweet_id, GameStatus.JUDGE_DONE)
+        await game_redis.remove_running_game(tweet_id, GameStatus.JUDGE_DONE)
     except Exception as err:
         logger.error(
             f"[_mark_judge_game_done] Error marking game as done: {err}"
         )
 
 
-def _try_acquire_judge_game_lock(_tweet_id):
-    # Initialize lock variable
+async def _try_acquire_judge_game_lock(_tweet_id):
     lock = None
 
     try:
         game_redis = _get_game_redis_cache()
-        # Attempt to acquire the lock with an expiry time
-        lock = game_redis.acquire_judge_game_lock(
-            _tweet_id, const.JUDGE_GAME_LOCK_EXPIRY  # e.g., 300 seconds
+        lock = await game_redis.acquire_judge_game_lock(
+            _tweet_id, const.JUDGE_GAME_LOCK_EXPIRY
         )
         logger.info(
             f"[_try_acquire_judge_game_lock] Lock acquisition attempt for game {_tweet_id}: {'successful' if lock else 'failed'}"
         )
-        return lock  # Returns True if acquired, False if already locked
+        return lock
 
     except Exception as e:
-        # Log any errors during lock acquisition
         logger.error(f"Error acquiring lock for tweet {_tweet_id}: {str(e)}")
         return False
 
     finally:
-        # Always execute this block, even if an exception occurs
-        if not lock:  # If lock wasn't acquired
+        if not lock:
             try:
-                # Attempt to release the lock
-                game_redis.release_judge_game_lock(_tweet_id)
+                await game_redis.release_judge_game_lock(_tweet_id)
                 logger.info(
                     f"[_try_acquire_judge_game_lock] Released lock for game {_tweet_id}"
                 )
             except Exception as e:
-                # Log any errors during lock release
                 logger.error(
                     f"Error releasing lock for tweet {_tweet_id}: {str(e)}"
                 )
@@ -626,13 +620,13 @@ class JudgeGameTask(MultiStepTaskBase):
                 f"[JudgeGameTask.process_task] Processing game {game_id} ({idx + 1}/{len(game_ids_need_to_judge)})"
             )
 
-            if not _is_judge_game_pending(game_id):
+            if not await _is_judge_game_pending(game_id):
                 logger.info(
                     f"[JudgeGameTask.process_task] Game {game_id} is not pending, skipping"
                 )
                 continue
 
-            if not _try_acquire_judge_game_lock(game_id):
+            if not await _try_acquire_judge_game_lock(game_id):
                 logger.info(
                     f"[JudgeGameTask.process_task] Game {game_id} is being processed by another instance, skipping..."
                 )
@@ -661,12 +655,12 @@ class JudgeGameTask(MultiStepTaskBase):
                 logger.info(
                     f"[JudgeGameTask.process_task] Tweet {game_id} does not match game ID, removing from cache"
                 )
-                _mark_judge_game_done(
+                await _mark_judge_game_done(
                     game_id
                 )  # Remove from cache since tweet doesn't exist
                 continue
 
-            _mark_judge_game_running(game_id)
+            await _mark_judge_game_running(game_id)
 
             answers, err = await _get_final_answers(log, game_id)
 
@@ -674,7 +668,7 @@ class JudgeGameTask(MultiStepTaskBase):
                 logger.error(
                     f"[JudgeGameTask.process_task] Error getting final answers for game {game_id}: {err}"
                 )
-                _mark_judge_game_pending(game_id)
+                await _mark_judge_game_pending(game_id)
                 return await a_move_state(
                     log, MissionChainState.ERROR, "Judge game failed"
                 )
@@ -709,12 +703,12 @@ class JudgeGameTask(MultiStepTaskBase):
                 logger.error(
                     f"[JudgeGameTask.process_task] Error handling winner for game {game_id}: {err}"
                 )
-                _mark_judge_game_pending(game_id)
+                await _mark_judge_game_pending(game_id)
                 return await a_move_state(
                     log, MissionChainState.ERROR, "Judge game failed"
                 )
 
-            _mark_judge_game_done(game_id)
+            await _mark_judge_game_done(game_id)
             log.execute_info["task_result"].append(
                 {
                     "tweet_id": game_id,
