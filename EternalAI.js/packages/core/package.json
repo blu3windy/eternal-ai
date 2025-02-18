@@ -13,7 +13,8 @@
   "scripts": {
     "start": "tsdx watch",
     "dev": "tsdx watch",
-    "build": "tsdx build",
+    "build": "rm -rf dist & tsdx build",
+    "build-umd": "rm -rf dist & tsdx build --format umd --name Core",
     "test": "tsdx test",
     "lint": "tsdx lint",
     "prepare": "tsdx build",
