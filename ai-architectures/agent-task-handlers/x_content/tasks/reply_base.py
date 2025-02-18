@@ -163,7 +163,7 @@ class ReplyTaskBase(MultiStepTaskBase):
             ]
 
             totals = len(futures)
-            for idx, result in enumerate(asyncio.as_completed(*futures, return_exceptions=True)):
+            for idx, result in enumerate(await asyncio.gather(*futures, return_exceptions=True)):
                 tweet_info = subtasks[idx].tweet_info
 
                 if isinstance(result, Exception):
