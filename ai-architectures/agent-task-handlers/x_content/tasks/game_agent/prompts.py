@@ -96,7 +96,7 @@ Where <search query> is the optimized search string.
 Here is the question: {question}
 
 Here are the image descriptions:
-{image_contents}
+{content_images}
 """
 
 JUDGE_GAME_WITH_FACTS_PROMPT_TEMPLATE = """**Act as an expert in evaluating and judging the quality of AI-generated responses to tweets.**  

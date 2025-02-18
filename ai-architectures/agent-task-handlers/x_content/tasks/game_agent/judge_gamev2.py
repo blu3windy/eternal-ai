@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import pdb
 import random
 import traceback
 from typing import List
@@ -211,6 +212,7 @@ def _get_facts_search_query(question: str, content_images: List[str]) -> str:
             seed=random.randint(1, int(1e9)),
         )
         result = model.generate(messages).generations[0].text
+        print("[_get_facts_search_query]", result)
         result = repair_json(result, return_objects=True)
 
         return result["query"]
@@ -251,17 +253,47 @@ async def _get_judge_game_with_facts_conversation(
         for img_url in game_tweet_object.get("image_urls"):
             try:
                 content_images.append(
-                    sync2async(get_image_description)(img_url)
+                    await sync2async(get_image_description)(img_url)
                 )
             except Exception as err:
                 logger.error(
                     f"[_get_judge_game_with_facts_conversation] Failed to get image description at {img_url}: {err}"
                 )
 
-    query = _get_facts_search_query(
-        game_tweet_object.get("full_text"), content_images
+    # Perform search
+    # Try to get cached response first
+    game_redis = _get_game_redis_cache()
+    cached_response = game_redis.get_fact_check(
+        game_tweet_object.get("tweet_id")
     )
-    response: SearchResponse = await fact_service.search(query)
+
+    if cached_response:
+        logger.info(
+            f"[_get_judge_game_with_facts_conversation] Using cached fact check response for tweet {game_tweet_object.get('id')}"
+        )
+        response = SearchResponse(**cached_response)
+    else:
+        query = await sync2async(_get_facts_search_query)(
+            game_tweet_object.get("full_text"), content_images
+        )
+        logger.info(
+            f"[_get_judge_game_with_facts_conversation] Received query '{query}' for fact searching for tweet {game_tweet_object.get('id')}"
+        )
+
+        # No cache found, call fact service
+        logger.info(
+            f"[_get_judge_game_with_facts_conversation] No cache found, calling fact service for tweet {game_tweet_object.get('id')}"
+        )
+        response = await fact_service.search(query)
+
+        # Cache the response
+        game_redis.set_fact_check(
+            game_tweet_object.get("id"), response.__dict__
+        )
+
+    logger.info(
+        "[_get_judge_game_with_facts_conversation] Building conversation for judging"
+    )
 
     content_images_str = "\n\n".join([f"- {x}" for x in content_images])
     user_prompt = JUDGE_GAME_WITH_FACTS_PROMPT_TEMPLATE.format(
