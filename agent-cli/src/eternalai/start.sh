@@ -32,7 +32,7 @@ echo env_file_name
 # Check if the file already exists
 if [ -f "$env_file_name" ]; then
     echo "$env_file_name already exists. Don't start existing agent again."
-    exit 0
+    # exit 0
 else
     echo "$env_file_name does not exist. Creating it."
 fi
@@ -65,8 +65,11 @@ EOL
 # custom env
 # file config for api chat
 cd $current_dir && cd ..
+root_dir=$(pwd)
 cd decentralized-compute/worker-hub/env
 api_config_file="local_contracts.json"
+
+
 
 cat <<EOL > "$api_config_file"
 {
@@ -77,11 +80,12 @@ cat <<EOL > "$api_config_file"
 }
 EOL
 
+cp $root_dir/decentralized-compute/worker-hub/env/local_contracts.json $current_dir/src/eternalai/local_contracts.json
+
 
 
 # file config for small service
-cd $current_dir && cd ..
-cd decentralized-inference
+cd $root_dir/decentralized-inference
 s_service_config_file="config.json"
 
 cat <<EOL > "$s_service_config_file"
@@ -95,11 +99,15 @@ cat <<EOL > "$s_service_config_file"
   },
   "file_path_infer": "/tmp/eternal-data",
   "submit_file_path": false,
-  "chat_completion_url": "$ETERNALAI_URL",
+  "chat_completion_url": "$ETERNALAI_URL/chat/completions",
   "api_key_chat_completion": "$ETERNALAI_API_KEY"
 }
 EOL
 
+
+cp $root_dir/decentralized-inference/config.json $current_dir/src/eternalai/config.json
+
+cp $root_dir/eai-chat $current_dir/src/eternalai/eai-chat
 
 # Step 1: Build eai-chat bin
 # cd ..
@@ -116,15 +124,25 @@ EOL
 # Step 2: create config.json and local_contract.json
 
 
+# build docker image
+
+# run docker container
+cd $current_dir/src/eternalai
+docker build -t eternalai-agent .
+
+### docker run to start agent
+
+docker run -d --name $agent_uid eternalai-agent
+
 # Step 3: start small service port 8484
-cd $current_dir && cd ..
+
 # ./eai-chat server &
 # ./eai-chat chat $ETERNALAI_AGENT_ID
 
-./eai-chat server > server.log 2>&1 &
+# ./eai-chat server > server.log 2>&1 &
 
 # Step 4: start chat command 
-./eai-chat chat $ETERNALAI_AGENT_ID
+# ./eai-chat chat $ETERNALAI_AGENT_ID
 
 
 # cp $current_dir/src/eliza/config.json .
