@@ -14,15 +14,23 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/lighthouse"
 )
 
-func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installUri string, installCode string) (string, error) {
+func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, address string, installUri string, signature string) (string, error) {
 	err := func() error {
-		if installCode == "" {
+		if address == "" || signature == "" {
 			return errs.NewError(errs.ErrBadRequest)
+		}
+		err := helpers.ValidateMessageSignature(
+			address,
+			address,
+			signature,
+		)
+		if err != nil {
+			return errs.NewError(err)
 		}
 		infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 			daos.GetDBMainCtx(ctx),
 			map[string][]interface{}{
-				"install_code = ?": {installCode},
+				"address = ?": {address},
 			},
 			map[string][]interface{}{}, []string{},
 		)
@@ -31,8 +39,7 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installUri s
 		}
 		if infraTwitterApp == nil {
 			infraTwitterApp = &models.InfraTwitterApp{
-				InstallCode: installCode,
-				ApiKey:      helpers.RandomStringWithLength(64),
+				Address: address,
 			}
 		}
 		err = s.dao.Save(daos.GetDBMainCtx(ctx), infraTwitterApp)
@@ -45,16 +52,15 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installUri s
 		return helpers.BuildUri(
 			installUri,
 			map[string]string{
-				"install_code": installCode,
-				"error":        err.Error(),
+				"error": err.Error(),
 			},
 		), nil
 	}
 	redirectUri := helpers.BuildUri(
 		s.conf.InfraTwitterApp.RedirectUri,
 		map[string]string{
-			"install_code": installCode,
-			"install_uri":  installUri,
+			"address":     address,
+			"install_uri": installUri,
 		},
 	)
 	return helpers.BuildUri(
@@ -71,16 +77,16 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installUri s
 	), nil
 }
 
-func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri string, installCode string, code string) (string, error) {
-	if installCode == "" || code == "" {
+func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri string, address string, code string) (string, error) {
+	if address == "" || code == "" {
 		return "", errs.NewError(errs.ErrBadRequest)
 	}
 	infraTwitterApp, err := func() (*models.InfraTwitterApp, error) {
 		redirectUri := helpers.BuildUri(
 			s.conf.InfraTwitterApp.RedirectUri,
 			map[string]string{
-				"install_code": installCode,
-				"install_uri":  installUri,
+				"address":     address,
+				"install_uri": installUri,
 			},
 		)
 		respOauth, err := s.twitterAPI.TwitterOauthCallbackForSampleApp(
@@ -130,7 +136,7 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 			infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 				daos.GetDBMainCtx(ctx),
 				map[string][]interface{}{
-					"install_code = ?": {installCode},
+					"address = ?": {address},
 				},
 				map[string][]interface{}{}, []string{},
 			)
@@ -154,13 +160,13 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 		return helpers.BuildUri(
 			installUri,
 			map[string]string{
-				"install_code": installCode,
-				"error":        err.Error(),
+				"address": address,
+				"error":   err.Error(),
 			},
 		), nil
 	}
 	params := map[string]string{
-		"api_key":          infraTwitterApp.ApiKey,
+		"address":          address,
 		"twitter_id":       infraTwitterApp.TwitterInfo.TwitterID,
 		"twitter_username": infraTwitterApp.TwitterInfo.TwitterUsername,
 		"twitter_name":     infraTwitterApp.TwitterInfo.TwitterName,
@@ -169,8 +175,8 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installUri 
 	return helpers.BuildUri(
 		installUri,
 		map[string]string{
-			"install_code": installCode,
-			"return_data":  returnData,
+			"address":     address,
+			"return_data": returnData,
 		},
 	), nil
 }
