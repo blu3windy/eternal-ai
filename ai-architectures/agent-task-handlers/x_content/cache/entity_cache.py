@@ -68,10 +68,12 @@ class GameRedisCache(object):
     GAMES_LOCK_PREFIX = f"{GAMES_PREFIX}locks/"
     GAMES_STATUS_PREFIX = f"{GAMES_PREFIX}status/"
     GAMES_RUNNING_PREFIX = f"{GAMES_PREFIX}running/"
+    GAMES_FACT_CHECK_PREFIX = f"{GAMES_PREFIX}fact_check/"
 
     def __init__(self):
         self.redis_client = redis_wrapper.reusable_redis_connection()
         self.cache_expiry = const.GAME_REDIS_CACHE  # Using existing constant
+        self.fact_check_expiry = 3600  # 60 minutes in seconds
 
     def get_game_status(self, tweet_id: str) -> str | None:
         key = f"{self.GAMES_STATUS_PREFIX}{tweet_id}"
@@ -135,6 +137,19 @@ class GameRedisCache(object):
 
     def _acquire_lock(self, lock_key: str, expiry_ms: int) -> bool:
         return self.redis_client.set(lock_key, "1", nx=True, px=expiry_ms)
+
+    def get_fact_check(self, tweet_id: str) -> dict | None:
+        """Get cached fact check response for a tweet."""
+        key = f"{self.GAMES_FACT_CHECK_PREFIX}{tweet_id}"
+        value = self.redis_client.get(key)
+        return json.loads(value) if value else None
+
+    def set_fact_check(self, tweet_id: str, response_dict: dict) -> bool:
+        """Cache fact check response for a tweet."""
+        key = f"{self.GAMES_FACT_CHECK_PREFIX}{tweet_id}"
+        return self.redis_client.set(
+            key, json.dumps(response_dict), ex=self.fact_check_expiry
+        )
 
 
 class ShadowReplyRedisCache(object):

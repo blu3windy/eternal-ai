@@ -1,7 +1,7 @@
 from functools import lru_cache
 import logging
 import requests
-from enum import IntEnum
+from enum import IntEnum, Enum
 from x_content.cache.entity_cache import (
     GameRedisCache,
 )
@@ -290,7 +290,7 @@ class GameAPIClient:
 
     @staticmethod
     def start_game(
-        tweet_id: str, agent_usernames: list, time_out: int
+        tweet_id: str, agent_usernames: list, bet_time: int, time_out: int
     ) -> tuple[GameInfo | None, Exception | None]:
         """
         Starts a new game
@@ -310,7 +310,7 @@ class GameAPIClient:
             "tweet_id": tweet_id,
             "usernames": agent_usernames,
             "time_out": time_out,
-            "bet_time_out": time_out,
+            "bet_time_out": bet_time,
         }
 
         response_data, err = GameAPIClient.request(
