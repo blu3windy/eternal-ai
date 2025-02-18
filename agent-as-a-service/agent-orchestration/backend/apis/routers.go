@@ -278,40 +278,39 @@ func (s *Server) Routers() {
 			subcriptionAPI.POST("/create-test", s.CreateAcctForTest)
 		}
 
-		agentStoreAPI := rootAPI.Group("/agent-store")
-		{
-			agentStoreAPI.POST("/save", s.authCheckTK1TokenMiddleware(), s.SaveAgentStore)
-			agentStoreAPI.POST("/mint/:agent_store_id", s.authCheckTK1TokenMiddleware(), s.ScanAgentInfraMintHash)
-			agentStoreAPI.GET("/list", s.GetListAgentStore)
-			agentStoreAPI.GET("/list-by-owner", s.authCheckTK1TokenMiddleware(), s.GetListAgentStoreByOwner)
-			agentStoreAPI.GET("/install/list", s.GetListAgentStoreInstall)
-			agentStoreAPI.GET("/:id", s.GetAgentStoreDetail)
-			agentStoreAPI.POST("/:id/mission", s.authCheckTK1TokenMiddleware(), s.SaveMissionStore)
-			agentStoreAPI.GET("/:id/install-code/:agent_info_id", s.authCheckTK1TokenMiddleware(), s.GetAgentStoreInstallCode)
-			agentStoreAPI.POST("/install/callback", s.AuthenAgentStoreCallback)
+		// agentStoreAPI := rootAPI.Group("/agent-store")
+		// {
+		// 	agentStoreAPI.POST("/save", s.authCheckTK1TokenMiddleware(), s.SaveAgentStore)
+		// 	agentStoreAPI.POST("/mint/:agent_store_id", s.authCheckTK1TokenMiddleware(), s.ScanAgentInfraMintHash)
+		// 	agentStoreAPI.GET("/list", s.GetListAgentStore)
+		// 	agentStoreAPI.GET("/list-by-owner", s.authCheckTK1TokenMiddleware(), s.GetListAgentStoreByOwner)
+		// 	agentStoreAPI.GET("/install/list", s.GetListAgentStoreInstall)
+		// 	agentStoreAPI.GET("/:id", s.GetAgentStoreDetail)
+		// 	agentStoreAPI.POST("/:id/mission", s.authCheckTK1TokenMiddleware(), s.SaveMissionStore)
+		// 	agentStoreAPI.GET("/:id/install-code/:agent_info_id", s.authCheckTK1TokenMiddleware(), s.GetAgentStoreInstallCode)
+		// 	agentStoreAPI.POST("/install/callback", s.AuthenAgentStoreCallback)
 
-			agentStoreAPI.POST("/run-mission", s.authCheckTK1TokenMiddleware(), s.RunMission)
-			agentStoreAPI.GET("/mission-result", s.authCheckTK1TokenMiddleware(), s.MissionStoreResult)
+		// 	agentStoreAPI.POST("/run-mission", s.authCheckTK1TokenMiddleware(), s.RunMission)
+		// 	agentStoreAPI.GET("/mission-result", s.authCheckTK1TokenMiddleware(), s.MissionStoreResult)
 
-			agentStoreAPI.GET("/install/info", s.GetInstallInfo)
+		// 	agentStoreAPI.GET("/install/info", s.GetInstallInfo)
 
-			agentStoreAPI.GET("/token-info/:id", s.authCheckTK1TokenMiddleware(), s.AgentStoreGetTokenInfo)
-			agentStoreAPI.GET("/create-token/:id", s.authCheckTK1TokenMiddleware(), s.AgentStoreCreateToken)
+		// 	agentStoreAPI.GET("/token-info/:id", s.authCheckTK1TokenMiddleware(), s.AgentStoreGetTokenInfo)
+		// 	agentStoreAPI.GET("/create-token/:id", s.authCheckTK1TokenMiddleware(), s.AgentStoreCreateToken)
 
-			agentStoreAPI.GET("/try-history/", s.authCheckTK1TokenMiddleware(), s.GetTryHistory)
-			agentStoreAPI.GET("/try-history/:id", s.authCheckTK1TokenMiddleware(), s.GetTryHistoryDetail)
+		// 	agentStoreAPI.GET("/try-history/", s.authCheckTK1TokenMiddleware(), s.GetTryHistory)
+		// 	agentStoreAPI.GET("/try-history/:id", s.authCheckTK1TokenMiddleware(), s.GetTryHistoryDetail)
+		// }
 
-		}
-
-		missionStoreAPI := rootAPI.Group("/mission-store")
-		{
-			missionStoreAPI.POST("/save", s.UploadMissionStore)
-			missionStoreAPI.GET("/list", s.GetListMissionStore)
-			missionStoreAPI.GET("/:id", s.GetMissionStoreDetail)
-			missionStoreAPI.GET("/history/:id", s.GetMissionStoreHistory)
-			missionStoreAPI.POST("/rating", s.RateMissionStore)
-			missionStoreAPI.GET("/rating/:id", s.GetMissionStoreRating)
-		}
+		// missionStoreAPI := rootAPI.Group("/mission-store")
+		// {
+		// 	missionStoreAPI.POST("/save", s.UploadMissionStore)
+		// 	missionStoreAPI.GET("/list", s.GetListMissionStore)
+		// 	missionStoreAPI.GET("/:id", s.GetMissionStoreDetail)
+		// 	missionStoreAPI.GET("/history/:id", s.GetMissionStoreHistory)
+		// 	missionStoreAPI.POST("/rating", s.RateMissionStore)
+		// 	missionStoreAPI.GET("/rating/:id", s.GetMissionStoreRating)
+		// }
 
 		bubbleAPI := rootAPI.Group("/bubble")
 		{
@@ -385,24 +384,24 @@ func (s *Server) Routers() {
 		// 	agentInfraAPI.Any("/:store_id/*path", s.proxyAgentStoreMiddleware("/api/infra"))
 		// }
 
-		sampleTwitterApp := rootAPI.Group("/sample-twitter-app")
-		{
-			sampleTwitterApp.GET("/install", s.SampleTwitterAppAuthenInstall)
-			sampleTwitterApp.GET("/callback", s.SampleTwitterAppAuthenCallback)
-			sampleTwitterApp.GET("/get-bitcoin-price", s.SampleTwitterAppGetBTCPrice)
-			sampleTwitterApp.POST("/tweet-message", s.SampleTwitterAppTweetMessage)
-		}
+		// sampleTwitterApp := rootAPI.Group("/sample-twitter-app")
+		// {
+		// 	sampleTwitterApp.GET("/install", s.SampleTwitterAppAuthenInstall)
+		// 	sampleTwitterApp.GET("/callback", s.SampleTwitterAppAuthenCallback)
+		// 	sampleTwitterApp.GET("/get-bitcoin-price", s.SampleTwitterAppGetBTCPrice)
+		// 	sampleTwitterApp.POST("/tweet-message", s.SampleTwitterAppTweetMessage)
+		// }
 
-		infraTwitterApp := rootAPI.Group("/infra-twitter-app")
-		{
-			infraTwitterApp.GET("/install", s.InfraTwitterAppAuthenInstall)
-			infraTwitterApp.GET("/callback", s.InfraTwitterAppAuthenCallback)
-		}
+		// infraTwitterApp := rootAPI.Group("/infra-twitter-app")
+		// {
+		// 	infraTwitterApp.GET("/install", s.InfraTwitterAppAuthenInstall)
+		// 	infraTwitterApp.GET("/callback", s.InfraTwitterAppAuthenCallback)
+		// }
 
-		storeTradingApp := rootAPI.Group("/store-defi-app")
-		{
-			storeTradingApp.GET("/install", s.StoreDefiAppAuthenInstall)
-			storeTradingApp.GET("/wallet", s.StoreDefiAppGetWallet)
-		}
+		// storeTradingApp := rootAPI.Group("/store-defi-app")
+		// {
+		// 	storeTradingApp.GET("/install", s.StoreDefiAppAuthenInstall)
+		// 	storeTradingApp.GET("/wallet", s.StoreDefiAppGetWallet)
+		// }
 	}
 }

@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
 	sync "sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
@@ -244,7 +245,9 @@ func (s *Service) AgentCreateMissionDefault(ctx context.Context, agentInfoID uin
 		return errs.NewError(err)
 	}
 	switch agentInfo.AgentType {
-	case models.AgentInfoAgentTypeEliza, models.AgentInfoAgentTypeZerepy:
+	case models.AgentInfoAgentTypeEliza,
+		models.AgentInfoAgentTypeZerepy,
+		models.AgentInfoAgentTypeDeveloper:
 		{
 			return nil
 		}
