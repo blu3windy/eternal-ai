@@ -1,18 +1,13 @@
 from app.models import InsertInputSchema, InsertProgressCallback, InsertResponse, QueryInputSchema, ResponseMessage, UpdateInputSchema
 from app.utils import limit_asyncio_concurrency, sync2async, sync2async_in_subprocess
 from app.wrappers import milvus_kit, telegram_kit
-
 from typing import Union
 import httpx
-
 from pymilvus import MilvusClient
-from pathlib import Path
-
 import json
 import logging
 import os
 import zipfile
-
 from . import constants as const
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.backend.docling_parse_v2_backend import DoclingParseV2DocumentBackend
@@ -21,13 +16,8 @@ from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
 import numpy as np
 import logging
 from docling.document_converter import ConversionResult
-from docling.datamodel.document import InputDocument
-from pydantic import model_validator
-from typing import Dict, Optional, Any
 from pydantic import BaseModel
-from docling.datamodel.base_models import (
-    InputFormat
-)
+from docling.datamodel.base_models import InputFormat
 
 class LiteInputDocument(BaseModel):
     format: InputFormat
