@@ -73,5 +73,15 @@
                 "description": "UniverseDagents"
             }
         ]
+    },
+    "avax_mainnet": {
+        "promptSchedulerAddress": "0xcbeB849347e9fD09Ae125D2d280D30f68504356b",
+        "models": [
+            {
+                "modelName": "unsloth/r1-1776-GGUF",
+                "modelAddress": "0x31c4e363d85452B85f8888c4744Ce00efcc2E0aF",
+                "description": "UniverseDagents"
+            }
+        ]
     }
 }
