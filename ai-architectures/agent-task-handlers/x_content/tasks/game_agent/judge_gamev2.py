@@ -630,9 +630,9 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
     # currently there are only 2 types: game & fact
     # so this works, consider alternative when the spec changes
     conversation_thread = await (
-        _get_judge_game_with_facts_conversation(tweet_obj, answers)
+        _get_judge_game_conversation(tweet_obj, answers)
         if is_create_game_tweet(resp.data.tweet_info)
-        else _get_judge_fact_conversation(tweet_obj, answers)
+        else _get_judge_game_with_facts_conversation(tweet_obj, answers)
     )
     logger.info(
         f"[_handle_winner_with_llm] Created conversation thread for judging: {conversation_thread}"
@@ -707,7 +707,7 @@ def _get_winner_from(result: str):
         result_found = result["result_found"]
         if not result_found:
             return None, Exception(f"Failed to find final result from llm")
-        winner = result["wining_agent"]
+        winner = result["winning_agent"]
         logger.info(f"[_get_winner_from] Successfully parsed winner: {winner}")
         return winner, None
     except Exception as err:

@@ -189,15 +189,22 @@ class GameRedisCache(object):
     def get_fact_check(self, tweet_id: str) -> dict | None:
         """Get cached fact check response for a tweet."""
         key = f"{self.GAMES_FACT_CHECK_PREFIX}{tweet_id}"
-        value = self.redis_client.get(key)
-        return json.loads(value) if value else None
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
+            value = cli.get(key)
+            return json.loads(value) if value else None
 
     def set_fact_check(self, tweet_id: str, response_dict: dict) -> bool:
         """Cache fact check response for a tweet."""
         key = f"{self.GAMES_FACT_CHECK_PREFIX}{tweet_id}"
-        return self.redis_client.set(
-            key, json.dumps(response_dict), ex=self.fact_check_expiry
-        )
+        with Redis(
+            connection_pool=redis_wrapper.get_redis_connection_pool()
+        ) as cli:
+            return cli.set(
+                key, json.dumps(response_dict), ex=self.fact_check_expiry
+            )
+
 
 class ShadowReplyRedisCache(object):
 
