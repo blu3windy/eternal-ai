@@ -278,7 +278,7 @@ async def chunking_and_embedding(
 
             else:
                 futures.extend([
-                    asyncio.ensure_future(embedd_triplet(item, e))
+                    asyncio.ensure_future(embedd_triplet(item, e, model_use))
                     for e in resp.result
                 ])
 
