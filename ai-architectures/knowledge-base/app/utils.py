@@ -15,7 +15,16 @@ import traceback
 import logging
 logger = logging.getLogger(__name__)
 import time
+from concurrent.futures import ProcessPoolExecutor
+from functools import lru_cache
+from .constants import MAX_NUM_CONCURRENT_PROCESSING_FILES
+import atexit
 
+@lru_cache(maxsize=1)
+def _subprocess_pool() -> ProcessPoolExecutor:
+    pool = ProcessPoolExecutor(max_workers=MAX_NUM_CONCURRENT_PROCESSING_FILES * 2)
+    atexit.register(pool.shutdown, wait=False)
+    return pool
 
 def get_content_checksum(data: Union[bytes, str]) -> str:
     if isinstance(data, str):
@@ -48,7 +57,17 @@ def get_hash(*items):
 def sync2async(sync_func: Callable):
     async def async_func(*args, **kwargs):
         return await run_in_threadpool(partial(sync_func, *args, **kwargs))
-    return async_func
+    return async_func if not asyncio.iscoroutinefunction(sync_func) else sync_func
+
+def sync2async_in_subprocess(sync_func: Callable):
+    async def async_func(*args, **kwargs):
+        wrapper = partial(sync_func, *args, **kwargs)
+        return await asyncio.get_event_loop().run_in_executor(
+            _subprocess_pool(),
+            wrapper
+        )
+
+    return async_func if not asyncio.iscoroutinefunction(sync_func) else sync_func
 
 def limit_asyncio_concurrency(num_of_concurrent_calls: int):
     semaphore = AsyncSemaphore(num_of_concurrent_calls)

@@ -1,4 +1,4 @@
-from app.io import get_doc_from_url, hook, notify_action
+from app.io import get_doc_from_url, hook, notify_action, LiteConverstionResult
 from app.utils import estimate_ip_from_distance, is_valid_schema
 
 from .models import (
@@ -99,7 +99,7 @@ async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingMode
 
 async def url_chunking(url: str, model_use: EmbeddingModel) -> AsyncGenerator:
     try:
-        doc: ConversionResult = await get_doc_from_url(url) 
+        doc: LiteConverstionResult = await get_doc_from_url(url) 
     except Exception as e:
         fmt_exec = traceback.format_exc(limit=8)
         msg = '''

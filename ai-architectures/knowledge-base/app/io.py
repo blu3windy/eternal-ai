@@ -1,11 +1,12 @@
 from app.models import InsertInputSchema, InsertProgressCallback, InsertResponse, QueryInputSchema, ResponseMessage, UpdateInputSchema
-from app.utils import limit_asyncio_concurrency, sync2async
+from app.utils import limit_asyncio_concurrency, sync2async, sync2async_in_subprocess
 from app.wrappers import milvus_kit, telegram_kit
 
 from typing import Union
 import httpx
 
 from pymilvus import MilvusClient
+from pathlib import Path
 
 import json
 import logging
@@ -19,6 +20,20 @@ from docling.document_converter import DocumentConverter, FormatOption
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
 import numpy as np
 import logging
+from docling.document_converter import ConversionResult
+from docling.datamodel.document import InputDocument
+from pydantic import model_validator
+from typing import Dict, Optional, Any
+from pydantic import BaseModel
+from docling.datamodel.base_models import (
+    InputFormat
+)
+
+class LiteInputDocument(BaseModel):
+    format: InputFormat
+
+class LiteConverstionResult(ConversionResult):
+    input: LiteInputDocument
 
 logger = logging.getLogger(__name__)
 
@@ -142,14 +157,26 @@ DOCUMENT_FORMAT_OPTIONS = {
     )
 }
 
+
+def docling_document_conversion_wrapper(source):
+    res = DocumentConverter(
+        allowed_formats=SUPORTED_DOCUMENT_FORMATS,
+        format_options=DOCUMENT_FORMAT_OPTIONS
+    ).convert(source=source)
+    
+    if res is None:
+        raise Exception("Failed to convert document to docling format")
+
+    return res.model_dump()
+
 @limit_asyncio_concurrency(2)
-async def get_doc_from_url(url):
-    return await sync2async(
-        DocumentConverter(
-            allowed_formats=SUPORTED_DOCUMENT_FORMATS,
-            format_options=DOCUMENT_FORMAT_OPTIONS
-        ).convert
-    )(source=url)
+async def get_doc_from_url(url) -> LiteConverstionResult:
+    res = await sync2async_in_subprocess(docling_document_conversion_wrapper)(source=url)
+
+    with open("debug.json", "w") as fp:
+        json.dump(res, fp, default=str)
+    
+    return LiteConverstionResult.model_validate(res)
 
 
 async def hook(
