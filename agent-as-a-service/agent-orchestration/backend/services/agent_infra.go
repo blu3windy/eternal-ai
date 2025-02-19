@@ -200,7 +200,7 @@ func (s *Service) ScanAgentInfraMintHash(ctx context.Context, userAddress string
 	return nil
 }
 
-func (s *Service) DeployAgentInfraAddress(ctx context.Context, agentInfoID uint) error {
+func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID uint) error {
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
 		agentInfoID,
@@ -211,7 +211,7 @@ func (s *Service) DeployAgentInfraAddress(ctx context.Context, agentInfoID uint)
 		return errs.NewError(err)
 	}
 	if agentInfo != nil {
-		if agentInfo.AgentType != models.AgentInfoAgentTypeInfra {
+		if agentInfo.AgentType != models.AgentInfoAgentTypeRealWorld {
 			return errs.NewError(errs.ErrBadRequest)
 		}
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" {
