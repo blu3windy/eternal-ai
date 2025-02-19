@@ -75,7 +75,7 @@ var CHAIN_NAME_MAP = map[uint64]string{
 	LOCAL_CHAIN_ID:            "LOCAL",
 	ZETA_CHAIN_ID:             "ZETA",
 	STORY_CHAIN_ID:            "STORY",
-	HYPE_CHAIN_ID:             "HYPE",
+	HYPE_CHAIN_ID:             "HYPER EVM",
 }
 
 var MAP_TOOLSET_NAME = map[string]string{
