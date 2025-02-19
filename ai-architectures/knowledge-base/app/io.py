@@ -58,12 +58,15 @@ async def export_collection_data(
 
     meta, vec = [], []
     hashes = set([])
+    scanned = 0
 
     while True:
         batch = await sync2async(it.next)()
 
         if len(batch) == 0:
             break
+        
+        scanned += len(batch)
 
         h = [e['hash'] for e in batch]
         mask = [True] * len(batch)
@@ -98,7 +101,7 @@ async def export_collection_data(
             if mask[i]
         ])
 
-        logger.info(f"Exported {len(hashes)}...")
+        logger.info(f"Exported {len(hashes)} (over {scanned}; {100 * len(hashes) / scanned:.2f}%)...")
 
     if include_embedding:
         vec = np.array(vec)
@@ -159,13 +162,9 @@ def docling_document_conversion_wrapper(source):
 
     return res.model_dump()
 
-@limit_asyncio_concurrency(2)
+@limit_asyncio_concurrency(1)
 async def get_doc_from_url(url) -> LiteConverstionResult:
     res = await sync2async_in_subprocess(docling_document_conversion_wrapper)(source=url)
-
-    with open("debug.json", "w") as fp:
-        json.dump(res, fp, default=str)
-    
     return LiteConverstionResult.model_validate(res)
 
 

@@ -500,10 +500,11 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
     if req.id in _running_tasks:
         return
 
+    # tmp dir preparation
+    tmp_dir = get_tmp_directory()
+    os.makedirs(tmp_dir, exist_ok=True)
+
     try:
-        # tmp dir preparation
-        tmp_dir = get_tmp_directory()
-        os.makedirs(tmp_dir, exist_ok=True)
 
         _running_tasks.add(req.id)
         kb = req.kb
@@ -584,8 +585,8 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
         return n_chunks
 
     finally:
-        shutil.rmtree(tmp_dir, ignore_errors=True)
         _running_tasks.remove(req.id)
+        shutil.rmtree(tmp_dir, ignore_errors=True)
         logger.info(f"Completed handling task: {req.id}")
 
 @schedule.every(5).minutes.do
@@ -713,6 +714,7 @@ def deduplicate_task():
 
         logger.info(f"Deduplication for {identity} done")    
 
+@redis_kit.cache_for(interval_seconds=300 // 5) # seconds
 async def get_sample(kb: str, k: int) -> List[QueryResult]:
     if k <= 0:
         return []
@@ -781,7 +783,10 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
     
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
     row_count = await get_collection_num_entities(model_identity)
-    
+
+    if row_count == 0:
+        return []
+
     entity_kb = [
         kb + const.ENTITY_SUFFIX 
         for kb in req.kb
@@ -809,7 +814,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
             kb_filter=f"kb in {entity_kb}",
             anns_field="embedding",
             output_fields=["head", "tail"],
-            search_params={"params": {"radius": req.threshold * 0.5}}
+            search_params={"params": {"radius": req.threshold}}
         )
 
         for ee in res:
