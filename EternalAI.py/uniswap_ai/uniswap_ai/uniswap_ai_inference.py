@@ -1,12 +1,18 @@
-import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import List
 
+from dotenv import load_dotenv
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
+
 import os
+import simplejson as json
 
 from uniswap_ai.const import HYBRID_MODEL_RPC_URL, HYBRID_MODEL_ABI, HYBRID_MODEL_ADDRESS
+
+load_dotenv()
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 @dataclass
@@ -15,20 +21,18 @@ class Inference:
     system_prompt: str
 
 
-@dataclass
+@dataclass()
 class LLMInferMessage:
-    content: str
-    role: str
+    content: str = ""
+    role: str = ""
 
 
-@dataclass
+@dataclass()
 class LLMInferRequest:
-    messages: List[LLMInferMessage]
-    model: str
-    seed: int
-    max_token: int
-    temperature: float
-    stream: bool
+    messages: List[LLMInferMessage] = None
+    model: str = ""
+    max_token: int = 4096
+    stream: bool = False
 
 
 @dataclass
@@ -40,7 +44,11 @@ class HybridModelInference:
         logging.info(f"Creating inference model...")
 
         if self.web3 is None:
-            self.web3 = Web3(Web3.HTTPProvider(HYBRID_MODEL_RPC_URL))
+            if HYBRID_MODEL_RPC_URL != "":
+                self.web3 = Web3(Web3.HTTPProvider(HYBRID_MODEL_RPC_URL))
+            else:
+                self.web3 = Web3(Web3.HTTPProvider(os.getenv("HYBRID_MODEL_RPC_URL")))
+            self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
         if self.web3.is_connected():
             if privateKey is None or len(privateKey) == 0:
                 privateKey = os.getenv("PRIVATE_KEY")
@@ -52,14 +60,17 @@ class HybridModelInference:
             account = self.web3.eth.account.from_key(privateKey)
             account_address = Web3.to_checksum_address(account.address)
 
-            req = LLMInferRequest
+            req = LLMInferRequest()
             req.model = "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
             req.messages = [LLMInferMessage(content="Can you tell me about BTC", role="user"),
                             LLMInferMessage(content="You are a BTC master", role="system")]
-            json_request = json.dumps(req)
-            hybrid_model_contract = self.web3.eth.contract(address=self.model_address, abi=HYBRID_MODEL_ABI)
+            json_request = json.dumps(asdict(req))
+            hybrid_model_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.model_address),
+                                                           abi=HYBRID_MODEL_ABI)
 
-            txn = hybrid_model_contract.functions.infer(json_request, True).buildTransaction({
+            func = hybrid_model_contract.functions.infer(json_request.encode("utf-8"), True)
+            txn = func.transact({"from": account_address})({
+                "from": account_address})({
                 'from': account_address,
                 'gas': 200000,
                 # 'gasPrice': web3.toWei('50', 'gwei'),
