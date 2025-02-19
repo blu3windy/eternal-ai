@@ -2001,3 +2001,64 @@ func (s *Service) UpdateAgentExternalInfo(ctx context.Context, agentID string, r
 	}
 	return true, nil
 }
+
+func (s *Service) CreateAgentInfoInstallCode(ctx context.Context, userAddress string, agentInfoID uint) (*models.AgentInfoInstall, error) {
+	if agentInfoID > 0 {
+		agentInfo, err := s.dao.FirstAgentInfoByID(daos.GetDBMainCtx(ctx), agentInfoID, map[string][]interface{}{}, true)
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+		if agentInfo == nil {
+			return nil, errs.NewError(errs.ErrBadRequest)
+		}
+	}
+	user, err := s.GetUser(daos.GetDBMainCtx(ctx), 0, userAddress, false)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	agentInfoInstall, err := s.dao.FirstAgentInfoInstall(
+		daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"user_id = ?":       {user.ID},
+			"agent_info_id = ?": {agentInfoID},
+		},
+		map[string][]interface{}{},
+		false,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	if agentInfoInstall == nil {
+		code := helpers.RandomStringWithLength(64)
+		params := map[string]string{"code": code}
+		paramstr, _ := json.Marshal(params)
+		agentInfoInstall = &models.AgentInfoInstall{
+			Code:           code,
+			AgentInfoID:    agentInfoID,
+			Status:         models.AgenInfoInstallStatusNew,
+			UserID:         user.ID,
+			CallbackParams: string(paramstr),
+		}
+		err = s.dao.Create(daos.GetDBMainCtx(ctx), agentInfoInstall)
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+	}
+	return agentInfoInstall, nil
+}
+
+func (s *Service) GetAgentInfoInstall(ctx context.Context, code string) (*models.AgentInfoInstall, error) {
+	res, err := s.dao.FirstAgentInfoInstall(daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"code = ?": {code},
+		},
+		map[string][]interface{}{
+			"User": {},
+		},
+		false,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return res, nil
+}

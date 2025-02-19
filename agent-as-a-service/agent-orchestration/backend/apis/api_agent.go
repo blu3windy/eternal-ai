@@ -1,8 +1,9 @@
 package apis
 
 import (
-	"github.com/sashabaranov/go-openai"
 	"net/http"
+
+	"github.com/sashabaranov/go-openai"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
@@ -533,4 +534,32 @@ func (s *Server) GetAgentChainFees(c *gin.Context) {
 		return
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: ms})
+}
+
+func (s *Server) GetAgentInfoInstallInfo(c *gin.Context) {
+	ctx := s.requestContext(c)
+
+	obj, err := s.nls.GetAgentInfoInstall(ctx, s.stringFromContextQuery(c, "code"))
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: obj.User.Address})
+}
+
+func (s *Server) GetAgentInfoInstallCode(c *gin.Context) {
+	ctx := s.requestContext(c)
+	agentStoreID := s.uintFromContextParam(c, "id")
+	agentInfoID := s.uintFromContextParam(c, "agent_info_id")
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+	res, err := s.nls.CreateAgentStoreInstallCode(ctx, userAddress, agentStoreID, agentInfoID)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: res.Code})
 }

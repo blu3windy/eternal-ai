@@ -162,6 +162,10 @@ func (s *Server) Routers() {
 			// infer
 			agentAPI.POST("/async-batch-prompt", s.AsyncBatchPrompt)
 			agentAPI.GET("/get-async-prompt-output/:id", s.GetBatchItem)
+			//
+			agentAPI.GET("/:id/install-code", s.authCheckTK1TokenMiddleware(), s.GetAgentStoreInstallCode)
+			agentAPI.GET("/install/info", s.GetAgentInfoInstallInfo)
+			//
 
 		}
 

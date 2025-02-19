@@ -209,14 +209,13 @@ func (s *Server) GetListAgentStoreInstall(c *gin.Context) {
 
 func (s *Server) GetAgentStoreInstallCode(c *gin.Context) {
 	ctx := s.requestContext(c)
-	agentStoreID := s.uintFromContextParam(c, "id")
-	agentInfoID := s.uintFromContextParam(c, "agent_info_id")
+	agentInfoID := s.uintFromContextParam(c, "id")
 	userAddress, err := s.getUserAddressFromTK1Token(c)
 	if err != nil || userAddress == "" {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
 		return
 	}
-	res, err := s.nls.CreateAgentStoreInstallCode(ctx, userAddress, agentStoreID, agentInfoID)
+	res, err := s.nls.CreateAgentInfoInstallCode(ctx, userAddress, agentInfoID)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return

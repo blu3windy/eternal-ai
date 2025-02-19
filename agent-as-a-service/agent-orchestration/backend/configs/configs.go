@@ -257,6 +257,7 @@ type Config struct {
 		OauthClientId     string `json:"oauth_client_id"`
 		OauthClientSecret string `json:"oauth_client_secret"`
 		RedirectUri       string `json:"redirect_uri"`
+		InfraAuthUri      string `json:"infra_auth_uri"`
 	} `json:"infra_twitter_app"`
 }
 
