@@ -1,3 +1,7 @@
 from interact.infer import Infer
-infer = Infer()
-infer.infer()
+
+def test_infer():
+    infer = Infer()
+    infer.infer()
+
+test_infer()
