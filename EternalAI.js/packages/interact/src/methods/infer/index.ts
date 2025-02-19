@@ -1,4 +1,3 @@
-import { InteractMethod } from '../types';
 import {
   InferExecuteResponse,
   InferPayload,
@@ -6,14 +5,14 @@ import {
 } from './types';
 
 const Infer = {
-  createPayload: <P = InferPayload, R = InferPayloadResult>(payload: P) => {
+  createPayload: (payload: InferPayload) => {
     console.log('infer create payload', payload);
-    return {} as R;
+    return {} as InferPayloadResult;
   },
-  execute: async <R = InferExecuteResponse>(signedTx: string): Promise<R> => {
+  execute: async (signedTx: string): Promise<InferExecuteResponse> => {
     console.log('infer execute', signedTx);
-    return {} as R;
+    return {} as InferExecuteResponse;
   },
-} satisfies InteractMethod;
+};
 
 export default Infer;
