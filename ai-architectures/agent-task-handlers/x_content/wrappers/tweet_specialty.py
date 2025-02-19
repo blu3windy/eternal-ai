@@ -60,9 +60,9 @@ def get_mentioned_usernames(tweet_info: ExtendedTweetInfo):
 def is_create_game_tweet(tweet_info: ExtendedTweetInfo):
     tweet_object = tweet_info.tweet_object
     text = tweet_object.full_text
-    agent_usernames = get_mentioned_usernames(tweet_info)
+    usernames = get_mentioned_usernames(tweet_info)
 
-    has_two_or_more_usernames = len(agent_usernames) >= 2
+    has_two_or_more_usernames = len(usernames) >= 2
 
     # contains_emoji = any(emoji in text for emoji in GAME_EMOJIS)
     emoji_count = sum(1 for emoji in const.GAME_EMOJIS if emoji in text)
@@ -86,6 +86,35 @@ def is_create_game_tweet(tweet_info: ExtendedTweetInfo):
     )
 
 
+def is_find_fact_tweet(tweet_info: ExtendedTweetInfo):
+    tweet_object = tweet_info.tweet_object
+    text = tweet_object.full_text
+    usernames = get_mentioned_usernames(tweet_info)
+
+    has_two_or_more_usernames = len(usernames) >= 2
+
+    # contains_emoji = any(emoji in text for emoji in GAME_EMOJIS)
+    emoji_count = sum(1 for emoji in const.FACT_EMOJIS if emoji in text)
+    contains_two_emojis = emoji_count >= 2
+    text = (
+        StringProcessor(text)
+        .remove_tags()
+        .remove_mentions()
+        .remove_urls()
+        .remove_emojis()
+        .strip_head_and_tail_white_string()
+        .get_text()
+    )
+    # logger.info(f"[is_find_fact_tweet] text after postprocess {text}")
+    contains_keyword = any(
+        keyword in text.lower() for keyword in const.FACT_KEYWORDS
+    )
+
+    return (
+        contains_two_emojis and contains_keyword and has_two_or_more_usernames
+    )
+
+
 def is_create_game_tweet_id(tweet_id: str) -> bool:
     resp = twitter_v2.get_tweet_info_from_tweet_id(tweet_id)
     if resp.is_error():
@@ -93,10 +122,17 @@ def is_create_game_tweet_id(tweet_id: str) -> bool:
     return is_create_game_tweet(resp.data.tweet_info)
 
 
+def is_find_fact_game_tweet_id(tweet_id: str) -> bool:
+    resp = twitter_v2.get_tweet_info_from_tweet_id(tweet_id)
+    if resp.is_error():
+        return False
+    return is_find_fact_tweet(resp.data.tweet_info)
+
+
 def detect_tweet_specialties(
     tweet_info: ExtendedTweetInfo,
 ) -> List[TweetSpecialty]:
-    if is_create_game_tweet(tweet_info):
+    if is_create_game_tweet(tweet_info) or is_find_fact_tweet(tweet_info):
         return [TweetSpecialty.CREATE_GAME]
     if is_create_game_tweet_id(tweet_info.conversation_id):
         return [TweetSpecialty.CREATE_GAME_SUBTREE]

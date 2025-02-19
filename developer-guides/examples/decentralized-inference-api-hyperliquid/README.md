@@ -1,11 +1,11 @@
 
-# Decentralized Inference API with DeepSeek-R1 on Hyperliquid
+# Decentralized Inference API with DeepSeek-R1 on HyperEVM
 
-This developer guide shows you how to use Decentralized Inference API with DeepSeek-R1 on Hyperliquid.
+This developer guide shows you how to use Decentralized Inference API with DeepSeek-R1 on HyperEVM.
 
 * **Decentralized**: Use Eternal AI's Decentralized Inference API instead of OpenAI's Centralized API.
 * **Onchain-verifiable AI**: Don't trust AI, verify them. All inferences are recorded onchain and verifiable by anyone.
-* **Unstoppable**: All inference runs exactly as coded on Base without any possibility of censorship, fraud, or third-party interference.
+* **Unstoppable**: All inference runs exactly as coded on HyperEVM without any possibility of censorship, fraud, or third-party interference.
 * **Permissionless**: Anyone can call the Decentralized Inference API at any time without a KYC or permission.
 * **SOTA model**: DeepSeek-R1 is the state-of-the-art AI model for reasoning.
 
@@ -13,13 +13,13 @@ This developer guide shows you how to use Decentralized Inference API with DeepS
 
 1. Go to http://eternalai.org/api
 2. Login with X (Twitter)
-3. Get the Decentralized Inference API key for Base
+3. Get the Decentralized Inference API key for HyperEVM
 
 It's free.
 
 ## Step 2: Send your first Onchain DeepSeek-R1 call
 
-We will ask DeepSeek-R1 to tell you about an overview of P2P system.
+We will ask DeepSeek-R1 to provide you with an overview of the P2P system.
 
 Let's run the `chat.js` script.
 
@@ -67,9 +67,9 @@ Onchain Data: {
 
 With Eternal AI's Decentralized Inference, everything is onchain-verifiable.
 
-Let's look at the onchain prompt transaction on Hyperliquid Explorer. You can verify that the prompt ran on DeepSeek-R1. You can also verify the system prompt and the user prompt.
+Let's look at the onchain prompt transaction on HyperEVM Explorer. You can verify that the prompt ran on DeepSeek-R1. You can also verify the system prompt and the user prompt.
 
-https://hyperliquid.cloud.blockscout.com/tx/0x207b26c3aca80885ac9d60e2fa38e3674e2b58ec7744535c4c18dd791734930e
+https://HyperEVM.cloud.blockscout.com/tx/0x207b26c3aca80885ac9d60e2fa38e3674e2b58ec7744535c4c18dd791734930e
 
 <img width="622" alt="image" src="https://github.com/user-attachments/assets/4518b545-a5d1-464a-b52f-2a39c6dc1e29" />
 
@@ -78,9 +78,9 @@ https://hyperliquid.cloud.blockscout.com/tx/0x207b26c3aca80885ac9d60e2fa38e3674e
 
 ## Step 5: Let's verify the onchain response transaction
 
-Now, let's see the onchain response transaction on Base Explorer. You can see the actual response content with the thinking process and the final answer. Everything is onchain and verifiable.
+Now, let's see the onchain response transaction on HyperEVM Explorer. You can see the actual response content with the thinking process and the final answer. Everything is onchain and verifiable.
 
-https://hyperliquid.cloud.blockscout.com/tx/0x38e15c057cbe43d9f529042efa77276d2fe52077f7c1613804d5695976236f07
+https://HyperEVM.cloud.blockscout.com/tx/0x38e15c057cbe43d9f529042efa77276d2fe52077f7c1613804d5695976236f07
 
 <img width="1674" alt="image" src="https://github.com/user-attachments/assets/f39acb55-97bf-49aa-b24d-e366337e347e" />
 
@@ -88,6 +88,6 @@ https://hyperliquid.cloud.blockscout.com/tx/0x38e15c057cbe43d9f529042efa77276d2f
 
 ## Conclusion
 
-Congrats! You've finished making the first decentralized inference call with DeepSeek-R1
+Congrats! You've finished making the first decentralized inference call with DeepSeek-R1 on HyperEVM.
 
-We can't wait to see what AI-powered dapps and AI agents you'll build next.
+We can't wait to see the AI-powered dapps and AI agents you'll build next!

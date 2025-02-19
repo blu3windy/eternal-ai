@@ -60,7 +60,7 @@ const (
 	AgentInfoAgentTypeEliza         AgentInfoAgentType = 3
 	AgentInfoAgentTypeZerepy        AgentInfoAgentType = 4
 	AgentInfoAgentTypeUtility       AgentInfoAgentType = 5
-	AgentInfoAgentTypeInfra         AgentInfoAgentType = 6
+	AgentInfoAgentTypeRealWorld     AgentInfoAgentType = 6
 )
 
 type (
