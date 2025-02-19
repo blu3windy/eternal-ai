@@ -92,9 +92,9 @@ eai agent ls
 ```
 
 Example output: 
-<img width="2704" alt="eternal-kernel-new-7" src="./media-kit/images/ls.png" />
+<img width="2704" alt="list_all_agents" src="./media-kit/images/ls.png" />
 
-### Start the agent
+### Start an agent
 ```bash
 eai agent start -n <agent_name>
 ```
@@ -104,7 +104,7 @@ eai agent start -n <agent_name>
 eai agent chat -n <agent_name>
 ```
 
-### Stop the agent
+### Stop an agent
 ```bash
 eai agent stop -n <agent_name>
 ```
