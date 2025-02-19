@@ -11,7 +11,7 @@ import simplejson as json
 
 from uniswap_ai.const import HYBRID_MODEL_RPC_URL, HYBRID_MODEL_ABI, HYBRID_MODEL_ADDRESS, AGENT_ABI
 
-load_dotenv()
+load_dotenv(".env")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
@@ -126,10 +126,11 @@ class HybridModelInference:
         if self.web3.is_connected():
             if private_key is None or len(private_key) == 0:
                 private_key = os.getenv("PRIVATE_KEY")
-
+            logging.info(f"Private key {private_key}")
             self.get_model_address(model_address)
             account = self.web3.eth.account.from_key(private_key)
             account_address = Web3.to_checksum_address(account.address)
+            logging.info(f"address: {account_address}")
 
             req = LLMInferRequest()
             # req.model = "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
