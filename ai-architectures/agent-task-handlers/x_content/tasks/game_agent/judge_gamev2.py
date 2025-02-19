@@ -296,7 +296,9 @@ async def _get_judge_game_with_facts_conversation(
                 f"[_get_judge_game_with_facts_conversation] Received query '{query}' for fact searching for tweet {game_tweet_object.get('id')}"
             )
 
-            response = await fact_service.search(query, time_range="w")
+            response = await fact_service.search(
+                query, time_range="d", search_depth="advanced"
+            )
 
             # Cache the response
             game_redis.set_fact_check(
