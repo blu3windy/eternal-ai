@@ -6,8 +6,10 @@ authors = [
     { name = "0xgen0000", email = "52655944+0xgen0000@users.noreply.github.com" }
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.8,<4"
 dependencies = [
+    "web3 (>=7.8.0,<8.0.0)",
+    "python-dotenv (>=1.0.1,<2.0.0)"
 ]
 
 

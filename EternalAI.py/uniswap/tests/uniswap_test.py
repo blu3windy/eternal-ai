@@ -1,8 +1,11 @@
 import pytest
-
-from uniswap.uniswap import sum_number
+from uniswap.uniswap import UniSwap
 
 
 def test_sum():
-    assert sum_number(1, 2) == 3
     assert 1 + 1 == 2
+
+
+def test_uniswap():
+    uniswap = UniSwap()
+    uniswap.swap("", 0.1, "", 0.1)
