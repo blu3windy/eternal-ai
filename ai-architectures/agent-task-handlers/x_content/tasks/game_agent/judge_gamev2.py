@@ -624,7 +624,7 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
     )(game_id, True)
 
     if resp.is_error():
-        return None, resp.error
+        return None, None, resp.error
 
     tweet_obj = resp.data.tweet_info.tweet_object.to_dict()
     # currently there are only 2 types: game & fact
@@ -650,7 +650,7 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
         logger.error(
             f"[_handle_winner_with_llm] Error getting winner from LLM: {err}"
         )
-        return None, err
+        return None, None, err
 
     logger.info(
         f"[_handle_winner_with_llm] LLM selected winner: {winning_agent}"
@@ -660,7 +660,7 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
         logger.error(
             f"[_handle_winner_with_llm] Error posting game result: {err}"
         )
-        return None, err
+        return None, None, err
 
     return winning_agent, infer_result.tx_hash, None
 
