@@ -1,3 +1,4 @@
+from .io import export_collection_data, notify_action
 from fastapi import APIRouter, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from .models import ResponseMessage
@@ -11,7 +12,7 @@ from .models import (
 )
 import logging
 
-from .handlers import process_data, run_query, get_sample, drop_kb, notify_action, export_collection_data
+from .handlers import process_data, run_query, get_sample, drop_kb
 from .utils import get_tmp_directory, iter_file
 from .embedding import get_default_embedding_model
 from app.state import get_insertion_request_handler

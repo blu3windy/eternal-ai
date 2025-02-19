@@ -108,4 +108,4 @@ NER_SYSTEM_PROMPT = """You are an expert in extracting named entities from text.
 
 # KB suffixes
 ENTITY_SUFFIX = "-entity"
-RELATION_SUFFIX = "relation"
+RELATION_SUFFIX = "-relation"

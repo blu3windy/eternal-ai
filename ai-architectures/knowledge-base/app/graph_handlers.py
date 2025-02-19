@@ -69,9 +69,9 @@ class Triplet(BaseModel):
             }
 
         assert (
-            all((k in data and isinstance(data[k], str)) 
+            all(k in data and isinstance(data[k], str) 
                 for k in ['s1', 's2', 'relation']),
-            ""
+            "Missing key(s) to construct triplet. Requires s1, s2 and relation"
         )
 
         return {
@@ -112,7 +112,7 @@ class GraphKnowledge:
         
         if -1 in (json_start, json_end):
             return ResponseMessage[List[Triplet]](
-                error="No data from LLM, expect a JSON returned"
+                error=f"No data from LLM, expect a JSON returned. Received: {result}"
             )
 
         try:
@@ -122,7 +122,7 @@ class GraphKnowledge:
             )
         except json.JSONDecodeError as err:
             return ResponseMessage[List[Triplet]](
-                error="Broken JSON generated"
+                error=f"Broken JSON generated: {result}"
             )
 
         resp: List[Triplet] = []
