@@ -5,7 +5,7 @@ DeepSeek-R1 is now unstoppable — running exactly as trained without any possib
 Let's interact with it.
 
 ```
-npm install && npx hardhat compile && RPC_URL=<YOUR_RPC_URL> PRIVATE_KEY=<0xYOUR_PRIVATE_KEY> CHOSEN_MODEL="DeepSeek-R1-Distill-Llama-70B" USER_PROMPT="Give a short overview of p2p system"  npm run sendUniverseAgentRequest:ethereum_mainnet
+npm install && npx hardhat compile && RPC_URL=<YOUR_RPC_URL> PRIVATE_KEY=<0xYOUR_PRIVATE_KEY> CHOSEN_MODEL="DeepSeek-R1-Distill-Llama-70B" USER_PROMPT="Give a short overview of p2p system"  npm run sendUniverseAgentRequest:hyper_mainnet
 ```
 
 ## STEP 1: Get the Chain ID and Model Name
@@ -41,7 +41,7 @@ Complete example code can be found at: https://github.com/eternalai-org/ai-power
 You can run the code with the following command. Replace <YOUR_KEY> with your development wallet's private key. The wallet should have some HIP on HyperEVM to pay the network fee.
 
 ```
-npx hardhat compile && RPC_URL=https://rpc.hyperliquid.xyz/evm  PRIVATE_KEY=<YOUR_KEY>  CHOSEN_MODEL="DeepSeek-R1-Distill-Llama-70B"  USER_PROMPT="Give a short overview of p2p system"  npm run sendUniverseAgentRequest:base_mainnet
+npx hardhat compile && RPC_URL=https://rpc.hyperliquid.xyz/evm  PRIVATE_KEY=<YOUR_KEY>  CHOSEN_MODEL="DeepSeek-R1-Distill-Llama-70B"  USER_PROMPT="Give a short overview of p2p system"  npm run sendUniverseAgentRequest:hyper_mainnet
 ```
 
 ## STEP 5: Review the onchain prompt transaction
