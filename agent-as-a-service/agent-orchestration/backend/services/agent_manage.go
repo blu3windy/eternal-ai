@@ -56,6 +56,20 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	if req.SystemContent == "" {
 		req.SystemContent = "default"
 	}
+	switch req.AgentType {
+	case models.AgentInfoAgentTypeUtility:
+		{
+			switch req.ChainID {
+			case models.BASE_CHAIN_ID:
+				{
+				}
+			default:
+				{
+					return nil, errs.ErrBadRequest
+				}
+			}
+		}
+	}
 	agent := &models.AgentInfo{
 		Version:          "2",
 		AgentType:        models.AgentInfoAgentTypeReasoning,
