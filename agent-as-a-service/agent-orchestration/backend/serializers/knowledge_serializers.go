@@ -2,6 +2,8 @@ package serializers
 
 import (
 	"time"
+
+	"github.com/sashabaranov/go-openai"
 )
 
 type CreateKnowledgeRequest struct {
@@ -110,8 +112,10 @@ type UpdateKnowledgeBaseWithSignatureRequest struct {
 }
 
 type RetrieveKnowledgeRequest struct {
-	Prompt    string  `json:"prompt"`
-	KbId      string  `json:"kb_id"`
-	TopK      int     `json:"top_k"`
-	Threshold float64 `json:"threshold"`
+	Prompt    string                         `json:"prompt"`
+	KbId      string                         `json:"kb_id"`
+	TopK      int                            `json:"top_k"`
+	Threshold float64                        `json:"threshold"`
+	Messages  []openai.ChatCompletionMessage `json:"messages"`
+	Stream    *bool                          `json:"stream"`
 }
