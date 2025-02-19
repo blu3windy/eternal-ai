@@ -23,11 +23,17 @@ Interact with the DeepSeek smart contract using TypeScript — the same way you 
 
 Let's call the infer() function with a simple prompt: "Give a short overview of p2p system"
 
+<img width="1430" alt="image" src="https://github.com/user-attachments/assets/8d9d4164-72e6-45d0-bf3e-c22dd82e9209" />
+
+
 ## STEP 3: Retrieve the response
 
 Eternal AI uses an async programming model for decentralized inference.
 
 Periodically check with the PromptScheduler contract to retrieve the response returned by DeepSeek-R1.
+
+<img width="1261" alt="image" src="https://github.com/user-attachments/assets/220bc232-7fb1-4b19-9cfb-df890b972c97" />
+
 
 ## STEP 4: Run the code
 
