@@ -129,6 +129,21 @@ class GraphKnowledge:
 
         resp: List[Triplet] = []
         
+        if isinstance(json_result, list):
+            ee = {
+                "triplets": []
+            }
+
+            for item in json_result:
+                xx = item.get("triplets", [])
+
+                if not isinstance(xx, list):
+                    continue
+
+                ee["triplets"].extend(xx)
+
+            json_result = ee
+
         if "triplets" not in json_result:
             return ResponseMessage[List[Triplet]](
                 error=f"Wrong format of generated JSON: {json_result}"
