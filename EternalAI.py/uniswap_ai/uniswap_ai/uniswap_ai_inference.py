@@ -36,7 +36,7 @@ class LLMInferRequest:
 
 
 @dataclass()
-class AgentInfernce:
+class AgentInference:
     web3: Web3 = None
     agent_address: str = None
 
