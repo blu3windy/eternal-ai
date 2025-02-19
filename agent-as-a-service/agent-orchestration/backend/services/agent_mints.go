@@ -34,7 +34,6 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 					"join agent_chain_fees on agent_chain_fees.network_id = agent_infos.network_id": {},
 				},
 				map[string][]interface{}{
-					"agent_infos.agent_id != ''": {},
 					"agent_infos.agent_type in (?)": {
 						[]models.AgentInfoAgentType{
 							models.AgentInfoAgentTypeNormal,
@@ -43,7 +42,7 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 							models.AgentInfoAgentTypeZerepy,
 						},
 					},
-					"agent_infos.agent_type <> ?":       {models.AgentInfoAgentTypeKnowledgeBase},
+					"agent_infos.agent_id != ''":        {},
 					"agent_infos.agent_contract_id = ?": {""},
 					"agent_infos.agent_nft_minted = ?":  {false},
 					`agent_infos.twin_twitter_usernames is null 
@@ -240,6 +239,14 @@ func (s *Service) JobRetryAgentMintNft(ctx context.Context) error {
 			agents, err := s.dao.FindAgentInfo(
 				daos.GetDBMainCtx(ctx),
 				map[string][]interface{}{
+					"agent_type in (?)": {
+						[]models.AgentInfoAgentType{
+							models.AgentInfoAgentTypeNormal,
+							models.AgentInfoAgentTypeReasoning,
+							models.AgentInfoAgentTypeEliza,
+							models.AgentInfoAgentTypeZerepy,
+						},
+					},
 					"updated_at <= ?":       {time.Now().Add(-60 * time.Minute)},
 					"agent_contract_id = ?": {""},
 					"agent_nft_minted = ?":  {true},
@@ -274,7 +281,6 @@ func (s *Service) JobRetryAgentMintNft(ctx context.Context) error {
 			}
 			var retErr error
 			for _, agent := range agents {
-				fmt.Println(agent.MintHash)
 				err = s.GetEVMClient(ctx, agent.NetworkID).TransactionConfirmed(agent.MintHash)
 				if err != nil {
 					fmt.Println(err.Error())
@@ -283,14 +289,18 @@ func (s *Service) JobRetryAgentMintNft(ctx context.Context) error {
 							Model(agent).
 							Updates(
 								map[string]interface{}{
-									"eai_balance":      gorm.Expr("eai_balance - ?", agent.MintFee),
-									"agent_nft_minted": false,
-									"mint_hash":        "",
+									"mint_hash": "",
 								},
 							).
 							Error
 						if err != nil {
 							return errs.NewError(err)
+						}
+						for i := 0; i < 5; i++ {
+							err = s.MintAgent(ctx, agent.ID)
+							if err == nil {
+								break
+							}
 						}
 					}
 				} else {
@@ -313,6 +323,14 @@ func (s *Service) JobRetryAgentMintNftError(ctx context.Context) error {
 			agents, err := s.dao.FindAgentInfo(
 				daos.GetDBMainCtx(ctx),
 				map[string][]interface{}{
+					"agent_infos.agent_type in (?)": {
+						[]models.AgentInfoAgentType{
+							models.AgentInfoAgentTypeNormal,
+							models.AgentInfoAgentTypeReasoning,
+							models.AgentInfoAgentTypeEliza,
+							models.AgentInfoAgentTypeZerepy,
+						},
+					},
 					"updated_at <= ?":                     {time.Now().Add(-60 * time.Minute)},
 					"agent_contract_id = ?":               {""},
 					"agent_nft_minted = ?":                {true},
@@ -354,7 +372,6 @@ func (s *Service) JobRetryAgentMintNftError(ctx context.Context) error {
 						Model(agent).
 						Updates(
 							map[string]interface{}{
-								"eai_balance":      gorm.Expr("eai_balance - ?", agent.MintFee),
 								"agent_nft_minted": false,
 								"scan_error":       "",
 							},
