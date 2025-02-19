@@ -516,6 +516,10 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 					if kbReq.ThumbnailUrl != "" {
 						updateMap["thumbnail_url"] = kbReq.ThumbnailUrl
 					}
+
+					if kbReq.DomainUrl != "" {
+						updateMap["domain_url"] = kbReq.DomainUrl
+					}
 				}
 
 				go s.AgentCreateMissionDefault(context.Background(), agent.ID)
