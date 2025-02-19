@@ -52,8 +52,12 @@ async def a_send_message(
     twitter_username = twitter_username or "junk_notifications"
 
     if (
-        twitter_username == "junk_nofitications"
-        and const.DISABLE_JUNK_NOTIFICATIONS
+        room is None
+        or message_to_send is None
+        or (
+            twitter_username == "junk_nofitications"
+            and const.DISABLE_JUNK_NOTIFICATIONS
+        )
     ):
         return False
 
