@@ -136,13 +136,13 @@ DOCUMENT_FORMAT_OPTIONS = {
         pipeline_cls=StandardPdfPipeline,
         backend=DoclingParseV2DocumentBackend,
         pipeline_options=PdfPipelineOptions(
-            do_table_structure=True,
+            do_table_structure=False,
             do_ocr=False
         )
     )
 }
 
-@limit_asyncio_concurrency(1)
+@limit_asyncio_concurrency(2)
 async def get_doc_from_url(url):
     return await sync2async(
         DocumentConverter(
