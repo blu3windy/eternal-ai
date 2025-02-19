@@ -247,7 +247,7 @@ func (s *Service) AgentCreateMissionDefault(ctx context.Context, agentInfoID uin
 	switch agentInfo.AgentType {
 	case models.AgentInfoAgentTypeEliza,
 		models.AgentInfoAgentTypeZerepy,
-		models.AgentInfoAgentTypeDeveloper:
+		models.AgentInfoAgentTypeUtility:
 		{
 			return nil
 		}
