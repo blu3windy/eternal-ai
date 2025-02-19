@@ -13,9 +13,9 @@ function PackageInteract() {
           onClick={async () => {
             const interact = new Interact();
             console.log(interact);
-            methods.Infer.createPayload({ data: "test" });
+            methods.Infer.createPayload({});
             await methods.Infer.execute("signedTx");
-            methods.Act.createPayload({ data: "test" });
+            methods.Act.createPayload({});
             await methods.Act.execute("signedTx");
           }}
         >

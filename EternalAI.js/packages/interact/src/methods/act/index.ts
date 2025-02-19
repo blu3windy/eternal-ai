@@ -1,15 +1,14 @@
-import { InteractMethod } from '../types';
 import { ActExecuteResponse, ActPayload, ActPayloadResult } from './types';
 
 const Act = {
-  createPayload: <P = ActPayload, R = ActPayloadResult>(payload: P) => {
+  createPayload: (payload: ActPayload) => {
     console.log('act create payload', payload);
-    return {} as R;
+    return {} as ActPayloadResult;
   },
-  execute: async <R = ActExecuteResponse>(signedTx: string): Promise<R> => {
+  execute: async (signedTx: string): Promise<ActExecuteResponse> => {
     console.log('act execute', signedTx);
-    return {} as R;
+    return {} as ActExecuteResponse;
   },
-} satisfies InteractMethod;
+};
 
 export default Act;
