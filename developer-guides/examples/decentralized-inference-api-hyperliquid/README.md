@@ -5,7 +5,7 @@ This developer guide shows you how to use Decentralized Inference API with DeepS
 
 * **Decentralized**: Use Eternal AI's Decentralized Inference API instead of OpenAI's Centralized API.
 * **Onchain-verifiable AI**: Don't trust AI, verify them. All inferences are recorded onchain and verifiable by anyone.
-* **Unstoppable**: All inference runs exactly as coded on Base without any possibility of censorship, fraud, or third-party interference.
+* **Unstoppable**: All inference runs exactly as coded on Hyperliquid without any possibility of censorship, fraud, or third-party interference.
 * **Permissionless**: Anyone can call the Decentralized Inference API at any time without a KYC or permission.
 * **SOTA model**: DeepSeek-R1 is the state-of-the-art AI model for reasoning.
 
@@ -13,7 +13,7 @@ This developer guide shows you how to use Decentralized Inference API with DeepS
 
 1. Go to http://eternalai.org/api
 2. Login with X (Twitter)
-3. Get the Decentralized Inference API key for Base
+3. Get the Decentralized Inference API key for Hyperliquid
 
 It's free.
 
@@ -78,7 +78,7 @@ https://hyperliquid.cloud.blockscout.com/tx/0x207b26c3aca80885ac9d60e2fa38e3674e
 
 ## Step 5: Let's verify the onchain response transaction
 
-Now, let's see the onchain response transaction on Base Explorer. You can see the actual response content with the thinking process and the final answer. Everything is onchain and verifiable.
+Now, let's see the onchain response transaction on Hyperliquid Explorer. You can see the actual response content with the thinking process and the final answer. Everything is onchain and verifiable.
 
 https://hyperliquid.cloud.blockscout.com/tx/0x38e15c057cbe43d9f529042efa77276d2fe52077f7c1613804d5695976236f07
 
