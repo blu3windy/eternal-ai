@@ -93,8 +93,8 @@ Only the param `-p` is required, and others are optional.
 Example: 
 ```
 eai agent create 
-    -p $(pwd)/decentralized-agents/characters/donald_trump.txt 
-    -n trump_agent -c base -f eternalai -m DeepSeek-R1-Distill-Llama-70B
+    -p ../decentralized-agents/characters/donald_trump.txt 
+    -n trump-agent -c base -f eternalai -m DeepSeek-R1-Distill-Llama-70B
 ```
 
 We are creating an agent who is a Donald Trump twin. The `.txt` file is the system prompt for your agent. It will be used to set the initial behavior for your agent. You can modify the content of the prompt file to adjust your agent's personality.
