@@ -136,7 +136,7 @@ DOCUMENT_FORMAT_OPTIONS = {
         pipeline_cls=StandardPdfPipeline,
         backend=DoclingParseV2DocumentBackend,
         pipeline_options=PdfPipelineOptions(
-            do_table_structure=True,
+            do_table_structure=False,
             do_ocr=False
         )
     )
