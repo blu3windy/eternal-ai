@@ -1,4 +1,4 @@
-__version__ = 'v2.0.22'
+__version__ = 'v3.0.1'
 
 import logging
 
@@ -9,9 +9,5 @@ if not load_dotenv():
     logger.warning("No .env file found")
 
 from . import (
-    lm, 
     wrappers, 
-    chunking, 
-    query_preprocessor,
-    storage_provider
 )
