@@ -41,11 +41,21 @@ npx hardhat compile && RPC_URL=https://rpc.hyperliquid.xyz/evm  PRIVATE_KEY=<YOU
 
 STEP 5: Review the onchain prompt transaction
 
-Because DeepSeek-V3 is a smart contract, every interaction with it is onchain on 
-@base
+Because DeepSeek-R1 is a smart contract, every interaction with it is onchain on HyperEVM
 . 
 
-Let's examine the prompt tx on BaseScan. You can verify that it runs on DeepSeek v3 and see its content.
+Let's examine the prompt tx on HyperEVM Explorer. You can verify that it runs on DeepSeek-R1 and see its content.
 
-https://basescan.org/tx/0x641c26eff85f9486dace2d4ac0558b3c8da576b9e3e79773bb94a817fb8db45c
+https://HyperEVM.cloud.blockscout.com/tx/0x207b26c3aca80885ac9d60e2fa38e3674e2b58ec7744535c4c18dd791734930e
+
+<img width="622" alt="image" src="https://github.com/user-attachments/assets/4518b545-a5d1-464a-b52f-2a39c6dc1e29" />
+
+STEP 6: Verify the onchain response transaction
+
+Now, let's look at the response transaction on HyperEVM Explorer. You can see the actual response content. Everything is onchain and verifiable.
+
+https://HyperEVM.cloud.blockscout.com/tx/0x38e15c057cbe43d9f529042efa77276d2fe52077f7c1613804d5695976236f07
+
+<img width="1674" alt="image" src="https://github.com/user-attachments/assets/f39acb55-97bf-49aa-b24d-e366337e347e" />
+
 
