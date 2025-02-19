@@ -20,13 +20,13 @@ module.exports = {
     {
       file: 'dist/bundle.iife.js',
       format: 'iife',
-      name: 'Core',
+      name: 'UniSwap',
       sourcemap: true,
     },
     {
       file: 'dist/bundle.umd.js',
       format: 'umd',
-      name: 'Core',
+      name: 'UniSwap',
       sourcemap: true,
     },
   ],
