@@ -6,7 +6,6 @@ Let's interact with it.
 
 ```
 npm install && npx hardhat compile && RPC_URL=<YOUR_RPC_URL> PRIVATE_KEY=<0xYOUR_PRIVATE_KEY> CHOSEN_MODEL="DeepSeek-R1-Distill-Llama-70B" USER_PROMPT="Give a short overview of p2p system"  npm run sendUniverseAgentRequest:ethereum_mainnet
-
 ```
 
 ## STEP 1: Get the Chain ID and Model Name
