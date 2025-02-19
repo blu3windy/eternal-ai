@@ -127,7 +127,7 @@ func (t *miner) streamData(dataFChan <-chan model.StreamingData, task *model.Tas
 	fmt.Println("")
 }
 
-func (t *miner) ExecueteTasks(ctx context.Context) {
+func (t *miner) ExecuteTasks(ctx context.Context) {
 	for {
 		task := <-t.tasksQueue
 		if task == nil {

@@ -50,7 +50,7 @@ type INewChainFlow interface {
 
 type IMiner interface {
 	GetPendingTasks(ctx context.Context)
-	ExecueteTasks(ctx context.Context)
+	ExecuteTasks(ctx context.Context)
 	Verify() bool
 	StakeForWorker() (*types.Transaction, error)
 	JoinForMinting() (*types.Transaction, error)

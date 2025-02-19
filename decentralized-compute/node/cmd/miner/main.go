@@ -59,7 +59,7 @@ goto_here:
 	ctx := context.Background()
 	go taskWatcher.GetPendingTasks(ctx)
 
-	go taskWatcher.ExecueteTasks(ctx)
+	go taskWatcher.ExecuteTasks(ctx)
 
 	<-done
 }
