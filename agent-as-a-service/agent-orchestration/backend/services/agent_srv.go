@@ -247,8 +247,7 @@ func (s *Service) AgentCreateMissionDefault(ctx context.Context, agentInfoID uin
 	switch agentInfo.AgentType {
 	case models.AgentInfoAgentTypeNormal,
 		models.AgentInfoAgentTypeReasoning,
-		models.AgentInfoAgentTypeKnowledgeBase,
-		models.AgentInfoAgentTypeInfra:
+		models.AgentInfoAgentTypeKnowledgeBase:
 		{
 		}
 	default:
