@@ -55,7 +55,6 @@ func NewMiner(cnf *config.Config) (port.IMiner, error) {
 		// cluster, _ := &base.
 		miner := usecase.NewMiner(c, s, cm, cnf, nil)
 		return miner, nil
-
 	case "8453___": // old
 		c, err := base.NewChain(ctx, cm)
 		if err != nil {

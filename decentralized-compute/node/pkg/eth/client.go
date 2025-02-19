@@ -7,7 +7,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/core/types"
 	"math/big"
+	"solo/pkg"
 	"strings"
 	"time"
 
@@ -43,10 +45,11 @@ func NewEthWsClient(ws string) (*ethclient.Client, error) {
 }
 
 func WaitForTx(client *ethclient.Client, tx common.Hash) error {
+	ctx := context.Background()
 	i := 0
 	for {
 		time.Sleep(2 * time.Second)
-		if i > 20 {
+		if i > 100 {
 			return errors.New("timeout")
 		}
 		i++
@@ -54,9 +57,19 @@ func WaitForTx(client *ethclient.Client, tx common.Hash) error {
 		if err != nil {
 			continue
 		}
-		if !isPending {
+
+		receipt, err := client.TransactionReceipt(ctx, tx)
+		if err != nil {
+			if err == ethereum.NotFound {
+				continue
+			}
+			continue
+		}
+
+		if !isPending && receipt.Status == 1 {
 			break
 		}
+
 	}
 	return nil
 }
@@ -212,7 +225,7 @@ func CreateBindTransactionOpts(ctx context.Context, client *ethclient.Client, pr
 	}
 
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.GasLimit = uint64(0) // in units
+	//auth.GasLimit = uint64(0) // in units
 	auth.GasPrice = gasPrice
 
 	return auth, nil
@@ -232,6 +245,8 @@ func ApproveERC20(ctx context.Context, client *ethclient.Client, privateKey stri
 		return err
 	}
 
+	auth.GasLimit = pkg.LOCAL_CHAIN_GAS_LIMIT
+	auth.GasPrice = big.NewInt(pkg.LOCAL_CHAIN_GAS_PRICE)
 	tx, err := erc20Contract.Approve(auth, contractAddress, maxBigInt)
 	if err != nil {
 		return err
@@ -274,4 +289,88 @@ func CheckTransactionReverted(ctx context.Context, client *ethclient.Client, txH
 	}
 
 	return false, nil // Transaction was successful
+}
+
+func GetTokenIDFromTx(client *ethclient.Client, txHash common.Hash) (*big.Int, error) {
+	transferEventSignature := crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)"))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Get the transaction receipt
+	receipt, err := client.TransactionReceipt(ctx, txHash)
+	if err != nil {
+		if err == ethereum.NotFound {
+			return nil, fmt.Errorf("transaction not found")
+		}
+		return nil, fmt.Errorf("failed to get transaction receipt: %v", err)
+	}
+
+	// Parse the logs for the Transfer event
+	for _, log := range receipt.Logs {
+		if log.Topics[0].Hex() == transferEventSignature.Hex() {
+			// The tokenID is the third indexed parameter
+			if len(log.Topics) < 4 {
+				continue
+			}
+
+			tokenID := new(big.Int).SetBytes(log.Topics[3].Bytes())
+			return tokenID, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no Transfer event found in transaction")
+}
+
+func WaitForTxReceipt(client *ethclient.Client, tx common.Hash) (*types.Receipt, error) {
+	i := 0
+	for {
+		time.Sleep(2 * time.Second)
+		if i > 20 {
+			return nil, errors.New("timeout")
+		}
+		i++
+		txReceipt, err := client.TransactionReceipt(context.Background(), tx)
+		if err != nil {
+			continue
+		}
+		if txReceipt != nil {
+			time.Sleep(2 * time.Second)
+			return txReceipt, nil
+		}
+	}
+}
+
+func SendToken(ctx context.Context, fromPrivKey string, toAddress string, amount *big.Int, client *ethclient.Client, customGaslimit int64) (*types.Transaction, error) {
+	auth, err := CreateBindTransactionOpts(ctx, client, fromPrivKey, customGaslimit)
+	if err != nil {
+		return nil, err
+	}
+
+	cID, err := client.ChainID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	_toAddress := common.HexToAddress(toAddress)
+	tx := types.NewTx(&types.DynamicFeeTx{
+		ChainID:   cID,
+		Nonce:     auth.Nonce.Uint64(),
+		Gas:       uint64(customGaslimit),
+		GasFeeCap: big.NewInt(customGaslimit * 2),
+		//GasTipCap: big.NewInt(customGaslimit),
+		Value: amount,
+		To:    &_toAddress})
+
+	pKey, _, _ := GetAccountInfo(fromPrivKey)
+	signedTx, err := types.SignTx(tx, types.LatestSignerForChainID(cID), pKey)
+	if err != nil {
+		return nil, err
+	}
+
+	err = client.SendTransaction(ctx, signedTx)
+	if err != nil {
+		return nil, err
+	}
+
+	return signedTx, nil
 }
