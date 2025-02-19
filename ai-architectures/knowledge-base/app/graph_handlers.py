@@ -3,6 +3,8 @@ import json_repair
 from . import constants as const
 from typing import List, Dict, Union
 import json
+import logging
+logger = logging.getLogger(__name__)
 from functools import lru_cache
 
 async def call_llm(messages: List[Dict[str, str]]):
@@ -19,15 +21,19 @@ async def call_llm(messages: List[Dict[str, str]]):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {const.LLM_API_KEY}"
     }
+    
+    logger.debug(f"Payload: {payload}")
 
     async with httpx.AsyncClient() as client:
         response = await client.post(
             const.LLM_API_BASE + "/chat/completions", 
             headers=headers, 
-            json=payload
+            json=payload,
+            timeout=httpx.Timeout(300)
         )
 
     if response.status_code != 200:
+        logger.debug(f"Response: {response.text}")
         return None
 
     response_json = response.json()
@@ -121,6 +127,11 @@ class GraphKnowledge:
 
         resp: List[Triplet] = []
         
+        if "triplets" not in json_result:
+            return ResponseMessage[List[Triplet]](
+                error=f"Wrong format of generated JSON: {json_result}"
+            )
+
         for item in json_result["triplets"]:
             try:
                 triplet = Triplet.model_validate(item)
