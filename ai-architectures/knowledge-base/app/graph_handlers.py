@@ -6,7 +6,9 @@ import json
 import logging
 logger = logging.getLogger(__name__)
 from functools import lru_cache
+from .utils import limit_asyncio_concurrency
 
+@limit_asyncio_concurrency(8)
 async def call_llm(messages: List[Dict[str, str]]):
 
     payload = {
