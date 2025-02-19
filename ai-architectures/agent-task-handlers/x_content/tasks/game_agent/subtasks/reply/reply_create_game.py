@@ -213,12 +213,17 @@ def _get_agent_wallet_mapping(game_info: GameInfo):
         return None, e
 
 
-def _create_wallet_tweet(wallet_mapping):
+def _create_wallet_tweet(wallet_mapping, bet_time, timeout):
     """Create tweet text with wallet mapping info"""
-    hours = const.GAME_DURATION // 3600
-    minutes = (const.GAME_DURATION % 3600) // 60
+    bet_hours = bet_time // 3600
+    bet_minutes = (bet_time % 3600) // 60
+    hours = timeout // 3600
+    minutes = (timeout % 3600) // 60
     wallet_tweet = const.GAME_CREATED_TWEET.format(
-        hours=hours, minutes=minutes
+        bet_hours=bet_hours,
+        bet_minutes=bet_minutes,
+        hours=hours,
+        minutes=minutes,
     )
     for username, wallet in wallet_mapping.items():
         wallet_tweet += f"{username}: {wallet}\n"
@@ -296,7 +301,7 @@ async def _handle_create_game_request(log: ReasoningLog, _tweet_object):
             return None, err
 
         # Create and post wallet tweet
-        wallet_tweet = _create_wallet_tweet(wallet_mapping)
+        wallet_tweet = _create_wallet_tweet(wallet_mapping, bet_time, timeout)
         return game_info, await _post_wallet_tweet(log, tweet_id, wallet_tweet)
 
     except Exception as err:
