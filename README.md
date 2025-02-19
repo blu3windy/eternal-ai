@@ -94,14 +94,19 @@ eai agent ls
 Example output: 
 <img width="2704" alt="eternal-kernel-new-7" src="./media-kit/images/ls.png" />
 
-### Fetch agent info by agent id
-```
-eai agent info -n <agent_name>
+### Start the agent
+```bash
+eai agent start -n <agent_name>
 ```
 
 ### Chat with an agent
 ```bash
 eai agent chat -n <agent_name>
+```
+
+### Stop the agent
+```bash
+eai agent stop -n <agent_name>
 ```
 
 

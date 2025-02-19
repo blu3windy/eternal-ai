@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { Framework, Model, Network } from './const';
-import { createAgent, listAgents, startAgent, stopAgent } from './handler';
+import { chatAgent, createAgent, listAgents, startAgent, stopAgent } from './handler';
 
 // Initialize the commander object
 const program = new Command();
@@ -59,7 +59,14 @@ agentCmd
         startAgent(options);
     });
 
-
+// cmd: agent chat
+agentCmd
+    .command('chat')
+    .description('Chat to the agent')
+    .requiredOption('-n, --name <name>', 'The agent\'s name.')
+    .action((options) => {
+        chatAgent(options);
+    });
 
 
 // Parse the command-line arguments

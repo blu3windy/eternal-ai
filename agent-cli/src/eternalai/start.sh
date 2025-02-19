@@ -4,7 +4,7 @@ echo "Starting new agent with EternalAI framework"
 
 agent_uid=$1 
 ETERNALAI_URL=$2
-ETERNALAI_API_KEY=$3g
+ETERNALAI_API_KEY=$3
 ETERNALAI_CHAIN_ID=$4
 ETERNALAI_RPC_URL=$5
 ETERNALAI_AGENT_CONTRACT_ADDRESS=$6
@@ -128,12 +128,11 @@ cp $root_dir/eai-chat $current_dir/src/eternalai/eai-chat
 
 # run docker container
 cd $current_dir/src/eternalai
-docker build -t eternalai-agent .
+# docker build -t eternalai-agent .
 
 ### docker run to start agent
 
-docker run -d --name $agent_uid eternalai-agent
-
+docker run -d --name $agent_uid -v ./config.json:/app/eternal-ai/decentralized-inference/config.json -v ./local_contracts.json:/app/eternal-ai/decentralized-compute/worker-hub/env/local_contracts.json eternalai-agent
 # Step 3: start small service port 8484
 
 # ./eai-chat server &

@@ -9,9 +9,8 @@ RUN apt-get update && apt-get install -y \
   && apt-get clean
 
 COPY ./eai-chat-linux /app/eternal-ai/eai-chat
-RUN cat /app/eternal-ai/eai-chat
-COPY config.json /app/eternal-ai/decentralized-inference/config.json
-COPY local_contracts.json /app/eternal-ai/decentralized-compute/worker-hub/env/local_contracts.json
+COPY default_config.json /app/eternal-ai/decentralized-inference/config.json
+COPY default_local_contracts.json /app/eternal-ai/decentralized-compute/worker-hub/env/local_contracts.json
 
 # Change the working directory to the desired folder
 WORKDIR /app/eternal-ai

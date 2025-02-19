@@ -16,7 +16,15 @@ const getSupportedModels = async (chainID: string) => {
     return response.data.data?.support_model_names;
 }
 
-const execCmd = async (cmd: string): Promise<any> => {
+const execCmd = async ({
+    cmd,
+    isLog = true,
+
+}: {
+    cmd: string,
+    isLog?: boolean,
+
+}): Promise<any> => {
     return new Promise((resolve, reject) => {
         exec(cmd, (error, stdout, stderr) => {
             if (error) {
@@ -27,7 +35,9 @@ const execCmd = async (cmd: string): Promise<any> => {
                 console.error(`Exec script ${cmd} stderr: ${stderr}`);
                 reject(stderr);
             }
-            console.log(stdout);
+            if (isLog) {
+                console.log(stdout);
+            }
             resolve(stdout);
         });
     })

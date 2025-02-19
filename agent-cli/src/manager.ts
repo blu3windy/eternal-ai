@@ -131,7 +131,7 @@ interface DockerContainer {
 
 
 const listRunningContainers = async (): Promise<Record<string, DockerContainer>> => {
-    const stdout = await execCmd('docker ps -a --format "{{json .}}"');
+    const stdout = await execCmd({ cmd: 'docker ps -a --format "{{json .}}"', isLog: false });
     if (stdout.length == 0) {
         return {};
     }

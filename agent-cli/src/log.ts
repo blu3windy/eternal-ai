@@ -2,7 +2,6 @@
 import chalk from 'chalk';
 import Table from 'cli-table3';
 import { AgentStatus } from './manager';
-import { validateHeaderName } from 'http';
 
 function getTimestamp() {
     return new Date().toLocaleTimeString();
@@ -33,6 +32,13 @@ function logHeader(message: string): void {
 function logTitle(message: string): void {
     console.log(chalk.bold.white(message));
     console.log(chalk.white('-'.repeat(message.length)));  // Creates a separator line
+}
+
+var HeaderMaps: Record<string, string> = {
+    "agentid": "agent id",
+    "chainid": "chain id",
+    "createat": "create at",
+    "containerid": "container id",
 }
 
 // interface Agent {
@@ -83,10 +89,20 @@ function logTable(data: Array<Record<string, any>>): void {
     // Get the table headers from the keys of the first object
     const headers = Object.keys(data[0]);
 
+    const newHeaders: string[] = [];
+    headers.map((header, i) => {
+        const newHeader = HeaderMaps[header.toLowerCase()] || header;
+        // console.log(`newHeader : ${newHeader}`);
+
+        newHeaders.push(newHeader);
+    })
+
+    // console.log("headers: ", headers);
+
 
     // Calculate the width for each column (max length of header or data)
-    const colWidths = headers.map(header =>
-        Math.max(...data.map(item => item[header].toString().length), header.length)
+    const colWidths = headers.map((header, i) =>
+        Math.max(...data.map(item => item[header].toString().length), newHeaders[i].length)
     );
 
     // console.log("colWidths: ", colWidths);
@@ -158,7 +174,7 @@ function logTable(data: Array<Record<string, any>>): void {
     // Print the formatted table
     // console.log(table.toString());
     console.log(borderLine);
-    console.log(formatHeaderRow(headers)); // Print header
+    console.log(formatHeaderRow(newHeaders)); // Print header
     console.log(borderLine);
     data.forEach(row => console.log(formatRow(row)));
     console.log(borderLine);
