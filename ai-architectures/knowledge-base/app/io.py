@@ -142,7 +142,7 @@ DOCUMENT_FORMAT_OPTIONS = {
     )
 }
 
-@limit_asyncio_concurrency(2)
+@limit_asyncio_concurrency(1)
 async def get_doc_from_url(url):
     return await sync2async(
         DocumentConverter(
