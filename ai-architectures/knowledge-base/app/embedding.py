@@ -11,7 +11,7 @@ def get_embedding_models() -> List[EmbeddingModel]:
             tokenizer=const.TOKENIZER_MODEL_ID,
             dimension=const.MODEL_DIMENSION,
             prefer_metric=SimMetric.IP,
-            normalize = False
+            normalize=False
         )
     ]
 
