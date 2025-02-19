@@ -35,29 +35,73 @@ class LLMInferRequest:
     stream: bool = False
 
 
+@dataclass()
+class AgentInfernce:
+    web3: Web3 = None
+    agent_address: str = None
+
+    def create_web3(self, rpc: str = ""):
+        if self.web3 is None:
+            if rpc != "":
+                self.web3 = Web3(Web3.HTTPProvider(rpc))
+            elif HYBRID_MODEL_RPC_URL != "":
+                self.web3 = Web3(Web3.HTTPProvider(HYBRID_MODEL_RPC_URL))
+            else:
+                self.web3 = Web3(Web3.HTTPProvider(os.getenv("HYBRID_MODEL_RPC_URL")))
+            self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+    def get_agent_address(self, model: str):
+        if self.agent_address is None or self.agent_address == "":
+            if model != "":
+                self.agent_address = model
+            elif HYBRID_MODEL_ADDRESS != "":
+                self.agent_address = HYBRID_MODEL_ADDRESS
+            else:
+                self.agent_address = os.getenv("HYBRID_MODEL_ADDRESS")
+
+    def create_inference_agent(self, private_key: str, rpc: str = ""):
+        logging.info(f"Creating inference agent...")
+
+        self.create_web3(rpc)
+        if self.web3.is_connected():
+            if private_key is None or len(private_key) == 0:
+                private_key = os.getenv("PRIVATE_KEY")
+
+
 @dataclass
 class HybridModelInference:
     web3: Web3 = None
     model_address: str = None
 
-    def create_inference_model(self, privateKey: str):
-        logging.info(f"Creating inference model...")
-
+    def create_web3(self, rpc: str = ""):
         if self.web3 is None:
-            if HYBRID_MODEL_RPC_URL != "":
+            if rpc != "":
+                self.web3 = Web3(Web3.HTTPProvider(rpc))
+            elif HYBRID_MODEL_RPC_URL != "":
                 self.web3 = Web3(Web3.HTTPProvider(HYBRID_MODEL_RPC_URL))
             else:
                 self.web3 = Web3(Web3.HTTPProvider(os.getenv("HYBRID_MODEL_RPC_URL")))
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-        if self.web3.is_connected():
-            if privateKey is None or len(privateKey) == 0:
-                privateKey = os.getenv("PRIVATE_KEY")
 
-            if self.model_address is None or self.model_address == "":
+    def get_model_address(self, model_address: str = ""):
+        if self.model_address is None or self.model_address == "":
+            if model_address != "":
+                self.model_address = model_address
+            elif HYBRID_MODEL_ADDRESS != "":
                 self.model_address = HYBRID_MODEL_ADDRESS
-                if self.model_address == "":
-                    self.model_address = os.getenv("HYBRID_MODEL_ADDRESS")
-            account = self.web3.eth.account.from_key(privateKey)
+            else:
+                self.model_address = os.getenv("HYBRID_MODEL_ADDRESS")
+
+    def create_inference_model(self, private_key: str, rpc: str = "", model_address: str = ""):
+        logging.info(f"Creating inference model...")
+
+        self.create_web3(rpc)
+        if self.web3.is_connected():
+            if private_key is None or len(private_key) == 0:
+                private_key = os.getenv("PRIVATE_KEY")
+
+            self.get_model_address(model_address)
+            account = self.web3.eth.account.from_key(private_key)
             account_address = Web3.to_checksum_address(account.address)
 
             req = LLMInferRequest()
@@ -76,6 +120,6 @@ class HybridModelInference:
                 'nonce': self.web3.eth.get_transaction_count(account_address),
             })
 
-            signed_txn = self.web3.eth.account.sign_transaction(txn, privateKey)
+            signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
             txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
             logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
