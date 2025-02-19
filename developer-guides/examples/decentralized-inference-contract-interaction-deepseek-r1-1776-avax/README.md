@@ -1,3 +1,5 @@
+# Decentralized inference contract interaction with DeepSeek-R1 1776 on Avalanche
+
 We just deployed DeepSeek-R1 1776 on Avalanche as a smart contract: https://snowtrace.io/address/0x31c4e363d85452B85f8888c4744Ce00efcc2E0aF
 
 DeepSeek-R1 1776 is now unstoppable — running exactly as trained without any possibility of downtime, censorship, fraud, or third-party interference.
