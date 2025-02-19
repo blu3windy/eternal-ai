@@ -29,7 +29,6 @@ const validateParams = async ({
 }> => {
 
     // validate chain
-
     const chainID = ChainIDMap[chain];
     const supportedModels = await getSupportedModels(chainID);
     if (model) {
@@ -118,7 +117,7 @@ const createAgent = async ({
         return;
     }
 
-    console.log("Mint agent successfully: Agent ID: ", agentID);
+    logSuccess(`Create agent successfully: Your Agent ID: ${agentID}`);
 
     const ETERNALAI_API_KEY = process.env.ETERNALAI_API_KEY;
     const TWITTER_USERNAME = process.env.TWITTER_USERNAME;
@@ -334,12 +333,10 @@ const chatAgent = async ({
     const AGENT_UID = getAgentUID(chain, agentID.toString());
     const agentName = name || AGENT_UID;
 
-    console.log('Current working directory:', process.cwd());
+    // console.log('Current working directory:', process.cwd());
 
     switch (framework) {
         case Framework.EternalAI: {
-
-
             // Define the path to the command and arguments
             const command = 'sh';
             const args = ['./src/eternalai/chat.sh', agentID];
@@ -362,10 +359,7 @@ const chatAgent = async ({
 
             // Listen for standard output (stdout)
             child.stdout.on('data', (data) => {
-                if (data.length > 2) {
-                    console.log(`${data.toString()}`);
-                }
-                // console.log(`stdout data : ${data.length} ${data.toString()}`);
+                process.stdout.write(data);
             });
 
             // Listen for standard error (stderr)

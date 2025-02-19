@@ -162,26 +162,26 @@ const mintAgent = async ({
 
     // console.log("systemPrompt: ", systemPrompt);
 
-    logInfo(`Mint agent params:  ${{
-        rpcURL,
-        privKey,
-        agentSystemPrompPath,
-        agentContractAddress,
-        modelID,
-        // promptSchedulerAddress,
-        // gpuManagerAddress,
-        agentURI,
-        agentFee,
-        // agentPromptKey = "EternalAIAgent",
+    // logInfo(`Mint agent params:  ${{
+    //     rpcURL,
+    //     privKey,
+    //     agentSystemPrompPath,
+    //     agentContractAddress,
+    //     modelID,
+    //     // promptSchedulerAddress,
+    //     // gpuManagerAddress,
+    //     agentURI,
+    //     agentFee,
+    //     // agentPromptKey = "EternalAIAgent",
 
-    }}`)
-    logInfo(`rpcURL: ${rpcURL}`);
-    logInfo(`agentSystemPrompPath: ${agentSystemPrompPath}`);
+    // }}`)
+    // logInfo(`rpcURL: ${rpcURL}`);
+    // logInfo(`agentSystemPrompPath: ${agentSystemPrompPath}`);
 
-    logInfo(`agentContractAddress: ${agentContractAddress}`);
-    logInfo(`modelID: ${modelID}`);
-    logInfo(`agentURI: ${agentURI}`);
-    logInfo(`agentFee: ${agentFee}`);
+    // logInfo(`agentContractAddress: ${agentContractAddress}`);
+    // logInfo(`modelID: ${modelID}`);
+    // logInfo(`agentURI: ${agentURI}`);
+    // logInfo(`agentFee: ${agentFee}`);
 
 
 
@@ -206,7 +206,7 @@ const mintAgent = async ({
 
         // console.log("Mint price: ", mintPrice);
 
-        logInfo(`data: ${data}`);
+        // logInfo(`data: ${data}`);
 
 
         // Call mint function

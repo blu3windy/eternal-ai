@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { Framework, Model, Network } from './const';
 import { chatAgent, createAgent, listAgents, startAgent, stopAgent } from './handler';
+import { getModels } from './model_handler';
 
 // Initialize the commander object
 const program = new Command();
@@ -66,6 +67,20 @@ agentCmd
     .requiredOption('-n, --name <name>', 'The agent\'s name.')
     .action((options) => {
         chatAgent(options);
+    });
+
+
+// Define a parent command: agent
+const modelCmd = program
+    .command('model')
+    .description('Get models\' info.');
+
+modelCmd
+    .command('ls')
+    .description('List of supported models.')
+    .requiredOption('-c, --chain <chain>', '')
+    .action((options) => {
+        getModels(options);
     });
 
 

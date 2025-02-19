@@ -132,7 +132,7 @@ cd $current_dir/src/eternalai
 
 ### docker run to start agent
 
-docker run -d --name $agent_uid -v ./config.json:/app/eternal-ai/decentralized-inference/config.json -v ./local_contracts.json:/app/eternal-ai/decentralized-compute/worker-hub/env/local_contracts.json eternalai-agent
+docker run -d --name $agent_uid -v ./config.json:/app/eternal-ai/decentralized-inference/config.json -v ./local_contracts.json:/app/eternal-ai/decentralized-compute/worker-hub/env/local_contracts.json -p 8484:8484 eternalai-agent 
 # Step 3: start small service port 8484
 
 # ./eai-chat server &

@@ -27,7 +27,7 @@ const FilePath = "./agents/list.json";
 
 const insertAgent = async (agent: Agent) => {
     try {
-        logInfo(`FilePath: ${FilePath}`);
+        // logInfo(`FilePath: ${FilePath}`);
 
         if (!fs.existsSync(FilePath)) {
             fs.writeFileSync(FilePath, JSON.stringify([agent], null, 2))
@@ -44,6 +44,10 @@ const insertAgent = async (agent: Agent) => {
 }
 
 const getAgents = async (): Promise<Agent[]> => {
+    if (!fs.existsSync(FilePath)) {
+        return [];
+    }
+
     const data = fs.readFileSync(FilePath, 'utf8');
     const currentAgents: Agent[] = JSON.parse(data);
     // console.log("currentAgents: ", currentAgents);

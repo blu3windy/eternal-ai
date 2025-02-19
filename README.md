@@ -66,6 +66,21 @@ Run the command to install:
 sh install.sh
 ```
 
+Copy `.env.example` to `.env` and update the `.env` file:
+
+```
+cp .env.example .env
+```
+
+```
+PRIVATE_KEY=
+ETERNALAI_API_KEY=
+```
+For the PRIVATE_KEY, make sure your account has enough gas tokens on the blockchains where you intend to create agents.
+
+For the ETERNALAI_API_KEY, you can get it [here](https://eternalai.org/api).
+
+
 ### Create an agent 
 
 ```bash
