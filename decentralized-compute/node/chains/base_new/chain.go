@@ -27,6 +27,11 @@ type chain struct {
 	common          port.ICommon
 	workerHub       *prompt_scheduler.PromptScheduler
 	seizeMinerRoles map[string]bool
+	task            *model.Task
+}
+
+func (b *chain) SetTask(task *model.Task) {
+	b.task = task
 }
 
 func NewChain(ctx context.Context, c port.ICommon) (port.IChain, error) {
@@ -302,4 +307,28 @@ func (b *chain) SubmitTask(ctx context.Context, inferenceID *big.Int, result []b
 	_ = receipt
 
 	return tx, nil
+}
+
+func (b *chain) GetInferenceByMiner() ([]*big.Int, error) {
+
+	t, err := b.workerHub.GetInferenceByMiner(nil, b.common.GetWalletAddres())
+	if err != nil {
+		return nil, err
+	}
+	return t, nil
+}
+
+func (b *chain) GetInferenceInfo(opt *bind.CallOpts, inferID uint64) (*model.InferInfo, error) {
+	t, err := b.workerHub.GetInferenceInfo(opt, inferID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.InferInfo{
+		Value:   t.Value,
+		Output:  t.Output,
+		ModelId: t.ModelId,
+		Input:   t.Input,
+		Status:  t.Status,
+	}, nil
 }

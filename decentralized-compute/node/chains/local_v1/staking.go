@@ -1,15 +1,14 @@
-package base
+package local_v1
 
 import (
 	"context"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"math/big"
 
-	"solo/internal/contracts/staking_hub"
+	"solo/internal/contracts/v1/staking_hub"
 	"solo/internal/port"
 	"solo/pkg/eth"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -83,14 +82,9 @@ func (s *staking) StakeForWorker() (*types.Transaction, error) {
 		return nil, err
 	}
 
-	auth.Value = minStake
+	//auth.Value = minStake
 	tx := new(types.Transaction)
-	if s.common.GetModelAddress() != "" {
-		tx, err = s.stakingHub.RegisterMiner0(auth, 1, common.HexToAddress(s.common.GetModelAddress()))
-		if err != nil {
-			return nil, err
-		}
-	} else {
+	if true {
 		tx, err = s.stakingHub.RegisterMiner(auth, 1)
 		if err != nil {
 			return nil, err

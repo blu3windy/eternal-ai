@@ -2,6 +2,10 @@ package common
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"math/big"
+	"solo/pkg"
 
 	"solo/config"
 	"solo/internal/contracts/erc20"
@@ -22,10 +26,12 @@ type common struct {
 	gasLimit     uint64
 	modelAddress string
 
-	stakingHubAddress    string
-	erc20contractAddress string
-	workerHubAddress     string
-	erc20contract        *erc20.Erc20
+	stakingHubAddress      string
+	erc20contractAddress   string
+	workerHubAddress       string
+	loadBalancerAddress    string
+	modelCollectionAddress string
+	erc20contract          *erc20.Erc20
 }
 
 func (c *common) GetWalletAddres() ethCommon.Address {
@@ -134,6 +140,10 @@ func NewCommon(ctx context.Context, cnf *config.Config) (port.ICommon, error) {
 		return nil, err
 	}
 
+	if cnf.Account == "" {
+		return nil, errors.New(fmt.Sprintf("ACCOUNT_PRIV is empty. Use %s to set it", pkg.COMMAND_CONFIG))
+	}
+
 	if err = c.account(*cnf); err != nil {
 		return nil, err
 	}
@@ -141,6 +151,8 @@ func NewCommon(ctx context.Context, cnf *config.Config) (port.ICommon, error) {
 	c.workerHubAddress = cnf.WorkerHubAddress
 	c.stakingHubAddress = cnf.StakingHubAddress
 	c.erc20contractAddress = cnf.Erc20Address
+	c.loadBalancerAddress = cnf.ModelLoadBalancerAddress
+	c.modelCollectionAddress = cnf.ModelCollectionAddress
 
 	if err = c.connectContractErc20(); err != nil {
 		return nil, err
@@ -151,4 +163,18 @@ func NewCommon(ctx context.Context, cnf *config.Config) (port.ICommon, error) {
 
 func (b *common) GetConfig() *config.Config {
 	return b.cnf
+}
+
+func (b *common) Erc20Balance() (*big.Int, error) {
+	erc20Contract := b.GetErc20contract()
+	bl, err := erc20Contract.BalanceOf(nil, b.GetWalletAddres())
+	return bl, err
+}
+
+func (b *common) GetModelCollectionAddress() ethCommon.Address {
+	return ethCommon.HexToAddress(b.modelCollectionAddress)
+}
+
+func (b *common) GetModelLoadBalancerAddress() ethCommon.Address {
+	return ethCommon.HexToAddress(b.loadBalancerAddress)
 }

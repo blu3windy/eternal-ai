@@ -1,4 +1,4 @@
-package abstract_testnet
+package local
 
 import (
 	"context"

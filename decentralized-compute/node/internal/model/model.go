@@ -74,6 +74,7 @@ type LLMInferRequest struct {
 	Seed        uint64            `json:"seed"`
 	MaxToken    uint64            `json:"max_tokens"`
 	Temperature float32           `json:"temperature"`
+	Stream      bool              `json:"stream"`
 }
 
 type LLMInferMessage struct {
@@ -82,28 +83,74 @@ type LLMInferMessage struct {
 }
 
 type LLMInferResponse struct {
-	Id      string `json:"id"`
-	Object  string `json:"object"`
-	Created int    `json:"created"`
-	Model   string `json:"model"`
-	Choices []struct {
-		Index   int `json:"index"`
-		Message struct {
-			Role      string        `json:"role"`
-			Content   string        `json:"content"`
-			ToolCalls []interface{} `json:"tool_calls"`
-		} `json:"message"`
-		Logprobs     interface{} `json:"logprobs"`
-		FinishReason string      `json:"finish_reason"`
-		StopReason   interface{} `json:"stop_reason"`
-	} `json:"choices"`
-	Usage struct {
+	Id      string           `json:"id"`
+	Object  string           `json:"object"`
+	Created int              `json:"created"`
+	Model   string           `json:"model"`
+	Choices []LLMInferChoice `json:"choices"`
+	Usage   struct {
 		PromptTokens        int         `json:"prompt_tokens"`
 		TotalTokens         int         `json:"total_tokens"`
 		CompletionTokens    int         `json:"completion_tokens"`
 		PromptTokensDetails interface{} `json:"prompt_tokens_details"`
 	} `json:"usage"`
 	PromptLogprobs interface{} `json:"prompt_logprobs"`
+	IsStop         bool        `json:"is_stop"`
+	OnchainData    struct {
+		InferId       uint64   `json:"infer_id"`
+		PbftCommittee []string `json:"pbft_committee"`
+		Proposer      string   `json:"proposer"`
+		InferTx       string   `json:"infer_tx"`
+		ProposeTx     string   `json:"propose_tx"`
+	} `json:"onchain_data"`
+}
+
+type LLMInferChoice struct {
+	Index   int `json:"index"`
+	Message struct {
+		Role      string        `json:"role"`
+		Content   string        `json:"content"`
+		ToolCalls []interface{} `json:"tool_calls"`
+	} `json:"message"`
+	Logprobs     interface{} `json:"logprobs"`
+	FinishReason string      `json:"finish_reason"`
+	StopReason   interface{} `json:"stop_reason"`
+}
+
+type LLMInferStreamResponse struct {
+	Id      string `json:"id"`
+	Object  string `json:"object"`
+	Created int    `json:"created"`
+	Model   string `json:"model"`
+	Choices []struct {
+		Index int `json:"index"`
+		Delta struct {
+			Content string `json:"content"`
+			Role    string `json:"role"`
+		} `json:"delta"`
+		Logprobs     interface{} `json:"logprobs"`
+		FinishReason interface{} `json:"finish_reason"`
+	} `json:"choices"`
+}
+
+type StreamingData struct {
+	Data        *LLMInferStreamResponse
+	Err         error
+	Stop        bool
+	InferenceID string
+	StreamID    int
+}
+
+type StreamDataChannel struct {
+	Data    *LLMInferResponse `json:"data"`
+	Err     error             `json:"err"`
+	InferID uint64            `json:"infer_id"`
+}
+
+type Response struct {
+	ResultURI string `json:"result_uri"`
+	Storage   string `json:"storage"`
+	Data      string `json:"data"`
 }
 
 type Assiment struct {
@@ -138,6 +185,37 @@ type Event struct {
 	Input             []byte
 	Flag              bool
 	Raw               types.Log // Blockchain specific contextual infos
+}
+
+type InferInfo struct {
+	Value          *big.Int
+	ModelId        uint32
+	SubmitTimeout  *big.Int
+	Status         uint8
+	Creator        common.Address
+	ProcessedMiner common.Address
+	Input          []byte
+	Output         []byte
+}
+
+type InferInfoChan struct {
+	Data *InferInfo
+	Err  error
+}
+
+type MinerInfo struct {
+	Address        string `json:"address"`
+	Tasks          int    `json:"tasks"`
+	ProcessedTasks int    `json:"processed_tasks"`
+	ModelName      string `json:"model_name"`
+	Balance        string `json:"balance"`
+	Reward         string `json:"reward"`
+	CurrentBlock   uint64 `json:"current_block"`
+	ClusterID      string `json:"cluster_id"`
+
+	//TODO - soon
+	Status       string `json:"status"`
+	StakedAmount string `json:"staked_amount"`
 }
 
 type Task struct {

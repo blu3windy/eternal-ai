@@ -1,21 +1,20 @@
-package base_new
+package local
 
 import (
 	"context"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/core/types"
 	"go.uber.org/zap"
 	"math/big"
 	"solo/internal/contracts/gpu_manager"
+	"solo/internal/port"
+	"solo/pkg"
+	"solo/pkg/eth"
 	"solo/pkg/logger"
 	"strconv"
 	"strings"
-
-	"solo/internal/port"
-	"solo/pkg/eth"
-
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type staking struct {
@@ -83,7 +82,7 @@ func (s *staking) StakeForWorker() (*types.Transaction, error) {
 
 	err = eth.ApproveERC20(
 		ctx, s.common.GetClient(), s.common.GetPrivateKey(), s.common.GetStakingHubAddress(),
-		s.common.GetErc20contractAddress(), int64(s.common.GetGasLimit()),
+		s.common.GetErc20contractAddress(), int64(pkg.LOCAL_CHAIN_GAS_PRICE),
 	)
 	if err != nil {
 		logger.GetLoggerInstanceFromContext(ctx).Info("StakeForWorker",

@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"flag"
+	"go.uber.org/zap"
 	_ "net/http/pprof"
+	"solo/internal/factory"
 	"time"
 
 	"solo/pkg"
 
 	"solo/config"
 	"solo/pkg/logger"
-	"solo/pkg/miner"
 )
 
 var configFile string
@@ -25,7 +26,16 @@ func main() {
 		logger.AtLog.Fatal(err)
 	}
 
-	taskWatcher, err := miner.NewMiner(cnf)
+	logger.GetLoggerInstanceFromContext(context.Background()).Info("ReadConfig",
+		zap.Any("cfg", cnf),
+	)
+
+	err = cnf.Verify()
+	if err != nil {
+		logger.AtLog.Fatal(err)
+	}
+
+	taskWatcher, err := factory.NewMiner(cnf)
 	if err != nil {
 		logger.AtLog.Fatal(err)
 	}
@@ -33,7 +43,7 @@ func main() {
 goto_here:
 	verifed := taskWatcher.Verify()
 	if !verifed {
-		err := taskWatcher.MakeVerify()
+		_, _, err := taskWatcher.MakeVerify()
 		if err != nil {
 			logger.AtLog.Error(err)
 		}
