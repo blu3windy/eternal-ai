@@ -135,6 +135,9 @@ class GraphKnowledge:
             }
 
             for item in json_result:
+                if not isinstance(item, dict):
+                    continue
+
                 xx = item.get("triplets", [])
 
                 if not isinstance(xx, list):
