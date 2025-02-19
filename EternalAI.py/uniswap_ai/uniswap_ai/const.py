@@ -1,6 +1,6 @@
 UNI_SWAP_RPC_URL = 'https://eth.llamarpc.com'
-HYBRID_MODEL_RPC_URL = ''
-HYBRID_MODEL_ADDRESS = ""
+HYBRID_MODEL_RPC_URL = "https://bsc.nodereal.io"
+HYBRID_MODEL_ADDRESS = "0x644292a7e238dd4eb7fc7f4c4afd8eb3c3d4111d"
 
 HYBRID_MODEL_ABI = [
     {
