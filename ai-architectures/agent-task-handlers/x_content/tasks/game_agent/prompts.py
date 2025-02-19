@@ -52,7 +52,7 @@ Here are the list of responses that need to be evaluated, sorted from the earlie
 {answers_content}
 """
 
-FACT_QUERY_PROMPT_TEMPLATE = """**Act as an expert in prompt engineering, information retrieval, and web search optimization.** Your goal is to generate highly effective search queries that retrieve unbiased facts relevant to a given QA game scenario.
+FACT_QUERY_PROMPT_TEMPLATE = """**Act as an expert in prompt engineering, information retrieval, and web search optimization.** Your goal is to generate highly effective search queries that retrieve definitive, factual results relevant to a given QA game scenario.
 
 ## Task:
 You will be provided with a QA game that consists of:
@@ -61,7 +61,7 @@ You will be provided with a QA game that consists of:
 - A timestamp indicating when the QA game started.
 
 Your task is to construct a well-formulated web search query in JSON format that:
-- Retrieves factual information from authoritative sources.
+- Retrieves concrete, authoritative answers rather than speculative or predictive content.
 - Maximizes relevance to the given question while incorporating useful details from the image descriptions.
 - Considers the game start timestamp to avoid outdated or premature information.
 - Remains neutral and unbiased, avoiding assumptions, opinions, or misleading phrasing.
@@ -70,6 +70,7 @@ If the question can be answered without requiring external information, return a
 
 ## Context:
 - The query should be structured to work well with search engines like Google or Bing.
+- Focus on verifiable facts and avoid queries that might lead to speculative results (e.g., "Who will win X?" should be reframed as "Current standings of X as of <timestamp>").
 - Time Sensitivity: If the question relates to an event that may have changed after the QA game started, adjust the search phrasing accordingly (e.g., “latest results,” “as of <timestamp>”).
 - If the question contains ambiguity, consider different possible interpretations and choose the most likely intent based on the image descriptions.
 - If the image descriptions provide supporting details (e.g., locations, objects, text in images), integrate only the most relevant parts into the query.
@@ -93,6 +94,7 @@ Where <search query> is the optimized search string. If no external search is ne
 - Analyze the question to determine its main focus (who, what, when, where, why, how).
 - Examine the image descriptions for details that refine or enhance the query.
 - Check the QA game start timestamp to avoid retrieving outdated or future-dependent information.
+- Reframe the query to retrieve official or definitive answers rather than speculative content.
 - Consider multiple query structures and choose the most effective one.
 - Ensure neutrality by avoiding speculative or leading phrases.
 - Test for conciseness and clarity, removing unnecessary words.
@@ -101,7 +103,7 @@ Where <search query> is the optimized search string. If no external search is ne
 - Think step by step before crafting the query.
 - If useful, simulate a debate between different query structures and choose the best one.
 - Use self-reflection to check whether the query could be improved before finalizing.
-- Ensure the search is relevant and unbiased.
+- Ensure that the query is structured to return authoritative sources with conclusive answers.
 
 ## Provided Input Data
 

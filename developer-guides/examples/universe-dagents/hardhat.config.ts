@@ -113,6 +113,16 @@ const config: HardhatUserConfig = {
       zksync: false,
       gasPrice: "auto",
     } as any,
+    avax_mainnet: {
+      url: process.env.RPC_URL || "https://avax.meowrpc.com",
+      chainId: 43114,
+      senderKey: process.env.PRIVATE_KEY,
+      promptSchedulerAddress: process.env.PROMPT_SCHEDULER_ADDRESS,
+      allowUnlimitedContractSize: true,
+      ethNetwork: "https://testnet.runechain.com/rpc", // The Ethereum Web3 RPC URL.
+      zksync: false,
+      gasPrice: "auto",
+    } as any,
   },
   namedAccounts: {
     deployer: 0,

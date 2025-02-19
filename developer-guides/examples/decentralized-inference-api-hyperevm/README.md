@@ -69,10 +69,9 @@ With Eternal AI's Decentralized Inference, everything is onchain-verifiable.
 
 Let's look at the onchain prompt transaction on HyperEVM Explorer. You can verify that the prompt ran on DeepSeek-R1. You can also verify the system prompt and the user prompt.
 
-https://HyperEVM.cloud.blockscout.com/tx/0x207b26c3aca80885ac9d60e2fa38e3674e2b58ec7744535c4c18dd791734930e
+https://hyperliquid.cloud.blockscout.com/tx/0x207b26c3aca80885ac9d60e2fa38e3674e2b58ec7744535c4c18dd791734930e
 
 <img width="622" alt="image" src="https://github.com/user-attachments/assets/4518b545-a5d1-464a-b52f-2a39c6dc1e29" />
-
 
 
 
@@ -80,7 +79,7 @@ https://HyperEVM.cloud.blockscout.com/tx/0x207b26c3aca80885ac9d60e2fa38e3674e2b5
 
 Now, let's see the onchain response transaction on HyperEVM Explorer. You can see the actual response content with the thinking process and the final answer. Everything is onchain and verifiable.
 
-https://HyperEVM.cloud.blockscout.com/tx/0x38e15c057cbe43d9f529042efa77276d2fe52077f7c1613804d5695976236f07
+https://hyperliquid.cloud.blockscout.com/tx/0x38e15c057cbe43d9f529042efa77276d2fe52077f7c1613804d5695976236f07
 
 <img width="1674" alt="image" src="https://github.com/user-attachments/assets/f39acb55-97bf-49aa-b24d-e366337e347e" />
 
