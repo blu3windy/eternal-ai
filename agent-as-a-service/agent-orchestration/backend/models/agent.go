@@ -59,8 +59,8 @@ const (
 	AgentInfoAgentTypeKnowledgeBase AgentInfoAgentType = 2
 	AgentInfoAgentTypeEliza         AgentInfoAgentType = 3
 	AgentInfoAgentTypeZerepy        AgentInfoAgentType = 4
-	AgentInfoAgentTypeDeveloper     AgentInfoAgentType = 5
-	AgentInfoAgentTypeUtility       AgentInfoAgentType = 6
+	AgentInfoAgentTypeUtility       AgentInfoAgentType = 5
+	AgentInfoAgentTypeInfra         AgentInfoAgentType = 6
 )
 
 type (
