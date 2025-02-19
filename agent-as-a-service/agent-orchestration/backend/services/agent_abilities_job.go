@@ -107,7 +107,8 @@ func (s *Service) JobAgentSnapshotPostCreate(ctx context.Context) error {
 							models.TRON_CHAIN_ID,
 							models.MODE_CHAIN_ID,
 							models.ZETA_CHAIN_ID,
-							models.IP_CHAIN_ID,
+							models.STORY_CHAIN_ID,
+							models.HYPE_CHAIN_ID,
 						},
 					},
 					`agent_snapshot_missions.infer_at is null

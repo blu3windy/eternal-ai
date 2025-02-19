@@ -16,6 +16,7 @@ type CreateKnowledgeRequest struct {
 	DepositAddress       string  `json:"-" form:"-"`
 	ThumbnailUrl         string  `json:"thumbnail_url" form:"thumbnail_url"`
 	SolanaDepositAddress string  `json:"-" form:"-"`
+	DomainUrl            string  `json:"domain_url" form:"domain_url"`
 }
 
 type UpdateKnowledgeRequest struct {
@@ -24,6 +25,7 @@ type UpdateKnowledgeRequest struct {
 	NetworkID   uint64  `json:"network_id"`
 	UserAddress string  `json:"user_address" form:"-"`
 	Files       []*File `json:"files" form:"files"`
+	DomainUrl   string  `json:"domain_url" form:"domain_url"`
 }
 
 type File struct {
@@ -60,6 +62,7 @@ type KnowledgeBase struct {
 	UsageCount             int64                `json:"usage_count"`
 	ChargeMore             float64              `json:"charge_more"`
 	FilecoinHash           string               `json:"filecoin_hash"`
+	DomainUrl              string               `json:"domain_url"`
 }
 
 type KnowledgeBaseFile struct {
