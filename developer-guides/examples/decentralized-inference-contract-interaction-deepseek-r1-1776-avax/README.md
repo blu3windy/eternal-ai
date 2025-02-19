@@ -58,7 +58,7 @@ https://snowtrace.io/tx/0xcbd8ad42218f29ad59a1d98a28ac73863fe658a38a5789760e2eac
 
 ## STEP 6: Verify the onchain response transaction
 
-Now, let's look at the response transaction on HyperEVM Explorer. You can see the actual response content. Everything is onchain and verifiable.
+Now, let's look at the response transaction on Avalanche Explorer. You can see the actual response content. Everything is onchain and verifiable.
 
 https://snowtrace.io/tx/0xecb2e1c41dbef13d8148989b745fc544f6d82268408bd70309d246fee29c4471
 
