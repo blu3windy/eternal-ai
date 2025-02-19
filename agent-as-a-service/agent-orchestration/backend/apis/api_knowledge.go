@@ -223,6 +223,10 @@ func (s *Server) updateKnowledge(c *gin.Context) {
 		updateMap["description"] = req.Description
 	}
 
+	if req.DomainUrl != "" {
+		updateMap["domain_url"] = req.DomainUrl
+	}
+
 	if req.NetworkID != 0 {
 		updateMap["network_id"] = req.NetworkID
 	}

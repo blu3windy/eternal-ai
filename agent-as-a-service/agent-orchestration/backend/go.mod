@@ -41,6 +41,7 @@ require (
 	github.com/sashabaranov/go-openai v1.36.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/viper v1.19.0
+	github.com/stretchr/testify v1.9.0
 	go.mongodb.org/mongo-driver v1.17.1
 	go.uber.org/zap v1.27.0
 	google.golang.org/api v0.187.0
@@ -206,7 +207,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stephenlacy/go-ethereum-hdwallet v0.0.0-20230913225845-a4fa94429863 // indirect
 	github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/temoto/robotstxt v1.1.1 // indirect
