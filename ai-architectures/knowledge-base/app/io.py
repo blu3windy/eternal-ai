@@ -10,7 +10,7 @@ import os
 import zipfile
 from . import constants as const
 from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling.backend.docling_parse_v2_backend import DoclingParseV2DocumentBackend
+from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
 from docling.document_converter import DocumentConverter, FormatOption
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
 import numpy as np
@@ -142,7 +142,7 @@ SUPORTED_DOCUMENT_FORMATS = [
 DOCUMENT_FORMAT_OPTIONS = {
     InputFormat.PDF: FormatOption(
         pipeline_cls=StandardPdfPipeline,
-        backend=DoclingParseV2DocumentBackend,
+        backend=PyPdfiumDocumentBackend,
         pipeline_options=PdfPipelineOptions(
             do_table_structure=False,
             do_ocr=False
@@ -162,7 +162,7 @@ def docling_document_conversion_wrapper(source):
 
     return res.model_dump()
 
-@limit_asyncio_concurrency(1)
+@limit_asyncio_concurrency(2)
 async def get_doc_from_url(url) -> LiteConverstionResult:
     res = await sync2async_in_subprocess(docling_document_conversion_wrapper)(source=url)
     return LiteConverstionResult.model_validate(res)
