@@ -11,6 +11,9 @@ function Home() {
         <li>
           <a href="/package-eternalaijs">Package Eternal AI js</a>
         </li>
+        <li>
+          <a href="/package-interact">Package Interact</a>
+        </li>
       </ul>
     </>
   );
