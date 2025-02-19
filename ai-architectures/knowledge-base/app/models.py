@@ -10,6 +10,11 @@ class EmbeddedItem(BaseModel):
     embedding: Optional[List[float]] = None
     raw_text: str
     error: Optional[str] = None
+
+class GraphEmbeddedItem(EmbeddedItem):
+    head: int
+    tail: int
+    kb_postfix: str
     
 class APIStatus(str, Enum):
     OK = "ok"
@@ -146,9 +151,21 @@ class ChunkScore(BaseModel):
     chunk_id: str
 
 class ResponseMessage(BaseModel, Generic[_generic_type]):
-    result: _generic_type
+    result: _generic_type = None
     error: Optional[str] = None
     status: APIStatus = APIStatus.OK
+    
+    @model_validator(mode="after")
+    def refine_status(self):
+        if self.error is not None:
+            self.status = APIStatus.ERROR
+            
+        return self
+
+class InsertionCounter(object):
+    def __init__(self):
+        self.total = 0
+        self.fails = 0
 
 class InsertResponse(BaseModel):
     """

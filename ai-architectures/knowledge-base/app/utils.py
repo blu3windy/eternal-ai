@@ -7,9 +7,14 @@ from typing import Generator, AsyncGenerator
 import tempfile
 import os
 from functools import wraps
+from pymilvus import Collection, CollectionSchema
 from starlette.concurrency import run_in_threadpool
 from app.models import EmbeddingModel, SimMetric
 from asyncio import Semaphore as AsyncSemaphore
+import traceback
+import logging
+logger = logging.getLogger(__name__)
+import time
 
 
 def get_content_checksum(data: Union[bytes, str]) -> str:
@@ -101,3 +106,48 @@ async def iter_file(file_name: str):
                 break
 
             yield chunk
+            
+
+def retry(func: Callable, max_retry=5, first_interval=10, interval_multiply=1) -> Callable:
+    def sync_wrapper(*args, **kwargs):
+        interval = first_interval
+        for iter in range(max_retry + 1):
+            try:
+                result = func(*args, **kwargs)
+                return result
+            except Exception as err:
+                traceback.print_exc()
+                logger.error(
+                    f"Function {func.__name__} failed with error '{err}'. Retry attempt {iter}/{max_retry}"
+                )
+
+            time.sleep(interval)
+            interval *= interval_multiply
+
+        logger.error(f"Function {func.__name__} failed after all retry.")
+        raise Exception(f"Function {func.__name__} failed after all retry.")
+
+    async def async_wrapper(*args, **kwargs):
+        interval = first_interval
+        for iter in range(max_retry + 1):
+            try:
+                result = await func(*args, **kwargs)
+                return result
+            except Exception as err:
+                traceback.print_exc()
+                logger.error(
+                    f"Function {func.__name__} failed with error '{err}'. Retry attempt {iter}/{max_retry}"
+                )
+            await asyncio.sleep(interval)
+            interval *= interval_multiply
+
+        logger.error(f"Function {func.__name__} failed after all retry.")
+        raise Exception(f"Function {func.__name__} failed after all retry.")
+
+    return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+
+
+def is_valid_schema(collection_name: str, required_schema: CollectionSchema):
+    collection = Collection(collection_name)
+    schema = collection.schema
+    return schema == required_schema
