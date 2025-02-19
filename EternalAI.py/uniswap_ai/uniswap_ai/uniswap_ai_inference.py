@@ -9,7 +9,7 @@ from web3.middleware import geth_poa_middleware
 import os
 import simplejson as json
 
-from uniswap_ai.const import HYBRID_MODEL_RPC_URL, HYBRID_MODEL_ABI, HYBRID_MODEL_ADDRESS
+from uniswap_ai.const import HYBRID_MODEL_RPC_URL, HYBRID_MODEL_ABI, HYBRID_MODEL_ADDRESS, AGENT_ABI
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -59,13 +59,40 @@ class AgentInfernce:
             else:
                 self.agent_address = os.getenv("HYBRID_MODEL_ADDRESS")
 
-    def create_inference_agent(self, private_key: str, rpc: str = ""):
+    def create_inference_agent(self, private_key: str, rpc: str = "", agent_address: str = "", model: str = ""):
         logging.info(f"Creating inference agent...")
 
         self.create_web3(rpc)
         if self.web3.is_connected():
             if private_key is None or len(private_key) == 0:
                 private_key = os.getenv("PRIVATE_KEY")
+
+            self.get_agent_address()
+            account = self.web3.eth.account.from_key(private_key)
+            account_address = Web3.to_checksum_address(account.address)
+
+            req = LLMInferRequest()
+            # req.model = "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
+            if model == "":
+                raise Exception("invalid model name")
+            req.model = model
+            req.messages = [LLMInferMessage(content="Can you tell me about BTC", role="user"),
+                            LLMInferMessage(content="You are a BTC master", role="system")]
+            json_request = json.dumps(asdict(req))
+            agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
+                                                    abi=AGENT_ABI)
+
+            func = agent_contract.functions.prompt(json_request.encode("utf-8"))
+            txn = func.build_transaction({
+                'from': account_address,
+                # 'gas': 200000,
+                # 'gasPrice': web3.toWei('50', 'gwei'),
+                'nonce': self.web3.eth.get_transaction_count(account_address),
+            })
+
+            signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
+            txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
 
 
 @dataclass
@@ -92,7 +119,7 @@ class HybridModelInference:
             else:
                 self.model_address = os.getenv("HYBRID_MODEL_ADDRESS")
 
-    def create_inference_model(self, private_key: str, rpc: str = "", model_address: str = ""):
+    def create_inference_model(self, private_key: str, rpc: str = "", model_address: str = "", model: str = ""):
         logging.info(f"Creating inference model...")
 
         self.create_web3(rpc)
@@ -105,7 +132,10 @@ class HybridModelInference:
             account_address = Web3.to_checksum_address(account.address)
 
             req = LLMInferRequest()
-            req.model = "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
+            # req.model = "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
+            if model == "":
+                raise Exception("invalid model name")
+            req.model = model
             req.messages = [LLMInferMessage(content="Can you tell me about BTC", role="user"),
                             LLMInferMessage(content="You are a BTC master", role="system")]
             json_request = json.dumps(asdict(req))
