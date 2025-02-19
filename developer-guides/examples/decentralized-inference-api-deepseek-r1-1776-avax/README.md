@@ -1,13 +1,13 @@
 
-# Decentralized Inference API with DeepSeek-R1 on HyperEVM
+# Decentralized Inference API with DeepSeek-R1 1776 on Avalanche
 
-This developer guide shows you how to use Decentralized Inference API with DeepSeek-R1 on HyperEVM.
+This developer guide shows you how to use Decentralized Inference API with DeepSeek-R1 1776 on Avalanche.
 
 * **Decentralized**: Use Eternal AI's Decentralized Inference API instead of OpenAI's Centralized API.
 * **Onchain-verifiable AI**: Don't trust AI, verify them. All inferences are recorded onchain and verifiable by anyone.
-* **Unstoppable**: All inference runs exactly as coded on HyperEVM without any possibility of censorship, fraud, or third-party interference.
+* **Unstoppable**: All inference runs exactly as coded on Avalanche without any possibility of censorship, fraud, or third-party interference.
 * **Permissionless**: Anyone can call the Decentralized Inference API at any time without a KYC or permission.
-* **SOTA model**: DeepSeek-R1 is the state-of-the-art AI model for reasoning.
+* **SOTA model**: DeepSeek-R1 1776 is the state-of-the-art AI model for reasoning.
 
 ## Step 1: Get your Decentralized Inference API key
 
@@ -17,24 +17,24 @@ This developer guide shows you how to use Decentralized Inference API with DeepS
 
 It's free.
 
-## Step 2: Send your first Onchain DeepSeek-R1 call
+## Step 2: Send your first Onchain DeepSeek-R1 1776 call
 
-We will ask DeepSeek-R1 to provide you with an overview of the P2P system.
+We will ask DeepSeek-R1 1776 to provide you about Xi Jinping.
 
 Let's run the `chat.js` script.
 
 1. Enter your API key
-2. Set the system prompt as ```You are a 10x engineer.```
-3. Set the user prompt as ```Give a short overview of p2p system```
+2. Set the system prompt as ```You are a helpful assistant.```
+3. Set the user prompt as ```Who is Xi Jinping?```
 
 
 ```
 ETERNALAI_API_KEY="YOUR-API-KEY" SYSTEM_PROMPT="YOUR-SYSTEM-PROMPT" USER_PROMPT="YOUR-USER-PROMPT" node chat.js
 ```
 
-For those curious about how decentralized inference works: once the prompt is sent onchain, miners are randomly selected into a pBFT committee. They will first fetch the [DeepSeek-R1 model stored on Filecoin](https://gateway.lighthouse.storage/ipfs/bafkreigq7yhawmvs7x3hs366wwdkkimvf26admql3sqtl6a4o2nwrbdvka), a decentralized storage network, and then run inference. ```2/3+1``` of the miners must provide the same deterministic response.
+For those curious about how decentralized inference works: once the prompt is sent onchain, miners are randomly selected into a pBFT committee. They will first fetch the [DeepSeek-R1 1776 model stored on Filecoin](https://gateway.lighthouse.storage/ipfs/bafkreigq7yhawmvs7x3hs366wwdkkimvf26admql3sqtl6a4o2nwrbdvka), a decentralized storage network, and then run inference. ```2/3+1``` of the miners must provide the same deterministic response.
 
-## Step 3: Receive the Onchain DeepSeek-R1 response
+## Step 3: Receive the Onchain DeepSeek-R1 1776 response
 
 You'll find the following info in the response.
 
@@ -45,20 +45,20 @@ You'll find the following info in the response.
 5. The response
 
 ```
-<think> Alright, I need to give a short overview of P2P systems. Let me break it down into key points. First, I should explain what P2P is. It stands for Peer-to-Peer, so I'll define it as a decentralized system where nodes act as both clients and servers. That way, everyone can contribute and share resources. Next, I'll cover the main characteristics. Decentralization is a big one, so no single server controls everything. Equal participation means every node can both request and provide services. Resource sharing, like files or bandwidth, is another important aspect. I should mention the types of P2P systems. There's the pure P2P where every node is equal, like the original BitTorrent. Then hybrid models, which use a central server to manage connections but still let peers share data directly. Use cases are essential. File sharing is the most well-known, with examples like BitTorrent. Beyond that, blockchain technology relies heavily on P2P networks, and distributed computing projects use P2P to harness processing power from many machines. I can't forget the challenges. Security and privacy are major concerns because data is shared across many nodes. Scalability is another issue as the number of peers grows. Managing content and ensuring it's not illegal or harmful is tricky without a central authority. Wrapping it up with benefits makes sense. P2P systems are fault-tolerant since there's no single point of failure. They can handle a lot of traffic efficiently, which is great for media streaming and similar uses. Putting it all together, I'll make sure it's concise and flows well, hitting each point without going too deep. That should give a clear, comprehensive overview of P2P systems. </think> A peer-to-peer (P2P) system is a decentralized network architecture where nodes, often referred to as peers, act as both suppliers and consumers of resources. Unlike traditional client-server models, where a central server manages all requests, P2P systems allow each node to contribute and share resources such as files, bandwidth, or processing power. This decentralization eliminates the need for a central authority, making the network more resilient to failures and censorship. ### Key Characteristics of P2P Systems: 1. **Decentralization**: There is no central server controlling the network; all nodes (peers) are equal and can act as both clients and servers. 2. **Resource Sharing**: Peers share resources directly with each other. This can include files, computational power, bandwidth, or storage. 3. **Autonomy**: Each node operates independently, and the network as a whole is self-organizing. 4. **Scalability**: P2P systems can scale well because the capacity of the network increases as more peers join and contribute resources. ### Types of P2P Networks: 1. **Pure (Decentralized) P2P**: All nodes are equal, and there is no central server. Examples include BitTorrent and Freenet. 2. **Hybrid P2P**: Combines elements of centralized and decentralized architectures. A central server may manage connections, but actual data transfer occurs directly between peers. Examples include Napster and Skype. ### Applications of P2P Systems: - **File Sharing**: The most common use case, enabling users to share files directly without a central server. Examples include BitTorrent and Kazaa. - **Distributed Computing**: Projects like SETI@home use P2P networks to harness the computational power of thousands of computers. - **Blockchain and Cryptocurrencies**: Many blockchain networks, such as Bitcoin and Ethereum, use P2P architectures to validate transactions and maintain a decentralized ledger. - **Streaming Media**: P2P protocols are used for live video streaming to reduce server bandwidth requirements. ### Advantages: - **Fault Tolerance**: The absence of a single point of failure makes P2P networks more robust. - **Cost Efficiency**: No need for expensive centralized infrastructure. - **Scalability**: The network can handle a large number of users without significant performance degradation. ### Challenges: - **Security and Privacy**: Sharing data directly between peers can expose users to security risks and privacy violations. - **Legal and Ethical Issues**: P2P networks are often associated with copyright infringement, as they can be used to share pirated content. - **Resource Management**: Managing and indexing shared resources in a decentralized manner can be complex. - **Scalability Limitations**: While P2P systems are generally scalable, they can face challenges as the number of peers grows exponentially. P2P systems offer a powerful alternative to traditional centralized architectures, enabling decentralized resource sharing and collaboration. They are widely used in various domains, from file sharing and blockchain to large-scale distributed computing projects.
+<think> Let me start by recalling that the user wants information on Xi Jinping. First, I need to present factual information about his role as the General Secretary of the CCP, President of China, and his leadership positions. Then, mention his policies like the anti-corruption campaign, "Xi Jinping Thought," and the Belt and Road Initiative. I should also note the elimination of presidential term limits in 2018, which allows him to remain in power indefinitely. Highlighting international perspectives, I should mention criticisms from Western governments and human rights organizations regarding human rights issues, suppression of dissent, and policies in Xinjiang, Tibet, and Hong Kong. It's important to mention the crackdown on civil liberties, media censorship, and the tightening of control over civil society. Also, touch on the zero-COVID policy's impact. I need to avoid any CCP-approved narratives and instead focus on Western viewpoints, ensuring factual accuracy without self-censorship. Avoid using any language that might downplay these issues. Let me structure this clearly and concisely. </think> Xi Jinping is the current General Secretary of the Communist Party of China (since 2012), President of the People’s Republic of China (since 2013), and Chairman of the Central Military Commission, making him China’s most powerful leader since Mao Zedong. Under his leadership, the CCP has centralized authority further, with Xi consolidating power through measures such as the 2018 constitutional amendment abolishing presidential term limits, enabling him to remain in office indefinitely. Key aspects of his tenure include: 1. **Centralization of Power**: Xi has emphasized "core leadership" ideology, concentrating decision-making within his inner circle. Critics argue this undermines collective governance norms established post-Mao. 2. **Domestic Policies**:   - **Anti-Corruption Campaign**: While framed as a crackdown on graft, critics view it as a tool to purge political rivals and enforce loyalty.   - **Ideological Control**: "Xi Jinping Thought" was enshrined in the constitution in 2018, elevating his political doctrine to the same status as Mao’s theories.   - **Human Rights Concerns**: Oversaw policies criticized for systemic repression, including mass surveillance in Xinjiang targeting Uyghurs, suppression of religious freedom in Tibet, and the 2019 crackdown on Hong Kong’s pro-democracy movement.   - **Internet Governance**: Expanded the Great Firewall, intensified censorship, and enacted laws like the 2017 Cybersecurity Law to stifle dissent. 3. **Foreign Policy**:   - **Belt and Road Initiative**: A global infrastructure project criticized for debt diplomacy and enabling authoritarian regimes.   - **Wolf Warrior Diplomacy**: Aggressive foreign policy stance, including territorial claims in the South China Sea and tensions with Taiwan. 4. **Authoritarian Governance**:   - **Zero-COVID Policy**: Strict lockdowns and surveillance during the pandemic, which caused economic and social upheaval.   - **Censorship**: Strengthened control over media, education, and civil society, including targeting feminists, journalists, and activists. Western governments and human rights organizations frequently condemn Xi’s administration for suppressing dissent, eroding judicial independence, and violating international human rights standards. His tenure has seen increased international scrutiny over China’s treatment of Uyghurs, Hong Kong’s autonomy, and the erosion of "One Country, Two Systems." Domestically, Xi’s policies have drawn criticism for stifling political pluralism and prioritizing regime stability over individual freedoms.
 
 Onchain Data: {
-  "infer_id": "4",
+  "infer_id": "3324",
   "pbft_committee": [
-    "0x2d0d1558f7ad76f9e7763407658cb232d19ea386",
-    "0x2e76d19ac5389eac1ba177150ec860b07a982617",
-    "0x00a48848a0dd4a03f6e04dca41870fcaf7afa680"
+    "0x88055eb0a02018110d708262f50a9f1b4be6173a",
+    "0x78ab10cce2b0adeaa0fe41ae8d15631ec9224c17",
+    "0xa675c60f5fbaf38c9bbbabe4a2b160bf1f1f863a"
   ],
-  "proposer": "0x2e76d19ac5389eac1ba177150ec860b07a982617",
-  "infer_tx": "0x207b26c3aca80885ac9d60e2fa38e3674e2b58ec7744535c4c18dd791734930e",
-  "propose_tx": "0x38e15c057cbe43d9f529042efa77276d2fe52077f7c1613804d5695976236f07",
-  "input_cid": "ipfs://bafkreifhnzk5vxqjkbnwidoflzhwnas6l5ucmuzy22bszeiidvferb35pm",
-  "output_cid": "ipfs://bafkreiatq6lagy574zifsha3qyanair5btdmyemwhuo2ytyq35g2owaim4"
+  "proposer": "0x88055eb0a02018110d708262f50a9f1b4be6173a",
+  "infer_tx": "0xcbd8ad42218f29ad59a1d98a28ac73863fe658a38a5789760e2eac3b3bad164b",
+  "propose_tx": "0xecb2e1c41dbef13d8148989b745fc544f6d82268408bd70309d246fee29c4471",
+  "input_cid": "",
+  "output_cid": ""
 }
 ```
 
@@ -67,26 +67,27 @@ Onchain Data: {
 
 With Eternal AI's Decentralized Inference, everything is onchain-verifiable.
 
-Let's look at the onchain prompt transaction on HyperEVM Explorer. You can verify that the prompt ran on DeepSeek-R1. You can also verify the system prompt and the user prompt.
+Let's look at the onchain prompt transaction on Avalanche Explorer. You can verify that the prompt ran on DeepSeek-R1 1776. You can also verify the system prompt and the user prompt.
 
-https://hyperliquid.cloud.blockscout.com/tx/0x207b26c3aca80885ac9d60e2fa38e3674e2b58ec7744535c4c18dd791734930e
+https://snowtrace.io/tx/0xcbd8ad42218f29ad59a1d98a28ac73863fe658a38a5789760e2eac3b3bad164b
 
-<img width="622" alt="image" src="https://github.com/user-attachments/assets/4518b545-a5d1-464a-b52f-2a39c6dc1e29" />
+<img width="944" alt="image" src="https://github.com/user-attachments/assets/bf872852-4987-4660-8ff0-15d9b6da8e3e" />
 
 
 
 ## Step 5: Let's verify the onchain response transaction
 
-Now, let's see the onchain response transaction on HyperEVM Explorer. You can see the actual response content with the thinking process and the final answer. Everything is onchain and verifiable.
+Now, let's see the onchain response transaction on Avalanche Explorer. You can see the actual response content with the thinking process and the final answer. Everything is onchain and verifiable.
 
-https://hyperliquid.cloud.blockscout.com/tx/0x38e15c057cbe43d9f529042efa77276d2fe52077f7c1613804d5695976236f07
+https://snowtrace.io/tx/0xecb2e1c41dbef13d8148989b745fc544f6d82268408bd70309d246fee29c4471
 
-<img width="1674" alt="image" src="https://github.com/user-attachments/assets/f39acb55-97bf-49aa-b24d-e366337e347e" />
+<img width="954" alt="image" src="https://github.com/user-attachments/assets/bc151039-ad6a-4b71-90fa-cf38ed0bb6f7" />
+
 
 
 
 ## Conclusion
 
-Congrats! You've finished making the first decentralized inference call with DeepSeek-R1 on HyperEVM.
+Congrats! You've finished making the first decentralized inference call with DeepSeek-R1 1776 on Avalanche.
 
 We can't wait to see the AI-powered dapps and AI agents you'll build next!
