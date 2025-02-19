@@ -630,7 +630,7 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
     # currently there are only 2 types: game & fact
     # so this works, consider alternative when the spec changes
     conversation_thread = await (
-        _get_judge_game_conversation(tweet_obj, answers)
+        _get_judge_game_with_facts_conversation(tweet_obj, answers)
         if is_create_game_tweet(resp.data.tweet_info)
         else _get_judge_fact_conversation(tweet_obj, answers)
     )
