@@ -4,8 +4,20 @@ GAME_BASE_URL = get_and_warn("GAME_BASE_URL")
 
 GAME_EMOJIS = ["🎮", "🎯", "🎪", "🎲", "🤔"]
 GAME_KEYWORDS = ["game", "play", "guess", "riddle"]
+FACT_EMOJIS = ["🎮", "🎯", "🎪", "🎲", "🤔"]
+FACT_KEYWORDS = [
+    "fact",
+    "trivia",
+    "did you know",
+    "learn",
+    "today i learned",
+    "til",
+]  # TODO: update this
 # GAME_DURATION = 60 * 60 * 4 # 4 hours
 GAME_DURATION = 60 * 10  # 10 minutes
+GAME_BET_DURATION = 60 * 10  # should be the same as GAME_DURATION
+FACT_DURATION = 60 * 60 * 24  # 1 days
+FACT_BET_DURATION = 60 * 60  # 1 hours
 GAME_REDIS_CACHE = 24 * 60 * 60 * 2  # 2 day
 CREATE_GAME_LOCK_EXPIRY = 1000 * 10
 # 10 seconds

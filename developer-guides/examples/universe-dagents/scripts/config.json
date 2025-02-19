@@ -63,5 +63,15 @@
                 "description": "UniverseDagents"
             }
         ]
+    },
+    "hyper_mainnet": {
+        "promptSchedulerAddress": "0x23613D7Ae65Eca6d02eaDe94ab4Be83b18b1F691",
+        "models": [
+            {
+                "modelName": "DeepSeek-R1-Distill-Llama-70B",
+                "modelAddress": "0xf65CADd63E5196072E7171e5139AD4a48D5abBD1",
+                "description": "UniverseDagents"
+            }
+        ]
     }
 }
