@@ -69,10 +69,9 @@ class HybridModelInference:
                                                            abi=HYBRID_MODEL_ABI)
 
             func = hybrid_model_contract.functions.infer(json_request.encode("utf-8"), True)
-            txn = func.transact({"from": account_address})({
-                "from": account_address})({
+            txn = func.build_transaction({
                 'from': account_address,
-                'gas': 200000,
+                # 'gas': 200000,
                 # 'gasPrice': web3.toWei('50', 'gwei'),
                 'nonce': self.web3.eth.get_transaction_count(account_address),
             })
