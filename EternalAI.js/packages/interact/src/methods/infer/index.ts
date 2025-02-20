@@ -460,7 +460,7 @@ const abis: ethers.ContractInterface = [
     type: 'receive',
   },
 ];
-const HYBRID_MODEL_ADDRESS = '0x644292a7e238dd4eb7fc7f4c4afd8eb3c3d4111d'; // smart contract address
+const HYBRID_MODEL_ADDRESS = '0x643c45e89769a16bcb870092bd1efe4696cb2ce7'; // smart contract address
 
 const Infer = {
   createPayload: async (
@@ -477,25 +477,36 @@ const Infer = {
 
       const { messages, model, chainId } = payload;
 
-      const callData = contract.interface.encodeFunctionData('infer', [
-        JSON.stringify({
-          messages,
-          model,
-        }),
-      ]);
+      const callData = contract.interface.encodeFunctionData(
+        'infer(bytes,bool)',
+        [
+          // ethers.utils.hexlify(
+          //   ethers.utils.toUtf8Bytes(
+          //     JSON.stringify({
+          //       messages,
+          //       model,
+          //     })
+          //   )
+          // ),
+          ethers.utils.toUtf8Bytes(
+            JSON.stringify({
+              messages,
+              model,
+            })
+          ),
+          true,
+        ]
+      );
 
+      const from = await wallet.getAddress();
       const params = {
         to: HYBRID_MODEL_ADDRESS, // smart contract address
-        from: wallet.address, // sender address
+        from: from, // sender address
         data: callData, // data
         chainId: ethers.BigNumber.from(chainId).toNumber(),
       } satisfies ethers.ethers.providers.TransactionRequest;
-      console.log('infer createPayload - params', {
-        params,
-      });
-      const tx = await wallet.signTransaction(params);
-      console.log('infer createPayload - succeed', tx);
-      return tx;
+      console.log('infer createPayload - succeed', params);
+      return params;
     } catch (e) {
       console.log('infer createPayload - failed', e);
       throw e;

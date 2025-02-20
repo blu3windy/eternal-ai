@@ -260,7 +260,7 @@ type Config struct {
 		InfraAuthUri      string `json:"infra_auth_uri"`
 		AgentAddress      string `json:"agent_address"`
 		WorkerAddress     string `json:"worker_address"`
-	}
+	} `json:"infra_twitter_app"`
 }
 
 func (cf *Config) ExistsedConfigKey(networkID uint64, name string) bool {
