@@ -19,28 +19,10 @@ from x_content.wrappers.game import (
     GameStatus,
 )
 from x_content.wrappers.magic import sync2async
-from x_content.wrappers.tweet_specialty import is_create_game_tweet
+from x_content.wrappers.tweet_specialty import is_create_game_tweet_id, is_find_fact_game_tweet_id
 
 logging.basicConfig(level=logging.INFO if not __debug__ else logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-
-def _filter_create_game_tweets(tweet_infos):
-    logger.info(
-        f"[_filter_create_game_tweets] Starting to filter {len(tweet_infos)} tweets for game creation criteria"
-    )
-
-    # Filter tweets that match game criteria using is_create_game_tweet()
-    filtered_tweets = [
-        tweet
-        for tweet in tweet_infos
-        if is_create_game_tweet(tweet["tweet_object"])
-    ]
-
-    logger.info(
-        f"[_filter_create_game_tweets] Found {len(filtered_tweets)} tweets matching game creation criteria out of {len(tweet_infos)} total tweets"
-    )
-    return filtered_tweets
 
 
 # Update the existing functions to use the Redis cache class
@@ -231,12 +213,17 @@ def _get_agent_wallet_mapping(game_info: GameInfo):
         return None, e
 
 
-def _create_wallet_tweet(wallet_mapping):
+def _create_wallet_tweet(wallet_mapping, bet_time, timeout):
     """Create tweet text with wallet mapping info"""
-    hours = const.GAME_DURATION // 3600
-    minutes = (const.GAME_DURATION % 3600) // 60
+    bet_hours = bet_time // 3600
+    bet_minutes = (bet_time % 3600) // 60
+    hours = timeout // 3600
+    minutes = (timeout % 3600) // 60
     wallet_tweet = const.GAME_CREATED_TWEET.format(
-        hours=hours, minutes=minutes
+        bet_hours=bet_hours,
+        bet_minutes=bet_minutes,
+        hours=hours,
+        minutes=minutes,
     )
     for username, wallet in wallet_mapping.items():
         wallet_tweet += f"{username}: {wallet}\n"
@@ -297,8 +284,13 @@ async def _handle_create_game_request(log: ReasoningLog, _tweet_object):
         logger.info(
             f"[_handle_create_game_request] Initiating game creation with tweet_id={tweet_id} for {len(agent_usernames)} agents"
         )
+        is_game = is_create_game_tweet_id(tweet_id)
+        bet_time = (
+            const.GAME_BET_DURATION if is_game else const.FACT_BET_DURATION
+        )
+        timeout = const.GAME_DURATION if is_game else const.FACT_DURATION
         game_info, err = await sync2async(GameAPIClient.start_game)(
-            tweet_id, agent_usernames, const.GAME_DURATION
+            tweet_id, agent_usernames, bet_time, timeout
         )
         if err:
             return None, err
@@ -309,7 +301,7 @@ async def _handle_create_game_request(log: ReasoningLog, _tweet_object):
             return None, err
 
         # Create and post wallet tweet
-        wallet_tweet = _create_wallet_tweet(wallet_mapping)
+        wallet_tweet = _create_wallet_tweet(wallet_mapping, bet_time, timeout)
         return game_info, await _post_wallet_tweet(log, tweet_id, wallet_tweet)
 
     except Exception as err:
