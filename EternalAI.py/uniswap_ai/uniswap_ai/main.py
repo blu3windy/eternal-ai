@@ -2,6 +2,7 @@ import decimal
 import logging
 import time
 import os
+import simplejson as json
 
 from dotenv import load_dotenv
 from uniswap_ai.const import RPC_URL, BSC_CHAIN_ID, BASE_CHAIN_ID, ETH_CHAIN_ID, V1, V2
@@ -16,13 +17,13 @@ def call_uniswap(private_key: str, content: str):
     logging.info(f"call uniswap with content {content}")
     try:
         uniswap_obj = UniSwapAI()
-        # json_data = json.loads(content)
-        # req = SwapReq(**json_data)
-        req = SwapReq(
-            "0x0000000000000000000000000000000000000000",
-            decimal.Decimal("0.1"),
-            "0x7d29a64504629172a429e64183d6673b9dacbfce",
-            decimal.Decimal("0.1"))
+        json_data = json.loads(content)
+        req = SwapReq(**json_data)
+        # req = SwapReq(
+        #     "0x0000000000000000000000000000000000000000",
+        #     decimal.Decimal("0.1"),
+        #     "0x7d29a64504629172a429e64183d6673b9dacbfce"
+        # )
 
         tx_swap = uniswap_obj.swap_v3(private_key, req)
     except Exception as e:
@@ -38,7 +39,7 @@ def process_infer(chain_id: str, tx_hash: str, rpc: str, worker_address: str):
         return None
 
     infer_processing = InferenceProcessing()
-    infer_id = infer_processing.get_infer_id(worker_hub_address=worker_address, tx_hash=tx_hash, rpc=rpc)
+    infer_id = infer_processing.get_infer_id(worker_hub_address=worker_address, tx_hash_hex=tx_hash, rpc=rpc)
     logging.info(f"infer id: {infer_id}")
 
     result = ""
