@@ -1987,6 +1987,18 @@ files = [
 ]
 
 [[package]]
+name = "stickytape"
+version = "0.2.1"
+description = "Convert Python packages into a single script"
+optional = false
+python-versions = ">=3.4"
+groups = ["main"]
+files = [
+    {file = "stickytape-0.2.1-py3-none-any.whl", hash = "sha256:66046dedac42484a352d87c12bc4272e4e222260a41f6e1fcbb29876c018e543"},
+    {file = "stickytape-0.2.1.tar.gz", hash = "sha256:9bbdd5dabed633ffde36bb7f656ee0cb55aeae9f87d9c95e377a06bf1ba7df8d"},
+]
+
+[[package]]
 name = "tomli"
 version = "2.2.1"
 description = "A lil' TOML parser"
@@ -2359,4 +2371,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.8,<4"
-content-hash = "f4ccf355952be754199ac8fd3a432262c513bc5cfc042f3b1e7fe6bab9da99f5"
+content-hash = "5d606539b465146361277c03156cdd8a5c3dba44f19e4339e2491892628fe447"

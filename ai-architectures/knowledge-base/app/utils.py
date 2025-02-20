@@ -16,9 +16,6 @@ import logging
 logger = logging.getLogger(__name__)
 import time
 from concurrent.futures import ProcessPoolExecutor
-from functools import lru_cache
-from .constants import MAX_NUM_CONCURRENT_PROCESSING_FILES
-import atexit
 
 def get_content_checksum(data: Union[bytes, str]) -> str:
     if isinstance(data, str):
@@ -95,7 +92,7 @@ def background_task_error_handle(handler: Callable):
 
                 if is_async_func(handler):
                     return await res
-      
+
         return wrapper
     return decorator
 
