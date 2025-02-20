@@ -1,3 +1,4 @@
+import decimal
 import logging
 import time
 import os
@@ -17,15 +18,14 @@ def call_uniswap(private_key: str, content: str):
     logging.info(f"call uniswap with content {content}")
     try:
         uniswap_obj = UniSwapAI()
+        # json_data = json.loads(content)
+        # req = SwapReq(**json_data)
+        req = SwapReq(
+            "0x0000000000000000000000000000000000000000",
+            decimal.Decimal("0.1"),
+            "0x7d29a64504629172a429e64183d6673b9dacbfce",
+            decimal.Decimal("0.1"))
 
-        # uniswap_obj.swap_v3("", SwapReq(
-        #     "0x0000000000000000000000000000000000000000",
-        #     decimal.Decimal("0.1"),
-        #     "0x7d29a64504629172a429e64183d6673b9dacbfce",
-        #     decimal.Decimal("0.1")))
-
-        json_data = json.loads(content)
-        req = SwapReq(**json_data)
         tx_swap = uniswap_obj.swap_v3(private_key, req)
     except Exception as e:
         logging.error(f'{e}')
