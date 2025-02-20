@@ -404,10 +404,16 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
             identifers.append(url)
 
         if len(futures) > 0:
-            results = await asyncio.gather(*futures)
+            results = await asyncio.gather(*futures, return_exceptions=True)
 
-            n_chunks = sum([r[0] for r in results])
-            fails_count = sum([r[1] for r in results])
+            for i, result in enumerate(results):
+                if isinstance(result, Exception):
+                    logger.error(f"Subtask {i} (out of {len(results)}) failed with error {result}")
+
+                else:
+                    total, fails = result
+                    n_chunks += total
+                    fails_count += fails
 
         logger.info(f"(overall) Inserted {n_chunks - fails_count} items to {kb} (collection: {model_use.identity()});")
 
