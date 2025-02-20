@@ -52,67 +52,60 @@ Here are the list of responses that need to be evaluated, sorted from the earlie
 {answers_content}
 """
 
-FACT_QUERY_PROMPT_TEMPLATE = """**Act as an expert in prompt engineering, information retrieval, and web search optimization.** Your goal is to generate highly effective search queries that retrieve definitive, factual results relevant to a given QA game scenario.
+FACT_QUERY_PROMPT_TEMPLATE = """Act as an expert in prompt engineering, information retrieval, and web search optimization. Your goal is to generate highly effective search queries that retrieve definitive, factual results which will serve as additional context for judging a QA game scenario.
 
 ## Task:
-You will be provided with a QA game that consists of:
+You will be provided with a QA game scenario that includes:
 - A question related to a specific topic.
-- A list of image descriptions that might provide additional context.
 - A timestamp indicating when the QA game started.
+- Optionally, a list of image descriptions that might offer further context.
 
-Your task is to construct a well-formulated web search query in JSON format that:
+Your task is to craft an optimized, natural language search query that:
 - Retrieves concrete, authoritative answers rather than speculative or predictive content.
-- Maximizes relevance to the given question while incorporating useful details from the image descriptions.
-- Considers the game start timestamp to avoid outdated or premature information.
+- Maximizes relevance to the given question while incorporating pertinent details from the image descriptions.
 - Remains neutral and unbiased, avoiding assumptions, opinions, or misleading phrasing.
-
-If the question can be answered without requiring external information, return an empty query string ("").
+- If the question can be answered without external information, returns an empty query string (i.e., "").
 
 ## Context:
-- The query should be structured to work well with search engines like Google or Bing.
-- Focus on verifiable facts and avoid queries that might lead to speculative results (e.g., "Who will win X?" should be reframed as "Current standings of X as of <timestamp>").
-- Time Sensitivity: If the question relates to an event that may have changed after the QA game started, adjust the search phrasing accordingly (e.g., “latest results,” “as of <timestamp>”).
-- If the question contains ambiguity, consider different possible interpretations and choose the most likely intent based on the image descriptions.
-- If the image descriptions provide supporting details (e.g., locations, objects, text in images), integrate only the most relevant parts into the query.
-- Prioritize clarity and conciseness while ensuring all key elements are included.
-- Do not include special search operators (e.g., site:, intitle:) or advanced syntax—only use natural text.
+- The query should be designed for search engines similar to Tavily, focusing on verifiable facts.
+- If the topic is time-sensitive, adjust the phrasing to include the relevant timestamp (e.g., “as of <timestamp>”).
+- Integrate details from image descriptions only if they are directly relevant (e.g., locations, objects, text).
+- Avoid special search operators (e.g., site:, intitle:) or advanced syntax; use only natural text.
+- Ensure clarity, conciseness, and neutrality.
 
 ## Response Format:
-Return a JSON object with the following structure:
+
+Return your answer strictly as a JSON object in the following format:
 
 {{
   "query": "<search query>"
 }}
 
-Where <search query> is the optimized search string. If no external search is needed, return:
-
-{{
-  "query": ""
-}}
+Where <search query> is the final optimized search query, or an empty string if no external search is required.
 
 ## Thought Process Before Answering:
-- Analyze the question to determine its main focus (who, what, when, where, why, how).
-- Examine the image descriptions for details that refine or enhance the query.
-- Check the QA game start timestamp to avoid retrieving outdated or future-dependent information.
-- Reframe the query to retrieve official or definitive answers rather than speculative content.
-- Consider multiple query structures and choose the most effective one.
-- Ensure neutrality by avoiding speculative or leading phrases.
-- Test for conciseness and clarity, removing unnecessary words.
 
-## Final Instructions:
-- Think step by step before crafting the query.
-- If useful, simulate a debate between different query structures and choose the best one.
-- Use self-reflection to check whether the query could be improved before finalizing.
-- Ensure that the query is structured to return authoritative sources with conclusive answers.
+Before providing your final answer, list your detailed chain-of-thought step by step. Your reasoning should include:
+- Analyzing the main focus of the question (who, what, when, where, why, how).
+- Evaluating the image descriptions to extract any useful details.
+- Considering the QA game start timestamp to ensure the query is time-appropriate.
+- Simulating a debate between different potential query structures, weighing their pros and cons.
+- Using self-reflection to check that the query is as clear, concise, neutral, and authoritative as possible.
 
 ## Provided Input Data
 
 Question: {question}
 
-Image Descriptions:
+QA Game Start Timestamp: {timestamp}
+
 {content_images}
 
-QA Game Start Timestamp: {timestamp}
+## Final Instructions:
+- Think carefully and list your thoughts step by step before arriving at your final query.
+- Utilize advanced reasoning techniques such as chain-of-thought, debate simulation, and self-reflection.
+- Ensure the final answer strictly adheres to the JSON response format provided.
+
+Now, please generate the optimized search query based on the provided input data.
 """
 
 JUDGE_GAME_WITH_FACTS_PROMPT_TEMPLATE = """**Act as an expert in evaluating and judging the quality of AI-generated responses to tweets.**  
@@ -166,7 +159,7 @@ Tweet timestamp: {tweet_timestamp}
 
 Current timestamp: {current_timestamp}
 
-Content images in the tweet: {content_images}
+{content_images}
 
 List of given facts:
 {given_facts}

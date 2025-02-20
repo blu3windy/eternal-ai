@@ -179,7 +179,11 @@ def _get_facts_search_query_conversation(
 ) -> List[dict]:
     system_message = "You are a helpful assistant."
 
-    content_images_str = "\n\n".join([f"- {x}" for x in content_images])
+    content_images_str = ""
+    if len(content_images) > 0:
+        content_images_str = "Image Descriptions:" + "\n\n".join(
+            [f"- {x}" for x in content_images]
+        )
 
     conversation_thread = [
         {
@@ -315,7 +319,11 @@ async def _get_judge_game_with_facts_conversation(
         "[_get_judge_game_with_facts_conversation] Building conversation for judging"
     )
 
-    content_images_str = "\n\n".join([f"- {x}" for x in content_images])
+    content_images_str = ""
+    if len(content_images) > 0:
+        content_images_str = "Content images in the tweet:" + "\n\n".join(
+            [f"- {x}" for x in content_images]
+        )
     user_prompt = JUDGE_GAME_WITH_FACTS_PROMPT_TEMPLATE.format(
         full_text=game_tweet_object.get("full_text"),
         content_images=content_images_str,
