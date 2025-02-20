@@ -258,7 +258,9 @@ type Config struct {
 		OauthClientSecret string `json:"oauth_client_secret"`
 		RedirectUri       string `json:"redirect_uri"`
 		InfraAuthUri      string `json:"infra_auth_uri"`
-	} `json:"infra_twitter_app"`
+		AgentAddress      string `json:"agent_address"`
+		WorkerAddress     string `json:"worker_address"`
+	}
 }
 
 func (cf *Config) ExistsedConfigKey(networkID uint64, name string) bool {
