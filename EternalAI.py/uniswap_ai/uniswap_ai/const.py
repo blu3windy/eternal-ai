@@ -2,6 +2,9 @@ ETH_CHAIN_ID = "0x1"
 BSC_CHAIN_ID = "0x38"
 BASE_CHAIN_ID = "0x2105"
 
+V1 = [ETH_CHAIN_ID, BASE_CHAIN_ID]
+V2 = [BSC_CHAIN_ID]
+
 RPC_URL = {
     ETH_CHAIN_ID: "https://eth.llamarpc.com",
     BSC_CHAIN_ID: "https://bsc.llamarpc.com",
