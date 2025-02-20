@@ -74,8 +74,6 @@ func (s *Service) DeployAgentUtilityAddress(ctx context.Context, agentInfoID uin
 								agentInfo.TokenSymbol,
 								models.ConvertBigFloatToWei(&totalSuply.Float, 18),
 								helpers.HexToAddress(memePoolAddress),
-								helpers.HexToAddress(models.ETH_ZERO_ADDRESS),
-								helpers.HexToAddress(models.ETH_ZERO_ADDRESS),
 								agentInfo.SystemPrompt,
 								storageInfo,
 							)

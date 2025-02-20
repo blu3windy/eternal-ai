@@ -985,16 +985,11 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 
 	searchResult := ""
 	for _, item := range response.Result {
-		searchResult = searchResult + "\t - " + item.Content + "\n"
+		searchResult = searchResult + item.Content + "\n\n"
 	}
-
+	options := map[string]interface{}{}
 	userPrompt := fmt.Sprintf("Use the following pieces of retrieved context to answer the question. If there is not enough information in the retrieved context to answer the question, just say something you know about the topic."+
-		"\n\n"+
-		"Question: %v"+
-		"\n"+
-		"Context: \n\n"+
-		"%v"+
-		"\n", userPromptInput, searchResult)
+		"\n\nQuestion: %v\nContext: \n\n%vAnswer:", userPromptInput, searchResult)
 	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
@@ -1006,14 +1001,25 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 			Content: userPrompt,
 		},
 	}
+	if agentModel == "DeepSeek-R1-Distill-Llama-70B" {
+		options = map[string]interface{}{
+			"temperature": 0.7,
+			"max_tokens":  4096,
+		}
+	} else {
+		options = map[string]interface{}{
+			"temperature": 0,
+			"top_p":       0.01,
+			"max_tokens":  1024,
+		}
+	}
 
 	messageCallLLM, _ := json.Marshal(&payloadAgentChat)
 	url := s.conf.AgentOffchainChatUrl
 	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
-
-	stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), agentModel, url)
+	stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), agentModel, url, options)
 	if err != nil {
 		return "", errs.NewError(err)
 	}
@@ -1087,16 +1093,11 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 
 	searchResult := ""
 	for _, item := range response.Result {
-		searchResult = searchResult + "\t - " + item.Content + "\n"
+		searchResult = searchResult + item.Content + "\n\n"
 	}
-
+	options := map[string]interface{}{}
 	userPrompt := fmt.Sprintf("Use the following pieces of retrieved context to answer the question. If there is not enough information in the retrieved context to answer the question, just say something you know about the topic."+
-		"\n\n"+
-		"Question: %v"+
-		"\n"+
-		"Context: \n\n"+
-		"%v"+
-		"\n", userPromptInput, searchResult)
+		"\n\nQuestion: %v\nContext: \n\n%vAnswer:", userPromptInput, searchResult)
 	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
@@ -1108,6 +1109,18 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 			Content: userPrompt,
 		},
 	}
+	if agentModel == "DeepSeek-R1-Distill-Llama-70B" {
+		options = map[string]interface{}{
+			"temperature": 0.7,
+			"max_tokens":  4096,
+		}
+	} else {
+		options = map[string]interface{}{
+			"temperature": 0,
+			"top_p":       0.01,
+			"max_tokens":  1024,
+		}
+	}
 
 	messageCallLLM, _ := json.Marshal(&payloadAgentChat)
 	url := s.conf.AgentOffchainChatUrl
@@ -1115,7 +1128,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
 
-	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), agentModel, url, outputChan, errChan, doneChan)
+	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), agentModel, url, options, outputChan, errChan, doneChan)
 }
 
 func (s *Service) GenerateKnowledgeQuery(systemPrompt, textUserInput string) (*string, error) {
@@ -1152,7 +1165,7 @@ Respond in stringified JSON format with the following structure:
 			time.Sleep(time.Second)
 		}
 
-		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url)
+		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{})
 		if err != nil || stringResp == "" {
 			continue
 		}
@@ -1245,7 +1258,11 @@ func (s *Service) PreviewAgentSystemPrompV1(ctx context.Context,
 
 	llmMessage = openai.UpdateSystemPromptInLLMRequest(llmMessage, systemContent)
 	messageCallLLM, _ := json.Marshal(&llmMessage)
-	aiStr, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url)
+	aiStr, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url,
+		map[string]interface{}{
+			"top_p":      0.01,
+			"max_tokens": 4096,
+		})
 	if err != nil {
 		return "", errs.NewError(err)
 	}
@@ -1362,7 +1379,10 @@ func (s *Service) ProcessStreamAgentSystemPromptV1(ctx context.Context,
 
 	llmMessage = openai.UpdateSystemPromptInLLMRequest(llmMessage, systemContent)
 	messageCallLLM, _ := json.Marshal(&llmMessage)
-	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), baseModel, url, outputChan, errChan, doneChan)
+	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), baseModel, url, map[string]interface{}{
+		"top_p":      0.01,
+		"max_tokens": 4096,
+	}, outputChan, errChan, doneChan)
 }
 
 func (s *Service) AgentChatSupport(ctx context.Context, msg string) (string, error) {
