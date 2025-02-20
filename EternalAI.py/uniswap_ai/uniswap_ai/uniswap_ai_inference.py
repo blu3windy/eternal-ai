@@ -96,7 +96,7 @@ class AgentInference:
             req = LLMInferRequest()
             if model == "":
                 raise Exception("invalid model name")
-            req.model = model
+            # req.model = model
             req.messages = [LLMInferMessage(content="Can you tell me about BTC", role="user"),
                             LLMInferMessage(content=system_prompt, role="system")]
             json_request = json.dumps(asdict(req))
@@ -111,7 +111,12 @@ class AgentInference:
 
             signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
             txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+
+            tx_receipt = self.web3.eth.wait_for_transaction_receipt(txn_hash)
+            logging.info(f"Transaction status: {tx_receipt['status']}")
+
             logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
+            return txn_hash
 
 
 @dataclass()
@@ -171,7 +176,13 @@ class HybridModelInference:
 
             signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
             txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+
+            tx_receipt = self.web3.eth.wait_for_transaction_receipt(txn_hash)
+            logging.info("Transaction receipt:", tx_receipt)
+            logging.info("Transaction status:", tx_receipt['status'])
+
             logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
+            return txn_hash
 
 
 @dataclass()
@@ -215,21 +226,21 @@ class InferenceProcessing:
                                               abi=PROMPT_SCHEDULER_ABI)
             try:
                 inference_info = contract.functions.getInferenceInfo(inference_id).call()
-                logging.info(f'Inference info: {inference_info}')
                 output = inference_info[10]
-                result = self.process_output(output)
-                if result.storage == "lighthouse-filecoint" or "ipfs://" in result.result_uri:
-                    light_house = result.result_uri.replace(IPFS, LIGHTHOUSE_IPFS)
-                    light_house_reponse = requests.get(light_house)
-                    if light_house_reponse.status_code == 200:
-                        return light_house_reponse.text
+                if len(output) != 0:
+                    result = self.process_output(output)
+                    if result.storage == "lighthouse-filecoint" or "ipfs://" in result.result_uri:
+                        light_house = result.result_uri.replace(IPFS, LIGHTHOUSE_IPFS)
+                        light_house_reponse = requests.get(light_house)
+                        if light_house_reponse.status_code == 200:
+                            return light_house_reponse.text
+                    else:
+                        decoded = base64.b64decode(result.data)
+                        decoded_string = decoded.decode('utf-8')
+                        return decoded_string
                 else:
-                    decoded = base64.b64decode(result.data)
-                    decoded_string = decoded.decode('utf-8')
-                    return decoded_string
-
+                    raise Exception(f'Could not get result')
             except Exception as e:
-                logging.error(f'Could not get assignments_info {e}', e)
                 raise e
         raise Exception("Could not get inference info")
 
@@ -256,7 +267,7 @@ class InferenceProcessing:
                     for log in logs:
                         try:
                             event_data = contract.events.NewInference().process_log(log)
-                            logging.info(f"Parsed Event Data: {event_data}")
+                            # logging.info(f"Parsed Event Data: {event_data}")
                             if event_data.args is not None and event_data.args.inferenceId is not None:
                                 return event_data.args.inferenceId
                         except Exception as e:
