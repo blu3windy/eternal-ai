@@ -496,6 +496,7 @@ async def inspect_by_file_identifier(file_identifier: str) -> CollectionInspecti
         status=APIStatus.OK if len(hashs) > 0 else APIStatus.ERROR
     )         
 
+@limit_asyncio_concurrency(1)
 async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
     if req.id in _running_tasks:
         return
@@ -591,8 +592,10 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
 
 @schedule.every(5).minutes.do
 def resume_pending_tasks():
-    logger.info("Scanning for pending tasks...")
+    if len(_running_tasks) > 0:
+        return
 
+    logger.info("Scanning for pending tasks...")
     handler = get_insertion_request_handler()
     
     logger.info(f"Found {len(handler.get_all())} pending tasks")
