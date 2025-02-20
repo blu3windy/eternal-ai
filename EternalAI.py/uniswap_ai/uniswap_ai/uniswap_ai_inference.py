@@ -59,66 +59,63 @@ class AgentInference:
             if self.agent_address == "":
                 raise Exception("Agent address missing")
 
+    def get_system_prompt(self, agent_address: str, rpc: str):
+        logging.info(f"Get system prompt from agent...")
 
-def get_system_prompt(self, agent_address: str, rpc: str):
-    logging.info(f"Get system prompt from agent...")
+        self.create_web3(rpc)
+        if self.web3.is_connected():
+            self.get_agent_address(agent_address)
+            agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
+                                                    abi=AGENT_ABI)
+            try:
+                system_prompt = agent_contract.functions.getSystemPrompt().call()
+                return system_prompt
+            except Exception as e:
+                logging.error(f'{e}')
+                raise e
+        return ""
 
-    self.create_web3(rpc)
-    if self.web3.is_connected():
-        self.get_agent_address(agent_address)
+    def get_worker_hub_address(self):
+        self.get_agent_address('')
         agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
                                                 abi=AGENT_ABI)
-        try:
-            system_prompt = agent_contract.functions.getSystemPrompt().call()
-            return system_prompt
-        except Exception as e:
-            logging.error(f'{e}')
-            raise e
-    return ""
+        return agent_contract.functions.getPromptSchedulerAddress().call()
 
+    def create_inference_agent(self, private_key: str, agent_address: str, prompt: str, rpc: str):
+        logging.info(f"Creating inference agent...")
+        if private_key == "" or private_key is None:
+            raise Exception("Private key missing")
+        self.create_web3(rpc)
+        if self.web3.is_connected():
+            self.get_agent_address(agent_address)
+            account = self.web3.eth.account.from_key(private_key)
+            account_address = Web3.to_checksum_address(account.address)
 
-def get_worker_hub_address(self):
-    self.get_agent_address('')
-    agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
-                                            abi=AGENT_ABI)
-    return agent_contract.functions.getPromptSchedulerAddress().call()
+            agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
+                                                    abi=AGENT_ABI)
+            system_prompt = self.get_system_prompt(agent_address, rpc)
+            logging.info(f"system_prompt: {system_prompt}")
+            req = LLMInferRequest()
+            req.messages = [LLMInferMessage(content=prompt, role="user"),
+                            LLMInferMessage(content=system_prompt, role="system")]
+            json_request = json.dumps(asdict(req))
 
+            func = agent_contract.functions.prompt(json_request.encode("utf-8"))
+            txn = func.build_transaction({
+                'from': account_address,
+                # 'gas': 200000,
+                # 'gasPrice': web3.toWei('50', 'gwei'),
+                'nonce': self.web3.eth.get_transaction_count(account_address),
+            })
 
-def create_inference_agent(self, private_key: str, agent_address: str, prompt: str, rpc: str):
-    logging.info(f"Creating inference agent...")
-    if private_key == "" or private_key is None:
-        raise Exception("Private key missing")
-    self.create_web3(rpc)
-    if self.web3.is_connected():
-        self.get_agent_address(agent_address)
-        account = self.web3.eth.account.from_key(private_key)
-        account_address = Web3.to_checksum_address(account.address)
+            signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
+            txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
-        agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
-                                                abi=AGENT_ABI)
-        system_prompt = self.get_system_prompt(agent_address, rpc)
-        logging.info(f"system_prompt: {system_prompt}")
-        req = LLMInferRequest()
-        req.messages = [LLMInferMessage(content=prompt, role="user"),
-                        LLMInferMessage(content=system_prompt, role="system")]
-        json_request = json.dumps(asdict(req))
+            tx_receipt = self.web3.eth.wait_for_transaction_receipt(txn_hash)
+            logging.info(f"Transaction status: {tx_receipt['status']}")
 
-        func = agent_contract.functions.prompt(json_request.encode("utf-8"))
-        txn = func.build_transaction({
-            'from': account_address,
-            # 'gas': 200000,
-            # 'gasPrice': web3.toWei('50', 'gwei'),
-            'nonce': self.web3.eth.get_transaction_count(account_address),
-        })
-
-        signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
-        txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
-
-        tx_receipt = self.web3.eth.wait_for_transaction_receipt(txn_hash)
-        logging.info(f"Transaction status: {tx_receipt['status']}")
-
-        logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
-        return txn_hash
+            logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
+            return txn_hash
 
 
 @dataclass()
