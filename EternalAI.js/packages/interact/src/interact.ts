@@ -1,7 +1,8 @@
 import * as ethers from 'ethers';
 import { InferPayload } from './types';
-import { CHAIN_MAPPING } from './constants';
+// import { CHAIN_MAPPING } from './constants';
 import * as methods from './methods';
+import { ChainId } from './methods/infer/types';
 
 class Interact {
   private _wallet: ethers.Wallet;
@@ -14,20 +15,25 @@ class Interact {
     this._wallet = wallet;
   }
 
-  private getProvider(chainId: string) {
-    const rpcUrl = CHAIN_MAPPING[chainId];
-    if (!rpcUrl) {
-      throw new Error(`Unsupported chainId: ${chainId}`);
-    }
+  private getProvider(chainId: ChainId) {
+    // const rpcUrl = CHAIN_MAPPING[chainId];
+    // if (!rpcUrl) {
+    //   throw new Error(`Unsupported chainId: ${chainId}`);
+    // }
 
-    return new ethers.providers.JsonRpcProvider(rpcUrl);
+    // return new ethers.providers.JsonRpcProvider(rpcUrl);
+    return new ethers.providers.JsonRpcProvider(
+      'https://bsc-dataseed.binance.org/'
+    );
   }
 
   public async infer(payload: InferPayload) {
     const provider = this.getProvider(payload.chainId);
     const signer = this._wallet.connect(provider);
     const signedTx = await methods.Infer.createPayload(signer, payload);
-    return await methods.Infer.execute(signer, signedTx);
+    const inference = await methods.Infer.sendInfer(signer, signedTx);
+    const result = await methods.Infer.listenInferResponse(signer, inference);
+    return result;
   }
 }
 
