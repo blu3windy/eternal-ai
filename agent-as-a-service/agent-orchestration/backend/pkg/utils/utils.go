@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -18,6 +19,61 @@ const Production Environment = "production"
 
 func IsEnvProduction(env string) bool {
 	return env == string(Production)
+}
+
+func GetFileSizeByURL(url string) (int64, error) {
+	resp, err := http.Head(url)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	contentLength := resp.ContentLength
+	if contentLength < 0 {
+		return 0, fmt.Errorf("content length not available")
+	}
+
+	return contentLength, nil
+}
+
+func CreateValidLink(domainURL, link string) (string, error) {
+	parsedLink, err := url.Parse(link)
+	if err != nil {
+		return "", fmt.Errorf("invalid link: %w", err)
+	}
+	parsedLink.Fragment = ""
+
+	if parsedLink.Scheme != "" && parsedLink.Host != "" {
+		return link, nil
+	}
+
+	parsedDomain, err := url.Parse(domainURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid domain URL: %w", err)
+	}
+
+	if parsedDomain.Scheme == "" {
+		return "", fmt.Errorf("domain URL must include a scheme (http or https)")
+	}
+
+	if strings.HasPrefix(link, "/") || !strings.Contains(link, "//") {
+		return parsedDomain.Scheme + "://" + parsedDomain.Host + parsedLink.Path + "?" + parsedLink.RawQuery + parsedLink.Fragment, nil
+	}
+
+	return parsedDomain.Scheme + "://" + parsedDomain.Host + "/" + link, nil
+}
+
+func RemoveFragment(urlString string) (string, error) {
+	u, err := url.Parse(urlString)
+	if err != nil {
+		return "", err
+	}
+	u.Fragment = "" // Remove the fragment (the part after '#')
+	return u.String(), nil
 }
 
 func filenameWithoutExtension(filename string) string {
