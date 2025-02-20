@@ -26,7 +26,8 @@ You can find the list of supported chains and models [here](https://docs.eternal
 
 For this tutorial, we'll use Polygon and Dobby 70b, so we need to update the chain ID in the `agent_with_eternalai.rs` from 45762 to 137. 
 
-![image](https://github.com/user-attachments/assets/da26890b-3dd0-479d-938d-0373b393993b)
+<img width="1377" alt="image" src="https://github.com/user-attachments/assets/210cee35-c114-4525-842f-8f9f67711940" />
+
 
 ## Step 4: Build your Rig agent
 
