@@ -64,6 +64,8 @@ type AssistantsReq struct {
 	MissionTopics          string                  `json:"mission_topics"`
 	CreateKnowledgeRequest *CreateKnowledgeRequest `json:"create_knowledge_request"`
 	KbIds                  []uint                  `json:"kb_ids"`
+
+	SourceUrl string `json:"source_url"`
 }
 
 func (m *AssistantsReq) GetAssistantCharacter(character interface{}) string {
