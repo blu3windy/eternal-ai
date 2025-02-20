@@ -37,10 +37,10 @@ def process_infer(chain_id: str, tx_hash: str, rpc: str, worker_address: str = W
     return result
 
 
-def create_agent_infer(private_key: str, chain_id: str, model: str, prompt: str):
+def create_agent_infer(private_key: str, chain_id: str, prompt: str):
     rpc = RPC_URL.get(chain_id)
     agent_infer = AgentInference()
-    tx_hash = agent_infer.create_inference_agent(private_key, AGENT_ADDRESS, model, prompt, rpc)
+    tx_hash = agent_infer.create_inference_agent(private_key, AGENT_ADDRESS, prompt, rpc)
     logging.info(f"infer tx_hash: {tx_hash}")
 
     worker_hub_address = agent_infer.get_worker_hub_address()
@@ -48,10 +48,10 @@ def create_agent_infer(private_key: str, chain_id: str, model: str, prompt: str)
     return process_infer(chain_id, tx_hash, rpc, worker_hub_address)
 
 
-def create_hybrid_model_infer(chain_id: str, model_address: str, model: str, system_prompt: str, prompt: str):
+def create_hybrid_model_infer(chain_id: str, model_address: str, system_prompt: str, prompt: str):
     rpc = RPC_URL.get(chain_id)
     hybrid_infer = HybridModelInference()
-    tx_hash = hybrid_infer.create_inference_model("", model_address, model, system_prompt, prompt, rpc)
+    tx_hash = hybrid_infer.create_inference_model("", model_address, system_prompt, prompt, rpc)
     # tx_hash = "0xdedf4bdcce83066f27399aad7504e0e1974c7b522152f1a446eddf7413edaf25"
     logging.info(f"infer tx_hash: {tx_hash}")
 
@@ -59,15 +59,13 @@ def create_hybrid_model_infer(chain_id: str, model_address: str, model: str, sys
 
 
 if __name__ == "__main__":
-    # create_hybrid_model_infer(BSC_CHAIN_ID,
-    #                           HYBRID_MODEL_ADDRESS,
-    #                           "NousResearch/Hermes-3-Llama-3.1-70B-FP8",
-    #                           "You are a BTC master",
-    #                           "Tell me about BTC")
+    create_hybrid_model_infer(BSC_CHAIN_ID,
+                              HYBRID_MODEL_ADDRESS,
+                              "You are a BTC master",
+                              "Tell me about BTC")
 
     result = create_agent_infer("",
                                 BSC_CHAIN_ID,
-                                "NousResearch/Hermes-3-Llama-3.1-70B-FP8",
                                 "Tell me about BTC")
 
     # uniswapObj = UniSwapAI()

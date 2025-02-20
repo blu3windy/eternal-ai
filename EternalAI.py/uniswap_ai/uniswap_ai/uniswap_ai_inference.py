@@ -35,7 +35,6 @@ class LLMInferMessage:
 @dataclass()
 class LLMInferRequest:
     messages: List[LLMInferMessage] = None
-    model: str = ""
     max_token: int = 4096
     stream: bool = False
 
@@ -83,7 +82,7 @@ class AgentInference:
                                                 abi=AGENT_ABI)
         return agent_contract.functions.getPromptSchedulerAddress().call()
 
-    def create_inference_agent(self, private_key: str, agent_address: str, model: str, prompt: str, rpc: str = ""):
+    def create_inference_agent(self, private_key: str, agent_address: str, prompt: str, rpc: str = ""):
         logging.info(f"Creating inference agent...")
 
         self.create_web3(rpc)
@@ -100,10 +99,7 @@ class AgentInference:
             system_prompt = self.get_system_prompt(agent_address, rpc)
             logging.info(f"system_prompt: {system_prompt}")
             req = LLMInferRequest()
-            if model == "":
-                raise Exception("invalid model name")
-            # req.model = model
-            req.messages = [LLMInferMessage(content="Can you tell me about BTC", role="user"),
+            req.messages = [LLMInferMessage(content=prompt, role="user"),
                             LLMInferMessage(content=system_prompt, role="system")]
             json_request = json.dumps(asdict(req))
 
@@ -147,7 +143,7 @@ class HybridModelInference:
                 if self.model_address == "":
                     self.model_address = os.getenv("HYBRID_MODEL_ADDRESS")
 
-    def create_inference_model(self, private_key: str, model_address: str, model: str,
+    def create_inference_model(self, private_key: str, model_address: str,
                                system_prompt: str, prompt: str,
                                rpc: str = ""):
         logging.info(f"Creating inference model...")
@@ -163,9 +159,6 @@ class HybridModelInference:
             logging.info(f"address: {account_address}")
 
             req = LLMInferRequest()
-            if model == "":
-                raise Exception("invalid model name")
-            req.model = model
             req.messages = [LLMInferMessage(content=prompt, role="user"),
                             LLMInferMessage(content=system_prompt, role="system")]
             json_request = json.dumps(asdict(req))
