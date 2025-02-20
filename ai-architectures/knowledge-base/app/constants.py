@@ -122,5 +122,5 @@ RELATION_SUFFIX = "-relation"
 
 MAX_NUM_CONCURRENT_PROCESSING_FILES = 2
 MAX_NUM_CONCURRENT_LLM_CALL = 16
-DOCLING_SERVER_URL=os.getenv("DOCLING_SERVER_URL", "").rstrip()
+DOCLING_SERVER_URL=os.getenv("DOCLING_SERVER_URL", "").rstrip("/")
 GATEWAY_IPFS_PREFIX = "https://gateway.lighthouse.storage/ipfs"

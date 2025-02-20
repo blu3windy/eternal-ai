@@ -334,7 +334,7 @@ async def download_filecoin_item(
         for root, dirs, files in os.walk(destination):
             for file in files:
                 fpath = os.path.join(root, file)
-                await unescape_html_file(fpath)
+                await unescape_html_file(str(fpath))
                 afiles.append(fpath)
 
         if len(afiles) > 0:
@@ -350,7 +350,7 @@ async def download_filecoin_item(
         path = Path(tmp_dir) / metadata['files'][0]['name']
 
         await download_file(session, url, path)
-        await unescape_html_file(path)
+        await unescape_html_file(str(path))
 
         return FilecoinData(
             identifier=identifier,
@@ -421,7 +421,8 @@ async def call_docling_server(
                             "min_chunk_size": min_chunk_size,
                             "max_chunk_size": max_chunk_size,
                             "tokenizer": embedding_model_name
-                        }
+                        },
+                        timeout=httpx.Timeout(120)
                     )
 
             if resp.status_code == 200:
