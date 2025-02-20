@@ -31,7 +31,11 @@ func (s *Service) DeployAgentUtilityAddress(ctx context.Context, agentInfoID uin
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.SourceUrl != "" {
 			if agentInfo.MintHash == "" {
 				switch agentInfo.NetworkID {
-				case models.BASE_CHAIN_ID:
+				case models.BASE_CHAIN_ID,
+					models.ARBITRUM_CHAIN_ID,
+					models.BSC_CHAIN_ID,
+					models.APE_CHAIN_ID,
+					models.AVALANCHE_C_CHAIN_ID:
 					{
 						totalSuply := numeric.NewBigFloatFromString("1000000000")
 						memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "meme_pool_address"))
@@ -136,10 +140,12 @@ func (s *Service) DeployAgentUtilityAddress(ctx context.Context, agentInfoID uin
 										return errs.NewError(err)
 									}
 								} else {
-									meme.TokenAddress = contractAddress
-									err = s.dao.Save(tx, meme)
-									if err != nil {
-										return errs.NewError(err)
+									if meme.Status == models.MemeStatusCreated {
+										meme.TokenAddress = contractAddress
+										err = s.dao.Save(tx, meme)
+										if err != nil {
+											return errs.NewError(err)
+										}
 									}
 								}
 								return nil
