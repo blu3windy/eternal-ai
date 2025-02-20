@@ -7,7 +7,7 @@ from typing import List
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from uniswap_ai.const import HYBRID_MODEL_ABI, HYBRID_MODEL_ADDRESS, AGENT_ABI, RPC_URL, ETH_CHAIN_ID, \
-    WORKER_HUB_ADDRESS, WORKER_HUB_ABI
+    WORKER_HUB_ADDRESS, WORKER_HUB_ABI, WORKER_HUB_ABI_V4
 
 
 @dataclass
@@ -51,6 +51,9 @@ class AgentInference:
                 self.agent_address = HYBRID_MODEL_ADDRESS
             else:
                 self.agent_address = os.getenv("HYBRID_MODEL_ADDRESS")
+
+    def get_system_prompt(self):
+        return ""
 
     def create_inference_agent(self, private_key: str, rpc: str = "", agent_address: str = "", model: str = ""):
         logging.info(f"Creating inference agent...")
@@ -162,15 +165,44 @@ class InferenceProcessing:
                 self.web3 = Web3(Web3.HTTPProvider(RPC_URL[ETH_CHAIN_ID]))
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-    def get_workerhub_address(self):
-        self.workerhub_address = WORKER_HUB_ADDRESS
+    def get_workerhub_address(self, worker_hub_address: str = ""):
+        if self.workerhub_address is None or self.workerhub_address == "":
+            self.workerhub_address = worker_hub_address
+            if self.workerhub_address == "":
+                self.workerhub_address = WORKER_HUB_ADDRESS
 
-    def get_infer_id(self, tx_hash: str, rpc: str = ""):
+    def get_assignments_by_inference(self, worker_hub_address: str, inference_id: int, rpc: str = ""):
+        self.create_web3(rpc)
+        if self.web3.is_connected():
+            self.get_workerhub_address(worker_hub_address)
+            contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.workerhub_address),
+                                              abi=WORKER_HUB_ABI)
+            try:
+                assignments_info = contract.functions.getAssignmentsByInference(inference_id).call()
+                logging.info(f'Assignments info: {assignments_info}')
+            except Exception as e:
+                logging.error(f'Could not get assignments_info {e}', e)
+                raise e
+
+    def get_inference_by_inference_id(self, worker_hub_address: str, inference_id: int, rpc: str = ""):
+        self.create_web3(rpc)
+        if self.web3.is_connected():
+            self.get_workerhub_address(worker_hub_address)
+            contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.workerhub_address),
+                                              abi=WORKER_HUB_ABI_V4)
+            try:
+                inference_info = contract.functions.getInferenceInfo(inference_id).call()
+                logging.info(f'Inference info: {inference_info}')
+            except Exception as e:
+                logging.error(f'Could not get assignments_info {e}', e)
+                raise e
+
+    def get_infer_id(self, worker_hub_address: str, tx_hash: str, rpc: str = ""):
         self.create_web3(rpc)
         if self.web3.is_connected():
             logging.info(f'Get infer Id from tx {tx_hash}')
             tx_receipt = self.web3.eth.get_transaction_receipt(tx_hash)
-            self.get_workerhub_address()
+            self.get_workerhub_address(worker_hub_address)
             if tx_receipt is None:
                 logging.error("Transaction receipt not found.")
             else:

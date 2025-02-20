@@ -2764,3 +2764,718 @@ WORKER_HUB_ABI = [
         "type": "receive"
     }
 ]
+
+WORKER_HUB_ABI_V4 = [
+    {
+        "inputs": [],
+        "name": "AlreadySubmitted",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "FailedTransfer",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidData",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidInferenceStatus",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidValue",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "OnlyAssignedWorker",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "SubmitTimeout",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            }
+        ],
+        "name": "Uint256Set_DuplicatedValue",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "Unauthorized",
+        "type": "error"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": True,
+                "internalType": "uint64",
+                "name": "batchId",
+                "type": "uint64"
+            },
+            {
+                "indexed": True,
+                "internalType": "uint32",
+                "name": "modelId",
+                "type": "uint32"
+            },
+            {
+                "indexed": True,
+                "internalType": "uint64",
+                "name": "inferId",
+                "type": "uint64"
+            }
+        ],
+        "name": "AppendToBatch",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": True,
+                "internalType": "uint64",
+                "name": "inferenceId",
+                "type": "uint64"
+            },
+            {
+                "indexed": False,
+                "internalType": "enum IScheduler.InferenceStatus",
+                "name": "newStatus",
+                "type": "uint8"
+            }
+        ],
+        "name": "InferenceStatusUpdate",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": False,
+                "internalType": "uint8",
+                "name": "version",
+                "type": "uint8"
+            }
+        ],
+        "name": "Initialized",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": True,
+                "internalType": "uint64",
+                "name": "inferenceId",
+                "type": "uint64"
+            },
+            {
+                "indexed": True,
+                "internalType": "address",
+                "name": "miner",
+                "type": "address"
+            },
+            {
+                "indexed": False,
+                "internalType": "uint40",
+                "name": "expiredAt",
+                "type": "uint40"
+            }
+        ],
+        "name": "NewAssignment",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": True,
+                "internalType": "uint64",
+                "name": "inferenceId",
+                "type": "uint64"
+            },
+            {
+                "indexed": True,
+                "internalType": "address",
+                "name": "creator",
+                "type": "address"
+            },
+            {
+                "indexed": True,
+                "internalType": "uint32",
+                "name": "modelId",
+                "type": "uint32"
+            },
+            {
+                "indexed": False,
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            },
+            {
+                "indexed": False,
+                "internalType": "bytes",
+                "name": "input",
+                "type": "bytes"
+            },
+            {
+                "indexed": False,
+                "internalType": "bool",
+                "name": "flag",
+                "type": "bool"
+            }
+        ],
+        "name": "NewInference",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": True,
+                "internalType": "address",
+                "name": "previousOwner",
+                "type": "address"
+            },
+            {
+                "indexed": True,
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": False,
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "Paused",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": True,
+                "internalType": "address",
+                "name": "miner",
+                "type": "address"
+            },
+            {
+                "indexed": True,
+                "internalType": "uint256",
+                "name": "inferId",
+                "type": "uint256"
+            }
+        ],
+        "name": "SolutionSubmission",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": True,
+                "internalType": "uint256",
+                "name": "assignmentId",
+                "type": "uint256"
+            },
+            {
+                "indexed": False,
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes"
+            }
+        ],
+        "name": "StreamedData",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": False,
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "Unpaused",
+        "type": "event"
+    },
+    {
+        "inputs": [],
+        "name": "_batchPeriod",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "_gpuManager",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "_inferenceCounter",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "_lastBatchTimestamp",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "_minerRequirement",
+        "outputs": [
+            {
+                "internalType": "uint8",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "_minerValidatorFeeRatio",
+        "outputs": [
+            {
+                "internalType": "uint16",
+                "name": "",
+                "type": "uint16"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "_submitDuration",
+        "outputs": [
+            {
+                "internalType": "uint40",
+                "name": "",
+                "type": "uint40"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "_wEAIToken",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint32",
+                "name": "modelId",
+                "type": "uint32"
+            },
+            {
+                "internalType": "uint64",
+                "name": "batchId",
+                "type": "uint64"
+            }
+        ],
+        "name": "getBatchInfo",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint64[]",
+                "name": "",
+                "type": "uint64[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "miner",
+                "type": "address"
+            }
+        ],
+        "name": "getInferenceByMiner",
+        "outputs": [
+            {
+                "internalType": "uint256[]",
+                "name": "",
+                "type": "uint256[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64",
+                "name": "inferId",
+                "type": "uint64"
+            }
+        ],
+        "name": "getInferenceInfo",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "value",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "modelId",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint40",
+                        "name": "submitTimeout",
+                        "type": "uint40"
+                    },
+                    {
+                        "internalType": "enum IScheduler.InferenceStatus",
+                        "name": "status",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "creator",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "processedMiner",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "input",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "output",
+                        "type": "bytes"
+                    }
+                ],
+                "internalType": "struct IScheduler.Inference",
+                "name": "",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getMinerRequirement",
+        "outputs": [
+            {
+                "internalType": "uint8",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint32",
+                "name": "modelId",
+                "type": "uint32"
+            },
+            {
+                "internalType": "bytes",
+                "name": "input",
+                "type": "bytes"
+            },
+            {
+                "internalType": "address",
+                "name": "creator",
+                "type": "address"
+            },
+            {
+                "internalType": "bool",
+                "name": "flag",
+                "type": "bool"
+            }
+        ],
+        "name": "infer",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint32",
+                "name": "modelId",
+                "type": "uint32"
+            },
+            {
+                "internalType": "bytes",
+                "name": "input",
+                "type": "bytes"
+            },
+            {
+                "internalType": "address",
+                "name": "creator",
+                "type": "address"
+            }
+        ],
+        "name": "infer",
+        "outputs": [
+            {
+                "internalType": "uint64",
+                "name": "",
+                "type": "uint64"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "wEAIToken_",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "gpuManager_",
+                "type": "address"
+            },
+            {
+                "internalType": "uint8",
+                "name": "minerRequirement_",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint40",
+                "name": "submitDuration_",
+                "type": "uint40"
+            },
+            {
+                "internalType": "uint16",
+                "name": "minerValidatorFeeRatio_",
+                "type": "uint16"
+            },
+            {
+                "internalType": "uint40",
+                "name": "batchPeriod_",
+                "type": "uint40"
+            }
+        ],
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "pause",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "paused",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint40",
+                "name": "submitDuration",
+                "type": "uint40"
+            }
+        ],
+        "name": "setSubmitDuration",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "wEAIToken",
+                "type": "address"
+            }
+        ],
+        "name": "setWEAIAddress",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint64",
+                "name": "inferId",
+                "type": "uint64"
+            },
+            {
+                "internalType": "bytes",
+                "name": "solution",
+                "type": "bytes"
+            }
+        ],
+        "name": "submitSolution",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "unpause",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "version",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+    },
+    {
+        "stateMutability": "payable",
+        "type": "receive"
+    }
+]
