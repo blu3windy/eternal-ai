@@ -36,7 +36,7 @@ cargo update
 ```
 ## Step 5: Run your Rig agent
 ```
-run --package rig-core --example agent_with_eternalai
+cargo run --package rig-eternalai --example agent_with_eternalai
 ```
 
 We will ask your agent a math-related question:
