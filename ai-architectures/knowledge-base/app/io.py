@@ -414,19 +414,20 @@ async def call_docling_server(
     for i in range(1 + retry):
         try:
             async with httpx.AsyncClient() as cli:
-                with open(file_path, 'rb') as fp:
-                    resp = await cli.post(
-                        const.DOCLING_SERVER_URL + "/chunks",
-                        files={
-                            'file': fp
-                        },
-                        params={
-                            "min_chunk_size": min_chunk_size,
-                            "max_chunk_size": max_chunk_size,
-                            "tokenizer": embedding_model_name
-                        },
-                        timeout=httpx.Timeout(120)
-                    )
+                fp = open(file_path, 'rb')
+                resp = await cli.post(
+                    const.DOCLING_SERVER_URL + "/chunks",
+                    files={
+                        'file': fp
+                    },
+                    params={
+                        "min_chunk_size": min_chunk_size,
+                        "max_chunk_size": max_chunk_size,
+                        "tokenizer": embedding_model_name
+                    },
+                    timeout=httpx.Timeout(120)
+                )
+                fp.close()
 
             if resp.status_code == 200:
                 resp_json = resp.json()
