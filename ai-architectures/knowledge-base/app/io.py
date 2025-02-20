@@ -414,10 +414,10 @@ async def call_docling_server(
 
             else:
                 logger.error(f"Failed to chunk file: {resp.text}")
-                continue
                 
         except Exception as err:
-            logger.error("Failed while communicating to docling server")
-            pass
+            logger.error("Failed while communicating to docling server: {}".format(err))
+
+        await asyncio.sleep(2 ** i)
 
     raise Exception(f"Chunking failed after all {retry} attempts")

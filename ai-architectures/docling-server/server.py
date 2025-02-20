@@ -84,11 +84,11 @@ def limit_asyncio_concurrency(num_of_concurrent_calls: int):
     return decorator
 
 
-def magic_get_doc(url):
+def magic_get_doc(source: str):
     res = DocumentConverter(
         allowed_formats=SUPORTED_DOCUMENT_FORMATS,
         format_options=DOCUMENT_FORMAT_OPTIONS
-    ).convert(source=url)
+    ).convert(source=source)
     
     return res.model_dump()
 
