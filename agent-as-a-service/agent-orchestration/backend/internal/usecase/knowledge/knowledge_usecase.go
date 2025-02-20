@@ -251,8 +251,9 @@ func (uc *knowledgeUsecase) Webhook(ctx context.Context, req *models.RagHookResp
 						map[string]interface{}{"status": file.Status},
 					)
 					if err != nil {
-						return nil, fmt.Errorf("failed to update knowledge base file status %s", file.Status)
+						return nil, fmt.Errorf("failed to update knowledge base file status %d", file.Status)
 					}
+
 					uc.SendMessage(ctx, fmt.Sprintf("process kb file  for kb agent via webhook DONE (kb_id: %d: %s : %v)", kn.ID, req.Result.Kb, req.Result.Identifier), uc.notiActChanId)
 
 				} else if req.Status == "error" {
@@ -266,7 +267,7 @@ func (uc *knowledgeUsecase) Webhook(ctx context.Context, req *models.RagHookResp
 						},
 					)
 					if err != nil {
-						return nil, fmt.Errorf("failed to update knowledge base file status %s", file.Status)
+						return nil, fmt.Errorf("failed to update knowledge base file status %d", file.Status)
 					}
 					uc.SendMessage(ctx, fmt.Sprintf("webhook update kb file status failed: %s (%d) %s - error %s", kn.Name, kn.ID, req.Result.Identifier, file.LastErrorMessage), uc.notiActChanId)
 				}
@@ -443,26 +444,27 @@ func (uc *knowledgeUsecase) UpdateListKnowledgeBaseFile(ctx context.Context, kbI
 	}
 
 	// still not support delete
-	/*currentFiles, err := uc.knowledgeBaseFileRepo.ListByKbId(ctx, kbId)
-	if err != nil {
-		return err
-	}
-	mapFiles := make(map[uint]*models.KnowledgeBaseFile)
-	for _, f := range currentFiles {
-		mapFiles[f.ID] = f
-	}
-
-	deletedIds := []uint{}
-	for k, v := range mapFiles {
-		if v.Status == models.KnowledgeBaseFileStatusDone {
-			continue
+	/*
+		currentFiles, err := uc.knowledgeBaseFileRepo.ListByKbId(ctx, kbId)
+		if err != nil {
+			return err
 		}
-		if !slices.Contains(fileIds, k) {
-			deletedIds = append(deletedIds, v.ID)
+		mapFiles := make(map[uint]*models.KnowledgeBaseFile)
+		for _, f := range currentFiles {
+			mapFiles[f.ID] = f
 		}
-	}
 
-	return uc.knowledgeBaseFileRepo.DeleteByIds(ctx, deletedIds)
+		deletedIds := []uint{}
+		for k, v := range mapFiles {
+			if v.Status == models.KnowledgeBaseFileStatusDone {
+				continue
+			}
+			if !slices.Contains(fileIds, k) {
+				deletedIds = append(deletedIds, v.ID)
+			}
+		}
+
+		return uc.knowledgeBaseFileRepo.DeleteByIds(ctx, deletedIds)
 	*/
 	return updated, nil
 }

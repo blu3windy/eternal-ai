@@ -139,22 +139,6 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 								return errs.NewError(errs.ErrBadRequest)
 							}
 						}
-						if m.AgentStoreID > 0 && m.Fee.Float.Cmp(big.NewFloat(0)) > 0 {
-							agentStore, err := s.dao.FirstAgentStoreByID(
-								daos.GetDBMainCtx(ctx),
-								m.AgentStoreID,
-								map[string][]interface{}{
-									"Owner": {},
-								},
-								false,
-							)
-							if err != nil {
-								return errs.NewError(err)
-							}
-							if agentStore.Owner.EaiBalance.Float.Cmp(&m.Fee.Float) < 0 {
-								return errs.NewError(errs.ErrBadRequest)
-							}
-						}
 					}
 				default:
 					{
@@ -263,52 +247,6 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 								)
 							}
 							_ = s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), m.AgentInfo.RefTweetID, m.AgentInfo.ID)
-						}
-						if m.AgentStoreID > 0 {
-							err = daos.GetDBMainCtx(ctx).
-								Model(m.AgentStore).
-								Updates(
-									map[string]interface{}{
-										"token_address": strings.ToLower(tokenAddress),
-									},
-								).Error
-							if err != nil {
-								return errs.NewError(err)
-							}
-							if m.Fee.Cmp(big.NewFloat(0)) > 0 {
-								agentStore, err := s.dao.FirstAgentStoreByID(
-									daos.GetDBMainCtx(ctx),
-									m.AgentStoreID,
-									map[string][]interface{}{
-										"Owner": {},
-									},
-									false,
-								)
-								if err != nil {
-									return errs.NewError(err)
-								}
-								err = daos.GetDBMainCtx(ctx).
-									Model(agentStore.Owner).
-									Updates(
-										map[string]interface{}{
-											"eai_balance": gorm.Expr("eai_balance - ?", m.Fee),
-										},
-									).Error
-								if err != nil {
-									return errs.NewError(err)
-								}
-								_ = s.dao.Create(
-									daos.GetDBMainCtx(ctx),
-									&models.UserTransaction{
-										NetworkID: m.NetworkID,
-										EventId:   fmt.Sprintf("meme_create_token_%d", m.ID),
-										UserID:    agentStore.OwnerID,
-										Type:      models.UserTransactionTypeTokenFee,
-										Amount:    numeric.NewBigFloatFromFloat(models.NegativeBigFloat(&m.Fee.Float)),
-										Status:    models.UserTransactionStatusDone,
-									},
-								)
-							}
 						}
 					}
 				}

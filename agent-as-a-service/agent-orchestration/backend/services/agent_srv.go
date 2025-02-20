@@ -245,9 +245,12 @@ func (s *Service) AgentCreateMissionDefault(ctx context.Context, agentInfoID uin
 		return errs.NewError(err)
 	}
 	switch agentInfo.AgentType {
-	case models.AgentInfoAgentTypeEliza,
-		models.AgentInfoAgentTypeZerepy,
-		models.AgentInfoAgentTypeDeveloper:
+	case models.AgentInfoAgentTypeNormal,
+		models.AgentInfoAgentTypeReasoning,
+		models.AgentInfoAgentTypeKnowledgeBase:
+		{
+		}
+	default:
 		{
 			return nil
 		}

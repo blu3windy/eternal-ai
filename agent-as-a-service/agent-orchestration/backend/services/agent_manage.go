@@ -56,6 +56,20 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	if req.SystemContent == "" {
 		req.SystemContent = "default"
 	}
+	switch req.AgentType {
+	case models.AgentInfoAgentTypeUtility:
+		{
+			switch req.ChainID {
+			case models.BASE_CHAIN_ID:
+				{
+				}
+			default:
+				{
+					return nil, errs.ErrBadRequest
+				}
+			}
+		}
+	}
 	agent := &models.AgentInfo{
 		Version:          "2",
 		AgentType:        models.AgentInfoAgentTypeReasoning,
@@ -444,7 +458,7 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				agent.Style = req.GetAssistantCharacter(req.Style)
 				agent.Adjectives = req.GetAssistantCharacter(req.Adjectives)
 				agent.SocialInfo = req.GetAssistantCharacter(req.SocialInfo)
-
+				agent.SourceUrl = req.SourceUrl
 				if req.TokenImageUrl != "" {
 					agent.TokenImageUrl = req.TokenImageUrl
 				}
@@ -501,6 +515,10 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 
 					if kbReq.ThumbnailUrl != "" {
 						updateMap["thumbnail_url"] = kbReq.ThumbnailUrl
+					}
+
+					if kbReq.DomainUrl != "" {
+						updateMap["domain_url"] = kbReq.DomainUrl
 					}
 				}
 

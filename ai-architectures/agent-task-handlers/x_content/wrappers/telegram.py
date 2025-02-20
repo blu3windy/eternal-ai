@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 from pydantic import BaseModel
 from .redis_wrapper import distributed_scheduling_job
 
+
 class TelegramMessage(BaseModel):
     text: str
     sender: str = "junk_notifications"
@@ -30,14 +31,15 @@ class TelegramMessage(BaseModel):
 
 
 def _get_url(
-    api_key: str = const.TELEGRAM_API_KEY, 
-    room: str = const.TELEGRAM_ROOM
+    api_key: str = const.TELEGRAM_API_KEY, room: str = const.TELEGRAM_ROOM
 ):
     return f"https://api.telegram.org/bot{api_key}/sendMessage?chat_id={room}"
+
 
 @lru_cache(maxsize=1)
 def _get_httpx_async_client():
     return httpx.AsyncClient()
+
 
 async def a_send_message(
     twitter_username: str,
@@ -50,8 +52,12 @@ async def a_send_message(
     twitter_username = twitter_username or "junk_notifications"
 
     if (
-        twitter_username == "junk_nofitications"
-        and const.DISABLE_JUNK_NOTIFICATIONS
+        room is None
+        or message_to_send is None
+        or (
+            twitter_username == "junk_nofitications"
+            and const.DISABLE_JUNK_NOTIFICATIONS
+        )
     ):
         return False
 
@@ -78,13 +84,13 @@ async def a_send_message(
     )
 
     resp = await _get_httpx_async_client().post(
-        _get_url(room=room), 
+        _get_url(room=room),
         json={
             "text": message_to_send,
             "parse_mode": fmt,
             "disable_notification": True,
             "link_preview_options": json.dumps(preview_opt),
-        }
+        },
     )
 
     if resp.status_code == 200:
@@ -105,8 +111,12 @@ def send_message(
     twitter_username = twitter_username or "junk_notifications"
 
     if (
-        twitter_username == "junk_nofitications"
-        and const.DISABLE_JUNK_NOTIFICATIONS
+        room is None
+        or message_to_send is None
+        or (
+            twitter_username == "junk_nofitications"
+            and const.DISABLE_JUNK_NOTIFICATIONS
+        )
     ):
         return False
 
@@ -133,13 +143,13 @@ def send_message(
     )
 
     resp = requests.post(
-        _get_url(room=room), 
+        _get_url(room=room),
         json={
             "text": message_to_send,
             "parse_mode": fmt,
             "disable_notification": True,
             "link_preview_options": json.dumps(preview_opt),
-        }
+        },
     )
 
     if resp.status_code == 200:
@@ -154,19 +164,16 @@ async def _a_enqueue(msg: TelegramMessage):
         connection_pool=get_aio_redis_connection_pool()
     ) as redis:
         await redis.rpush(
-            const.TELEGRAM_MESSAGE_LIST_REDIS_KEY, 
-            json.dumps(msg.model_dump())
+            const.TELEGRAM_MESSAGE_LIST_REDIS_KEY, json.dumps(msg.model_dump())
         )
-        
+
 
 def _enqueue(msg: TelegramMessage):
-    with Redis(
-        connection_pool=get_redis_connection_pool()
-    ) as redis:
+    with Redis(connection_pool=get_redis_connection_pool()) as redis:
         redis.rpush(
-            const.TELEGRAM_MESSAGE_LIST_REDIS_KEY, 
-            json.dumps(msg.model_dump())
+            const.TELEGRAM_MESSAGE_LIST_REDIS_KEY, json.dumps(msg.model_dump())
         )
+
 
 def group_message(
     msgs: List[TelegramMessage],
@@ -197,11 +204,10 @@ def group_message(
 
     return grouped_msgs
 
+
 @distributed_scheduling_job(interval_seconds=20)
 def _flush():
-    with Redis(
-        connection_pool=get_redis_connection_pool()
-    ) as cli:
+    with Redis(connection_pool=get_redis_connection_pool()) as cli:
 
         length_queue = cli.llen(const.TELEGRAM_MESSAGE_LIST_REDIS_KEY)
         by_room: Dict[str, List] = {}
@@ -222,7 +228,9 @@ def _flush():
                         "text": msg.text,
                         "parse_mode": msg.parse_mode,
                         "disable_notification": msg.disable_notification,
-                        "link_preview_options": json.dumps(msg.link_preview_options),
+                        "link_preview_options": json.dumps(
+                            msg.link_preview_options
+                        ),
                     },
                 )
 
@@ -239,10 +247,8 @@ def _flush():
         groups = group_message(msgs, sep)
 
         for group in groups:
-            joint_message = sep.join(
-                [msg.text for msg in group]
-            )
-            
+            joint_message = sep.join([msg.text for msg in group])
+
             requests.post(
                 _get_url(room=room),
                 json={
@@ -252,5 +258,6 @@ def _flush():
                     "link_preview_options": json.dumps({}),
                 },
             )
+
 
 schedule.every(20).seconds.do(_flush)

@@ -1,24 +1,31 @@
-from app.models import InsertInputSchema, InsertProgressCallback, InsertResponse, QueryInputSchema, ResponseMessage, UpdateInputSchema
-from app.utils import limit_asyncio_concurrency, sync2async
+from app.handlers import download_filecoin_item, logger
+from app.models import FilecoinData, InsertInputSchema, InsertProgressCallback, InsertResponse, QueryInputSchema, ResponseMessage, UpdateInputSchema
+from app.utils import limit_asyncio_concurrency, sync2async, sync2async_in_subprocess
 from app.wrappers import milvus_kit, telegram_kit
-
-from typing import Union
+from typing import List, Union
 import httpx
-
 from pymilvus import MilvusClient
-
 import json
 import logging
 import os
 import zipfile
-
 from . import constants as const
 from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling.backend.docling_parse_v2_backend import DoclingParseV2DocumentBackend
+from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
 from docling.document_converter import DocumentConverter, FormatOption
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
 import numpy as np
 import logging
+from docling.document_converter import ConversionResult
+from pydantic import BaseModel
+from docling.datamodel.base_models import InputFormat
+import re
+
+class LiteInputDocument(BaseModel):
+    format: InputFormat
+
+class LiteConverstionResult(ConversionResult):
+    input: LiteInputDocument
 
 logger = logging.getLogger(__name__)
 
@@ -53,12 +60,15 @@ async def export_collection_data(
 
     meta, vec = [], []
     hashes = set([])
+    scanned = 0
 
     while True:
         batch = await sync2async(it.next)()
 
         if len(batch) == 0:
             break
+        
+        scanned += len(batch)
 
         h = [e['hash'] for e in batch]
         mask = [True] * len(batch)
@@ -93,7 +103,7 @@ async def export_collection_data(
             if mask[i]
         ])
 
-        logger.info(f"Exported {len(hashes)}...")
+        logger.info(f"Exported {len(hashes)} (over {scanned}; {100 * len(hashes) / scanned:.2f}%)...")
 
     if include_embedding:
         vec = np.array(vec)
@@ -134,22 +144,30 @@ SUPORTED_DOCUMENT_FORMATS = [
 DOCUMENT_FORMAT_OPTIONS = {
     InputFormat.PDF: FormatOption(
         pipeline_cls=StandardPdfPipeline,
-        backend=DoclingParseV2DocumentBackend,
+        backend=PyPdfiumDocumentBackend,
         pipeline_options=PdfPipelineOptions(
-            do_table_structure=True,
+            do_table_structure=False,
             do_ocr=False
         )
     )
 }
 
+
+def docling_document_conversion_wrapper(source):
+    res = DocumentConverter(
+        allowed_formats=SUPORTED_DOCUMENT_FORMATS,
+        format_options=DOCUMENT_FORMAT_OPTIONS
+    ).convert(source=source)
+    
+    if res is None:
+        raise Exception("Failed to convert document to docling format")
+
+    return res.model_dump()
+
 @limit_asyncio_concurrency(2)
-async def get_doc_from_url(url):
-    return await sync2async(
-        DocumentConverter(
-            allowed_formats=SUPORTED_DOCUMENT_FORMATS,
-            format_options=DOCUMENT_FORMAT_OPTIONS
-        ).convert
-    )(source=url)
+async def get_doc_from_url(url) -> LiteConverstionResult:
+    res = await sync2async_in_subprocess(docling_document_conversion_wrapper)(source=url)
+    return LiteConverstionResult.model_validate(res)
 
 
 async def hook(
@@ -253,3 +271,43 @@ async def notify_action(req: Union[InsertInputSchema, UpdateInputSchema, QueryIn
             "is_disabled": True,
         }
     )
+
+
+async def download_and_extract_from_filecoin(
+    url: str, tmp_dir: str, ignore_inserted: bool=True
+) -> List[FilecoinData]:
+    list_files: List[FilecoinData] = []
+
+    pat = re.compile(r"ipfs/(.+)")
+    cid = pat.search(url).group(1)
+
+    if not cid:
+        raise ValueError(f"Invalid filecoin url: {url}")
+
+    async with httpx.AsyncClient() as session:
+        response = await session.get(url)
+
+        if response.status_code != 200:
+            raise ValueError(f"Failed to get metadata from {url}; Reason: {response.text}")
+
+        list_metadata = json.loads(response.content)
+
+        for file_index, metadata in enumerate(list_metadata):
+            metadata: dict
+            logger.info(metadata)
+
+            if ignore_inserted and metadata.get("is_inserted", False):
+                continue
+
+            fcdata = await download_filecoin_item(
+                metadata,
+                tmp_dir,
+                session,
+                identifier=f"{cid}/{file_index}"
+            )
+
+            if fcdata is not None:
+                list_files.append(fcdata)
+
+    logger.info(f"List of files to be processed: {list_files}")
+    return list_files

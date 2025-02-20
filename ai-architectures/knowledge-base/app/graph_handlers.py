@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 from functools import lru_cache
 from .utils import limit_asyncio_concurrency
 
-@limit_asyncio_concurrency(8)
-async def call_llm(messages: List[Dict[str, str]]):
+@limit_asyncio_concurrency(const.MAX_NUM_CONCURRENT_LLM_CALL * 1.5)
+async def call_llm_priotized(messages: List[Dict[str, str]]):
 
     payload = {
         "model": const.MODEL_NAME,
@@ -42,6 +42,10 @@ async def call_llm(messages: List[Dict[str, str]]):
     content = response_json["choices"][0]["message"]["content"]
 
     return content
+
+@limit_asyncio_concurrency(const.MAX_NUM_CONCURRENT_LLM_CALL)
+async def call_llm(messages: List[Dict[str, str]]):
+    return await call_llm_priotized(messages)
 
 from pydantic import BaseModel, model_validator
 from .models import ResponseMessage
@@ -129,6 +133,24 @@ class GraphKnowledge:
 
         resp: List[Triplet] = []
         
+        if isinstance(json_result, list):
+            ee = {
+                "triplets": []
+            }
+
+            for item in json_result:
+                if not isinstance(item, dict):
+                    continue
+
+                xx = item.get("triplets", [])
+
+                if not isinstance(xx, list):
+                    continue
+
+                ee["triplets"].extend(xx)
+
+            json_result = ee
+
         if "triplets" not in json_result:
             return ResponseMessage[List[Triplet]](
                 error=f"Wrong format of generated JSON: {json_result}"
@@ -158,7 +180,7 @@ class GraphKnowledge:
             }
         ]
 
-        result = await call_llm(messages)
+        result = await call_llm_priotized(messages)
 
         if result is None:
             return ResponseMessage[List[str]](

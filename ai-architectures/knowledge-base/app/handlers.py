@@ -1,4 +1,4 @@
-from app.io import get_doc_from_url, hook, notify_action
+from app.io import download_and_extract_from_filecoin, get_doc_from_url, hook, notify_action, LiteConverstionResult
 from app.utils import estimate_ip_from_distance, is_valid_schema
 
 from .models import (
@@ -31,7 +31,6 @@ import json
 
 import logging
 from docling.chunking import HybridChunker
-from docling.document_converter import ConversionResult
 from typing import List, Union, Optional
 import random
 
@@ -59,7 +58,6 @@ from .state import get_insertion_request_handler
 import schedule
 import traceback
 from pathlib import Path as PathL
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +97,7 @@ async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingMode
 
 async def url_chunking(url: str, model_use: EmbeddingModel) -> AsyncGenerator:
     try:
-        doc: ConversionResult = await get_doc_from_url(url) 
+        doc: LiteConverstionResult = await get_doc_from_url(url) 
     except Exception as e:
         fmt_exec = traceback.format_exc(limit=8)
         msg = '''
@@ -278,7 +276,7 @@ async def chunking_and_embedding(
 
             else:
                 futures.extend([
-                    asyncio.ensure_future(embedd_triplet(item, e))
+                    asyncio.ensure_future(embedd_triplet(item, e, model_use))
                     for e in resp.result
                 ])
 
@@ -431,45 +429,6 @@ async def download_filecoin_item(
         
     return None
 
-async def download_and_extract_from_filecoin(
-    url: str, tmp_dir: str, ignore_inserted: bool=True
-) -> List[FilecoinData]:
-    list_files: List[FilecoinData] = []
-
-    pat = re.compile(r"ipfs/(.+)")
-    cid = pat.search(url).group(1)
-    
-    if not cid:
-        raise ValueError(f"Invalid filecoin url: {url}")
-
-    async with httpx.AsyncClient() as session:
-        response = await session.get(url)
-
-        if response.status_code != 200:
-            raise ValueError(f"Failed to get metadata from {url}; Reason: {response.text}")
-
-        list_metadata = json.loads(response.content)
-
-        for file_index, metadata in enumerate(list_metadata):
-            metadata: dict
-            logger.info(metadata)
-            
-            if ignore_inserted and metadata.get("is_inserted", False):
-                continue
-
-            fcdata = await download_filecoin_item(
-                metadata, 
-                tmp_dir, 
-                session, 
-                identifier=f"{cid}/{file_index}"
-            )
-            
-            if fcdata is not None:
-                list_files.append(fcdata)
-
-    logger.info(f"List of files to be processed: {list_files}")
-    return list_files
-
 async def inspect_by_file_identifier(file_identifier: str) -> CollectionInspection:
     milvus_cli = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)
 
@@ -496,15 +455,16 @@ async def inspect_by_file_identifier(file_identifier: str) -> CollectionInspecti
         status=APIStatus.OK if len(hashs) > 0 else APIStatus.ERROR
     )         
 
-@limit_asyncio_concurrency(4)
+@limit_asyncio_concurrency(1)
 async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
     if req.id in _running_tasks:
         return
 
+    # tmp dir preparation
+    tmp_dir = get_tmp_directory()
+    os.makedirs(tmp_dir, exist_ok=True)
+
     try:
-        # tmp dir preparation
-        tmp_dir = get_tmp_directory()
-        os.makedirs(tmp_dir, exist_ok=True)
 
         _running_tasks.add(req.id)
         kb = req.kb
@@ -585,14 +545,16 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
         return n_chunks
 
     finally:
-        shutil.rmtree(tmp_dir, ignore_errors=True)
         _running_tasks.remove(req.id)
+        shutil.rmtree(tmp_dir, ignore_errors=True)
         logger.info(f"Completed handling task: {req.id}")
 
 @schedule.every(5).minutes.do
 def resume_pending_tasks():
-    logger.info("Scanning for pending tasks...")
+    if len(_running_tasks) > 0:
+        return
 
+    logger.info("Scanning for pending tasks...")
     handler = get_insertion_request_handler()
     
     logger.info(f"Found {len(handler.get_all())} pending tasks")
@@ -611,6 +573,7 @@ def resume_pending_tasks():
                 "is_re_submit": True
             }
         )
+        break
 
 async def get_collection_num_entities(collection_name: str) -> int:
     cli = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)
@@ -714,6 +677,7 @@ def deduplicate_task():
 
         logger.info(f"Deduplication for {identity} done")    
 
+@redis_kit.cache_for(interval_seconds=300 // 5) # seconds
 async def get_sample(kb: str, k: int) -> List[QueryResult]:
     if k <= 0:
         return []
@@ -782,7 +746,10 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
     
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
     row_count = await get_collection_num_entities(model_identity)
-    
+
+    if row_count == 0:
+        return []
+
     entity_kb = [
         kb + const.ENTITY_SUFFIX 
         for kb in req.kb
@@ -810,7 +777,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
             kb_filter=f"kb in {entity_kb}",
             anns_field="embedding",
             output_fields=["head", "tail"],
-            search_params={"params": {"radius": req.threshold * 0.5}}
+            search_params={"params": {"radius": req.threshold}}
         )
 
         for ee in res:

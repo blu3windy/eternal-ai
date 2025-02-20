@@ -17,6 +17,7 @@ import (
 	blockchainutils "github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/blockchain_utils"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/dexscreener"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
+	"github.com/jinzhu/gorm"
 )
 
 func (s *Service) FindAgentSnapshotMission(ctx context.Context, agentId uint) ([]*models.AgentSnapshotMission, error) {
@@ -353,7 +354,9 @@ func (s *Service) JobCreateTokenInfo(ctx context.Context) error {
 					`token_network_id > 0`:                          {},
 				},
 				map[string][]interface{}{},
-				[]string{},
+				[]string{
+					"rand()",
+				},
 				0,
 				50,
 			)
@@ -441,7 +444,6 @@ func (s *Service) CreateTokenInfo(ctx context.Context, agentID uint) error {
 									tokenDesc = fmt.Sprintf(`%v`, v)
 								}
 							}
-
 							if tokenDesc != "" && tokenName != "" && tokenSymbol != "" {
 								updateFields := map[string]interface{}{
 									"token_name": tokenName,
@@ -464,7 +466,6 @@ func (s *Service) CreateTokenInfo(ctx context.Context, agentID uint) error {
 						if err != nil {
 							return errs.NewError(err)
 						}
-
 						err = daos.GetDBMainCtx(ctx).Model(agentInfo).Updates(
 							map[string]interface{}{
 								"token_image_url": imageUrl,
@@ -478,11 +479,25 @@ func (s *Service) CreateTokenInfo(ctx context.Context, agentID uint) error {
 						if tokenNetworkID == 0 {
 							tokenNetworkID = agentInfo.NetworkID
 						}
-
 						if tokenNetworkID == models.SOLANA_CHAIN_ID {
 							agentTokenAdminAddress := s.conf.GetConfigKeyString(models.GENERTAL_NETWORK_ID, "agent_token_admin_address")
 							base64Str, _ := helpers.CurlBase64String(models.GetImageUrl(agentInfo.TokenImageUrl))
 							if base64Str != "" {
+								tokenFee := big.NewFloat(0)
+								if agentInfo.RefTweetID <= 0 {
+									agentChainFee, err := s.GetAgentChainFee(
+										daos.GetDBMainCtx(ctx),
+										tokenNetworkID,
+									)
+									if err != nil {
+										return errs.NewError(err)
+									}
+									tokenFee = &agentChainFee.TokenFee.Float
+								}
+								if tokenFee.Cmp(big.NewFloat(0)) > 0 &&
+									agentInfo.EaiBalance.Float.Cmp(tokenFee) < 0 {
+									return errs.NewError(errs.ErrBadRequest)
+								}
 								pumfunResp, err := s.blockchainUtils.SolanaCreatePumpfunToken(
 									&blockchainutils.SolanaCreatePumpfunTokenReq{
 										Address:     agentTokenAdminAddress,
@@ -511,12 +526,37 @@ func (s *Service) CreateTokenInfo(ctx context.Context, agentID uint) error {
 											"token_position_hash": "ok",
 										},
 									).Error
-
 									if agentInfo.RefTweetID > 0 {
 										go s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), agentInfo.RefTweetID, agentInfo.ID)
 									} else {
 										// TODO: post twitter
 										go s.PostTwitterAferCreateToken(ctx, agentInfo.ID)
+									}
+									if tokenFee.Cmp(big.NewFloat(0)) > 0 {
+										_ = func() error {
+											_ = daos.GetDBMainCtx(ctx).
+												Model(agentInfo).
+												Updates(
+													map[string]interface{}{
+														"eai_balance": gorm.Expr("eai_balance - ?", numeric.NewBigFloatFromFloat(tokenFee)),
+													},
+												).Error
+											_ = s.dao.Create(
+												daos.GetDBMainCtx(ctx),
+												&models.AgentEaiTopup{
+													NetworkID:      agentInfo.NetworkID,
+													EventId:        fmt.Sprintf("agent_token_fee_%d", agentInfo.ID),
+													AgentInfoID:    agentInfo.ID,
+													Type:           models.AgentEaiTopupTypeSpent,
+													Amount:         numeric.NewBigFloatFromFloat(tokenFee),
+													Status:         models.AgentEaiTopupStatusDone,
+													DepositAddress: agentInfo.ETHAddress,
+													ToAddress:      agentInfo.ETHAddress,
+													Toolset:        "token_fee",
+												},
+											)
+											return nil
+										}()
 									}
 								}
 							}

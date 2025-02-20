@@ -19,6 +19,8 @@ const (
 	KnowledgeBaseStatusMinted
 	KnowledgeBaseStatusProcessingFailed
 	KnowledgeBaseStatusProcessUpdate
+	KnowledgeBaseStatusProcessCrawlData
+	KnowledgeBaseStatusCrawlDataDone
 )
 
 const (
@@ -55,6 +57,7 @@ type KnowledgeBase struct {
 	ThumbnailUrl           string               `json:"thumbnail_url"`
 	UsageFee               float64              `json:"usage_fee"`
 	RagInsertFileRequest   string               `json:"rag_insert_file_request"`
+	DomainUrl              string               `json:"domain_url"`
 }
 
 type KnowledgeBaseFile struct {
@@ -69,6 +72,7 @@ type KnowledgeBaseFile struct {
 	FilecoinHashRawData string                  `json:"filecoin_hash_raw_data"`
 	TransferHash        string                  `json:"transfer_hash"`
 	LastErrorMessage    string                  `json:"last_error_message"`
+	FromUrl             string                  `json:"from_url"`
 }
 
 type ListKnowledgeBaseRequest struct {

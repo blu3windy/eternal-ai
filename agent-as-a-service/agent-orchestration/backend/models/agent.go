@@ -59,7 +59,8 @@ const (
 	AgentInfoAgentTypeKnowledgeBase AgentInfoAgentType = 2
 	AgentInfoAgentTypeEliza         AgentInfoAgentType = 3
 	AgentInfoAgentTypeZerepy        AgentInfoAgentType = 4
-	AgentInfoAgentTypeDeveloper     AgentInfoAgentType = 5
+	AgentInfoAgentTypeUtility       AgentInfoAgentType = 5
+	AgentInfoAgentTypeRealWorld     AgentInfoAgentType = 6
 )
 
 type (
@@ -201,6 +202,8 @@ type AgentInfo struct {
 	TwinEndTrainingAt       *time.Time
 	TwinTrainingProgress    float64 `json:"twin_training_progress"`
 	TwinTrainingMessage     string  `gorm:"type:longtext"`
+
+	SourceUrl string `gorm:"type:text"` //ipfs_ || ethfs_
 
 	EstimateTwinDoneTimestamp *time.Time `json:"estimate_twin_done_timestamp"`
 	TotalMintTwinFee          float64
