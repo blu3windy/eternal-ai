@@ -10,7 +10,7 @@ from typing import List
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from uniswap_ai.const import HYBRID_MODEL_ABI, AGENT_ABI, RPC_URL, ETH_CHAIN_ID, WORKER_HUB_ABI, PROMPT_SCHEDULER_ABI, \
-    AGENT_ADDRESS, LIGHTHOUSE_IPFS, IPFS
+    LIGHTHOUSE_IPFS, IPFS
 
 
 @dataclass()
@@ -170,14 +170,17 @@ class HybridModelInference:
             })
 
             signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
-            txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            try:
+                txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
-            tx_receipt = self.web3.eth.wait_for_transaction_receipt(txn_hash)
-            logging.info("Transaction receipt:", tx_receipt)
-            logging.info("Transaction status:", tx_receipt['status'])
+                tx_receipt = self.web3.eth.wait_for_transaction_receipt(txn_hash)
+                logging.info("Transaction receipt:", tx_receipt)
+                logging.info("Transaction status:", tx_receipt['status'])
 
-            logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
-            return txn_hash
+                logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
+                return txn_hash
+            except Exception as e:
+                raise e
 
 
 @dataclass()
