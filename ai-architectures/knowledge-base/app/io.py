@@ -24,6 +24,7 @@ import subprocess
 import asyncio
 from pathlib import Path
 import html
+import traceback
 
 class LiteInputDocument(BaseModel):
     format: InputFormat
@@ -435,6 +436,7 @@ async def call_docling_server(
                 logger.error(f"Failed to chunk file: {resp.text}")
                 
         except Exception as err:
+            traceback.print_exc()
             logger.error("Failed while communicating to docling server: {}".format(err))
 
         await asyncio.sleep(2 ** i)
