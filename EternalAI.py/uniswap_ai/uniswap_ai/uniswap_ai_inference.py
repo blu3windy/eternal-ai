@@ -95,7 +95,7 @@ class AgentInference:
             logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
 
 
-@dataclass
+@dataclass()
 class HybridModelInference:
     web3: Web3 = None
     model_address: str = None
@@ -154,3 +154,34 @@ class HybridModelInference:
             signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
             txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
             logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
+
+
+@dataclass()
+class InferenceProcessing:
+    web3: Web3 = None
+
+    def create_web3(self, rpc: str = ""):
+        if self.web3 is None:
+            if rpc != "":
+                self.web3 = Web3(Web3.HTTPProvider(rpc))
+            elif HYBRID_MODEL_RPC_URL != "":
+                self.web3 = Web3(Web3.HTTPProvider(HYBRID_MODEL_RPC_URL))
+            else:
+                self.web3 = Web3(Web3.HTTPProvider(os.getenv("HYBRID_MODEL_RPC_URL")))
+            self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+    def get_inferId(self, tx_hash: str):
+        self.create_web3()
+        if self.web3.is_connected():
+            logging.info(f'Get infer Id from tx {tx_hash}')
+            tx_receipt = self.web3.eth.get_transaction_receipt(tx_hash)
+            if tx_receipt is None:
+                logging.error("Transaction receipt not found.")
+            else:
+                # Access logs from the transaction receipt
+                logs = tx_receipt['logs']
+                for log in logs:
+
+
+        else:
+            raise Exception("not connected")
