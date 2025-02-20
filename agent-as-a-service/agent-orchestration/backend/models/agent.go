@@ -205,6 +205,9 @@ type AgentInfo struct {
 
 	SourceUrl string `gorm:"type:text"` //ipfs_ || ethfs_
 
+	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	Worker      string
+
 	EstimateTwinDoneTimestamp *time.Time `json:"estimate_twin_done_timestamp"`
 	TotalMintTwinFee          float64
 	TwitterName               string           `gorm:"-"`

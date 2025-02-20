@@ -10,6 +10,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/jinzhu/gorm"
 )
 
@@ -214,15 +215,28 @@ func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID u
 		if agentInfo.AgentType != models.AgentInfoAgentTypeRealWorld {
 			return errs.NewError(errs.ErrBadRequest)
 		}
-		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" {
+		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.Worker != "" {
 			if agentInfo.MintHash == "" {
 				switch agentInfo.NetworkID {
 				case models.BASE_CHAIN_ID:
 					{
-						var contractAddress, txHash string
-						// TODO deploy infra contract
-						if contractAddress == "" {
-							return errs.NewError(errs.ErrBadRequest)
+						totalSuply := numeric.NewBigFloatFromString("1000000000")
+						memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "meme_pool_address"))
+						eaiTokenAddress := strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "eai_contract_address"))
+						contractAddress, txHash, err := s.GetEthereumClient(ctx, agentInfo.NetworkID).
+							DeployERC20RealWorldAgent(
+								s.GetAddressPrk(memePoolAddress),
+								agentInfo.TokenName,
+								agentInfo.TokenSymbol,
+								models.ConvertBigFloatToWei(&totalSuply.Float, 18),
+								common.HexToAddress(memePoolAddress),
+								models.ConvertBigFloatToWei(&agentInfo.MinFeeToUse.Float, 18),
+								24*3600,
+								common.HexToAddress(eaiTokenAddress),
+								common.HexToAddress(agentInfo.Worker),
+							)
+						if err != nil {
+							return errs.NewError(err)
 						}
 						err = daos.WithTransaction(daos.GetDBMainCtx(ctx),
 							func(tx *gorm.DB) error {
@@ -232,7 +246,7 @@ func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID u
 										map[string]interface{}{
 											"agent_contract_address": strings.ToLower(contractAddress),
 											"mint_hash":              txHash,
-											"status":                 models.AssistantStatusMinting,
+											"status":                 models.AssistantStatusReady,
 											"reply_enabled":          true,
 										},
 									).Error
@@ -257,7 +271,7 @@ func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID u
 									meme = &models.Meme{
 										NetworkID:         agentInfo.NetworkID,
 										OwnerAddress:      strings.ToLower(agentInfo.Creator),
-										TokenAddress:      contractAddress,
+										TokenAddress:      strings.ToLower(contractAddress),
 										Name:              agentInfo.TokenName,
 										Description:       agentInfo.TokenDesc,
 										Ticker:            agentInfo.TokenSymbol,
@@ -267,8 +281,8 @@ func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID u
 										Website:           "",
 										Status:            models.MemeStatusCreated,
 										StoreImageOnChain: false,
-										TotalSuply:        numeric.NewBigFloatFromString("1000000000"),
-										Supply:            numeric.NewBigFloatFromString("1000000000"),
+										TotalSuply:        totalSuply,
+										Supply:            totalSuply,
 										Decimals:          18,
 										AgentInfoID:       agentInfo.ID,
 										BaseTokenSymbol:   string(models.BaseTokenSymbolEAI),
