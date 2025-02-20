@@ -80,6 +80,7 @@ def create_agent_infer(private_key: str, chain_id: str, agent_address: str, prom
 
     if content_response is not None and len(content_response) > 0:
         tx_swap = call_uniswap(private_key, content_response)
+        return tx_swap
     else:
         return None
 
@@ -88,14 +89,15 @@ def create_hybrid_model_infer(private_key: str, chain_id: str, model_address: st
                               worker_address: str):
     rpc = RPC_URL.get(chain_id)
     hybrid_infer = HybridModelInference()
-    tx_hash = hybrid_infer.create_inference_model(private_key, model_address, system_prompt, prompt, rpc)
-    # tx_hash = "0x9ff83107e360c1f6ab09ec0d9f3c6c5188868ff382bc9b822c9b7eb249820790"
+    # tx_hash = hybrid_infer.create_inference_model(private_key, model_address, system_prompt, prompt, rpc)
+    tx_hash = "0x72f23026b34fbabb5dda2313ce3cf48b337bb690ff2c8dba6ac1ba6d95b2170a"
     logging.info(f"infer tx_hash: {tx_hash}")
 
     content_response = process_infer(chain_id, tx_hash, rpc, worker_address)
 
     if content_response is not None and len(content_response) > 0:
         tx_swap = call_uniswap(private_key, content_response)
+        return tx_swap
     else:
         return None
 

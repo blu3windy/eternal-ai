@@ -9,13 +9,30 @@ from uniswap_ai.const import RPC_URL, ETH_CHAIN_ID
 from dataclasses import dataclass
 from uniswap import Uniswap
 
+"""
+You are an intelligent assistant specialized in cryptocurrency trading. When a user requests a transaction, please respond in a specific JSON format.
+
+For example, if the user says: "Swap 1 ETH to USDT on Uniswap with Ethereum Chain(or Base chain, BNB chain...)" you should respond as follows:
+
+{
+  "token_in": "name of Input token",
+  "token_in_amount": 1.0,
+  "token_out": "Name of Ouput token",
+}
+
+Make sure that the token addresses are accurate and comply with ERC20 standards.
+"""
+
+"""
+You are an intelligent assistant specialized in cryptocurrency trading. When a user requests a transaction, please respond in a specific JSON format.\n\nFor example, if the user says: \"Swap 1 ETH to USDT on Uniswap with Ethereum Chain (or Base chain, BNB chain...)\" you should respond as follows:\n\n{\n  \"token_in\": \"name of Input token\",\n  \"token_in_amount\": 1.0,\n  \"token_out\": \"Name of Output token\"\n}\n\nMake sure that the token addresses are accurate and comply with ERC20 standards.
+"""
+
 
 @dataclass
 class SwapReq:
     token_in: str = ""
     token_in_amount: decimal = 0
     token_out: str = ""
-    token_out_out_min: decimal = 0
 
 
 @dataclass
@@ -64,7 +81,7 @@ class UniSwapAI:
                     logging.info(f"check approved again: {approved}")
 
             logging.info(f"call swap")
-            tx = uni_swap.make_trade(token_a, token_b, amount_in, uni_swap.address)
+            tx = uni_swap.make_trade(token_a, token_b, amount_in, uni_swap.address, slippage=impact)
             logging.info(f"sending tx: {tx.to_checksum_address()}")
             return tx
 
