@@ -1,4 +1,4 @@
-from app.io import get_doc_from_url, hook, notify_action, LiteConverstionResult
+from app.io import download_and_extract_from_filecoin, get_doc_from_url, hook, notify_action, LiteConverstionResult
 from app.utils import estimate_ip_from_distance, is_valid_schema
 
 from .models import (
@@ -31,7 +31,6 @@ import json
 
 import logging
 from docling.chunking import HybridChunker
-from docling.document_converter import ConversionResult
 from typing import List, Union, Optional
 import random
 
@@ -59,7 +58,6 @@ from .state import get_insertion_request_handler
 import schedule
 import traceback
 from pathlib import Path as PathL
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -430,45 +428,6 @@ async def download_filecoin_item(
         )
         
     return None
-
-async def download_and_extract_from_filecoin(
-    url: str, tmp_dir: str, ignore_inserted: bool=True
-) -> List[FilecoinData]:
-    list_files: List[FilecoinData] = []
-
-    pat = re.compile(r"ipfs/(.+)")
-    cid = pat.search(url).group(1)
-    
-    if not cid:
-        raise ValueError(f"Invalid filecoin url: {url}")
-
-    async with httpx.AsyncClient() as session:
-        response = await session.get(url)
-
-        if response.status_code != 200:
-            raise ValueError(f"Failed to get metadata from {url}; Reason: {response.text}")
-
-        list_metadata = json.loads(response.content)
-
-        for file_index, metadata in enumerate(list_metadata):
-            metadata: dict
-            logger.info(metadata)
-            
-            if ignore_inserted and metadata.get("is_inserted", False):
-                continue
-
-            fcdata = await download_filecoin_item(
-                metadata, 
-                tmp_dir, 
-                session, 
-                identifier=f"{cid}/{file_index}"
-            )
-            
-            if fcdata is not None:
-                list_files.append(fcdata)
-
-    logger.info(f"List of files to be processed: {list_files}")
-    return list_files
 
 async def inspect_by_file_identifier(file_identifier: str) -> CollectionInspection:
     milvus_cli = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)

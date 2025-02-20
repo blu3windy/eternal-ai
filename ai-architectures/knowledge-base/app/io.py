@@ -1,7 +1,8 @@
-from app.models import InsertInputSchema, InsertProgressCallback, InsertResponse, QueryInputSchema, ResponseMessage, UpdateInputSchema
+from app.handlers import download_filecoin_item, logger
+from app.models import FilecoinData, InsertInputSchema, InsertProgressCallback, InsertResponse, QueryInputSchema, ResponseMessage, UpdateInputSchema
 from app.utils import limit_asyncio_concurrency, sync2async, sync2async_in_subprocess
 from app.wrappers import milvus_kit, telegram_kit
-from typing import Union
+from typing import List, Union
 import httpx
 from pymilvus import MilvusClient
 import json
@@ -18,6 +19,7 @@ import logging
 from docling.document_converter import ConversionResult
 from pydantic import BaseModel
 from docling.datamodel.base_models import InputFormat
+import re
 
 class LiteInputDocument(BaseModel):
     format: InputFormat
@@ -269,3 +271,43 @@ async def notify_action(req: Union[InsertInputSchema, UpdateInputSchema, QueryIn
             "is_disabled": True,
         }
     )
+
+
+async def download_and_extract_from_filecoin(
+    url: str, tmp_dir: str, ignore_inserted: bool=True
+) -> List[FilecoinData]:
+    list_files: List[FilecoinData] = []
+
+    pat = re.compile(r"ipfs/(.+)")
+    cid = pat.search(url).group(1)
+
+    if not cid:
+        raise ValueError(f"Invalid filecoin url: {url}")
+
+    async with httpx.AsyncClient() as session:
+        response = await session.get(url)
+
+        if response.status_code != 200:
+            raise ValueError(f"Failed to get metadata from {url}; Reason: {response.text}")
+
+        list_metadata = json.loads(response.content)
+
+        for file_index, metadata in enumerate(list_metadata):
+            metadata: dict
+            logger.info(metadata)
+
+            if ignore_inserted and metadata.get("is_inserted", False):
+                continue
+
+            fcdata = await download_filecoin_item(
+                metadata,
+                tmp_dir,
+                session,
+                identifier=f"{cid}/{file_index}"
+            )
+
+            if fcdata is not None:
+                list_files.append(fcdata)
+
+    logger.info(f"List of files to be processed: {list_files}")
+    return list_files
