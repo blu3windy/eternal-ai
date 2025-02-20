@@ -3,19 +3,26 @@ import logging
 
 from dotenv import load_dotenv
 
-from uniswap_ai.const import RPC_URL, BSC_CHAIN_ID, WORKER_HUB_ADDRESS, BASE_CHAIN_ID
+from uniswap_ai.const import RPC_URL, BSC_CHAIN_ID, WORKER_HUB_ADDRESS, BASE_CHAIN_ID, AGENT_ADDRESS, \
+    HYBRID_MODEL_ADDRESS
 from uniswap_ai.uniswap_ai import UniSwapAI, SwapReq
-from uniswap_ai.uniswap_ai_inference import HybridModelInference, InferenceProcessing
+from uniswap_ai.uniswap_ai_inference import HybridModelInference, InferenceProcessing, AgentInference
 
 load_dotenv(".env")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def create_hybrid_model_infer(chain_id: str):
+def create_agent_infer(chain_id: str, model: str, prompt: str):
     rpc = RPC_URL.get(chain_id)
-    # hybrid_infer = HybridModelInference()
-    # tx_hash = hybrid_infer.create_inference_model("", rpc)
-    tx_hash = "0xdedf4bdcce83066f27399aad7504e0e1974c7b522152f1a446eddf7413edaf25"
+    agent_infer = AgentInference()
+    tx_hash = agent_infer.create_inference_agent("", AGENT_ADDRESS, model, prompt, rpc)
+
+
+def create_hybrid_model_infer(chain_id: str, model: str, prompt: str):
+    rpc = RPC_URL.get(chain_id)
+    hybrid_infer = HybridModelInference()
+    tx_hash = hybrid_infer.create_inference_model("", HYBRID_MODEL_ADDRESS, model, "You are a BTC master", prompt, rpc)
+    # tx_hash = "0xdedf4bdcce83066f27399aad7504e0e1974c7b522152f1a446eddf7413edaf25"
     logging.info(f"infer tx_hash: {tx_hash}")
 
     infer_processing = InferenceProcessing()
@@ -33,7 +40,9 @@ def create_hybrid_model_infer(chain_id: str):
 
 
 if __name__ == "__main__":
-    create_hybrid_model_infer(BSC_CHAIN_ID)
+    create_hybrid_model_infer(BSC_CHAIN_ID, "NousResearch/Hermes-3-Llama-3.1-70B-FP8", "Tell me about BTC")
+    create_agent_infer(BSC_CHAIN_ID, "NousResearch/Hermes-3-Llama-3.1-70B-FP8", "Tell me about BTC")
+
     # uniswapObj = UniSwapAI()
     # uniswapObj.swap_v3("", SwapReq(
     #     "0x0000000000000000000000000000000000000000",
