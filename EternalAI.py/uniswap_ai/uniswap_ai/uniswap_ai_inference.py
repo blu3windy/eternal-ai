@@ -8,6 +8,7 @@ import simplejson as json
 from dataclasses import dataclass, asdict
 from typing import List
 from web3 import Web3
+from web3.types import HexStr
 from web3.middleware import geth_poa_middleware
 from uniswap_ai.const import HYBRID_MODEL_ABI, AGENT_ABI, RPC_URL, ETH_CHAIN_ID, WORKER_HUB_ABI, PROMPT_SCHEDULER_ABI, \
     LIGHTHOUSE_IPFS, IPFS
@@ -115,7 +116,9 @@ class AgentInference:
             logging.info(f"Transaction status: {tx_receipt['status']}")
 
             logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
-            return txn_hash
+            return self.web3.to_hex(txn_hash)
+        else:
+            return None
 
 
 @dataclass()
@@ -175,7 +178,7 @@ class HybridModelInference:
                 logging.info(f"Transaction status: {tx_receipt['status']}")
 
                 logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
-                return txn_hash
+                return self.web3.to_hex(txn_hash)
             except Exception as e:
                 raise e
 
@@ -272,11 +275,11 @@ class InferenceProcessing:
                 return decoded_string
             return None
 
-    def get_infer_id(self, worker_hub_address: str, tx_hash: str, rpc: str):
+    def get_infer_id(self, worker_hub_address: str, tx_hash_hex: str, rpc: str):
         self.create_web3(rpc)
         if self.web3.is_connected():
-            logging.info(f'Get infer Id from tx {tx_hash}')
-            tx_receipt = self.web3.eth.get_transaction_receipt(tx_hash)
+            logging.info(f'Get infer Id from tx {tx_hash_hex}')
+            tx_receipt = self.web3.eth.get_transaction_receipt(HexStr(tx_hash_hex))
             self.get_workerhub_address(worker_hub_address)
             if tx_receipt is None:
                 logging.error("Transaction receipt not found.")

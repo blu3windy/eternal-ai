@@ -3,8 +3,6 @@ import logging
 import time
 import os
 
-import simplejson as json
-
 from dotenv import load_dotenv
 from uniswap_ai.const import RPC_URL, BSC_CHAIN_ID, BASE_CHAIN_ID
 from uniswap_ai.uniswap_ai import UniSwapAI, SwapReq
@@ -89,8 +87,8 @@ def create_hybrid_model_infer(private_key: str, chain_id: str, model_address: st
                               worker_address: str):
     rpc = RPC_URL.get(chain_id)
     hybrid_infer = HybridModelInference()
-    # tx_hash = hybrid_infer.create_inference_model(private_key, model_address, system_prompt, prompt, rpc)
-    tx_hash = "0x72f23026b34fbabb5dda2313ce3cf48b337bb690ff2c8dba6ac1ba6d95b2170a"
+    tx_hash = hybrid_infer.create_inference_model(private_key, model_address, system_prompt, prompt, rpc)
+    # tx_hash = "0x72f23026b34fbabb5dda2313ce3cf48b337bb690ff2c8dba6ac1ba6d95b2170a"
     logging.info(f"infer tx_hash: {tx_hash}")
 
     content_response = process_infer(chain_id, tx_hash, rpc, worker_address)
