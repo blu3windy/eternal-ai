@@ -461,7 +461,6 @@ def resume_pending_tasks():
                 "is_re_submit": True
             }
         )
-        break
 
 async def get_collection_num_entities(collection_name: str) -> int:
     cli = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)

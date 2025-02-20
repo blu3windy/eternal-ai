@@ -1,11 +1,12 @@
-__version__ = 'v3.0.15'
+__version__ = 'v3.0.16'
 
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
-if not load_dotenv():
+if not load_dotenv(os.path.join(os.getcwd(), '.env')):
     logger.warning("No .env file found")
 
 from . import (

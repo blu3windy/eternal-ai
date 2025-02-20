@@ -24,6 +24,7 @@ import subprocess
 import asyncio
 from pathlib import Path
 import html
+import time
 import traceback
 
 class LiteInputDocument(BaseModel):
@@ -352,7 +353,12 @@ async def download_filecoin_item(
         url = f"{const.GATEWAY_IPFS_PREFIX}/{metadata['files'][0]['hash']}"
         path = Path(tmp_dir) / metadata['files'][0]['name']
 
-        await download_file(session, url, path)
+        try:
+            await download_file(session, url, path)
+        except Exception as err:
+            logger.error(f"Failed to pull file from lighthouse: {err}")
+            return None
+
         await unescape_html_file(str(path))
 
         return FilecoinData(
@@ -411,12 +417,15 @@ async def call_docling_server(
 ) -> List[str]:  
     assert os.path.exists(file_path), f"File not found: {file_path}"
 
+    logger.info(f"Calling {const.DOCLING_SERVER_URL}")
+
     for i in range(1 + retry):
-        try:
-            async with httpx.AsyncClient() as cli:
-                fp = open(file_path, 'rb')
+        timeout = time.time() + 600
+        
+        async with httpx.AsyncClient() as cli:
+            with open(file_path, 'rb') as fp:
                 resp = await cli.post(
-                    const.DOCLING_SERVER_URL + "/chunks",
+                    const.DOCLING_SERVER_URL + "/async-submit",
                     files={
                         'file': fp
                     },
@@ -425,21 +434,35 @@ async def call_docling_server(
                         "max_chunk_size": max_chunk_size,
                         "tokenizer": embedding_model_name
                     },
-                    timeout=httpx.Timeout(120)
+                    timeout=httpx.Timeout(120.0)
                 )
-                fp.close()
 
             if resp.status_code == 200:
-                resp_json = resp.json()
-                return resp_json['chunks']      
+                _id = resp.json()['result']
 
-            else:
-                logger.error(f"Failed to chunk file: {resp.text}")
-                
-        except Exception as err:
-            traceback.print_exc()
-            logger.error("Failed while communicating to docling server: {}".format(err))
+                while time.time() < timeout:
+                    resp = await cli.get(
+                        const.DOCLING_SERVER_URL + "/async-get",
+                        params={
+                            "request_id": _id,
+                        },
+                        timeout=httpx.Timeout(30.0)
+                    )
 
-        await asyncio.sleep(2 ** i)
+                    if resp.status_code == 200:
+                        resp_json = resp.json()
+                        result: dict = resp_json['result']
+
+                        if result["status"] == "error":
+                            msg = result.get("message")
+                            logger.info(f"Error while generating chunks for the file {file_path}: {msg}")
+                            break
+
+                        if result["status"] == "ok":
+                            return result["chunks"]
+
+                    await asyncio.sleep(1)
+
+            await asyncio.sleep(2 ** i)
 
     raise Exception(f"Chunking failed after all {retry} attempts")

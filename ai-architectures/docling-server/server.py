@@ -6,14 +6,14 @@ logger = logging.getLogger(__name__)
 import asyncio
 import uvicorn
 import os
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, BackgroundTasks
 from fastapi.responses import JSONResponse
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
 from docling.document_converter import FormatOption, DocumentConverter
 from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
 from docling.datamodel.base_models import InputFormat
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator, Field
 from docling.document_converter import ConversionResult
 from starlette.concurrency import run_in_threadpool
 from typing import Callable, AsyncGenerator
@@ -28,6 +28,10 @@ import aiofiles
 import tempfile
 import shutil
 from concurrent.futures import ProcessPoolExecutor
+from functools import lru_cache
+from enum import Enum
+from typing import Generic, TypeVar, Optional, List, Dict
+import uuid
 
 class LiteInputDocument(BaseModel):
     format: InputFormat
@@ -166,7 +170,35 @@ logging_config = {
     },
 }
 
-from functools import lru_cache
+
+_generic_type = TypeVar('_generic_type')
+
+class APIStatus(str, Enum):
+    OK = "ok"
+    ERROR = "error"
+
+    PENDING = "pending"
+    PROCESSING = "processing"
+    NOT_FOUND = "not_found"
+
+
+class ResponseMessage(BaseModel, Generic[_generic_type]):
+    result: Optional[_generic_type] = None
+    error: Optional[str] = None
+    status: APIStatus = APIStatus.OK
+    
+    @model_validator(mode="after")
+    def refine_status(self):
+        if self.error is not None:
+            self.status = APIStatus.ERROR
+            
+        return self
+
+class ChunkingResult(BaseModel):
+    id: str = Field(default_factory=lambda: f"doc-{str(uuid.uuid4().hex)}")
+    chunks: List[str] = []
+    status: APIStatus = APIStatus.PENDING
+    message: Optional[str] = None
 
 @lru_cache(1)
 def app_tmp_dir():
@@ -191,6 +223,85 @@ if __name__ == "__main__":
 
     def get_random_payload(n=8):
         return os.urandom(n).hex()
+    
+    async def gen_chunks(filepath: str, tokenizer: str, min_chunk_size: int, max_chunk_size: int):
+        res = []
+
+        async for chunk in url_chunking(filepath, tokenizer, min_chunk_size, max_chunk_size):
+            res.append(chunk) 
+
+        return res
+    
+    responses_register: Dict[str, ChunkingResult] = {}
+    
+    async def background_chunking_task(id: str, filepath: str, tokenizer: str, min_chunk_size: int, max_chunk_size: int):
+        global responses_register
+
+        try:
+            responses_register[id].chunks = await gen_chunks(
+                filepath, 
+                tokenizer,
+                min_chunk_size,
+                max_chunk_size
+            )
+
+            responses_register[id].status = APIStatus.OK
+
+        except Exception as err:
+            responses_register[id].status = APIStatus.ERROR
+            responses_register[id].message = f"Error while generating chunks for the file {filepath}: {err}"
+
+    @api_app.post("/async-submit")
+    async def submit(file: UploadFile, background_tasks: BackgroundTasks, tokenizer: str, min_chunk_size: int=10, max_chunk_size: int=512) -> ResponseMessage[str]:
+
+        global responses_register
+
+        resp = ChunkingResult()
+        responses_register.setdefault(resp.id, resp)
+    
+        random_payload = get_random_payload()
+        directory: Path = app_tmp_dir() / random_payload  
+        os.makedirs(directory, exist_ok=True)
+        
+        logger.info(f"Saving file to {directory / file.filename}")
+        async with aiofiles.open(directory / file.filename, 'wb') as f:
+            await f.write(await file.read())
+        
+        logger.info(f"Saved file to {directory / file.filename}")
+        background_tasks.add_task(
+            background_chunking_task, 
+            resp.id, directory / file.filename, tokenizer, min_chunk_size, max_chunk_size
+        )
+
+        background_tasks.add_task(
+            shutil.rmtree,
+            directory, ignore_errors=True
+        )
+
+        return ResponseMessage[str](
+            result=resp.id,
+            status=APIStatus.OK
+        )
+
+    @api_app.get("/async-get")
+    async def get_result(request_id: str) -> ResponseMessage[ChunkingResult]:
+        if request_id not in responses_register:
+            return ResponseMessage[ChunkingResult](
+                result=ChunkingResult(
+                    id=request_id,
+                    status=APIStatus.NOT_FOUND
+                )
+            )
+
+        res = responses_register[request_id]
+
+        if res.status in [APIStatus.ERROR, APIStatus.OK]:
+            responses_register.pop(request_id)
+
+        return ResponseMessage[ChunkingResult](
+            result=res,
+            status=APIStatus.OK
+        )
 
     @api_app.post("/chunks")
     async def chunks(file: UploadFile, tokenizer: str, min_chunk_size: int=10, max_chunk_size: int=512):
