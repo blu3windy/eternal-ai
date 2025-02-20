@@ -63,7 +63,7 @@ def create_hybrid_model_infer(private_key: str, chain_id: str, model_address: st
     rpc = RPC_URL.get(chain_id)
     hybrid_infer = HybridModelInference()
     tx_hash = hybrid_infer.create_inference_model(private_key, model_address, system_prompt, prompt, rpc)
-    # tx_hash = "0xdedf4bdcce83066f27399aad7504e0e1974c7b522152f1a446eddf7413edaf25"
+    # tx_hash = "0x9ff83107e360c1f6ab09ec0d9f3c6c5188868ff382bc9b822c9b7eb249820790"
     logging.info(f"infer tx_hash: {tx_hash}")
 
     return process_infer(chain_id, tx_hash, rpc, worker_address)
@@ -92,17 +92,17 @@ if __name__ == "__main__":
     subparsers = parser.add_subparsers(dest='command', required=True)
 
     model_infer = subparsers.add_parser('model-infer', help='Infer to model contract')
+    model_infer.add_argument('system_prompt', type=str, help='system prompt')
+    model_infer.add_argument('prompt', type=str, help='user prompt')
     model_infer.add_argument('--pk', type=str, help='private key', required=False)
     model_infer.add_argument('--model_address', type=str, help='model address', required=False)
     model_infer.add_argument('--worker_hub_address', type=str, help='worker hub address', required=False)
-    model_infer.add_argument('system_prompt', type=str, help='system prompt')
-    model_infer.add_argument('prompt', type=str, help='user prompt')
     model_infer.add_argument('--chain_id', type=str, help='chain id', required=False)
 
     agent_infer = subparsers.add_parser('agent-infer', help='Infer to agent contract')
+    agent_infer.add_argument('prompt', type=str, help='user prompt')
     agent_infer.add_argument('--pk', type=str, help='private key', required=False)
     agent_infer.add_argument('--agent_address', type=str, help='agent address', required=False)
-    agent_infer.add_argument('prompt', type=str, help='user prompt')
     agent_infer.add_argument('--chain_id', type=str, help='chain id', required=False)
 
     # Parse arguments
