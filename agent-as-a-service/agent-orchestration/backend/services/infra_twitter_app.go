@@ -31,16 +31,15 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installCode 
 			return errs.NewError(err)
 		}
 		if infraTwitterApp == nil {
-			// TODO get addres from instal code
 			var res struct {
-				Address string
+				Result string `json:"result"`
 			}
-			err = helpers.CurlURL(s.conf.InfraTwitterApp.InfraAuthUri+"?install_code="+installCode, http.MethodGet, nil, nil, &res)
+			err = helpers.CurlURL(s.conf.InfraTwitterApp.InfraAuthUri+"?code="+installCode, http.MethodGet, nil, nil, &res)
 			if err != nil {
 				return errs.NewError(err)
 			}
 			infraTwitterApp = &models.InfraTwitterApp{
-				Address:     res.Address,
+				Address:     res.Result,
 				InstallCode: installCode,
 			}
 		}

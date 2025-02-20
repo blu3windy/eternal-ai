@@ -1,0 +1,1 @@
+abigen --bin=ERC20UtilityAgent.bin --abi=ERC20UtilityAgent.abi --pkg=ERC20UtilityAgent --out=ERC20UtilityAgent.go

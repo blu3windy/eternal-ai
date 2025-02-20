@@ -7,7 +7,7 @@ DeepSeek-R1 1776 is now unstoppable — running exactly as trained without any p
 Let's interact with it.
 
 ```
-npm install && npx hardhat compile && RPC_URL=<YOUR_RPC_URL> PRIVATE_KEY=<0xYOUR_PRIVATE_KEY> CHOSEN_MODEL="DeepSeek-R1-Distill-Llama-70B" USER_PROMPT="Give a short overview of p2p system"  npm run sendUniverseAgentRequest:avax_mainnet
+npm install && npx hardhat compile && RPC_URL=<YOUR_RPC_URL> PRIVATE_KEY=<0xYOUR_PRIVATE_KEY> CHOSEN_MODEL="unsloth/r1-1776-GGUF" USER_PROMPT="Who is Xi Jinping?"  npm run sendUniverseAgentRequest:avax_mainnet
 ```
 
 ## STEP 1: Get the Chain ID and Model Name
@@ -43,7 +43,7 @@ Complete example code can be found at: https://github.com/eternalai-org/ai-power
 You can run the code with the following command. Replace <YOUR_KEY> with your development wallet's private key. The wallet should have some AVAX on Avalanche to pay the network fee.
 
 ```
-npx hardhat compile && RPC_URL=https://api.avax.network/ext/bc/C/rpc  PRIVATE_KEY=<YOUR_KEY>  CHOSEN_MODEL="unsloth/r1-1776-GGUF"  USER_PROMPT="Who is Xi Jinping?"  npm run sendUniverseAgentRequest:avax_mainnet
+npx hardhat compile && RPC_URL="https://api.avax.network/ext/bc/C/rpc"  PRIVATE_KEY=<YOUR_KEY>  CHOSEN_MODEL="unsloth/r1-1776-GGUF"  USER_PROMPT="Who is Xi Jinping?"  npm run sendUniverseAgentRequest:avax_mainnet
 ```
 
 ## STEP 5: Review the onchain prompt transaction
