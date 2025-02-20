@@ -436,44 +436,46 @@ func (s *Service) CreateInfraTwitterAppRequest(ctx context.Context, event *ethap
 	err := daos.WithTransaction(
 		daos.GetDBMainCtx(ctx),
 		func(tx *gorm.DB) error {
-			eventHash := fmt.Sprintf("%s_%d", event.TxHash, event.Index)
-			inst, err := s.dao.FirstInfraRequest(tx,
-				map[string][]interface{}{
-					"contract_address = ?": {strings.ToLower(event.ContractAddress)},
-					"uuid = ?":             {event.Uuid},
-				},
-				map[string][]interface{}{},
-				[]string{},
-			)
-			if err != nil {
-				return errs.NewError(err)
-			}
-
-			if inst == nil {
-				agentInfo, err := s.dao.FirstAgentInfo(tx,
+			if strings.EqualFold(s.conf.InfraTwitterApp.AgentAddress, event.ContractAddress) {
+				eventHash := fmt.Sprintf("%s_%d", event.TxHash, event.Index)
+				inst, err := s.dao.FirstInfraRequest(tx,
 					map[string][]interface{}{
-						"agent_contract_address = ?": {strings.ToLower(event.ContractAddress)},
+						"contract_address = ?": {strings.ToLower(event.ContractAddress)},
+						"uuid = ?":             {event.Uuid},
 					},
 					map[string][]interface{}{},
 					[]string{},
 				)
-				if agentInfo != nil {
-					inst = &models.InfraRequest{
-						NetworkID:       agentInfo.NetworkID,
-						AgentInfoID:     agentInfo.ID,
-						TxHash:          strings.ToLower(event.TxHash),
-						ContractAddress: strings.ToLower(event.ContractAddress),
-						EventId:         eventHash,
-						TxAt:            time.Unix(int64(event.Timestamp), 0),
-						Status:          models.InfraRequestStatusPending,
-						Uuid:            event.Uuid,
-						Data:            event.Data,
-						Creator:         strings.ToLower(event.Creator),
-						ActId:           event.ActId.Uint64(),
-					}
-					err = s.dao.Create(tx, inst)
-					if err != nil {
-						return errs.NewError(err)
+				if err != nil {
+					return errs.NewError(err)
+				}
+
+				if inst == nil {
+					agentInfo, err := s.dao.FirstAgentInfo(tx,
+						map[string][]interface{}{
+							"agent_contract_address = ?": {strings.ToLower(event.ContractAddress)},
+						},
+						map[string][]interface{}{},
+						[]string{},
+					)
+					if agentInfo != nil {
+						inst = &models.InfraRequest{
+							NetworkID:       agentInfo.NetworkID,
+							AgentInfoID:     agentInfo.ID,
+							TxHash:          strings.ToLower(event.TxHash),
+							ContractAddress: strings.ToLower(event.ContractAddress),
+							EventId:         eventHash,
+							TxAt:            time.Unix(int64(event.Timestamp), 0),
+							Status:          models.InfraRequestStatusPending,
+							Uuid:            event.Uuid,
+							Data:            event.Data,
+							Creator:         strings.ToLower(event.Creator),
+							ActId:           event.ActId.Uint64(),
+						}
+						err = s.dao.Create(tx, inst)
+						if err != nil {
+							return errs.NewError(err)
+						}
 					}
 				}
 			}
@@ -534,7 +536,7 @@ func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID u
 				return errs.NewError(err)
 			}
 
-			if reqInfo != nil {
+			if reqInfo != nil && reqInfo.Status == models.InfraRequestStatusPending {
 				address := reqInfo.Creator
 				ipfsReq := reqInfo.Data
 				rawReq, _, err := lighthouse.DownloadDataSimple(ipfsReq)
@@ -672,13 +674,28 @@ func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID u
 				if err != nil {
 					return errs.NewError(err)
 				}
-				_ = daos.GetDBMainCtx(ctx).Model(&models.AgentTokenInfo{}).Where("id = ?", reqInfo.ID).Updates(
-					map[string]interface{}{
-						"result": ipfsHash,
-					},
-				)
+				updateFields := map[string]interface{}{
+					"result": ipfsHash,
+				}
 
 				//TODO: call contract result
+				txHash, err := s.GetEthereumClient(ctx, reqInfo.NetworkID).
+					ERC20RealWorldAgentSubmitSolution(
+						s.conf.InfraTwitterApp.AgentAddress,
+						s.GetAddressPrk(s.conf.InfraTwitterApp.WorkerAddress),
+						models.Number2BigInt(fmt.Sprintf("%d", reqInfo.ActId), 18),
+						[]byte(ipfsHash),
+					)
+				if err != nil {
+					updateFields["error"] = errs.NewError(err)
+				} else {
+					updateFields["status"] = models.InfraRequestStatusExecuted
+					updateFields["result_hash"] = txHash
+				}
+
+				_ = daos.GetDBMainCtx(ctx).Model(&models.AgentTokenInfo{}).Where("id = ?", reqInfo.ID).Updates(
+					updateFields,
+				)
 			}
 
 			return nil
