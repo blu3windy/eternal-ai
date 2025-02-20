@@ -39,4 +39,5 @@ type InfraRequest struct {
 	Creator         string `gorm:"index"`
 	Result          string `gorm:"type:longtext"`
 	Error           string
+	ActId           uint64
 }

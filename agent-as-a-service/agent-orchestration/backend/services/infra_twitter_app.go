@@ -469,6 +469,7 @@ func (s *Service) CreateInfraTwitterAppRequest(ctx context.Context, event *ethap
 						Uuid:            event.Uuid,
 						Data:            event.Data,
 						Creator:         strings.ToLower(event.Creator),
+						ActId:           event.ActId.Uint64(),
 					}
 					err = s.dao.Create(tx, inst)
 					if err != nil {
