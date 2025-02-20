@@ -6,12 +6,29 @@ from dataclasses import dataclass, asdict
 from typing import List
 
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+# from web3.middleware import geth_poa_middleware 
+# from web3.middleware.geth_poa import geth_poa_middleware
 
 import os
 import simplejson as json
 
+from interact.const import HYBRID_MODEL_RPC_URL, HYBRID_MODEL_ABI, HYBRID_MODEL_ADDRESS
+
+
 load_dotenv()
+
+@dataclass()
+class LLMInferMessage:
+    content: str = ""
+    role: str = ""
+@dataclass()
+class LLMInferRequest:
+    messages: List[LLMInferMessage] = None
+    model: str = ""
+    max_token: int = 4096
+    stream: bool = False
+    
+
 
 def create_payload():
 
@@ -22,6 +39,10 @@ def create_payload():
 
 def send_infer():
     logging.info(f"Creating inference model...")
+    web3: Web3 = None
+    privateKey: str = None
+    model_address: str = None
+    
     if web3 is None:
         if HYBRID_MODEL_RPC_URL != "":
                 web3 = Web3(Web3.HTTPProvider(HYBRID_MODEL_RPC_URL))
@@ -38,7 +59,7 @@ def send_infer():
                     model_address = os.getenv("HYBRID_MODEL_ADDRESS")
             account = web3.eth.account.from_key(privateKey)
             account_address = Web3.to_checksum_address(account.address)
-
+            print('address: ' + account_address)
             req = LLMInferRequest()
             req.model = "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
             req.messages = [LLMInferMessage(content="Can you tell me about BTC", role="user"),
