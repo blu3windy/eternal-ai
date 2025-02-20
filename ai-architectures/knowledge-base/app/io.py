@@ -283,6 +283,8 @@ async def download_file(
     session: httpx.AsyncClient, url: str, path: str
 ):
     async with session.stream("GET", url) as response:
+        response.raise_for_status()
+
         async with aiofiles.open(path, 'wb') as f:
             async for chunk in response.aiter_bytes(8192):
                 await f.write(chunk)

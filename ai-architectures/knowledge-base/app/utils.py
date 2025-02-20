@@ -76,7 +76,7 @@ def random_payload(length: int) -> str:
     return os.urandom(length).hex()
 
 def get_tmp_directory():
-    return os.path.join(tempfile.gettempdir(), random_payload(20))
+    return os.path.join(os.getcwd(), '.tmp', random_payload(20))
 
 def is_async_func(func: Callable) -> bool:
     return asyncio.iscoroutinefunction(func)
