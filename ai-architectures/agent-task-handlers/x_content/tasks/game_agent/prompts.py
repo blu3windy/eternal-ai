@@ -62,13 +62,15 @@ You will be provided with a QA game scenario that includes:
 
 Your task is to craft an optimized, natural language search query that:
 - Retrieves concrete, authoritative information used for judging.
-- Maximizes relevance to the given question while incorporating pertinent details from the image descriptions.
+- Maximizes relevance for judging the given question while incorporating pertinent details from the image descriptions.
 - Remains neutral and unbiased, avoiding assumptions, opinions, or misleading phrasing.
+- If the question asks for a prediction about a future event, ensure the search query is structured to find results that confirm the actual outcome of the event.
 - If the question can be answered without external information, returns an empty query string (i.e., "").
 
 ## Context:
 - The query should be designed for search engines similar to Tavily, focusing on verifiable facts.
 - If the topic is time-sensitive, adjust the phrasing to include the relevant timestamp (e.g., “as of <timestamp>”).
+- If the question involves an event that had an uncertain outcome at the time of the QA game start, reframe the query to seek results that confirm the actual outcome after the event has occurred.
 - Integrate details from image descriptions only if they are directly relevant (e.g., locations, objects, text).
 - Avoid special search operators (e.g., site:, intitle:) or advanced syntax; use only natural text.
 - Ensure clarity, conciseness, and neutrality.
@@ -87,6 +89,8 @@ Where <search query> is the final optimized search query, or an empty string if 
 
 Before providing your final answer, list your detailed chain-of-thought step by step. Your reasoning should include:
 - Analyzing the main focus of the question (who, what, when, where, why, how).
+- Determining if the question involves a future event that would have had an uncertain outcome at the time of the QA game.
+  - If so, modify the search to look for post-event results rather than pre-event predictions.
 - Evaluating the image descriptions to extract any useful details.
 - Considering the QA game start timestamp to ensure the query is time-appropriate.
 - Simulating a debate between different potential query structures, weighing their pros and cons.
@@ -96,7 +100,9 @@ Before providing your final answer, list your detailed chain-of-thought step by 
 
 Question: {question}
 
-QA Game Start Timestamp: {timestamp}
+QA Game Start Timestamp: {tweet_timestamp}
+
+Current Timestamp: {current_timestamp}
 
 {content_images}
 

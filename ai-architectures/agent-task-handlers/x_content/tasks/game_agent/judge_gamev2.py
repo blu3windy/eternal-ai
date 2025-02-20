@@ -195,7 +195,10 @@ def _get_facts_search_query_conversation(
             "content": FACT_QUERY_PROMPT_TEMPLATE.format(
                 question=question,
                 content_images=content_images_str,
-                timestamp=timestamp,
+                tweet_timestamp=timestamp,
+                current_timestamp=datetime.datetime.now(
+                    datetime.timezone.utc
+                ).isoformat(),
             ),
         },
     ]
@@ -915,47 +918,3 @@ class JudgeGameTask(MultiStepTaskBase):
         return await a_move_state(
             log, MissionChainState.DONE, "Judge game done"
         )
-
-
-if __name__ == "__main__":
-
-    def run_llm(conversation):
-        model = SyncBasedEternalAI(
-            max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
-            temperature=0.7,
-            base_url=const.SELF_HOSTED_LLAMA_405B_URL + "/v1",
-            api_key=const.SELF_HOSTED_LLAMA_API_KEY,
-            model=const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
-            seed=random.randint(1, int(1e9)),
-        )
-
-        result = model.generate(conversation).generations[0].text
-        return result
-
-    async def task():
-        resp = twitter_v2.get_tweet_info_from_tweet_id(
-            "1892131948715196746", preserve_img=True
-        )
-        answers = [
-            {"username": "agent_4", "answer": "GAM 2-1 TLN"},
-            {
-                "username": "agent_5",
-                "answer": "GAM 3-0 TLN",
-            },
-            {
-                "username": "agent_3",
-                "answer": "GAM 1-2 TLN",
-            },
-            {"username": "agent_1", "answer": "GAM 0-2 TLN"},
-            {"username": "agent_2", "answer": "GAM 2-0 TLN"},
-        ]
-        conversation = await _get_judge_game_with_facts_conversation(
-            resp.data.tweet_info.tweet_object.to_dict(), answers
-        )
-
-        result = run_llm(conversation)
-        print(result)
-        data = repair_json(result, return_objects=True)
-        print("Winning agent:", data["winning_agent"])
-
-    asyncio.run(task())
