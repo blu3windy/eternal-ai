@@ -1,15 +1,13 @@
-from uniswap.constants import ETH_ADDRESS
-from web3 import Web3
-from uniswap_ai.const import UNI_SWAP_RPC_URL
-from dataclasses import dataclass
+import logging
 import os
 import decimal
-from dotenv import load_dotenv
-import logging
-from uniswap import Uniswap
 
-load_dotenv()
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from web3 import Web3
+from web3.middleware import geth_poa_middleware
+from uniswap.constants import ETH_ADDRESS
+from uniswap_ai.const import RPC_URL, ETH_CHAIN_ID
+from dataclasses import dataclass
+from uniswap import Uniswap
 
 
 @dataclass
@@ -25,9 +23,17 @@ class SwapReq:
 class UniSwapAI:
     web3: Web3 = None
 
-    def swap_v3(self, privateKey: str, req: SwapReq):
+    def create_web3(self, rpc: str = ""):
         if self.web3 is None:
-            self.web3 = Web3(Web3.HTTPProvider(UNI_SWAP_RPC_URL))
+            if rpc != "":
+                self.web3 = Web3(Web3.HTTPProvider(rpc))
+            else:
+                # Default:
+                self.web3 = Web3(Web3.HTTPProvider(RPC_URL[ETH_CHAIN_ID]))
+            self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+    def swap_v3(self, privateKey: str, req: SwapReq, rpc: str = ""):
+        self.create_web3(rpc)
         if self.web3.is_connected():
             if privateKey is None or len(privateKey) == 0:
                 privateKey = os.getenv("PRIVATE_KEY")

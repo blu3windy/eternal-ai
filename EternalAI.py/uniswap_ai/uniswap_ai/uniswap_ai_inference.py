@@ -1,18 +1,13 @@
 import logging
-from dataclasses import dataclass, asdict
-from typing import List
-
-from dotenv import load_dotenv
-from web3 import Web3
-from web3.middleware import geth_poa_middleware
-
 import os
 import simplejson as json
 
-from uniswap_ai.const import HYBRID_MODEL_RPC_URL, HYBRID_MODEL_ABI, HYBRID_MODEL_ADDRESS, AGENT_ABI
-
-load_dotenv(".env")
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from dataclasses import dataclass, asdict
+from typing import List
+from web3 import Web3
+from web3.middleware import geth_poa_middleware
+from uniswap_ai.const import HYBRID_MODEL_ABI, HYBRID_MODEL_ADDRESS, AGENT_ABI, RPC_URL, ETH_CHAIN_ID, \
+    WORKER_HUB_ADDRESS, WORKER_HUB_ABI
 
 
 @dataclass
@@ -44,8 +39,6 @@ class AgentInference:
         if self.web3 is None:
             if rpc != "":
                 self.web3 = Web3(Web3.HTTPProvider(rpc))
-            elif HYBRID_MODEL_RPC_URL != "":
-                self.web3 = Web3(Web3.HTTPProvider(HYBRID_MODEL_RPC_URL))
             else:
                 self.web3 = Web3(Web3.HTTPProvider(os.getenv("HYBRID_MODEL_RPC_URL")))
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -104,10 +97,9 @@ class HybridModelInference:
         if self.web3 is None:
             if rpc != "":
                 self.web3 = Web3(Web3.HTTPProvider(rpc))
-            elif HYBRID_MODEL_RPC_URL != "":
-                self.web3 = Web3(Web3.HTTPProvider(HYBRID_MODEL_RPC_URL))
             else:
-                self.web3 = Web3(Web3.HTTPProvider(os.getenv("HYBRID_MODEL_RPC_URL")))
+                # Default:
+                self.web3 = Web3(Web3.HTTPProvider(RPC_URL[ETH_CHAIN_ID]))
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def get_model_address(self, model_address: str = ""):
@@ -159,29 +151,44 @@ class HybridModelInference:
 @dataclass()
 class InferenceProcessing:
     web3: Web3 = None
+    workerhub_address: str = None
 
     def create_web3(self, rpc: str = ""):
         if self.web3 is None:
             if rpc != "":
                 self.web3 = Web3(Web3.HTTPProvider(rpc))
-            elif HYBRID_MODEL_RPC_URL != "":
-                self.web3 = Web3(Web3.HTTPProvider(HYBRID_MODEL_RPC_URL))
             else:
-                self.web3 = Web3(Web3.HTTPProvider(os.getenv("HYBRID_MODEL_RPC_URL")))
+                # Default:
+                self.web3 = Web3(Web3.HTTPProvider(RPC_URL[ETH_CHAIN_ID]))
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-    def get_inferId(self, tx_hash: str):
-        self.create_web3()
+    def get_workerhub_address(self):
+        self.workerhub_address = WORKER_HUB_ADDRESS
+
+    def get_infer_id(self, tx_hash: str, rpc: str = ""):
+        self.create_web3(rpc)
         if self.web3.is_connected():
             logging.info(f'Get infer Id from tx {tx_hash}')
             tx_receipt = self.web3.eth.get_transaction_receipt(tx_hash)
+            self.get_workerhub_address()
             if tx_receipt is None:
                 logging.error("Transaction receipt not found.")
             else:
                 # Access logs from the transaction receipt
                 logs = tx_receipt['logs']
-                for log in logs:
+                if len(logs) > 0:
+                    contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.workerhub_address),
+                                                      abi=WORKER_HUB_ABI)
+                    for log in logs:
+                        try:
+                            event_data = contract.events.NewInference().process_log(log)
+                            logging.info(f"Parsed Event Data: {event_data}")
+                            if event_data.args is not None and event_data.args.inferenceId is not None:
+                                return event_data.args.inferenceId
+                        except Exception as e:
+                            logging.error(e)
 
+                    raise Exception("No Infer Id")
 
         else:
             raise Exception("not connected")
