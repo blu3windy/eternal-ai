@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (c *Client) DeployERC20UtilityAgent(prkHex string, name string, symbol string, amount *big.Int, recipient common.Address, promptScheduler common.Address, modelAddress common.Address, systemPrompt string, storageInfo []byte) (string, string, error) {
+func (c *Client) DeployERC20UtilityAgent(prkHex string, name string, symbol string, amount *big.Int, recipient common.Address, systemPrompt string, storageInfo []byte) (string, string, error) {
 	_, prk, err := c.parsePrkAuth(prkHex)
 	if err != nil {
 		return "", "", err
@@ -30,7 +30,7 @@ func (c *Client) DeployERC20UtilityAgent(prkHex string, name string, symbol stri
 		return "", "", err
 	}
 	auth.GasPrice = gasPrice
-	address, tx, _, err := erc20utilityagent.DeployERC20UtilityAgent(auth, client, name, symbol, amount, recipient, promptScheduler, modelAddress, systemPrompt, storageInfo)
+	address, tx, _, err := erc20utilityagent.DeployERC20UtilityAgent(auth, client, name, symbol, amount, recipient, systemPrompt, storageInfo)
 	if err != nil {
 		return "", "", err
 	}

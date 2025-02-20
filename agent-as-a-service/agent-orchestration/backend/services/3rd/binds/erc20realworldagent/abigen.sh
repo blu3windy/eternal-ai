@@ -1,1 +1,1 @@
-abigen --bin=ERC20RealWorldAgent.bin --abi=ERC20RealWorldAgent.abi --pkg=ERC20RealWorldAgent --out=ERC20RealWorldAgent.go
+abigen --bin=ERC20RealWorldAgent.bin --abi=ERC20RealWorldAgent.abi --pkg=erc20realworldagent --type=ERC20RealWorldAgent --out=ERC20RealWorldAgent.go
