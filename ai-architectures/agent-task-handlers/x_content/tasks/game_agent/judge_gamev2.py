@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import random
 import traceback
@@ -251,9 +252,7 @@ async def _get_judge_game_with_facts_conversation(
 
     answers_content = ""
     for answer in answers:
-        answers_content += (
-            f"- Agent {answer['username']}: {answer['answer']}\n"
-        )
+        answers_content += f"- {answer['username']}: {answer['answer']}\n"
 
     content_images = []
     if game_tweet_object.get("image_urls"):
@@ -297,7 +296,9 @@ async def _get_judge_game_with_facts_conversation(
                 f"[_get_judge_game_with_facts_conversation] Received query '{query}' for fact searching for tweet {game_tweet_object.get('id')}"
             )
 
-            response = await fact_service.search(query, time_range="w")
+            response = await fact_service.search(
+                query, time_range="d", search_depth="advanced"
+            )
 
             # Cache the response
             game_redis.set_fact_check(

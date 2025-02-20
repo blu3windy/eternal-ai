@@ -203,6 +203,11 @@ type AgentInfo struct {
 	TwinTrainingProgress    float64 `json:"twin_training_progress"`
 	TwinTrainingMessage     string  `gorm:"type:longtext"`
 
+	SourceUrl string `gorm:"type:text"` //ipfs_ || ethfs_
+
+	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	Worker      string
+
 	EstimateTwinDoneTimestamp *time.Time `json:"estimate_twin_done_timestamp"`
 	TotalMintTwinFee          float64
 	TwitterName               string           `gorm:"-"`

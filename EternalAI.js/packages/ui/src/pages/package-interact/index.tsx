@@ -1,25 +1,34 @@
-import { useState } from "react";
-import { Interact, methods } from "@eternalai.js/interact";
+import { Interact } from "@eternalai.js/interact";
 import "./Styles.css";
+import { ethers } from "ethers";
 
 function PackageInteract() {
-  const [num, setNum] = useState(0);
-
   return (
     <>
       <h1>Package Interact</h1>
       <div className="card">
         <button
           onClick={async () => {
-            const interact = new Interact();
-            console.log(interact);
-            methods.Infer.createPayload({});
-            await methods.Infer.execute("signedTx");
-            methods.Act.createPayload({});
-            await methods.Act.execute("signedTx");
+            const wallet = ethers.Wallet.createRandom();
+            const interact = new Interact(wallet);
+            const result = await interact.infer({
+              chainId: 56,
+              model: "NousResearch/Hermes-3-Llama-3.1-70B-FP8",
+              messages: [
+                {
+                  role: "system",
+                  content: "You are a BTC master",
+                },
+                {
+                  role: "user",
+                  content: "Can you tell me about BTC",
+                },
+              ],
+            });
+            console.log(result);
           }}
         >
-          sum of two random numbers is {num}
+          Excuted
         </button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR

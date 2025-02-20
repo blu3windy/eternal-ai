@@ -17,6 +17,16 @@ DEFAULT_LLM_MAX_TOKENS = os.getenv("DEFAULT_LLM_MAX_TOKENS") or 512
 DEFAULT_LLM_SEED = os.getenv("DEFAULT_LLM_SEED") or 42
 DEFAULT_LLM_TEMPERATURE = os.getenv("DEFAULT_LLM_TEMPERATURE") or 0.7
 
+if isinstance(DEFAULT_LLM_TEMPERATURE, str):
+    DEFAULT_LLM_TEMPERATURE = float(DEFAULT_LLM_TEMPERATURE)
+    
+
+if isinstance(DEFAULT_LLM_MAX_TOKENS, str):
+    DEFAULT_LLM_MAX_TOKENS = int(DEFAULT_LLM_MAX_TOKENS)
+    
+if isinstance(DEFAULT_LLM_SEED, int):
+    DEFAULT_LLM_SEED = int(DEFAULT_LLM_SEED)
+
 CREATE_NEW_IF_NOT_EXISTS=os.getenv("CREATE_NEW_IF_NOT_EXISTS", "true").lower() == "true"
 
 TELEGRAM_ROOM = os.getenv("TELEGRAM_ROOM")
@@ -109,3 +119,8 @@ NER_SYSTEM_PROMPT = """You are an expert in extracting named entities from text.
 # KB suffixes
 ENTITY_SUFFIX = "-entity"
 RELATION_SUFFIX = "-relation"
+
+MAX_NUM_CONCURRENT_PROCESSING_FILES = 2
+MAX_NUM_CONCURRENT_LLM_CALL = 16
+DOCLING_SERVER_URL=os.getenv("DOCLING_SERVER_URL", "").rstrip("/")
+GATEWAY_IPFS_PREFIX = "https://gateway.lighthouse.storage/ipfs"

@@ -19,6 +19,8 @@ const (
 	KnowledgeBaseStatusMinted
 	KnowledgeBaseStatusProcessingFailed
 	KnowledgeBaseStatusProcessUpdate
+	KnowledgeBaseStatusProcessCrawlData
+	KnowledgeBaseStatusCrawlDataDone
 )
 
 const (
@@ -70,6 +72,7 @@ type KnowledgeBaseFile struct {
 	FilecoinHashRawData string                  `json:"filecoin_hash_raw_data"`
 	TransferHash        string                  `json:"transfer_hash"`
 	LastErrorMessage    string                  `json:"last_error_message"`
+	FromUrl             string                  `json:"from_url"`
 }
 
 type ListKnowledgeBaseRequest struct {
