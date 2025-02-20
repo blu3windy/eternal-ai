@@ -16,8 +16,12 @@ FACT_KEYWORDS = [
 # GAME_DURATION = 60 * 60 * 4 # 4 hours
 GAME_DURATION = 60 * 10  # 10 minutes
 GAME_BET_DURATION = 60 * 10  # should be the same as GAME_DURATION
-FACT_DURATION = 60 * 60 * 24  # 1 days
-FACT_BET_DURATION = 60 * 60  # 1 hours
+# FACT_DURATION = 60 * 60 * 24  # 1 days
+# FACT_BET_DURATION = 60 * 60  # 1 hours
+
+FACT_DURATION = 60 * 30  # 30 minutes
+FACT_BET_DURATION = 60 * 10  # 10 minutes
+
 GAME_REDIS_CACHE = 24 * 60 * 60 * 2  # 2 day
 CREATE_GAME_LOCK_EXPIRY = 1000 * 10
 # 10 seconds
