@@ -43,19 +43,31 @@ class AgentInference:
                 self.web3 = Web3(Web3.HTTPProvider(os.getenv("HYBRID_MODEL_RPC_URL")))
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-    def get_agent_address(self, model: str):
+    def get_agent_address(self, agent_address: str):
         if self.agent_address is None or self.agent_address == "":
-            if model != "":
-                self.agent_address = model
-            elif HYBRID_MODEL_ADDRESS != "":
+            self.agent_address = agent_address
+            if self.agent_address == "":
                 self.agent_address = HYBRID_MODEL_ADDRESS
             else:
                 self.agent_address = os.getenv("HYBRID_MODEL_ADDRESS")
 
-    def get_system_prompt(self):
+    def get_system_prompt(self, agent_address: str, rpc: str = ""):
+        logging.info(f"Get system prompt from agent...")
+
+        self.create_web3(rpc)
+        if self.web3.is_connected():
+            self.get_agent_address(agent_address)
+            agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
+                                                    abi=AGENT_ABI)
+            try:
+                system_prompt = agent_contract.functions.getSystemPrompt().call
+                return system_prompt
+            except Exception as e:
+                logging.error(f'{e}')
+                raise e
         return ""
 
-    def create_inference_agent(self, private_key: str, rpc: str = "", agent_address: str = "", model: str = ""):
+    def create_inference_agent(self, private_key: str, agent_address: str, rpc: str = "", model: str = ""):
         logging.info(f"Creating inference agent...")
 
         self.create_web3(rpc)
@@ -63,7 +75,7 @@ class AgentInference:
             if private_key is None or len(private_key) == 0:
                 private_key = os.getenv("PRIVATE_KEY")
 
-            self.get_agent_address()
+            self.get_agent_address(agent_address)
             account = self.web3.eth.account.from_key(private_key)
             account_address = Web3.to_checksum_address(account.address)
 
