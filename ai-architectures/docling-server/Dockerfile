@@ -16,7 +16,7 @@ RUN conda create -n env python==3.10 -y
 COPY requirements.txt /tmp/requirements.txt
 RUN conda run --no-capture-output -n env python -m pip install -r /tmp/requirements.txt
 
-RUN rm -rf /tmp/requirements.txt /root/.cache
+RUN rm -rf /tmp/requirements.txt
 COPY server.py /app
 
 EXPOSE 8000
