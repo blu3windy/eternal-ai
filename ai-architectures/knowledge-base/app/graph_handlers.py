@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 from functools import lru_cache
 from .utils import limit_asyncio_concurrency
 
+@limit_asyncio_concurrency(12)
 async def call_llm_priotized(messages: List[Dict[str, str]]):
 
     payload = {
