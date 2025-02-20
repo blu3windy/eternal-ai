@@ -26,6 +26,8 @@ from transformers import AutoTokenizer
 from docling.datamodel.base_models import InputFormat, DocItemLabel
 import aiofiles
 import tempfile
+import shutil
+from concurrent.futures import ProcessPoolExecutor
 
 class LiteInputDocument(BaseModel):
     format: InputFormat
@@ -60,6 +62,16 @@ def sync2async(sync_func: Callable):
         return await run_in_threadpool(partial(sync_func, *args, **kwargs))
     return async_func if not asyncio.iscoroutinefunction(sync_func) else sync_func
 
+def sync2async_use_subprocess(sync_func: Callable):
+    async def async_func(*args, **kwargs):
+        with ProcessPoolExecutor(max_workers=1) as pool:
+            return await asyncio.get_event_loop().run_in_executor(
+                pool, 
+                partial(sync_func, *args, **kwargs)
+            )
+
+    return async_func if not asyncio.iscoroutinefunction(sync_func) else sync_func
+
 def limit_asyncio_concurrency(num_of_concurrent_calls: int):
     semaphore = AsyncSemaphore(num_of_concurrent_calls)
 
@@ -71,14 +83,23 @@ def limit_asyncio_concurrency(num_of_concurrent_calls: int):
         return wrapper
     return decorator
 
+
+def magic_get_doc(url):
+    res = DocumentConverter(
+        allowed_formats=SUPORTED_DOCUMENT_FORMATS,
+        format_options=DOCUMENT_FORMAT_OPTIONS
+    ).convert(source=url)
+    
+    return res.model_dump()
+
 @limit_asyncio_concurrency(2)
 async def get_doc_from_url(url) -> LiteConverstionResult:
-    return await sync2async(
-        DocumentConverter(
-            allowed_formats=SUPORTED_DOCUMENT_FORMATS,
-            format_options=DOCUMENT_FORMAT_OPTIONS
-        ).convert
+
+    res = await sync2async_use_subprocess(
+        magic_get_doc
     )(source=url)
+
+    return LiteConverstionResult.model_validate(res)
 
 async def url_chunking(url: str, tokenizer: str, min_chunk_size: int=10, max_chunk_size: int=512) -> AsyncGenerator:
     try:
@@ -145,6 +166,14 @@ logging_config = {
     },
 }
 
+from functools import lru_cache
+
+@lru_cache(1)
+def app_tmp_dir():
+    res = Path(tempfile.gettempdir()) / "docling-server"
+    os.makedirs(res, exist_ok=True)
+    return res
+
 if __name__ == "__main__":
     api_app = FastAPI()
 
@@ -160,20 +189,30 @@ if __name__ == "__main__":
             status_code=200
         )
 
-    @api_app.post("/chunking")
-    async def chunking(file: UploadFile, tokenizer: str, min_chunk_size: int=10, max_chunk_size: int=512):
-        file_path = Path(tempfile.gettempdir()) / file.filename
+    def get_random_payload(n=8):
+        return os.urandom(n).hex()
+
+    @api_app.post("/chunks")
+    async def chunks(file: UploadFile, tokenizer: str, min_chunk_size: int=10, max_chunk_size: int=512):
+
+        random_payload = get_random_payload()
+        directory: Path = app_tmp_dir() / random_payload  
         res = []
 
         try:
-            async with aiofiles.open(file_path, 'wb') as f:
+            os.makedirs(directory, exist_ok=True)
+            logger.info(f"Saving file to {directory / file.filename}")
+        
+            async with aiofiles.open(directory / file.filename, 'wb') as f:
                 await f.write(await file.read())
 
-            async for chunk in url_chunking(file_path, tokenizer, min_chunk_size, max_chunk_size):
+            async for chunk in url_chunking(directory / file.filename, tokenizer, min_chunk_size, max_chunk_size):
                 res.append(chunk) 
 
         finally:
-            os.remove(file_path) 
+
+            if directory.exists():
+                shutil.rmtree(directory, ignore_errors=True)
 
         return JSONResponse(
             {

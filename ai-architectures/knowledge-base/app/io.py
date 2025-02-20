@@ -1,8 +1,7 @@
-from app.handlers import download_filecoin_item, logger
 from app.models import FilecoinData, InsertInputSchema, InsertProgressCallback, InsertResponse, QueryInputSchema, ResponseMessage, UpdateInputSchema
 from app.utils import limit_asyncio_concurrency, sync2async, sync2async_in_subprocess
 from app.wrappers import milvus_kit, telegram_kit
-from typing import List, Union
+from typing import List, Union, Optional, AsyncGenerator
 import httpx
 from pymilvus import MilvusClient
 import json
@@ -20,6 +19,10 @@ from docling.document_converter import ConversionResult
 from pydantic import BaseModel
 from docling.datamodel.base_models import InputFormat
 import re
+import aiofiles
+import subprocess
+import asyncio
+from pathlib import Path
 
 class LiteInputDocument(BaseModel):
     format: InputFormat
@@ -273,6 +276,73 @@ async def notify_action(req: Union[InsertInputSchema, UpdateInputSchema, QueryIn
     )
 
 
+
+@limit_asyncio_concurrency(4)
+async def download_file(
+    session: httpx.AsyncClient, url: str, path: str
+):
+    async with session.stream("GET", url) as response:
+        async with aiofiles.open(path, 'wb') as f:
+            async for chunk in response.aiter_bytes(8192):
+                await f.write(chunk)
+
+    logger.info(f"Downloaded {path}")
+
+async def download_filecoin_item(
+    metadata: dict, 
+    tmp_dir: str, 
+    session: httpx.AsyncClient,
+    identifier: str
+) -> Optional[FilecoinData]:
+    
+    if metadata["is_part"]:
+        parts = sorted(metadata["files"], key=lambda x: x["index"])
+        zip_parts, tasks = [], []
+
+        for part in parts:
+            part_url = f"{const.GATEWAY_IPFS_PREFIX}/{part['hash']}"
+            part_path = Path(tmp_dir) / part['name']
+            tasks.append(download_file(session, part_url, part_path))
+            zip_parts.append(part_path)
+
+        await asyncio.gather(*tasks)
+
+        name = metadata['name']
+        destination = Path(tmp_dir) / name
+        command = f"cat {tmp_dir}/{name}.zip.part-* | pigz -p 2 -d | tar -xf - -C {tmp_dir}"
+
+        await sync2async(subprocess.run)(
+            command, shell=True, check=True
+        )
+
+        logger.info(f"Successfully extracted files to {destination}")
+        afiles = []
+
+        for root, dirs, files in os.walk(destination):
+            for file in files:
+                afiles.append(os.path.join(root, file))
+
+        if len(afiles) > 0:
+            return FilecoinData(
+                identifier=identifier,
+                address=afiles[0]
+            )
+
+        logger.warning(f"No files extracted from {destination}")
+
+    else:
+        url = f"{const.GATEWAY_IPFS_PREFIX}/{metadata['files'][0]['hash']}"
+        path = Path(tmp_dir) / metadata['files'][0]['name']
+
+        await download_file(session, url, path)
+
+        return FilecoinData(
+            identifier=identifier,
+            address=path
+        )
+        
+    return None
+
 async def download_and_extract_from_filecoin(
     url: str, tmp_dir: str, ignore_inserted: bool=True
 ) -> List[FilecoinData]:
@@ -311,3 +381,43 @@ async def download_and_extract_from_filecoin(
 
     logger.info(f"List of files to be processed: {list_files}")
     return list_files
+
+@limit_asyncio_concurrency(4)
+async def call_docling_server(
+    file_path: str, 
+    embedding_model_name: str, 
+    min_chunk_size=10, 
+    max_chunk_size=512,
+    retry=5
+) -> List[str]:  
+    assert os.path.exists(file_path), f"File not found: {file_path}"
+
+    for i in range(1 + retry):
+        try:
+            async with httpx.AsyncClient() as cli:
+                with open(file_path, 'rb') as fp:
+                    resp = await cli.post(
+                        const.DOCLING_SERVER_URL + "/chunks",
+                        files={
+                            'file': fp
+                        },
+                        params={
+                            "min_chunk_size": min_chunk_size,
+                            "max_chunk_size": max_chunk_size,
+                            "tokenizer": embedding_model_name
+                        }
+                    )
+
+            if resp.status_code == 200:
+                resp_json = resp.json()
+                return resp_json['chunks']      
+
+            else:
+                logger.error(f"Failed to chunk file: {resp.text}")
+                continue
+                
+        except Exception as err:
+            logger.error("Failed while communicating to docling server")
+            pass
+
+    raise Exception(f"Chunking failed after all {retry} attempts")
