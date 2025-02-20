@@ -57,10 +57,15 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		req.SystemContent = "default"
 	}
 	switch req.AgentType {
-	case models.AgentInfoAgentTypeUtility:
+	case models.AgentInfoAgentTypeRealWorld,
+		models.AgentInfoAgentTypeUtility:
 		{
 			switch req.ChainID {
-			case models.BASE_CHAIN_ID:
+			case models.BASE_CHAIN_ID,
+				models.ARBITRUM_CHAIN_ID,
+				models.BSC_CHAIN_ID,
+				models.APE_CHAIN_ID,
+				models.AVALANCHE_C_CHAIN_ID:
 				{
 				}
 			default:
@@ -102,6 +107,8 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		MissionTopics:    req.MissionTopics,
 		ConfigData:       req.ConfigData,
 	}
+	agent.MinFeeToUse = req.MinFeeToUse
+	agent.Worker = req.Worker
 
 	tokenInfo, _ := s.GenerateTokenInfoFromSystemPrompt(ctx, req.AgentName, req.SystemContent)
 	if tokenInfo != nil && tokenInfo.TokenSymbol != "" {
@@ -459,6 +466,8 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				agent.Adjectives = req.GetAssistantCharacter(req.Adjectives)
 				agent.SocialInfo = req.GetAssistantCharacter(req.SocialInfo)
 				agent.SourceUrl = req.SourceUrl
+				agent.MinFeeToUse = req.MinFeeToUse
+				agent.Worker = req.Worker
 				if req.TokenImageUrl != "" {
 					agent.TokenImageUrl = req.TokenImageUrl
 				}
