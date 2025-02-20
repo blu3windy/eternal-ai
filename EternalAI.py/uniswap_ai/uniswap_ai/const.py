@@ -5,7 +5,7 @@ BASE_CHAIN_ID = "0x2105"
 RPC_URL = {
     ETH_CHAIN_ID: "https://eth.llamarpc.com",
     BSC_CHAIN_ID: "https://bsc.llamarpc.com",
-    BASE_CHAIN_ID: "https://bsc.llamarpc.com",
+    BASE_CHAIN_ID: "https://base.llamarpc.com",
 }
 
 IPFS = "ipfs://"
