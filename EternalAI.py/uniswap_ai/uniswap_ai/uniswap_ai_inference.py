@@ -225,7 +225,6 @@ class InferenceProcessing:
                         continue
                 raise Exception(f'Could not get result')
             except Exception as e:
-                logging.error(f'Could not get assignments_info {e}', e)
                 raise e
         else:
             raise Exception('Web3 not connected')

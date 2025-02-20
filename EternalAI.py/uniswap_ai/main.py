@@ -30,9 +30,15 @@ def process_infer(chain_id: str, tx_hash: str, rpc: str, worker_address: str):
 
     result = ""
     if chain_id == BASE_CHAIN_ID:
-        infer_processing.get_assignments_by_inference(worker_hub_address=worker_address,
-                                                      inference_id=infer_id,
-                                                      rpc=rpc)
+        while (True):
+            try:
+                infer_processing.get_assignments_by_inference(worker_hub_address=worker_address,
+                                                              inference_id=infer_id,
+                                                              rpc=rpc)
+                break
+            except Exception as e:
+                logging.info(f'Can not get result for inference, try again')
+                time.sleep(30)
     elif chain_id == BSC_CHAIN_ID:
         while (True):
             try:
@@ -62,8 +68,8 @@ def create_hybrid_model_infer(private_key: str, chain_id: str, model_address: st
                               worker_address: str):
     rpc = RPC_URL.get(chain_id)
     hybrid_infer = HybridModelInference()
-    tx_hash = hybrid_infer.create_inference_model(private_key, model_address, system_prompt, prompt, rpc)
-    # tx_hash = "0x9ff83107e360c1f6ab09ec0d9f3c6c5188868ff382bc9b822c9b7eb249820790"
+    # tx_hash = hybrid_infer.create_inference_model(private_key, model_address, system_prompt, prompt, rpc)
+    tx_hash = "0x9ff83107e360c1f6ab09ec0d9f3c6c5188868ff382bc9b822c9b7eb249820790"
     logging.info(f"infer tx_hash: {tx_hash}")
 
     return process_infer(chain_id, tx_hash, rpc, worker_address)
