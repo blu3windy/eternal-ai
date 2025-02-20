@@ -77,6 +77,12 @@ class AgentInference:
                 raise e
         return ""
 
+    def get_worker_hub_address(self):
+        self.get_agent_address('')
+        agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
+                                                abi=AGENT_ABI)
+        return agent_contract.functions.getPromptSchedulerAddress().call()
+
     def create_inference_agent(self, private_key: str, agent_address: str, model: str, prompt: str, rpc: str = ""):
         logging.info(f"Creating inference agent...")
 
