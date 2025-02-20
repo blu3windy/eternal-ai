@@ -1,4 +1,4 @@
-from app.io import download_and_extract_from_filecoin, hook, call_docling_server
+from app.io import download_and_extract_from_filecoin, hook, call_docling_server, download_file_v2
 from app.utils import estimate_ip_from_distance, is_valid_schema
 
 from .models import (
@@ -394,9 +394,15 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
                 ))
 
         for url in req.file_urls:
+            try:
+                local_filepath = await download_file_v2(url, tmp_dir)
+            except Exception as err:
+                logger.error(f"Failed to download {url} to read locally")
+                continue
+
             futures.append(asyncio.ensure_future(
                 smaller_task(
-                    url, kb, model_use, 
+                    local_filepath, kb, model_use, 
                     file_identifier=url,
                     request_identifier=req.ref
                 )
@@ -454,7 +460,7 @@ def resume_pending_tasks():
     logger.info(f"Found {len(handler.get_all())} pending tasks")
     pending_tasks = handler.get_all()
 
-    for task in pending_tasks:
+    for task in pending_tasks[::-1]:
         if task.id in _running_tasks:
             continue
 

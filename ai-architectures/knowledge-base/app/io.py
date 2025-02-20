@@ -1,7 +1,7 @@
 from app.models import FilecoinData, InsertInputSchema, InsertProgressCallback, InsertResponse, QueryInputSchema, ResponseMessage, UpdateInputSchema
 from app.utils import limit_asyncio_concurrency, sync2async, sync2async_in_subprocess
 from app.wrappers import milvus_kit, telegram_kit
-from typing import List, Union, Optional, AsyncGenerator
+from typing import List, Union, Optional
 import httpx
 from pymilvus import MilvusClient
 import json
@@ -25,7 +25,7 @@ import asyncio
 from pathlib import Path
 import html
 import time
-import traceback
+from urllib.parse import urlparse
 
 class LiteInputDocument(BaseModel):
     format: InputFormat
@@ -279,6 +279,31 @@ async def notify_action(req: Union[InsertInputSchema, UpdateInputSchema, QueryIn
     )
 
 
+async def download_file_v2(url, save_dir="."):
+
+    async with httpx.AsyncClient() as cli:
+        async with cli.stream("GET", url) as stream:
+            stream.raise_for_status()  # Raise an error for bad responses
+            headers = stream.headers
+            
+            # Extract filename from Content-Disposition header if available
+            content_disposition = headers.get("Content-Disposition")
+
+            if content_disposition and "filename=" in content_disposition:
+                filename = content_disposition.split("filename=")[-1].strip('"')
+            else:
+                # Otherwise, extract from URL path
+                parsed_url = urlparse(url)
+                filename = os.path.basename(parsed_url.path) or "downloaded_file"
+            
+            save_path = os.path.join(save_dir, filename)
+            
+            # Write the file in binary mode
+            async with aiofiles.open(save_path, "wb") as file:
+                async for chunk in stream.aiter_bytes(chunk_size=8192):
+                    await file.write(chunk)
+            
+            return save_path
 
 @limit_asyncio_concurrency(4)
 async def download_file(
@@ -417,7 +442,7 @@ async def call_docling_server(
 ) -> List[str]:  
     assert os.path.exists(file_path), f"File not found: {file_path}"
 
-    logger.info(f"Calling {const.DOCLING_SERVER_URL}")
+    logger.info(f"sending {file_path} to {const.DOCLING_SERVER_URL}...")
 
     for i in range(1 + retry):
         timeout = time.time() + 600
@@ -440,6 +465,8 @@ async def call_docling_server(
             if resp.status_code == 200:
                 _id = resp.json()['result']
 
+                logger.info(f"File {file_path} is successfully sent. Awaiting for the result...")
+
                 while time.time() < timeout:
                     resp = await cli.get(
                         const.DOCLING_SERVER_URL + "/async-get",
@@ -453,13 +480,15 @@ async def call_docling_server(
                         resp_json = resp.json()
                         result: dict = resp_json['result']
 
-                        if result["status"] == "error":
+                        if result["status"] in ["error", "not_found"]:
                             msg = result.get("message")
-                            logger.info(f"Error while generating chunks for the file {file_path}: {msg}")
+                            logger.info(f"Error while generating chunks for the file {file_path}: {msg} (status: {result['status']})")
                             break
 
                         if result["status"] == "ok":
-                            return result["chunks"]
+                            res = result["chunks"]
+                            logger.info(f"Successfully split {file_path} into chunks! Total {len(res)} (chunks)")
+                            return res
 
                     await asyncio.sleep(5)
 
