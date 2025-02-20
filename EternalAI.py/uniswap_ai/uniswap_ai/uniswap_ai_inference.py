@@ -251,11 +251,16 @@ class InferenceProcessing:
     def process_output(self, out: bytes):
         json_string = out.decode('utf-8')
         temp = json.loads(json_string)
-        result = InferenceResponse(**temp)
-        return result
+        try:
+            result = InferenceResponse(**temp)
+            return result
+        except:
+            return None
 
     def process_output_to_infer_response(self, output: bytes):
         infer_reponse = self.process_output(output)
+        if infer_reponse is None:
+            return None
         if infer_reponse.storage == "lighthouse-filecoint" or "ipfs://" in infer_reponse.result_uri:
             light_house = infer_reponse.result_uri.replace(IPFS, LIGHTHOUSE_IPFS)
             light_house_reponse = requests.get(light_house)
