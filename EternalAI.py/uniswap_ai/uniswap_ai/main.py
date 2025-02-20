@@ -1,5 +1,6 @@
 import decimal
 import logging
+import re
 import time
 import os
 import simplejson as json
@@ -16,6 +17,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def call_uniswap(private_key: str, content: str):
     logging.info(f"call uniswap with content {content}")
     try:
+        # get json content
+        json_match = re.search(r'\{.*?\}', content, re.DOTALL)
+        if json_match:
+            content = json_match.group(0)
+        else:
+            print("No JSON content found.")
+
         uniswap_obj = UniSwapAI()
         json_data = json.loads(content)
         req = SwapReq(**json_data)
