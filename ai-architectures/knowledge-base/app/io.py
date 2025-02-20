@@ -23,6 +23,7 @@ import aiofiles
 import subprocess
 import asyncio
 from pathlib import Path
+import html
 
 class LiteInputDocument(BaseModel):
     format: InputFormat
@@ -287,6 +288,18 @@ async def download_file(
                 await f.write(chunk)
 
     logger.info(f"Downloaded {path}")
+    
+async def unescape_html_file(s: str):
+    if not s.endswith('html'):
+        return s
+    
+    with open(s, 'r') as f:
+        content = f.read()
+
+    with open(s, 'w') as f:
+        f.write(await sync2async(html.unescape)(content))
+        
+    return s
 
 async def download_filecoin_item(
     metadata: dict, 
@@ -320,7 +333,9 @@ async def download_filecoin_item(
 
         for root, dirs, files in os.walk(destination):
             for file in files:
-                afiles.append(os.path.join(root, file))
+                fpath = os.path.join(root, file)
+                await unescape_html_file(fpath)
+                afiles.append(fpath)
 
         if len(afiles) > 0:
             return FilecoinData(
@@ -335,6 +350,7 @@ async def download_filecoin_item(
         path = Path(tmp_dir) / metadata['files'][0]['name']
 
         await download_file(session, url, path)
+        await unescape_html_file(path)
 
         return FilecoinData(
             identifier=identifier,
