@@ -93,8 +93,7 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 				daos.GetDBMainCtx(ctx),
 				memeID,
 				map[string][]interface{}{
-					"AgentInfo":  {},
-					"AgentStore": {},
+					"AgentInfo": {},
 				},
 				false,
 			)
