@@ -1,15 +1,12 @@
 import logging
 
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("requests").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 import asyncio
 import uvicorn
 import os
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, UploadFile
 from fastapi.responses import JSONResponse
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
@@ -44,7 +41,6 @@ SUPORTED_DOCUMENT_FORMATS = [
     InputFormat.ASCIIDOC,
     InputFormat.HTML,
     InputFormat.XML_USPTO,
-    InputFormat.XML_PUBMED,
     InputFormat.PDF
 ]
 
