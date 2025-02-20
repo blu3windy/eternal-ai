@@ -60,16 +60,19 @@ def create_hybrid_model_infer(private_key: str, chain_id: str, model_address: st
 
 
 if __name__ == "__main__":
-    create_hybrid_model_infer(os.getenv("PRIVATE_KEY"), BSC_CHAIN_ID,
-                              os.getenv("HYBRID_MODEL_ADDRESS"),
-                              "You are a BTC master",
-                              "Tell me about BTC",
-                              os.getenv("WORKER_HUB_ADDRESS"))
+    create_hybrid_model_infer(
+        os.getenv("PRIVATE_KEY"),
+        BASE_CHAIN_ID,
+        os.getenv("HYBRID_MODEL_ADDRESS"),
+        "You are a BTC master",
+        "Tell me about BTC",
+        os.getenv("WORKER_HUB_ADDRESS"))
 
-    result = create_agent_infer(os.getenv("PRIVATE_KEY"),
-                                BSC_CHAIN_ID,
-                                AGENT_ADDRESS,
-                                "Tell me about BTC")
+    result = create_agent_infer(
+        os.getenv("PRIVATE_KEY"),
+        BSC_CHAIN_ID,
+        AGENT_ADDRESS,
+        "Tell me about BTC")
 
     # uniswapObj = UniSwapAI()
     # uniswapObj.swap_v3("", SwapReq(
