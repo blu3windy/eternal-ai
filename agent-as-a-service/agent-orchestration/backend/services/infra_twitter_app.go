@@ -38,6 +38,9 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installCode 
 			if err != nil {
 				return errs.NewError(err)
 			}
+			if res.Result == "" {
+				return errs.NewError(errs.ErrBadRequest)
+			}
 			infraTwitterApp = &models.InfraTwitterApp{
 				Address:     res.Result,
 				InstallCode: installCode,
@@ -167,6 +170,7 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installCode
 		), nil
 	}
 	params := map[string]string{
+		"address":          infraTwitterApp.Address,
 		"twitter_id":       infraTwitterApp.TwitterInfo.TwitterID,
 		"twitter_username": infraTwitterApp.TwitterInfo.TwitterUsername,
 		"twitter_name":     infraTwitterApp.TwitterInfo.TwitterName,
