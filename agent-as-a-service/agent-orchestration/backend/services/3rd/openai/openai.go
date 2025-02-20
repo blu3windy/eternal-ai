@@ -225,12 +225,15 @@ func (c OpenAI) TestAgentPersinality(systemPrompt, userPrompt, baseUrl string) (
 	return chatResp, nil
 }
 
-func (c OpenAI) CallDirectlyEternalLLM(messages, model, baseUrl string) (string, error) {
+func (c OpenAI) CallDirectlyEternalLLM(messages, model, baseUrl string, options map[string]interface{}) (string, error) {
 	seed := models.RandSeed()
 	bodyReq := map[string]interface{}{
 		"model":  model,
 		"stream": false,
 		"seed":   seed,
+	}
+	for k, v := range options {
+		bodyReq[k] = v
 	}
 	contents := []map[string]string{}
 	err := json.Unmarshal([]byte(messages), &contents)
@@ -270,7 +273,7 @@ func (c OpenAI) CallDirectlyEternalLLM(messages, model, baseUrl string) (string,
 	return chatResp, nil
 }
 
-func (c OpenAI) CallStreamDirectlyEternalLLM(ctx context.Context, messages, model, baseUrl string, outputChan chan *openai.ChatCompletionStreamResponse, errChan chan error, doneChan chan bool) {
+func (c OpenAI) CallStreamDirectlyEternalLLM(ctx context.Context, messages, model, baseUrl string, options map[string]interface{}, outputChan chan *openai.ChatCompletionStreamResponse, errChan chan error, doneChan chan bool) {
 	seed := rand.Int()
 	var contents []openai.ChatCompletionMessage
 	err := json.Unmarshal([]byte(messages), &contents)
@@ -284,6 +287,12 @@ func (c OpenAI) CallStreamDirectlyEternalLLM(ctx context.Context, messages, mode
 		Stream:   true,
 		Seed:     &seed,
 		Messages: contents,
+	}
+	if value, ok := options["top_p"]; ok {
+		llmRequest.TopP, _ = value.(float32)
+	}
+	if value, ok := options["max_tokens"]; ok {
+		llmRequest.MaxTokens, _ = value.(int)
 	}
 	stream, err := client.CreateChatCompletionStream(
 		ctx,
