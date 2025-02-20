@@ -461,7 +461,7 @@ async def call_docling_server(
                         if result["status"] == "ok":
                             return result["chunks"]
 
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(5)
 
             await asyncio.sleep(2 ** i)
 
