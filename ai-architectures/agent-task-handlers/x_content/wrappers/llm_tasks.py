@@ -4,7 +4,7 @@ import random
 from openai import BaseModel
 import requests
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from . import redis_wrapper
 
@@ -590,6 +590,91 @@ def clean_text(crawled_text: str):
     except Exception as err:
         logger.error(f"[clean_text] An error occured: {err}")
         return crawled_text
+
+
+EXTRACT_CONTENT_PROMPT = """Act as an expert in natural language processing (NLP) and information retrieval. You specialize in extracting the most relevant content from search results based on a given query. Your expertise ensures that only the most meaningful, contextually relevant information is included in the final output.
+
+## Task:
+
+Given a search query and a corresponding search result, extract a single, well-structured paragraph that is highly relevant to the search query. The extracted content should be:
+- Concise: Remove unnecessary information that does not directly relate to the query.
+- Contextually relevant: Preserve key details needed to understand the extracted content in relation to the query.
+- Well-structured: Ensure the extracted content is readable as a single, coherent paragraph.
+
+## Context:
+- The search result may contain extraneous information such as ads, navigation links, or general introductions. Ignore these and focus only on content that directly addresses the query.
+- If multiple relevant sections exist, merge them into a single, fluid paragraph without losing meaning.
+- If no relevant information is found, return an empty string.
+- If there is uncertainty about what to extract, list key reasoning steps before making a decision.
+
+## Response Format (JSON):
+
+Your output must be a valid JSON object with the following structure:
+
+{{
+  "content": "<single extracted paragraph>"
+}}
+
+where "content" is a single paragraph containing the extracted relevant content. If no relevant content is found, return an empty string ("").
+
+## Instructions for Thought Process:
+
+1. Analyze the search query to determine the core information being requested.
+2. Review the search result and identify portions that directly answer the query.
+3. Filter out irrelevant information such as ads, unrelated sections, or promotional content.
+4. Merge relevant sections into a single, well-structured paragraph while maintaining clarity.
+5. Format the output strictly as JSON, ensuring proper nesting and valid syntax.
+
+If any ambiguity arises, list your reasoning steps before finalizing the extracted content.
+
+## Provided Input:
+
+Search Query: {query}
+
+Search Results:
+{result}
+"""
+
+
+def extract_content_relevant_to_query(query: str, contents: List[str]):
+    system_prompt = "You are a helpful assistant."
+
+    contents_str = "\n\n".join([f"- {x}" for x in contents])
+
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt,
+        },
+        {
+            "role": "user",
+            "content": EXTRACT_CONTENT_PROMPT.format(
+                query=query, result=contents_str
+            ),
+        },
+    ]
+
+    def run_llm():
+        model = SyncBasedEternalAI(
+            max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
+            temperature=0.7,
+            base_url=const.SELF_HOSTED_HERMES_70B_URL + "/v1",
+            api_key=const.SELF_HOSTED_LLAMA_API_KEY,
+            model=const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY,
+            seed=random.randint(1, int(1e9)),
+        )
+        result = model.generate(messages).generations[0].text
+        result = repair_json(result, return_objects=True)
+
+        return result["content"]
+
+    obj = retry(
+        run_llm,
+        max_retry=3,
+        first_interval=get_llm_tasks_first_interval(),
+        interval_multiply=2,
+    )()
+    return obj
 
 
 if __name__ == "__main__":

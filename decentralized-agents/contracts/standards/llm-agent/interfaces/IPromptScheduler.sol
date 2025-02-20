@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IInferable} from "./IInferable.sol";
 
-interface IWorkerHub is IInferable {
+interface IPromptScheduler is IInferable {
     enum InferenceStatus {
         Nil,
         Solving,

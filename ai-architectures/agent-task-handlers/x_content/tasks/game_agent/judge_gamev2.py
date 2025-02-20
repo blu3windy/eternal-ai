@@ -179,7 +179,11 @@ def _get_facts_search_query_conversation(
 ) -> List[dict]:
     system_message = "You are a helpful assistant."
 
-    content_images_str = "\n\n".join([f"- {x}" for x in content_images])
+    content_images_str = ""
+    if len(content_images) > 0:
+        content_images_str = "Image Descriptions:" + "\n\n".join(
+            [f"- {x}" for x in content_images]
+        )
 
     conversation_thread = [
         {
@@ -191,7 +195,10 @@ def _get_facts_search_query_conversation(
             "content": FACT_QUERY_PROMPT_TEMPLATE.format(
                 question=question,
                 content_images=content_images_str,
-                timestamp=timestamp,
+                tweet_timestamp=timestamp,
+                current_timestamp=datetime.datetime.now(
+                    datetime.timezone.utc
+                ).isoformat(),
             ),
         },
     ]
@@ -276,13 +283,13 @@ async def _get_judge_game_with_facts_conversation(
     given_facts = ""
     if cached_response:
         logger.info(
-            f"[_get_judge_game_with_facts_conversation] Using cached fact check response for tweet {game_tweet_object.get('id')}"
+            f"[_get_judge_game_with_facts_conversation] Using cached fact check response for tweet {game_tweet_object.get('tweet_id')}"
         )
         given_facts = SearchResponse(**cached_response).results
     else:
         # No cache found, call fact service
         logger.info(
-            f"[_get_judge_game_with_facts_conversation] No cache found, calling fact service for tweet {game_tweet_object.get('id')}"
+            f"[_get_judge_game_with_facts_conversation] No cache found, calling fact service for tweet {game_tweet_object.get('tweet_id')}"
         )
 
         query = await sync2async(_get_facts_search_query)(
@@ -293,7 +300,7 @@ async def _get_judge_game_with_facts_conversation(
 
         if query != "":
             logger.info(
-                f"[_get_judge_game_with_facts_conversation] Received query '{query}' for fact searching for tweet {game_tweet_object.get('id')}"
+                f"[_get_judge_game_with_facts_conversation] Received query '{query}' for fact searching for tweet {game_tweet_object.get('tweet_id')}"
             )
 
             response = await fact_service.search(
@@ -308,14 +315,21 @@ async def _get_judge_game_with_facts_conversation(
             given_facts = response.results
         else:
             logger.info(
-                f"[_get_judge_game_with_facts_conversation] Fact searching is not required for tweet {game_tweet_object.get('id')}"
+                f"[_get_judge_game_with_facts_conversation] Fact searching is not required for tweet {game_tweet_object.get('tweet_id')}"
             )
 
     logger.info(
         "[_get_judge_game_with_facts_conversation] Building conversation for judging"
     )
 
-    content_images_str = "\n\n".join([f"- {x}" for x in content_images])
+    content_images_str = ""
+    if len(content_images) > 0:
+        content_images_str = "Content images in the tweet:" + "\n\n".join(
+            [f"- {x}" for x in content_images]
+        )
+    if given_facts == "":
+        given_facts = "Facts not found"
+
     user_prompt = JUDGE_GAME_WITH_FACTS_PROMPT_TEMPLATE.format(
         full_text=game_tweet_object.get("full_text"),
         content_images=content_images_str,

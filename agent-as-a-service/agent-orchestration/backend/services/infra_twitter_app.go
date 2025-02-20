@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
@@ -12,7 +14,9 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/ethapi"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/lighthouse"
+	"github.com/jinzhu/gorm"
 )
 
 func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installCode string, installUri string) (string, error) {
@@ -31,16 +35,18 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installCode 
 			return errs.NewError(err)
 		}
 		if infraTwitterApp == nil {
-			// TODO get addres from instal code
 			var res struct {
-				Address string
+				Result string `json:"result"`
 			}
-			err = helpers.CurlURL(s.conf.InfraTwitterApp.InfraAuthUri+"?install_code="+installCode, http.MethodGet, nil, nil, &res)
+			err = helpers.CurlURL(s.conf.InfraTwitterApp.InfraAuthUri+"?code="+installCode, http.MethodGet, nil, nil, &res)
 			if err != nil {
 				return errs.NewError(err)
 			}
+			if res.Result == "" {
+				return errs.NewError(errs.ErrBadRequest)
+			}
 			infraTwitterApp = &models.InfraTwitterApp{
-				Address:     res.Address,
+				Address:     res.Result,
 				InstallCode: installCode,
 			}
 		}
@@ -168,6 +174,7 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installCode
 		), nil
 	}
 	params := map[string]string{
+		"address":          infraTwitterApp.Address,
 		"twitter_id":       infraTwitterApp.TwitterInfo.TwitterID,
 		"twitter_username": infraTwitterApp.TwitterInfo.TwitterUsername,
 		"twitter_name":     infraTwitterApp.TwitterInfo.TwitterName,
@@ -425,138 +432,278 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installCode
 // 	return helpers.ConvertJsonString(resp), nil
 // }
 
-func (s *Service) InfraTwitterAppExecuteRequest(ctx context.Context, address string, ipfsReq string) (string, error) {
-	rawReq, _, err := lighthouse.DownloadDataSimple(ipfsReq)
+func (s *Service) CreateInfraTwitterAppRequest(ctx context.Context, event *ethapi.RealWorldAgentExecutionRequested) error {
+	err := daos.WithTransaction(
+		daos.GetDBMainCtx(ctx),
+		func(tx *gorm.DB) error {
+			if strings.EqualFold(s.conf.InfraTwitterApp.AgentAddress, event.ContractAddress) {
+				eventHash := fmt.Sprintf("%s_%d", event.TxHash, event.Index)
+				inst, err := s.dao.FirstInfraRequest(tx,
+					map[string][]interface{}{
+						"contract_address = ?": {strings.ToLower(event.ContractAddress)},
+						"uuid = ?":             {event.Uuid},
+					},
+					map[string][]interface{}{},
+					[]string{},
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+
+				if inst == nil {
+					agentInfo, err := s.dao.FirstAgentInfo(tx,
+						map[string][]interface{}{
+							"agent_contract_address = ?": {strings.ToLower(event.ContractAddress)},
+						},
+						map[string][]interface{}{},
+						[]string{},
+					)
+					if agentInfo != nil {
+						inst = &models.InfraRequest{
+							NetworkID:       agentInfo.NetworkID,
+							AgentInfoID:     agentInfo.ID,
+							TxHash:          strings.ToLower(event.TxHash),
+							ContractAddress: strings.ToLower(event.ContractAddress),
+							EventId:         eventHash,
+							TxAt:            time.Unix(int64(event.Timestamp), 0),
+							Status:          models.InfraRequestStatusPending,
+							Uuid:            event.Uuid,
+							Data:            event.Data,
+							Creator:         strings.ToLower(event.Creator),
+							ActId:           event.ActId.Uint64(),
+						}
+						err = s.dao.Create(tx, inst)
+						if err != nil {
+							return errs.NewError(err)
+						}
+					}
+				}
+			}
+
+			return nil
+		},
+	)
+
 	if err != nil {
-		return "", errs.NewError(err)
+		return errs.NewError(err)
 	}
-	resp, err := func() (interface{}, error) {
-		infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
-			daos.GetDBMainCtx(ctx),
-			map[string][]interface{}{
-				"address = ?": {address},
-			},
-			map[string][]interface{}{
-				"TwitterInfo": {},
-			},
-			[]string{},
-		)
-		if err != nil {
-			return "", errs.NewError(err)
-		}
-		var reqMethod struct {
-			Method string `json:"method"`
-		}
-		err = json.Unmarshal(rawReq, &reqMethod)
-		if err != nil {
-			return nil, errs.NewError(err)
-		}
-		switch reqMethod.Method {
-		case "getUserById":
-			{
-				var req struct {
-					Params struct {
-						Id string `json:"id"`
-					} `json:"params"`
-				}
-				err := json.Unmarshal(rawReq, &req)
-				if err != nil {
-					return nil, errs.NewError(err)
-				}
-				user, err := s.GetTwitterUserByID(ctx, req.Params.Id)
-				if err != nil {
-					return nil, errs.NewError(err)
-				}
-				return user, nil
+	return nil
+}
+
+func (s *Service) JobExecuteInfraTwitterAppRequest(ctx context.Context) error {
+	err := s.JobRunCheck(
+		ctx, "JobExecuteInfraTwitterAppRequest",
+		func() error {
+			agents, err := s.dao.FindInfraRequest(
+				daos.GetDBMainCtx(ctx),
+				map[string][]interface{}{
+					`status = ?`: {models.InfraRequestStatusPending},
+				},
+				map[string][]interface{}{},
+				[]string{},
+				0,
+				50,
+			)
+			if err != nil {
+				return errs.NewError(err)
 			}
-		case "getUserByUsername":
-			{
-				var req struct {
-					Params struct {
-						Username string `json:"username"`
-					} `json:"params"`
-				}
-				err := json.Unmarshal(rawReq, &req)
+			var retErr error
+			for _, agent := range agents {
+				err = s.InfraTwitterAppExecuteRequestByID(ctx, agent.ID)
 				if err != nil {
-					return nil, errs.NewError(err)
+					retErr = errs.MergeError(retErr, errs.NewError(err))
 				}
-				resp, err := s.GetTwitterUserByUsername(ctx, req.Params.Username)
-				if err != nil {
-					return nil, errs.NewError(err)
-				}
-				return resp, nil
 			}
-		case "seachUserByQuery":
-			{
-				var req struct {
-					Params struct {
-						Username string `json:"username"`
-					} `json:"params"`
-				}
-				err := json.Unmarshal(rawReq, &req)
-				if err != nil {
-					return nil, errs.NewError(err)
-				}
-				resp, err := s.SeachTwitterUserByQuery(ctx, req.Params.Username)
-				if err != nil {
-					return nil, errs.NewError(err)
-				}
-				return resp, nil
-			}
-		case "getUserTweets":
-			{
-				var req struct {
-					Params struct {
-						TwitterID       string `json:"twitter_id"`
-						PaginationToken string `json:"pagination_token"`
-						MaxResults      int    `json:"max_results"`
-					} `json:"params"`
-				}
-				err := json.Unmarshal(rawReq, &req)
-				if err != nil {
-					return nil, errs.NewError(err)
-				}
-				resp, err := s.GetListUserTweets(ctx, req.Params.TwitterID, req.Params.PaginationToken, req.Params.MaxResults)
-				if err != nil {
-					return nil, errs.NewError(err)
-				}
-				return resp, nil
-			}
-		case "tweet":
-			{
-				if infraTwitterApp == nil {
-					return "", errs.NewError(errs.ErrBadRequest)
-				}
-				var req struct {
-					Params struct {
-						Content string `json:"content"`
-					} `json:"params"`
-				}
-				err := json.Unmarshal(rawReq, &req)
-				if err != nil {
-					return nil, errs.NewError(err)
-				}
-				tweetId, err := helpers.ReplyTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, req.Params.Content, "", "")
-				if err != nil {
-					return nil, errs.NewError(err)
-				}
-				return tweetId, nil
-			}
-		default:
-			{
-				return nil, errs.NewError(errs.ErrBadRequest)
-			}
-		}
-	}()
-	var rawData string
+			return retErr
+		},
+	)
 	if err != nil {
-		rawData = helpers.ConvertJsonString(&serializers.Resp{Error: errs.NewError(err)})
-	} else {
-		rawData = helpers.ConvertJsonString(&serializers.Resp{Result: resp})
+		return errs.NewError(err)
 	}
-	ipfsHash, err := s.IpfsUploadDataForName(ctx, "data", []byte(rawData))
+	return nil
+}
+
+func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID uint) error {
+	err := s.JobRunCheck(
+		ctx, fmt.Sprintf("InfraTwitterAppExecuteRequestByID_%d", reqID),
+		func() error {
+			reqInfo, err := s.dao.FirstInfraRequestByID(daos.GetDBMainCtx(ctx),
+				reqID,
+				map[string][]interface{}{},
+				false,
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			if reqInfo != nil && reqInfo.Status == models.InfraRequestStatusPending {
+				address := reqInfo.Creator
+				ipfsReq := reqInfo.Data
+				rawReq, _, err := lighthouse.DownloadDataSimple(ipfsReq)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				resp, err := func() (interface{}, error) {
+					infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
+						daos.GetDBMainCtx(ctx),
+						map[string][]interface{}{
+							"address = ?": {address},
+						},
+						map[string][]interface{}{
+							"TwitterInfo": {},
+						},
+						[]string{},
+					)
+					if err != nil {
+						return "", errs.NewError(err)
+					}
+					var reqMethod struct {
+						Method string `json:"method"`
+					}
+					err = json.Unmarshal(rawReq, &reqMethod)
+					if err != nil {
+						return nil, errs.NewError(err)
+					}
+					switch reqMethod.Method {
+					case "getUserById":
+						{
+							var req struct {
+								Params struct {
+									Id string `json:"id"`
+								} `json:"params"`
+							}
+							err := json.Unmarshal(rawReq, &req)
+							if err != nil {
+								return nil, errs.NewError(err)
+							}
+							user, err := s.GetTwitterUserByID(ctx, req.Params.Id)
+							if err != nil {
+								return nil, errs.NewError(err)
+							}
+							return user, nil
+						}
+					case "getUserByUsername":
+						{
+							var req struct {
+								Params struct {
+									Username string `json:"username"`
+								} `json:"params"`
+							}
+							err := json.Unmarshal(rawReq, &req)
+							if err != nil {
+								return nil, errs.NewError(err)
+							}
+							resp, err := s.GetTwitterUserByUsername(ctx, req.Params.Username)
+							if err != nil {
+								return nil, errs.NewError(err)
+							}
+							return resp, nil
+						}
+					case "seachUserByQuery":
+						{
+							var req struct {
+								Params struct {
+									Username string `json:"username"`
+								} `json:"params"`
+							}
+							err := json.Unmarshal(rawReq, &req)
+							if err != nil {
+								return nil, errs.NewError(err)
+							}
+							resp, err := s.SeachTwitterUserByQuery(ctx, req.Params.Username)
+							if err != nil {
+								return nil, errs.NewError(err)
+							}
+							return resp, nil
+						}
+					case "getUserTweets":
+						{
+							var req struct {
+								Params struct {
+									TwitterID       string `json:"twitter_id"`
+									PaginationToken string `json:"pagination_token"`
+									MaxResults      int    `json:"max_results"`
+								} `json:"params"`
+							}
+							err := json.Unmarshal(rawReq, &req)
+							if err != nil {
+								return nil, errs.NewError(err)
+							}
+							resp, err := s.GetListUserTweets(ctx, req.Params.TwitterID, req.Params.PaginationToken, req.Params.MaxResults)
+							if err != nil {
+								return nil, errs.NewError(err)
+							}
+							return resp, nil
+						}
+					case "tweet":
+						{
+							if infraTwitterApp == nil {
+								return "", errs.NewError(errs.ErrBadRequest)
+							}
+							var req struct {
+								Params struct {
+									Content string `json:"content"`
+								} `json:"params"`
+							}
+							err := json.Unmarshal(rawReq, &req)
+							if err != nil {
+								return nil, errs.NewError(err)
+							}
+							if infraTwitterApp.TwitterInfo == nil {
+								return nil, errs.NewError(errs.ErrUnAuthorization)
+							}
+							tweetId, err := helpers.ReplyTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, req.Params.Content, "", "")
+							if err != nil {
+								return nil, errs.NewError(err)
+							}
+							return tweetId, nil
+						}
+					default:
+						{
+							return nil, errs.NewError(errs.ErrBadRequest)
+						}
+					}
+				}()
+				var rawData string
+				if err != nil {
+					rawData = helpers.ConvertJsonString(&serializers.Resp{Error: errs.NewError(err)})
+				} else {
+					rawData = helpers.ConvertJsonString(&serializers.Resp{Result: resp})
+				}
+				ipfsHash, err := s.IpfsUploadDataForName(ctx, "data", []byte(rawData))
+				if err != nil {
+					return errs.NewError(err)
+				}
+				updateFields := map[string]interface{}{
+					"result": ipfsHash,
+				}
+
+				//TODO: call contract result
+				txHash, err := s.GetEthereumClient(ctx, reqInfo.NetworkID).
+					ERC20RealWorldAgentSubmitSolution(
+						s.conf.InfraTwitterApp.AgentAddress,
+						s.GetAddressPrk(s.conf.InfraTwitterApp.WorkerAddress),
+						models.Number2BigInt(fmt.Sprintf("%d", reqInfo.ActId), 18),
+						[]byte(ipfsHash),
+					)
+				if err != nil {
+					updateFields["error"] = errs.NewError(err)
+				} else {
+					updateFields["status"] = models.InfraRequestStatusExecuted
+					updateFields["result_hash"] = txHash
+				}
+
+				_ = daos.GetDBMainCtx(ctx).Model(&models.AgentTokenInfo{}).Where("id = ?", reqInfo.ID).Updates(
+					updateFields,
+				)
+			}
+
+			return nil
+		},
+	)
 	if err != nil {
-		return "", errs.NewError(err)
+		return errs.NewError(err)
 	}
-	return ipfsHash, nil
+	return nil
+
 }

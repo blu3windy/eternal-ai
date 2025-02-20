@@ -127,6 +127,7 @@ type AgentInfoResp struct {
 	GraphData                 string                    `json:"graph_data"`
 	AgentType                 models.AgentInfoAgentType `json:"agent_type"`
 	ConfigData                string                    `json:"config_data"`
+	SourceURL                 string                    `json:"source_url"`
 }
 
 type AgentTwitterPostResp struct {
@@ -283,6 +284,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		MissionTopics:        m.MissionTopics,
 		GraphData:            m.GraphData,
 		AgentType:            m.AgentType,
+		SourceURL:            m.SourceUrl,
 	}
 
 	if m.NftTokenImage != "" {
