@@ -9,8 +9,8 @@ from dataclasses import dataclass, asdict
 from typing import List
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
-from uniswap_ai.const import HYBRID_MODEL_ABI, HYBRID_MODEL_ADDRESS, AGENT_ABI, RPC_URL, ETH_CHAIN_ID, \
-    WORKER_HUB_ADDRESS, WORKER_HUB_ABI, PROMPT_SCHEDULER_ABI, AGENT_ADDRESS, LIGHTHOUSE_IPFS, IPFS
+from uniswap_ai.const import HYBRID_MODEL_ABI, AGENT_ABI, RPC_URL, ETH_CHAIN_ID, WORKER_HUB_ABI, PROMPT_SCHEDULER_ABI, \
+    AGENT_ADDRESS, LIGHTHOUSE_IPFS, IPFS
 
 
 @dataclass()
@@ -44,12 +44,13 @@ class AgentInference:
     web3: Web3 = None
     agent_address: str = None
 
-    def create_web3(self, rpc: str = ""):
+    def create_web3(self, rpc: str):
         if self.web3 is None:
             if rpc != "":
                 self.web3 = Web3(Web3.HTTPProvider(rpc))
             else:
-                self.web3 = Web3(Web3.HTTPProvider(os.getenv("HYBRID_MODEL_RPC_URL")))
+                # Default:
+                self.web3 = Web3(Web3.HTTPProvider(RPC_URL[ETH_CHAIN_ID]))
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def get_agent_address(self, agent_address: str):
@@ -60,7 +61,7 @@ class AgentInference:
                 if self.agent_address == "":
                     self.agent_address = os.getenv("AGENT_ADDRESS")
 
-    def get_system_prompt(self, agent_address: str, rpc: str = ""):
+    def get_system_prompt(self, agent_address: str, rpc: str):
         logging.info(f"Get system prompt from agent...")
 
         self.create_web3(rpc)
@@ -82,14 +83,12 @@ class AgentInference:
                                                 abi=AGENT_ABI)
         return agent_contract.functions.getPromptSchedulerAddress().call()
 
-    def create_inference_agent(self, private_key: str, agent_address: str, prompt: str, rpc: str = ""):
+    def create_inference_agent(self, private_key: str, agent_address: str, prompt: str, rpc: str):
         logging.info(f"Creating inference agent...")
-
+        if private_key == "" or private_key is None:
+            raise Exception("Private key missing")
         self.create_web3(rpc)
         if self.web3.is_connected():
-            if private_key is None or len(private_key) == 0:
-                private_key = os.getenv("PRIVATE_KEY")
-
             self.get_agent_address(agent_address)
             account = self.web3.eth.account.from_key(private_key)
             account_address = Web3.to_checksum_address(account.address)
@@ -126,7 +125,7 @@ class HybridModelInference:
     web3: Web3 = None
     model_address: str = None
 
-    def create_web3(self, rpc: str = ""):
+    def create_web3(self, rpc: str):
         if self.web3 is None:
             if rpc != "":
                 self.web3 = Web3(Web3.HTTPProvider(rpc))
@@ -135,23 +134,20 @@ class HybridModelInference:
                 self.web3 = Web3(Web3.HTTPProvider(RPC_URL[ETH_CHAIN_ID]))
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-    def get_model_address(self, model_address: str = ""):
+    def get_model_address(self, model_address: str):
         if self.model_address is None or self.model_address == "":
             self.model_address = model_address
             if self.model_address == "":
-                self.model_address = HYBRID_MODEL_ADDRESS
-                if self.model_address == "":
-                    self.model_address = os.getenv("HYBRID_MODEL_ADDRESS")
+                raise Exception("No model")
 
     def create_inference_model(self, private_key: str, model_address: str,
                                system_prompt: str, prompt: str,
-                               rpc: str = ""):
+                               rpc: str):
         logging.info(f"Creating inference model...")
-
+        if private_key == "" or private_key is None:
+            raise Exception("Private key missing")
         self.create_web3(rpc)
         if self.web3.is_connected():
-            if private_key is None or len(private_key) == 0:
-                private_key = os.getenv("PRIVATE_KEY")
             logging.info(f"Private key {private_key}")
             self.get_model_address(model_address)
             account = self.web3.eth.account.from_key(private_key)
@@ -189,7 +185,7 @@ class InferenceProcessing:
     web3: Web3 = None
     workerhub_address: str = None
 
-    def create_web3(self, rpc: str = ""):
+    def create_web3(self, rpc: str):
         if self.web3 is None:
             if rpc != "":
                 self.web3 = Web3(Web3.HTTPProvider(rpc))
@@ -198,13 +194,13 @@ class InferenceProcessing:
                 self.web3 = Web3(Web3.HTTPProvider(RPC_URL[ETH_CHAIN_ID]))
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-    def get_workerhub_address(self, worker_hub_address: str = ""):
+    def get_workerhub_address(self, worker_hub_address: str):
         if self.workerhub_address is None or self.workerhub_address == "":
             self.workerhub_address = worker_hub_address
             if self.workerhub_address == "":
-                self.workerhub_address = WORKER_HUB_ADDRESS
+                raise Exception(f"missing worker hub address")
 
-    def get_assignments_by_inference(self, worker_hub_address: str, inference_id: int, rpc: str = ""):
+    def get_assignments_by_inference(self, worker_hub_address: str, inference_id: int, rpc: str):
         self.create_web3(rpc)
         if self.web3.is_connected():
             self.get_workerhub_address(worker_hub_address)
@@ -217,7 +213,7 @@ class InferenceProcessing:
                 logging.error(f'Could not get assignments_info {e}', e)
                 raise e
 
-    def get_inference_by_inference_id(self, worker_hub_address: str, inference_id: int, rpc: str = ""):
+    def get_inference_by_inference_id(self, worker_hub_address: str, inference_id: int, rpc: str):
         self.create_web3(rpc)
         if self.web3.is_connected():
             self.get_workerhub_address(worker_hub_address)
@@ -249,7 +245,7 @@ class InferenceProcessing:
         result = InferenceResponse(**temp)
         return result
 
-    def get_infer_id(self, worker_hub_address: str, tx_hash: str, rpc: str = ""):
+    def get_infer_id(self, worker_hub_address: str, tx_hash: str, rpc: str):
         self.create_web3(rpc)
         if self.web3.is_connected():
             logging.info(f'Get infer Id from tx {tx_hash}')

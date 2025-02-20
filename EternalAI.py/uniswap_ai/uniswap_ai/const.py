@@ -1082,7 +1082,6 @@ AGENT_ABI = [
     }
 ]
 
-HYBRID_MODEL_ADDRESS = "0x644292a7e238dd4eb7fc7f4c4afd8eb3c3d4111d"
 HYBRID_MODEL_ABI = [
     {
         "inputs": [],
@@ -1537,7 +1536,6 @@ HYBRID_MODEL_ABI = [
     }
 ]
 
-WORKER_HUB_ADDRESS = "0x7c9c1bbde91d6e9a96d93ed621921060b49db0c0"
 WORKER_HUB_ABI = [
     {
         "inputs": [],
