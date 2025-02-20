@@ -12,11 +12,10 @@ from uniswap import Uniswap
 
 @dataclass
 class SwapReq:
-    token_a: str
-    token_a_amount: decimal
-    token_b: str
-    token_b_out_min: decimal
-    uniswap_router_address: str = "0xe592427a0aece92de3edee1f18e0157c05861564"
+    token_in: str
+    token_in_amount: decimal
+    token_out: str
+    token_out_out_min: decimal
 
 
 @dataclass
@@ -33,21 +32,20 @@ class UniSwapAI:
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def swap_v3(self, privateKey: str, req: SwapReq, rpc: str = ""):
+        if privateKey is None or len(privateKey) == 0:
+            raise Exception('Private key missing')
         self.create_web3(rpc)
         if self.web3.is_connected():
-            if privateKey is None or len(privateKey) == 0:
-                privateKey = os.getenv("PRIVATE_KEY")
-
             account = self.web3.eth.account.from_key(privateKey)
             account_address = Web3.to_checksum_address(account.address)
 
             """Checks price impact for a pool with liquidity."""
             uni_swap = Uniswap(address=account_address, private_key=privateKey, web3=self.web3, version=3)
 
-            token_a = Web3.to_checksum_address(req.token_a)
-            amount_in = self.web3.to_wei(req.token_a_amount, 'ether')
+            token_a = Web3.to_checksum_address(req.token_in)
+            amount_in = self.web3.to_wei(req.token_in_amount, 'ether')
 
-            token_b = Web3.to_checksum_address(req.token_b)
+            token_b = Web3.to_checksum_address(req.token_out)
 
             # Compare the results with the output of:
             logging.info(f"https://app.uniswap.org/#/swap?use=v3&inputCurrency={token_a}&outputCurrency={token_b}")

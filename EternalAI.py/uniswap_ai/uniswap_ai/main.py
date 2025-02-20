@@ -2,6 +2,7 @@ import decimal
 import logging
 import time
 import os
+import simplejson as json
 
 from dotenv import load_dotenv
 from uniswap_ai.const import RPC_URL, BSC_CHAIN_ID, BASE_CHAIN_ID
@@ -12,14 +13,18 @@ load_dotenv(".env")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def call_uniswap():
-    ""
-    # uniswapObj = UniSwapAI()
-    # uniswapObj.swap_v3("", SwapReq(
-    #     "0x0000000000000000000000000000000000000000",
-    #     decimal.Decimal("0.1"),
-    #     "0x7d29a64504629172a429e64183d6673b9dacbfce",
-    #     decimal.Decimal("0.1")))
+def call_uniswap(private_key: str, content: str):
+    logging.info(f"call uniswap with content {content}")
+    uniswapObj = UniSwapAI()
+    json_data = json.loads(content)
+    req = SwapReq(**json_data)
+    try:
+        tx_swap = uniswapObj.swap_v3(private_key, req)
+    except Exception as e:
+        logging.error(f'{e}')
+        return None
+
+    return tx_swap
 
 
 def process_infer(chain_id: str, tx_hash: str, rpc: str, worker_address: str):
@@ -31,9 +36,9 @@ def process_infer(chain_id: str, tx_hash: str, rpc: str, worker_address: str):
     if chain_id == BASE_CHAIN_ID:
         while (True):
             try:
-                infer_processing.get_assignments_by_inference(worker_hub_address=worker_address,
-                                                              inference_id=infer_id,
-                                                              rpc=rpc)
+                result = infer_processing.get_assignments_by_inference(worker_hub_address=worker_address,
+                                                                       inference_id=infer_id,
+                                                                       rpc=rpc)
                 break
             except Exception as e:
                 logging.info(f'Can not get result for inference, try again')
@@ -48,7 +53,10 @@ def process_infer(chain_id: str, tx_hash: str, rpc: str, worker_address: str):
             except Exception as e:
                 logging.info(f'Can not get result for inference, try again')
                 time.sleep(30)
-    logging.info(f'result: {result}')
+    if result is not None:
+        logging.info(f'result: {result}')
+    else:
+        logging.info(f'result: None')
     return result
 
 
@@ -60,18 +68,29 @@ def create_agent_infer(private_key: str, chain_id: str, agent_address: str, prom
 
     worker_hub_address = agent_infer.get_worker_hub_address()
     logging.info(f'worker_hub_address : {worker_hub_address}')
-    return process_infer(chain_id, tx_hash, rpc, worker_hub_address)
+
+    content_response = process_infer(chain_id, tx_hash, rpc, worker_hub_address)
+
+    if content_response is not None and len(content_response) > 0:
+        tx_swap = call_uniswap(private_key, content_response)
+    else:
+        return None
 
 
 def create_hybrid_model_infer(private_key: str, chain_id: str, model_address: str, system_prompt: str, prompt: str,
                               worker_address: str):
     rpc = RPC_URL.get(chain_id)
     hybrid_infer = HybridModelInference()
-    # tx_hash = hybrid_infer.create_inference_model(private_key, model_address, system_prompt, prompt, rpc)
-    tx_hash = "0x9ff83107e360c1f6ab09ec0d9f3c6c5188868ff382bc9b822c9b7eb249820790"
+    tx_hash = hybrid_infer.create_inference_model(private_key, model_address, system_prompt, prompt, rpc)
+    # tx_hash = "0x9ff83107e360c1f6ab09ec0d9f3c6c5188868ff382bc9b822c9b7eb249820790"
     logging.info(f"infer tx_hash: {tx_hash}")
 
-    return process_infer(chain_id, tx_hash, rpc, worker_address)
+    content_response = process_infer(chain_id, tx_hash, rpc, worker_address)
+
+    if content_response is not None and len(content_response) > 0:
+        tx_swap = call_uniswap(private_key, content_response)
+    else:
+        return None
 
 
 def main(args):
