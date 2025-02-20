@@ -348,9 +348,7 @@ async def _get_judge_fact_conversation(tweet_object, answers):
 
     answers_content = ""
     for answer in answers:
-        answers_content += (
-            f"- Agent {answer['username']}: {answer['answer']}\n"
-        )
+        answers_content += f"- {answer['username']}: {answer['answer']}\n"
 
     # Example claim to search
     query = tweet_object.get("full_text")
@@ -421,9 +419,7 @@ async def _get_judge_game_conversation(game_tweet_object, answers):
 
     answers_content = ""
     for answer in answers:
-        answers_content += (
-            f"- Agent {answer['username']}: {answer['answer']}\n"
-        )
+        answers_content += f"- {answer['username']}: {answer['answer']}\n"
 
     content_images = ""
     if game_tweet_object.get("image_urls"):
