@@ -12,10 +12,10 @@ from uniswap import Uniswap
 
 @dataclass
 class SwapReq:
-    token_in: str
-    token_in_amount: decimal
-    token_out: str
-    token_out_out_min: decimal
+    token_in: str = ""
+    token_in_amount: decimal = 0
+    token_out: str = ""
+    token_out_out_min: decimal = 0
 
 
 @dataclass
