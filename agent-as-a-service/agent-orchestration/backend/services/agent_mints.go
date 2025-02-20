@@ -560,7 +560,7 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 								strings.Split(s.conf.GetConfigKeyString(agentInfo.NetworkID, "agent_admin_address"), ","),
 							),
 						),
-						common.HexToAddress(agentInfo.Creator),
+						helpers.HexToAddress(agentInfo.Creator),
 						"ipfs://"+uriHash,
 						[]byte("ipfs://"+systemContentHash),
 						models.ConvertBigFloatToWei(&agentInfo.InferFee.Float, 18),

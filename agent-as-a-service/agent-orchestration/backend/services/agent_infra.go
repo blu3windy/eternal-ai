@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
@@ -10,7 +11,6 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/jinzhu/gorm"
 )
 
@@ -201,7 +201,36 @@ func (s *Service) ScanAgentInfraMintHash(ctx context.Context, userAddress string
 	return nil
 }
 
-func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID uint) error {
+func (s *Service) DeployAgentRealWorldAddress(
+	ctx context.Context,
+	networkID uint64,
+	tokenName string,
+	tokenSymbol string,
+	totalSuply *big.Float,
+	minFeeToUse *big.Float,
+	worker string,
+) (string, string, error) {
+	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
+	eaiTokenAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "eai_contract_address"))
+	contractAddress, txHash, err := s.GetEthereumClient(ctx, networkID).
+		DeployERC20RealWorldAgent(
+			s.GetAddressPrk(memePoolAddress),
+			tokenName,
+			tokenSymbol,
+			models.ConvertBigFloatToWei(totalSuply, 18),
+			helpers.HexToAddress(memePoolAddress),
+			models.ConvertBigFloatToWei(minFeeToUse, 18),
+			24*3600,
+			helpers.HexToAddress(eaiTokenAddress),
+			helpers.HexToAddress(worker),
+		)
+	if err != nil {
+		return "", "", errs.NewError(err)
+	}
+	return contractAddress, txHash, nil
+}
+
+func (s *Service) DeployAgentRealWorld(ctx context.Context, agentInfoID uint) error {
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
 		agentInfoID,
@@ -225,20 +254,15 @@ func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID u
 					models.AVALANCHE_C_CHAIN_ID:
 					{
 						totalSuply := numeric.NewBigFloatFromString("1000000000")
-						memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "meme_pool_address"))
-						eaiTokenAddress := strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "eai_contract_address"))
-						contractAddress, txHash, err := s.GetEthereumClient(ctx, agentInfo.NetworkID).
-							DeployERC20RealWorldAgent(
-								s.GetAddressPrk(memePoolAddress),
-								agentInfo.TokenName,
-								agentInfo.TokenSymbol,
-								models.ConvertBigFloatToWei(&totalSuply.Float, 18),
-								common.HexToAddress(memePoolAddress),
-								models.ConvertBigFloatToWei(&agentInfo.MinFeeToUse.Float, 18),
-								24*3600,
-								common.HexToAddress(eaiTokenAddress),
-								common.HexToAddress(agentInfo.Worker),
-							)
+						contractAddress, txHash, err := s.DeployAgentRealWorldAddress(
+							ctx,
+							agentInfo.NetworkID,
+							agentInfo.TokenName,
+							agentInfo.TokenSymbol,
+							&totalSuply.Float,
+							&agentInfo.MinFeeToUse.Float,
+							agentInfo.Worker,
+						)
 						if err != nil {
 							return errs.NewError(err)
 						}

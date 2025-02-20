@@ -53,7 +53,7 @@ func (s *Service) DeployAgentUtilityAddress(ctx context.Context, agentInfoID uin
 							FsContractAddress common.Address
 							Filename          string
 						}{
-							common.HexToAddress(fsContractAddress),
+							helpers.HexToAddress(fsContractAddress),
 							fileName,
 						}
 						storageInfoType, _ := abi.NewType("tuple", "storageInfo", []abi.ArgumentMarshaling{
@@ -73,9 +73,9 @@ func (s *Service) DeployAgentUtilityAddress(ctx context.Context, agentInfoID uin
 								agentInfo.TokenName,
 								agentInfo.TokenSymbol,
 								models.ConvertBigFloatToWei(&totalSuply.Float, 18),
-								common.HexToAddress(memePoolAddress),
-								common.HexToAddress(models.ETH_ZERO_ADDRESS),
-								common.HexToAddress(models.ETH_ZERO_ADDRESS),
+								helpers.HexToAddress(memePoolAddress),
+								helpers.HexToAddress(models.ETH_ZERO_ADDRESS),
+								helpers.HexToAddress(models.ETH_ZERO_ADDRESS),
 								agentInfo.SystemPrompt,
 								storageInfo,
 							)
