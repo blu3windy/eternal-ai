@@ -22,16 +22,6 @@
         "type": "address"
       },
       {
-        "internalType": "address",
-        "name": "promptScheduler_",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "modelAddress_",
-        "type": "address"
-      },
-      {
         "internalType": "string",
         "name": "systemPrompt_",
         "type": "string"
@@ -47,7 +37,7 @@
   },
   {
     "inputs": [],
-    "name": "InvalidAddress",
+    "name": "DuplicateUuid",
     "type": "error"
   },
   {
@@ -69,6 +59,11 @@
       }
     ],
     "name": "StringTooLong",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAddress",
     "type": "error"
   },
   {
@@ -156,6 +151,37 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "uuid",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "inferId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "fowardData",
+        "type": "bytes"
+      }
+    ],
+    "name": "ForwardPerformed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "address",
         "name": "hybridModel",
@@ -189,9 +215,9 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "caller",
-        "type": "address"
+        "internalType": "bytes32",
+        "name": "uuid",
+        "type": "bytes32"
       },
       {
         "indexed": true,
@@ -200,9 +226,15 @@
         "type": "uint256"
       },
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
         "indexed": false,
         "internalType": "bytes",
-        "name": "request",
+        "name": "executionData",
         "type": "bytes"
       }
     ],
@@ -219,7 +251,7 @@
         "type": "address"
       }
     ],
-    "name": "PromptSchedulerHubUpdate",
+    "name": "PromptSchedulerUpdate",
     "type": "event"
   },
   {
@@ -228,7 +260,7 @@
       {
         "indexed": false,
         "internalType": "string",
-        "name": "systemPrompt",
+        "name": "newSystemPrompt",
         "type": "string"
       }
     ],
@@ -566,6 +598,35 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "uuid",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "dstAgent",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "request",
+        "type": "bytes"
+      }
+    ],
+    "name": "forward",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "dstActionId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getFileStorageChunkInfo",
     "outputs": [
@@ -602,19 +663,6 @@
         "internalType": "struct File",
         "name": "file",
         "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getModelAddress",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -664,13 +712,19 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getPromptSchedulerAddress",
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "getResultById",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "bytes",
         "name": "",
-        "type": "address"
+        "type": "bytes"
       }
     ],
     "stateMutability": "view",
@@ -679,9 +733,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
+        "internalType": "bytes32",
+        "name": "uuid",
+        "type": "bytes32"
       }
     ],
     "name": "getResultById",
@@ -908,11 +962,35 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "inferId",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "uuid",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "request",
+        "type": "bytes"
+      }
+    ],
+    "name": "prompt",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -1023,32 +1101,6 @@
       }
     ],
     "name": "updateFileName",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "modelAddress",
-        "type": "address"
-      }
-    ],
-    "name": "updateModelAddress",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "promptScheduler",
-        "type": "address"
-      }
-    ],
-    "name": "updatePromptScheduler",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

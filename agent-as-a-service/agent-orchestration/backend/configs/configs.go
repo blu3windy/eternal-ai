@@ -258,6 +258,7 @@ type Config struct {
 		OauthClientSecret string `json:"oauth_client_secret"`
 		RedirectUri       string `json:"redirect_uri"`
 		InfraAuthUri      string `json:"infra_auth_uri"`
+		NetworkID         uint64 `json:"network_id"`
 		AgentAddress      string `json:"agent_address"`
 		WorkerAddress     string `json:"worker_address"`
 	} `json:"infra_twitter_app"`
