@@ -114,3 +114,19 @@ Block Explorer: https://evm-subtensor.eternalai.org
 ```
 unsloth/Llama-3.3-70B-Instruct-bnb-4bit
 ```
+
+## Avalanche
+
+```
+Chain ID: 43114
+
+Block Explorer: https://api.avax.network/ext/bc/C/rpc
+```
+
+### Models deployed on Avalanche
+
+#### DeepSeek-R1 1776
+
+```
+unsloth/r1-1776-GGUF
+```
