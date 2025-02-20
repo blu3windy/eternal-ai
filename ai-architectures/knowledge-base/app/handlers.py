@@ -1,4 +1,4 @@
-from app.io import get_doc_from_url, hook, notify_action
+from app.io import get_doc_from_url, hook, notify_action, LiteConverstionResult
 from app.utils import estimate_ip_from_distance, is_valid_schema
 
 from .models import (
@@ -99,7 +99,7 @@ async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingMode
 
 async def url_chunking(url: str, model_use: EmbeddingModel) -> AsyncGenerator:
     try:
-        doc: ConversionResult = await get_doc_from_url(url) 
+        doc: LiteConverstionResult = await get_doc_from_url(url) 
     except Exception as e:
         fmt_exec = traceback.format_exc(limit=8)
         msg = '''
@@ -278,7 +278,7 @@ async def chunking_and_embedding(
 
             else:
                 futures.extend([
-                    asyncio.ensure_future(embedd_triplet(item, e))
+                    asyncio.ensure_future(embedd_triplet(item, e, model_use))
                     for e in resp.result
                 ])
 
@@ -500,10 +500,11 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
     if req.id in _running_tasks:
         return
 
+    # tmp dir preparation
+    tmp_dir = get_tmp_directory()
+    os.makedirs(tmp_dir, exist_ok=True)
+
     try:
-        # tmp dir preparation
-        tmp_dir = get_tmp_directory()
-        os.makedirs(tmp_dir, exist_ok=True)
 
         _running_tasks.add(req.id)
         kb = req.kb
@@ -584,8 +585,8 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
         return n_chunks
 
     finally:
-        shutil.rmtree(tmp_dir, ignore_errors=True)
         _running_tasks.remove(req.id)
+        shutil.rmtree(tmp_dir, ignore_errors=True)
         logger.info(f"Completed handling task: {req.id}")
 
 @schedule.every(5).minutes.do
@@ -713,6 +714,7 @@ def deduplicate_task():
 
         logger.info(f"Deduplication for {identity} done")    
 
+@redis_kit.cache_for(interval_seconds=300 // 5) # seconds
 async def get_sample(kb: str, k: int) -> List[QueryResult]:
     if k <= 0:
         return []
@@ -781,7 +783,10 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
     
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
     row_count = await get_collection_num_entities(model_identity)
-    
+
+    if row_count == 0:
+        return []
+
     entity_kb = [
         kb + const.ENTITY_SUFFIX 
         for kb in req.kb
@@ -809,7 +814,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
             kb_filter=f"kb in {entity_kb}",
             anns_field="embedding",
             output_fields=["head", "tail"],
-            search_params={"params": {"radius": req.threshold * 0.5}}
+            search_params={"params": {"radius": req.threshold}}
         )
 
         for ee in res:

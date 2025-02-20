@@ -54,7 +54,11 @@ class TavilyVerificationSource(FactVerificationSource):
         self.client = TavilyClient(api_key=self.api_key)
 
     async def search(
-        self, query: str, time_range="d", include_answer="basic", **kwargs
+        self,
+        query: str,
+        time_range="d",
+        include_answer="basic",
+        **kwargs,
     ) -> SearchResponse:
         search_results = self.client.search(
             query=query,
@@ -63,14 +67,17 @@ class TavilyVerificationSource(FactVerificationSource):
             **kwargs,
         )
 
+        metadata = {
+            "source": "tavily",
+            "time_range": time_range,
+            "include_answer": include_answer,
+        }
+        metadata.update(kwargs)
+
         return SearchResponse(
             query=query,
             results=search_results.get("answer", "N/A"),
-            metadata={
-                "source": "tavily",
-                "time_range": "d",
-                "include_answer": "basic",
-            },
+            metadata=metadata,
         )
 
 
