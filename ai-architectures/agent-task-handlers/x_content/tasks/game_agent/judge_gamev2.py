@@ -280,13 +280,13 @@ async def _get_judge_game_with_facts_conversation(
     given_facts = ""
     if cached_response:
         logger.info(
-            f"[_get_judge_game_with_facts_conversation] Using cached fact check response for tweet {game_tweet_object.get('id')}"
+            f"[_get_judge_game_with_facts_conversation] Using cached fact check response for tweet {game_tweet_object.get('tweet_id')}"
         )
         given_facts = SearchResponse(**cached_response).results
     else:
         # No cache found, call fact service
         logger.info(
-            f"[_get_judge_game_with_facts_conversation] No cache found, calling fact service for tweet {game_tweet_object.get('id')}"
+            f"[_get_judge_game_with_facts_conversation] No cache found, calling fact service for tweet {game_tweet_object.get('tweet_id')}"
         )
 
         query = await sync2async(_get_facts_search_query)(
@@ -297,7 +297,7 @@ async def _get_judge_game_with_facts_conversation(
 
         if query != "":
             logger.info(
-                f"[_get_judge_game_with_facts_conversation] Received query '{query}' for fact searching for tweet {game_tweet_object.get('id')}"
+                f"[_get_judge_game_with_facts_conversation] Received query '{query}' for fact searching for tweet {game_tweet_object.get('tweet_id')}"
             )
 
             response = await fact_service.search(
@@ -312,7 +312,7 @@ async def _get_judge_game_with_facts_conversation(
             given_facts = response.results
         else:
             logger.info(
-                f"[_get_judge_game_with_facts_conversation] Fact searching is not required for tweet {game_tweet_object.get('id')}"
+                f"[_get_judge_game_with_facts_conversation] Fact searching is not required for tweet {game_tweet_object.get('tweet_id')}"
             )
 
     logger.info(
@@ -324,6 +324,9 @@ async def _get_judge_game_with_facts_conversation(
         content_images_str = "Content images in the tweet:" + "\n\n".join(
             [f"- {x}" for x in content_images]
         )
+    if given_facts == "":
+        given_facts = "Facts not found"
+
     user_prompt = JUDGE_GAME_WITH_FACTS_PROMPT_TEMPLATE.format(
         full_text=game_tweet_object.get("full_text"),
         content_images=content_images_str,
@@ -912,3 +915,47 @@ class JudgeGameTask(MultiStepTaskBase):
         return await a_move_state(
             log, MissionChainState.DONE, "Judge game done"
         )
+
+
+if __name__ == "__main__":
+
+    def run_llm(conversation):
+        model = SyncBasedEternalAI(
+            max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
+            temperature=0.7,
+            base_url=const.SELF_HOSTED_LLAMA_405B_URL + "/v1",
+            api_key=const.SELF_HOSTED_LLAMA_API_KEY,
+            model=const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
+            seed=random.randint(1, int(1e9)),
+        )
+
+        result = model.generate(conversation).generations[0].text
+        return result
+
+    async def task():
+        resp = twitter_v2.get_tweet_info_from_tweet_id(
+            "1892131948715196746", preserve_img=True
+        )
+        answers = [
+            {"username": "agent_4", "answer": "GAM 2-1 TLN"},
+            {
+                "username": "agent_5",
+                "answer": "GAM 3-0 TLN",
+            },
+            {
+                "username": "agent_3",
+                "answer": "GAM 1-2 TLN",
+            },
+            {"username": "agent_1", "answer": "GAM 0-2 TLN"},
+            {"username": "agent_2", "answer": "GAM 2-0 TLN"},
+        ]
+        conversation = await _get_judge_game_with_facts_conversation(
+            resp.data.tweet_info.tweet_object.to_dict(), answers
+        )
+
+        result = run_llm(conversation)
+        print(result)
+        data = repair_json(result, return_objects=True)
+        print("Winning agent:", data["winning_agent"])
+
+    asyncio.run(task())

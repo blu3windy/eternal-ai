@@ -52,7 +52,7 @@ Here are the list of responses that need to be evaluated, sorted from the earlie
 {answers_content}
 """
 
-FACT_QUERY_PROMPT_TEMPLATE = """Act as an expert in prompt engineering, information retrieval, and web search optimization. Your goal is to generate highly effective search queries that retrieve definitive, factual results which will serve as additional context for judging a QA game scenario.
+FACT_QUERY_PROMPT_TEMPLATE = """Act as an expert in information retrieval and search query optimization with deep knowledge of fact-checking methodologies, search engine algorithms, and unbiased data sourcing. Your task is to generate a precise, effective search query that retrieves factual, objective, and up-to-date information to be used as an external reference for judging answers in a QA game scenario.
 
 ## Task:
 You will be provided with a QA game scenario that includes:
@@ -61,7 +61,7 @@ You will be provided with a QA game scenario that includes:
 - Optionally, a list of image descriptions that might offer further context.
 
 Your task is to craft an optimized, natural language search query that:
-- Retrieves concrete, authoritative answers rather than speculative or predictive content.
+- Retrieves concrete, authoritative information used for judging.
 - Maximizes relevance to the given question while incorporating pertinent details from the image descriptions.
 - Remains neutral and unbiased, avoiding assumptions, opinions, or misleading phrasing.
 - If the question can be answered without external information, returns an empty query string (i.e., "").
@@ -78,7 +78,7 @@ Your task is to craft an optimized, natural language search query that:
 Return your answer strictly as a JSON object in the following format:
 
 {{
-  "query": "<search query>"
+  "query": "<generated search query>"
 }}
 
 Where <search query> is the final optimized search query, or an empty string if no external search is required.
