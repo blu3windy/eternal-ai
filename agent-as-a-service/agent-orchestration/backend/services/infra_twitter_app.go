@@ -42,6 +42,9 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installCode 
 			if err != nil {
 				return errs.NewError(err)
 			}
+			if res.Result == "" {
+				return errs.NewError(errs.ErrBadRequest)
+			}
 			infraTwitterApp = &models.InfraTwitterApp{
 				Address:     res.Result,
 				InstallCode: installCode,
@@ -171,6 +174,7 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installCode
 		), nil
 	}
 	params := map[string]string{
+		"address":          infraTwitterApp.Address,
 		"twitter_id":       infraTwitterApp.TwitterInfo.TwitterID,
 		"twitter_username": infraTwitterApp.TwitterInfo.TwitterUsername,
 		"twitter_name":     infraTwitterApp.TwitterInfo.TwitterName,
@@ -641,6 +645,9 @@ func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID u
 							err := json.Unmarshal(rawReq, &req)
 							if err != nil {
 								return nil, errs.NewError(err)
+							}
+							if infraTwitterApp.TwitterInfo == nil {
+								return nil, errs.NewError(errs.ErrUnAuthorization)
 							}
 							tweetId, err := helpers.ReplyTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, req.Params.Content, "", "")
 							if err != nil {

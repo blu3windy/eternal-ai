@@ -939,16 +939,12 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 
 	userPromptInput := openai.LastUserPrompt(messages)
 	retrieveQuery := userPromptInput
-	retrieveQueryFromLLM, _ := s.GenerateKnowledgeQuery(systemPrompt, userPromptInput)
-	if retrieveQueryFromLLM != nil {
-		retrieveQuery = *retrieveQueryFromLLM
-	}
 
 	topKQuery := 5
 	if topK != nil {
 		topKQuery = *topK
 	}
-	th := 0.2
+	th := 0.4
 	if threshold != nil {
 		th = *threshold
 	}
@@ -987,43 +983,29 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 		return "", errs.NewError(err)
 	}
 
-	searchResult := []string{}
+	searchResult := ""
 	for _, item := range response.Result {
-		searchResult = append(searchResult, item.Content)
+		searchResult = searchResult + "\t - " + item.Content + "\n"
 	}
 
-	answerPrmptPrefix := ""
-	for _, item := range searchResult {
-		answerPrmptPrefix += fmt.Sprintf("- %v\n", item)
-	}
-
-	answerPrmptPrefix += ". \n\nUsing the above information to address the user's input: " + userPromptInput
+	userPrompt := fmt.Sprintf("Use the following pieces of retrieved context to answer the question. If there is not enough information in the retrieved context to answer the question, just say something you know about the topic."+
+		"\n\n"+
+		"Question: %v"+
+		"\n"+
+		"Context: \n\n"+
+		"%v"+
+		"\n", userPromptInput, searchResult)
+	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
 			Role:    openai2.ChatMessageRoleSystem,
 			Content: systemPrompt,
 		},
-	}
-
-	for i, item := range messages {
-		if item.Role == openai2.ChatMessageRoleSystem {
-			continue
-		}
-		if i == len(messages)-1 {
-			continue
-		}
-
-		payloadAgentChat = append(payloadAgentChat, openai2.ChatCompletionMessage{
+		{
 			Role:    openai2.ChatMessageRoleUser,
-			Content: item.Content,
-		})
+			Content: userPrompt,
+		},
 	}
-
-	// add answer prompt
-	payloadAgentChat = append(payloadAgentChat, openai2.ChatCompletionMessage{
-		Role:    openai2.ChatMessageRoleUser,
-		Content: answerPrmptPrefix,
-	})
 
 	messageCallLLM, _ := json.Marshal(&payloadAgentChat)
 	url := s.conf.AgentOffchainChatUrl
@@ -1059,16 +1041,11 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 
 	userPromptInput := openai.LastUserPrompt(messages)
 	retrieveQuery := userPromptInput
-	retrieveQueryFromLLM, _ := s.GenerateKnowledgeQuery(systemPrompt, userPromptInput)
-	if retrieveQueryFromLLM != nil {
-		retrieveQuery = *retrieveQueryFromLLM
-	}
-
 	topKQuery := 5
 	if topK != nil {
 		topKQuery = *topK
 	}
-	th := 0.2
+	th := 0.4
 	if threshold != nil {
 		th = *threshold
 	}
@@ -1108,43 +1085,29 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		return
 	}
 
-	searchResult := []string{}
+	searchResult := ""
 	for _, item := range response.Result {
-		searchResult = append(searchResult, item.Content)
+		searchResult = searchResult + "\t - " + item.Content + "\n"
 	}
 
-	answerPrmptPrefix := ""
-	for _, item := range searchResult {
-		answerPrmptPrefix += fmt.Sprintf("- %v\n", item)
-	}
-
-	answerPrmptPrefix += ". \n\nUsing the above information to address the user's input: " + userPromptInput
+	userPrompt := fmt.Sprintf("Use the following pieces of retrieved context to answer the question. If there is not enough information in the retrieved context to answer the question, just say something you know about the topic."+
+		"\n\n"+
+		"Question: %v"+
+		"\n"+
+		"Context: \n\n"+
+		"%v"+
+		"\n", userPromptInput, searchResult)
+	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
 			Role:    openai2.ChatMessageRoleSystem,
 			Content: systemPrompt,
 		},
-	}
-
-	for i, item := range messages {
-		if item.Role == openai2.ChatMessageRoleSystem {
-			continue
-		}
-		if i == len(messages)-1 {
-			continue
-		}
-
-		payloadAgentChat = append(payloadAgentChat, openai2.ChatCompletionMessage{
+		{
 			Role:    openai2.ChatMessageRoleUser,
-			Content: item.Content,
-		})
+			Content: userPrompt,
+		},
 	}
-
-	// add answer prompt
-	payloadAgentChat = append(payloadAgentChat, openai2.ChatCompletionMessage{
-		Role:    openai2.ChatMessageRoleUser,
-		Content: answerPrmptPrefix,
-	})
 
 	messageCallLLM, _ := json.Marshal(&payloadAgentChat)
 	url := s.conf.AgentOffchainChatUrl

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 )
 
 type AssistantCharacter struct {
@@ -66,6 +67,9 @@ type AssistantsReq struct {
 	KbIds                  []uint                  `json:"kb_ids"`
 
 	SourceUrl string `json:"source_url"`
+
+	MinFeeToUse numeric.BigFloat `json:"min_fee_to_use"`
+	Worker      string           `json:"worker"`
 }
 
 func (m *AssistantsReq) GetAssistantCharacter(character interface{}) string {
