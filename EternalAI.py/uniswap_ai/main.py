@@ -71,7 +71,7 @@ if __name__ == "__main__":
     result = create_agent_infer(
         os.getenv("PRIVATE_KEY"),
         BSC_CHAIN_ID,
-        AGENT_ADDRESS,
+        os.getenv("AGENT_ADDRESS"),
         "Tell me about BTC")
 
     # uniswapObj = UniSwapAI()

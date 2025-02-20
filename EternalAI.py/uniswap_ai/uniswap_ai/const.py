@@ -11,7 +11,6 @@ RPC_URL = {
 IPFS = "ipfs://"
 LIGHTHOUSE_IPFS = "https://gateway.lighthouse.storage/ipfs/"
 
-AGENT_ADDRESS = '0x3B9710bA5578C2eeD075D8A23D8c596925fa4625'
 AGENT_ABI = [
     {
         "inputs": [
