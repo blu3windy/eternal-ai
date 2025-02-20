@@ -539,6 +539,9 @@ func (s *Service) InfraTwitterAppExecuteRequest(ctx context.Context, address str
 				if err != nil {
 					return nil, errs.NewError(err)
 				}
+				if infraTwitterApp.TwitterInfo == nil {
+					return nil, errs.NewError(errs.ErrUnAuthorization)
+				}
 				tweetId, err := helpers.ReplyTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, req.Params.Content, "", "")
 				if err != nil {
 					return nil, errs.NewError(err)
