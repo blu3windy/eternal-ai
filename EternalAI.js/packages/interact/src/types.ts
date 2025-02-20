@@ -1,10 +1,7 @@
-export type Message = {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-};
+import { Message } from './methods/infer/types';
 
 export type InferPayload = {
   model: string;
-  chainId: string;
+  chainId: string | number;
   messages: Message[];
 };
