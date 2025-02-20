@@ -1,5 +1,8 @@
+import base64
 import logging
 import os
+
+import requests
 import simplejson as json
 
 from dataclasses import dataclass, asdict
@@ -7,12 +10,14 @@ from typing import List
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from uniswap_ai.const import HYBRID_MODEL_ABI, HYBRID_MODEL_ADDRESS, AGENT_ABI, RPC_URL, ETH_CHAIN_ID, \
-    WORKER_HUB_ADDRESS, WORKER_HUB_ABI, WORKER_HUB_ABI_V4, AGENT_ADDRESS
+    WORKER_HUB_ADDRESS, WORKER_HUB_ABI, PROMPT_SCHEDULER_ABI, AGENT_ADDRESS, LIGHTHOUSE_IPFS, IPFS
 
 
 @dataclass()
 class InferenceResponse:
-    aa: str
+    result_uri: str
+    storage: str
+    data: str
 
 
 @dataclass
@@ -207,17 +212,32 @@ class InferenceProcessing:
         if self.web3.is_connected():
             self.get_workerhub_address(worker_hub_address)
             contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.workerhub_address),
-                                              abi=WORKER_HUB_ABI_V4)
+                                              abi=PROMPT_SCHEDULER_ABI)
             try:
                 inference_info = contract.functions.getInferenceInfo(inference_id).call()
                 logging.info(f'Inference info: {inference_info}')
-                return inference_info.output
+                output = inference_info[10]
+                result = self.process_output(output)
+                if result.storage == "lighthouse-filecoint" or "ipfs://" in result.result_uri:
+                    light_house = result.result_uri.replace(IPFS, LIGHTHOUSE_IPFS)
+                    light_house_reponse = requests.get(light_house)
+                    if light_house_reponse.status_code == 200:
+                        return light_house_reponse.text
+                else:
+                    decoded = base64.b64decode(result.data)
+                    decoded_string = decoded.decode('utf-8')
+                    return decoded_string
+
             except Exception as e:
                 logging.error(f'Could not get assignments_info {e}', e)
                 raise e
+        raise Exception("Could not get inference info")
 
     def process_output(self, out: bytes):
         json_string = out.decode('utf-8')
+        temp = json.loads(json_string)
+        result = InferenceResponse(**temp)
+        return result
 
     def get_infer_id(self, worker_hub_address: str, tx_hash: str, rpc: str = ""):
         self.create_web3(rpc)

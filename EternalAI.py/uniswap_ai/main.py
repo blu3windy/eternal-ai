@@ -15,7 +15,24 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def create_agent_infer(chain_id: str, model: str, prompt: str):
     rpc = RPC_URL.get(chain_id)
     agent_infer = AgentInference()
-    tx_hash = agent_infer.create_inference_agent("", AGENT_ADDRESS, model, prompt, rpc)
+    # tx_hash = agent_infer.create_inference_agent("", AGENT_ADDRESS, model, prompt, rpc)
+    tx_hash = "0xc23d76ee8fcdeb11ae263263aae398912f5c6544cd819e6d960cd97e799f1751"
+    logging.info(f"infer tx_hash: {tx_hash}")
+
+    infer_processing = InferenceProcessing()
+    infer_id = infer_processing.get_infer_id(worker_hub_address=WORKER_HUB_ADDRESS, tx_hash=tx_hash, rpc=rpc)
+    logging.info(f"infer id: {infer_id}")
+
+    result = ""
+    if chain_id == BASE_CHAIN_ID:
+        infer_processing.get_assignments_by_inference(worker_hub_address=WORKER_HUB_ADDRESS,
+                                                      inference_id=infer_id,
+                                                      rpc=rpc)
+    elif chain_id == BSC_CHAIN_ID:
+        result = infer_processing.get_inference_by_inference_id(worker_hub_address=WORKER_HUB_ADDRESS,
+                                                                inference_id=infer_id,
+                                                                rpc=rpc)
+    logging.info(f'result: {result}')
 
 
 def create_hybrid_model_infer(chain_id: str, model: str, prompt: str):
@@ -40,7 +57,7 @@ def create_hybrid_model_infer(chain_id: str, model: str, prompt: str):
 
 
 if __name__ == "__main__":
-    create_hybrid_model_infer(BSC_CHAIN_ID, "NousResearch/Hermes-3-Llama-3.1-70B-FP8", "Tell me about BTC")
+    # create_hybrid_model_infer(BSC_CHAIN_ID, "NousResearch/Hermes-3-Llama-3.1-70B-FP8", "Tell me about BTC")
     create_agent_infer(BSC_CHAIN_ID, "NousResearch/Hermes-3-Llama-3.1-70B-FP8", "Tell me about BTC")
 
     # uniswapObj = UniSwapAI()

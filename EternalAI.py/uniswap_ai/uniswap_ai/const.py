@@ -8,6 +8,9 @@ RPC_URL = {
     BASE_CHAIN_ID: "https://bsc.llamarpc.com",
 }
 
+IPFS = "ipfs://"
+LIGHTHOUSE_IPFS = "https://gateway.lighthouse.storage/ipfs/"
+
 AGENT_ADDRESS = '0x3B9710bA5578C2eeD075D8A23D8c596925fa4625'
 AGENT_ABI = [
     {
@@ -2765,7 +2768,22 @@ WORKER_HUB_ABI = [
     }
 ]
 
-WORKER_HUB_ABI_V4 = [
+PROMPT_SCHEDULER_ABI = [
+    {
+        "inputs": [],
+        "name": "AlreadyCommitted",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AlreadyRevealed",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "AlreadySeized",
+        "type": "error"
+    },
     {
         "inputs": [],
         "name": "AlreadySubmitted",
@@ -2773,12 +2791,27 @@ WORKER_HUB_ABI_V4 = [
     },
     {
         "inputs": [],
-        "name": "FailedTransfer",
+        "name": "CannotFastForward",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CommitTimeout",
         "type": "error"
     },
     {
         "inputs": [],
         "name": "InvalidAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidCommitment",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidContext",
         "type": "error"
     },
     {
@@ -2793,12 +2826,42 @@ WORKER_HUB_ABI_V4 = [
     },
     {
         "inputs": [],
-        "name": "InvalidValue",
+        "name": "InvalidMiner",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidNonce",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidReveal",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidRole",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "NotCommitted",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "NotEnoughMiners",
         "type": "error"
     },
     {
         "inputs": [],
         "name": "OnlyAssignedWorker",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "RevealTimeout",
         "type": "error"
     },
     {
@@ -2827,24 +2890,145 @@ WORKER_HUB_ABI_V4 = [
         "inputs": [
             {
                 "indexed": True,
-                "internalType": "uint64",
-                "name": "batchId",
-                "type": "uint64"
+                "internalType": "address",
+                "name": "miner",
+                "type": "address"
             },
             {
                 "indexed": True,
-                "internalType": "uint32",
-                "name": "modelId",
-                "type": "uint32"
+                "internalType": "uint256",
+                "name": "assigmentId",
+                "type": "uint256"
             },
             {
-                "indexed": True,
-                "internalType": "uint64",
-                "name": "inferId",
-                "type": "uint64"
+                "indexed": False,
+                "internalType": "bytes32",
+                "name": "commitment",
+                "type": "bytes32"
             }
         ],
-        "name": "AppendToBatch",
+        "name": "CommitmentSubmission",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": False,
+                "internalType": "uint256",
+                "name": "chainId",
+                "type": "uint256"
+            },
+            {
+                "indexed": False,
+                "internalType": "uint256",
+                "name": "inferenceId",
+                "type": "uint256"
+            },
+            {
+                "indexed": False,
+                "internalType": "address",
+                "name": "modelAddress",
+                "type": "address"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "address",
+                        "name": "receiver",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "amount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "enum IWorkerHub.DAOTokenReceiverRole",
+                        "name": "role",
+                        "type": "uint8"
+                    }
+                ],
+                "indexed": False,
+                "internalType": "struct IWorkerHub.DAOTokenReceiverInfor[]",
+                "name": "receivers",
+                "type": "tuple[]"
+            }
+        ],
+        "name": "DAOTokenMintedV2",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint16",
+                        "name": "minerPercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "userPercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "referrerPercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "refereePercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "l2OwnerPercentage",
+                        "type": "uint16"
+                    }
+                ],
+                "indexed": False,
+                "internalType": "struct IWorkerHub.DAOTokenPercentage",
+                "name": "oldValue",
+                "type": "tuple"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "uint16",
+                        "name": "minerPercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "userPercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "referrerPercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "refereePercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "l2OwnerPercentage",
+                        "type": "uint16"
+                    }
+                ],
+                "indexed": False,
+                "internalType": "struct IWorkerHub.DAOTokenPercentage",
+                "name": "newValue",
+                "type": "tuple"
+            }
+        ],
+        "name": "DAOTokenPercentageUpdated",
         "type": "event"
     },
     {
@@ -2852,13 +3036,13 @@ WORKER_HUB_ABI_V4 = [
         "inputs": [
             {
                 "indexed": True,
-                "internalType": "uint64",
+                "internalType": "uint256",
                 "name": "inferenceId",
-                "type": "uint64"
+                "type": "uint256"
             },
             {
                 "indexed": False,
-                "internalType": "enum IScheduler.InferenceStatus",
+                "internalType": "enum IWorkerHub.InferenceStatus",
                 "name": "newStatus",
                 "type": "uint8"
             }
@@ -2884,9 +3068,40 @@ WORKER_HUB_ABI_V4 = [
         "inputs": [
             {
                 "indexed": True,
-                "internalType": "uint64",
+                "internalType": "uint256",
+                "name": "assignmentId",
+                "type": "uint256"
+            },
+            {
+                "indexed": True,
+                "internalType": "uint256",
                 "name": "inferenceId",
-                "type": "uint64"
+                "type": "uint256"
+            },
+            {
+                "indexed": True,
+                "internalType": "address",
+                "name": "miner",
+                "type": "address"
+            }
+        ],
+        "name": "MinerRoleSeized",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": True,
+                "internalType": "uint256",
+                "name": "assignmentId",
+                "type": "uint256"
+            },
+            {
+                "indexed": True,
+                "internalType": "uint256",
+                "name": "inferenceId",
+                "type": "uint256"
             },
             {
                 "indexed": True,
@@ -2909,21 +3124,21 @@ WORKER_HUB_ABI_V4 = [
         "inputs": [
             {
                 "indexed": True,
-                "internalType": "uint64",
+                "internalType": "uint256",
                 "name": "inferenceId",
-                "type": "uint64"
+                "type": "uint256"
+            },
+            {
+                "indexed": True,
+                "internalType": "address",
+                "name": "model",
+                "type": "address"
             },
             {
                 "indexed": True,
                 "internalType": "address",
                 "name": "creator",
                 "type": "address"
-            },
-            {
-                "indexed": True,
-                "internalType": "uint32",
-                "name": "modelId",
-                "type": "uint32"
             },
             {
                 "indexed": False,
@@ -2933,15 +3148,9 @@ WORKER_HUB_ABI_V4 = [
             },
             {
                 "indexed": False,
-                "internalType": "bytes",
-                "name": "input",
-                "type": "bytes"
-            },
-            {
-                "indexed": False,
-                "internalType": "bool",
-                "name": "flag",
-                "type": "bool"
+                "internalType": "uint256",
+                "name": "originInferenceId",
+                "type": "uint256"
             }
         ],
         "name": "NewInference",
@@ -2977,6 +3186,86 @@ WORKER_HUB_ABI_V4 = [
             }
         ],
         "name": "Paused",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": True,
+                "internalType": "uint256",
+                "name": "inferenceId",
+                "type": "uint256"
+            },
+            {
+                "indexed": True,
+                "internalType": "address",
+                "name": "model",
+                "type": "address"
+            },
+            {
+                "indexed": True,
+                "internalType": "address",
+                "name": "creator",
+                "type": "address"
+            },
+            {
+                "indexed": False,
+                "internalType": "uint256",
+                "name": "value",
+                "type": "uint256"
+            },
+            {
+                "indexed": False,
+                "internalType": "uint256",
+                "name": "originInferenceId",
+                "type": "uint256"
+            },
+            {
+                "indexed": False,
+                "internalType": "bytes",
+                "name": "input",
+                "type": "bytes"
+            },
+            {
+                "indexed": False,
+                "internalType": "bool",
+                "name": "flag",
+                "type": "bool"
+            }
+        ],
+        "name": "RawSubmitted",
+        "type": "event"
+    },
+    {
+        "anonymous": False,
+        "inputs": [
+            {
+                "indexed": True,
+                "internalType": "address",
+                "name": "miner",
+                "type": "address"
+            },
+            {
+                "indexed": True,
+                "internalType": "uint256",
+                "name": "assigmentId",
+                "type": "uint256"
+            },
+            {
+                "indexed": False,
+                "internalType": "uint40",
+                "name": "nonce",
+                "type": "uint40"
+            },
+            {
+                "indexed": False,
+                "internalType": "bytes",
+                "name": "output",
+                "type": "bytes"
+            }
+        ],
+        "name": "RevealSubmission",
         "type": "event"
     },
     {
@@ -3031,163 +3320,11 @@ WORKER_HUB_ABI_V4 = [
         "type": "event"
     },
     {
-        "inputs": [],
-        "name": "_batchPeriod",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "_gpuManager",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "_inferenceCounter",
-        "outputs": [
-            {
-                "internalType": "uint64",
-                "name": "",
-                "type": "uint64"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "_lastBatchTimestamp",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "_minerRequirement",
-        "outputs": [
-            {
-                "internalType": "uint8",
-                "name": "",
-                "type": "uint8"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "_minerValidatorFeeRatio",
-        "outputs": [
-            {
-                "internalType": "uint16",
-                "name": "",
-                "type": "uint16"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "_submitDuration",
-        "outputs": [
-            {
-                "internalType": "uint40",
-                "name": "",
-                "type": "uint40"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "_wEAIToken",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
         "inputs": [
             {
-                "internalType": "uint32",
-                "name": "modelId",
-                "type": "uint32"
-            },
-            {
-                "internalType": "uint64",
-                "name": "batchId",
-                "type": "uint64"
-            }
-        ],
-        "name": "getBatchInfo",
-        "outputs": [
-            {
                 "internalType": "uint256",
-                "name": "",
+                "name": "_inferenceId",
                 "type": "uint256"
-            },
-            {
-                "internalType": "uint64[]",
-                "name": "",
-                "type": "uint64[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "miner",
-                "type": "address"
-            }
-        ],
-        "name": "getInferenceByMiner",
-        "outputs": [
-            {
-                "internalType": "uint256[]",
-                "name": "",
-                "type": "uint256[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint64",
-                "name": "inferId",
-                "type": "uint64"
             }
         ],
         "name": "getInferenceInfo",
@@ -3200,9 +3337,19 @@ WORKER_HUB_ABI_V4 = [
                         "type": "uint256"
                     },
                     {
-                        "internalType": "uint32",
-                        "name": "modelId",
-                        "type": "uint32"
+                        "internalType": "uint256",
+                        "name": "feeL2",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "feeTreasury",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "modelAddress",
+                        "type": "address"
                     },
                     {
                         "internalType": "uint40",
@@ -3210,7 +3357,7 @@ WORKER_HUB_ABI_V4 = [
                         "type": "uint40"
                     },
                     {
-                        "internalType": "enum IScheduler.InferenceStatus",
+                        "internalType": "enum IWorkerHub.InferenceStatus",
                         "name": "status",
                         "type": "uint8"
                     },
@@ -3225,6 +3372,11 @@ WORKER_HUB_ABI_V4 = [
                         "type": "address"
                     },
                     {
+                        "internalType": "address",
+                        "name": "referrer",
+                        "type": "address"
+                    },
+                    {
                         "internalType": "bytes",
                         "name": "input",
                         "type": "bytes"
@@ -3235,9 +3387,28 @@ WORKER_HUB_ABI_V4 = [
                         "type": "bytes"
                     }
                 ],
-                "internalType": "struct IScheduler.Inference",
+                "internalType": "struct IWorkerHub.Inference",
                 "name": "",
                 "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_modelAddress",
+                "type": "address"
+            }
+        ],
+        "name": "getMinFeeToUse",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -3257,99 +3428,185 @@ WORKER_HUB_ABI_V4 = [
         "type": "function"
     },
     {
+        "inputs": [],
+        "name": "getSubmitDuration",
+        "outputs": [
+            {
+                "internalType": "uint40",
+                "name": "",
+                "type": "uint40"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getTreasuryAddress",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
-                "internalType": "uint32",
-                "name": "modelId",
-                "type": "uint32"
-            },
-            {
                 "internalType": "bytes",
-                "name": "input",
+                "name": "_input",
                 "type": "bytes"
             },
             {
                 "internalType": "address",
-                "name": "creator",
+                "name": "_creator",
                 "type": "address"
             },
             {
                 "internalType": "bool",
-                "name": "flag",
+                "name": "_flag",
                 "type": "bool"
             }
         ],
         "name": "infer",
         "outputs": [
             {
-                "internalType": "uint64",
+                "internalType": "uint256",
                 "name": "",
-                "type": "uint64"
+                "type": "uint256"
             }
         ],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
         "type": "function"
     },
     {
         "inputs": [
             {
-                "internalType": "uint32",
-                "name": "modelId",
-                "type": "uint32"
-            },
-            {
                 "internalType": "bytes",
-                "name": "input",
+                "name": "_input",
                 "type": "bytes"
             },
             {
                 "internalType": "address",
-                "name": "creator",
+                "name": "_creator",
                 "type": "address"
             }
         ],
         "name": "infer",
         "outputs": [
             {
-                "internalType": "uint64",
+                "internalType": "uint256",
                 "name": "",
-                "type": "uint64"
+                "type": "uint256"
             }
         ],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "inferenceNumber",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {
         "inputs": [
             {
                 "internalType": "address",
-                "name": "wEAIToken_",
+                "name": "_wEAI",
                 "type": "address"
             },
             {
                 "internalType": "address",
-                "name": "gpuManager_",
+                "name": "_l2Owner",
                 "type": "address"
             },
             {
+                "internalType": "address",
+                "name": "_treasury",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_daoToken",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "_stakingHub",
+                "type": "address"
+            },
+            {
+                "internalType": "uint16",
+                "name": "_feeL2Percentage",
+                "type": "uint16"
+            },
+            {
+                "internalType": "uint16",
+                "name": "_feeTreasuryPercentage",
+                "type": "uint16"
+            },
+            {
                 "internalType": "uint8",
-                "name": "minerRequirement_",
+                "name": "_minerRequirement",
                 "type": "uint8"
             },
             {
                 "internalType": "uint40",
-                "name": "submitDuration_",
+                "name": "_submitDuration",
                 "type": "uint40"
             },
             {
                 "internalType": "uint16",
-                "name": "minerValidatorFeeRatio_",
+                "name": "_feeRatioMinerValidor",
                 "type": "uint16"
             },
             {
-                "internalType": "uint40",
-                "name": "batchPeriod_",
-                "type": "uint40"
+                "internalType": "uint256",
+                "name": "_daoTokenReward",
+                "type": "uint256"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "uint16",
+                        "name": "minerPercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "userPercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "referrerPercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "refereePercentage",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "l2OwnerPercentage",
+                        "type": "uint16"
+                    }
+                ],
+                "internalType": "struct IWorkerHub.DAOTokenPercentage",
+                "name": "_daoTokenPercentage",
+                "type": "tuple"
             }
         ],
         "name": "initialize",
@@ -3391,6 +3648,24 @@ WORKER_HUB_ABI_V4 = [
         "type": "function"
     },
     {
+        "inputs": [
+            {
+                "internalType": "address[]",
+                "name": "_referrers",
+                "type": "address[]"
+            },
+            {
+                "internalType": "address[]",
+                "name": "_referees",
+                "type": "address[]"
+            }
+        ],
+        "name": "registerReferrer",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
         "inputs": [],
         "name": "renounceOwnership",
         "outputs": [],
@@ -3400,8 +3675,34 @@ WORKER_HUB_ABI_V4 = [
     {
         "inputs": [
             {
+                "internalType": "address",
+                "name": "_daoToken",
+                "type": "address"
+            }
+        ],
+        "name": "setDAOTokenAddress",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_stakingHub",
+                "type": "address"
+            }
+        ],
+        "name": "setStakingHubAddress",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint40",
-                "name": "submitDuration",
+                "name": "_submitDuration",
                 "type": "uint40"
             }
         ],
@@ -3414,7 +3715,7 @@ WORKER_HUB_ABI_V4 = [
         "inputs": [
             {
                 "internalType": "address",
-                "name": "wEAIToken",
+                "name": "_wEAI",
                 "type": "address"
             }
         ],
@@ -3424,15 +3725,28 @@ WORKER_HUB_ABI_V4 = [
         "type": "function"
     },
     {
+        "inputs": [],
+        "name": "stakingHub",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
-                "internalType": "uint64",
-                "name": "inferId",
-                "type": "uint64"
+                "internalType": "uint256",
+                "name": "_inferId",
+                "type": "uint256"
             },
             {
                 "internalType": "bytes",
-                "name": "solution",
+                "name": "_data",
                 "type": "bytes"
             }
         ],
