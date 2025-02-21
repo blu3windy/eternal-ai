@@ -1,6 +1,6 @@
 import pytest
 
-from uniswap_ai.main import call_uniswap
+from uniswap_ai.uniswap_ai import call_uniswap
 
 
 def test_sum():

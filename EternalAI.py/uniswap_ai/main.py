@@ -2,7 +2,7 @@ import logging
 import argparse
 from dotenv import load_dotenv
 
-from uniswap_ai.main import main
+from uniswap_ai import uni_swap_ai
 
 load_dotenv(".env")
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -30,4 +30,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Execute main logic
-    main(args)
+    uni_swap_ai(args)
