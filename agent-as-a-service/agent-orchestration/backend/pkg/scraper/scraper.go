@@ -86,8 +86,10 @@ func (s *scraper) FetchLinksFromDomainByRod(ctx context.Context, w *sync.WaitGro
 	logger.Info(tracerTagName, "fetch-all-url-from-domain", zap.Any("domain-url", s.url))
 	outChan := make(chan string, chanSize)
 	go func() {
-		defer w.Done()
-		defer close(outChan)
+		defer func() {
+			w.Done()
+			close(outChan)
+		}()
 
 		domainURL, err := url.Parse(s.url)
 		if err != nil {
@@ -107,8 +109,8 @@ func (s *scraper) FetchLinksFromDomainByRod(ctx context.Context, w *sync.WaitGro
 		var queue = []string{s.url}
 		var depth = 0
 
-		fmt.Printf("depth: %d - queue: %d\n", depth, len(queue))
 		for len(queue) > 0 && depth <= s.maxDepth {
+			fmt.Printf("depth: %d - queue: %d\n", depth, len(queue))
 			nextQueue := []string{}
 			for _, currentURL := range queue {
 				if visited[currentURL] {
@@ -171,7 +173,6 @@ func (s *scraper) FetchLinksFromDomainByRod(ctx context.Context, w *sync.WaitGro
 					if strings.HasSuffix(link, "?") {
 						link = link[:len(link)-1]
 					}
-
 					if strings.Contains(link, domain) {
 						outChan <- link
 						if !visited[link] {
@@ -185,7 +186,6 @@ func (s *scraper) FetchLinksFromDomainByRod(ctx context.Context, w *sync.WaitGro
 			queue = nextQueue
 			depth++
 		}
-
 	}()
 	return outChan
 }

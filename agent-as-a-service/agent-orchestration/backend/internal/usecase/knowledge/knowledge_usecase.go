@@ -658,15 +658,25 @@ func (uc *knowledgeUsecase) processCrawlData(_ context.Context, kb *models.Knowl
 				hash, err := lighthouse.UploadDataWithRetry(uc.lighthouseKey, utils.FileNameFromUrl(link), []byte(html.EscapeString(content)))
 				fileUrl := fmt.Sprintf("https://gateway.lighthouse.storage/ipfs/%s", hash)
 				fileSize, _ := utils.GetFileSizeByURL(fileUrl)
+				fileName := utils.FileNameFromUrl(link)
+				rawData := &lighthouse.FileInLightHouse{
+					Name:   fileName,
+					IsPart: false,
+					Files: []*lighthouse.FileDetail{
+						{Name: fileName, Hash: hash, Index: 1},
+					},
+				}
+				rw, _ := json.Marshal(rawData)
 				file = &models.KnowledgeBaseFile{
-					FileUrl:         fileUrl,
-					FileName:        utils.FileNameFromUrl(link),
-					FileSize:        uint(fileSize),
-					KnowledgeBaseId: kb.ID,
-					GroupFileId:     grFileId,
-					Status:          models.KnowledgeBaseFileStatusPending,
-					FilecoinHash:    hash,
-					FromUrl:         link,
+					FileUrl:             fileUrl,
+					FileName:            fileName,
+					FileSize:            uint(fileSize),
+					KnowledgeBaseId:     kb.ID,
+					GroupFileId:         grFileId,
+					Status:              models.KnowledgeBaseFileStatusPending,
+					FilecoinHash:        hash,
+					FromUrl:             link,
+					FilecoinHashRawData: string(rw),
 				}
 			}
 
