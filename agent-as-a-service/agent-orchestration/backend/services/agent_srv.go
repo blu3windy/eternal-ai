@@ -1050,9 +1050,9 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		errChan <- errs.NewError(errors.New("ERROR_GENERATE_QUERY"))
 		return
 	}
-	if retrieveQuery == nil || *retrieveQuery == "" {
-		errChan <- errs.NewError(errors.New("ERROR_QUERY_EMPTY"))
-		return
+	if retrieveQuery == nil {
+		str := ""
+		retrieveQuery = &str
 	}
 
 	topKQuery := 5
