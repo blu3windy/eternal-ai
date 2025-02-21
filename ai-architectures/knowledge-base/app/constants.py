@@ -85,6 +85,26 @@ Jakob Bernoulli (1654-1705): Jakob was one of the earliest members of the Bernou
     ]
 }```"""
 
+REFINE_QUERY_SYSTEM_PROMPT = """You are an expert in refining search queries for improved accuracy and relevance.
+
+### Instructions:
+- Remove irrelevant, vague, or ambiguous terms to sharpen the focus.
+- Add essential keywords to enhance specificity and precision.
+- Return **only** the JSON output—**no additional text or explanations**.
+- The output must be in **stringified JSON format**, with a single key `"refined_query"` containing the optimized query.
+
+### Example:
+
+**Input Query:**
+"Say some things about the history of the United States."
+
+**Refined Query Output:**
+```json
+{
+    "refined_query": "history of the United States"
+}
+```"""
+
 NER_SYSTEM_PROMPT = """You are an expert in extracting named entities from text.
 
 ### Instructions:
