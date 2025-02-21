@@ -1224,7 +1224,9 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 						if err != nil {
 							return errs.NewError(err)
 						}
-						addrs = append(addrs, s.conf.InfraTwitterApp.AgentAddress)
+						if s.conf.InfraTwitterApp.AgentAddress != "" {
+							addrs = append(addrs, s.conf.InfraTwitterApp.AgentAddress)
+						}
 						startBlocks := chain.LastBlockNumber + 1
 						endBlocks := (chain.LastBlockNumber + chain.NumBlocks - 1)
 						eventResp, err := ethClient.ScanEvents(addrs, startBlocks, endBlocks)

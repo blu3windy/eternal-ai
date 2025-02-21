@@ -3,6 +3,7 @@ package main_test
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -10,7 +11,9 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/databases"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 )
 
 var ts *services.Service
@@ -67,6 +70,16 @@ func Test_JOB(t *testing.T) {
 func Test_UTIL(t *testing.T) {
 	// ts.JobScanRepliesByLaunchpadTweetID(context.Background())
 	// ts.AgentStoreGetTokenInfo(context.Background(), "", 9)
+
+	fmt.Println(ts.DeployAgentRealWorldAddress(
+		context.Background(),
+		models.BASE_CHAIN_ID,
+		"RWTST",
+		"RWTST",
+		numeric.NewFloatFromString("1000000000"),
+		numeric.NewFloatFromString("0.000001"),
+		"0x792FAB59D60D8F5a13E9D39dB9a6c6B37EAd0E64",
+	))
 }
 
 func Test_SRV(t *testing.T) {
