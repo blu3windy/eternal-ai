@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
@@ -10,11 +11,12 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/jinzhu/gorm"
 )
 
 func (s *Service) GetAgentStore(ctx context.Context, storeId string) (*models.AgentStore, error) {
-	agentStore, err := s.dao.FirstAgentStore(daos.GetDBMainCtx(ctx), map[string][]interface{}{"store_id = ?": {storeId}}, map[string][]interface{}{}, false)
+	agentStore, err := s.dao.FirstAgentStore(daos.GetDBMainCtx(ctx), map[string][]any{"store_id = ?": {storeId}}, map[string][]any{}, false)
 	if err != nil {
 		return nil, errs.NewError(err)
 	}
@@ -27,10 +29,10 @@ func (s *Service) GetAgentStore(ctx context.Context, storeId string) (*models.Ag
 func (s *Service) ValidateUserStoreFee(ctx context.Context, apiKey string) (*models.AgentStoreInstall, error) {
 	agentStoreInstall, err := s.dao.FirstAgentStoreInstall(
 		daos.GetDBMainCtx(ctx),
-		map[string][]interface{}{
+		map[string][]any{
 			"code = ?": {apiKey},
 		},
-		map[string][]interface{}{
+		map[string][]any{
 			"User":       {},
 			"AgentStore": {},
 		},
@@ -57,7 +59,7 @@ func (s *Service) ChargeUserStoreInstall(ctx context.Context, agentStoreInstallI
 			agentStoreInstall, err := s.dao.FirstAgentStoreInstallByID(
 				tx,
 				agentStoreInstallID,
-				map[string][]interface{}{
+				map[string][]any{
 					"User":             {},
 					"AgentStore.Owner": {},
 				},
@@ -139,7 +141,7 @@ func (s *Service) ChargeUserStoreInstall(ctx context.Context, agentStoreInstallI
 }
 
 func (s *Service) ScanAgentInfraMintHash(ctx context.Context, userAddress string, networkID uint64, txHash string, agentStoreID uint) error {
-	agentStore, err := s.dao.FirstAgentStoreByID(daos.GetDBMainCtx(ctx), agentStoreID, map[string][]interface{}{}, false)
+	agentStore, err := s.dao.FirstAgentStoreByID(daos.GetDBMainCtx(ctx), agentStoreID, map[string][]any{}, false)
 	if err != nil {
 		return errs.NewError(err)
 	}
@@ -172,11 +174,11 @@ func (s *Service) ScanAgentInfraMintHash(ctx context.Context, userAddress string
 	{
 		agentStoreCheck, err := s.dao.FirstAgentStore(
 			daos.GetDBMainCtx(ctx),
-			map[string][]interface{}{
+			map[string][]any{
 				"contract_address = ?": {contractAddress},
 				"token_id = ?":         {tokenId},
 			},
-			map[string][]interface{}{},
+			map[string][]any{},
 			false,
 		)
 		if err != nil {
@@ -189,7 +191,7 @@ func (s *Service) ScanAgentInfraMintHash(ctx context.Context, userAddress string
 	err = daos.GetDBMainCtx(ctx).
 		Model(agentStore).
 		Updates(
-			map[string]interface{}{
+			map[string]any{
 				"contract_address": contractAddress,
 				"token_id":         tokenId,
 			},
@@ -200,11 +202,58 @@ func (s *Service) ScanAgentInfraMintHash(ctx context.Context, userAddress string
 	return nil
 }
 
-func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID uint) error {
+func (s *Service) ERC20RealWorldAgentAct(
+	ctx context.Context,
+	uuid string,
+	ipfsHash string,
+) (string, error) {
+	txHash, err := s.GetEthereumClient(ctx, s.conf.InfraTwitterApp.NetworkID).
+		ERC20RealWorldAgentAct(
+			s.conf.InfraTwitterApp.AgentAddress,
+			s.GetAddressPrk(s.conf.InfraTwitterApp.WorkerAddress),
+			[32]byte(common.Hex2Bytes(uuid)),
+			[]byte(ipfsHash),
+		)
+	if err != nil {
+		return "", errs.NewError(err)
+	}
+	return txHash, nil
+}
+
+func (s *Service) DeployAgentRealWorldAddress(
+	ctx context.Context,
+	networkID uint64,
+	tokenName string,
+	tokenSymbol string,
+	totalSuply *big.Float,
+	minFeeToUse *big.Float,
+	worker string,
+) (string, string, error) {
+	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
+	eaiTokenAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "eai_contract_address"))
+	contractAddress, txHash, err := s.GetEthereumClient(ctx, networkID).
+		DeployERC20RealWorldAgent(
+			s.GetAddressPrk(memePoolAddress),
+			tokenName,
+			tokenSymbol,
+			models.ConvertBigFloatToWei(totalSuply, 18),
+			helpers.HexToAddress(memePoolAddress),
+			models.ConvertBigFloatToWei(minFeeToUse, 18),
+			24*3600,
+			helpers.HexToAddress(eaiTokenAddress),
+			helpers.HexToAddress(worker),
+		)
+	if err != nil {
+		return "", "", errs.NewError(err)
+	}
+	return contractAddress, txHash, nil
+}
+
+func (s *Service) DeployAgentRealWorld(ctx context.Context, agentInfoID uint) error {
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
 		agentInfoID,
-		map[string][]interface{}{},
+		map[string][]any{},
 		false,
 	)
 	if err != nil {
@@ -214,36 +263,63 @@ func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID u
 		if agentInfo.AgentType != models.AgentInfoAgentTypeRealWorld {
 			return errs.NewError(errs.ErrBadRequest)
 		}
-		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" {
+		err = s.CreateTokenInfo(ctx, agentInfo.ID)
+		if err != nil {
+			return errs.NewError(err)
+		}
+		agentInfo, err = s.dao.FirstAgentInfoByID(
+			daos.GetDBMainCtx(ctx),
+			agentInfoID,
+			map[string][]any{},
+			false,
+		)
+		if err != nil {
+			return errs.NewError(err)
+		}
+		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.Worker != "" {
 			if agentInfo.MintHash == "" {
 				switch agentInfo.NetworkID {
-				case models.BASE_CHAIN_ID:
+				case models.BASE_CHAIN_ID,
+					models.ARBITRUM_CHAIN_ID,
+					models.BSC_CHAIN_ID,
+					models.APE_CHAIN_ID,
+					models.AVALANCHE_C_CHAIN_ID:
 					{
-						var contractAddress, txHash string
-						// TODO deploy infra contract
-						if contractAddress == "" {
-							return errs.NewError(errs.ErrBadRequest)
+						totalSuply := numeric.NewBigFloatFromString("1000000000")
+						contractAddress, txHash, err := s.DeployAgentRealWorldAddress(
+							ctx,
+							agentInfo.NetworkID,
+							agentInfo.TokenName,
+							agentInfo.TokenSymbol,
+							&totalSuply.Float,
+							&agentInfo.MinFeeToUse.Float,
+							agentInfo.Worker,
+						)
+						if err != nil {
+							return errs.NewError(err)
 						}
 						err = daos.WithTransaction(daos.GetDBMainCtx(ctx),
 							func(tx *gorm.DB) error {
 								err = tx.
 									Model(agentInfo).
 									Updates(
-										map[string]interface{}{
+										map[string]any{
 											"agent_contract_address": strings.ToLower(contractAddress),
+											"agent_contract_id":      "0",
 											"mint_hash":              txHash,
-											"status":                 models.AssistantStatusMinting,
+											"status":                 models.AssistantStatusReady,
 											"reply_enabled":          true,
+											"token_status":           "created",
 										},
 									).Error
 								if err != nil {
 									return errs.NewError(err)
 								}
 								meme, err := s.dao.FirstMeme(tx,
-									map[string][]interface{}{
+									map[string][]any{
 										"agent_info_id = ?": {agentInfo.ID},
 									},
-									map[string][]interface{}{},
+									map[string][]any{},
 									false,
 								)
 								if err != nil {
@@ -257,7 +333,7 @@ func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID u
 									meme = &models.Meme{
 										NetworkID:         agentInfo.NetworkID,
 										OwnerAddress:      strings.ToLower(agentInfo.Creator),
-										TokenAddress:      contractAddress,
+										TokenAddress:      strings.ToLower(contractAddress),
 										Name:              agentInfo.TokenName,
 										Description:       agentInfo.TokenDesc,
 										Ticker:            agentInfo.TokenSymbol,
@@ -267,8 +343,8 @@ func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID u
 										Website:           "",
 										Status:            models.MemeStatusCreated,
 										StoreImageOnChain: false,
-										TotalSuply:        numeric.NewBigFloatFromString("1000000000"),
-										Supply:            numeric.NewBigFloatFromString("1000000000"),
+										TotalSuply:        totalSuply,
+										Supply:            totalSuply,
 										Decimals:          18,
 										AgentInfoID:       agentInfo.ID,
 										BaseTokenSymbol:   string(models.BaseTokenSymbolEAI),
@@ -282,10 +358,12 @@ func (s *Service) DeployAgentRealWorldAddress(ctx context.Context, agentInfoID u
 										return errs.NewError(err)
 									}
 								} else {
-									meme.TokenAddress = contractAddress
-									err = s.dao.Save(tx, meme)
-									if err != nil {
-										return errs.NewError(err)
+									if meme.Status == models.MemeStatusCreated {
+										meme.TokenAddress = contractAddress
+										err = s.dao.Save(tx, meme)
+										if err != nil {
+											return errs.NewError(err)
+										}
 									}
 								}
 								return nil

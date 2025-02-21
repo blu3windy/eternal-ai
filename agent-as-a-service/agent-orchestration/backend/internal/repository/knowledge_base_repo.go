@@ -135,6 +135,7 @@ func (r *knowledgeBaseRepo) UpdateById(ctx context.Context, id uint, updatedFiel
 func (r *knowledgeBaseRepo) GetByKBId(ctx context.Context, kbId string) (*models.KnowledgeBase, error) {
 	knowledge := &models.KnowledgeBase{}
 	err := r.db.WithContext(ctx).
+		Preload("AgentInfo").
 		Preload("KnowledgeBaseFiles").
 		Where("kb_id = ? ", kbId).
 		First(knowledge).Error

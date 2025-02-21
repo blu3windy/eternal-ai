@@ -1,4 +1,4 @@
-from app.io import get_doc_from_url, hook, notify_action, LiteConverstionResult
+from app.io import download_and_extract_from_filecoin, hook, call_docling_server, download_file_v2
 from app.utils import estimate_ip_from_distance, is_valid_schema
 
 from .models import (
@@ -11,32 +11,24 @@ from .models import (
     GraphEmbeddedItem,
     APIStatus,
     ResponseMessage,
-    FilecoinData,
     InsertProgressCallback,
     CollectionInspection,
     InsertionCounter
 )
 import requests
-import subprocess
 import os
-import aiofiles
 import asyncio
 import json
 import os
 import shutil
-import subprocess
-
-from docling.datamodel.base_models import InputFormat, DocItemLabel
 import json
-
 import logging
-from docling.chunking import HybridChunker
-from docling.document_converter import ConversionResult
 from typing import List, Union, Optional
 import random
 
 from . import constants as const
-from .embedding import get_embedding_models, get_default_embedding_model, get_tokenizer
+from .wrappers.log_decorators import log_execution_time
+from .embedding import get_embedding_models, get_default_embedding_model
 from pymilvus import MilvusClient, FieldSchema, CollectionSchema, DataType
 from .wrappers import milvus_kit, redis_kit
 from .graph_handlers import get_gk, Triplet
@@ -57,16 +49,11 @@ import asyncio
 from typing import AsyncGenerator
 from .state import get_insertion_request_handler
 import schedule
-import traceback
-from pathlib import Path as PathL
-import re
 
 logger = logging.getLogger(__name__)
 
-GATEWAY_IPFS_PREFIX = "https://gateway.lighthouse.storage/ipfs"
-
-@limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT)
-async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingModel) -> List[List[float]]:
+@limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT * 1.5)
+async def mk_cog_embedding_priotized(text: Union[str, List[str]], model_use: EmbeddingModel) -> List[List[float]]:
     url = model_use.base_url
 
     headers = {
@@ -97,61 +84,28 @@ async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingMode
     response_json = response.json()
     return response_json['output']['result']
 
-async def url_chunking(url: str, model_use: EmbeddingModel) -> AsyncGenerator:
-    try:
-        doc: LiteConverstionResult = await get_doc_from_url(url) 
-    except Exception as e:
-        fmt_exec = traceback.format_exc(limit=8)
-        msg = '''
-<strong>Error while reading file from {file_url}</strong>
-<strong>Reason:</strong> {reason}
-<strong>Traceback:</strong>
-<pre>
-{traceback}
-</pre>
-'''.format(
-    file_url=f'<a href="{url}">{PathL(url).name}</a>',
-    reason=str(e),
-    traceback=fmt_exec
-)
-        await notify_action(msg)
-        logger.error(f"Failed to convert document from {url} to docling format. Reason: {str(e)}")
-        traceback.print_exc()
-        return
-
-    is_html = doc.input.format == InputFormat.HTML
-    chunker = HybridChunker(
-        tokenizer=get_tokenizer(model_use), 
-        max_tokens=512
-    )
-
-    if not is_html:
-        captured_items = [
-            DocItemLabel.PARAGRAPH, DocItemLabel.TEXT, DocItemLabel.TITLE, DocItemLabel.LIST_ITEM, DocItemLabel.CODE
-        ]
-    else:
-        captured_items = [
-            DocItemLabel.PARAGRAPH, DocItemLabel.TITLE, DocItemLabel.LIST_ITEM, DocItemLabel.CODE
-        ]
-
-    for item in await sync2async(chunker.chunk)(dl_doc=doc.document):
-        item_labels = list(map(lambda x: x.label, item.meta.doc_items))
-        text = item.text
-        
-        if len(get_tokenizer(model_use).tokenize(text, max_length=None)) >= const.MIN_CHUNK_SIZE \
-            and any([k in item_labels for k in captured_items]):
-            yield text
-
+@limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT)
+async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingModel) -> List[List[float]]:
+    return await mk_cog_embedding_priotized(text, model_use)
 
 async def url_graph_chunking(url_or_texts: str, model_use: EmbeddingModel) -> AsyncGenerator:
     gk = get_gk()
+    chunks = await call_docling_server(url_or_texts, model_use.tokenizer)
 
-    async for item in url_chunking(url_or_texts, model_use):
-        graph_result = await gk.construct_graph_from_chunk(item)
+    futures = []
 
-        if graph_result.status != APIStatus.OK:
+    for item in chunks:
+        futures.append(asyncio.ensure_future(gk.construct_graph_from_chunk(item)))
+
+    results = await asyncio.gather(*futures, return_exceptions=True)
+    
+    for item, graph_result in zip(chunks, results):
+        graph_result: Union[Exception, ResponseMessage[List[Triplet]]]
+
+        if isinstance(graph_result, Exception) or graph_result.status != APIStatus.OK:
             shortened_item = item[:100].replace('\n', '\\n')
-            logger.error(f"Failed to construct graph from {shortened_item}. Reason: {graph_result.error}")
+            err_msg = graph_result.error if not isinstance(graph_result, Exception) else graph_result
+            logger.error(f"Failed to construct graph from {shortened_item}. Reason: {err_msg}")
         else:
             for triplet in graph_result.result:
                 yield item, triplet
@@ -214,6 +168,13 @@ async def insert_to_collection(
 
 mk_cog_embedding_retry_wrapper = retry(
     mk_cog_embedding, 
+    max_retry=2,
+    first_interval=2, 
+    interval_multiply=2
+)
+
+mk_cog_embedding_retry_wrapper_priotized = retry(
+    mk_cog_embedding_priotized, 
     max_retry=2,
     first_interval=2, 
     interval_multiply=2
@@ -366,109 +327,7 @@ async def smaller_task(
 
     return (counter.total, counter.fails)
 
-@limit_asyncio_concurrency(4)
-async def download_file(
-    session: httpx.AsyncClient, url: str, path: str
-):
-    async with session.stream("GET", url) as response:
-        async with aiofiles.open(path, 'wb') as f:
-            async for chunk in response.aiter_bytes(8192):
-                await f.write(chunk)
-
-    logger.info(f"Downloaded {path}")
     
-async def download_filecoin_item(
-    metadata: dict, 
-    tmp_dir: str, 
-    session: httpx.AsyncClient,
-    identifier: str
-) -> Optional[FilecoinData]:
-    
-    if metadata["is_part"]:
-        parts = sorted(metadata["files"], key=lambda x: x["index"])
-        zip_parts, tasks = [], []
-
-        for part in parts:
-            part_url = f"{GATEWAY_IPFS_PREFIX}/{part['hash']}"
-            part_path = PathL(tmp_dir) / part['name']
-            tasks.append(download_file(session, part_url, part_path))
-            zip_parts.append(part_path)
-
-        await asyncio.gather(*tasks)
-
-        name = metadata['name']
-        destination = PathL(tmp_dir) / name
-        command = f"cat {tmp_dir}/{name}.zip.part-* | pigz -p 2 -d | tar -xf - -C {tmp_dir}"
-
-        await sync2async(subprocess.run)(
-            command, shell=True, check=True
-        )
-
-        logger.info(f"Successfully extracted files to {destination}")
-        afiles = []
-
-        for root, dirs, files in os.walk(destination):
-            for file in files:
-                afiles.append(os.path.join(root, file))
-
-        if len(afiles) > 0:
-            return FilecoinData(
-                identifier=identifier,
-                address=afiles[0]
-            )
-
-        logger.warning(f"No files extracted from {destination}")
-
-    else:
-        url = f"{GATEWAY_IPFS_PREFIX}/{metadata['files'][0]['hash']}"
-        path = PathL(tmp_dir) / metadata['files'][0]['name']
-        await download_file(session, url, path)
-
-        return FilecoinData(
-            identifier=identifier,
-            address=path
-        )
-        
-    return None
-
-async def download_and_extract_from_filecoin(
-    url: str, tmp_dir: str, ignore_inserted: bool=True
-) -> List[FilecoinData]:
-    list_files: List[FilecoinData] = []
-
-    pat = re.compile(r"ipfs/(.+)")
-    cid = pat.search(url).group(1)
-    
-    if not cid:
-        raise ValueError(f"Invalid filecoin url: {url}")
-
-    async with httpx.AsyncClient() as session:
-        response = await session.get(url)
-
-        if response.status_code != 200:
-            raise ValueError(f"Failed to get metadata from {url}; Reason: {response.text}")
-
-        list_metadata = json.loads(response.content)
-
-        for file_index, metadata in enumerate(list_metadata):
-            metadata: dict
-            logger.info(metadata)
-            
-            if ignore_inserted and metadata.get("is_inserted", False):
-                continue
-
-            fcdata = await download_filecoin_item(
-                metadata, 
-                tmp_dir, 
-                session, 
-                identifier=f"{cid}/{file_index}"
-            )
-            
-            if fcdata is not None:
-                list_files.append(fcdata)
-
-    logger.info(f"List of files to be processed: {list_files}")
-    return list_files
 
 async def inspect_by_file_identifier(file_identifier: str) -> CollectionInspection:
     milvus_cli = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)
@@ -496,7 +355,7 @@ async def inspect_by_file_identifier(file_identifier: str) -> CollectionInspecti
         status=APIStatus.OK if len(hashs) > 0 else APIStatus.ERROR
     )         
 
-@limit_asyncio_concurrency(1)
+@limit_asyncio_concurrency(4)
 async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
     if req.id in _running_tasks:
         return
@@ -547,9 +406,15 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
                 ))
 
         for url in req.file_urls:
+            try:
+                local_filepath = await download_file_v2(url, tmp_dir)
+            except Exception as err:
+                logger.error(f"Failed to download {url} to read locally")
+                continue
+
             futures.append(asyncio.ensure_future(
                 smaller_task(
-                    url, kb, model_use, 
+                    local_filepath, kb, model_use, 
                     file_identifier=url,
                     request_identifier=req.ref
                 )
@@ -557,10 +422,16 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
             identifers.append(url)
 
         if len(futures) > 0:
-            results = await asyncio.gather(*futures)
+            results = await asyncio.gather(*futures, return_exceptions=True)
 
-            n_chunks = sum([r[0] for r in results])
-            fails_count = sum([r[1] for r in results])
+            for i, result in enumerate(results):
+                if isinstance(result, Exception):
+                    logger.error(f"Subtask {i} (out of {len(results)}) failed with error {result}")
+
+                else:
+                    total, fails = result
+                    n_chunks += total
+                    fails_count += fails
 
         logger.info(f"(overall) Inserted {n_chunks - fails_count} items to {kb} (collection: {model_use.identity()});")
 
@@ -601,7 +472,7 @@ def resume_pending_tasks():
     logger.info(f"Found {len(handler.get_all())} pending tasks")
     pending_tasks = handler.get_all()
 
-    for task in pending_tasks:
+    for task in pending_tasks[::-1]:
         if task.id in _running_tasks:
             continue
 
@@ -775,6 +646,7 @@ async def drop_kb(kb: str):
     logger.info(f"Deleted all data for kb {kb}")
     return removed_count
 
+@log_execution_time
 @redis_kit.cache_for(interval_seconds=300 // 5) # seconds
 async def run_query(req: QueryInputSchema) -> List[QueryResult]:
     if len(req.kb) == 0 or req.top_k <= 0:
@@ -782,13 +654,17 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
 
     embedding_model = get_default_embedding_model()
     model_identity = embedding_model.identity()
-    query_embedding = await mk_cog_embedding(req.query, embedding_model)
+
+    resp = await get_gk().refine_query(req.query)
+    
+    logger.info(f"Refined query: {resp.result}")
+    refined_query = resp.result or req.query
+
+    query_embedding = await mk_cog_embedding_retry_wrapper_priotized(
+        refined_query, embedding_model
+    )
     
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
-    row_count = await get_collection_num_entities(model_identity)
-
-    if row_count == 0:
-        return []
 
     entity_kb = [
         kb + const.ENTITY_SUFFIX 
@@ -813,7 +689,9 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
     if len(ner_query_list) > 0:
         res = await sync2async(cli.search)(
             collection_name=model_identity,
-            data=await mk_cog_embedding(ner_query_list, embedding_model),
+            data=await mk_cog_embedding_retry_wrapper_priotized(
+                ner_query_list, embedding_model
+            ),
             kb_filter=f"kb in {entity_kb}",
             anns_field="embedding",
             output_fields=["head", "tail"],
@@ -837,7 +715,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
         collection_name=model_identity,
         data=query_embedding,
         filter=filter_str,
-        limit=min(req.top_k, row_count),
+        limit=max(req.top_k, 1),
         anns_field="embedding",
         output_fields=["id", "content", "reference", "hash"],
         search_params={"params": {"radius": req.threshold}},

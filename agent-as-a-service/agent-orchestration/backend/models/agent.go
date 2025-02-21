@@ -203,6 +203,11 @@ type AgentInfo struct {
 	TwinTrainingProgress    float64 `json:"twin_training_progress"`
 	TwinTrainingMessage     string  `gorm:"type:longtext"`
 
+	SourceUrl string `gorm:"type:text"` //ipfs_ || ethfs_
+
+	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	Worker      string
+
 	EstimateTwinDoneTimestamp *time.Time `json:"estimate_twin_done_timestamp"`
 	TotalMintTwinFee          float64
 	TwitterName               string           `gorm:"-"`
@@ -600,10 +605,12 @@ type AgentExternalInfo struct {
 
 type AgentChainFee struct {
 	gorm.Model
-	NetworkID uint64           `gorm:"unique_index"`
-	InferFee  numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	MintFee   numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	TokenFee  numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	NetworkID               uint64           `gorm:"unique_index"`
+	InferFee                numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	MintFee                 numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	TokenFee                numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	RealworldAgentDeployFee numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	UtilityAgentDeployFee   numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 }
 
 type AgentStudioChildren struct {

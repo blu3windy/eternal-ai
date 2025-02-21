@@ -57,10 +57,15 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		req.SystemContent = "default"
 	}
 	switch req.AgentType {
-	case models.AgentInfoAgentTypeUtility:
+	case models.AgentInfoAgentTypeRealWorld,
+		models.AgentInfoAgentTypeUtility:
 		{
 			switch req.ChainID {
-			case models.BASE_CHAIN_ID:
+			case models.BASE_CHAIN_ID,
+				models.ARBITRUM_CHAIN_ID,
+				models.BSC_CHAIN_ID,
+				models.APE_CHAIN_ID,
+				models.AVALANCHE_C_CHAIN_ID:
 				{
 				}
 			default:
@@ -101,7 +106,10 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		TokenImageUrl:    req.TokenImageUrl,
 		MissionTopics:    req.MissionTopics,
 		ConfigData:       req.ConfigData,
+		SourceUrl:        req.SourceUrl,
 	}
+	agent.MinFeeToUse = req.MinFeeToUse
+	agent.Worker = req.Worker
 
 	tokenInfo, _ := s.GenerateTokenInfoFromSystemPrompt(ctx, req.AgentName, req.SystemContent)
 	if tokenInfo != nil && tokenInfo.TokenSymbol != "" {
@@ -222,6 +230,16 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 
 	if agent.AgentName == "" && req.CreateKnowledgeRequest != nil {
 		agent.AgentName = req.CreateKnowledgeRequest.Name
+	}
+
+	switch req.AgentType {
+	case models.AgentInfoAgentTypeRealWorld,
+		models.AgentInfoAgentTypeUtility:
+		{
+			agent.TokenMode = string(models.CreateTokenModeTypeAutoCreate)
+			agent.TokenStatus = "pending"
+			agent.TokenNetworkID = agent.NetworkID
+		}
 	}
 
 	if err := s.dao.Create(daos.GetDBMainCtx(ctx), agent); err != nil {
@@ -458,7 +476,9 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				agent.Style = req.GetAssistantCharacter(req.Style)
 				agent.Adjectives = req.GetAssistantCharacter(req.Adjectives)
 				agent.SocialInfo = req.GetAssistantCharacter(req.SocialInfo)
-
+				agent.SourceUrl = req.SourceUrl
+				agent.MinFeeToUse = req.MinFeeToUse
+				agent.Worker = req.Worker
 				if req.TokenImageUrl != "" {
 					agent.TokenImageUrl = req.TokenImageUrl
 				}

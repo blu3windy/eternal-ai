@@ -16,9 +16,6 @@ import logging
 logger = logging.getLogger(__name__)
 import time
 from concurrent.futures import ProcessPoolExecutor
-from functools import lru_cache
-from .constants import MAX_NUM_CONCURRENT_PROCESSING_FILES
-import atexit
 
 def get_content_checksum(data: Union[bytes, str]) -> str:
     if isinstance(data, str):
@@ -79,7 +76,7 @@ def random_payload(length: int) -> str:
     return os.urandom(length).hex()
 
 def get_tmp_directory():
-    return os.path.join(tempfile.gettempdir(), random_payload(20))
+    return os.path.join(os.getcwd(), '.tmp', random_payload(20))
 
 def is_async_func(func: Callable) -> bool:
     return asyncio.iscoroutinefunction(func)
@@ -95,7 +92,7 @@ def background_task_error_handle(handler: Callable):
 
                 if is_async_func(handler):
                     return await res
-      
+
         return wrapper
     return decorator
 

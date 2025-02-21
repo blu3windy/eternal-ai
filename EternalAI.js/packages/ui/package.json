@@ -11,12 +11,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+     "ethers": "5.7.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eternalai.js/core": "*",
-    "@eternalai.js/eternalaijs": "*",
     "@eternalai.js/interact": "*",
     "@eslint/js": "^9.19.0",
     "@types/react": "^19.0.8",

@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 from functools import lru_cache
 from .utils import limit_asyncio_concurrency
 
-@limit_asyncio_concurrency(12)
+@limit_asyncio_concurrency(const.MAX_NUM_CONCURRENT_LLM_CALL * 1.5)
 async def call_llm_priotized(messages: List[Dict[str, str]]):
 
     payload = {
@@ -43,7 +43,7 @@ async def call_llm_priotized(messages: List[Dict[str, str]]):
 
     return content
 
-@limit_asyncio_concurrency(8)
+@limit_asyncio_concurrency(const.MAX_NUM_CONCURRENT_LLM_CALL)
 async def call_llm(messages: List[Dict[str, str]]):
     return await call_llm_priotized(messages)
 
@@ -90,10 +90,12 @@ class GraphKnowledge:
     def __init__(
         self, 
         graph_system_prompt: str = const.GRAPH_SYSTEM_PROMPT,
-        ner_system_prompt: str = const.NER_SYSTEM_PROMPT
+        ner_system_prompt: str = const.NER_SYSTEM_PROMPT,
+        refine_query_system_prompt: str = const.REFINE_QUERY_SYSTEM_PROMPT
     ):
         self.graph_system_prompt: str = graph_system_prompt 
         self.ner_system_prompt: str = ner_system_prompt
+        self.refine_query_system_prompt: str = refine_query_system_prompt
 
     async def construct_graph_from_chunk(self, chunk: str) -> ResponseMessage[List[Triplet]]:
         messages = [
@@ -166,6 +168,45 @@ class GraphKnowledge:
 
         return ResponseMessage[List[Triplet]](
             result=resp
+        )
+    
+    async def refine_query(self, query: str) -> ResponseMessage[str]:
+        messages = [
+            {
+                "role": "system",
+                "content": self.refine_query_system_prompt
+            },
+            {
+                "role": "user",
+                "content": query
+            }
+        ]
+
+        result = await call_llm_priotized(messages)
+        if result is None:
+            return ResponseMessage[str](
+                error="LLM inference failed"
+            )
+
+        json_start, json_end = result.find("{"), result.rfind("}") + 1
+
+        if -1 in (json_start, json_end):
+            return ResponseMessage[str](
+                error="No data from LLM, expect a JSON returned"
+            )
+
+        try:        
+            json_result = json_repair.repair_json(
+                result[json_start:json_end], 
+                return_objects=True
+            )
+        except json.JSONDecodeError as err:
+            return ResponseMessage[str](
+                error="Broken JSON generated",
+            )
+
+        return ResponseMessage[str](
+            result=str(json_result["refined_query"])
         )
 
     async def extract_named_entities(self, text: str) -> ResponseMessage[List[str]]:

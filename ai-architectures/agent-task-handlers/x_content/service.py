@@ -232,7 +232,7 @@ def scan_db_and_resume_tasks():
             continue
 
         logger.info(f"Resuming task {log.id}")
-        
+
         payload = log.model_dump()
         payload["is_resubmit"] = True
 
@@ -244,9 +244,10 @@ def scan_db_and_resume_tasks():
 
         time.sleep(2)
         cnt += 1
-        
+
         if cnt >= 10:
             break
+
 
 def scan_db_and_resume_chat_requests():
     logger.info("Scanning DB for resumable chat requests")
@@ -259,7 +260,7 @@ def scan_db_and_resume_chat_requests():
 
     current_time = datetime.datetime.now()
     cnt = 0
-    
+
     undone_request = sorted(undone_request, key=lambda x: x.created_at)
 
     for request in undone_request:
@@ -295,42 +296,44 @@ def scan_db_and_resume_chat_requests():
             continue
 
         logger.info(f"Resuming chat request {request.id}")
-        
+
         payload = request.model_dump()
         payload["is_resubmit"] = True
 
         requests.post(
-            f"http://{SERVER_HOST}:{SERVER_PORT}/async/chat/enqueue", 
+            f"http://{SERVER_HOST}:{SERVER_PORT}/async/chat/enqueue",
             json=payload,
             headers={"X-Token": API_SECRET_TOKEN},
         )
-        
+
         time.sleep(2)
-        
+
         cnt += 1
-        
+
         if cnt >= 10:
             break
-    
+
+
 def handle_pod_ready():
     from x_content.wrappers.telegram import send_message, TELEGRAM_ALERT_ROOM
     from . import __version__
     from x_content.wrappers import magic
-    
+
     magic.is_local_env() or send_message(
-        'junk_notifications', 
-        'Pod is ready to serve. Version: {}'.format(__version__),
+        "junk_notifications",
+        "Pod is ready to serve. Version: {}".format(__version__),
         room=TELEGRAM_ALERT_ROOM,
-        fmt='HTML'
+        fmt="HTML",
     )
 
     logger.info("Pod is ready to serve")
+
 
 def handle_pod_shutdown(signum, frame):
     global _running_tasks, _task_handled_key, logger
 
     logger.info("Pod is being shut down")
-    
+
     redis_cli = redis.Redis(connection_pool=get_redis_connection_pool())
 
     for task_id in _running_tasks:
@@ -338,17 +341,46 @@ def handle_pod_shutdown(signum, frame):
         redis_cli.delete(_task_handled_key.format(task_id))
 
     _running_tasks = set([])
+
+    # Reset any in-progress game judging on shutdown (due to LLM need too much time to process)
+    from x_content.wrappers.game import _get_game_redis_cache
+    from x_content.wrappers.game import (
+        GameStatus,
+    )
+
+    try:
+        game_cache = _get_game_redis_cache()
+        if game_cache is None:
+            logger.error(
+                "Failed to get game cache, skipping game status reset"
+            )
+        else:
+            logger.info(
+                "Resetting in-progress game judging statuses from JUDGE_RUNNING to JUDGE_PENDING"
+            )
+            num_reset = game_cache.reset_games_status_impl(
+                status_from=GameStatus.JUDGE_RUNNING,
+                status_to=GameStatus.JUDGE_PENDING,
+            )
+            logger.info(f"Reset {num_reset} game judging statuses")
+    except Exception as e:
+        logger.error(f"Error resetting game statuses: {e}")
+
     from x_content.wrappers.telegram import send_message, TELEGRAM_ALERT_ROOM
     from . import __version__
     from x_content.wrappers import magic
-    
+
     magic.is_local_env() or send_message(
-        'junk_notifications', 
-        'Pod is being shut down, all running tasks are stopped (signum: {}). Version: {}'.format(signum, __version__), 
+        "junk_notifications",
+        "Pod is being shut down, all running tasks are stopped (signum: {}). Version: {}".format(
+            signum, __version__
+        ),
         room=TELEGRAM_ALERT_ROOM,
-        fmt='HTML'
+        fmt="HTML",
     )
     sys.exit(0)
 
+
 import schedule
+
 schedule.every(3).minutes.do(scan_db_and_resume_tasks)

@@ -1,6 +1,7 @@
 import logging
 import time
 from .telegram_kit import send_message
+import asyncio
 
 # Configure basic logging (can be customized per project)
 logging.basicConfig(
@@ -37,8 +38,17 @@ def log_execution_time(func):
             f"Function `{func.__name__}` executed in {elapsed_time:.4f} seconds"
         )
         return result
+    
+    async def async_wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = await func(*args, **kwargs)
+        elapsed_time = time.time() - start_time
+        logging.info(
+            f"Function `{func.__name__}` executed in {elapsed_time:.4f} seconds"
+        )
+        return result
 
-    return wrapper
+    return wrapper if not asyncio.iscoroutinefunction(func) else async_wrapper
 
 import traceback
 
