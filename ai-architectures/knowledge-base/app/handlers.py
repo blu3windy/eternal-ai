@@ -641,7 +641,11 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
 
     embedding_model = get_default_embedding_model()
     model_identity = embedding_model.identity()
-    query_embedding = await mk_cog_embedding(req.query, embedding_model)
+
+    resp = await get_gk().extract_named_entities(req.query)
+    refined_query = resp.result or req.query
+
+    query_embedding = await mk_cog_embedding(refined_query, embedding_model)
     
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
     row_count = await get_collection_num_entities(model_identity)
