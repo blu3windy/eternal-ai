@@ -104,6 +104,7 @@ REFINE_QUERY_SYSTEM_PROMPT = """You are an expert in refining search queries for
     "refined_query": "history of the United States"
 }
 ```"""
+
 NER_SYSTEM_PROMPT = """You are an expert in extracting named entities from text.
 
 ### Instructions:

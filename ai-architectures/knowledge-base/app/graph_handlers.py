@@ -181,16 +181,17 @@ class GraphKnowledge:
                 "content": query
             }
         ]
+
         result = await call_llm_priotized(messages)
         if result is None:
-            return ResponseMessage[List[str]](
+            return ResponseMessage[str](
                 error="LLM inference failed"
             )
 
         json_start, json_end = result.find("{"), result.rfind("}") + 1
 
         if -1 in (json_start, json_end):
-            return ResponseMessage[List[str]](
+            return ResponseMessage[str](
                 error="No data from LLM, expect a JSON returned"
             )
 
@@ -200,13 +201,12 @@ class GraphKnowledge:
                 return_objects=True
             )
         except json.JSONDecodeError as err:
-            return ResponseMessage[List[str]](
+            return ResponseMessage[str](
                 error="Broken JSON generated",
-                result=[]
             )
 
-        return ResponseMessage[List[str]](
-            result=json_result["refined_query"]
+        return ResponseMessage[str](
+            result=str(json_result["refined_query"])
         )
 
     async def extract_named_entities(self, text: str) -> ResponseMessage[List[str]]:
