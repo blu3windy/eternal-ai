@@ -3,6 +3,7 @@ package main_test
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -66,10 +67,17 @@ func Test_JOB(t *testing.T) {
 
 func Test_UTIL(t *testing.T) {
 	// ts.JobScanRepliesByLaunchpadTweetID(context.Background())
-	// ts.AgentStoreGetTokenInfo(context.Background(), "", 9)
+	resp := map[string]interface{}{
+		"method": "getUserByUsername",
+		"params": map[string]interface{}{
+			"username": "Uniswap",
+		},
+	}
+	jsonString, _ := json.Marshal(resp)
+	ts.IpfsUploadDataForName(context.Background(), "infra_result_1", []byte(jsonString))
 }
 
 func Test_SRV(t *testing.T) {
-	ts.JobScanAgentTwitterPostForCreateLaunchpad(context.Background())
-	// ts.AgentTwitterPostCreateLaunchpad(context.Background(), 34285)
+	// ts.JobExecuteInfraTwitterAppRequest(context.Background())
+	ts.RetrySubmitResultByID(context.Background(), 1)
 }
