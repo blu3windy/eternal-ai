@@ -14,7 +14,7 @@ const Home = (_props: Props) => {
           <Box flex={1}>
             <ChatAgent />
           </Box>
-          <Box maxW={"353px"}>
+          <Box w={"353px"}>
             <TradeAgent />
           </Box>
         </Flex>
