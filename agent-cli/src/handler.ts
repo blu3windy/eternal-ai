@@ -4,7 +4,7 @@ import * as readline from 'readline';  // Optional: For interactive user input
 
 // for dev
 import dotenv from 'dotenv';
-import { execCmd, getSupportedModels } from "./utils";
+import { execCmd, getSupportedModels, padWithPrefix } from "./utils";
 import { mintAgent } from "./mintv1";
 import { Agent, AgentStatus, getAgentByName, getAgents, insertAgent, updateAgentByName } from "./manager";
 import { logError, logInfo, logSuccess, logTable } from "./log";
@@ -259,6 +259,8 @@ const startAgent = async ({
     const AGENT_UID = getAgentUID(chain, agentID.toString());
     const agentName = name || AGENT_UID;
 
+    const servicePort = padWithPrefix(agentID.toString(), "5", 5);
+
     let scriptPath = "";
     if (containerID) {
         scriptPath = `docker start ${containerID}`;
@@ -276,7 +278,7 @@ const startAgent = async ({
             }
             case Framework.EternalAI: {
                 // Path to your Bash script
-                scriptPath = `sh src/eternalai/start.sh ${AGENT_UID} ${ETERNALAI_URL} ${ETERNALAI_API_KEY} ${chainID} ${ETERNALAI_RPC_URL} ${ETERNALAI_AGENT_CONTRACT_ADDRESS} ${agentID} ${model} ${TWITTER_USERNAME} ${TWITTER_PASSWORD} ${TWITTER_EMAIL} ${TWITTER_TARGET_USERS} ${agentName}`;
+                scriptPath = `sh src/eternalai/start.sh ${AGENT_UID} ${ETERNALAI_URL} ${ETERNALAI_API_KEY} ${chainID} ${ETERNALAI_RPC_URL} ${ETERNALAI_AGENT_CONTRACT_ADDRESS} ${agentID} ${model} ${TWITTER_USERNAME} ${TWITTER_PASSWORD} ${TWITTER_EMAIL} ${TWITTER_TARGET_USERS} ${agentName} ${servicePort}`;
                 break;
             }
         }
@@ -333,13 +335,16 @@ const chatAgent = async ({
     const AGENT_UID = getAgentUID(chain, agentID.toString());
     const agentName = name || AGENT_UID;
 
+
     // console.log('Current working directory:', process.cwd());
 
     switch (framework) {
         case Framework.EternalAI: {
             // Define the path to the command and arguments
+            const configPath = `./agent-cli/agents/${AGENT_UID}/local_contracts.json`
+            // const chatConfigPath = `./agent-cli/agents/${AGENT_UID}/config.json`
             const command = 'sh';
-            const args = ['./src/eternalai/chat.sh', agentID];
+            const args = ['./src/eternalai/chat.sh', agentID, configPath];
 
             // Spawn the child process
             const child = spawn(command, args);

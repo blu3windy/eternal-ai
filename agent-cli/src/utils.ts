@@ -44,8 +44,24 @@ const execCmd = async ({
 }
 
 
+const padWithPrefix = (s: string, prefix: string, length: number): string => {
+    // If the string is already longer than or equal to the desired length, return it as is
+    if (s.length >= length) {
+        return s;
+    }
+
+    // Calculate how many times to repeat the prefix
+    const paddingLength = length - s.length;
+    const repeatedPrefix = prefix.repeat(Math.ceil(paddingLength / prefix.length));
+
+    // Pad the string with the repeated prefix and trim to the fixed length
+    return (repeatedPrefix + s).slice(0, length);
+}
+
+
 
 export {
     getSupportedModels,
     execCmd,
+    padWithPrefix,
 }
