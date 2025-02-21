@@ -27,6 +27,7 @@ from typing import List, Union, Optional
 import random
 
 from . import constants as const
+from .wrappers.log_decorators import log_execution_time
 from .embedding import get_embedding_models, get_default_embedding_model
 from pymilvus import MilvusClient, FieldSchema, CollectionSchema, DataType
 from .wrappers import milvus_kit, redis_kit
@@ -51,8 +52,8 @@ import schedule
 
 logger = logging.getLogger(__name__)
 
-@limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT)
-async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingModel) -> List[List[float]]:
+@limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT * 1.5)
+async def mk_cog_embedding_priotized(text: Union[str, List[str]], model_use: EmbeddingModel) -> List[List[float]]:
     url = model_use.base_url
 
     headers = {
@@ -82,6 +83,10 @@ async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingMode
 
     response_json = response.json()
     return response_json['output']['result']
+
+@limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT)
+async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingModel) -> List[List[float]]:
+    return await mk_cog_embedding_priotized(text, model_use)
 
 async def url_graph_chunking(url_or_texts: str, model_use: EmbeddingModel) -> AsyncGenerator:
     gk = get_gk()
@@ -163,6 +168,13 @@ async def insert_to_collection(
 
 mk_cog_embedding_retry_wrapper = retry(
     mk_cog_embedding, 
+    max_retry=2,
+    first_interval=2, 
+    interval_multiply=2
+)
+
+mk_cog_embedding_retry_wrapper_priotized = retry(
+    mk_cog_embedding_priotized, 
     max_retry=2,
     first_interval=2, 
     interval_multiply=2
@@ -634,6 +646,7 @@ async def drop_kb(kb: str):
     logger.info(f"Deleted all data for kb {kb}")
     return removed_count
 
+@log_execution_time
 @redis_kit.cache_for(interval_seconds=300 // 5) # seconds
 async def run_query(req: QueryInputSchema) -> List[QueryResult]:
     if len(req.kb) == 0 or req.top_k <= 0:
@@ -641,13 +654,17 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
 
     embedding_model = get_default_embedding_model()
     model_identity = embedding_model.identity()
-    query_embedding = await mk_cog_embedding(req.query, embedding_model)
+
+    resp = await get_gk().refine_query(req.query)
+    
+    logger.info(f"Refined query: {resp.result}")
+    refined_query = resp.result or req.query
+
+    query_embedding = await mk_cog_embedding_retry_wrapper_priotized(
+        refined_query, embedding_model
+    )
     
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
-    row_count = await get_collection_num_entities(model_identity)
-
-    if row_count == 0:
-        return []
 
     entity_kb = [
         kb + const.ENTITY_SUFFIX 
@@ -672,7 +689,9 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
     if len(ner_query_list) > 0:
         res = await sync2async(cli.search)(
             collection_name=model_identity,
-            data=await mk_cog_embedding(ner_query_list, embedding_model),
+            data=await mk_cog_embedding_retry_wrapper_priotized(
+                ner_query_list, embedding_model
+            ),
             kb_filter=f"kb in {entity_kb}",
             anns_field="embedding",
             output_fields=["head", "tail"],
@@ -696,7 +715,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
         collection_name=model_identity,
         data=query_embedding,
         filter=filter_str,
-        limit=min(req.top_k, row_count),
+        limit=max(req.top_k, 1),
         anns_field="embedding",
         output_fields=["id", "content", "reference", "hash"],
         search_params={"params": {"radius": req.threshold}},

@@ -458,24 +458,26 @@ func (s *Service) CreateInfraTwitterAppRequest(ctx context.Context, event *ethap
 						map[string][]interface{}{},
 						[]string{},
 					)
+					inst = &models.InfraRequest{
+						TxHash:          strings.ToLower(event.TxHash),
+						ContractAddress: strings.ToLower(event.ContractAddress),
+						EventId:         eventHash,
+						TxAt:            time.Unix(int64(event.Timestamp), 0),
+						Status:          models.InfraRequestStatusPending,
+						Uuid:            event.Uuid,
+						Data:            event.Data,
+						Creator:         strings.ToLower(event.Creator),
+						ActId:           event.ActId.Uint64(),
+					}
+
 					if agentInfo != nil {
-						inst = &models.InfraRequest{
-							NetworkID:       agentInfo.NetworkID,
-							AgentInfoID:     agentInfo.ID,
-							TxHash:          strings.ToLower(event.TxHash),
-							ContractAddress: strings.ToLower(event.ContractAddress),
-							EventId:         eventHash,
-							TxAt:            time.Unix(int64(event.Timestamp), 0),
-							Status:          models.InfraRequestStatusPending,
-							Uuid:            event.Uuid,
-							Data:            event.Data,
-							Creator:         strings.ToLower(event.Creator),
-							ActId:           event.ActId.Uint64(),
-						}
-						err = s.dao.Create(tx, inst)
-						if err != nil {
-							return errs.NewError(err)
-						}
+						inst.NetworkID = agentInfo.NetworkID
+						inst.AgentInfoID = agentInfo.ID
+					}
+
+					err = s.dao.Create(tx, inst)
+					if err != nil {
+						return errs.NewError(err)
 					}
 				}
 			}
