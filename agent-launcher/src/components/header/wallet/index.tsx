@@ -67,6 +67,8 @@ const HeaderWallet: React.FC<IProps> = ({
   const menuItems = useMemo(() => {
     const items: any[] = [];
 
+    console.log('items', items);
+
     return items;
   }, [])
 
