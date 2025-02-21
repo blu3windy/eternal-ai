@@ -109,3 +109,85 @@ func (c *Client) ERC20RealWorldAgentSubmitSolution(contractAddr string, prkHex s
 	}
 	return signedTx.Hash().Hex(), nil
 }
+
+func (c *Client) ERC20RealWorldAgentAct(contractAddr string, prkHex string, uuid [32]byte, data []byte) (string, error) {
+	pbkHex, prk, err := c.parsePrkAuth(prkHex)
+	if err != nil {
+		return "", err
+	}
+	gasPrice, gasTipCap, err := c.GetCachedGasPriceAndTipCap()
+	if err != nil {
+		return "", err
+	}
+	client, err := c.getClient()
+	if err != nil {
+		return "", err
+	}
+	instance, err := erc20realworldagent.NewERC20RealWorldAgent(common.HexToAddress(contractAddr), client)
+	if err != nil {
+		return "", err
+	}
+	dataHash, err := instance.GetHashToSign(&bind.CallOpts{}, uuid, data)
+	if err != nil {
+		return "", err
+	}
+	signature, err := c.Sign(prkHex, dataHash)
+	if err != nil {
+		return "", err
+	}
+	instanceABI, err := erc20realworldagent.ERC20RealWorldAgentMetaData.GetAbi()
+	if err != nil {
+		return "", err
+	}
+	dataBytes, err := instanceABI.Pack(
+		"act0",
+		uuid,
+		data,
+		signature,
+	)
+	if err != nil {
+		return "", err
+	}
+	contractAddress := helpers.HexToAddress(contractAddr)
+	value := big.NewInt(0)
+	gasNumber, err := client.EstimateGas(context.Background(), ethereum.CallMsg{
+		From:  pbkHex,
+		To:    &contractAddress,
+		Data:  dataBytes,
+		Value: value,
+	})
+	if err != nil {
+		return "", err
+	}
+	chainID, err := c.GetChainID()
+	if err != nil {
+		return "", err
+	}
+	nonceAt, err := client.PendingNonceAt(context.Background(), pbkHex)
+	if err != nil {
+		return "", err
+	}
+	rawTx := types.NewTx(&types.DynamicFeeTx{
+		ChainID:   big.NewInt(int64(chainID)),
+		Nonce:     nonceAt,
+		GasFeeCap: gasPrice,
+		GasTipCap: gasTipCap,
+		Gas:       (gasNumber * 2),
+		To:        &contractAddress,
+		Value:     value,
+		Data:      dataBytes,
+	})
+	signedTx, err := types.SignTx(rawTx, types.NewLondonSigner(big.NewInt(int64(chainID))), prk)
+	if err != nil {
+		return "", err
+	}
+	err = client.SendTransaction(context.Background(), signedTx)
+	if err != nil {
+		return "", err
+	}
+	_, err = c.InscribeTxs([]string{signedTx.Hash().Hex()})
+	if err != nil {
+		return "", err
+	}
+	return signedTx.Hash().Hex(), nil
+}
