@@ -745,7 +745,8 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 									Status:         models.AgentEaiTopupStatusDone,
 									ToAddress:      agent.ETHAddress,
 								}
-								if m.NetworkID == models.ABSTRACT_TESTNET_CHAIN_ID && m.NetworkID != agent.NetworkID {
+								if (m.NetworkID == models.ABSTRACT_TESTNET_CHAIN_ID ||
+									m.NetworkID == models.MONAD_TESTNET_CHAIN_ID) && m.NetworkID != agent.NetworkID {
 									m.Status = models.AgentEaiTopupStatusCancelled
 								}
 								err = s.dao.Create(
@@ -824,7 +825,8 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 									Amount:      numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Value, 18)),
 									Status:      models.UserTransactionStatusDone,
 								}
-								if m.NetworkID == models.ABSTRACT_TESTNET_CHAIN_ID {
+								if m.NetworkID == models.ABSTRACT_TESTNET_CHAIN_ID ||
+									m.NetworkID == models.MONAD_TESTNET_CHAIN_ID {
 									m.Status = models.UserTransactionStatusCancelled
 								}
 								err = s.dao.Create(
