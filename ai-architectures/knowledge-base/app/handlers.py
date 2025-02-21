@@ -99,7 +99,7 @@ async def url_graph_chunking(url_or_texts: str, model_use: EmbeddingModel) -> As
 
         if isinstance(graph_result, Exception) or graph_result.status != APIStatus.OK:
             shortened_item = item[:100].replace('\n', '\\n')
-            err_msg = graph_result.error if isinstance(graph_result, Exception) else graph_result.error
+            err_msg = graph_result.error if not isinstance(graph_result, Exception) else graph_result
             logger.error(f"Failed to construct graph from {shortened_item}. Reason: {err_msg}")
         else:
             for triplet in graph_result.result:
