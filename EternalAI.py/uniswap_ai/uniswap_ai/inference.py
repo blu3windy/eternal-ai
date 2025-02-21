@@ -21,12 +21,6 @@ class InferenceResponse:
     data: str
 
 
-@dataclass
-class Inference:
-    user_prompt: str
-    system_prompt: str
-
-
 @dataclass()
 class LLMInferMessage:
     content: str = ""
