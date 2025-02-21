@@ -11,6 +11,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/jinzhu/gorm"
 )
 
@@ -199,6 +200,24 @@ func (s *Service) ScanAgentInfraMintHash(ctx context.Context, userAddress string
 		return errs.NewError(err)
 	}
 	return nil
+}
+
+func (s *Service) ERC20RealWorldAgentAct(
+	ctx context.Context,
+	uuid string,
+	ipfsHash string,
+) (string, error) {
+	txHash, err := s.GetEthereumClient(ctx, s.conf.InfraTwitterApp.NetworkID).
+		ERC20RealWorldAgentAct(
+			s.conf.InfraTwitterApp.AgentAddress,
+			s.GetAddressPrk(s.conf.InfraTwitterApp.WorkerAddress),
+			[32]byte(common.Hex2Bytes(uuid)),
+			[]byte(ipfsHash),
+		)
+	if err != nil {
+		return "", errs.NewError(err)
+	}
+	return txHash, nil
 }
 
 func (s *Service) DeployAgentRealWorldAddress(
