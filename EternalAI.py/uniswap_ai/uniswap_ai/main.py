@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def call_uniswap(private_key: str, content: str):
     logging.info(f"call uniswap with content {content}")
     try:
-        # get json content
+        # json content
         json_match = re.search(r'\{.*?\}', content, re.DOTALL)
         if json_match:
             content = json_match.group(0)
@@ -27,11 +27,7 @@ def call_uniswap(private_key: str, content: str):
         uniswap_obj = UniSwapAI()
         json_data = json.loads(content)
         req = SwapReq(**json_data)
-        # req = SwapReq(
-        #     "0x0000000000000000000000000000000000000000",
-        #     decimal.Decimal("0.1"),
-        #     "0x7d29a64504629172a429e64183d6673b9dacbfce"
-        # )
+        req.convert_in_out()
 
         tx_swap = uniswap_obj.swap_v3(private_key, req)
     except Exception as e:
