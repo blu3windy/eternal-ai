@@ -539,9 +539,7 @@ func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID u
 			}
 
 			if reqInfo != nil && reqInfo.Status == models.InfraRequestStatusPending {
-				address := reqInfo.Creator
-				ipfsReq := reqInfo.Data
-				rawReq, _, err := lighthouse.DownloadDataSimple(ipfsReq)
+				rawReq, _, err := lighthouse.DownloadDataSimple(reqInfo.Data)
 				if err != nil {
 					return errs.NewError(err)
 				}
@@ -549,7 +547,7 @@ func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID u
 					infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 						daos.GetDBMainCtx(ctx),
 						map[string][]interface{}{
-							"address = ?": {address},
+							"address = ?": {reqInfo.Creator},
 						},
 						map[string][]interface{}{
 							"TwitterInfo": {},
