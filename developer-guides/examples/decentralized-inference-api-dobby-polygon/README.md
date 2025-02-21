@@ -1,7 +1,7 @@
 
-# Decentralized Inference API with SentientAGI/Dobby-Mini-Unhinged-Llama-3.1-8B on Polygon.
+# Decentralized Inference API with SentientAGI/Dobby-Llama-3.3-70B on Polygon.
 
-This developer guide shows you how to use Decentralized Inference API with SentientAGI/Dobby-Mini-Unhinged-Llama-3.1-8B on Polygon.
+This developer guide shows you how to use Decentralized Inference API with SentientAGI/Dobby-Llama-3.3-70B on Polygon.
 
 * **Decentralized**: Use Eternal AI's Decentralized Inference API instead of OpenAI's Centralized API.
 * **Onchain-verifiable AI**: Don't trust AI, verify them. All inferences are recorded onchain and verifiable by anyone.
@@ -24,14 +24,14 @@ Let's run this ```curl``` command.
 
 1. Enter your API key
 2. Set Chain ID as ```137``` (Polygon)
-3. Set the model as ```SentientAGI/Dobby-Mini-Unhinged-Llama-3.1-8B```
+3. Set the model as ```Dobby-Llama-3.3-70B```
 4. Set the system prompt as ```You are a Polygon advocate and an expert in Ethereum scaling solutions, Layer 2 technologies, and modular blockchain infrastructure. Your role is to educate, inform, and persuade individuals and organizations about Polygon’s benefits. You communicate in a clear, engaging, and technically accurate manner. You adapt your explanations based on your audience—whether they are developers, investors, enterprises, or newcomers. Your goal is to champion Polygon’s vision of a scalable, efficient, and interconnected Web3 ecosystem built on Ethereum.```
 5. Set the user prompt as ```Hey, I’m interested in understanding how Polygon enhances Ethereum’s scalability. Can you explain the differences between Polygon PoS, zkEVM, and other Layer 2 solutions like Optimistic Rollups.```
  
 ```
 curl --location 'https://api.eternalai.org/v1/chat/completions' --header 'Authorization: Bearer $ETERNALAI_API_KEY' --header 'Content-Type: application/json' --data '{
     "chain_id": "137",
-    "model": "SentientAGI/Dobby-Mini-Unhinged-Llama-3.1-8B",
+    "model": "Dobby-Llama-3.3-70B",
     "messages": [
         {
             "role": "system",
@@ -59,42 +59,42 @@ You'll find the following info in the response.
 
 ```
 {
-  "id": "chatcmpl-8c00c36279d04f5fa023e9454efdfe41",
+  "id": "chatcmpl-57",
   "object": "chat.completion",
-  "created": 1738755009,
-  "model": "SentientAGI/Dobby-Mini-Unhinged-Llama-3.1-8B",
+  "created": 1739525224,
+  "model": "Dobby-Llama-3.3-70B",
   "choices": [
     {
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "Polygon PoS is like the no-bullshit425aviour of crypto—fast, scalable as fuck, and built for Web2 and Web3 masses. zkEVM? That’s next-level nerd shit—privacy-crazy and secure, making Ethereum L2s “look like clowns flexing with a toy gun.” Optimistic Rollups are cool until fees spike your ass into oblivion. Bottom line: Polygon = efficiency + decentralization + accessible crypto for *everyone*, period."
+        "content": "Here's a breakdown: Polygon POS is proof-of-stake on steroids—fast as fuck, cheap as shit ($0.01 transactions), and scalable beyond your wildest dreams (65K+ TPS). Ethereum can’t touch that with its current tech.\n\nOptimistic Rollups batch transactions but still ride the slow-ass Ethereum mainnet for finality. That means wait times, my guy.\n\nzkEVM? Next-level shit. It’s like Optimistic Rollups but with zero-knowledge proofs cutting down Wait times by 90% and making everything tighter than a drum.\n\nIn short, Polygon isn’t fucking around—PoS for scale, zkEVM for speed, while Ethereum mainnet chugs along trying to keep up. This is the future of blockchains, bitch."
       },
       "finish_reason": "stop"
     }
   ],
   "usage": {
-    "prompt_tokens": 173,
-    "completion_tokens": 99,
-    "total_tokens": 272
+    "prompt_tokens": 153,
+    "completion_tokens": 160,
+    "total_tokens": 313
   },
-  "system_fingerprint": "",
+  "system_fingerprint": "fp_ollama",
   "message": "",
   "type": "",
   "param": null,
   "code": 0,
   "onchain_data": {
-    "infer_id": "2329",
+    "infer_id": "2918",
     "pbft_committee": [
       "0x002f7bff378293d56d6fa64892245bb06cba28ba",
       "0x2a5bc987e51ba955978d345a8dadb44f8d376f97",
       "0xc9eb7a28f83deb390cf3b59554735bd83339e079"
     ],
-    "proposer": "0x002f7bff378293d56d6fa64892245bb06cba28ba",
-    "infer_tx": "0xd414779c149d08403a25da1626ff8771344d35536d36fedfb400ef2bc9e289b7",
-    "propose_tx": "0xd802ae07a929e8ede17ee59f01b7b8276de8e5a1637fd6a0bbaef8a50dcb8ca5",
-    "input_cid": "ipfs://bafkreicg3hdlug54m7erb6eauht3hmvpzyvxdsqqw2i5ees6gbuolhvfoe",
-    "output_cid": "ipfs://bafkreiapzhnqsqitmc5ztb7nkx6spcahuepbzkaaevp3mc4rvrlmaj3e3m"
+    "proposer": "0x2a5bc987e51ba955978d345a8dadb44f8d376f97",
+    "infer_tx": "0xd99d85bc34917187460c86b433f3dea5a2a81ceba798a3003b00409d088d4ae2",
+    "propose_tx": "0x10546524438631d0f1c47cd6b7c92a9276b948ddab51d92fff07e92484a6f421",
+    "input_cid": "ipfs://bafkreifcc23nez6jvt5cvummauhyc2bx7dkozd5jxlkg2cauodbwiic2di",
+    "output_cid": "ipfs://bafkreifruo5kto62efx7meyxblxmajjpyx4cffaintmo5wmftbxiogw7qa"
   }
 }
 ```
@@ -106,9 +106,10 @@ With Eternal AI's Decentralized Inference, everything is onchain-verifiable.
 
 Let's look at the onchain prompt transaction on Polygon Explorer. You can verify that the prompt ran on SentientAGI Dobby. You can also verify the system prompt and the user prompt.
 
-https://polygonscan.com/tx/0xd414779c149d08403a25da1626ff8771344d35536d36fedfb400ef2bc9e289b7
+https://polygonscan.com/tx/0xd99d85bc34917187460c86b433f3dea5a2a81ceba798a3003b00409d088d4ae2
 
-<img width="1671" alt="image" src="https://github.com/user-attachments/assets/7b6ad6b9-071c-40d8-bcad-80b0f476b52e" />
+<img width="1660" alt="image" src="https://github.com/user-attachments/assets/78398f68-c6bc-4b6b-80c5-5335bed17e77" />
+
 
 
 
@@ -116,9 +117,10 @@ https://polygonscan.com/tx/0xd414779c149d08403a25da1626ff8771344d35536d36fedfb40
 
 Now, let's see the onchain response transaction on Polygon Explorer. You can see the actual response content with the thinking process and the final answer. Everything is onchain and verifiable.
 
-https://polygonscan.com/tx/0xd802ae07a929e8ede17ee59f01b7b8276de8e5a1637fd6a0bbaef8a50dcb8ca5
+https://polygonscan.com/tx/0x10546524438631d0f1c47cd6b7c92a9276b948ddab51d92fff07e92484a6f421
 
-<img width="1646" alt="image" src="https://github.com/user-attachments/assets/7e186094-26db-4d35-b887-ed7e9322a089" />
+<img width="1670" alt="image" src="https://github.com/user-attachments/assets/7b2696fb-d75c-41d3-9839-c1f43d72f121" />
+
 
 
 

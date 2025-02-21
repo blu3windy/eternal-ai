@@ -56,6 +56,25 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	if req.SystemContent == "" {
 		req.SystemContent = "default"
 	}
+	switch req.AgentType {
+	case models.AgentInfoAgentTypeRealWorld,
+		models.AgentInfoAgentTypeUtility:
+		{
+			switch req.ChainID {
+			case models.BASE_CHAIN_ID,
+				models.ARBITRUM_CHAIN_ID,
+				models.BSC_CHAIN_ID,
+				models.APE_CHAIN_ID,
+				models.AVALANCHE_C_CHAIN_ID:
+				{
+				}
+			default:
+				{
+					return nil, errs.ErrBadRequest
+				}
+			}
+		}
+	}
 	agent := &models.AgentInfo{
 		Version:          "2",
 		AgentType:        models.AgentInfoAgentTypeReasoning,
@@ -88,6 +107,8 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		MissionTopics:    req.MissionTopics,
 		ConfigData:       req.ConfigData,
 	}
+	agent.MinFeeToUse = req.MinFeeToUse
+	agent.Worker = req.Worker
 
 	tokenInfo, _ := s.GenerateTokenInfoFromSystemPrompt(ctx, req.AgentName, req.SystemContent)
 	if tokenInfo != nil && tokenInfo.TokenSymbol != "" {
@@ -99,7 +120,14 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		}
 	}
 
-	if req.TokenChainId != "" {
+	if req.CreateTokenMode == models.CreateTokenModeTypeLinkExisting {
+		agent.TokenMode = string(models.CreateTokenModeTypeLinkExisting)
+		agent.TokenAddress = req.TokenAddress
+		agent.TokenSymbol = req.Ticker
+		agent.TokenName = req.TokenName
+		tokenChainId, _ := strconv.ParseUint(req.TokenChainId, 0, 64)
+		agent.TokenNetworkID = tokenChainId
+	} else if req.TokenChainId != "" {
 		tokenChainId, _ := strconv.ParseUint(req.TokenChainId, 0, 64)
 		if !(tokenChainId == models.POLYGON_CHAIN_ID || tokenChainId == models.ZKSYNC_CHAIN_ID) {
 			agent.TokenNetworkID = tokenChainId
@@ -191,16 +219,16 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		}
 	}
 
+	if req.AgentType > 0 {
+		agent.AgentType = req.AgentType
+	}
+
 	if req.CreateKnowledgeRequest != nil {
 		agent.AgentType = models.AgentInfoAgentTypeKnowledgeBase
 	}
 
 	if agent.AgentName == "" && req.CreateKnowledgeRequest != nil {
 		agent.AgentName = req.CreateKnowledgeRequest.Name
-	}
-
-	if req.AgentType > 0 {
-		agent.AgentType = req.AgentType
 	}
 
 	if err := s.dao.Create(daos.GetDBMainCtx(ctx), agent); err != nil {
@@ -223,6 +251,9 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	}
 
 	if agent.ID > 0 {
+		if req.CreateTokenMode == models.CreateTokenModeTypeLinkExisting {
+			go s.UpdateTokenPriceInfo(context.Background(), agent.ID)
+		}
 		go s.AgentCreateMissionDefault(context.Background(), agent.ID)
 	}
 
@@ -434,7 +465,9 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				agent.Style = req.GetAssistantCharacter(req.Style)
 				agent.Adjectives = req.GetAssistantCharacter(req.Adjectives)
 				agent.SocialInfo = req.GetAssistantCharacter(req.SocialInfo)
-
+				agent.SourceUrl = req.SourceUrl
+				agent.MinFeeToUse = req.MinFeeToUse
+				agent.Worker = req.Worker
 				if req.TokenImageUrl != "" {
 					agent.TokenImageUrl = req.TokenImageUrl
 				}
@@ -492,6 +525,10 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 					if kbReq.ThumbnailUrl != "" {
 						updateMap["thumbnail_url"] = kbReq.ThumbnailUrl
 					}
+
+					if kbReq.DomainUrl != "" {
+						updateMap["domain_url"] = kbReq.DomainUrl
+					}
 				}
 
 				go s.AgentCreateMissionDefault(context.Background(), agent.ID)
@@ -503,31 +540,30 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 		return nil, errs.NewError(err)
 	}
 
-	if updateKb && len(req.CreateKnowledgeRequest.Files) > 0 {
-		updatedListFile, err := s.KnowledgeUsecase.UpdateListKnowledgeBaseFile(ctx, agent.AgentKBId, req.CreateKnowledgeRequest.Files)
+	if updateKb {
+		i, err := s.KnowledgeUsecase.GetKnowledgeBaseById(ctx, agent.AgentKBId)
 		if err != nil {
-			return nil, errs.NewError(err)
+			return nil, err
 		}
-		if updatedListFile {
-			i, err := s.KnowledgeUsecase.GetKnowledgeBaseById(ctx, agent.AgentKBId)
+		if len(req.CreateKnowledgeRequest.Files) > 0 {
+			updatedListFile, err := s.KnowledgeUsecase.UpdateListKnowledgeBaseFile(ctx, agent.AgentKBId, req.CreateKnowledgeRequest.Files)
 			if err != nil {
-				return nil, err
+				return nil, errs.NewError(err)
 			}
-
-			i.Fee, _ = s.KnowledgeUsecase.CalcFeeByKnowledgeBaseId(ctx, agent.AgentKBId)
-			i.ChargeMore = i.CalcChargeMore()
-
-			updateMap["fee"] = i.Fee
-			updateMap["charge_more"] = i.ChargeMore
-			if i.ChargeMore != 0 {
-				updateMap["status"] = models.KnowledgeBaseStatusWaitingPayment
+			if updatedListFile {
+				i.ChargeMore = i.CalcChargeMore()
+				if i.ChargeMore != 0 {
+					i.Fee = i.Fee + i.ChargeMore
+					updateMap["fee"] = i.Fee
+					updateMap["charge_more"] = i.ChargeMore
+					updateMap["status"] = models.KnowledgeBaseStatusWaitingPayment
+				}
 			}
-
-			if err := s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, agent.AgentKBId, updateMap); err != nil {
-				return nil, err
-			}
-			agent.KnowledgeBase = i
 		}
+		if err := s.KnowledgeUsecase.UpdateKnowledgeBaseById(ctx, agent.AgentKBId, updateMap); err != nil {
+			return nil, err
+		}
+		agent.KnowledgeBase = i
 	}
 
 	agentInfoKbs := []*models.AgentInfoKnowledgeBase{}

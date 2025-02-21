@@ -1,10 +1,15 @@
+import asyncio
 import logging
+import random
 import traceback
+import datetime
+from typing import List
 
 from json_repair import repair_json
 from x_content.constants import MissionChainState
 from x_content import constants as const
 from x_content.llm.base import OnchainInferResult
+from x_content.llm.local import SyncBasedEternalAI
 from x_content.models import ReasoningLog
 from x_content.tasks.base import MultiStepTaskBase
 from x_content.wrappers.api import twitter_v2
@@ -21,11 +26,17 @@ from x_content.wrappers.game import (
     GameStatus,
     GameState,
 )
+from x_content.services import fact_service
+from x_content.services.fact.fact_check import SearchResponse
 
 from x_content.tasks.utils import a_move_state, create_twitter_auth_from_reasoning_log
 
 from x_content.wrappers.vision_tasks import get_image_description
-from x_content.wrappers.magic import sync2async
+from x_content.wrappers.magic import get_llm_tasks_first_interval, retry, sync2async
+
+from x_content.tasks.game_agent.prompts import FACT_QUERY_PROMPT_TEMPLATE, JUDGE_GAME_PROMPT_TEMPLATE, JUDGE_FACT_PROMPT_TEMPLATE, JUDGE_GAME_WITH_FACTS_PROMPT_TEMPLATE
+from x_content.wrappers.tweet_specialty import is_create_game_tweet, is_find_fact_tweet
+from x_content.wrappers.postprocess import StringProcessor
 
 logging.basicConfig(level=logging.INFO if not __debug__ else logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -38,8 +49,10 @@ async def _get_ready_to_judge_games():
         logger.info(
             "[_get_ready_to_judge_games] Getting running games from Redis"
         )
+
         game_redis = _get_game_redis_cache()
-        running_games = game_redis.get_running_games()
+        running_games = await sync2async(game_redis.get_running_games)()
+
         if not running_games:
             logger.info("[_get_ready_to_judge_games] No running games found")
             return []
@@ -161,32 +174,248 @@ def _try_acquire_judge_game_lock(_tweet_id):
                 )
 
 
-JUDGE_GAME_PROMPT_TEMPLATE = """Act as an expert in evaluating and judging the quality of AI-generated responses to tweets.
+def _get_facts_search_query_conversation(
+    question: str, timestamp: str, content_images: List[str]
+) -> List[dict]:
+    system_message = "You are a helpful assistant."
 
-Your task is to objectively evaluate multiple AI agents' responses to a tweet based on the following criteria:
+    content_images_str = ""
+    if len(content_images) > 0:
+        content_images_str = "Image Descriptions:" + "\n\n".join(
+            [f"- {x}" for x in content_images]
+        )
 
-1. Accuracy and Relevance: Assess how accurately and appropriately each response addresses the content of the tweet.
-2. Creativity and Originality: Evaluate the degree of innovation and uniqueness demonstrated in each response.
-3. Clarity and Coherence: Determine how well-structured and easy to understand each response is.
-4. Adherence to Constraints: Take into account whether each response follows any specific rules or constraints mentioned in the tweet.
+    conversation_thread = [
+        {
+            "role": "system",
+            "content": system_message,
+        },
+        {
+            "role": "user",
+            "content": FACT_QUERY_PROMPT_TEMPLATE.format(
+                question=question,
+                content_images=content_images_str,
+                tweet_timestamp=timestamp,
+                current_timestamp=datetime.datetime.now(
+                    datetime.timezone.utc
+                ).isoformat(),
+            ),
+        },
+    ]
 
-List your thoughts for each response before making a final decision. If complex reasoning is required, think step by step and weigh all sides of the topic before settling on the best response. Utilize advanced prompt engineering techniques such as Chain of Thought, Debate simulations, Self Reflection, and Self Consistency where appropriate.
+    logger.info(
+        f"[_get_facts_search_query_conversation] Successfully built conversation: {conversation_thread}"
+    )
 
-After evaluating all responses, identify the agent with the best response. If multiple agents provide the best response, the winning agent is the one with the earliest best response.
+    return conversation_thread
 
-Response format:
-Please provide your response as a stringified JSON object with the key "winning_agent" containing the username of the agent with the best response.
 
-Example output:
-{{ "winning_agent": "Agent's username" }}
+def _get_facts_search_query(
+    question: str, timestamp: str, content_images: List[str]
+) -> str:
+    messages = _get_facts_search_query_conversation(
+        question, timestamp, content_images
+    )
 
-Here are the information of the given tweet:
-- Tweet text: {full_text}
-- Content images in the tweet: {content_images}
+    def run_llm():
+        model = SyncBasedEternalAI(
+            max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
+            temperature=0.7,
+            base_url=const.SELF_HOSTED_LLAMA_405B_URL + "/v1",
+            api_key=const.SELF_HOSTED_LLAMA_API_KEY,
+            model=const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
+            seed=random.randint(1, int(1e9)),
+        )
+        result = model.generate(messages).generations[0].text
+        print("[_get_facts_search_query]", result)
+        result = repair_json(result, return_objects=True)
 
-Here are the list of responses that need to be evaluated, sorted from the earliest to the latest:
-{answers_content}
-"""
+        return result["query"]
+
+    query = retry(
+        run_llm,
+        max_retry=3,
+        first_interval=get_llm_tasks_first_interval(),
+        interval_multiply=2,
+    )()
+    return query
+
+
+async def _get_judge_game_with_facts_conversation(
+    game_tweet_object: dict,
+    answers: List[dict],
+):
+    """
+    Return conversation to judge the winning agent from given game tweet and participating agents' answers
+    :param game_tweet_object: tweet object with schema { "full_text": str, "img_url": str }
+    :param answers: list of objects with schema { "username": str, "answer": str } representing the answer from participating agents
+    :return conversation to submit LLM inference
+    """
+    logger.info(
+        "[_get_judge_game_with_facts_conversation] Building conversation for judging"
+    )
+
+    system_message = "You are a helpful assistant."
+
+    answers_content = ""
+    for answer in answers:
+        answers_content += f"- {answer['username']}: {answer['answer']}\n"
+
+    content_images = []
+    if game_tweet_object.get("image_urls"):
+        for img_url in game_tweet_object.get("image_urls"):
+            try:
+                content_images.append(
+                    await sync2async(get_image_description)(img_url)
+                )
+            except Exception as err:
+                logger.error(
+                    f"[_get_judge_game_with_facts_conversation] Failed to get image description at {img_url}: {err}"
+                )
+
+    # Perform search
+    # Try to get cached response first
+    game_redis = _get_game_redis_cache()
+    cached_response = game_redis.get_fact_check(
+        game_tweet_object.get("tweet_id")
+    )
+
+    given_facts = ""
+    if cached_response:
+        logger.info(
+            f"[_get_judge_game_with_facts_conversation] Using cached fact check response for tweet {game_tweet_object.get('tweet_id')}"
+        )
+        given_facts = SearchResponse(**cached_response).results
+    else:
+        # No cache found, call fact service
+        logger.info(
+            f"[_get_judge_game_with_facts_conversation] No cache found, calling fact service for tweet {game_tweet_object.get('tweet_id')}"
+        )
+
+        query = await sync2async(_get_facts_search_query)(
+            game_tweet_object.get("full_text"),
+            game_tweet_object.get("posted_at"),
+            content_images,
+        )
+
+        if query != "":
+            logger.info(
+                f"[_get_judge_game_with_facts_conversation] Received query '{query}' for fact searching for tweet {game_tweet_object.get('tweet_id')}"
+            )
+
+            response = await fact_service.search(
+                query, time_range="d", search_depth="advanced"
+            )
+
+            # Cache the response
+            game_redis.set_fact_check(
+                game_tweet_object.get("id"), response.__dict__
+            )
+
+            given_facts = response.results
+        else:
+            logger.info(
+                f"[_get_judge_game_with_facts_conversation] Fact searching is not required for tweet {game_tweet_object.get('tweet_id')}"
+            )
+
+    logger.info(
+        "[_get_judge_game_with_facts_conversation] Building conversation for judging"
+    )
+
+    content_images_str = ""
+    if len(content_images) > 0:
+        content_images_str = "Content images in the tweet:" + "\n\n".join(
+            [f"- {x}" for x in content_images]
+        )
+    if given_facts == "":
+        given_facts = "Facts not found"
+
+    user_prompt = JUDGE_GAME_WITH_FACTS_PROMPT_TEMPLATE.format(
+        full_text=game_tweet_object.get("full_text"),
+        content_images=content_images_str,
+        tweet_timestamp=game_tweet_object.get("posted_at"),
+        current_timestamp=datetime.datetime.now(
+            datetime.timezone.utc
+        ).isoformat(),
+        given_facts=given_facts,
+        answers_content=answers_content,
+    )
+
+    conversation_thread = [
+        {
+            "role": "system",
+            "content": system_message,
+        },
+        {
+            "role": "user",
+            "content": user_prompt,
+        },
+    ]
+    logger.info(
+        f"[_get_judge_game_with_facts_conversation] Successfully built conversation: {conversation_thread}"
+    )
+    return conversation_thread
+
+
+async def _get_judge_fact_conversation(tweet_object, answers):
+    system_message = "You are a helpful assistant."
+
+    answers_content = ""
+    for answer in answers:
+        answers_content += f"- {answer['username']}: {answer['answer']}\n"
+
+    # Example claim to search
+    query = tweet_object.get("full_text")
+    query = (
+        StringProcessor(query)
+        .remove_tags()
+        .remove_mentions()
+        .remove_urls()
+        .remove_emojis()
+        .strip_head_and_tail_white_string()
+        .get_text()
+    )
+
+    # Perform search
+    # Try to get cached response first
+    game_redis = _get_game_redis_cache()
+    cached_response = game_redis.get_fact_check(tweet_object.get("id"))
+
+    if cached_response:
+        logger.info(
+            f"[_get_judge_fact_conversation] Using cached fact check response for tweet {tweet_object.get('id')}"
+        )
+        response = SearchResponse(**cached_response)
+    else:
+        # No cache found, call fact service
+        logger.info(
+            f"[_get_judge_fact_conversation] No cache found, calling fact service for tweet {tweet_object.get('id')}"
+        )
+        response = await fact_service.search(query)
+
+        # Cache the response
+        game_redis.set_fact_check(tweet_object.get("id"), response.__dict__)
+
+    user_prompt = JUDGE_FACT_PROMPT_TEMPLATE.format(
+        query=tweet_object.get("full_text"),
+        fact=response.results,
+        answers=answers_content,
+    )
+
+    conversation_thread = [
+        {
+            "role": "system",
+            "content": system_message,
+        },
+        {
+            "role": "user",
+            "content": user_prompt,
+        },
+    ]
+    logger.info(
+        f"[_get_judge_game_conversation] Successfully built conversation: {conversation_thread}"
+    )
+    return conversation_thread
 
 
 async def _get_judge_game_conversation(game_tweet_object, answers):
@@ -204,9 +433,7 @@ async def _get_judge_game_conversation(game_tweet_object, answers):
 
     answers_content = ""
     for answer in answers:
-        answers_content += (
-            f"- Agent {answer['username']}: {answer['answer']}\n"
-        )
+        answers_content += f"- {answer['username']}: {answer['answer']}\n"
 
     content_images = ""
     if game_tweet_object.get("image_urls"):
@@ -237,13 +464,14 @@ async def _get_judge_game_conversation(game_tweet_object, answers):
             "content": user_prompt,
         },
     ]
+
     logger.info(
         f"[_get_judge_game_conversation] Successfully built conversation: {conversation_thread}"
     )
+
     return conversation_thread
 
 
-##TODO: replace with real api when has from Ron
 async def _get_child_tweets(tweet_id):
     """
     Get all child tweets (replies) for a given tweet ID from the Twitter API
@@ -254,13 +482,14 @@ async def _get_child_tweets(tweet_id):
         logger.info(
             f"[_get_child_tweets] Fetching child tweets for tweet {tweet_id}"
         )
-        # query = f"conversation_id:{tweet_id}" ##TODO:@harvey update this query
 
         resp: Response[TweetsDto] = await sync2async(
             twitter_v2.search_recent_tweet_by_tweetid
         )(tweet_id)
+
         if resp.is_error():
             raise Exception(resp.error)
+
         recent_replies = resp.data.tweets
 
         logger.info(
@@ -302,6 +531,7 @@ async def _get_final_answers(log: ReasoningLog, _tweet_id):
         child_tweets, game_data, err = await _get_game_data_and_tweets(
             _tweet_id
         )
+
         if err is not None:
             return None, err
 
@@ -309,11 +539,14 @@ async def _get_final_answers(log: ReasoningLog, _tweet_id):
         participants_answers, err = _get_participant_answers_from_tweets(
             game_data, child_tweets
         )
+
         if err is not None:
             return None, err
+
         answers = _format_answers_within_time_limit(
             game_data, participants_answers
         )
+
         logger.info(
             f"[_get_final_answers] Successfully got {len(answers)} final answers"
         )
@@ -365,6 +598,7 @@ def _get_participant_answers_from_tweets(game_data: GameInfo, child_tweets):
     # Take first tweet from each participant
     seen_usernames = set()
     participants_answers = []
+
     for tweet in sorted_child_tweets:
         if (
             tweet["username"] in participants
@@ -376,6 +610,7 @@ def _get_participant_answers_from_tweets(game_data: GameInfo, child_tweets):
     logger.info(
         f"[_get_participant_answers_from_tweets] Found {len(participants_answers)} participant answers"
     )
+
     return participants_answers, None
 
 
@@ -394,15 +629,24 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
     """Handle case when there are multiple participants, calling LLM to determine the winner"""
     # Create conversation for judging
     logger.info("[_handle_winner_with_llm] Creating conversation for judging")
+
     resp: Response[ExtendedTweetInfoDto] = await sync2async(
         twitter_v2.get_tweet_info_from_tweet_id
     )(game_id, True)
+
     if resp.is_error():
-        return None, resp.error
+        return None, None, resp.error
 
     tweet_obj = resp.data.tweet_info.tweet_object.to_dict()
-    conversation_thread = await _get_judge_game_conversation(
-        tweet_obj, answers
+    # currently there are only 2 types: game & fact
+    # so this works, consider alternative when the spec changes
+    conversation_thread = await (
+        _get_judge_game_conversation(tweet_obj, answers)
+        if is_create_game_tweet(resp.data.tweet_info)
+        else _get_judge_game_with_facts_conversation(tweet_obj, answers)
+    )
+    logger.info(
+        f"[_handle_winner_with_llm] Created conversation thread for judging: {conversation_thread}"
     )
 
     logger.info("[_handle_winner_with_llm] Calling LLM for judgment")
@@ -417,7 +661,7 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
         logger.error(
             f"[_handle_winner_with_llm] Error getting winner from LLM: {err}"
         )
-        return None, err
+        return None, None, err
 
     logger.info(
         f"[_handle_winner_with_llm] LLM selected winner: {winning_agent}"
@@ -427,7 +671,7 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
         logger.error(
             f"[_handle_winner_with_llm] Error posting game result: {err}"
         )
-        return None, err
+        return None, None, err
 
     return winning_agent, infer_result.tx_hash, None
 
@@ -471,7 +715,10 @@ def _get_winner_from(result: str):
             "[_get_winner_from] Parsing LLM result to determine winner"
         )
         result = repair_json(result, return_objects=True)
-        winner = result["wining_agent"]
+        result_found = result["result_found"]
+        if not result_found:
+            return None, Exception(f"Failed to find final result from llm")
+        winner = result["winning_agent"]
         logger.info(f"[_get_winner_from] Successfully parsed winner: {winner}")
         return winner, None
     except Exception as err:
@@ -499,6 +746,7 @@ async def _post_game_result(log: ReasoningLog, game_id, winning_agent):
     _, err = await sync2async(GameAPIClient.submit_game_result)(
         game_id, winning_agent
     )
+
     if err is not None:
         logger.error(f"[_post_game_result] Error posting to API: {err}")
         return None, err
@@ -578,6 +826,7 @@ class JudgeGameTask(MultiStepTaskBase):
             resp: Response[ExtendedTweetInfoDto] = await sync2async(
                 twitter_v2.get_tweet_info_from_tweet_id
             )(game_id)
+
             if (
                 resp.is_error()
                 or resp.data is None

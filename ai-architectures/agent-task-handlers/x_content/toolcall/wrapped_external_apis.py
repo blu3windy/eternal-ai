@@ -247,13 +247,16 @@ class LiveXDB(IToolCall):
         resp: Response[ExtendedTweetInfoDto] = await sync2async(
             twitter_v2.get_tweet_info_from_tweet_id
         )(tweet_id)
+
         if resp.is_error():
             return "Error getting tweet by id"
+
         tweet_info = resp.data.tweet_info
 
         specialties: List[TweetSpecialty] = await sync2async(
             detect_tweet_specialties
         )(tweet_info)
+
         if len(specialties) > 0:
             return "Cannot reply this tweet. Please select another tweet to reply."
 
@@ -925,6 +928,9 @@ class LiveXDB(IToolCall):
                 label=ToolLabel.QUERY,
             ),
         ]
+
+        for i in range(len(resp)):
+            resp[i].executor = sync2async(resp[i].executor)
 
         return resp
 

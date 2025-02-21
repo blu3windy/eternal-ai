@@ -9,14 +9,13 @@ logger = logging.getLogger(__name__)
 
 from typing import Optional
 import threading
-from x_content.service import handle_pod_shutdown, scan_db_and_resume_chat_requests, scan_db_and_resume_tasks
+from x_content.service import handle_pod_shutdown, handle_pod_ready
 from x_content import constants as const
 from x_content import __version__
 import uvicorn
 import os
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-import asyncio
 import schedule
 import traceback
 import time
@@ -83,53 +82,12 @@ def scheduler_job():
 
 previous_non_blocking_io_resume_task: Optional[threading.Thread] = None
 
-
-def _setup_scheduling():
-    global previous_non_blocking_io_resume_task
-
-    def start_non_blocking_io_scan_and_resume_task(
-        once=False,
-    ) -> Optional[schedule.CancelJob]:
-        global previous_non_blocking_io_resume_task
-
-        if (
-            previous_non_blocking_io_resume_task is None
-            or not previous_non_blocking_io_resume_task.is_alive()
-        ):
-            non_blocking_io_resume_task = threading.Thread(
-                target=asyncio.run,
-                args=(scan_db_and_resume_tasks(),),
-                daemon=True,
-            )
-
-            non_blocking_io_resume_task.start()
-
-            # non_blocking_io_resume_chat_requests = threading.Thread(
-            #     target=asyncio.run,
-            #     args=(scan_db_and_resume_chat_requests(),),
-            #     daemon=True,
-            # )
-
-            # non_blocking_io_resume_chat_requests.start()
-        else:
-            logger.info("Non-blocking IO task is already running. Skipping...")
-
-        return schedule.CancelJob if once else None
-
-    # for the first time run
-    schedule.every(10).minutes.do(
-        lambda: start_non_blocking_io_scan_and_resume_task(once=True)
-    )
-    schedule.every(30).minutes.do(
-        lambda: start_non_blocking_io_scan_and_resume_task(once=False)
-    )
-
-
 if __name__ == "__main__":
     app = FastAPI()
 
     signal.signal(signal.SIGTERM, handle_pod_shutdown)
     signal.signal(signal.SIGINT, handle_pod_shutdown)
+    # signal.signal(signal.SIGKILL, handle_pod_shutdown)
 
     scheduler_thread = threading.Thread(target=scheduler_job, daemon=True)
 
@@ -151,11 +109,11 @@ if __name__ == "__main__":
         )
 
     from x_content.api import router
-
     app.include_router(router)
+    app.add_event_handler("startup", handle_pod_ready)
 
-    _setup_scheduling()
     scheduler_thread.start()
+
     uvicorn.run(
         app=app,
         host=const.SERVER_HOST,

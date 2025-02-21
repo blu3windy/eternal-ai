@@ -1,7 +1,7 @@
 from abc import abstractmethod
 import logging
 import traceback
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from x_content.constants import MissionChainState
 from x_content.tasks.reply_subtask_base import ReplySubtaskBase
 from x_content.wrappers.api import twitter_v2
@@ -43,74 +43,66 @@ class ReplyTaskBase(MultiStepTaskBase):
 
     async def process_task(self, log: ReasoningLog) -> ReasoningLog:
         if log.state == MissionChainState.NEW:
-            try:
-                logger.info(
-                    f"[{self.__class__.__name__}.process_task] Initializing new reply task with log ID {log.id}"
-                )
-                response: Response[ExtendedTweetInfosDto] = await sync2async(
-                    twitter_v2.get_recent_mentioned_tweets_by_username_v2
-                )(
-                    auth=create_twitter_auth_from_reasoning_log(log),
-                    num_tweets=5,
-                    replied=0,
-                    max_num_tweets_in_conversation=3,
-                    preserve_img=True,
-                    get_all=True,
-                )
-                if response.is_error():
-                    raise Exception(response.error)
+            logger.info(
+                f"[{self.__class__.__name__}.process_task] Initializing new reply task with log ID {log.id}"
+            )
 
-                mentioned_tweets = response.data.tweet_infos
-                # TODO: Remove debug
-                # mentioned_tweets = [x for x in mentioned_tweets if x.tweet_object.tweet_id == "1879789038519169405"]
-                logger.info(
-                    f"[{self.__class__.__name__}.process_task] Retrieved {len(mentioned_tweets)} recent mentions for {log.meta_data.twitter_username}"
-                )
+            response: Response[ExtendedTweetInfosDto] = await sync2async(
+                twitter_v2.get_recent_mentioned_tweets_by_username_v2
+            )(
+                auth=create_twitter_auth_from_reasoning_log(log),
+                num_tweets=5,
+                replied=0,
+                max_num_tweets_in_conversation=3,
+                preserve_img=True,
+                get_all=True,
+            )
 
-                futures = []
-                for idx, tweet_info in enumerate(mentioned_tweets):
-                    task = asyncio.create_task(
-                        sync2async(detect_tweet_specialties)(tweet_info)
-                    )
-                    task.idx = idx
-
-                    loop = asyncio.get_event_loop()
-                    wrapper = loop.create_future()
-                    task.add_done_callback(wrapper.set_result)
-                    futures.append(wrapper)
-
-                mentioned_data = []
-
-                totals = len(futures)
-                for idx, future in enumerate(asyncio.as_completed(futures)):
-                    task = await future
-                    og_idx: int = task.idx
-                    try:
-                        specialties: List[TweetSpecialty] = task.result()
-                        mentioned_data.append(
-                            {
-                                "tweet_info": mentioned_tweets[
-                                    og_idx
-                                ].to_dict(),
-                                "specialties": [
-                                    specialty.name for specialty in specialties
-                                ],
-                            }
-                        )
-                    except Exception as err:
-                        logger.info(
-                            f"[{log.id}] Error while processing index {idx+1} (out of {totals}): {err} (getting tweet specialties fail)."
-                        )
-                        continue
-            except Exception as err:
-                traceback.print_exc()
-                logger.error(
-                    f"[process_task] Error retrieving mentioned tweets: {err}"
-                )
+            if response.is_error():
                 return await a_move_state(
                     log,
                     MissionChainState.ERROR,
-                    f"Error retrieving mentioned tweets: {err}",
+                    f"Error when retrieving mentioned tweets: {response.error}",
+                )
+
+            mentioned_tweets = response.data.tweet_infos
+
+            logger.info(
+                f"[{self.__class__.__name__}.process_task] Retrieved {len(mentioned_tweets)} recent mentions for {log.meta_data.twitter_username}"
+            )
+
+            if len(mentioned_tweets) == 0:
+                return await a_move_state(
+                    log,
+                    MissionChainState.ERROR, 
+                    "No mentioned tweets found"
+                )
+
+            futures = [
+                asyncio.ensure_future(
+                    sync2async(detect_tweet_specialties)(tweet_info)
+                )
+                for tweet_info in mentioned_tweets
+            ]
+
+            mentioned_data = []
+            totals = len(futures)
+
+            for idx, specialties in enumerate(await asyncio.gather(*futures, return_exceptions=True)):
+                if isinstance(specialties, Exception):
+                    logger.info(
+                        f"[{log.id}] Error while processing index {idx+1} (out of {totals}): {err} (getting tweet specialties fail)."
+                    )
+                    continue
+
+                specialties: List[TweetSpecialty]
+                mentioned_data.append(
+                    {
+                        "tweet_info": mentioned_tweets[idx].to_dict(),
+                        "specialties": [
+                            specialty.name for specialty in specialties
+                        ],
+                    }
                 )
 
             logger.info(
@@ -126,7 +118,7 @@ class ReplyTaskBase(MultiStepTaskBase):
 
             if len(mentioned_data) == 0:
                 return await a_move_state(
-                    log, MissionChainState.DONE, "Mentioned tweets not found"
+                    log, MissionChainState.ERROR, "Tweet specialties detection failed"
                 )
 
             return await a_move_state(
@@ -135,12 +127,13 @@ class ReplyTaskBase(MultiStepTaskBase):
 
         if log.state == MissionChainState.RUNNING:
             mentioned_data = log.execute_info["tweets"]
-
             subtasks: List[ReplySubtaskBase] = []
+
             for i in range(len(mentioned_data)):
                 tweet_info = ExtendedTweetInfo.model_validate(
                     mentioned_data[i]["tweet_info"]
                 )
+
                 specialties = [
                     TweetSpecialty[specialty]
                     for specialty in mentioned_data[i]["specialties"]
@@ -149,6 +142,7 @@ class ReplyTaskBase(MultiStepTaskBase):
                 subtask_cls = self.get_subtask_cls(
                     log, specialties, tweet_info
                 )
+
                 if subtask_cls is not None:
                     subtasks.append(
                         subtask_cls(
@@ -163,29 +157,18 @@ class ReplyTaskBase(MultiStepTaskBase):
                 f"[{self.__class__.__name__}.process_task] Start processing {len(subtasks)} subtasks"
             )
 
-            futures = []
-            for idx, subtask in enumerate(subtasks):
-                task = asyncio.create_task(subtask.run())
-                task.idx = idx
-
-                loop = asyncio.get_event_loop()
-                wrapper = loop.create_future()
-                task.add_done_callback(wrapper.set_result)
-                futures.append(wrapper)
+            futures = [
+                asyncio.ensure_future(subtask.run()) 
+                for subtask in subtasks
+            ]
 
             totals = len(futures)
-            for idx, future in enumerate(asyncio.as_completed(futures)):
-                task = await future
-                og_idx: int = task.idx
-                tweet_info = subtasks[og_idx].tweet_info
-                try:
-                    result = task.result()
-                    log.execute_info["task_result"].append(result)
-                    logger.info(
-                        f"[{log.id}] Successfully processed subtask index {idx+1} (out of {totals}) (tweet_id={tweet_info.tweet_object.tweet_id})"
-                    )
-                except Exception as err:
+            for idx, result in enumerate(await asyncio.gather(*futures, return_exceptions=True)):
+                tweet_info = subtasks[idx].tweet_info
+
+                if isinstance(result, Exception):
                     traceback.print_exc()
+                    err = result
                     log.execute_info["task_failed"].append(
                         {
                             "tweet_id": tweet_info.tweet_object.tweet_id,
@@ -196,6 +179,11 @@ class ReplyTaskBase(MultiStepTaskBase):
                         f"[{log.id}] Error while processing index {idx+1} (out of {totals}): {err} (subtask fail) (tweet_id={tweet_info.tweet_object.tweet_id})"
                     )
                     continue
+
+                log.execute_info["task_result"].append(result)
+                logger.info(
+                    f"[{log.id}] Successfully processed subtask index {idx+1} (out of {totals}) (tweet_id={tweet_info.tweet_object.tweet_id})"
+                )
 
             n_success = len(log.execute_info["task_result"])
             n_failed = len(log.execute_info["task_failed"])

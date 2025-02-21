@@ -26,9 +26,9 @@ func TestZipAndUploadFileInMultiplePartsToLightHouseByUrl(t *testing.T) {
 			tt.name,
 			func(t *testing.T) {
 				got, err := ZipAndUploadFileInMultiplePartsToLightHouseByUrl(
-					"http://storage.googleapis.com/eternal-ai/ai-models/eternalai-774675271/1737456588-offshorefinancialfreedom33topsecretpublishing2016topsecret.pdf",
+					"url",
 					"/tmp/data",
-					"da69db7d.010ffac15c0f4081a938b9446f599e14")
+					"lighthouse-key")
 				if (err != nil) != tt.wantErr {
 					t.Errorf("getListZipFile() error = %v, wantErr %v", err, tt.wantErr)
 					return
@@ -53,7 +53,7 @@ func TestDownloadHFModelFromLightHouse(t *testing.T) {
 	}{
 		{
 			name: "Test Case 1",
-			args: args{hash: "bafkreicraauqqrju5cw4tvqaqimwxxn6fckxkjs3sohpkeotxcf423ikty", hfDir: "/tmp/download"},
+			args: args{hash: "filecoin-hash", hfDir: "/tmp/download"},
 		},
 	}
 	for _, tt := range tests {

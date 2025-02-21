@@ -38,10 +38,12 @@ func GetConfig() *Config {
 }
 
 type Config struct {
-	Server         ServerConfig `json:"server"`
-	Mongodb        MongoConfig  `json:"mongodb"`
-	FilePathInfer  string       `json:"file_path_infer"`
-	SubmitFilePath bool         `json:"submit_file_path"`
+	Server               ServerConfig `json:"server"`
+	Mongodb              MongoConfig  `json:"mongodb"`
+	FilePathInfer        string       `json:"file_path_infer"`
+	SubmitFilePath       bool         `json:"submit_file_path"`
+	ChatCompletionUrl    string       `json:"chat_completion_url"`
+	APIKeyChatCompletion string       `json:"api_key_chat_completion"`
 }
 
 type ServerConfig struct {
@@ -60,9 +62,9 @@ func (c ChatConfig) VerifyBeforeChat() error {
 	if c.Rpc == "" {
 		return fmt.Errorf("Chain RPC is empty")
 	}
-	if c.PrivateKey == "" {
-		return fmt.Errorf("Private key to create infer onchain is empty")
-	}
+	//if c.PrivateKey == "" {
+	//	return fmt.Errorf("Private key to create infer onchain is empty")
+	//}
 	if c.AgentID == "" {
 		return fmt.Errorf("Agent ID is empty")
 	}

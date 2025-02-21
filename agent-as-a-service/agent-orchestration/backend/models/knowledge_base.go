@@ -19,6 +19,8 @@ const (
 	KnowledgeBaseStatusMinted
 	KnowledgeBaseStatusProcessingFailed
 	KnowledgeBaseStatusProcessUpdate
+	KnowledgeBaseStatusProcessCrawlData
+	KnowledgeBaseStatusCrawlDataDone
 )
 
 const (
@@ -43,8 +45,8 @@ type KnowledgeBase struct {
 	KBTokenID              string               `json:"kb_token_id" gorm:"index"`
 	KBTokenMintTx          string               `json:"kb_token_mint_tx" gorm:"index"`
 	KnowledgeBaseFiles     []*KnowledgeBaseFile `json:"knowledge_base_files"`
-	Fee                    float64              `json:"fee"`
-	ChargeMore             float64              `json:"charge_more"`
+	Fee                    float64              `json:"fee"`         // total fee user need pay (all time)
+	ChargeMore             float64              `json:"charge_more"` // fee user need pay current (last update or create)
 	SolanaDepositAddress   string               `json:"solana_deposit_address"`
 	SolanaDepositPrivKey   string               `json:"-"`
 	FilecoinHash           string               `json:"filecoin_hash"`
@@ -55,6 +57,7 @@ type KnowledgeBase struct {
 	ThumbnailUrl           string               `json:"thumbnail_url"`
 	UsageFee               float64              `json:"usage_fee"`
 	RagInsertFileRequest   string               `json:"rag_insert_file_request"`
+	DomainUrl              string               `json:"domain_url"`
 }
 
 type KnowledgeBaseFile struct {
@@ -69,6 +72,7 @@ type KnowledgeBaseFile struct {
 	FilecoinHashRawData string                  `json:"filecoin_hash_raw_data"`
 	TransferHash        string                  `json:"transfer_hash"`
 	LastErrorMessage    string                  `json:"last_error_message"`
+	FromUrl             string                  `json:"from_url"`
 }
 
 type ListKnowledgeBaseRequest struct {

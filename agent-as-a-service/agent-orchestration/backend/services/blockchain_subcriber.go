@@ -216,3 +216,22 @@ func (s *Service) InscribeTxsLog(txHash string, inscribeTxHash string, logErr st
 		return nil
 	}()
 }
+
+func (s *Service) ApproveMaxEAIForAddress(
+	ctx context.Context,
+	networkID uint64,
+	address string,
+	spender string,
+) (string, error) {
+	eaiTokenAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "eai_contract_address"))
+	txHash, err := s.GetEthereumClient(ctx, networkID).
+		Erc20ApproveMax(
+			eaiTokenAddress,
+			s.GetAddressPrk(address),
+			spender,
+		)
+	if err != nil {
+		return "", errs.NewError(err)
+	}
+	return txHash, nil
+}

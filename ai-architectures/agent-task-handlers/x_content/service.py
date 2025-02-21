@@ -5,13 +5,12 @@ from x_content.constants import MissionChainState
 from x_content.tasks.base import ChatTaskBase
 from x_content.tasks.utils import create_llm
 
-from .constants import REACT_MODELS_BLACKLIST, REPLY_MODELS_BLACKLIST
+from .constants import REACT_MODELS_BLACKLIST, REPLY_MODELS_BLACKLIST, API_SECRET_TOKEN
 from x_content.models import ChatRequest, ReasoningLog
 from x_content.tasks import MultiStepTaskBase
 from typing import Optional
-from x_content.wrappers.redis_wrapper import reusable_redis_connection
 import sys
-
+import requests
 import traceback
 
 logging.basicConfig(level=logging.INFO if not __debug__ else logging.DEBUG)
@@ -21,9 +20,11 @@ from .constants import AgentTask
 from .tasks.utils import create_kn_base, magic_toolset_from_reasoning_log, notify_status_chat_request, notify_status_reasoning_log, send_alert
 
 from . import tasks
-from .constants import ToolSet, ModelName
+from .constants import ToolSet, ModelName, SERVER_HOST, SERVER_PORT
 import datetime
-import asyncio
+import redis
+from x_content.wrappers.redis_wrapper import get_redis_connection_pool
+import time
 
 
 # TODO: bad designed here, refactor it
@@ -39,6 +40,9 @@ def task_cls_resolver(log: ReasoningLog) -> Optional[MultiStepTaskBase]:
 
     if log.task == AgentTask.POST_V2:
         return tasks.social_agent.post_v2.PostV2
+
+    # if log.task == AgentTask.CREATE_GAME or log.task == AgentTask.JUDGE_GAME:
+    #     return tasks.others.FallbackTask
 
     if log.task == AgentTask.CREATE_GAME:
         return tasks.game_agent.create_gamev2.GameReplyTask
@@ -70,7 +74,6 @@ def task_cls_resolver(log: ReasoningLog) -> Optional[MultiStepTaskBase]:
 
         if log.model in [
             ModelName.DEEPSEEK_R1,
-            ModelName.DEEPSEEK_V3,
             ModelName.DEEPSEEK_R1_DISTILL_LLAMA_70B,
         ]:
             return (
@@ -94,11 +97,6 @@ async def service_v2_handle_request(log: ReasoningLog) -> ReasoningLog:
     global _running_tasks
 
     do_job = log.id not in _running_tasks
-    # and atomic_check_and_set_flag(
-    #     reusable_redis_connection(),
-    #     _task_handled_key.format(log.id),
-    #     "1", 6 * 3600
-    # )
 
     if not do_job:
         logger.info(f"Task {log.id} is already handled (by someone else)")
@@ -130,19 +128,17 @@ async def service_v2_handle_request(log: ReasoningLog) -> ReasoningLog:
 
     except Exception as err:
         traceback_str = traceback.format_exc()
-        send_alert(log, traceback_str)
+        await send_alert(log, traceback_str)
         log = await tasks.utils.a_move_state(
             log,
             MissionChainState.ERROR,
             f"An error occurred: {err} (unhandled)",
         )
-        MissionStateHandler(reusable_redis_connection()).commit(log)
+        await MissionStateHandler().acommit(log)
 
     finally:
-        notify_status_reasoning_log(log)
+        await notify_status_reasoning_log(log)
         _running_tasks.remove(log.id)
-        # redis_cli = reusable_redis_connection()
-        # redis_cli.expire(_task_handled_key.format(log.id), 3)
 
     logger.info(f"Completed handling task {log.id}")
     return log
@@ -178,34 +174,34 @@ async def handle_chat_request(request: ChatRequest) -> ChatRequest:
 
     except Exception as err:
         traceback_str = traceback.format_exc()
-        send_alert(request, traceback_str)
+        await send_alert(request, traceback_str)
         request = await tasks.utils.a_move_state(
             request,
             MissionChainState.ERROR,
             f"An error occurred: {err} (unhandled)",
         )
-        ChatRequestStateHandler(reusable_redis_connection()).commit(request)
+        await ChatRequestStateHandler().acommit(request)
 
     finally:
-        notify_status_chat_request(request)
+        await notify_status_chat_request(request)
         _running_tasks.remove(request.id)
 
     logger.info(f"Completed handling task {request.id}")
     return request
 
 
-async def scan_db_and_resume_tasks():
+def scan_db_and_resume_tasks():
     logger.info("Scanning DB for resumable tasks")
 
-    handler = MissionStateHandler(reusable_redis_connection())
+    handler = MissionStateHandler()
     undone_task = handler.get_undone()
 
     if len(undone_task) == 0:
         logger.info("No undone task found")
-        return
 
-    futures = []
     current_time = datetime.datetime.now()
+    undone_task = sorted(undone_task, key=lambda x: x.created_at)
+    cnt = 0
 
     for log in undone_task:
         if log.id in _running_tasks:
@@ -216,38 +212,55 @@ async def scan_db_and_resume_tasks():
         )
 
         if (current_time - created_dtime).total_seconds() > 60 * 60 * 6:
-            logger.info(f"Task {log.id} is too old, skipping")
+            log = tasks.utils.move_state(
+                log,
+                MissionChainState.ERROR,
+                "Task expired",
+            )
+            handler.commit(log)
             continue
 
         task_cls = task_cls_resolver(log)
 
-        if not task_cls.resumable:
-            logger.info(f"Task {log.id} is not resumable, skipping")
+        if task_cls is None or not task_cls.resumable:
+            log = tasks.utils.move_state(
+                log,
+                MissionChainState.ERROR,
+                "Task is paused but not resumable",
+            )
+            handler.commit(log)
             continue
 
         logger.info(f"Resuming task {log.id}")
-        futures.append(asyncio.ensure_future(service_v2_handle_request(log)))
+        
+        payload = log.model_dump()
+        payload["is_resubmit"] = True
 
-    logger.info(f"Resuming {len(futures)} tasks")
+        requests.post(
+            f"http://{SERVER_HOST}:{SERVER_PORT}/async/enqueue",
+            json=payload,
+            headers={"X-Token": API_SECRET_TOKEN},
+        )
 
-    if len(futures) > 0:
-        await asyncio.gather(*futures)
+        time.sleep(2)
+        cnt += 1
+        
+        if cnt >= 10:
+            break
 
-    logger.info("Scanning DB for resumable tasks completed")
-
-
-async def scan_db_and_resume_chat_requests():
+def scan_db_and_resume_chat_requests():
     logger.info("Scanning DB for resumable chat requests")
 
-    handler = ChatRequestStateHandler(reusable_redis_connection())
+    handler = ChatRequestStateHandler()
     undone_request = handler.get_undone()
 
     if len(undone_request) == 0:
         logger.info("No undone chat request found")
-        return
 
-    futures = []
     current_time = datetime.datetime.now()
+    cnt = 0
+    
+    undone_request = sorted(undone_request, key=lambda x: x.created_at)
 
     for request in undone_request:
         if request.id in _running_tasks:
@@ -259,36 +272,83 @@ async def scan_db_and_resume_chat_requests():
 
         if (current_time - created_dtime).total_seconds() > 60 * 60 * 6:
             logger.info(f"Chat request {request.id} is too old, skipping")
+            log = tasks.utils.move_state(
+                request,
+                MissionChainState.ERROR,
+                "Request expired",
+            )
+            handler.commit(log)
             continue
 
-        task_cls = task_cls_resolver(request)
+        task_cls = chat_request_cls_resolver(request)
 
-        if not task_cls.resumable:
+        if task_cls is None or not task_cls.resumable:
             logger.info(
                 f"Chat request {request.id} is not resumable, skipping"
             )
+            log = tasks.utils.move_state(
+                request,
+                MissionChainState.ERROR,
+                "Request is paused but not resumable",
+            )
+            handler.commit(log)
             continue
 
         logger.info(f"Resuming chat request {request.id}")
-        futures.append(asyncio.ensure_future(handle_chat_request(request)))
+        
+        payload = request.model_dump()
+        payload["is_resubmit"] = True
 
-    logger.info(f"Resuming {len(futures)} chat requests")
+        requests.post(
+            f"http://{SERVER_HOST}:{SERVER_PORT}/async/chat/enqueue", 
+            json=payload,
+            headers={"X-Token": API_SECRET_TOKEN},
+        )
+        
+        time.sleep(2)
+        
+        cnt += 1
+        
+        if cnt >= 10:
+            break
+    
+def handle_pod_ready():
+    from x_content.wrappers.telegram import send_message, TELEGRAM_ALERT_ROOM
+    from . import __version__
+    from x_content.wrappers import magic
+    
+    magic.is_local_env() or send_message(
+        'junk_notifications', 
+        'Pod is ready to serve. Version: {}'.format(__version__),
+        room=TELEGRAM_ALERT_ROOM,
+        fmt='HTML'
+    )
 
-    if len(futures) > 0:
-        await asyncio.gather(*futures)
-
-    logger.info("Scanning DB for resumable chat requests completed")
-
+    logger.info("Pod is ready to serve")
 
 def handle_pod_shutdown(signum, frame):
     global _running_tasks, _task_handled_key, logger
 
     logger.info("Pod is being shut down")
-    redis_cli = reusable_redis_connection()
+    
+    redis_cli = redis.Redis(connection_pool=get_redis_connection_pool())
 
     for task_id in _running_tasks:
         logger.info(f"Removing task {task_id} from running tasks")
         redis_cli.delete(_task_handled_key.format(task_id))
 
     _running_tasks = set([])
+    from x_content.wrappers.telegram import send_message, TELEGRAM_ALERT_ROOM
+    from . import __version__
+    from x_content.wrappers import magic
+    
+    magic.is_local_env() or send_message(
+        'junk_notifications', 
+        'Pod is being shut down, all running tasks are stopped (signum: {}). Version: {}'.format(signum, __version__), 
+        room=TELEGRAM_ALERT_ROOM,
+        fmt='HTML'
+    )
     sys.exit(0)
+
+import schedule
+schedule.every(3).minutes.do(scan_db_and_resume_tasks)

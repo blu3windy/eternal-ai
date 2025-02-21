@@ -51,11 +51,6 @@ func AgentTerminalChat(ctx context.Context, agentID string) error {
 		streamData := make(chan types.StreamData, 1)
 
 		go getLLMResponseWithStreamV2(userInput, chatConfig, stopChan, streamData)
-		if err != nil {
-			fmt.Println("Error getting response from server", err)
-			continue
-		}
-
 		go showLoading(stopChan)
 		index := 0
 		for v := range streamData {
@@ -80,6 +75,7 @@ func AgentTerminalChat(ctx context.Context, agentID string) error {
 
 			respBytes := v.Data
 			if len(respBytes) == 0 {
+				index++
 				continue
 			}
 
@@ -89,6 +85,7 @@ func AgentTerminalChat(ctx context.Context, agentID string) error {
 			}
 
 			if len(response.Data.Data.Choices) == 0 {
+				index++
 				continue
 			}
 

@@ -42,7 +42,7 @@ func init() {
 }
 
 func Test_JOB(t *testing.T) {
-	// ts.JobAgentSnapshotPostCreate(context.Background())
+	ts.MemeEventsByTransaction(context.Background(), 33139, "0xa9c5a7718f9919f311a2b554cdf756da198dfe371a8c3879ba3626c1c33d823a")
 	// ts.AgentSnapshotPostCreate(context.Background(), 59166, "", "")
 	// ts.JobScanAgentTwitterPostForTA(context.Background())
 	// ts.RetryAgentDeployToken(context.Background(), 51265)
@@ -66,7 +66,7 @@ func Test_JOB(t *testing.T) {
 
 func Test_UTIL(t *testing.T) {
 	// ts.JobScanRepliesByLaunchpadTweetID(context.Background())
-	ts.UpdateOffchainAutoOutputV2ForId(context.Background(), 210823)
+	// ts.AgentStoreGetTokenInfo(context.Background(), "", 9)
 }
 
 func Test_SRV(t *testing.T) {

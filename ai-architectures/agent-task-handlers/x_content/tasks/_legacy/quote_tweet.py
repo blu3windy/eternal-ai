@@ -40,13 +40,17 @@ class QuoteTweetTask(MultiStepTaskBase):
                 username=quote_tweet_username,
                 num_tweets=5,
             )
+
             if resp.is_error():
                 return await a_move_state(
                     log,
                     MissionChainState.ERROR,
                     f"Error retrieving quote tweets: {resp.error}",
                 )
-            tweets = [x.to_dict() for x in resp.data.tweet_infos]
+
+            tweets = [
+                x.to_dict() for x in resp.data.tweet_infos
+            ]
 
             log.execute_info = {
                 "tweets": tweets,
@@ -61,6 +65,7 @@ class QuoteTweetTask(MultiStepTaskBase):
                 ] = await sync2async(twitter_v2.get_full_context_by_tweet_id)(
                     tweet_info["tweet_object"]["tweet_id"],
                 )
+
                 if context_resp.is_error():
                     full_context = []
                 else:
@@ -72,6 +77,7 @@ class QuoteTweetTask(MultiStepTaskBase):
                     self.kn_base,
                     tweets=full_context,
                 )
+
                 knowledge_v2 = (
                     StructuredInformation(knowledge=[], news=[])
                     if info_resp.is_error()
@@ -107,40 +113,38 @@ class QuoteTweetTask(MultiStepTaskBase):
                 for conversation in log.execute_info["conversation"]
             ]
 
-            for i, task in enumerate(asyncio.as_completed(futures)):
-                try:
-                    infer_result: OnchainInferResult = await task
-                except Exception as err:
+            # TODO: rewrite this
+            for i, infer in enumerate(await asyncio.gather(*futures, return_exceptions=True)):
+                if isinstance(infer, Exception):
                     logger.info(
-                        f"[{log.id}] Error while processing index {i} (out of {totals}): {err} (inference fails)."
+                        f"[{log.id}] Error while processing index {i} (out of {totals}): {infer} (inference fails)."
                     )
                     continue
 
+                infer: OnchainInferResult
                 result = await sync2async(post_process_tweet)(
-                    infer_result.generations[0].message.content.strip('" ')
+                    infer.generations[0].message.content.strip('" ')
                 )
                 liked_tweet = log.execute_info["tweets"][i]["tweet_object"]
                 liked_tweet_id = liked_tweet["tweet_id"]
 
                 await sync2async(twitter_v2.quote_tweet)(
-                    auth=await sync2async(
-                        create_twitter_auth_from_reasoning_log
-                    )(log),
+                    auth=create_twitter_auth_from_reasoning_log(log),
                     tweet_id=liked_tweet_id,
                     comment=result,
-                    tx_hash=infer_result.tx_hash,
+                    tx_hash=infer.tx_hash,
                 )
 
                 log.execute_info["task_result"].append(
                     {
                         "tweet_id": liked_tweet_id,
                         "reply_content": result,
-                        "tx_hash": infer_result.tx_hash,
+                        "tx_hash": infer.tx_hash,
                     }
                 )
 
             return await a_move_state(
-                log, MissionChainState.DONE, "Final answer found"
+                log, MissionChainState.DONE, "Quote tweet task completed"
             )
 
         return log

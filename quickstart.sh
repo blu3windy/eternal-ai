@@ -44,7 +44,7 @@ eai apis start
 eai aaas deploy-contract
 
 # Step 5.2. Mint an agent
-eai agent create $(pwd)/decentralized-agents/characters/donald_trump.txt
+# eai agent create $(pwd)/decentralized-agents/characters/donald_trump.txt
 
 # Step 6.1. Chat with the agent
-eai agent chat 1
+# eai agent chat 1

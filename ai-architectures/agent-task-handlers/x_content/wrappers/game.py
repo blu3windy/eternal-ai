@@ -1,13 +1,14 @@
 from functools import lru_cache
 import logging
 import requests
-from enum import IntEnum
+from enum import IntEnum, Enum
 from x_content.cache.entity_cache import (
     GameRedisCache,
 )
 from x_content.wrappers.magic import helpful_raise_for_status
 from x_content.wrappers import telegram
 from x_content import constants as const
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +183,7 @@ class GameAPIClient:
             )
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nGame API request failed (status code: {e.response.status_code if hasattr(e, 'response') else 'N/A'}; url: {url}; error: {str(e)})\n```",
+                f"<pre>\nGame API request failed (status code: {e.response.status_code if hasattr(e, 'response') else 'N/A'}; url: {url}; error: {str(e)})\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
             return None, e
@@ -290,7 +291,7 @@ class GameAPIClient:
 
     @staticmethod
     def start_game(
-        tweet_id: str, agent_usernames: list, time_out: int
+        tweet_id: str, agent_usernames: list, bet_time: int, time_out: int
     ) -> tuple[GameInfo | None, Exception | None]:
         """
         Starts a new game
@@ -310,7 +311,7 @@ class GameAPIClient:
             "tweet_id": tweet_id,
             "usernames": agent_usernames,
             "time_out": time_out,
-            "bet_time_out": time_out,
+            "bet_time_out": bet_time,
         }
 
         response_data, err = GameAPIClient.request(

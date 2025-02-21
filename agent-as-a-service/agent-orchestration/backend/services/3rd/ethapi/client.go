@@ -574,6 +574,21 @@ func (c *Client) SignWithEthereum(privateKey string, dataBytes []byte) (string, 
 	return sigHex, nil
 }
 
+func (c *Client) Sign(privateKey string, hash [32]byte) ([]byte, error) {
+	prk, err := crypto.HexToECDSA(privateKey)
+	if err != nil {
+		return nil, err
+	}
+	signature, err := crypto.Sign(hash[:], prk)
+	if err != nil {
+		return nil, err
+	}
+	signature[crypto.RecoveryIDOffset] += 27
+	sigHex := hexutil.Encode(signature)
+	sigHex = sigHex[2:]
+	return signature, nil
+}
+
 func (c *Client) Erc20Transfer(erc20Addr string, prkHex string, toAddr string, amount string) (string, error) {
 	if erc20Addr == "" ||
 		!common.IsHexAddress(erc20Addr) {

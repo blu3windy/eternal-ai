@@ -59,36 +59,9 @@ const (
 	AgentInfoAgentTypeKnowledgeBase AgentInfoAgentType = 2
 	AgentInfoAgentTypeEliza         AgentInfoAgentType = 3
 	AgentInfoAgentTypeZerepy        AgentInfoAgentType = 4
+	AgentInfoAgentTypeUtility       AgentInfoAgentType = 5
+	AgentInfoAgentTypeRealWorld     AgentInfoAgentType = 6
 )
-
-func GetAgentFee(networkID uint64) numeric.BigFloat {
-	switch networkID {
-	case SHARDAI_CHAIN_ID:
-		{
-			return numeric.NewBigFloatFromString("600")
-		}
-	case ETHEREUM_CHAIN_ID:
-		{
-			return numeric.NewBigFloatFromString("1330")
-		}
-	case SOLANA_CHAIN_ID:
-		{
-			return numeric.NewBigFloatFromString("50")
-		}
-	case BITTENSOR_CHAIN_ID:
-		{
-			return numeric.NewBigFloatFromString("100")
-		}
-	case TRON_CHAIN_ID:
-		{
-			return numeric.NewBigFloatFromString("50")
-		}
-	default:
-		{
-			return numeric.NewBigFloatFromString("1")
-		}
-	}
-}
 
 type (
 	AssistantStatus     string
@@ -229,6 +202,11 @@ type AgentInfo struct {
 	TwinEndTrainingAt       *time.Time
 	TwinTrainingProgress    float64 `json:"twin_training_progress"`
 	TwinTrainingMessage     string  `gorm:"type:longtext"`
+
+	SourceUrl string `gorm:"type:text"` //ipfs_ || ethfs_
+
+	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	Worker      string
 
 	EstimateTwinDoneTimestamp *time.Time `json:"estimate_twin_done_timestamp"`
 	TotalMintTwinFee          float64
@@ -657,4 +635,23 @@ type AgentStudioGraphData struct {
 type AgentStudioTwitterInfo struct {
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
+}
+
+type (
+	AgenInfoInstallStatus string
+)
+
+const (
+	AgenInfoInstallStatusNew  AgenInfoInstallStatus = "new"
+	AgenInfoInstallStatusDone AgenInfoInstallStatus = "done"
+)
+
+type AgentInfoInstall struct {
+	gorm.Model
+	Code           string `gorm:"unique_index"`
+	UserID         uint   `gorm:"unique_index:agent_info_main_idx"`
+	AgentInfoID    uint   `gorm:"unique_index:agent_info_main_idx"`
+	User           *User
+	CallbackParams string `gorm:"type:longtext"` //{"user_id" : "123", "authen_token" : "xxx",...}
+	Status         AgenInfoInstallStatus
 }

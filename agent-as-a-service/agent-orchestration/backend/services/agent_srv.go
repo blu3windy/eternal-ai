@@ -7,10 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net/http"
 	"strconv"
 	"strings"
 	sync "sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
@@ -242,7 +245,12 @@ func (s *Service) AgentCreateMissionDefault(ctx context.Context, agentInfoID uin
 		return errs.NewError(err)
 	}
 	switch agentInfo.AgentType {
-	case models.AgentInfoAgentTypeEliza, models.AgentInfoAgentTypeZerepy:
+	case models.AgentInfoAgentTypeNormal,
+		models.AgentInfoAgentTypeReasoning,
+		models.AgentInfoAgentTypeKnowledgeBase:
+		{
+		}
+	default:
 		{
 			return nil
 		}
@@ -919,7 +927,7 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 		return "", errs.NewError(errors.New("knowledge bases is empty"))
 	}
 	if agentModel == "" {
-		agentModel = "Llama3.3"
+		agentModel = "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
 	}
 	systemPrompt := openai.GetSystemPromptFromLLMMessage(messages)
 	isKbAgent := false
@@ -931,16 +939,12 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 
 	userPromptInput := openai.LastUserPrompt(messages)
 	retrieveQuery := userPromptInput
-	retrieveQueryFromLLM, _ := s.GenerateKnowledgeQuery(systemPrompt, userPromptInput)
-	if retrieveQueryFromLLM != nil {
-		retrieveQuery = *retrieveQueryFromLLM
-	}
 
 	topKQuery := 5
 	if topK != nil {
 		topKQuery = *topK
 	}
-	th := 0.2
+	th := 0.4
 	if threshold != nil {
 		th = *threshold
 	}
@@ -979,43 +983,144 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 		return "", errs.NewError(err)
 	}
 
-	searchResult := []string{}
+	searchResult := ""
 	for _, item := range response.Result {
-		searchResult = append(searchResult, item.Content)
+		searchResult = searchResult + item.Content + "\n\n"
 	}
-
-	answerPrmptPrefix := ""
-	for _, item := range searchResult {
-		answerPrmptPrefix += fmt.Sprintf("- %v\n", item)
-	}
-
-	answerPrmptPrefix += ". \n\nUsing the above information to address the user's input: " + userPromptInput
+	options := map[string]interface{}{}
+	userPrompt := fmt.Sprintf("Use the following pieces of retrieved context to answer the question. If there is not enough information in the retrieved context to answer the question, just say something you know about the topic."+
+		"\n\nQuestion: %v\nContext: \n\n%vAnswer:", userPromptInput, searchResult)
+	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
 			Role:    openai2.ChatMessageRoleSystem,
 			Content: systemPrompt,
 		},
-	}
-
-	for i, item := range messages {
-		if item.Role == openai2.ChatMessageRoleSystem {
-			continue
-		}
-		if i == len(messages)-1 {
-			continue
-		}
-
-		payloadAgentChat = append(payloadAgentChat, openai2.ChatCompletionMessage{
+		{
 			Role:    openai2.ChatMessageRoleUser,
-			Content: item.Content,
-		})
+			Content: userPrompt,
+		},
+	}
+	if agentModel == "DeepSeek-R1-Distill-Llama-70B" {
+		options = map[string]interface{}{
+			"temperature": 0.7,
+			"max_tokens":  4096,
+		}
+	} else {
+		options = map[string]interface{}{
+			"temperature": 0,
+			"top_p":       0.01,
+			"max_tokens":  1024,
+		}
 	}
 
-	// add answer prompt
-	payloadAgentChat = append(payloadAgentChat, openai2.ChatCompletionMessage{
-		Role:    openai2.ChatMessageRoleUser,
-		Content: answerPrmptPrefix,
-	})
+	messageCallLLM, _ := json.Marshal(&payloadAgentChat)
+	url := s.conf.AgentOffchainChatUrl
+	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
+		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
+	}
+	stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), agentModel, url, options)
+	if err != nil {
+		return "", errs.NewError(err)
+	}
+	return stringResp, nil
+}
+
+func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string, messages []openai2.ChatCompletionMessage,
+	knowledgeBases []*models.KnowledgeBase, topK *int, threshold *float64,
+	outputChan chan *openai2.ChatCompletionStreamResponse,
+	errChan chan error, doneChan chan bool) {
+	if len(knowledgeBases) == 0 {
+		errChan <- errs.NewError(errors.New("knowledge bases is empty"))
+		return
+	}
+	if agentModel == "" {
+		agentModel = "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
+	}
+	systemPrompt := openai.GetSystemPromptFromLLMMessage(messages)
+	isKbAgent := false
+	if systemPrompt == "" {
+		isKbAgent = true
+		systemPrompt = "You are a helpful assistant."
+	}
+	_ = isKbAgent
+
+	userPromptInput := openai.LastUserPrompt(messages)
+	retrieveQuery := userPromptInput
+	topKQuery := 5
+	if topK != nil {
+		topKQuery = *topK
+	}
+	th := 0.4
+	if threshold != nil {
+		th = *threshold
+	}
+
+	request := serializers.RetrieveKnowledgeBaseRequest{
+		Query: retrieveQuery,
+		TopK:  topKQuery,
+		Kb: []string{
+			knowledgeBases[0].KbId,
+		},
+		Threshold: th,
+	}
+
+	// retry
+	var (
+		body string
+		err  error
+	)
+	maxRetry := 10
+	for i := 1; i <= maxRetry; i++ {
+		body, err = helpers.CurlURLString(
+			s.conf.KnowledgeBaseConfig.QueryServiceUrl,
+			"POST",
+			map[string]string{},
+			&request,
+		)
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+
+	response := &serializers.RetrieveKnowledgeBaseResponse{}
+	err = json.Unmarshal([]byte(body), response)
+	if err != nil {
+		errChan <- err
+		return
+	}
+
+	searchResult := ""
+	for _, item := range response.Result {
+		searchResult = searchResult + item.Content + "\n\n"
+	}
+	options := map[string]interface{}{}
+	userPrompt := fmt.Sprintf("Use the following pieces of retrieved context to answer the question. If there is not enough information in the retrieved context to answer the question, just say something you know about the topic."+
+		"\n\nQuestion: %v\nContext: \n\n%vAnswer:", userPromptInput, searchResult)
+	//answer prompt
+	payloadAgentChat := []openai2.ChatCompletionMessage{
+		{
+			Role:    openai2.ChatMessageRoleSystem,
+			Content: systemPrompt,
+		},
+		{
+			Role:    openai2.ChatMessageRoleUser,
+			Content: userPrompt,
+		},
+	}
+	if agentModel == "DeepSeek-R1-Distill-Llama-70B" {
+		options = map[string]interface{}{
+			"temperature": 0.7,
+			"max_tokens":  4096,
+		}
+	} else {
+		options = map[string]interface{}{
+			"temperature": 0,
+			"top_p":       0.01,
+			"max_tokens":  1024,
+		}
+	}
 
 	messageCallLLM, _ := json.Marshal(&payloadAgentChat)
 	url := s.conf.AgentOffchainChatUrl
@@ -1023,15 +1128,11 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
 
-	stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), agentModel, url)
-	if err != nil {
-		return "", errs.NewError(err)
-	}
-	return stringResp, nil
+	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), agentModel, url, options, outputChan, errChan, doneChan)
 }
 
 func (s *Service) GenerateKnowledgeQuery(systemPrompt, textUserInput string) (*string, error) {
-	baseModel := "Llama3.3"
+	baseModel := "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
 	url := s.conf.AgentOffchainChatUrl
 	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
@@ -1064,7 +1165,7 @@ Respond in stringified JSON format with the following structure:
 			time.Sleep(time.Second)
 		}
 
-		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url)
+		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{})
 		if err != nil || stringResp == "" {
 			continue
 		}
@@ -1157,11 +1258,131 @@ func (s *Service) PreviewAgentSystemPrompV1(ctx context.Context,
 
 	llmMessage = openai.UpdateSystemPromptInLLMRequest(llmMessage, systemContent)
 	messageCallLLM, _ := json.Marshal(&llmMessage)
-	aiStr, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url)
+	aiStr, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url,
+		map[string]interface{}{
+			"top_p":      0.01,
+			"max_tokens": 4096,
+		})
 	if err != nil {
 		return "", errs.NewError(err)
 	}
 	return aiStr, nil
+}
+
+func (s *Service) PreviewStreamAgentSystemPromptV1(ctx context.Context, writerResponse gin.ResponseWriter,
+	outputChan chan *openai2.ChatCompletionStreamResponse,
+	errChan chan error, doneChan chan bool) {
+	needFakeResponse := true
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-doneChan:
+			if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: serializers.DoneResponseStreamData}.ToOutPut()); err != nil {
+				return
+			}
+			writerResponse.Flush()
+			return
+		case <-time.Tick(time.Minute * 20):
+			if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: serializers.TimeoutResponseStreamData}.ToOutPut()); err != nil {
+				return
+			}
+			writerResponse.Flush()
+			return
+		case err := <-errChan:
+			data, _ := json.Marshal(serializers.ChatCompletionStreamResponse{
+				Message: err.Error(),
+				Code:    http.StatusBadRequest})
+			if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: data}.ToOutPut()); err != nil {
+				return
+			}
+			writerResponse.Flush()
+			return
+		case output := <-outputChan:
+			data, _ := json.Marshal(serializers.ChatCompletionStreamResponse{
+				ChatCompletionStreamResponse: *output,
+				Code:                         http.StatusContinue})
+			if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: data}.ToOutPut()); err != nil {
+				return
+			}
+			writerResponse.Flush()
+			needFakeResponse = false
+		default:
+			if needFakeResponse {
+				if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: serializers.FakeResponseStreamData}.ToOutPut()); err != nil {
+					return
+				}
+				writerResponse.Flush()
+				time.Sleep(2 * time.Second)
+			}
+		}
+	}
+}
+
+func (s *Service) ProcessStreamAgentSystemPromptV1(ctx context.Context,
+	req *serializers.PreviewRequest, outputChan chan *openai2.ChatCompletionStreamResponse,
+	errChan chan error, doneChan chan bool) {
+	var agentInfo *models.AgentInfo
+	baseModel := "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
+	if req.AgentID != nil {
+		agentInfo, _ = s.dao.FirstAgentInfoByID(daos.GetDBMainCtx(ctx), *req.AgentID, map[string][]interface{}{}, false)
+	}
+	var llmMessage []openai2.ChatCompletionMessage
+	err := json.Unmarshal([]byte(req.Messages), &llmMessage)
+	if err != nil {
+		errChan <- errs.NewError(errors.New("invalid message request"))
+		return
+	}
+
+	systemContent := openai.GetSystemPromptFromLLMMessage(llmMessage)
+	url := s.conf.AgentOffchainChatUrl
+	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
+		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
+		if agentInfo != nil && agentInfo.AgentBaseModel != "" {
+			baseModel = agentInfo.AgentBaseModel
+		}
+	}
+	if req.ModelName != nil && len(*req.ModelName) > 0 {
+		baseModel = *req.ModelName
+	}
+
+	if s.conf.KnowledgeBaseConfig.EnableSimulation && agentInfo != nil {
+		// get last knowledge base of agent
+		var knowledgeBaseUse *models.KnowledgeBase
+		agentInfoKnowledgeBase, _ := s.dao.FirstAgentInfoKnowledgeBaseByAgentInfoID(
+			daos.GetDBMainCtx(ctx),
+			agentInfo.ID,
+			map[string][]interface{}{
+				"KnowledgeBase": {}, // must preload
+			},
+			[]string{"id desc"},
+		)
+		if agentInfoKnowledgeBase != nil && agentInfoKnowledgeBase.KnowledgeBase != nil {
+			knowledgeBaseUse = agentInfoKnowledgeBase.KnowledgeBase
+		}
+
+		if req.KbId != nil {
+			knowledgeBaseFromQuery, _ := s.dao.FirstKnowledgeBase(daos.GetDBMainCtx(ctx), map[string][]interface{}{
+				"kb_id = ?": {*req.KbId},
+			}, map[string][]interface{}{}, []string{"id desc"}, false)
+			if knowledgeBaseFromQuery != nil {
+				knowledgeBaseUse = knowledgeBaseFromQuery
+			}
+		}
+		if knowledgeBaseUse != nil {
+			s.StreamRetrieveKnowledge(ctx, baseModel, llmMessage, []*models.KnowledgeBase{
+				knowledgeBaseUse,
+			}, nil, nil, outputChan, errChan, doneChan)
+			return
+		}
+	}
+
+	llmMessage = openai.UpdateSystemPromptInLLMRequest(llmMessage, systemContent)
+	messageCallLLM, _ := json.Marshal(&llmMessage)
+	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), baseModel, url, map[string]interface{}{
+		"top_p":      0.01,
+		"max_tokens": 4096,
+	}, outputChan, errChan, doneChan)
 }
 
 func (s *Service) AgentChatSupport(ctx context.Context, msg string) (string, error) {
@@ -1765,4 +1986,65 @@ func (s *Service) UpdateAgentExternalInfo(ctx context.Context, agentID string, r
 		return false, errs.NewError(err)
 	}
 	return true, nil
+}
+
+func (s *Service) CreateAgentInfoInstallCode(ctx context.Context, userAddress string, agentInfoID uint) (*models.AgentInfoInstall, error) {
+	if agentInfoID > 0 {
+		agentInfo, err := s.dao.FirstAgentInfoByID(daos.GetDBMainCtx(ctx), agentInfoID, map[string][]interface{}{}, true)
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+		if agentInfo == nil {
+			return nil, errs.NewError(errs.ErrBadRequest)
+		}
+	}
+	user, err := s.GetUser(daos.GetDBMainCtx(ctx), 0, userAddress, false)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	agentInfoInstall, err := s.dao.FirstAgentInfoInstall(
+		daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"user_id = ?":       {user.ID},
+			"agent_info_id = ?": {agentInfoID},
+		},
+		map[string][]interface{}{},
+		false,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	if agentInfoInstall == nil {
+		code := helpers.RandomStringWithLength(64)
+		params := map[string]string{"code": code}
+		paramstr, _ := json.Marshal(params)
+		agentInfoInstall = &models.AgentInfoInstall{
+			Code:           code,
+			AgentInfoID:    agentInfoID,
+			Status:         models.AgenInfoInstallStatusNew,
+			UserID:         user.ID,
+			CallbackParams: string(paramstr),
+		}
+		err = s.dao.Create(daos.GetDBMainCtx(ctx), agentInfoInstall)
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+	}
+	return agentInfoInstall, nil
+}
+
+func (s *Service) GetAgentInfoInstall(ctx context.Context, code string) (*models.AgentInfoInstall, error) {
+	res, err := s.dao.FirstAgentInfoInstall(daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"code = ?": {code},
+		},
+		map[string][]interface{}{
+			"User": {},
+		},
+		false,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return res, nil
 }

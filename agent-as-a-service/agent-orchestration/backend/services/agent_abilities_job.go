@@ -107,6 +107,8 @@ func (s *Service) JobAgentSnapshotPostCreate(ctx context.Context) error {
 							models.TRON_CHAIN_ID,
 							models.MODE_CHAIN_ID,
 							models.ZETA_CHAIN_ID,
+							models.STORY_CHAIN_ID,
+							models.HYPE_CHAIN_ID,
 						},
 					},
 					`agent_snapshot_missions.infer_at is null
@@ -415,7 +417,9 @@ func (s *Service) AgentSnapshotPostCreate(ctx context.Context, missionID uint, o
 								"agent_info_id = ?":  {mission.AgentInfoID},
 								"status = ?":         {models.AgentStoreInstallStatusDone},
 							},
-							map[string][]interface{}{},
+							map[string][]interface{}{
+								"User": {},
+							},
 							[]string{"id desc"},
 						)
 						if err != nil {
@@ -447,9 +451,19 @@ func (s *Service) AgentSnapshotPostCreate(ctx context.Context, missionID uint, o
 						if err != nil {
 							return errs.NewError(err)
 						}
+						params["install_code"] = agentStoreInstall.Code
+						if agentStoreInstall.User != nil {
+							params["user_address"] = agentStoreInstall.User.Address
+						}
 						inferItems[0].Content, err = helpers.GenerateTemplateContent(mission.AgentStoreMission.UserPrompt, params)
 						if err != nil {
 							return errs.NewError(err)
+						}
+						if mission.UserPrompt != "" {
+							inferItems[0].Content, err = helpers.GenerateTemplateContent(mission.UserPrompt, params)
+							if err != nil {
+								return errs.NewError(err)
+							}
 						}
 						toolList, err = helpers.GenerateTemplateContent(mission.AgentStoreMission.ToolList, params)
 						if err != nil {
@@ -609,7 +623,7 @@ func (s *Service) AgentSnapshotPostCreate(ctx context.Context, missionID uint, o
 	return nil
 }
 
-func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID uint64, userAddress string, systemPrompt string, agentBaseModel string, agentStoreMissionID uint) (*models.AgentSnapshotPost, error) {
+func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID uint64, userAddress string, userPrompt string, agentBaseModel string, agentStoreMissionID uint) (*models.AgentSnapshotPost, error) {
 	var inferPost *models.AgentSnapshotPost
 	err := s.JobRunCheck(
 		ctx,
@@ -666,7 +680,9 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 							"agent_store_id = ?": {agentStoreMission.AgentStoreID},
 							"status = ?":         {models.AgentStoreInstallStatusDone},
 						},
-						map[string][]interface{}{},
+						map[string][]interface{}{
+							"User": {},
+						},
 						[]string{"id desc"},
 					)
 					if err != nil {
@@ -676,6 +692,10 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 						err = helpers.ConvertJsonObject(agentStoreInstall.CallbackParams, &params)
 						if err != nil {
 							return errs.NewError(err)
+						}
+						params["install_code"] = agentStoreInstall.Code
+						if agentStoreInstall.User != nil {
+							params["user_address"] = agentStoreInstall.User.Address
 						}
 					}
 					inferItems[0].Content, err = helpers.GenerateTemplateContent(agentStoreMission.UserPrompt, params)
@@ -690,18 +710,23 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 					if err != nil {
 						return errs.NewError(err)
 					}
+					prompt := inferItems[0].Content
+					if userPrompt != "" {
+						prompt = userPrompt
+					}
+
 					inferPost = &models.AgentSnapshotPost{
-						NetworkID:            networkID,
-						UserID:               user.ID,
-						InferData:            string(inferData),
-						InferAt:              helpers.TimeNow(),
-						Status:               models.AgentSnapshotPostStatusInferSubmitted,
-						Fee:                  inferFee,
-						UserPrompt:           inferItems[0].Content,
-						HeadSystemPrompt:     headSystemPrompt,
-						AgentMetaData:        helpers.ConvertJsonString(metaDataReq),
-						ToolList:             toolList,
-						SystemPrompt:         systemPrompt,
+						NetworkID:        networkID,
+						UserID:           user.ID,
+						InferData:        string(inferData),
+						InferAt:          helpers.TimeNow(),
+						Status:           models.AgentSnapshotPostStatusInferSubmitted,
+						Fee:              inferFee,
+						UserPrompt:       prompt,
+						HeadSystemPrompt: headSystemPrompt,
+						AgentMetaData:    helpers.ConvertJsonString(metaDataReq),
+						ToolList:         toolList,
+						// SystemPrompt:         systemPrompt,
 						SystemReminder:       "",
 						Toolset:              "mission_store",
 						AgentBaseModel:       agentBaseModel,
@@ -830,7 +855,7 @@ func (s *Service) AgentSnapshotPostCreateForUser(ctx context.Context, networkID 
 						history := &models.AgentStoreTryDetail{
 							AgentStoreTryID: agentStoreTry.ID,
 							FromUser:        true,
-							Content:         systemPrompt,
+							Content:         userPrompt,
 						}
 						s.dao.Create(
 							tx,
@@ -1642,6 +1667,14 @@ func (s *Service) UpdateOffchainAutoOutputV2ForId(ctx context.Context, snapshotP
 						return errs.NewError(err)
 					}
 				}
+
+				//cache result
+				agentSnapshotPost.InferOutputData = inferOutputData
+				err = s.CacheAgentSnapshotPost(agentSnapshotPost)
+				if err != nil {
+					return errs.NewError(err)
+				}
+
 				state, ok := aiOutput["state"]
 				if ok {
 					if state.(string) == "done" {
@@ -1901,17 +1934,31 @@ func (s *Service) UpdateDataMissionTradeAnalytics(ctx context.Context, snapshotP
 	return nil
 }
 
+func (s *Service) JobUpdateOffchainAutoOutputForMission(ctx context.Context) error {
+	err := s.JobRunCheck(
+		ctx, "JobUpdateOffchainAutoOutputForMission",
+		func() error {
+			var retErr error
+			{
+				err := s.UpdateOffchainAutoOutputForMission(ctx)
+				if err != nil {
+					retErr = errs.MergeError(retErr, err)
+				}
+			}
+			return retErr
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
+
 func (s *Service) JobUpdateOffchainAutoOutput(ctx context.Context) error {
 	err := s.JobRunCheck(
 		ctx, "JobUpdateOffchainAutoOutput",
 		func() error {
 			var retErr error
-			{
-				err := s.JobUpdateOffchainAutoOutputForMission(ctx)
-				if err != nil {
-					retErr = errs.MergeError(retErr, err)
-				}
-			}
 			{
 				ms, err := s.dao.FindAgentSnapshotPostAction(daos.GetDBMainCtx(ctx),
 					map[string][]interface{}{
@@ -1965,7 +2012,7 @@ func (s *Service) JobUpdateOffchainAutoOutput(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) JobUpdateOffchainAutoOutputForMission(ctx context.Context) error {
+func (s *Service) UpdateOffchainAutoOutputForMission(ctx context.Context) error {
 	var retErr error
 	joinFilters := map[string][]interface{}{
 		`
@@ -1979,7 +2026,6 @@ func (s *Service) JobUpdateOffchainAutoOutputForMission(ctx context.Context) err
 	ms, err := s.dao.FindAgentSnapshotPostJoinSelect(daos.GetDBMainCtx(ctx),
 		selected, joinFilters,
 		map[string][]interface{}{
-			"agent_snapshot_posts.created_at <= adddate(now(), interval -5 minute)":                      {},
 			"agent_snapshot_posts.created_at >= adddate(now(), interval -12 hour)":                       {},
 			"agent_snapshot_missions.tool_set in (?) or agent_snapshot_posts.agent_store_mission_id > 0": {[]models.ToolsetType{models.ToolsetTypeTradeAnalyticsOnTwitter, models.ToolsetTypeTradeAnalyticsMentions, models.ToolsetTypeLuckyMoneys, models.ToolsetTypeMissionStore}},
 			"agent_snapshot_posts.status = ?":                                                            {models.AgentSnapshotPostStatusInferSubmitted},
@@ -2002,15 +2048,9 @@ func (s *Service) JobUpdateOffchainAutoOutputForMission(ctx context.Context) err
 
 func (s *Service) JobUpdateOffchainAutoOutput3Hour(ctx context.Context) error {
 	err := s.JobRunCheck(
-		ctx, "JobUpdateOffchainAutoOutput",
+		ctx, "JobUpdateOffchainAutoOutput3Hour",
 		func() error {
 			var retErr error
-			{
-				err := s.JobUpdateOffchainAutoOutputForMission(ctx)
-				if err != nil {
-					retErr = errs.MergeError(retErr, err)
-				}
-			}
 			{
 				ms, err := s.dao.FindAgentSnapshotPost(daos.GetDBMainCtx(ctx),
 					map[string][]interface{}{

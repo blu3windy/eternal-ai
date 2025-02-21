@@ -44,7 +44,8 @@
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
     "typescript": "^5.4.3",
-    "zksync-ethers": "^6.11.0"
+    "zksync-ethers": "^6.11.0",
+    "solady": "^0.1.8"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-verify": "^2.0.5",

@@ -48,6 +48,12 @@ DeepSeek-R1-Distill-Llama-70B
 NousResearch/Hermes-3-Llama-3.1-70B-FP8
 ```
 
+#### DeepHermes
+
+```
+NousResearch/DeepHermes-3-Llama-3-8B-Preview
+```
+
 #### Intellect Prime 1 Instruct
 
 ```
@@ -113,4 +119,36 @@ Block Explorer: https://evm-subtensor.eternalai.org
 
 ```
 unsloth/Llama-3.3-70B-Instruct-bnb-4bit
+```
+
+## Avalanche
+
+```
+Chain ID: 43114
+
+Block Explorer: https://api.avax.network/ext/bc/C/rpc
+```
+
+### Models deployed on Avalanche
+
+#### DeepSeek-R1 1776
+
+```
+unsloth/r1-1776-GGUF
+```
+
+## HyperEVM
+
+```
+Chain ID: 999
+
+Block Explorer: https://rpc.hyperliquid.xyz/evm
+```
+
+### Models deployed on HyperEVM
+
+#### DeekSeek R1
+
+```
+DeepSeek-R1-Distill-Llama-70B
 ```
