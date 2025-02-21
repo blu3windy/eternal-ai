@@ -10,7 +10,7 @@ const Header = (_props: Props) => {
   return (
     <Flex className={s.headerContainer}>
       <Link href={ROUTERS.HOME} fontSize={"18px"} fontWeight={500} textDecoration={"unset !important"}>Eternal AI</Link>
-      <HeaderMenu />
+      <HeaderMenu primaryColor={'black'}/>
       <HeaderWallet />
     </Flex>
   );
