@@ -2,19 +2,96 @@ package services
 
 import (
 	"context"
+	"math/big"
 	"strings"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/erc20utilityagent"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/jinzhu/gorm"
 )
 
-func (s *Service) DeployAgentUtilityAddress(ctx context.Context, agentInfoID uint) error {
+func (s *Service) ERC20UtilityAgentFetchCode(
+	ctx context.Context,
+	networkID uint64,
+	contractAddress string,
+) (string, error) {
+	resp, err := s.GetEthereumClient(ctx, networkID).
+		ERC20UtilityAgentFetchCode(
+			contractAddress,
+		)
+	if err != nil {
+		return "", errs.NewError(err)
+	}
+	return resp, nil
+}
+
+func (s *Service) ERC20UtilityAgentGetStorageInfo(
+	ctx context.Context,
+	networkID uint64,
+	contractAddress string,
+) (*erc20utilityagent.IUtilityAgentStorageInfo, error) {
+	resp, err := s.GetEthereumClient(ctx, networkID).
+		ERC20UtilityAgentGetStorageInfo(
+			contractAddress,
+		)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return resp, nil
+}
+
+func (s *Service) DeployAgentUtilityAddress(
+	ctx context.Context,
+	networkID uint64,
+	tokenName string,
+	tokenSymbol string,
+	totalSuply *big.Float,
+	systemPrompt string,
+	fsContractAddress string,
+	fileName string,
+) (string, string, error) {
+	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
+	typeAddress, err := abi.NewType("address", "", nil)
+	if err != nil {
+		return "", "", errs.NewError(err)
+	}
+	typeString, err := abi.NewType("string", "", nil)
+	if err != nil {
+		return "", "", errs.NewError(err)
+	}
+	storageInfoArgs := abi.Arguments{
+		{Type: typeAddress},
+		{Type: typeString},
+	}
+	storageInfo, err := storageInfoArgs.Pack(
+		helpers.HexToAddress(fsContractAddress),
+		fileName,
+	)
+	if err != nil {
+		return "", "", errs.NewError(err)
+	}
+	contractAddress, txHash, err := s.GetEthereumClient(ctx, networkID).
+		DeployERC20UtilityAgent(
+			s.GetAddressPrk(memePoolAddress),
+			tokenName,
+			tokenSymbol,
+			models.ConvertBigFloatToWei(totalSuply, 18),
+			helpers.HexToAddress(memePoolAddress),
+			systemPrompt,
+			storageInfo,
+		)
+	if err != nil {
+		return "", "", errs.NewError(err)
+	}
+	return contractAddress, txHash, nil
+}
+
+func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) error {
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
 		agentInfoID,
@@ -38,7 +115,6 @@ func (s *Service) DeployAgentUtilityAddress(ctx context.Context, agentInfoID uin
 					models.AVALANCHE_C_CHAIN_ID:
 					{
 						totalSuply := numeric.NewBigFloatFromString("1000000000")
-						memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "meme_pool_address"))
 						var fsContractAddress, fileName string
 						if strings.HasPrefix(agentInfo.SourceUrl, "ethfs_") {
 							fsContractAddress = strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "ethfs_address"))
@@ -49,34 +125,16 @@ func (s *Service) DeployAgentUtilityAddress(ctx context.Context, agentInfoID uin
 						} else {
 							return errs.NewError(errs.ErrBadRequest)
 						}
-						record := struct {
-							FsContractAddress common.Address
-							Filename          string
-						}{
-							helpers.HexToAddress(fsContractAddress),
+						contractAddress, txHash, err := s.DeployAgentUtilityAddress(
+							ctx,
+							agentInfo.NetworkID,
+							agentInfo.TokenName,
+							agentInfo.TokenSymbol,
+							&totalSuply.Float,
+							agentInfo.SystemPrompt,
+							fsContractAddress,
 							fileName,
-						}
-						storageInfoType, _ := abi.NewType("tuple", "storageInfo", []abi.ArgumentMarshaling{
-							{Name: "fsContractAddress", Type: "address"},
-							{Name: "filename", Type: "string"},
-						})
-						storageInfoArgs := abi.Arguments{
-							{Type: storageInfoType, Name: "param"},
-						}
-						storageInfo, err := storageInfoArgs.Pack(&record)
-						if err != nil {
-							return errs.NewError(err)
-						}
-						contractAddress, txHash, err := s.GetEthereumClient(ctx, agentInfo.NetworkID).
-							DeployERC20UtilityAgent(
-								s.GetAddressPrk(memePoolAddress),
-								agentInfo.TokenName,
-								agentInfo.TokenSymbol,
-								models.ConvertBigFloatToWei(&totalSuply.Float, 18),
-								helpers.HexToAddress(memePoolAddress),
-								agentInfo.SystemPrompt,
-								storageInfo,
-							)
+						)
 						if err != nil {
 							return errs.NewError(err)
 						}
