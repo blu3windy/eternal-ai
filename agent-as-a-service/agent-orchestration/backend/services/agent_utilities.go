@@ -10,9 +10,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/erc20utilityagent"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/jinzhu/gorm"
 )
 
 func (s *Service) ERC20UtilityAgentFetchCode(
@@ -50,7 +48,6 @@ func (s *Service) DeployAgentUtilityAddress(
 	networkID uint64,
 	tokenName string,
 	tokenSymbol string,
-	totalSuply *big.Float,
 	systemPrompt string,
 	fsContractAddress string,
 	fileName string,
@@ -80,7 +77,7 @@ func (s *Service) DeployAgentUtilityAddress(
 			s.GetAddressPrk(memePoolAddress),
 			tokenName,
 			tokenSymbol,
-			models.ConvertBigFloatToWei(totalSuply, 18),
+			big.NewInt(0),
 			helpers.HexToAddress(memePoolAddress),
 			systemPrompt,
 			storageInfo,
@@ -127,7 +124,6 @@ func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) erro
 					models.APE_CHAIN_ID,
 					models.AVALANCHE_C_CHAIN_ID:
 					{
-						totalSuply := numeric.NewBigFloatFromString("1000000000")
 						var fsContractAddress, fileName string
 						if strings.HasPrefix(agentInfo.SourceUrl, "ethfs_") {
 							fsContractAddress = strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "ethfs_address"))
@@ -143,7 +139,6 @@ func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) erro
 							agentInfo.NetworkID,
 							agentInfo.TokenName,
 							agentInfo.TokenSymbol,
-							&totalSuply.Float,
 							agentInfo.SystemPrompt,
 							fsContractAddress,
 							fileName,
@@ -151,77 +146,20 @@ func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) erro
 						if err != nil {
 							return errs.NewError(err)
 						}
-						err = daos.WithTransaction(daos.GetDBMainCtx(ctx),
-							func(tx *gorm.DB) error {
-								err = tx.
-									Model(agentInfo).
-									Updates(
-										map[string]any{
-											"agent_contract_address": strings.ToLower(contractAddress),
-											"agent_contract_id":      "0",
-											"mint_hash":              txHash,
-											"status":                 models.AssistantStatusReady,
-											"reply_enabled":          true,
-											"token_status":           "created",
-										},
-									).Error
-								if err != nil {
-									return errs.NewError(err)
-								}
-								meme, err := s.dao.FirstMeme(tx,
-									map[string][]any{
-										"agent_info_id = ?": {agentInfo.ID},
-									},
-									map[string][]any{},
-									false,
-								)
-								if err != nil {
-									return errs.NewError(err)
-								}
-								if meme == nil {
-									owner, err := s.GetUser(tx, agentInfo.NetworkID, agentInfo.Creator, false)
-									if err != nil {
-										return errs.NewError(err)
-									}
-									meme = &models.Meme{
-										NetworkID:         agentInfo.NetworkID,
-										OwnerAddress:      strings.ToLower(agentInfo.Creator),
-										TokenAddress:      strings.ToLower(contractAddress),
-										Name:              agentInfo.TokenName,
-										Description:       agentInfo.TokenDesc,
-										Ticker:            agentInfo.TokenSymbol,
-										Image:             agentInfo.TokenImageUrl,
-										Twitter:           "",
-										Telegram:          "",
-										Website:           "",
-										Status:            models.MemeStatusCreated,
-										StoreImageOnChain: false,
-										TotalSuply:        totalSuply,
-										Supply:            totalSuply,
-										Decimals:          18,
-										AgentInfoID:       agentInfo.ID,
-										BaseTokenSymbol:   string(models.BaseTokenSymbolEAI),
-										ReqSyncAt:         helpers.TimeNow(),
-										SyncAt:            helpers.TimeNow(),
-										TokenId:           helpers.RandomBigInt(32).String(),
-										OwnerID:           owner.ID,
-									}
-									err = s.dao.Create(tx, meme)
-									if err != nil {
-										return errs.NewError(err)
-									}
-								} else {
-									if meme.Status == models.MemeStatusCreated {
-										meme.TokenAddress = contractAddress
-										err = s.dao.Save(tx, meme)
-										if err != nil {
-											return errs.NewError(err)
-										}
-									}
-								}
-								return nil
-							},
-						)
+						err = daos.GetDBMainCtx(ctx).
+							Model(agentInfo).
+							Updates(
+								map[string]any{
+									"agent_contract_address": strings.ToLower(contractAddress),
+									"agent_contract_id":      "0",
+									"mint_hash":              txHash,
+									"status":                 models.AssistantStatusReady,
+									"reply_enabled":          true,
+								},
+							).Error
+						if err != nil {
+							return errs.NewError(err)
+						}
 						if err != nil {
 							return errs.NewError(err)
 						}

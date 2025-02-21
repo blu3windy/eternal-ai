@@ -1,5 +1,5 @@
 from app.models import FilecoinData, InsertInputSchema, InsertProgressCallback, InsertResponse, QueryInputSchema, ResponseMessage, UpdateInputSchema
-from app.utils import limit_asyncio_concurrency, sync2async, sync2async_in_subprocess
+from app.utils import limit_asyncio_concurrency, sync2async
 from app.wrappers import milvus_kit, telegram_kit
 from typing import List, Union, Optional
 import httpx
@@ -9,15 +9,8 @@ import logging
 import os
 import zipfile
 from . import constants as const
-from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
-from docling.document_converter import DocumentConverter, FormatOption
-from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
 import numpy as np
 import logging
-from docling.document_converter import ConversionResult
-from pydantic import BaseModel
-from docling.datamodel.base_models import InputFormat
 import re
 import aiofiles
 import subprocess
@@ -26,12 +19,6 @@ from pathlib import Path
 import html
 import time
 from urllib.parse import urlparse
-
-class LiteInputDocument(BaseModel):
-    format: InputFormat
-
-class LiteConverstionResult(ConversionResult):
-    input: LiteInputDocument
 
 logger = logging.getLogger(__name__)
 
@@ -132,49 +119,6 @@ async def export_collection_data(
 
     logging.info(f"Export {filter_expr} from {collection}: Done (filesize: {os.path.getsize(destination_file) / 1024 / 1024:.2f} MB)")
     return destination_file
-
-from docling.datamodel.base_models import InputFormat
-
-SUPORTED_DOCUMENT_FORMATS = [
-    InputFormat.XLSX,
-    InputFormat.DOCX,
-    InputFormat.PPTX,
-    InputFormat.MD,
-    InputFormat.ASCIIDOC,
-    InputFormat.HTML,
-    InputFormat.XML_USPTO,
-    InputFormat.XML_PUBMED,
-    InputFormat.PDF
-]
-
-DOCUMENT_FORMAT_OPTIONS = {
-    InputFormat.PDF: FormatOption(
-        pipeline_cls=StandardPdfPipeline,
-        backend=PyPdfiumDocumentBackend,
-        pipeline_options=PdfPipelineOptions(
-            do_table_structure=False,
-            do_ocr=False
-        )
-    )
-}
-
-
-def docling_document_conversion_wrapper(source):
-    res = DocumentConverter(
-        allowed_formats=SUPORTED_DOCUMENT_FORMATS,
-        format_options=DOCUMENT_FORMAT_OPTIONS
-    ).convert(source=source)
-    
-    if res is None:
-        raise Exception("Failed to convert document to docling format")
-
-    return res.model_dump()
-
-@limit_asyncio_concurrency(2)
-async def get_doc_from_url(url) -> LiteConverstionResult:
-    res = await sync2async_in_subprocess(docling_document_conversion_wrapper)(source=url)
-    return LiteConverstionResult.model_validate(res)
-
 
 async def hook(
     resp: ResponseMessage[Union[InsertResponse, InsertProgressCallback]],
