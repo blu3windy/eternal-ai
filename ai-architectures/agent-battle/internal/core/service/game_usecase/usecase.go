@@ -441,6 +441,12 @@ func (uc *GameUsecase) markCompletedGame(ctx context.Context, game *model.Game) 
 
 	// there is no participants, then skip
 	if game.HasNoParticipants() {
+		// also refund to expired players when there is no participants
+		if err := uc.refundToExpiredPlayers(ctx, game); err != nil {
+			canCompleteGame = false
+			return err
+		}
+
 		return nil
 	}
 

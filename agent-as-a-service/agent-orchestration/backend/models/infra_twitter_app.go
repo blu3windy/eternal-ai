@@ -20,6 +20,7 @@ type (
 
 const (
 	InfraRequestStatusPending  InfraRequestStatus = "pending"
+	InfraRequestStatusError    InfraRequestStatus = "error"
 	InfraRequestStatusExecuted InfraRequestStatus = "executed"
 	InfraRequestStatusInvalid  InfraRequestStatus = "invalid"
 )
