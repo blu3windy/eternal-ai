@@ -106,6 +106,7 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		TokenImageUrl:    req.TokenImageUrl,
 		MissionTopics:    req.MissionTopics,
 		ConfigData:       req.ConfigData,
+		SourceUrl:        req.SourceUrl,
 	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
