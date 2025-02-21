@@ -361,6 +361,7 @@ func (s *Service) JobCreateTokenInfo(ctx context.Context) error {
 					"agent_nft_minted = ?":                          {true},
 					`(token_address is null or token_address = "")`: {},
 					`token_network_id > 0`:                          {},
+					`(eai_balance >= 50 or ref_tweet_id > 0)`:       {},
 				},
 				map[string][]any{},
 				[]string{
