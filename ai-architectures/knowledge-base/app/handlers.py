@@ -187,8 +187,9 @@ async def embedd_triplet(
 ) -> Optional[tuple]:
     global mk_cog_embedding_retry_wrapper
 
-    head_e, tail_e, relation_e = await mk_cog_embedding_retry_wrapper(
-        [triplet.s1, triplet.s2, triplet.fact()], 
+    relation = triplet.fact()
+    head_e, tail_e, relation_e, raw_e = await mk_cog_embedding_retry_wrapper(
+        [triplet.s1, triplet.s2, relation, chunk], 
         model_use
     )
 
@@ -201,18 +202,27 @@ async def embedd_triplet(
             kb_postfix=const.ENTITY_SUFFIX,
             head = head_h,
             tail = tail_h
-        ), GraphEmbeddedItem(
+        ), 
+        GraphEmbeddedItem(
             embedding=tail_e, 
             raw_text=chunk,
             kb_postfix=const.ENTITY_SUFFIX,
             head = tail_h,
             tail = head_h
-        ), GraphEmbeddedItem(
+        ), 
+        GraphEmbeddedItem(
             embedding=relation_e, 
             raw_text=chunk,
             kb_postfix=const.RELATION_SUFFIX,
             head = head_h,
             tail = tail_h
+        ),
+        GraphEmbeddedItem(
+            embedding=raw_e, 
+            raw_text=chunk,
+            kb_postfix="",
+            head = 0,
+            tail = 0
         )
     )
 
@@ -599,7 +609,7 @@ async def get_sample(kb: str, k: int) -> List[QueryResult]:
     model_identity = embedding_model.identity()
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
 
-    relational_kb = kb + const.RELATION_SUFFIX
+    relational_kb = kb # + const.RELATION_SUFFIX
 
     results = await sync2async(cli.query)(
         model_identity,
@@ -657,14 +667,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
 
     resp = await get_gk().refine_query(req.query)
     
-    logger.info(f"Refined query: {resp.result}")
-    refined_query = resp.result or req.query
-
-    query_embedding = await mk_cog_embedding_retry_wrapper_priotized(
-        refined_query, embedding_model
-    )
-    
-    cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
+    refined_query = req.query
 
     entity_kb = [
         kb + const.ENTITY_SUFFIX 
@@ -685,6 +688,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
         logger.warning(f"No entities extracted from the given query. Message: {resp.error}")
 
     ner_query_list = resp.result or []
+    cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
 
     if len(ner_query_list) > 0:
         res = await sync2async(cli.search)(
@@ -711,10 +715,24 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
         nodes = list(set(nodes))
         filter_str += f" and (head in {nodes} or tail in {nodes})"
 
+    query_embedding = await mk_cog_embedding_retry_wrapper_priotized(
+        refined_query, embedding_model
+    )
+
     res = await sync2async(cli.search)(
         collection_name=model_identity,
         data=query_embedding,
         filter=filter_str,
+        limit=max(req.top_k, 1),
+        anns_field="embedding",
+        output_fields=["id", "content", "reference", "hash"],
+        search_params={"params": {"radius": req.threshold}},
+    )
+
+    res_raw = await sync2async(cli.search)(
+        collection_name=model_identity,
+        data=query_embedding,
+        filter=f"kb in {req.kb}",
         limit=max(req.top_k, 1),
         anns_field="embedding",
         output_fields=["id", "content", "reference", "hash"],
@@ -727,6 +745,26 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
             for item in res[0]
         }.values()
     )
+    
+    raw_hits = list(
+        {
+            item['entity']['hash']: item 
+            for item in res_raw[0]
+        }.values()
+    )
+    
+    m = {
+        e['entity']['hash']: i
+        for i, e in enumerate(hits)
+    }
+    
+    for hit in raw_hits:
+        if hit['entity']['hash'] in m:
+            index = m[hit['entity']['hash']]
+            hits[index]['distance'] = (hit['distance'] + hits[index]['distance']) / 2
+            continue
+
+        hits.append(hit)
 
     for i in range(len(hits)):
         hits[i]['score'] = estimate_ip_from_distance(
