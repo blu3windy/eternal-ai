@@ -45,15 +45,9 @@ Here are the key ongoing research projects.
 
 ## Installation
 
-Run the following command to start the whole system.
+Run the following command to start the whole system with your local network.
 ```
 sudo bash quickstart.sh
-```
-
-Install the `eai` CLI tool to interact with your local system.
-
-```bash
-sudo ./install.sh
 ```
 
 ## `eai` CLI
@@ -97,8 +91,8 @@ eai agent create
     -n trump-agent -c base -f eternalai -m DeepSeek-R1-Distill-Llama-70B
 ```
 
-We are creating an agent who is a Donald Trump twin. The `.txt` file is the system prompt for your agent. It will be used to set the initial behavior for your agent. You can modify the content of the prompt file to adjust your agent's personality.
 
+We are creating an agent who is a Donald Trump twin called `trump-agent` on the Base Chain. It uses the EternalAI framework and the DeepSeek-R1-Distill-Llama-70B model. The `.txt` file is the system prompt for your agent, which defines its initial behavior. You can edit this file to customize the agent’s personality.
 
 
 ### List out all agents on your machine
