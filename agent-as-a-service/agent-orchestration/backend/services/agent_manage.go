@@ -106,6 +106,7 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		TokenImageUrl:    req.TokenImageUrl,
 		MissionTopics:    req.MissionTopics,
 		ConfigData:       req.ConfigData,
+		SourceUrl:        req.SourceUrl,
 	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
@@ -229,6 +230,16 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 
 	if agent.AgentName == "" && req.CreateKnowledgeRequest != nil {
 		agent.AgentName = req.CreateKnowledgeRequest.Name
+	}
+
+	switch req.AgentType {
+	case models.AgentInfoAgentTypeRealWorld,
+		models.AgentInfoAgentTypeUtility:
+		{
+			agent.TokenMode = string(models.CreateTokenModeTypeAutoCreate)
+			agent.TokenStatus = "pending"
+			agent.TokenNetworkID = agent.NetworkID
+		}
 	}
 
 	if err := s.dao.Create(daos.GetDBMainCtx(ctx), agent); err != nil {

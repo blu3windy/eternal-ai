@@ -16,7 +16,7 @@ import (
 )
 
 func (s *Service) GetAgentStore(ctx context.Context, storeId string) (*models.AgentStore, error) {
-	agentStore, err := s.dao.FirstAgentStore(daos.GetDBMainCtx(ctx), map[string][]interface{}{"store_id = ?": {storeId}}, map[string][]interface{}{}, false)
+	agentStore, err := s.dao.FirstAgentStore(daos.GetDBMainCtx(ctx), map[string][]any{"store_id = ?": {storeId}}, map[string][]any{}, false)
 	if err != nil {
 		return nil, errs.NewError(err)
 	}
@@ -29,10 +29,10 @@ func (s *Service) GetAgentStore(ctx context.Context, storeId string) (*models.Ag
 func (s *Service) ValidateUserStoreFee(ctx context.Context, apiKey string) (*models.AgentStoreInstall, error) {
 	agentStoreInstall, err := s.dao.FirstAgentStoreInstall(
 		daos.GetDBMainCtx(ctx),
-		map[string][]interface{}{
+		map[string][]any{
 			"code = ?": {apiKey},
 		},
-		map[string][]interface{}{
+		map[string][]any{
 			"User":       {},
 			"AgentStore": {},
 		},
@@ -59,7 +59,7 @@ func (s *Service) ChargeUserStoreInstall(ctx context.Context, agentStoreInstallI
 			agentStoreInstall, err := s.dao.FirstAgentStoreInstallByID(
 				tx,
 				agentStoreInstallID,
-				map[string][]interface{}{
+				map[string][]any{
 					"User":             {},
 					"AgentStore.Owner": {},
 				},
@@ -141,7 +141,7 @@ func (s *Service) ChargeUserStoreInstall(ctx context.Context, agentStoreInstallI
 }
 
 func (s *Service) ScanAgentInfraMintHash(ctx context.Context, userAddress string, networkID uint64, txHash string, agentStoreID uint) error {
-	agentStore, err := s.dao.FirstAgentStoreByID(daos.GetDBMainCtx(ctx), agentStoreID, map[string][]interface{}{}, false)
+	agentStore, err := s.dao.FirstAgentStoreByID(daos.GetDBMainCtx(ctx), agentStoreID, map[string][]any{}, false)
 	if err != nil {
 		return errs.NewError(err)
 	}
@@ -174,11 +174,11 @@ func (s *Service) ScanAgentInfraMintHash(ctx context.Context, userAddress string
 	{
 		agentStoreCheck, err := s.dao.FirstAgentStore(
 			daos.GetDBMainCtx(ctx),
-			map[string][]interface{}{
+			map[string][]any{
 				"contract_address = ?": {contractAddress},
 				"token_id = ?":         {tokenId},
 			},
-			map[string][]interface{}{},
+			map[string][]any{},
 			false,
 		)
 		if err != nil {
@@ -191,7 +191,7 @@ func (s *Service) ScanAgentInfraMintHash(ctx context.Context, userAddress string
 	err = daos.GetDBMainCtx(ctx).
 		Model(agentStore).
 		Updates(
-			map[string]interface{}{
+			map[string]any{
 				"contract_address": contractAddress,
 				"token_id":         tokenId,
 			},
@@ -253,7 +253,7 @@ func (s *Service) DeployAgentRealWorld(ctx context.Context, agentInfoID uint) er
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
 		agentInfoID,
-		map[string][]interface{}{},
+		map[string][]any{},
 		false,
 	)
 	if err != nil {
@@ -262,6 +262,19 @@ func (s *Service) DeployAgentRealWorld(ctx context.Context, agentInfoID uint) er
 	if agentInfo != nil {
 		if agentInfo.AgentType != models.AgentInfoAgentTypeRealWorld {
 			return errs.NewError(errs.ErrBadRequest)
+		}
+		err = s.CreateTokenInfo(ctx, agentInfo.ID)
+		if err != nil {
+			return errs.NewError(err)
+		}
+		agentInfo, err = s.dao.FirstAgentInfoByID(
+			daos.GetDBMainCtx(ctx),
+			agentInfoID,
+			map[string][]any{},
+			false,
+		)
+		if err != nil {
+			return errs.NewError(err)
 		}
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.Worker != "" {
 			if agentInfo.MintHash == "" {
@@ -290,21 +303,23 @@ func (s *Service) DeployAgentRealWorld(ctx context.Context, agentInfoID uint) er
 								err = tx.
 									Model(agentInfo).
 									Updates(
-										map[string]interface{}{
+										map[string]any{
 											"agent_contract_address": strings.ToLower(contractAddress),
+											"agent_contract_id":      "0",
 											"mint_hash":              txHash,
 											"status":                 models.AssistantStatusReady,
 											"reply_enabled":          true,
+											"token_status":           "created",
 										},
 									).Error
 								if err != nil {
 									return errs.NewError(err)
 								}
 								meme, err := s.dao.FirstMeme(tx,
-									map[string][]interface{}{
+									map[string][]any{
 										"agent_info_id = ?": {agentInfo.ID},
 									},
-									map[string][]interface{}{},
+									map[string][]any{},
 									false,
 								)
 								if err != nil {

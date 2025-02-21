@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -474,6 +475,9 @@ func (s *Service) CreateInfraTwitterAppRequest(ctx context.Context, event *ethap
 						inst.NetworkID = agentInfo.NetworkID
 						inst.AgentInfoID = agentInfo.ID
 					}
+					if inst.NetworkID == 0 {
+						inst.NetworkID = s.conf.InfraTwitterApp.NetworkID
+					}
 
 					err = s.dao.Create(tx, inst)
 					if err != nil {
@@ -539,9 +543,7 @@ func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID u
 			}
 
 			if reqInfo != nil && reqInfo.Status == models.InfraRequestStatusPending {
-				address := reqInfo.Creator
-				ipfsReq := reqInfo.Data
-				rawReq, _, err := lighthouse.DownloadDataSimple(ipfsReq)
+				rawReq, _, err := lighthouse.DownloadDataSimple(reqInfo.Data)
 				if err != nil {
 					return errs.NewError(err)
 				}
@@ -549,7 +551,7 @@ func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID u
 					infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 						daos.GetDBMainCtx(ctx),
 						map[string][]interface{}{
-							"address = ?": {address},
+							"address = ?": {reqInfo.Creator},
 						},
 						map[string][]interface{}{
 							"TwitterInfo": {},
@@ -681,25 +683,73 @@ func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID u
 				}
 
 				//TODO: call contract result
+				prk := s.GetAddressPrk(s.conf.InfraTwitterApp.WorkerAddress)
 				txHash, err := s.GetEthereumClient(ctx, reqInfo.NetworkID).
 					ERC20RealWorldAgentSubmitSolution(
 						s.conf.InfraTwitterApp.AgentAddress,
-						s.GetAddressPrk(s.conf.InfraTwitterApp.WorkerAddress),
+						prk,
 						models.Number2BigInt(fmt.Sprintf("%d", reqInfo.ActId), 18),
 						[]byte(ipfsHash),
 					)
 				if err != nil {
-					updateFields["error"] = errs.NewError(err)
+					updateFields["error"] = err.Error()
+					updateFields["status"] = models.InfraRequestStatusError
 				} else {
 					updateFields["status"] = models.InfraRequestStatusExecuted
 					updateFields["result_hash"] = txHash
 				}
 
-				_ = daos.GetDBMainCtx(ctx).Model(&models.AgentTokenInfo{}).Where("id = ?", reqInfo.ID).Updates(
-					updateFields,
-				)
+				_ = daos.GetDBMainCtx(ctx).Model(&models.InfraRequest{}).
+					Where("id = ?", reqInfo.ID).
+					Updates(updateFields)
 			}
 
+			return nil
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+
+}
+
+func (s *Service) RetrySubmitResultByID(ctx context.Context, reqID uint) error {
+	err := s.JobRunCheck(
+		ctx, fmt.Sprintf("RetrySubmitResultByID_%d", reqID),
+		func() error {
+			reqInfo, err := s.dao.FirstInfraRequestByID(daos.GetDBMainCtx(ctx),
+				reqID,
+				map[string][]interface{}{},
+				false,
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			if reqInfo != nil && reqInfo.Result != "" &&
+				reqInfo.Status == models.InfraRequestStatusError {
+				updateFields := map[string]interface{}{}
+				//TODO: call contract result
+				prk := s.GetAddressPrk(s.conf.InfraTwitterApp.WorkerAddress)
+				txHash, err := s.GetEthereumClient(ctx, reqInfo.NetworkID).
+					ERC20RealWorldAgentSubmitSolution(
+						s.conf.InfraTwitterApp.AgentAddress,
+						prk,
+						big.NewInt(int64(reqInfo.ActId)),
+						[]byte(reqInfo.Result),
+					)
+				if err != nil {
+					updateFields["error"] = err.Error()
+				} else {
+					updateFields["status"] = models.InfraRequestStatusExecuted
+					updateFields["result_hash"] = txHash
+				}
+
+				_ = daos.GetDBMainCtx(ctx).Model(&models.InfraRequest{}).
+					Where("id = ?", reqInfo.ID).
+					Updates(updateFields)
+			}
 			return nil
 		},
 	)

@@ -6,13 +6,13 @@ Eternal AI agents operate on a powerful peer-to-peer global infrastructure with 
 
 * End-to-end decentralization: Inference, Compute, Storage, etc.
 * State-of-the-art models: DeepSeek, Llama, FLUX, etc.
-* Omnichain interoperability: Bitcoin, Ethereum, Solana, etc.
+* Multichain interoperability: Bitcoin, Ethereum, Solana, etc.
 
 This enables developers to create SocialFi agents that interact on Twitter, DeFi agents that trade crypto, GameFi agents that play onchain games, and many other fully onchain AI agents yet to be invented — all without a middleman or counterparty risk.
 
 # Protocol Architecture
 
-<img width="2704" alt="eternal-kernel-new-7" src="https://github.com/user-attachments/assets/d0fd6429-510c-4114-83a1-c3b5aebd753f" />
+<img width="1928" alt="eai-new-architecture-6" src="https://github.com/user-attachments/assets/77f99b90-9faa-4c95-be1d-8517501027b7" />
 
 Here are the major components of the Eternal AI software stack.
 

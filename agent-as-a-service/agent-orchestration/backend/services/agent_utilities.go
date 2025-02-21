@@ -95,7 +95,7 @@ func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) erro
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
 		agentInfoID,
-		map[string][]interface{}{},
+		map[string][]any{},
 		false,
 	)
 	if err != nil {
@@ -104,6 +104,19 @@ func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) erro
 	if agentInfo != nil {
 		if agentInfo.AgentType != models.AgentInfoAgentTypeUtility {
 			return errs.NewError(errs.ErrBadRequest)
+		}
+		err = s.CreateTokenInfo(ctx, agentInfo.ID)
+		if err != nil {
+			return errs.NewError(err)
+		}
+		agentInfo, err = s.dao.FirstAgentInfoByID(
+			daos.GetDBMainCtx(ctx),
+			agentInfoID,
+			map[string][]any{},
+			false,
+		)
+		if err != nil {
+			return errs.NewError(err)
 		}
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.SourceUrl != "" {
 			if agentInfo.MintHash == "" {
@@ -143,21 +156,23 @@ func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) erro
 								err = tx.
 									Model(agentInfo).
 									Updates(
-										map[string]interface{}{
+										map[string]any{
 											"agent_contract_address": strings.ToLower(contractAddress),
+											"agent_contract_id":      "0",
 											"mint_hash":              txHash,
 											"status":                 models.AssistantStatusReady,
 											"reply_enabled":          true,
+											"token_status":           "created",
 										},
 									).Error
 								if err != nil {
 									return errs.NewError(err)
 								}
 								meme, err := s.dao.FirstMeme(tx,
-									map[string][]interface{}{
+									map[string][]any{
 										"agent_info_id = ?": {agentInfo.ID},
 									},
-									map[string][]interface{}{},
+									map[string][]any{},
 									false,
 								)
 								if err != nil {

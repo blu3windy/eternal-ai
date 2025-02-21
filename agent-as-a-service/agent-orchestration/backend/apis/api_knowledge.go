@@ -315,6 +315,12 @@ func (s *Server) retrieveKnowledge(c *gin.Context) {
 		return
 	}
 
+	knowledgeBase, err := s.nls.KnowledgeUsecase.GetKnowledgeBaseByKBId(ctx, req.KbId)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errors.New("Knowledge agent not found"))})
+		return
+	}
+
 	chatTopK := 5
 	if s.conf.KnowledgeBaseConfig.KbChatTopK > 0 {
 		chatTopK = s.conf.KnowledgeBaseConfig.KbChatTopK
@@ -334,6 +340,17 @@ func (s *Server) retrieveKnowledge(c *gin.Context) {
 			Content: req.Prompt,
 			Role:    openai2.ChatMessageRoleUser,
 		}}
+	}
+
+	systemPrompt := knowledgeBase.AgentInfo.SystemPrompt
+	if chatCompletionMessages[0].Role != openai2.ChatMessageRoleSystem {
+		newChatCompletionMessages := []openai2.ChatCompletionMessage{{
+			Content: systemPrompt,
+			Role:    openai2.ChatMessageRoleSystem,
+		}}
+		newChatCompletionMessages = append(newChatCompletionMessages, chatCompletionMessages...)
+
+		chatCompletionMessages = newChatCompletionMessages
 	}
 
 	if req.Stream != nil && *req.Stream {
