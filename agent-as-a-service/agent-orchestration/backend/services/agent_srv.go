@@ -1045,8 +1045,16 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	}
 	_ = isKbAgent
 
-	userPromptInput := openai.LastUserPrompt(messages)
-	retrieveQuery := userPromptInput
+	retrieveQuery, errGenerateQuery, conversation := s.GenerateKnowledgeQuery(messages)
+	if errGenerateQuery != nil {
+		errChan <- errs.NewError(errors.New("ERROR_GENERATE_QUERY"))
+		return
+	}
+	if retrieveQuery == nil || *retrieveQuery == "" {
+		errChan <- errs.NewError(errors.New("ERROR_QUERY_EMPTY"))
+		return
+	}
+
 	topKQuery := 5
 	if topK != nil {
 		topKQuery = *topK
@@ -1057,7 +1065,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	}
 
 	request := serializers.RetrieveKnowledgeBaseRequest{
-		Query: retrieveQuery,
+		Query: *retrieveQuery,
 		TopK:  topKQuery,
 		Kb: []string{
 			knowledgeBases[0].KbId,
@@ -1096,8 +1104,8 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		searchResult = searchResult + item.Content + "\n\n"
 	}
 	options := map[string]interface{}{}
-	userPrompt := fmt.Sprintf("Use the following pieces of retrieved context to answer the question. If there is not enough information in the retrieved context to answer the question, just say something you know about the topic."+
-		"\n\nQuestion: %v\nContext: \n\n%vAnswer:", userPromptInput, searchResult)
+	userPrompt := fmt.Sprintf("Use the following context from the conversation to answer the question. If the context is insufficient, you may draw from external knowledge to provide a relevant answer.\n\nConversation: \n%v\n\nContext: \n%v\n\nAnswer:",
+		conversation, searchResult)
 	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
@@ -1131,20 +1139,27 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), agentModel, url, options, outputChan, errChan, doneChan)
 }
 
-func (s *Service) GenerateKnowledgeQuery(systemPrompt, textUserInput string) (*string, error) {
+func (s *Service) GenerateKnowledgeQuery(histories []openai2.ChatCompletionMessage) (*string, error, string) {
 	baseModel := "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
 	url := s.conf.AgentOffchainChatUrl
 	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
 
-	generateQueryPrefix := `Generate a concise and effective search query to retrieve relevant information from the database. Ensure the query is clear, simple, and optimized for accurate results based on the input question:
-%v
-Respond in stringified JSON format with the following structure:
-{
-  "query": "<generated_query>"
-}`
-	userPrompt := fmt.Sprintf(generateQueryPrefix, textUserInput)
+	conversation := ""
+	for _, item := range histories {
+		if item.Role == openai2.ChatMessageRoleSystem {
+			continue
+		}
+
+		conversation += fmt.Sprintf("%v: %v\n", strings.ToTitle(item.Role), item.Content)
+	}
+	systemPrompt := openai.GetSystemPromptFromLLMMessage(histories)
+	if systemPrompt == "" {
+		systemPrompt = "You are a helpfully assistant"
+	}
+	generateQueryPrefix := "You are an AI assistant capable of generating highly relevant queries based on the user's question and the provided context.\n\n### Instruction:\n- Generate a precise query based on the user's question and the available context.\n- Output the query in **stringified JSON format** with a key `\"query\"`.\n- Do not include additional explanations or comments—just the JSON.\n\nExample:\n\n**Conversation:**  \nuser: What is French cuisine?\nassistant: French cuisine refers to the traditional cooking styles of France, famous for its rich flavors and varied dishes.\nuser: What is the most popular?\n\n**Output:**  \n```json\n{{\n    \"query\": \"popular French cuisine\"\n}}\n```\n\nHere is the conversation:   \n\n %v \n\nAnswer:"
+	userPrompt := fmt.Sprintf(generateQueryPrefix, conversation)
 	messages := []openai2.ChatCompletionMessage{
 		{
 			Role:    openai2.ChatMessageRoleSystem,
@@ -1190,7 +1205,7 @@ Respond in stringified JSON format with the following structure:
 		break
 	}
 
-	return queryStringResp, nil
+	return queryStringResp, nil, conversation
 }
 
 func (s *Service) PreviewAgentSystemPrompV1(ctx context.Context,
