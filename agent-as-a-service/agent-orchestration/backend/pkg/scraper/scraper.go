@@ -124,13 +124,21 @@ func (s *scraper) FetchLinksFromDomainByRod(ctx context.Context, w *sync.WaitGro
 				page.MustWaitLoad()
 
 				links := page.MustElements("a[href]")
-
+				// links = append(links, page.MustElement("img[src]"))
 				for _, linkElement := range links {
 					href, err := linkElement.Attribute("href")
 					if err != nil {
 						logger.Error(tracerTagName, "error getting href", zap.Error(err))
 						continue
 					}
+
+					// if href == nil || *href == "" {
+					// 	href, err = linkElement.Attribute("src")
+					// 	if err != nil {
+					// 		logger.Error(tracerTagName, "error getting href", zap.Error(err))
+					// 		continue
+					// 	}
+					// }
 
 					if href == nil || *href == "" {
 						continue
@@ -173,6 +181,7 @@ func (s *scraper) FetchLinksFromDomainByRod(ctx context.Context, w *sync.WaitGro
 					if strings.HasSuffix(link, "?") {
 						link = link[:len(link)-1]
 					}
+					// || strings.Contains(link, "cdn.prod.website-files.com")
 					if strings.Contains(link, domain) {
 						outChan <- link
 						if !visited[link] {

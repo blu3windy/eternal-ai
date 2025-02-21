@@ -229,6 +229,7 @@ func (uc *knowledgeUsecase) Webhook(ctx context.Context, req *models.RagHookResp
 		if len(identifies) < 2 {
 			return nil, fmt.Errorf("invalid identifier %s", req.Result.Identifier)
 		}
+
 		hash := identifies[0]
 		indexFile, err := strconv.Atoi(identifies[1])
 		if err != nil {
@@ -245,6 +246,7 @@ func (uc *knowledgeUsecase) Webhook(ctx context.Context, req *models.RagHookResp
 		if len(listFileInfo) < indexFile {
 			return nil, fmt.Errorf("invalid file index len(listFile) %v , index file %v", len(listFileInfo), indexFile)
 		}
+
 		for _, file := range kn.KnowledgeBaseFiles {
 			var lighthouseFile lighthouse.FileInLightHouse
 			if err := json.Unmarshal([]byte(file.FilecoinHashRawData), &lighthouseFile); err != nil {
@@ -586,7 +588,7 @@ func (uc *knowledgeUsecase) ExecCrawlData(ctx context.Context, kbId uint) error 
 	logger.Info(categoryNameTracer, "exec-crawl-data", zap.Any("website", kb.DomainUrl))
 
 	mainW := &sync.WaitGroup{}
-	scraper, err := scraper.NewScraper(kb.DomainUrl, 4)
+	scraper, err := scraper.NewScraper(kb.DomainUrl, 5)
 	if err != nil {
 		return err
 	}
@@ -606,23 +608,23 @@ func (uc *knowledgeUsecase) ExecCrawlData(ctx context.Context, kbId uint) error 
 	return nil
 }
 
-func (uc *knowledgeUsecase) processCrawlData(_ context.Context, kb *models.KnowledgeBase, urlChan chan string, scraper ports.IScraper) error {
+func (uc *knowledgeUsecase) processCrawlData(ctx context.Context, kb *models.KnowledgeBase, urlChan chan string, scraper ports.IScraper) error {
 	grFileId := time.Now().Unix()
 	wg := &sync.WaitGroup{}
 	ch := make(chan int, grMax)
 	urlChecker := make(map[string]bool)
 	for _, f := range kb.KnowledgeBaseFiles {
-		urlChecker[f.FromUrl] = true
+		if f.FromUrl != "" {
+			urlChecker[f.FromUrl] = true
+		}
+
+		if f.FileUrl != "" {
+			urlChecker[f.FileUrl] = true
+		}
 	}
 
 	for link := range urlChan {
 		logger.Info(categoryNameTracer, "processCrawlData", zap.Any("original-link", link))
-
-		// d, _ := utils.ExtractDomainFromUrl(link)
-		// if d != domain {
-		// 	continue
-		// }
-
 		if _, ok := urlChecker[link]; ok || strings.Contains(link, "signin?return=") || strings.Contains(link, "ethdenver.zendesk.com") {
 			continue
 		}
@@ -640,11 +642,48 @@ func (uc *knowledgeUsecase) processCrawlData(_ context.Context, kb *models.Knowl
 			fmt.Sprintf("url: %s", link)
 			c := context.Background()
 			var file *models.KnowledgeBaseFile
-			if strings.HasSuffix(link, ".pdf") {
-				fileSize, _ := utils.GetFileSizeByURL(link)
+			finalURL, err := utils.FollowRedirects(link)
+			if err != nil {
+				logger.Error(categoryNameTracer, "FollowRedirects", zap.Error(err))
+				return
+			}
+
+			if finalURL != link {
+				isFinalURLDownload, err := utils.IsDownloadLink(finalURL)
+				if err != nil {
+					logger.Error(categoryNameTracer, "IsDownloadLinkRedirectLink", zap.Error(err))
+					return
+				}
+				if isFinalURLDownload {
+					fInfo, _ := utils.GetFileInfoByURL(finalURL)
+					file = &models.KnowledgeBaseFile{
+						FileUrl:         finalURL,
+						FileSize:        uint(fInfo.Size),
+						FileName:        fInfo.Name,
+						KnowledgeBaseId: kb.ID,
+						GroupFileId:     grFileId,
+						Status:          models.KnowledgeBaseFileStatusPending,
+					}
+
+					_, err = uc.knowledgeBaseFileRepo.Create(c, file)
+					if err != nil {
+						logger.Error(categoryNameTracer, "uc.knowledgeBaseFileRepo.Create", zap.Error(err))
+					}
+					return
+				}
+			}
+
+			isDownloadLink, err := utils.IsDownloadLink(link)
+			if err != nil {
+				logger.Error(categoryNameTracer, "IsDownloadLink", zap.Error(err))
+				return
+			}
+			if isDownloadLink {
+				fInfo, _ := utils.GetFileInfoByURL(link)
 				file = &models.KnowledgeBaseFile{
 					FileUrl:         link,
-					FileSize:        uint(fileSize),
+					FileSize:        uint(fInfo.Size),
+					FileName:        fInfo.Name,
 					KnowledgeBaseId: kb.ID,
 					GroupFileId:     grFileId,
 					Status:          models.KnowledgeBaseFileStatusPending,
@@ -652,6 +691,7 @@ func (uc *knowledgeUsecase) processCrawlData(_ context.Context, kb *models.Knowl
 			} else {
 				content, err := scraper.ContentHtmlByUrl(c, link)
 				if err != nil {
+					logger.Error(categoryNameTracer, "ContentHtmlByUrl", zap.Error(err))
 					return
 				}
 
@@ -680,7 +720,7 @@ func (uc *knowledgeUsecase) processCrawlData(_ context.Context, kb *models.Knowl
 				}
 			}
 
-			_, err := uc.knowledgeBaseFileRepo.Create(c, file)
+			_, err = uc.knowledgeBaseFileRepo.Create(c, file)
 			if err != nil {
 				logger.Error(categoryNameTracer, "uc.knowledgeBaseFileRepo.Create", zap.Error(err))
 			}
