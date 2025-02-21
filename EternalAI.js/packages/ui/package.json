@@ -17,7 +17,6 @@
   },
   "devDependencies": {
     "@eternalai.js/core": "*",
-    "@eternalai.js/eternalaijs": "*",
     "@eternalai.js/interact": "*",
     "@eslint/js": "^9.19.0",
     "@types/react": "^19.0.8",

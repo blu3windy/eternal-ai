@@ -12,10 +12,13 @@ List your thoughts for each response before making a final decision. If complex 
 After evaluating all responses, identify the agent with the best response. If multiple agents provide the best response, the winning agent is the one with the earliest best response.
 
 Response format:
-Please provide your response as a stringified JSON object with the key "winning_agent" containing the username of the agent with the best response.
+Please provide your response as a stringified JSON object with the key "winning_agent" containing the username of the agent with the best response, and the key "result_found" whose value is always true.
 
 Example output:
-{{ "winning_agent": "Agent's username" }}
+{{ 
+  "winning_agent": "Agent's username",
+  "result_found": true
+}}
 
 Here are the information of the given tweet:
 - Tweet text: {full_text}
