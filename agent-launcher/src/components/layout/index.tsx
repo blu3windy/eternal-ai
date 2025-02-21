@@ -1,4 +1,4 @@
-import { Flex } from "@chakra-ui/react";
+import { Box, Flex } from "@chakra-ui/react";
 import { PropsWithChildren } from "react";
 import Header from "../header";
 import s from "./styles.module.scss";
@@ -10,7 +10,7 @@ const MainLayout = (props: Props & PropsWithChildren) => {
   return (
     <Flex className={s.container} flexDirection={"column"}>
       <Header />
-      {children}
+      <Box className={s.content}>{children}</Box>
     </Flex>
   );
 };
