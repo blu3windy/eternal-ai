@@ -187,8 +187,7 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 					}
 					switch agent.AgentType {
 					case models.AgentInfoAgentTypeNormal,
-						models.AgentInfoAgentTypeReasoning,
-						models.AgentInfoAgentTypeKnowledgeBase:
+						models.AgentInfoAgentTypeReasoning:
 						{
 							mintFee = &agentChainFee.MintFee.Float
 							checkFee = models.AddBigFloats(&agentChainFee.MintFee.Float, models.MulBigFloats(&agentChainFee.InferFee.Float, big.NewFloat(9.9)))
@@ -250,7 +249,7 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 						}
 					case models.AgentInfoAgentTypeRealWorld:
 						{
-							for range 5 {
+							for range 2 {
 								err = s.DeployAgentRealWorld(ctx, agent.ID)
 								if err == nil {
 									break
@@ -259,7 +258,7 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 						}
 					case models.AgentInfoAgentTypeUtility:
 						{
-							for range 5 {
+							for range 2 {
 								err = s.DeployAgentUtility(ctx, agent.ID)
 								if err == nil {
 									break
