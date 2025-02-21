@@ -12,7 +12,7 @@ This enables developers to create SocialFi agents that interact on Twitter, DeFi
 
 # Protocol Architecture
 
-<img width="2704" alt="eternal-kernel-new-7" src="https://github.com/user-attachments/assets/d0fd6429-510c-4114-83a1-c3b5aebd753f" />
+<img width="1928" alt="eai-new-architecture-6" src="https://github.com/user-attachments/assets/77f99b90-9faa-4c95-be1d-8517501027b7" />
 
 Here are the major components of the Eternal AI software stack.
 
