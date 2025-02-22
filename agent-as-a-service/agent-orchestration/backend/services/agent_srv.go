@@ -1055,7 +1055,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		retrieveQuery = &str
 	}
 
-	topKQuery := 5
+	topKQuery := 20
 	if topK != nil {
 		topKQuery = *topK
 	}
@@ -1099,13 +1099,19 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		return
 	}
 
-	searchResult := ""
+	searchedResult := []string{}
 	for _, item := range response.Result {
-		searchResult = searchResult + item.Content + "\n\n"
+		searchedResult = append(searchedResult, item.Content)
+	}
+	userQuestion := openai.GetQuestionFromLLMMessage(messages)
+	analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, userQuestion, searchedResult)
+	if err != nil {
+		errChan <- err
+		return
 	}
 	options := map[string]interface{}{}
 	userPrompt := fmt.Sprintf("Utilize the information from the conversation and the knowledge provided to answer the question effectively. If the conversation doesn't provide enough details, respond as an ETHDenver assistant, maintaining a helpful and informative tone.\n\nConversation:\n%v\n\nKnowledge:\n%v\n\nAnswer:\n",
-		conversation, searchResult)
+		conversation, analysedResult)
 	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
@@ -1198,6 +1204,49 @@ func (s *Service) GenerateKnowledgeQuery(histories []openai2.ChatCompletionMessa
 	}
 
 	return queryStringResp, nil, conversation
+}
+func (s *Service) AnalyseSearchResults(baseModel string, systemPrompt string, question string, searchedResult []string) (string, error) {
+	searchResult := ""
+	for _, item := range searchedResult {
+		searchResult = searchResult + item + "\n\n"
+	}
+	url := s.conf.AgentOffchainChatUrl
+	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
+		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
+	}
+
+	generateQueryPrefix := "Analyze the search results below and provide a concise summary of the key points relevant to the user's question.\n\n### Instructions:\n- Review the search results carefully.\n- Identify the most relevant and informative points related to the question.\n- Summarize the key insights clearly and concisely.\n\n### Question:\n%v\n\n### Search Results:\n%v### Key Points:\n"
+	userPrompt := fmt.Sprintf(generateQueryPrefix, question, searchResult)
+	messages := []openai2.ChatCompletionMessage{
+		{
+			Role:    openai2.ChatMessageRoleSystem,
+			Content: systemPrompt,
+		},
+		{
+			Role:    openai2.ChatMessageRoleUser,
+			Content: userPrompt,
+		},
+	}
+
+	maxRetry := 10
+	messageCallLLM, _ := json.Marshal(&messages)
+
+	for i := 1; i <= maxRetry; i++ {
+		if i > 1 {
+			time.Sleep(time.Second)
+		}
+
+		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{
+			"temperature": 0.7,
+			"max_tokens":  4096,
+		})
+		if err != nil || stringResp == "" {
+			continue
+		}
+		return stringResp, nil
+	}
+
+	return "", fmt.Errorf("can not get analysed results after %v retries", maxRetry)
 }
 
 func (s *Service) PreviewAgentSystemPrompV1(ctx context.Context,
