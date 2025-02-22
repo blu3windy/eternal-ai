@@ -1059,7 +1059,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	if topK != nil {
 		topKQuery = *topK
 	}
-	th := 0.4
+	th := 0.2
 	if threshold != nil {
 		th = *threshold
 	}
@@ -1104,7 +1104,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		searchResult = searchResult + item.Content + "\n\n"
 	}
 	options := map[string]interface{}{}
-	userPrompt := fmt.Sprintf("Use the following context from the conversation to answer the question. If the context is insufficient, you may draw from external knowledge to provide a relevant answer.\n\nConversation: \n%v\n\nContext: \n%v\n\nAnswer:",
+	userPrompt := fmt.Sprintf("Utilize the information from the conversation and the knowledge provided to answer the question effectively. If the conversation doesn't provide enough details, respond as an ETHDenver assistant, maintaining a helpful and informative tone.\n\nConversation:\n%v\n\nKnowledge:\n%v\n\nAnswer:\n",
 		conversation, searchResult)
 	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
@@ -1117,17 +1117,9 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 			Content: userPrompt,
 		},
 	}
-	if agentModel == "DeepSeek-R1-Distill-Llama-70B" || agentModel == "Llama3.3" {
-		options = map[string]interface{}{
-			"temperature": 0.7,
-			"max_tokens":  4096,
-		}
-	} else {
-		options = map[string]interface{}{
-			"temperature": 0,
-			"top_p":       0.01,
-			"max_tokens":  1024,
-		}
+	options = map[string]interface{}{
+		"temperature": 0.7,
+		"max_tokens":  4096,
 	}
 
 	messageCallLLM, _ := json.Marshal(&payloadAgentChat)
@@ -1385,17 +1377,9 @@ func (s *Service) ProcessStreamAgentSystemPromptV1(ctx context.Context,
 			}
 		}
 		if knowledgeBaseUse != nil {
-			var topK *int
-			var threshold *float64
-			if agentInfo.AgentName == "ETHDenver" {
-				topK = new(int)
-				*topK = 5
-				threshold = new(float64)
-				*threshold = 0.2
-			}
 			s.StreamRetrieveKnowledge(ctx, baseModel, llmMessage, []*models.KnowledgeBase{
 				knowledgeBaseUse,
-			}, topK, threshold, outputChan, errChan, doneChan)
+			}, nil, nil, outputChan, errChan, doneChan)
 			return
 		}
 	}
