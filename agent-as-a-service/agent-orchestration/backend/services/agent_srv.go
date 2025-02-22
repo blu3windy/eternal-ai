@@ -1117,7 +1117,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 			Content: userPrompt,
 		},
 	}
-	if agentModel == "DeepSeek-R1-Distill-Llama-70B" {
+	if agentModel == "DeepSeek-R1-Distill-Llama-70B" || agentModel == "Llama3.3" {
 		options = map[string]interface{}{
 			"temperature": 0.7,
 			"max_tokens":  4096,
@@ -1158,7 +1158,7 @@ func (s *Service) GenerateKnowledgeQuery(histories []openai2.ChatCompletionMessa
 	if systemPrompt == "" {
 		systemPrompt = "You are a helpfully assistant"
 	}
-	generateQueryPrefix := "You are an AI assistant capable of generating highly relevant queries based on the user's question and the provided context.\n\n### Instruction:\n- Generate a precise query based on the user's question and the available context.\n- Output the query in **stringified JSON format** with a key `\"query\"`.\n- Do not include additional explanations or comments—just the JSON.\n\nExample:\n\n**Conversation:**  \nuser: What is French cuisine?\nassistant: French cuisine refers to the traditional cooking styles of France, famous for its rich flavors and varied dishes.\nuser: What is the most popular?\n\n**Output:**  \n```json\n{{\n    \"query\": \"popular French cuisine\"\n}}\n```\n\nHere is the conversation:   \n\n %v \n\nAnswer:"
+	generateQueryPrefix := "You are an AI assistant capable of generating highly relevant queries based on the user's question and the provided context.\n\n### Instruction:\n- Generate a precise query based on the user's question and the available context.\n- Output the query in **stringified JSON format** with a key `\"query\"`.\n- Do not include additional explanations or comments—just the JSON.\n\nExample:\n\n**Conversation:**\nuser: What is French cuisine?\nassistant: French cuisine refers to the traditional cooking styles of France, famous for its rich flavors and varied dishes.\nuser: What is the most popular?\n\n**Output:**\n```json\n{{\n    \"query\": \"popular French cuisine\"\n}}\n```\n\nHere is the conversation:\n\n%v\n\nAnswer:"
 	userPrompt := fmt.Sprintf(generateQueryPrefix, conversation)
 	messages := []openai2.ChatCompletionMessage{
 		{
@@ -1385,9 +1385,17 @@ func (s *Service) ProcessStreamAgentSystemPromptV1(ctx context.Context,
 			}
 		}
 		if knowledgeBaseUse != nil {
+			var topK *int
+			var threshold *float64
+			if agentInfo.AgentName == "ETHDenver" {
+				topK = new(int)
+				*topK = 5
+				threshold = new(float64)
+				*threshold = 0.2
+			}
 			s.StreamRetrieveKnowledge(ctx, baseModel, llmMessage, []*models.KnowledgeBase{
 				knowledgeBaseUse,
-			}, nil, nil, outputChan, errChan, doneChan)
+			}, topK, threshold, outputChan, errChan, doneChan)
 			return
 		}
 	}

@@ -24,7 +24,21 @@ logger = logging.getLogger(__name__)
 
 MINIMUM_REPLY_LENGTH = 32
 
+from x_content.wrappers.game import GameAPIClient, GameState
 from x_content.wrappers.magic import get_agent_llm_first_interval, retry, sync2async
+
+
+def is_game_created(_tweet_id):
+    try:
+        game_info, err = GameAPIClient.get_game_info_by_tweet_id(_tweet_id)
+        if err:
+            raise err
+        return game_info.status == GameState.RUNNING
+    except Exception as err:
+        logger.error(
+            f"[is_game_created] Failed to check done status for tweet {_tweet_id}: {err}"
+        )
+        return False
 
 
 class ReplyGameSubtask(ReplySubtaskBase):
