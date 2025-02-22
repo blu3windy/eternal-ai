@@ -97,7 +97,7 @@ def magic_get_doc(source: str):
     
     return res.model_dump()
 
-@limit_asyncio_concurrency(2)
+@limit_asyncio_concurrency(4)
 async def get_doc_from_url(url) -> LiteConverstionResult:
 
     res = await sync2async_use_subprocess(
@@ -137,6 +137,7 @@ async def file_chunking(url: str, tokenizer: str, min_chunk_size: int=10, max_ch
 
             url = url_markdown
         except Exception as err:
+            traceback.print_exc()
             pass
     
     try:
@@ -145,29 +146,16 @@ async def file_chunking(url: str, tokenizer: str, min_chunk_size: int=10, max_ch
         traceback.print_exc()
         return
 
-    is_html = doc.input.format == InputFormat.HTML
-
     tokenizer = AutoTokenizer.from_pretrained(tokenizer)
     chunker = HybridChunker(
         tokenizer=tokenizer, 
         max_tokens=max_chunk_size
     )
 
-    if not is_html:
-        captured_items = [
-            DocItemLabel.PARAGRAPH, DocItemLabel.TEXT, DocItemLabel.TITLE, DocItemLabel.LIST_ITEM, DocItemLabel.CODE
-        ]
-    else:
-        captured_items = [
-            DocItemLabel.PARAGRAPH, DocItemLabel.TITLE, DocItemLabel.LIST_ITEM, DocItemLabel.CODE
-        ]
-
     for item in await sync2async(chunker.chunk)(dl_doc=doc.document):
-        item_labels = list(map(lambda x: x.label, item.meta.doc_items))
         text = item.text
 
-        if len(tokenizer.tokenize(text, max_length=None)) >= min_chunk_size \
-            and any([k in item_labels for k in captured_items]):
+        if len(tokenizer.tokenize(text, max_length=None)) >= min_chunk_size:
             yield text
 
 class EndpointFilter(logging.Filter):

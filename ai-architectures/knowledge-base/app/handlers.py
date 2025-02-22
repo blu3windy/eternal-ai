@@ -345,7 +345,8 @@ async def inspect_by_file_identifier(file_identifier: str) -> CollectionInspecti
     it = milvus_cli.query_iterator(
         collection_name=get_default_embedding_model().identity(),
         filter=f"reference == {file_identifier!r}",
-        output_fields=["hash"]
+        output_fields=["hash"],
+        batch_size=1000 * 10
     )
     
     hashs = set([])
