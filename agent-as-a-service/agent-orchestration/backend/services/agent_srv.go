@@ -1051,7 +1051,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		errChan <- errs.NewError(errors.New("ERROR_GENERATE_QUERY"))
 		return
 	}
-	logger.Info("stream_retrieve_knowledge", "generate query", zap.Any("id_request", idRequest), zap.Any("retrieveQuery", retrieveQuery))
+	logger.Info("stream_retrieve_knowledge", "generate query", zap.Any("id_request", idRequest), zap.Any("retrieveQuery", retrieveQuery), zap.Any("input", messages))
 	if retrieveQuery == nil {
 		str := ""
 		retrieveQuery = &str
@@ -1105,7 +1105,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	for _, item := range response.Result {
 		searchedResult = append(searchedResult, item.Content)
 	}
-	logger.Info("stream_retrieve_knowledge", "searched result", zap.Any("id_request", idRequest), zap.Any("searchedResult", searchedResult))
+	logger.Info("stream_retrieve_knowledge", "searched result", zap.Any("id_request", idRequest), zap.Any("searchedResult", searchedResult), zap.Any("input", request))
 	userQuestion := openai.GetQuestionFromLLMMessage(messages)
 	analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, userQuestion, searchedResult)
 	if err != nil {
