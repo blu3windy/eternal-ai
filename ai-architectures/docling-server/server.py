@@ -121,7 +121,7 @@ async def extract_html_content(file_path: str):
     for script in soup(["script", "style"]):
         await sync2async(script.extract)()    # rip it out
     
-    text = await sync2async(soup.get_text)()
+    text = await sync2async(soup.get_text)(" ")
     lines = (line.strip() for line in text.splitlines())
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
     return [chunk for chunk in chunks if chunk]

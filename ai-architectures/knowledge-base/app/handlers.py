@@ -106,6 +106,7 @@ async def url_graph_chunking(url_or_texts: str, model_use: EmbeddingModel) -> As
             shortened_item = item[:100].replace('\n', '\\n')
             err_msg = graph_result.error if not isinstance(graph_result, Exception) else graph_result
             logger.error(f"Failed to construct graph from {shortened_item}. Reason: {err_msg}")
+            yield item, None
         else:
             for triplet in graph_result.result:
                 yield item, triplet
@@ -180,6 +181,31 @@ mk_cog_embedding_retry_wrapper_priotized = retry(
     interval_multiply=2
 )
 
+
+async def embedd_normal_text(
+    chunks: List[str], 
+    model_use: EmbeddingModel, 
+) -> AsyncGenerator:
+    global mk_cog_embedding_retry_wrapper
+    
+    if len(chunks) == 0:
+        return
+
+    for sub_chunks in batching(chunks, 16):
+        chunks_e = await mk_cog_embedding_retry_wrapper(
+            sub_chunks, 
+            model_use
+        )
+
+        for chunk, e in zip(sub_chunks, chunks_e):
+            yield GraphEmbeddedItem(
+                embedding=e, 
+                raw_text=chunk,
+                kb_postfix="",
+                head=0,
+                tail=0
+            )
+
 async def embedd_triplet(
     chunk: str, 
     triplet: Triplet, 
@@ -200,29 +226,29 @@ async def embedd_triplet(
             embedding=head_e, 
             raw_text=chunk,
             kb_postfix=const.ENTITY_SUFFIX,
-            head = head_h,
-            tail = tail_h
+            head=head_h,
+            tail=tail_h
         ), 
         GraphEmbeddedItem(
             embedding=tail_e, 
             raw_text=chunk,
             kb_postfix=const.ENTITY_SUFFIX,
-            head = tail_h,
-            tail = head_h
+            head=tail_h,
+            tail=head_h
         ), 
         GraphEmbeddedItem(
             embedding=relation_e, 
             raw_text=chunk,
             kb_postfix=const.RELATION_SUFFIX,
-            head = head_h,
-            tail = tail_h
+            head=head_h,
+            tail=tail_h
         ),
         GraphEmbeddedItem(
             embedding=raw_e, 
             raw_text=chunk,
             kb_postfix="",
-            head = 0,
-            tail = 0
+            head=0,
+            tail=0
         )
     )
 
@@ -233,10 +259,14 @@ async def chunking_and_embedding(
 ) -> AsyncGenerator:
     futures = []
     counter = counter or InsertionCounter()
+    failed: List[str] = []
 
     if isinstance(url_or_texts, str):
         async for chunk, triplet in url_graph_chunking(url_or_texts, model_use):
-            futures.append(asyncio.ensure_future(embedd_triplet(chunk, triplet, model_use)))
+            if triplet is not None:
+                futures.append(asyncio.ensure_future(embedd_triplet(chunk, triplet, model_use)))
+            else:
+                failed.append(chunk)
 
     elif isinstance(url_or_texts, list):
         gk = get_gk()
@@ -246,6 +276,7 @@ async def chunking_and_embedding(
 
             if resp.status != APIStatus.OK:
                 logger.error(f"Failed to get embedding for {item[:100] + '...'!r} Reason: {resp.error}")
+                failed.append(item)
 
             else:
                 futures.extend([
@@ -256,7 +287,7 @@ async def chunking_and_embedding(
     else:
         raise ValueError("Invalid input type; Expecting str or list of str, got {}".format(type(url_or_texts)))
 
-    counter.total = len(futures) * 3
+    counter.total = len(futures) * 4 + len(failed)
 
     for future in asyncio.as_completed(futures):
         try:
@@ -266,6 +297,11 @@ async def chunking_and_embedding(
         except Exception as err:
             counter.fails += 1
             logger.error(f"Exception raised while embedding triplet: {err}")
+    
+    async for item in embedd_normal_text(failed, model_use):
+        item: GraphEmbeddedItem
+        yield item
+    
 
 _running_tasks = set([])
 
