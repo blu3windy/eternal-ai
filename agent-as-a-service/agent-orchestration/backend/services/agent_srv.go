@@ -1106,15 +1106,15 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		searchedResult = append(searchedResult, item.Content)
 	}
 	logger.Info("stream_retrieve_knowledge", "searched result", zap.Any("id_request", idRequest), zap.Any("searchedResult", searchedResult), zap.Any("input", request))
-	userQuestion := openai.GetQuestionFromLLMMessage(messages)
-	analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, userQuestion, searchedResult)
+
+	analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, *retrieveQuery, searchedResult)
 	if err != nil {
 		errChan <- err
 		return
 	}
-	logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("userQuestion", userQuestion), zap.Any("analyzed Result", analysedResult))
+	logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("analyzed Result", analysedResult))
 	options := map[string]interface{}{}
-	userPrompt := fmt.Sprintf("Utilize the information from the conversation and the knowledge provided to answer the question effectively. If the conversation doesn't provide enough details, respond as an ETHDenver assistant, maintaining a helpful and informative tone.\n\nConversation:\n%v\n\nKnowledge:\n%v\n\nAnswer:\n",
+	userPrompt := fmt.Sprintf("## Task:\n\nYour goal is to answer user questions only using the information available in the conversation history and relevant information from the website. Do not speculate, assume, or generate responses beyond what is explicitly given. If the conversation lacks sufficient detail, respond as an ETHDenver assistant while maintaining a professional, helpful, and informative tone.\n\n## Context:\n\nETHDenver is a major Web3 and blockchain-focused event, featuring hackathons, talks, workshops, and networking opportunities. Attendees may ask about schedules, speakers, sponsors, hackathon rules, travel logistics, and event-specific policies. Your responses must be strictly relevant to ETHDenver and avoid unrelated discussions.\n\n## Response Format:\n\n- Analyze the Context: Before answering, check the conversation history and relevant information from the website to determine if sufficient information exists.\n- Clarify if Needed: If the user's query is unclear or missing key details, prompt them to provide more specifics instead of making assumptions.\n- Provide a Focused Answer: Respond only with ETHDenver-relevant information, ensuring accuracy and conciseness.\n- Handle Missing Information Gracefully: If the necessary details are unavailable, politely inform the user and, if appropriate, suggest official sources for more information.\n\n## Input Template:\n\nConversation History:\n%v\n\nRelevant information from the Website:\n%v\n\nFinal Answer:\n(Provide a concise, ETHDenver-relevant response following the outlined guidelines.)\n",
 		conversation, analysedResult)
 	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
@@ -1138,7 +1138,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
 
-	logger.Info("stream_retrieve_knowledge", "start call finish result", zap.Any("id_request", idRequest), zap.Any("userQuestion", userQuestion), zap.Any("payloadAgentChat", payloadAgentChat), zap.Any("options", options))
+	logger.Info("stream_retrieve_knowledge", "start call finish result", zap.Any("id_request", idRequest), zap.Any("payloadAgentChat", payloadAgentChat), zap.Any("options", options))
 	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), agentModel, url, options, outputChan, errChan, doneChan)
 }
 
@@ -1161,7 +1161,7 @@ func (s *Service) GenerateKnowledgeQuery(histories []openai2.ChatCompletionMessa
 	if systemPrompt == "" {
 		systemPrompt = "You are a helpfully assistant"
 	}
-	generateQueryPrefix := "You are an AI assistant capable of generating highly relevant queries based on the user's question and the provided context.\n\n### Instruction:\n- Generate a precise query based on the user's question and the available context.\n- Output the query in **stringified JSON format** with a key `\"query\"`.\n- Do not include additional explanations or comments—just the JSON.\n\nExample:\n\n**Conversation:**\nuser: What is French cuisine?\nassistant: French cuisine refers to the traditional cooking styles of France, famous for its rich flavors and varied dishes.\nuser: What is the most popular?\n\n**Output:**\n```json\n{{\n    \"query\": \"popular French cuisine\"\n}}\n```\n\nHere is the conversation:\n\n%v\n\nAnswer:"
+	generateQueryPrefix := "Based on the conversation below, generate a precise query that can be used to retrieve relevant information.\n\n### Instruction:\n- Generate a precise query based on the user's question and the available context.\n- Output the query in **stringified JSON format** with a key `\"query\"`.\n- Do not include additional explanations or comments—just the JSON.\n\nExample:\n\n**Conversation:**  \nuser: What is French cuisine?\nassistant: French cuisine refers to the traditional cooking styles of France, famous for its rich flavors and varied dishes.\nuser: What is the most popular?\n\n**Output:**  \n```json\n{\n    \"query\": \"popular French cuisine\"\n}\n```\n\nHere is the conversation:   \n\n%v\n\nAnswer:"
 	userPrompt := fmt.Sprintf(generateQueryPrefix, conversation)
 	messages := []openai2.ChatCompletionMessage{
 		{
@@ -1210,7 +1210,7 @@ func (s *Service) GenerateKnowledgeQuery(histories []openai2.ChatCompletionMessa
 
 	return queryStringResp, nil, conversation
 }
-func (s *Service) AnalyseSearchResults(baseModel string, systemPrompt string, question string, searchedResult []string) (string, error) {
+func (s *Service) AnalyseSearchResults(baseModel string, systemPrompt string, query string, searchedResult []string) (string, error) {
 	searchResult := ""
 	for _, item := range searchedResult {
 		searchResult = searchResult + item + "\n\n"
@@ -1220,8 +1220,8 @@ func (s *Service) AnalyseSearchResults(baseModel string, systemPrompt string, qu
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
 
-	generateQueryPrefix := "Analyze the search results below and provide a concise summary of the key points relevant to the user's question.\n\n### Instructions:\n- Review the search results carefully.\n- Identify the most relevant and informative points related to the question.\n- Summarize the key insights clearly and concisely.\n\n### Question:\n%v\n\n### Search Results:\n%v### Key Points:\n"
-	userPrompt := fmt.Sprintf(generateQueryPrefix, question, searchResult)
+	generateQueryPrefix := "Analyze the search results below and extract the most critical insights directly relevant to the query.\n\n### Instructions:\n- Carefully review the search results.\n- Summarize only the most essential and relevant key points.\n- Ensure the summary is concise, precise, and highly relevant to the query.\n\n### Query:\n%v### Search Results:\n%v\n\n### Key Insights:\n"
+	userPrompt := fmt.Sprintf(generateQueryPrefix, query, searchResult)
 	messages := []openai2.ChatCompletionMessage{
 		{
 			Role:    openai2.ChatMessageRoleSystem,
