@@ -1117,7 +1117,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 			Content: userPrompt,
 		},
 	}
-	if agentModel == "DeepSeek-R1-Distill-Llama-70B" {
+	if agentModel == "DeepSeek-R1-Distill-Llama-70B" || agentModel == "Llama3.3" {
 		options = map[string]interface{}{
 			"temperature": 0.7,
 			"max_tokens":  4096,
@@ -1385,9 +1385,17 @@ func (s *Service) ProcessStreamAgentSystemPromptV1(ctx context.Context,
 			}
 		}
 		if knowledgeBaseUse != nil {
+			var topK *int
+			var threshold *float64
+			if agentInfo.AgentName == "ETHDenver" {
+				topK = new(int)
+				*topK = 5
+				threshold = new(float64)
+				*threshold = 0.2
+			}
 			s.StreamRetrieveKnowledge(ctx, baseModel, llmMessage, []*models.KnowledgeBase{
 				knowledgeBaseUse,
-			}, nil, nil, outputChan, errChan, doneChan)
+			}, topK, threshold, outputChan, errChan, doneChan)
 			return
 		}
 	}
