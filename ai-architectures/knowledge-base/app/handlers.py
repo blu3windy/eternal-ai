@@ -665,9 +665,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
     embedding_model = get_default_embedding_model()
     model_identity = embedding_model.identity()
 
-    resp = await get_gk().refine_query(req.query)
-    
-    refined_query = req.query
+    logger.info(f"Searching for: {req.query!r} from {model_identity} [kbs={req.kb}; top_k={req.top_k}; threshold={req.threshold}]")
 
     entity_kb = [
         kb + const.ENTITY_SUFFIX 
@@ -683,7 +681,8 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
 
     # Extract named entities from the query
     resp  = await get_gk().extract_named_entities(req.query)
-    
+    logger.info(f"Extracted NER: {resp.result}")
+
     if resp.status != APIStatus.OK:
         logger.warning(f"No entities extracted from the given query. Message: {resp.error}")
 
@@ -716,7 +715,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
         filter_str += f" and (head in {nodes} or tail in {nodes})"
 
     query_embedding = await mk_cog_embedding_retry_wrapper_priotized(
-        refined_query, embedding_model
+        req.query, embedding_model
     )
 
     res = await sync2async(cli.search)(
@@ -746,7 +745,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
         }.values()
     )
     
-    raw_hits = list(
+    extended_hits = list(
         {
             item['entity']['hash']: item 
             for item in res_raw[0]
@@ -758,7 +757,7 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
         for i, e in enumerate(hits)
     }
     
-    for hit in raw_hits:
+    for hit in extended_hits:
         if hit['entity']['hash'] in m:
             index = m[hit['entity']['hash']]
             hits[index]['distance'] = (hit['distance'] + hits[index]['distance']) / 2
