@@ -1045,11 +1045,13 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	}
 	_ = isKbAgent
 
+	idRequest := time.Now().UnixMicro()
 	retrieveQuery, errGenerateQuery, conversation := s.GenerateKnowledgeQuery(messages)
 	if errGenerateQuery != nil {
 		errChan <- errs.NewError(errors.New("ERROR_GENERATE_QUERY"))
 		return
 	}
+	logger.Info("stream_retrieve_knowledge", "generate query", zap.Any("id_request", idRequest), zap.Any("retrieveQuery", retrieveQuery))
 	if retrieveQuery == nil {
 		str := ""
 		retrieveQuery = &str
@@ -1103,12 +1105,14 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	for _, item := range response.Result {
 		searchedResult = append(searchedResult, item.Content)
 	}
+	logger.Info("stream_retrieve_knowledge", "searched result", zap.Any("id_request", idRequest), zap.Any("searchedResult", searchedResult))
 	userQuestion := openai.GetQuestionFromLLMMessage(messages)
 	analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, userQuestion, searchedResult)
 	if err != nil {
 		errChan <- err
 		return
 	}
+	logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("userQuestion", userQuestion), zap.Any("analyzed Result", analysedResult))
 	options := map[string]interface{}{}
 	userPrompt := fmt.Sprintf("Utilize the information from the conversation and the knowledge provided to answer the question effectively. If the conversation doesn't provide enough details, respond as an ETHDenver assistant, maintaining a helpful and informative tone.\n\nConversation:\n%v\n\nKnowledge:\n%v\n\nAnswer:\n",
 		conversation, analysedResult)
@@ -1134,6 +1138,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
 
+	logger.Info("stream_retrieve_knowledge", "start call finish result", zap.Any("id_request", idRequest), zap.Any("userQuestion", userQuestion), zap.Any("payloadAgentChat", payloadAgentChat), zap.Any("options", options))
 	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), agentModel, url, options, outputChan, errChan, doneChan)
 }
 
