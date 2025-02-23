@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ROUTERS from "./constants/route-path";
-import Home from "./pages/home";
+// import Home from "./pages/home";
+import Authen from "./pages/authen";
 
 import "./styles/global.scss";
 
@@ -9,7 +10,8 @@ function App() {
     <>
       <BrowserRouter>
         <Routes>
-          <Route path={ROUTERS.HOME} element={<Home />} />
+          <Route path={ROUTERS.HOME} element={<Authen />} />
+          <Route path={ROUTERS.AUTHEN} element={<Authen />} />
         </Routes>
       </BrowserRouter>
     </>
