@@ -617,7 +617,7 @@ def deduplicate_task():
                     kb=item["kb"],
                     head=item["head"],
                     tail=item["tail"],
-                    ref=item["ref"]
+                    ref=item["reference"]
                 )
 
                 if item_key not in first_observation:
