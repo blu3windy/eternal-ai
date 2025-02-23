@@ -56,8 +56,8 @@ DOCUMENT_FORMAT_OPTIONS = {
         pipeline_cls=StandardPdfPipeline,
         backend=PyPdfiumDocumentBackend,
         pipeline_options=PdfPipelineOptions(
-            do_table_structure=False,
-            do_ocr=False
+            do_table_structure=True,
+            do_ocr=True
         )
     )
 }
