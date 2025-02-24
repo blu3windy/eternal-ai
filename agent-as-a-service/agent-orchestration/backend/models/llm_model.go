@@ -9,6 +9,7 @@ type ChatCompletionStreamResponse struct {
 	Message                             string                `json:"message"`
 	Code                                int                   `json:"code"`
 	OnchainData                         CompletionOnChainData `json:"onchain_data"`
+	ThinkingMessages                    []string              `json:"thinking_messages"`
 }
 
 type CompletionOnChainData struct {
