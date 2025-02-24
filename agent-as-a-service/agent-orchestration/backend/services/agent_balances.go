@@ -346,14 +346,20 @@ func (s *Service) JobCreateTokenInfo(ctx context.Context) error {
 		ctx, "JobCreateTokenInfo",
 		func() error {
 			var retErr error
-			agents, err := s.dao.FindAgentInfo(
+			agents, err := s.dao.FindAgentInfoJoin(
 				daos.GetDBMainCtx(ctx),
 				map[string][]any{
-					`token_status in (?) or (agent_type=2 and status="ready")`: {[]string{"pending", "etching"}},
-					"agent_nft_minted = ?":                          {true},
-					`(token_address is null or token_address = "")`: {},
-					`token_network_id > 0`:                          {},
-					`(eai_balance >= 50 or ref_tweet_id > 0)`:       {},
+					"join agent_chain_fees on agent_chain_fees.network_id = agent_infos.token_network_id": {},
+				},
+				map[string][]any{
+					`agent_infos.token_status in (?) or (agent_infos.agent_type=2 and agent_infos.status="ready")`: {[]string{"pending", "etching"}},
+					"agent_infos.agent_nft_minted = ?":                                      {true},
+					`(agent_infos.token_address is null or agent_infos.token_address = "")`: {},
+					`agent_infos.token_network_id > 0`:                                      {},
+					`(
+						(agent_infos.eai_balance > 0 and agent_infos.eai_balance >= agent_chain_fees.token_fee) 
+						or agent_infos.ref_tweet_id > 0
+					)`: {},
 				},
 				map[string][]any{},
 				[]string{
