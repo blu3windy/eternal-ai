@@ -3,8 +3,6 @@ package apis
 import (
 	"net/http"
 
-	"github.com/sashabaranov/go-openai"
-
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
@@ -288,7 +286,7 @@ func (s *Server) PreviewAgentSystemPrompV1(c *gin.Context) {
 		c.Writer.Header().Set("Cache-Control", "no-cache")
 		c.Writer.WriteHeader(http.StatusOK)
 		c.Writer.WriteHeaderNow()
-		outputChan := make(chan *openai.ChatCompletionStreamResponse)
+		outputChan := make(chan *models.ChatCompletionStreamResponse)
 		errChan := make(chan error)
 		doneChan := make(chan bool)
 		go s.nls.ProcessStreamAgentSystemPromptV1(c, &req, outputChan, errChan, doneChan)

@@ -3,6 +3,7 @@ package serializers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/sashabaranov/go-openai"
 	"net/http"
 )
@@ -27,8 +28,8 @@ func (ev HttpEventStreamResponse) ToOutPut() []byte {
 	return byteBuffer.Bytes()
 }
 
-var DoneResponseStreamData, _ = json.Marshal(ChatCompletionStreamResponse{Message: "DONE", Code: http.StatusOK})
-var FakeResponseStreamData, _ = json.Marshal(ChatCompletionStreamResponse{
+var DoneResponseStreamData, _ = json.Marshal(models.ChatCompletionStreamResponse{Message: "DONE", Code: http.StatusOK})
+var FakeResponseStreamData, _ = json.Marshal(models.ChatCompletionStreamResponse{
 	Message: "",
 	Code:    http.StatusContinue,
 	ChatCompletionStreamResponse: openai.ChatCompletionStreamResponse{
@@ -39,10 +40,10 @@ var FakeResponseStreamData, _ = json.Marshal(ChatCompletionStreamResponse{
 		},
 	},
 })
-var TimeoutResponseStreamData, _ = json.Marshal(ChatCompletionStreamResponse{Message: "Timeout", Code: http.StatusGatewayTimeout})
+var TimeoutResponseStreamData, _ = json.Marshal(models.ChatCompletionStreamResponse{Message: "Timeout", Code: http.StatusGatewayTimeout})
 
-type ChatCompletionStreamResponse struct {
+/*type ChatCompletionStreamResponse struct {
 	openai.ChatCompletionStreamResponse `json:",inline"`
 	Message                             string `json:"message"`
 	Code                                int    `json:"code"`
-}
+}*/

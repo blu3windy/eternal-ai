@@ -360,7 +360,7 @@ func (s *Server) retrieveKnowledge(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusOK)
 		c.Writer.WriteHeaderNow()
 
-		outputChan := make(chan *openai2.ChatCompletionStreamResponse)
+		outputChan := make(chan *models.ChatCompletionStreamResponse)
 		errChan := make(chan error)
 		doneChan := make(chan bool)
 		go s.nls.StreamRetrieveKnowledge(ctx, "", chatCompletionMessages, []*models.KnowledgeBase{{
