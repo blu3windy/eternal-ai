@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -134,12 +135,16 @@ func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) erro
 						} else {
 							return errs.NewError(errs.ErrBadRequest)
 						}
+						systemContentHash, err := s.IpfsUploadDataForName(ctx, fmt.Sprintf("%v_%v", agentInfo.AgentID, "system_content"), []byte(agentInfo.SystemPrompt))
+						if err != nil {
+							return errs.NewError(err)
+						}
 						contractAddress, txHash, err := s.DeployAgentUtilityAddress(
 							ctx,
 							agentInfo.NetworkID,
 							agentInfo.TokenName,
 							agentInfo.TokenSymbol,
-							agentInfo.SystemPrompt,
+							systemContentHash,
 							fsContractAddress,
 							fileName,
 						)
