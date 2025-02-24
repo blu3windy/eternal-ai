@@ -273,7 +273,7 @@ func (c OpenAI) CallDirectlyEternalLLM(messages, model, baseUrl string, options 
 	return chatResp, nil
 }
 
-func (c OpenAI) CallStreamDirectlyEternalLLM(ctx context.Context, messages, model, baseUrl string, options map[string]interface{}, outputChan chan *openai.ChatCompletionStreamResponse, errChan chan error, doneChan chan bool) {
+func (c OpenAI) CallStreamDirectlyEternalLLM(ctx context.Context, messages, model, baseUrl string, options map[string]interface{}, outputChan chan *models.ChatCompletionStreamResponse, errChan chan error, doneChan chan bool) {
 	seed := rand.Int()
 	var contents []openai.ChatCompletionMessage
 	err := json.Unmarshal([]byte(messages), &contents)
@@ -304,12 +304,13 @@ func (c OpenAI) CallStreamDirectlyEternalLLM(ctx context.Context, messages, mode
 	}
 	defer stream.Close()
 	for {
-		var response openai.ChatCompletionStreamResponse
-		response, err = stream.Recv()
+		body, err := stream.RecvRaw()
 		if errors.Is(err, io.EOF) {
 			doneChan <- true
 			break
 		}
+		var response models.ChatCompletionStreamResponse
+		err = json.Unmarshal(body, &response)
 		if err != nil {
 			errChan <- fmt.Errorf("error when receive data from ai server: %v", err)
 			return

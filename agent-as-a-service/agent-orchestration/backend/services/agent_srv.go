@@ -1028,7 +1028,7 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 
 func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string, messages []openai2.ChatCompletionMessage,
 	knowledgeBases []*models.KnowledgeBase, topK *int, threshold *float64,
-	outputChan chan *openai2.ChatCompletionStreamResponse,
+	outputChan chan *models.ChatCompletionStreamResponse,
 	errChan chan error, doneChan chan bool) {
 	if len(knowledgeBases) == 0 {
 		errChan <- errs.NewError(errors.New("knowledge bases is empty"))
@@ -1056,6 +1056,12 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		str := ""
 		retrieveQuery = &str
 	}
+	go func() {
+		outputChan <- &models.ChatCompletionStreamResponse{
+			Message: "Finish generating the query.",
+			Code:    http.StatusProcessing,
+		}
+	}()
 
 	topKQuery := 20
 	if topK != nil {
@@ -1105,6 +1111,13 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	for _, item := range response.Result {
 		searchedResult = append(searchedResult, item.Content)
 	}
+
+	go func() {
+		outputChan <- &models.ChatCompletionStreamResponse{
+			Message: "Finish the search query in the RAG system.",
+			Code:    http.StatusProcessing,
+		}
+	}()
 	logger.Info("stream_retrieve_knowledge", "searched result", zap.Any("id_request", idRequest), zap.Any("searchedResult", searchedResult), zap.Any("input", request))
 
 	analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, *retrieveQuery, searchedResult)
@@ -1112,6 +1125,13 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		errChan <- err
 		return
 	}
+
+	go func() {
+		outputChan <- &models.ChatCompletionStreamResponse{
+			Message: "Finish analyzing the search results.",
+			Code:    http.StatusProcessing,
+		}
+	}()
 	logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("analyzed Result", analysedResult))
 	options := map[string]interface{}{}
 	userPrompt := fmt.Sprintf("## Task:\n\nYour goal is to answer user questions only using the information available in the conversation history and relevant information from the website. Do not speculate, assume, or generate responses beyond what is explicitly given. If the conversation lacks sufficient detail, respond as an ETHDenver assistant while maintaining a professional, helpful, and informative tone.\n\n## Context:\n\nETHDenver is a major Web3 and blockchain-focused event, featuring hackathons, talks, workshops, and networking opportunities. Attendees may ask about schedules, speakers, sponsors, hackathon rules, travel logistics, and event-specific policies. Your responses must be strictly relevant to ETHDenver and avoid unrelated discussions.\n\n## Response Format:\n\n- Analyze the Context: Before answering, check the conversation history and relevant information from the website to determine if sufficient information exists.\n- Clarify if Needed: If the user's query is unclear or missing key details, prompt them to provide more specifics instead of making assumptions.\n- Provide a Focused Answer: Respond only with ETHDenver-relevant information, ensuring accuracy and conciseness.\n- Handle Missing Information Gracefully: If the necessary details are unavailable, politely inform the user and, if appropriate, suggest official sources for more information.\n\n## Input Template:\n\nConversation History:\n%v\n\nRelevant information from the Website:\n%v\n\nFinal Answer:\n(Provide a concise, ETHDenver-relevant response following the outlined guidelines.)\n",
@@ -1331,7 +1351,7 @@ func (s *Service) PreviewAgentSystemPrompV1(ctx context.Context,
 }
 
 func (s *Service) PreviewStreamAgentSystemPromptV1(ctx context.Context, writerResponse gin.ResponseWriter,
-	outputChan chan *openai2.ChatCompletionStreamResponse,
+	outputChan chan *models.ChatCompletionStreamResponse,
 	errChan chan error, doneChan chan bool) {
 	needFakeResponse := true
 	for {
@@ -1351,7 +1371,7 @@ func (s *Service) PreviewStreamAgentSystemPromptV1(ctx context.Context, writerRe
 			writerResponse.Flush()
 			return
 		case err := <-errChan:
-			data, _ := json.Marshal(serializers.ChatCompletionStreamResponse{
+			data, _ := json.Marshal(models.ChatCompletionStreamResponse{
 				Message: err.Error(),
 				Code:    http.StatusBadRequest})
 			if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: data}.ToOutPut()); err != nil {
@@ -1360,9 +1380,7 @@ func (s *Service) PreviewStreamAgentSystemPromptV1(ctx context.Context, writerRe
 			writerResponse.Flush()
 			return
 		case output := <-outputChan:
-			data, _ := json.Marshal(serializers.ChatCompletionStreamResponse{
-				ChatCompletionStreamResponse: *output,
-				Code:                         http.StatusContinue})
+			data, _ := json.Marshal(output)
 			if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: data}.ToOutPut()); err != nil {
 				return
 			}
@@ -1381,7 +1399,7 @@ func (s *Service) PreviewStreamAgentSystemPromptV1(ctx context.Context, writerRe
 }
 
 func (s *Service) ProcessStreamAgentSystemPromptV1(ctx context.Context,
-	req *serializers.PreviewRequest, outputChan chan *openai2.ChatCompletionStreamResponse,
+	req *serializers.PreviewRequest, outputChan chan *models.ChatCompletionStreamResponse,
 	errChan chan error, doneChan chan bool) {
 	var agentInfo *models.AgentInfo
 	baseModel := "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
