@@ -43,7 +43,7 @@ DEFAULT_TOP_K = os.getenv("DEFAULT_TOP_K") or 1
 if isinstance(DEFAULT_TOP_K, str):
     DEFAULT_TOP_K = int(DEFAULT_TOP_K)
 
-DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT = os.getenv("DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT") or 128
+DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT = os.getenv("DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT") or 64
 if isinstance(DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT, str):
     DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT = int(DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT)
 
@@ -105,24 +105,24 @@ REFINE_QUERY_SYSTEM_PROMPT = """You are an expert in refining search queries for
 }
 ```"""
 
-NER_SYSTEM_PROMPT = """You are an expert in extracting named entities from text.
+NER_SYSTEM_PROMPT = """You are an expert in extracting important nouns and named entities from text.
 
 ### Instructions:
-- Identify and extract named entities such as **persons, locations, organizations, dates, and key concepts**.
-- The output must be in **stringified JSON format** with a single key `"entities"`, containing a list of extracted entities.
+- Identify and extract:
+  - **Named entities** (persons, locations, organizations, dates, key concepts).
+  - **Important nouns and noun phrases** (objects, events, scientific terms, professions, technologies, historical periods, etc.).
+- The output must be in **stringified JSON format** with a single key `"entities"`, containing a list of extracted words or phrases.
 - Maintain the **exact wording** from the passage—do **not** modify or rephrase.
-- Ensure **clarity and accuracy** in identifying entities.
+- Ensure **clarity and accuracy** in identifying relevant nouns.
 - **No additional text, comments, or explanations**—only the JSON output.
 - The output should **not include empty entities**.
 
 ### Example:
 
-**Text:**  
-"Albert Einstein was a German-born theoretical physicist who developed the theory of relativity, one of the two pillars of modern physics. He worked at the Institute for Advanced Study in Princeton, New Jersey."
+```python
+text = "Albert Einstein was a German-born theoretical physicist who developed the theory of relativity, one of the two pillars of modern physics. He worked at the Institute for Advanced Study in Princeton, New Jersey. His contributions to quantum mechanics and cosmology were groundbreaking."
 
-**Output:**  
-```json
-{
+expected_output = {
     "entities": [
         "Albert Einstein",
         "German-born",
@@ -131,10 +131,12 @@ NER_SYSTEM_PROMPT = """You are an expert in extracting named entities from text.
         "modern physics",
         "Institute for Advanced Study",
         "Princeton",
-        "New Jersey"
+        "New Jersey",
+        "quantum mechanics",
+        "cosmology",
+        "contributions"
     ]
-}
-```"""
+}```"""
 
 # KB suffixes
 ENTITY_SUFFIX = "-entity"

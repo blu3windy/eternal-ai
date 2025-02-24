@@ -4,3 +4,4 @@ pydantic==2.9.2
 uvicorn
 aiofiles
 python-multipart
+bs4

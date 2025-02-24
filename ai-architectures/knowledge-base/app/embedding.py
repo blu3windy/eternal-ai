@@ -1,7 +1,6 @@
 from .models import EmbeddingModel, SimMetric
 from typing import List
 from . import constants as const
-from transformers import AutoTokenizer    
 
 def get_embedding_models() -> List[EmbeddingModel]:
     return [
@@ -20,17 +19,3 @@ def get_default_embedding_model() -> EmbeddingModel:
 
 def get_embedding_model_api_key(_: EmbeddingModel) -> str:
     return const.SELF_HOSTED_LLAMA_API_KEY
-
-from functools import lru_cache
-
-@lru_cache(maxsize=8)
-def get_tokenizer(model: EmbeddingModel):
-    return AutoTokenizer.from_pretrained(model.tokenizer)
-
-@lru_cache(maxsize=8)
-def get_tokenizer_by_model_id(modelid: str):
-    for model in get_embedding_models():
-        if model.name == modelid:
-            return get_tokenizer(model)
-        
-    return None

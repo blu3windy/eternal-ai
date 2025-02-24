@@ -3,6 +3,7 @@ from x_content.constants.main import GAME_TASKS_WHITELIST
 from x_content.tasks.reply_base import ReplyTaskBase
 from x_content.tasks.reply_subtask_base import ReplySubtaskBase
 from x_content.models import ReasoningLog
+from x_content.tasks.social_agent.subtasks.reply.reply_game import is_game_created
 from x_content.wrappers.api.twitter_v2.models.objects import ExtendedTweetInfo
 from x_content.wrappers.tweet_specialty import TweetSpecialty
 
@@ -20,6 +21,8 @@ class SocialReplyTask(ReplyTaskBase):
         if TweetSpecialty.CREATE_GAME in specialties:
             # Game agent should not reply create game tweet as a social agent
             if log.meta_data.twitter_username in GAME_TASKS_WHITELIST:
+                return None
+            if not is_game_created(tweet_info.tweet_object.tweet_id):
                 return None
             return subtasks.reply.reply_game.ReplyGameSubtask
         if TweetSpecialty.CREATE_GAME_SUBTREE in specialties:

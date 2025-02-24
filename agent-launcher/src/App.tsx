@@ -2,8 +2,6 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ROUTERS from "./constants/route-path";
 import Home from "./pages/home";
 
-import "./styles/global.scss";
-
 function App() {
   return (
     <>
