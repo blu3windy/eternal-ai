@@ -64,7 +64,7 @@ class SwapReq:
         result = None
         token_info_response = requests.get(f"https://api.coingecko.com/api/v3/coins/{symbol}")
         if token_info_response.status_code == 200:
-            result = self.get_token_address_from_info(token_info_response.json())
+            result = self.get_token_address_from_info(token_info_response.json(), symbol)
         if result is None:
             token_info_list_response = requests.get(
                 "https://api.coingecko.com/api/v3/coins/list?include_platform=true&status=active")

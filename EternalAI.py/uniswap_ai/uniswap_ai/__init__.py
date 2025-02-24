@@ -79,10 +79,11 @@ def process_infer(chain_id: str, tx_hash: str, rpc: str, worker_address: str):
 def create_agent_infer(private_key: str, chain_id: str, agent_address: str, prompt: str):
     rpc = RPC_URL.get(chain_id)
     agent_infer = AgentInference()
-    tx_hash = agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
+    # tx_hash = agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
+    tx_hash = '0xfb1c25179aa6eebde816ab92efab93a2be0a353728d2d1fa48c1f7dd8e90b94f'
     logging.info(f"infer tx_hash: {tx_hash}")
 
-    worker_hub_address = agent_infer.get_worker_hub_address()
+    worker_hub_address = agent_infer.get_worker_hub_address(agent_address, rpc)
     logging.info(f'worker_hub_address : {worker_hub_address}')
 
     content_response = process_infer(chain_id, tx_hash, rpc, worker_hub_address)
