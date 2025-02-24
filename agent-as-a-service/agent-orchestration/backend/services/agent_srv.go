@@ -1207,7 +1207,8 @@ func (s *Service) GenerateKnowledgeQuery(histories []openai2.ChatCompletionMessa
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
 
-	conversation := ""
+	today := time.Now().Format("2006-01-02")
+	conversation := fmt.Sprintf("Remember that today is: %v\n\n", today)
 	for _, item := range histories {
 		if item.Role == openai2.ChatMessageRoleSystem {
 			continue
