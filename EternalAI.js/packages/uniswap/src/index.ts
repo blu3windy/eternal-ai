@@ -1,10 +1,10 @@
 import {BSC_CHAIN_ID, RPC_URL, V1, V2} from "@/const";
 import {AgentInference, InferenceProcessing} from "@/inference";
 import {sleep} from "@/utils";
-// import * as dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 
 
-// dotenv.config();
+dotenv.config();
 export const call_uniswap = (private_key: string, content: string) => {
     console.log(`call uniswap with content ${content}`)
     const tx_swap = "";
@@ -82,11 +82,12 @@ export const create_agent_infer = async (private_key: string, chain_id: string, 
 
 export const uni_swap_ai = async (args: any) => {
     if (args.command == "agent-infer") {
-        create_agent_infer(
-            args.pk,
+        const tx_swap = await create_agent_infer(
+            args.pk || process.env.PRIVATE_KEY,
             args.chain_id || BSC_CHAIN_ID,
-            args.agent_address,
+            args.agent_address || process.env.AGENT_ADDRESS,
             args.prompt
         )
+        console.log(`swap tx ${tx_swap}`);
     }
 }
