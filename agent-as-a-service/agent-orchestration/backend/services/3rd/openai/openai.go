@@ -6,14 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
-	"github.com/sashabaranov/go-openai"
-	"go.uber.org/zap"
 	"io"
 	"math/rand"
 	"net/http"
 	"strings"
+
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
+	"github.com/sashabaranov/go-openai"
+	"go.uber.org/zap"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 )
@@ -72,7 +73,7 @@ func (c OpenAI) ChatMessage(msgChat string) (string, error) {
 	tracerData.Add("msgChat", msgChat)
 	tracerData.Add("path", path)
 
-	//log here
+	// log here
 	defer func() {
 		if err != nil {
 			logger.Error("OpenAI", logKey, zap.Any("data", tracerData.Data()), zap.Error(err))
@@ -99,6 +100,8 @@ func (c OpenAI) ChatMessage(msgChat string) (string, error) {
 	}
 
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ApiKey))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return chatResp, err
@@ -150,6 +153,8 @@ func (c OpenAI) ChatMessageWithSystemPromp(msgChat, systemContent string) (strin
 		return chatResp, err
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ApiKey))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return chatResp, err
@@ -198,6 +203,8 @@ func (c OpenAI) TestAgentPersinality(systemPrompt, userPrompt, baseUrl string) (
 		return chatResp, err
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ApiKey))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return chatResp, err
@@ -246,6 +253,8 @@ func (c OpenAI) CallDirectlyEternalLLM(messages, model, baseUrl string, options 
 		return chatResp, err
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ApiKey))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return chatResp, err
@@ -338,6 +347,8 @@ func (c OpenAI) TestAgentPersinalityV1(messages, baseUrl string) (string, error)
 		return chatResp, err
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ApiKey))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return chatResp, err
@@ -389,6 +400,8 @@ func (c OpenAI) SummaryWebContent(webContent string) (string, error) {
 		return chatResp, err
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ApiKey))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return chatResp, err
@@ -447,6 +460,8 @@ func (c OpenAI) AgentChats(systemPrompt, baseUrl string, messages serializers.Ag
 		return &m, err
 	}
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ApiKey))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return &m, err
