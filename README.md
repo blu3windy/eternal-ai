@@ -1,38 +1,18 @@
 # Eternal AI: A Peer-to-Peer Autonomous Agent System
 
-Eternal AI is an open source AI protocol for fully onchain agents. These AI agents are deployed on multiple blockchains and run exactly as programmed. They are permissionless, uncensored, trustless, and unstoppable.
+Eternal AI is an open source AI protocol for fully onchain agents. Deployed onchain, these AI agents run exactly as programmed all without a middleman or counterparty risk. They are permissionless, uncensored, trustless, and unstoppable.
+
+The future of AI is decentralized.
+
+# Protocol Architecture
 
 Eternal AI agents operate on a powerful peer-to-peer global infrastructure with many unique properties:
 
 * End-to-end decentralization: Inference, Compute, Storage, etc.
 * State-of-the-art models: DeepSeek, Llama, FLUX, etc.
-* Multichain interoperability: Bitcoin, Ethereum, Solana, etc.
-
-This enables developers to create SocialFi agents that interact on Twitter, DeFi agents that trade crypto, GameFi agents that play onchain games, and many other fully onchain AI agents yet to be invented — all without a middleman or counterparty risk.
-
-# Protocol Architecture
+* Multichain support: Bitcoin, Ethereum, Solana, etc.
 
 <img width="1928" alt="eai-new-architecture-6" src="https://github.com/user-attachments/assets/77f99b90-9faa-4c95-be1d-8517501027b7" />
-
-Here are the major components of the Eternal AI software stack.
-
-| Component | Description |
-|:--------------------------|--------------------------|
-| [ai-kernel](/ai-kernel)| A set of Solidity smart contracts that trustlessly coordinate user space, onchain space, and offchain space. |
-| [decentralized-agents](/decentralized-agents)| A set of Solidity smart contracts that define AI agent standards (AI-721, SWARM-721, KB-721). |
-| [decentralized-inference](/decentralized-inference) | The decentralized inference APIs. |
-| [decentralized-compute](/decentralized-compute) | The peer-to-peer GPU clustering and orchestration protocol. |
-| [agent-as-a-service](/agent-as-a-service)| The production-grade agent launchpad and management. |
-| [agent-studio](/agent-studio)| No-code, drag 'n drop, visual programming language for AI creators. |
-| [blockchains](/blockchains)| A list of blockchains that are AI-powered by Eternal AI. |
-
-Here are the key ongoing research projects.
-
-| Component | Description |
-|:--------------------------|--------------------------|
-| [cuda-evm](/research/cuda-evm)| The GPU-accelerated EVM and its Solidity tensor linear algebra library. |
-| [nft-ai](/research/nft-ai)| AI-powered fully-onchain NFTs. |
-| [physical-ai](/research/physical-ai)| AI-powered hardware devices. |
 
 # Get started
 
