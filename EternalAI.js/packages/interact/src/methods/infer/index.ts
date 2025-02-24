@@ -1,13 +1,10 @@
 import * as ethers from 'ethers';
 
 import { InteractWallet } from '../types';
-import {
-  CreateInferPayload,
-  ListenInferPayload,
-  SendInferResponse,
-} from './types';
+import { SendInferResponse } from './types';
 import { abis, AGENT_CONTRACT_ADDRESSES } from './constants';
 import { ChainId } from '@/constants';
+import { InferPayloadWithMessages, InferPayloadWithPrompt } from '@/types';
 
 const contracts: Record<string, ethers.Contract> = {};
 
@@ -38,12 +35,12 @@ const Infer = {
       console.log('infer getSystemPrompt - end');
     }
   },
-  createPayload: async (
+  createPayloadWithPrompt: async (
     wallet: InteractWallet,
-    payload: CreateInferPayload
+    payload: InferPayloadWithPrompt
   ) => {
     try {
-      console.log('infer createPayload - start', payload);
+      console.log('infer createPayloadWithPrompt - start', payload);
       const contractAddress = AGENT_CONTRACT_ADDRESSES[payload.chainId];
       const contract = getContract(contractAddress, wallet);
 
@@ -62,9 +59,7 @@ const Infer = {
         },
       ];
 
-      const encoder = new TextEncoder();
-
-      const promptPayload = encoder.encode(
+      const promptPayload = ethers.utils.toUtf8Bytes(
         JSON.stringify({
           messages,
           model,
@@ -90,13 +85,59 @@ const Infer = {
         gasPrice: gasPrice,
         nonce: nonce,
       } satisfies ethers.ethers.providers.TransactionRequest;
-      console.log('infer createPayload - succeed', params);
+      console.log('infer createPayloadWithPrompt - succeed', params);
       return params;
     } catch (e) {
-      console.log('infer createPayload - failed', e);
+      console.log('infer createPayloadWithPrompt - failed', e);
       throw e;
     } finally {
-      console.log('infer createPayload - end');
+      console.log('infer createPayloadWithPrompt - end');
+    }
+  },
+  createPayloadWithMessages: async (
+    wallet: InteractWallet,
+    payload: InferPayloadWithMessages
+  ) => {
+    try {
+      console.log('infer createPayloadWithMessages - start', payload);
+      const contractAddress = AGENT_CONTRACT_ADDRESSES[payload.chainId];
+      const contract = getContract(contractAddress, wallet);
+
+      const { model, chainId, messages } = payload;
+
+      const promptPayload = ethers.utils.toUtf8Bytes(
+        JSON.stringify({
+          messages,
+          model,
+        })
+      );
+      const callData = contract.interface.encodeFunctionData('prompt(bytes)', [
+        promptPayload,
+      ]);
+
+      const from = await wallet.getAddress();
+      const [gasLimit, gasPrice, nonce] = await Promise.all([
+        contract.estimateGas.prompt(promptPayload),
+        wallet.provider.getGasPrice(),
+        wallet.provider.getTransactionCount(from),
+      ]);
+
+      const params = {
+        to: contractAddress, // smart contract address
+        from: from, // sender address
+        data: callData, // data
+        chainId: ethers.BigNumber.from(chainId).toNumber(),
+        gasLimit: gasLimit,
+        gasPrice: gasPrice,
+        nonce: nonce,
+      } satisfies ethers.ethers.providers.TransactionRequest;
+      console.log('infer createPayloadWithMessages - succeed', params);
+      return params;
+    } catch (e) {
+      console.log('infer createPayloadWithMessages - failed', e);
+      throw e;
+    } finally {
+      console.log('infer createPayloadWithMessages - end');
     }
   },
   sendPrompt: async (
