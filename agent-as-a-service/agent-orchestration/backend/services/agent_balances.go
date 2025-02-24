@@ -386,9 +386,7 @@ func (s *Service) CreateTokenInfo(ctx context.Context, agentID uint) error {
 		func() error {
 			agentInfo, err := s.dao.FirstAgentInfoByID(daos.GetDBMainCtx(ctx),
 				agentID,
-				map[string][]any{
-					"TwitterInfo": {},
-				},
+				map[string][]any{},
 				false,
 			)
 			if err != nil {
@@ -401,7 +399,6 @@ func (s *Service) CreateTokenInfo(ctx context.Context, agentID uint) error {
 					updateFields := map[string]any{
 						"token_status": "pending",
 					}
-
 					err := daos.GetDBMainCtx(ctx).Model(agentInfo).Updates(
 						updateFields,
 					).Error
@@ -435,11 +432,9 @@ func (s *Service) CreateTokenInfo(ctx context.Context, agentID uint) error {
 								if v, ok := mapInfo["token-name"]; ok {
 									tokenName = fmt.Sprintf(`%v`, v)
 								}
-
 								if v, ok := mapInfo["token-symbol"]; ok {
 									tokenSymbol = fmt.Sprintf(`%v`, v)
 								}
-
 								if v, ok := mapInfo["token-story"]; ok {
 									tokenDesc = fmt.Sprintf(`%v`, v)
 								}
@@ -449,7 +444,6 @@ func (s *Service) CreateTokenInfo(ctx context.Context, agentID uint) error {
 									"token_name": tokenName,
 									"token_desc": tokenDesc,
 								}
-
 								if agentInfo.TokenSymbol == "" {
 									updateFields["token_symbol"] = tokenSymbol
 								}
