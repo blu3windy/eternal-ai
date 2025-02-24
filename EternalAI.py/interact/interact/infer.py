@@ -1,217 +1,121 @@
-
 from dotenv import load_dotenv
-
 import logging
 from dataclasses import dataclass, asdict
 from typing import List
-
 from web3 import Web3
 from web3.types import HexStr
 from web3.middleware import geth_poa_middleware
-
-# from web3.middleware import geth_poa_middleware 
-# from web3.middleware.geth_poa import geth_poa_middleware
-
 import os
 import simplejson as json
+import requests
+import base64
 
-
-from interact.const import HYBRID_MODEL_ABI, RPC_URL, ETH_CHAIN_ID, WORKER_HUB_ABI, PROMPT_SCHEDULER_ABI, \
-    LIGHTHOUSE_IPFS, IPFS
-
+from interact.const import HYBRID_MODEL_ABI, RPC_URL, ETH_CHAIN_ID, WORKER_HUB_ABI, PROMPT_SCHEDULER_ABI, LIGHTHOUSE_IPFS, IPFS
 
 load_dotenv()
 
-@dataclass()
+@dataclass
 class LLMInferMessage:
     content: str = ""
     role: str = ""
-@dataclass()
+
+@dataclass
 class LLMInferRequest:
     messages: List[LLMInferMessage] = None
     model: str = ""
     max_token: int = 4096
     stream: bool = False
-    
 
-
-# def create_payload():
-
-
-
-
-#     print("create_payload method")
-
-# def send_infer(account):
-    # logging.info(f"Creating inference model...")
-    # web3: Web3 = None
-    # privateKey: str = None
-    # model_address: str = None
-    
-    # if web3 is None:
-    #     if HYBRID_MODEL_RPC_URL != "":
-    #             web3 = Web3(Web3.HTTPProvider(HYBRID_MODEL_RPC_URL))
-    #     else:
-    #             web3 = Web3(Web3.HTTPProvider(os.getenv("HYBRID_MODEL_RPC_URL")))
-    #             web3.middleware_onion.inject(geth_poa_middleware, layer=0)
-    # if web3.is_connected():
-    #         if privateKey is None or len(privateKey) == 0:
-    #             privateKey = os.getenv("PRIVATE_KEY")
-
-    #         if model_address is None or model_address == "":
-    #             model_address = HYBRID_MODEL_ADDRESS
-    #             if model_address == "":
-    #                 model_address = os.getenv("HYBRID_MODEL_ADDRESS")
-    #         account = web3.eth.account.from_key(privateKey)
-    #         account_address = Web3.to_checksum_address(account.address)
-    #         print('address: ' + account_address)
-    #         req = LLMInferRequest()
-    #         req.model = "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
-    #         req.messages = [LLMInferMessage(content="Can you tell me about BTC", role="user"),
-    #                         LLMInferMessage(content="You are a BTC master", role="system")]
-    #         json_request = json.dumps(asdict(req))
-    #         hybrid_model_contract = web3.eth.contract(address=Web3.to_checksum_address(model_address),
-    #                                                        abi=HYBRID_MODEL_ABI)
-
-    #         func = hybrid_model_contract.functions.infer(json_request.encode("utf-8"), True)
-    #         txn = func.build_transaction({
-    #             'from': account_address,
-    #             # 'gas': 200000,
-    #             # 'gasPrice': web3.toWei('50', 'gwei'),
-    #             'nonce': web3.eth.get_transaction_count(account_address),
-    #         })
-
-    #         signed_txn = web3.eth.account.sign_transaction(txn, privateKey)
-    #         txn_hash = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
-    #         logging.info(f'Transaction hash: {web3.to_hex(txn_hash)}')
-    # print("send_infer method")
-
-# def get_agent(id):
-    # HYBRID_MODEL_RPC_URL
-    # HYBRID_MODEL_ADDRESS
-
-    # print("get_agent method")
-    
-@dataclass()
+@dataclass
 class AgentInference:
     web3: Web3 = None
     agent_address: str = None
 
     def create_web3(self, rpc: str):
         if self.web3 is None:
-            if rpc != "":
-                self.web3 = Web3(Web3.HTTPProvider(rpc))
-            else:
-                # Default:
-                self.web3 = Web3(Web3.HTTPProvider(RPC_URL[ETH_CHAIN_ID]))
+            self.web3 = Web3(Web3.HTTPProvider(rpc or RPC_URL[ETH_CHAIN_ID]))
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def get_agent_address(self, agent_address: str):
-        if self.agent_address is None or self.agent_address == "":
+        if not self.agent_address:
             self.agent_address = agent_address
-            if self.agent_address == "":
+            if not self.agent_address:
                 raise Exception("Agent address missing")
 
     def get_system_prompt(self, agent_address: str, rpc: str):
-        logging.info(f"Get system prompt from agent...")
-
+        logging.info("Get system prompt from agent...")
         self.create_web3(rpc)
         if self.web3.is_connected():
             self.get_agent_address(agent_address)
-            agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
-                                                    abi=AGENT_ABI)
+            agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address), abi=AGENT_ABI)
             try:
-                system_prompt = agent_contract.functions.getSystemPrompt().call()
-                return system_prompt
+                return agent_contract.functions.getSystemPrompt().call()
             except Exception as e:
-                logging.error(f'{e}')
+                logging.error(e)
                 raise e
         return ""
 
     def get_worker_hub_address(self):
         self.get_agent_address('')
-        agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
-                                                abi=AGENT_ABI)
+        agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address), abi=AGENT_ABI)
         return agent_contract.functions.getPromptSchedulerAddress().call()
 
     def create_inference_agent(self, private_key: str, agent_address: str, prompt: str, rpc: str):
-        logging.info(f"Creating inference agent...")
-        if private_key == "" or private_key is None:
+        logging.info("Creating inference agent...")
+        if not private_key:
             raise Exception("Private key missing")
         self.create_web3(rpc)
         if self.web3.is_connected():
             self.get_agent_address(agent_address)
             account = self.web3.eth.account.from_key(private_key)
             account_address = Web3.to_checksum_address(account.address)
-
-            agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
-                                                    abi=AGENT_ABI)
+            agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address), abi=AGENT_ABI)
             system_prompt = self.get_system_prompt(agent_address, rpc)
             logging.info(f"system_prompt: {system_prompt}")
-            req = LLMInferRequest()
-            req.messages = [LLMInferMessage(content=prompt, role="user"),
-                            LLMInferMessage(content=system_prompt, role="system")]
+            req = LLMInferRequest(messages=[LLMInferMessage(content=prompt, role="user"), LLMInferMessage(content=system_prompt, role="system")])
             json_request = json.dumps(asdict(req))
-
             func = agent_contract.functions.prompt(json_request.encode("utf-8"))
-            txn = func.build_transaction({
-                'from': account_address,
-                # 'gas': 200000,
-                # 'gasPrice': web3.toWei('50', 'gwei'),
-                'nonce': self.web3.eth.get_transaction_count(account_address),
-            })
-
+            txn = func.build_transaction({'from': account_address, 'nonce': self.web3.eth.get_transaction_count(account_address)})
             signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
             txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
-
             tx_receipt = self.web3.eth.wait_for_transaction_receipt(txn_hash)
             logging.info(f"Transaction status: {tx_receipt['status']}")
-
             logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
             return self.web3.to_hex(txn_hash)
-        else:
-            return None
-@dataclass()
+        return None
+
+@dataclass
 class InferenceProcessing:
     web3: Web3 = None
     workerhub_address: str = None
 
     def create_web3(self, rpc: str):
         if self.web3 is None:
-            if rpc != "":
-                self.web3 = Web3(Web3.HTTPProvider(rpc))
-            else:
-                # Default:
-                self.web3 = Web3(Web3.HTTPProvider(RPC_URL[ETH_CHAIN_ID]))
+            self.web3 = Web3(Web3.HTTPProvider(rpc or RPC_URL[ETH_CHAIN_ID]))
             self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def get_workerhub_address(self, worker_hub_address: str):
-        if self.workerhub_address is None or self.workerhub_address == "":
+        if not self.workerhub_address:
             self.workerhub_address = worker_hub_address
-            if self.workerhub_address == "":
-                raise Exception(f"missing worker hub address")
+            if not self.workerhub_address:
+                raise Exception("Missing worker hub address")
 
     def get_assignments_by_inference(self, worker_hub_address: str, inference_id: int, rpc: str):
         self.create_web3(rpc)
         if self.web3.is_connected():
             self.get_workerhub_address(worker_hub_address)
-            worker_hub_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.workerhub_address),
-                                                         abi=WORKER_HUB_ABI)
+            worker_hub_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.workerhub_address), abi=WORKER_HUB_ABI)
             try:
                 assignments_info = worker_hub_contract.functions.getAssignmentsByInference(inference_id).call()
                 for assignment in assignments_info:
                     assignment_info = worker_hub_contract.functions.getAssignmentInfo(assignment).call()
                     logging.info(f'Assignments info: {assignment_info}')
                     output = assignment_info[7]
-                    if len(output) != 0:
+                    if output:
                         result = self.process_output_to_infer_response(output)
-                        if result is not None:
+                        if result:
                             return result
-                        else:
-                            continue
-                    else:
-                        continue
-                raise Exception(f'Could not get result')
+                raise Exception("Could not get result")
             except Exception as e:
                 raise e
         else:
@@ -221,17 +125,15 @@ class InferenceProcessing:
         self.create_web3(rpc)
         if self.web3.is_connected():
             self.get_workerhub_address(worker_hub_address)
-            contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.workerhub_address),
-                                              abi=PROMPT_SCHEDULER_ABI)
+            contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.workerhub_address), abi=PROMPT_SCHEDULER_ABI)
             try:
                 inference_info = contract.functions.getInferenceInfo(inference_id).call()
                 output = inference_info[10]
-                if len(output) != 0:
+                if output:
                     result = self.process_output_to_infer_response(output)
-                    if result is not None:
+                    if result:
                         return result
-                else:
-                    raise Exception(f'Could not get result')
+                raise Exception("Could not get result")
             except Exception as e:
                 raise e
         raise Exception("Could not get inference info")
@@ -240,28 +142,24 @@ class InferenceProcessing:
         json_string = out.decode('utf-8')
         temp = json.loads(json_string)
         try:
-            result = InferenceResponse(**temp)
-            return result
+            return InferenceResponse(**temp)
         except:
             return None
 
     def process_output_to_infer_response(self, output: bytes):
-        infer_reponse = self.process_output(output)
-        if infer_reponse is None:
+        infer_response = self.process_output(output)
+        if not infer_response:
             return None
-        if infer_reponse.storage == "lighthouse-filecoint" or "ipfs://" in infer_reponse.result_uri:
-            light_house = infer_reponse.result_uri.replace(IPFS, LIGHTHOUSE_IPFS)
-            light_house_reponse = requests.get(light_house)
-            if light_house_reponse.status_code == 200:
-                return light_house_reponse.text
-            else:
-                return None
-        else:
-            if infer_reponse.data != "":
-                decoded = base64.b64decode(infer_reponse.data)
-                decoded_string = decoded.decode('utf-8')
-                return decoded_string
+        if infer_response.storage == "lighthouse-filecoint" or "ipfs://" in infer_response.result_uri:
+            light_house = infer_response.result_uri.replace(IPFS, LIGHTHOUSE_IPFS)
+            light_house_response = requests.get(light_house)
+            if light_house_response.status_code == 200:
+                return light_house_response.text
             return None
+        if infer_response.data:
+            decoded = base64.b64decode(infer_response.data)
+            return decoded.decode('utf-8')
+        return None
 
     def get_infer_id(self, worker_hub_address: str, tx_hash_hex: str, rpc: str):
         self.create_web3(rpc)
@@ -269,58 +167,42 @@ class InferenceProcessing:
             logging.info(f'Get infer Id from tx {tx_hash_hex}')
             tx_receipt = self.web3.eth.get_transaction_receipt(HexStr(tx_hash_hex))
             self.get_workerhub_address(worker_hub_address)
-            if tx_receipt is None:
+            if not tx_receipt:
                 logging.error("Transaction receipt not found.")
             else:
-                # Access logs from the transaction receipt
                 logs = tx_receipt['logs']
-                if len(logs) > 0:
-                    contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.workerhub_address),
-                                                      abi=WORKER_HUB_ABI)
+                if logs:
+                    contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.workerhub_address), abi=WORKER_HUB_ABI)
                     for log in logs:
                         try:
                             event_data = contract.events.NewInference().process_log(log)
-                            # logging.info(f"Parsed Event Data: {event_data}")
-                            if event_data.args is not None and event_data.args.inferenceId is not None:
+                            if event_data.args and event_data.args.inferenceId:
                                 return event_data.args.inferenceId
                         except Exception as e:
                             logging.error(e)
-
                     raise Exception("No Infer Id")
-
         else:
-            raise Exception("not connected")
+            raise Exception("Not connected")
 
-@dataclass()
+@dataclass
 class Infer:
-    # def __init__(self):
-    #     # infura_url = "https://node.eternalai.org"
-    #     # web3 = Web3(Web3.HTTPProvider(infura_url))
-    #     self.web3 = web3
-        
     web3: Web3 = None
     model_address: str = None
 
     def create_web3(self, rpc: str):
         if self.web3 is None:
-            if rpc != "":
-                self.web3 = Web3(Web3.HTTPProvider(rpc))
-            else:
-                # Default:
-                self.web3 = Web3(Web3.HTTPProvider(RPC_URL[ETH_CHAIN_ID]))
-            self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)    
-    
+            self.web3 = Web3(Web3.HTTPProvider(rpc or RPC_URL[ETH_CHAIN_ID]))
+            self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
     def get_model_address(self, model_address: str):
-        if self.model_address is None or self.model_address == "":
+        if not self.model_address:
             self.model_address = model_address
-            if self.model_address == "":
+            if not self.model_address:
                 raise Exception("No model")
-    
-    def create_inference_model(self, private_key: str, model_address: str,
-                               system_prompt: str, prompt: str,
-                               rpc: str):
-        logging.info(f"Creating inference model...")
-        if private_key == "" or private_key is None:
+
+    def create_inference_model(self, private_key: str, model_address: str, system_prompt: str, prompt: str, rpc: str):
+        logging.info("Creating inference model...")
+        if not private_key:
             raise Exception("Private key missing")
         self.create_web3(rpc)
         if self.web3.is_connected():
@@ -329,34 +211,21 @@ class Infer:
             account = self.web3.eth.account.from_key(private_key)
             account_address = Web3.to_checksum_address(account.address)
             logging.info(f"address: {account_address}")
-
-            req = LLMInferRequest()
-            req.messages = [LLMInferMessage(content=prompt, role="user"),
-                            LLMInferMessage(content=system_prompt, role="system")]
+            req = LLMInferRequest(messages=[LLMInferMessage(content=prompt, role="user"), LLMInferMessage(content=system_prompt, role="system")])
             json_request = json.dumps(asdict(req))
-            hybrid_model_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.model_address),
-                                                           abi=HYBRID_MODEL_ABI)
-
+            hybrid_model_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.model_address), abi=HYBRID_MODEL_ABI)
             func = hybrid_model_contract.functions.infer(json_request.encode("utf-8"), True)
-            txn = func.build_transaction({
-                'from': account_address,
-                # 'gas': 200000,
-                # 'gasPrice': web3.toWei('50', 'gwei'),
-                'nonce': self.web3.eth.get_transaction_count(account_address),
-            })
-
+            txn = func.build_transaction({'from': account_address, 'nonce': self.web3.eth.get_transaction_count(account_address)})
             signed_txn = self.web3.eth.account.sign_transaction(txn, private_key)
             try:
                 txn_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
-
                 tx_receipt = self.web3.eth.wait_for_transaction_receipt(txn_hash)
                 logging.info(f"Transaction status: {tx_receipt['status']}")
-
                 logging.info(f'Transaction hash: {self.web3.to_hex(txn_hash)}')
                 return self.web3.to_hex(txn_hash)
             except Exception as e:
                 raise e
-    
+
     def get_web3(self):
         return self.web3
 
@@ -364,8 +233,7 @@ class Infer:
         return self.web3.provider
 
     def get_contract(self, address, abi):
-        contract = self.web3.eth.contract(address=address, abi=abi)
-        return contract
+        return self.web3.eth.contract(address=address, abi=abi)
 
     def infer(self):
         create_payload()
