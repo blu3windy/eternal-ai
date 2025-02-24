@@ -1152,14 +1152,30 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		"max_tokens":  4096,
 	}
 
-	messageCallLLM, _ := json.Marshal(&payloadAgentChat)
 	url := s.conf.AgentOffchainChatUrl
-	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
-		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
+	apiKey := s.conf.KnowledgeBaseConfig.OnchainAPIKey
+
+	if s.conf.KnowledgeBaseConfig.OnChainUrl != "" {
+		url = s.conf.KnowledgeBaseConfig.OnChainUrl
+	}
+
+	seedAnswer := 1234
+	chainID := fmt.Sprintf("%v", knowledgeBases[0].NetworkID)
+	llmRequest := openai2.ChatCompletionRequest{
+		Stream:      true,
+		Messages:    payloadAgentChat,
+		Model:       agentModel,
+		Temperature: 0.7,
+		MaxTokens:   4096,
+		Seed:        &seedAnswer,
+		Metadata: map[string]string{
+			"chain_id":         chainID,
+			"onchain_internal": "1",
+		},
 	}
 
 	logger.Info("stream_retrieve_knowledge", "start call finish result", zap.Any("id_request", idRequest), zap.Any("payloadAgentChat", payloadAgentChat), zap.Any("options", options))
-	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), agentModel, url, options, outputChan, errChan, doneChan)
+	s.openais["Agent"].CallStreamOnchainEternalLLM(ctx, url, apiKey, llmRequest, outputChan, errChan, doneChan)
 }
 
 func (s *Service) GenerateKnowledgeQuery(histories []openai2.ChatCompletionMessage) (*string, error, string) {
