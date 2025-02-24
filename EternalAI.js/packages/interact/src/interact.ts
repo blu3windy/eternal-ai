@@ -1,5 +1,5 @@
 import * as ethers from 'ethers';
-import { InferPayloadWithPrompt } from './types';
+import { InferPayloadWithMessages, InferPayloadWithPrompt } from './types';
 import * as methods from './methods';
 import { CHAIN_MAPPING, ChainId } from './constants';
 
@@ -31,7 +31,18 @@ class Interact {
 
   // Implementation
   // @ts-ignore
-  public async infer(payload: InferPayloadWithPrompt) {
+
+  public async infer(
+    payload: InferPayloadWithPrompt | InferPayloadWithMessages
+  ) {
+    if (typeof (payload as InferPayloadWithPrompt).prompt === 'string') {
+      return this.inferWithPrompt(payload as InferPayloadWithPrompt);
+    } else {
+      return this.inferWithMessages(payload as InferPayloadWithMessages);
+    }
+  }
+
+  private async inferWithPrompt(payload: InferPayloadWithPrompt) {
     try {
       console.log('infer - start');
       const provider = this.getProvider(payload.chainId);
@@ -70,8 +81,7 @@ class Interact {
     }
   }
 
-  // @ts-ignore
-  public async infer(payload: InferPayloadWithMessages) {
+  private async inferWithMessages(payload: InferPayloadWithMessages) {
     try {
       console.log('infer - start');
       const provider = this.getProvider(payload.chainId);
