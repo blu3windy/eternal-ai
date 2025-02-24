@@ -1044,7 +1044,12 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		systemPrompt = "You are a helpful assistant."
 	}
 	_ = isKbAgent
-
+	go func() {
+		outputChan <- &models.ChatCompletionStreamResponse{
+			Message: "Start generating the query.",
+			Code:    http.StatusProcessing,
+		}
+	}()
 	idRequest := time.Now().UnixMicro()
 	retrieveQuery, errGenerateQuery, conversation := s.GenerateKnowledgeQuery(messages)
 	if errGenerateQuery != nil {
@@ -1080,7 +1085,12 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		},
 		Threshold: th,
 	}
-
+	go func() {
+		outputChan <- &models.ChatCompletionStreamResponse{
+			Message: "Start searching query in the RAG system.",
+			Code:    http.StatusProcessing,
+		}
+	}()
 	// retry
 	var (
 		body string
@@ -1118,6 +1128,13 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 			Code:    http.StatusProcessing,
 		}
 	}()
+
+	go func() {
+		outputChan <- &models.ChatCompletionStreamResponse{
+			Message: "Start analyzing the search result.",
+			Code:    http.StatusProcessing,
+		}
+	}()
 	logger.Info("stream_retrieve_knowledge", "searched result", zap.Any("id_request", idRequest), zap.Any("searchedResult", searchedResult), zap.Any("input", request))
 
 	analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, *retrieveQuery, searchedResult)
@@ -1128,7 +1145,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 
 	go func() {
 		outputChan <- &models.ChatCompletionStreamResponse{
-			Message: "Finish analyzing the search results.",
+			Message: "Finish analyzing the search result.",
 			Code:    http.StatusProcessing,
 		}
 	}()
@@ -1173,7 +1190,12 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 			"onchain_internal": "1",
 		},
 	}
-
+	go func() {
+		outputChan <- &models.ChatCompletionStreamResponse{
+			Message: "Start generating the result.",
+			Code:    http.StatusProcessing,
+		}
+	}()
 	logger.Info("stream_retrieve_knowledge", "start call finish result", zap.Any("id_request", idRequest), zap.Any("payloadAgentChat", payloadAgentChat), zap.Any("options", options))
 	s.openais["Agent"].CallStreamOnchainEternalLLM(ctx, url, apiKey, llmRequest, outputChan, errChan, doneChan)
 }
