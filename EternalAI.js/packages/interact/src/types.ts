@@ -1,14 +1,16 @@
 import { ChainId } from './constants';
 import { Message } from './methods/infer/types';
 
-export type InferPayloadWithPrompt = {
+type InferPayloadBase = {
   model: string;
+};
+
+export type InferPayloadWithPrompt = InferPayloadBase & {
   chainId: ChainId;
   prompt: string;
 };
 
-export type InferPayloadWithMessages = {
-  model: string;
+export type InferPayloadWithMessages = InferPayloadBase & {
   chainId: ChainId;
   messages: Message[];
 };
