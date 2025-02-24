@@ -6,12 +6,6 @@ export type Message = {
   content: string;
 };
 
-export type CreateInferPayload = {
-  model: string;
-  chainId: ChainId;
-  prompt: string;
-};
-
 export type SendInferResponse = string;
 
 export type ListenInferPayload = SendInferResponse;

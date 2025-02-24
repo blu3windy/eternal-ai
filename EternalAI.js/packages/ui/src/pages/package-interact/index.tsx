@@ -13,16 +13,7 @@ function PackageInteract() {
             const inferPayload = {
               chainId: 8453,
               model: "NousResearch/Hermes-3-Llama-3.1-70B-FP8",
-              messages: [
-                {
-                  role: "system",
-                  content: "You are a BTC master",
-                },
-                {
-                  role: "user",
-                  content: "Can you tell me about BTC",
-                },
-              ],
+              prompt: "test",
             } satisfies InferPayload;
 
             // // solution 1
@@ -30,6 +21,12 @@ function PackageInteract() {
               const wallet = ethers.Wallet.createRandom();
               const interact = new Interact(wallet);
               await interact.infer(inferPayload);
+            }
+
+            {
+              const wallet = ethers.Wallet.createRandom();
+              const interact = new Interact(wallet);
+              await interact.infer("abc", "test");
             }
 
             // // // solution 2
