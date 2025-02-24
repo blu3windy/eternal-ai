@@ -43,12 +43,15 @@ class SwapReq:
                 self.token_in = ETH_ADDRESS
             else:
                 self.token_in = token_address
-
-        token_address = self.convert_token_address(self.token_out.lower())
-        if token_address is None:
+                
+        if self.token_out.lower() == "eth":
             self.token_out = ETH_ADDRESS
         else:
-            self.token_out = token_address
+            token_address = self.convert_token_address(self.token_out.lower())
+            if token_address is None:
+                self.token_out = ETH_ADDRESS
+            else:
+                self.token_out = token_address
 
     def get_token_address_from_info(self, token_info: dict, symbol: str):
         result = None
