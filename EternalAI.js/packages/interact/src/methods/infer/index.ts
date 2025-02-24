@@ -6,7 +6,7 @@ import {
   ListenInferPayload,
   SendInferResponse,
 } from './types';
-import { abis, HYBRID_MODEL_ADDRESS } from './constants';
+import { abis, AGENT_CONTRACT_ADDRESSES } from './constants';
 
 const Infer = {
   createPayload: async (
@@ -15,30 +15,27 @@ const Infer = {
   ) => {
     try {
       console.log('infer createPayload - start');
+      const contractAddress = AGENT_CONTRACT_ADDRESSES[payload.chainId];
       const contract = new ethers.Contract(
-        HYBRID_MODEL_ADDRESS,
+        contractAddress,
         abis,
         wallet.provider
       );
 
       const { messages, model, chainId } = payload;
 
-      const callData = contract.interface.encodeFunctionData(
-        'infer(bytes,bool)',
-        [
-          ethers.utils.toUtf8Bytes(
-            JSON.stringify({
-              messages,
-              model,
-            })
-          ),
-          true,
-        ]
-      );
+      const callData = contract.interface.encodeFunctionData('prompt(bytes)', [
+        ethers.utils.toUtf8Bytes(
+          JSON.stringify({
+            messages,
+            model,
+          })
+        ),
+      ]);
 
       const from = await wallet.getAddress();
       const params = {
-        to: HYBRID_MODEL_ADDRESS, // smart contract address
+        to: contractAddress, // smart contract address
         from: from, // sender address
         data: callData, // data
         chainId: ethers.BigNumber.from(chainId).toNumber(),
