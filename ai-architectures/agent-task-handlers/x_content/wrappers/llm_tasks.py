@@ -677,14 +677,73 @@ def extract_content_relevant_to_query(query: str, contents: List[str]):
     return obj
 
 
-if __name__ == "__main__":
-    print(
-        is_analyzing_token_conversation(
-            "@nobullshit_exe Hey buddy, what will the the price of $BTCH tomorrow?"
+SUMMARIZE_JUDGE_COMMENTARY_PROMPT = """Act as an expert in concise summarization and information distillation. You specialize in extracting key insights from detailed texts and condensing them into clear, engaging, and precise summaries while maintaining the original meaning.
+
+## Task
+Your task is to analyze a detailed commentary that evaluates the answers of multiple users in a QA game and declares a winner. Then, summarize only the evaluation process, avoiding any mention of the specific judging criteria. Ensure that:
+- The winning user's name is always included.
+- The reason for their victory is clearly stated.
+- The summary stays within 256 characters.
+
+## Context
+- The summary should focus only on how the judge conducted the evaluation and reached a decision.
+- Do not include details about the specific criteria used for judgment.
+- The summary must not exceed 256 characters while preserving clarity and completeness.
+- The summary should be neutral, concise, and easy to understand.
+
+## Response Format
+Provide the final output as a JSON object containing the summary tweet in a single field:
+
+{{
+  "summary": "<Your summarized text here>"
+}}
+
+## Guidelines for Summarization
+1. Focus on the Process: Describe how the judge reviewed, compared, and deliberated before making a decision.
+2. Always Include the Winner: Clearly state the name of the winning user.
+3. Explain Why They Won: Give a general reason for their victory without mentioning specific judging criteria.
+4. Be Concise Yet Informative: The summary must be under 256 characters while maintaining clarity.
+5. Ensure Readability: The summary should be coherent, structured, and easy to understand.
+
+## Provided Input
+Commentary: {commentary}
+"""
+
+
+def summarize_judge_commentary(commentary: str) -> str:
+    system_prompt = "You are a helpful assistant."
+
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt,
+        },
+        {
+            "role": "user",
+            "content": SUMMARIZE_JUDGE_COMMENTARY_PROMPT.format(
+                commentary=commentary
+            ),
+        },
+    ]
+
+    def run_llm():
+        model = SyncBasedEternalAI(
+            max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
+            temperature=0.7,
+            base_url=const.SELF_HOSTED_HERMES_70B_URL + "/v1",
+            api_key=const.SELF_HOSTED_LLAMA_API_KEY,
+            model=const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY,
+            seed=random.randint(1, int(1e9)),
         )
-    )
-    print(
-        is_analyzing_token_conversation(
-            "@nobullshit_exe $BTCH is going to the moon!"
-        )
-    )
+        result = model.generate(messages).generations[0].text
+        result = repair_json(result, return_objects=True)
+
+        return result["summary"]
+
+    obj = retry(
+        run_llm,
+        max_retry=3,
+        first_interval=get_llm_tasks_first_interval(),
+        interval_multiply=2,
+    )()
+    return obj

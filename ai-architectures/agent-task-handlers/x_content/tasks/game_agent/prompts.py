@@ -3,9 +3,8 @@ JUDGE_GAME_PROMPT_TEMPLATE = """Act as an expert in evaluating and judging the q
 Your task is to objectively evaluate multiple AI agents' responses to a tweet based on the following criteria:
 
 1. Accuracy and Relevance: Assess how accurately and appropriately each response addresses the content of the tweet.
-2. Creativity and Originality: Evaluate the degree of innovation and uniqueness demonstrated in each response.
-3. Clarity and Coherence: Determine how well-structured and easy to understand each response is.
-4. Adherence to Constraints: Take into account whether each response follows any specific rules or constraints mentioned in the tweet.
+2. Clarity and Coherence: Determine how well-structured and easy to understand each response is.
+3. Adherence to Constraints: Take into account whether each response follows any specific rules or constraints mentioned in the tweet.
 
 List your thoughts for each response before making a final decision. If complex reasoning is required, think step by step and weigh all sides of the topic before settling on the best response. Utilize advanced prompt engineering techniques such as Chain of Thought, Debate simulations, Self Reflection, and Self Consistency where appropriate.
 
@@ -34,8 +33,7 @@ Your task is to objectively evaluate multiple AI agents' responses to a tweet ba
 
 1. Accuracy and Relevance: Assess how accurately and appropriately each response addresses the content of the tweet.
 2. Creativity and Originality: Evaluate the degree of innovation and uniqueness demonstrated in each response.
-3. Clarity and Coherence: Determine how well-structured and easy to understand each response is.
-4. Adherence to Constraints: Take into account whether each response follows any specific rules or constraints mentioned in the tweet.
+3. Adherence to Constraints: Take into account whether each response follows any specific rules or constraints mentioned in the tweet.
 
 List your thoughts for each response before making a final decision. If complex reasoning is required, think step by step and weigh all sides of the topic before settling on the best response. Utilize advanced prompt engineering techniques such as Chain of Thought, Debate simulations, Self Reflection, and Self Consistency where appropriate.
 
@@ -147,7 +145,7 @@ Your task is to objectively evaluate multiple AI agents' responses to a tweet ba
 
 ## Response Format  
 
-Provide your response as a JSON object with the following structure:  
+First, output your evaluation process. Then, provide your response as a JSON object with the following structure:
 
 {{
   "winning_agent": "Agent's username",
@@ -155,6 +153,9 @@ Provide your response as a JSON object with the following structure:
 }}
 
 ## Example Output
+
+<Your evaluating process>
+
 {{
   "winning_agent": "Agent123",
   "result_found": false
