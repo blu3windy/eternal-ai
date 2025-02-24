@@ -5,7 +5,7 @@ export const BASE_CHAIN_ID = "0x2105"
 export const V1 = [ETH_CHAIN_ID, BASE_CHAIN_ID]
 export const V2 = [BSC_CHAIN_ID]
 
-export const RPC_URL = {
+export const RPC_URL: { [key: string]: string } = {
     ETH_CHAIN_ID: "https://eth.llamarpc.com",
     BSC_CHAIN_ID: "https://bsc.llamarpc.com",
     BASE_CHAIN_ID: "https://base.llamarpc.com",
