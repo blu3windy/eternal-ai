@@ -1171,14 +1171,13 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	if s.conf.KnowledgeBaseConfig.OnChainUrl != "" {
 		url = s.conf.KnowledgeBaseConfig.OnChainUrl
 	}
-
 	seedAnswer := 1234
 	chainID := fmt.Sprintf("%v", knowledgeBases[0].NetworkID)
 	llmRequest := openai2.ChatCompletionRequest{
 		Stream:      true,
 		Messages:    payloadAgentChat,
-		Model:       agentModel,
-		Temperature: 0.01,
+		Model:       "NousResearch/Hermes-3-Llama-3.1-70B-FP8",
+		Temperature: 0.7,
 		MaxTokens:   4096,
 		Seed:        &seedAnswer,
 		Metadata: map[string]string{
