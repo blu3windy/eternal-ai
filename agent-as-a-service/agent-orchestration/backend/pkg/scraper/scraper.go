@@ -97,7 +97,7 @@ func (s *scraper) FetchLinksFromDomainByRod(ctx context.Context, w *sync.WaitGro
 			return
 		}
 		domain := domainURL.Hostname()
-
+		logger.Info(tracerTagName, "fetch-links-from-domain-by-rod", zap.Any("domain", domain), zap.Any("input-url", s.url))
 		l := launcher.New().Headless(true)
 		browser := rod.New().ControlURL(l.MustLaunch()).MustConnect()
 		defer browser.MustClose()
@@ -105,17 +105,19 @@ func (s *scraper) FetchLinksFromDomainByRod(ctx context.Context, w *sync.WaitGro
 		page := browser.MustPage(s.url)
 		page.MustWaitLoad()
 
-		var visited = make(map[string]bool)
-		var queue = []string{s.url}
-		var depth = 0
+		var (
+			visited = make(map[string]bool)
+			queue   = []string{s.url}
+			depth   = 0
+		)
 
 		for len(queue) > 0 && depth <= s.maxDepth {
-			fmt.Printf("depth: %d - queue: %d\n", depth, len(queue))
 			nextQueue := []string{}
 			for _, currentURL := range queue {
 				if visited[currentURL] {
 					continue
 				}
+
 				visited[currentURL] = true
 				logger.Info(tracerTagName, "visiting", zap.Any("url", currentURL))
 
@@ -151,13 +153,14 @@ func (s *scraper) FetchLinksFromDomainByRod(ctx context.Context, w *sync.WaitGro
 							logger.Error(tracerTagName, "error parsing current url", zap.Error(err))
 							continue
 						}
+
 						relativeUrl, err := url.Parse(*href)
 						if err != nil {
 							logger.Error(tracerTagName, "error parsing relative url", zap.Error(err))
 							continue
 						}
-						absoluteURL = absoluteURL.ResolveReference(relativeUrl)
 
+						absoluteURL = absoluteURL.ResolveReference(relativeUrl)
 					} else if !absoluteURL.IsAbs() {
 						absoluteURL, err = url.Parse(currentURL)
 						if err != nil {

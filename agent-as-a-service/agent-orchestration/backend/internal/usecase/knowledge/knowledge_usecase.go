@@ -36,7 +36,7 @@ import (
 
 var categoryNameTracer string = "knowledge_usecase_tracer"
 
-const grMax = 10
+const grMax = 20
 
 type options func(*knowledgeUsecase)
 
@@ -639,7 +639,6 @@ func (uc *knowledgeUsecase) processCrawlData(ctx context.Context, kb *models.Kno
 				<-ch
 			}()
 
-			fmt.Sprintf("url: %s", link)
 			c := context.Background()
 			var file *models.KnowledgeBaseFile
 			finalURL, err := utils.FollowRedirects(link)
@@ -654,6 +653,7 @@ func (uc *knowledgeUsecase) processCrawlData(ctx context.Context, kb *models.Kno
 					logger.Error(categoryNameTracer, "IsDownloadLinkRedirectLink", zap.Error(err))
 					return
 				}
+
 				if isFinalURLDownload {
 					fInfo, _ := utils.GetFileInfoByURL(finalURL)
 					file = &models.KnowledgeBaseFile{
