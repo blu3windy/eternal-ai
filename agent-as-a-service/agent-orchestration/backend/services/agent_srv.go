@@ -1380,12 +1380,14 @@ func (s *Service) PreviewStreamAgentSystemPromptV1(ctx context.Context, writerRe
 			writerResponse.Flush()
 			return
 		case output := <-outputChan:
+			if output.Code != http.StatusProcessing {
+				needFakeResponse = false
+			}
 			data, _ := json.Marshal(output)
 			if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: data}.ToOutPut()); err != nil {
 				return
 			}
 			writerResponse.Flush()
-			needFakeResponse = false
 		default:
 			if needFakeResponse {
 				if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: serializers.FakeResponseStreamData}.ToOutPut()); err != nil {
