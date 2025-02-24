@@ -1,6 +1,8 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import vm from "vm";
+import * as electron from "electron"; // Import Electron safely
 
 // const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,6 +29,16 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 
 let win: BrowserWindow | null;
 
+ipcMain.handle("execute-bundled-code", async (_, code: string) => {
+  try {
+    const context = vm.createContext({ console, require }); // ✅ Enable require inside VM
+    const script = new vm.Script(`(function() { ${code} })()`);
+    return script.runInContext(context);
+  } catch (error: any) {
+    return `Error: ${error.message}`;
+  }
+});
+
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "icon.svg"),
@@ -37,9 +49,15 @@ function createWindow() {
     height: 1080,
   });
 
+  win.loadURL("http://localhost:5173");
+
   // Test active push message to Renderer-process.
   win.webContents.on("did-finish-load", () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString());
+  });
+
+  win.on("closed", () => {
+    win = null;
   });
 
   if (VITE_DEV_SERVER_URL) {
