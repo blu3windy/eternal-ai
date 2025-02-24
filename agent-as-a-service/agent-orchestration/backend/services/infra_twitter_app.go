@@ -737,7 +737,6 @@ func (s *Service) RetrySubmitResultByID(ctx context.Context, reqID uint) error {
 						s.conf.InfraTwitterApp.AgentAddress,
 						prk,
 						big.NewInt(int64(reqInfo.ActId)),
-						// models.Number2BigInt(fmt.Sprintf("%d", reqInfo.ActId), 0),
 						[]byte(reqInfo.Result),
 					)
 				if err != nil {

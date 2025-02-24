@@ -232,16 +232,6 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		agent.AgentName = req.CreateKnowledgeRequest.Name
 	}
 
-	switch req.AgentType {
-	case models.AgentInfoAgentTypeRealWorld,
-		models.AgentInfoAgentTypeUtility:
-		{
-			agent.TokenMode = string(models.CreateTokenModeTypeAutoCreate)
-			agent.TokenStatus = "pending"
-			agent.TokenNetworkID = agent.NetworkID
-		}
-	}
-
 	if err := s.dao.Create(daos.GetDBMainCtx(ctx), agent); err != nil {
 		return nil, errs.NewError(err)
 	}

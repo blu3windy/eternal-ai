@@ -51,6 +51,7 @@ const (
 	ZETA_CHAIN_ID             = uint64(7000)
 	STORY_CHAIN_ID            = uint64(1514)
 	HYPE_CHAIN_ID             = uint64(999)
+	MONAD_TESTNET_CHAIN_ID    = uint64(10143)
 )
 
 var CHAIN_NAME_MAP = map[uint64]string{
@@ -76,6 +77,7 @@ var CHAIN_NAME_MAP = map[uint64]string{
 	ZETA_CHAIN_ID:             "ZETA",
 	STORY_CHAIN_ID:            "STORY",
 	HYPE_CHAIN_ID:             "HYPER EVM",
+	MONAD_TESTNET_CHAIN_ID:    "MONAD TESTNET",
 }
 
 var MAP_TOOLSET_NAME = map[string]string{

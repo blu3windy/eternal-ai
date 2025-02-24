@@ -22,7 +22,7 @@ from asyncio import Semaphore as AsyncSemaphore
 import traceback
 from pathlib import Path
 from docling.chunking import HybridChunker
-from transformers import AutoTokenizer    
+from transformers import AutoTokenizer
 from docling.datamodel.base_models import InputFormat, DocItemLabel
 import aiofiles
 import tempfile
@@ -32,6 +32,7 @@ from functools import lru_cache
 from enum import Enum
 from typing import Generic, TypeVar, Optional, List, Dict
 import uuid
+from bs4 import BeautifulSoup
 
 class LiteInputDocument(BaseModel):
     format: InputFormat
@@ -55,8 +56,8 @@ DOCUMENT_FORMAT_OPTIONS = {
         pipeline_cls=StandardPdfPipeline,
         backend=PyPdfiumDocumentBackend,
         pipeline_options=PdfPipelineOptions(
-            do_table_structure=False,
-            do_ocr=False
+            do_table_structure=True,
+            do_ocr=True
         )
     )
 }
@@ -96,7 +97,7 @@ def magic_get_doc(source: str):
     
     return res.model_dump()
 
-@limit_asyncio_concurrency(2)
+@limit_asyncio_concurrency(4)
 async def get_doc_from_url(url) -> LiteConverstionResult:
 
     res = await sync2async_use_subprocess(
@@ -105,14 +106,45 @@ async def get_doc_from_url(url) -> LiteConverstionResult:
 
     return LiteConverstionResult.model_validate(res)
 
-async def url_chunking(url: str, tokenizer: str, min_chunk_size: int=10, max_chunk_size: int=512) -> AsyncGenerator:
+async def extract_html_content(file_path: str):
+    assert file_path.endswith('html')
+    
+    async with aiofiles.open(file_path, 'r') as fp:
+        html_data = await fp.read()
+
+    soup = BeautifulSoup(
+        html_data,
+        features="html.parser"
+    )
+    
+    # kill all script and style elements
+    for script in soup(["script", "style"]):
+        await sync2async(script.extract)()    # rip it out
+    
+    text = await sync2async(soup.get_text)(" ")
+    lines = (line.strip() for line in text.splitlines())
+    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+    return [chunk for chunk in chunks if chunk]
+
+
+async def file_chunking(url: str, tokenizer: str, min_chunk_size: int=10, max_chunk_size: int=512) -> AsyncGenerator:
+    if url.endswith('html'):
+        url_markdown = url.replace('html', 'md')
+
+        try:
+            async with aiofiles.open(url_markdown, 'w') as fp:
+                await fp.write('\n\n'.join(await extract_html_content(url)))
+
+            url = url_markdown
+        except Exception as err:
+            traceback.print_exc()
+            pass
+    
     try:
         doc: LiteConverstionResult = await get_doc_from_url(url) 
     except Exception as e:
         traceback.print_exc()
         return
-
-    is_html = doc.input.format == InputFormat.HTML
 
     tokenizer = AutoTokenizer.from_pretrained(tokenizer)
     chunker = HybridChunker(
@@ -120,21 +152,10 @@ async def url_chunking(url: str, tokenizer: str, min_chunk_size: int=10, max_chu
         max_tokens=max_chunk_size
     )
 
-    if not is_html:
-        captured_items = [
-            DocItemLabel.PARAGRAPH, DocItemLabel.TEXT, DocItemLabel.TITLE, DocItemLabel.LIST_ITEM, DocItemLabel.CODE
-        ]
-    else:
-        captured_items = [
-            DocItemLabel.PARAGRAPH, DocItemLabel.TITLE, DocItemLabel.LIST_ITEM, DocItemLabel.CODE
-        ]
-
     for item in await sync2async(chunker.chunk)(dl_doc=doc.document):
-        item_labels = list(map(lambda x: x.label, item.meta.doc_items))
         text = item.text
 
-        if len(tokenizer.tokenize(text, max_length=None)) >= min_chunk_size \
-            and any([k in item_labels for k in captured_items]):
+        if len(tokenizer.tokenize(text, max_length=None)) >= min_chunk_size:
             yield text
 
 class EndpointFilter(logging.Filter):
@@ -227,7 +248,7 @@ if __name__ == "__main__":
     async def gen_chunks(filepath: str, tokenizer: str, min_chunk_size: int, max_chunk_size: int):
         res = []
 
-        async for chunk in url_chunking(filepath, tokenizer, min_chunk_size, max_chunk_size):
+        async for chunk in file_chunking(filepath, tokenizer, min_chunk_size, max_chunk_size):
             res.append(chunk) 
 
         return res
@@ -270,7 +291,7 @@ if __name__ == "__main__":
         logger.info(f"Saved file to {directory / file.filename}")
         background_tasks.add_task(
             background_chunking_task, 
-            resp.id, directory / file.filename, tokenizer, min_chunk_size, max_chunk_size
+            resp.id, str(directory / file.filename), tokenizer, min_chunk_size, max_chunk_size
         )
 
         background_tasks.add_task(
@@ -317,7 +338,7 @@ if __name__ == "__main__":
             async with aiofiles.open(directory / file.filename, 'wb') as f:
                 await f.write(await file.read())
 
-            async for chunk in url_chunking(directory / file.filename, tokenizer, min_chunk_size, max_chunk_size):
+            async for chunk in file_chunking(directory / file.filename, tokenizer, min_chunk_size, max_chunk_size):
                 res.append(chunk) 
 
         finally:

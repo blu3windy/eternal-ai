@@ -787,3 +787,15 @@ func GetTokenIDFromMap(mapInfo map[string]interface{}) uint64 {
 	}
 	return uint64(tokenId)
 }
+
+func splitStringArray(arr []string, size int) [][]string {
+	var result [][]string
+	for i := 0; i < len(arr); i += size {
+		end := i + size
+		if end > len(arr) {
+			end = len(arr)
+		}
+		result = append(result, arr[i:end])
+	}
+	return result
+}
