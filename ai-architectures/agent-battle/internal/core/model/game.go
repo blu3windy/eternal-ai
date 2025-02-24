@@ -33,6 +33,7 @@ type Game struct {
 	StartTime             time.Time                 `json:"start_time" bson:"start_time"`
 	EndTime               time.Time                 `json:"end_time" bson:"end_time"`
 	BetEndTime            time.Time                 `json:"bet_end_time" bson:"bet_end_time"`
+	ResultUpdatedTime     time.Time                 `json:"result_updated_time,omitempty" bson:"result_updated_time,omitempty"`
 	AgentWallets          []*AgentWallet            `json:"agent_wallets" bson:"agent_wallets"`
 	Status                GameStatus                `json:"status" bson:"status"`
 	Players               []*Player                 `json:"players" bson:"players"`
