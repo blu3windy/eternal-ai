@@ -529,7 +529,7 @@ func (uc *knowledgeUsecase) ScanKnowledgeBaseStatusPaymentReceipt(ctx context.Co
 	defer logger.Info(categoryNameTracer, "scan_knowledge_base_payment_receipt", zap.Any("start", start), zap.Any("end", time.Now()))
 	offset := 0
 	limit := 30
-	statuses := []models.KnowledgeBaseStatus{models.KnowledgeBaseStatusCrawlDataDone}
+	statuses := []models.KnowledgeBaseStatus{models.KnowledgeBaseStatusCrawlDataDone, models.KnowledgeBaseStatusPaymentReceipt}
 	for {
 		resp, err := uc.knowledgeBaseRepo.GetByStatuses(
 			ctx, statuses, offset, limit,
