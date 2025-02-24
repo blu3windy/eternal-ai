@@ -20,6 +20,7 @@ type (
 
 const (
 	InfraRequestStatusPending  InfraRequestStatus = "pending"
+	InfraRequestStatusError    InfraRequestStatus = "error"
 	InfraRequestStatusExecuted InfraRequestStatus = "executed"
 	InfraRequestStatusInvalid  InfraRequestStatus = "invalid"
 )
@@ -37,6 +38,8 @@ type InfraRequest struct {
 	Uuid            string `gorm:"index"`
 	Data            string `gorm:"type:longtext"`
 	Creator         string `gorm:"index"`
+	ResultHash      string
 	Result          string `gorm:"type:longtext"`
 	Error           string
+	ActId           uint64
 }

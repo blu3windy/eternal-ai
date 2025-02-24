@@ -814,7 +814,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 					TxIndex:         log.TxIndex,
 					BlockNumber:     log.BlockNumber,
 					ActId:           logParsed.ActId,
-					Uuid:            string(logParsed.Uuid[:]),
+					Uuid:            common.Bytes2Hex(logParsed.Uuid[:]),
 					Creator:         logParsed.Creator.Hex(),
 					Data:            string(logParsed.Data[:]),
 				},

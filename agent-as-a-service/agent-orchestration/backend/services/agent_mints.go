@@ -28,79 +28,127 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 	err := s.JobRunCheck(
 		ctx, "JobAgentMintNft",
 		func() error {
-			agents, err := s.dao.FindAgentInfoJoin(
-				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
-					"join agent_chain_fees on agent_chain_fees.network_id = agent_infos.network_id": {},
-				},
-				map[string][]interface{}{
-					"agent_infos.agent_type in (?)": {
-						[]models.AgentInfoAgentType{
-							models.AgentInfoAgentTypeNormal,
-							models.AgentInfoAgentTypeReasoning,
-							models.AgentInfoAgentTypeEliza,
-							models.AgentInfoAgentTypeZerepy,
-						},
+			var retErr error
+			{
+				agents, err := s.dao.FindAgentInfoJoin(
+					daos.GetDBMainCtx(ctx),
+					map[string][]any{
+						"join agent_chain_fees on agent_chain_fees.network_id = agent_infos.network_id": {},
 					},
-					"agent_infos.agent_id != ''":        {},
-					"agent_infos.agent_contract_id = ?": {""},
-					"agent_infos.agent_nft_minted = ?":  {false},
-					`agent_infos.twin_twitter_usernames is null 
+					map[string][]any{
+						"agent_infos.agent_type in (?)": {
+							[]models.AgentInfoAgentType{
+								models.AgentInfoAgentTypeNormal,
+								models.AgentInfoAgentTypeReasoning,
+								models.AgentInfoAgentTypeEliza,
+								models.AgentInfoAgentTypeZerepy,
+							},
+						},
+						"agent_infos.agent_id != ''":        {},
+						"agent_infos.agent_contract_id = ?": {""},
+						"agent_infos.agent_nft_minted = ?":  {false},
+						`agent_infos.twin_twitter_usernames is null 
 						or agent_infos.twin_twitter_usernames = '' 
 						or (agent_infos.twin_twitter_usernames != '' and agent_infos.twin_status = ?)
 					`: {models.TwinStatusDoneSuccess},
-					"agent_infos.scan_enabled = ?":    {true},
-					"agent_infos.system_prompt != ''": {},
-					"agent_infos.eai_balance > 0":     {},
-					`(agent_infos.ref_tweet_id > 0 
+						"agent_infos.scan_enabled = ?":    {true},
+						"agent_infos.system_prompt != ''": {},
+						"agent_infos.eai_balance > 0":     {},
+						`(agent_infos.ref_tweet_id > 0 
 						or (agent_infos.eai_balance >= (agent_chain_fees.mint_fee + 9.9 * agent_chain_fees.infer_fee))
 						or (agent_infos.agent_type in (3,4) and agent_infos.eai_balance >= agent_chain_fees.mint_fee)
 						)`: {},
-					"agent_infos.network_id in (?)": {
-						[]uint64{
-							models.SHARDAI_CHAIN_ID,
-							models.ETHEREUM_CHAIN_ID,
-							models.BITTENSOR_CHAIN_ID,
-							models.SOLANA_CHAIN_ID,
-							models.BASE_CHAIN_ID,
-							models.HERMES_CHAIN_ID,
-							models.ARBITRUM_CHAIN_ID,
-							models.ZKSYNC_CHAIN_ID,
-							models.POLYGON_CHAIN_ID,
-							models.BSC_CHAIN_ID,
-							models.APE_CHAIN_ID,
-							models.AVALANCHE_C_CHAIN_ID,
-							models.ABSTRACT_TESTNET_CHAIN_ID,
-							models.DUCK_CHAIN_ID,
-							models.TRON_CHAIN_ID,
-							models.MODE_CHAIN_ID,
-							models.ZETA_CHAIN_ID,
-							models.STORY_CHAIN_ID,
-							models.HYPE_CHAIN_ID,
+						"agent_infos.network_id in (?)": {
+							[]uint64{
+								models.SHARDAI_CHAIN_ID,
+								models.ETHEREUM_CHAIN_ID,
+								models.BITTENSOR_CHAIN_ID,
+								models.SOLANA_CHAIN_ID,
+								models.BASE_CHAIN_ID,
+								models.HERMES_CHAIN_ID,
+								models.ARBITRUM_CHAIN_ID,
+								models.ZKSYNC_CHAIN_ID,
+								models.POLYGON_CHAIN_ID,
+								models.BSC_CHAIN_ID,
+								models.APE_CHAIN_ID,
+								models.AVALANCHE_C_CHAIN_ID,
+								models.ABSTRACT_TESTNET_CHAIN_ID,
+								models.DUCK_CHAIN_ID,
+								models.TRON_CHAIN_ID,
+								models.MODE_CHAIN_ID,
+								models.ZETA_CHAIN_ID,
+								models.STORY_CHAIN_ID,
+								models.HYPE_CHAIN_ID,
+								models.MONAD_TESTNET_CHAIN_ID,
+							},
 						},
 					},
-				},
-				map[string][]interface{}{},
-				[]string{
-					"updated_at asc",
-				},
-				0,
-				10,
-			)
-			if err != nil {
-				return errs.NewError(err)
+					map[string][]any{},
+					[]string{
+						"updated_at asc",
+					},
+					0,
+					10,
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				for _, agent := range agents {
+					err = s.AgentMintNft(ctx, agent.ID)
+					if err != nil {
+						retErr = errs.MergeError(retErr, errs.NewError(err))
+					}
+					err = s.AgentCreateMissionDefault(ctx, agent.ID)
+					if err != nil {
+						retErr = errs.MergeError(retErr, errs.NewError(err))
+					}
+					time.Sleep(10 * time.Second)
+				}
 			}
-			var retErr error
-			for _, agent := range agents {
-				err = s.AgentMintNft(ctx, agent.ID)
+			{
+				agents, err := s.dao.FindAgentInfoJoin(
+					daos.GetDBMainCtx(ctx),
+					map[string][]any{
+						"join agent_chain_fees on agent_chain_fees.network_id = agent_infos.network_id": {},
+					},
+					map[string][]any{
+						"agent_infos.agent_contract_id = ?": {""},
+						"agent_infos.agent_nft_minted = ?":  {false},
+						"agent_infos.eai_balance > 0":       {},
+						`(1 != 1
+							or (agent_infos.agent_type = ? and agent_infos.eai_balance >= agent_chain_fees.realworld_agent_deploy_fee)
+							or (agent_infos.agent_type = ? and agent_infos.eai_balance >= agent_chain_fees.utility_agent_deploy_fee)
+						)`: {
+							models.AgentInfoAgentTypeRealWorld,
+							models.AgentInfoAgentTypeUtility,
+						},
+						"agent_infos.network_id in (?)": {
+							[]uint64{
+								models.BASE_CHAIN_ID,
+								models.ARBITRUM_CHAIN_ID,
+								models.BSC_CHAIN_ID,
+								models.APE_CHAIN_ID,
+								models.AVALANCHE_C_CHAIN_ID,
+							},
+						},
+					},
+					map[string][]any{},
+					[]string{
+						"updated_at asc",
+					},
+					0,
+					10,
+				)
 				if err != nil {
-					retErr = errs.MergeError(retErr, errs.NewError(err))
+					return errs.NewError(err)
 				}
-				err = s.AgentCreateMissionDefault(ctx, agent.ID)
-				if err != nil {
-					retErr = errs.MergeError(retErr, errs.NewError(err))
+				for _, agent := range agents {
+					err = s.AgentMintNft(ctx, agent.ID)
+					if err != nil {
+						retErr = errs.MergeError(retErr, errs.NewError(err))
+					}
+					time.Sleep(10 * time.Second)
 				}
-				time.Sleep(10 * time.Second)
 			}
 			return retErr
 		},
@@ -119,7 +167,7 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 			agent, err := s.dao.FirstAgentInfoByID(
 				daos.GetDBMainCtx(ctx),
 				agentInfoID,
-				map[string][]interface{}{},
+				map[string][]any{},
 				false,
 			)
 			if err != nil {
@@ -128,11 +176,9 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 			if agent.AgentContractID == "" &&
 				!agent.AgentNftMinted {
 				var isOk bool
-				var mintFee, checkFee *big.Float
-				if agent.RefTweetID > 0 {
-					mintFee = numeric.NewFloatFromString("0.0")
-					checkFee = numeric.NewFloatFromString("0.0")
-				} else {
+				mintFee := numeric.NewFloatFromString("0.0")
+				checkFee := numeric.NewFloatFromString("0.0")
+				if agent.RefTweetID <= 0 {
 					agentChainFee, err := s.GetAgentChainFee(
 						daos.GetDBMainCtx(ctx),
 						agent.NetworkID,
@@ -140,13 +186,32 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 					if err != nil {
 						return errs.NewError(err)
 					}
-					mintFee = &agentChainFee.MintFee.Float
-					checkFee = models.AddBigFloats(&agentChainFee.MintFee.Float, models.MulBigFloats(&agentChainFee.InferFee.Float, big.NewFloat(9.9)))
 					switch agent.AgentType {
-					case models.AgentInfoAgentTypeEliza, models.AgentInfoAgentTypeZerepy:
+					case models.AgentInfoAgentTypeNormal,
+						models.AgentInfoAgentTypeReasoning:
+						{
+							mintFee = &agentChainFee.MintFee.Float
+							checkFee = models.AddBigFloats(&agentChainFee.MintFee.Float, models.MulBigFloats(&agentChainFee.InferFee.Float, big.NewFloat(9.9)))
+						}
+					case models.AgentInfoAgentTypeEliza,
+						models.AgentInfoAgentTypeZerepy:
 						{
 							mintFee = &agentChainFee.MintFee.Float
 							checkFee = &agentChainFee.MintFee.Float
+						}
+					case models.AgentInfoAgentTypeRealWorld:
+						{
+							mintFee = &agentChainFee.RealworldAgentDeployFee.Float
+							checkFee = &agentChainFee.RealworldAgentDeployFee.Float
+						}
+					case models.AgentInfoAgentTypeUtility:
+						{
+							mintFee = &agentChainFee.UtilityAgentDeployFee.Float
+							checkFee = &agentChainFee.UtilityAgentDeployFee.Float
+						}
+					default:
+						{
+							return errs.NewError(errs.ErrBadRequest)
 						}
 					}
 				}
@@ -154,27 +219,63 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 					isOk = true
 				}
 				if isOk {
-					updateAgentFields := map[string]interface{}{
+					updateAgentFields := map[string]any{
 						"agent_nft_minted": true,
 					}
-					if agent.TokenMode == string(models.TokenSetupEnumAutoCreate) && agent.TokenAddress == "" && agent.TokenStatus == "" {
+					if agent.TokenMode == string(models.TokenSetupEnumAutoCreate) &&
+						agent.TokenAddress == "" &&
+						agent.TokenStatus == "" {
 						updateAgentFields["token_status"] = "pending"
 					}
-					err = daos.GetDBMainCtx(ctx).Model(agent).Updates(updateAgentFields).Error
+					err = daos.GetDBMainCtx(ctx).
+						Model(agent).
+						Updates(updateAgentFields).
+						Error
 					if err != nil {
 						return errs.NewError(err)
 					}
-					for i := 0; i < 5; i++ {
-						err = s.MintAgent(ctx, agent.ID)
-						if err == nil {
-							break
+					switch agent.AgentType {
+					case models.AgentInfoAgentTypeNormal,
+						models.AgentInfoAgentTypeReasoning,
+						models.AgentInfoAgentTypeKnowledgeBase,
+						models.AgentInfoAgentTypeEliza,
+						models.AgentInfoAgentTypeZerepy:
+						{
+							for range 5 {
+								err = s.MintAgent(ctx, agent.ID)
+								if err == nil {
+									break
+								}
+							}
+						}
+					case models.AgentInfoAgentTypeRealWorld:
+						{
+							for range 2 {
+								err = s.DeployAgentRealWorld(ctx, agent.ID)
+								if err == nil {
+									break
+								}
+							}
+						}
+					case models.AgentInfoAgentTypeUtility:
+						{
+							for range 2 {
+								err = s.DeployAgentUtility(ctx, agent.ID)
+								if err == nil {
+									break
+								}
+							}
+						}
+					default:
+						{
+							err = errs.NewError(errs.ErrBadRequest)
 						}
 					}
 					if err != nil {
 						_ = daos.GetDBMainCtx(ctx).
 							Model(agent).
 							Updates(
-								map[string]interface{}{
+								map[string]any{
 									"scan_error": "mint nft error " + err.Error(),
 								},
 							).
@@ -205,7 +306,7 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 									err = tx.
 										Model(agent).
 										Updates(
-											map[string]interface{}{
+											map[string]any{
 												"eai_balance": gorm.Expr("eai_balance - ?", numeric.NewBigFloatFromFloat(mintFee)),
 												"mint_fee":    numeric.NewBigFloatFromFloat(mintFee),
 											},
@@ -239,7 +340,7 @@ func (s *Service) JobRetryAgentMintNft(ctx context.Context) error {
 		func() error {
 			agents, err := s.dao.FindAgentInfo(
 				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
+				map[string][]any{
 					"agent_type in (?)": {
 						[]models.AgentInfoAgentType{
 							models.AgentInfoAgentTypeNormal,
@@ -268,10 +369,11 @@ func (s *Service) JobRetryAgentMintNft(ctx context.Context) error {
 							models.ZETA_CHAIN_ID,
 							models.STORY_CHAIN_ID,
 							models.HYPE_CHAIN_ID,
+							models.MONAD_TESTNET_CHAIN_ID,
 						},
 					},
 				},
-				map[string][]interface{}{},
+				map[string][]any{},
 				[]string{
 					"rand()",
 				},
@@ -290,7 +392,7 @@ func (s *Service) JobRetryAgentMintNft(ctx context.Context) error {
 						err = daos.GetDBMainCtx(ctx).
 							Model(agent).
 							Updates(
-								map[string]interface{}{
+								map[string]any{
 									"mint_hash": "",
 								},
 							).
@@ -324,7 +426,7 @@ func (s *Service) JobRetryAgentMintNftError(ctx context.Context) error {
 		func() error {
 			agents, err := s.dao.FindAgentInfo(
 				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
+				map[string][]any{
 					"agent_infos.agent_type in (?)": {
 						[]models.AgentInfoAgentType{
 							models.AgentInfoAgentTypeNormal,
@@ -355,10 +457,11 @@ func (s *Service) JobRetryAgentMintNftError(ctx context.Context) error {
 							models.ZETA_CHAIN_ID,
 							models.STORY_CHAIN_ID,
 							models.HYPE_CHAIN_ID,
+							models.MONAD_TESTNET_CHAIN_ID,
 						},
 					},
 				},
-				map[string][]interface{}{},
+				map[string][]any{},
 				[]string{
 					"rand()",
 				},
@@ -374,7 +477,7 @@ func (s *Service) JobRetryAgentMintNftError(ctx context.Context) error {
 					err = daos.GetDBMainCtx(ctx).
 						Model(agent).
 						Updates(
-							map[string]interface{}{
+							map[string]any{
 								"agent_nft_minted": false,
 								"scan_error":       "",
 							},
@@ -398,7 +501,7 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
 		agentInfoID,
-		map[string][]interface{}{},
+		map[string][]any{},
 		false,
 	)
 	if err != nil {
@@ -446,7 +549,7 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 					err = daos.GetDBMainCtx(ctx).
 						Model(agentInfo).
 						Updates(
-							map[string]interface{}{
+							map[string]any{
 								"agent_contract_address": agentContractAddress,
 								"mint_hash":              txHash,
 								"status":                 models.AssistantStatusMinting,
@@ -473,7 +576,8 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 				models.MODE_CHAIN_ID,
 				models.ZETA_CHAIN_ID,
 				models.STORY_CHAIN_ID,
-				models.HYPE_CHAIN_ID:
+				models.HYPE_CHAIN_ID,
+				models.MONAD_TESTNET_CHAIN_ID:
 				{
 					agentUriData := models.AgentUriData{
 						Name: agentInfo.AgentName,
@@ -509,7 +613,7 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 					err = daos.GetDBMainCtx(ctx).
 						Model(agentInfo).
 						Updates(
-							map[string]interface{}{
+							map[string]any{
 								"agent_contract_address": agentContractAddress,
 								"mint_hash":              txHash,
 								"status":                 models.AssistantStatusMinting,
@@ -525,7 +629,7 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 					err = daos.GetDBMainCtx(ctx).
 						Model(agentInfo).
 						Updates(
-							map[string]interface{}{
+							map[string]any{
 								"agent_contract_address": s.conf.GetConfigKeyString(agentInfo.NetworkID, "agent_contract_address"),
 								"agent_contract_id":      strconv.FormatUint(uint64(agentInfo.ID), 10),
 								"status":                 models.AssistantStatusReady,
@@ -560,7 +664,7 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 								strings.Split(s.conf.GetConfigKeyString(agentInfo.NetworkID, "agent_admin_address"), ","),
 							),
 						),
-						common.HexToAddress(agentInfo.Creator),
+						helpers.HexToAddress(agentInfo.Creator),
 						"ipfs://"+uriHash,
 						[]byte("ipfs://"+systemContentHash),
 						models.ConvertBigFloatToWei(&agentInfo.InferFee.Float, 18),
@@ -571,7 +675,7 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 					err = daos.GetDBMainCtx(ctx).
 						Model(agentInfo).
 						Updates(
-							map[string]interface{}{
+							map[string]any{
 								"agent_contract_address": s.conf.GetConfigKeyString(agentInfo.NetworkID, "agent_contract_address"),
 								"mint_hash":              txHash,
 								"status":                 models.AssistantStatusMinting,
@@ -595,11 +699,11 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 func (s *Service) SystemPromptManagerNewTokenEvent(ctx context.Context, networkID uint64, event *systempromptmanager.SystemPromptManagerNewToken) error {
 	agentInfo, err := s.dao.FirstAgentInfo(
 		daos.GetDBMainCtx(ctx),
-		map[string][]interface{}{
+		map[string][]any{
 			"network_id = ?": {networkID},
 			"mint_hash = ?":  {event.Raw.TxHash.Hex()},
 		},
-		map[string][]interface{}{},
+		map[string][]any{},
 		[]string{},
 	)
 	if err != nil {
@@ -622,7 +726,7 @@ func (s *Service) SystemPromptManagerNewTokenEvent(ctx context.Context, networkI
 			{
 				data, _, err := lighthouse.DownloadDataSimple(event.Uri)
 				if err != nil {
-					dataInfo := map[string]interface{}{}
+					dataInfo := map[string]any{}
 					err = json.Unmarshal([]byte(event.Uri), &dataInfo)
 					if err != nil {
 						return errs.NewError(err)
@@ -646,7 +750,7 @@ func (s *Service) SystemPromptManagerNewTokenEvent(ctx context.Context, networkI
 		err = daos.GetDBMainCtx(ctx).
 			Model(agentInfo).
 			Updates(
-				map[string]interface{}{
+				map[string]any{
 					"agent_name":        info.Name,
 					"creator":           strings.ToLower(event.Minter.Hex()),
 					"agent_contract_id": event.TokenId.String(),
@@ -679,7 +783,7 @@ func (s *Service) SystemPromptManagerAgentDataUpdateEvent(ctx context.Context, n
 		Where("agent_contract_address = ?", s.GetEVMClient(ctx, networkID).ConvertAddressForOut(strings.ToLower(event.Raw.Address.Hex()))).
 		Where("agent_contract_id = ?", contractAgentID).
 		Updates(
-			map[string]interface{}{
+			map[string]any{
 				"system_prompt": string(systemPromptBytes),
 			},
 		).Error
@@ -707,7 +811,7 @@ func (s *Service) SystemPromptManagerAgentURIUpdateEvent(ctx context.Context, ne
 		Where("agent_contract_address = ?", s.GetEVMClient(ctx, networkID).ConvertAddressForOut(strings.ToLower(event.Raw.Address.Hex()))).
 		Where("agent_contract_id = ?", contractAgentID).
 		Updates(
-			map[string]interface{}{
+			map[string]any{
 				"agent_name": agentUriData.Name,
 				"uri":        uri,
 			},
@@ -803,7 +907,7 @@ func (s *Service) JobAgentStart(ctx context.Context) error {
 		func() error {
 			agents, err := s.dao.FindAgentInfo(
 				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
+				map[string][]any{
 					"agent_infos.agent_type in (3,4)":     {},
 					"agent_infos.agent_contract_id != ''": {},
 					"agent_infos.deployed_ref_id = ''":    {},
@@ -828,10 +932,11 @@ func (s *Service) JobAgentStart(ctx context.Context) error {
 							models.ZETA_CHAIN_ID,
 							models.STORY_CHAIN_ID,
 							models.HYPE_CHAIN_ID,
+							models.MONAD_TESTNET_CHAIN_ID,
 						},
 					},
 				},
-				map[string][]interface{}{},
+				map[string][]any{},
 				[]string{
 					"rand()",
 				},
@@ -844,7 +949,7 @@ func (s *Service) JobAgentStart(ctx context.Context) error {
 			var retErr error
 			for _, agent := range agents {
 				err = func() error {
-					startReq := map[string]interface{}{}
+					startReq := map[string]any{}
 					err = json.Unmarshal([]byte(agent.ConfigData), &startReq)
 					if err != nil {
 						return errs.NewError(err)
@@ -865,7 +970,7 @@ func (s *Service) JobAgentStart(ctx context.Context) error {
 						return errs.NewError(err)
 					}
 					err = daos.GetDBMainCtx(ctx).Model(agent).Updates(
-						map[string]interface{}{
+						map[string]any{
 							"deployed_ref_id": helpers.RandomBigInt(12).Text(16),
 						},
 					).Error

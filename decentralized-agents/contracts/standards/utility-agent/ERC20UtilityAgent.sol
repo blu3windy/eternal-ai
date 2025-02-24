@@ -12,22 +12,32 @@ contract ERC20UtilityAgent is ERC20, ERC20Permit, ERC20Votes, UtilityAgent {
         string memory symbol_,
         uint256 amount_,
         address recipient_,
-        address promptScheduler_,
-        address modelAddress_,
         string memory systemPrompt_,
         bytes memory storageInfo_
     )
         ERC20(name_, symbol_)
         ERC20Permit(name_)
-        UtilityAgent(
-            promptScheduler_,
-            modelAddress_,
-            systemPrompt_,
-            storageInfo_
-        )
+        UtilityAgent(systemPrompt_, storageInfo_)
     {
         _mint(recipient_, amount_);
     }
+
+    function prompt(
+        bytes memory request
+    ) external payable virtual override returns (uint256) {}
+
+    function prompt(
+        bytes32 uuid,
+        bytes calldata request
+    ) external payable virtual override returns (uint256) {}
+
+    function getResultById(
+        bytes32 uuid
+    ) external view override returns (bytes memory) {}
+
+    function getResultById(
+        uint256 id
+    ) external view override returns (bytes memory) {}
 
     function _mint(
         address account,

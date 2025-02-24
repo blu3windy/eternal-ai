@@ -1,4 +1,4 @@
-from app.io import download_and_extract_from_filecoin, hook, call_docling_server
+from app.io import download_and_extract_from_filecoin, hook, call_docling_server, download_file_v2
 from app.utils import estimate_ip_from_distance, is_valid_schema
 
 from .models import (
@@ -27,6 +27,7 @@ from typing import List, Union, Optional
 import random
 
 from . import constants as const
+from .wrappers.log_decorators import log_execution_time
 from .embedding import get_embedding_models, get_default_embedding_model
 from pymilvus import MilvusClient, FieldSchema, CollectionSchema, DataType
 from .wrappers import milvus_kit, redis_kit
@@ -51,8 +52,8 @@ import schedule
 
 logger = logging.getLogger(__name__)
 
-@limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT)
-async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingModel) -> List[List[float]]:
+@limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT * 1.5)
+async def mk_cog_embedding_priotized(text: Union[str, List[str]], model_use: EmbeddingModel) -> List[List[float]]:
     url = model_use.base_url
 
     headers = {
@@ -83,6 +84,10 @@ async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingMode
     response_json = response.json()
     return response_json['output']['result']
 
+@limit_asyncio_concurrency(const.DEFAULT_CONCURRENT_EMBEDDING_REQUESTS_LIMIT)
+async def mk_cog_embedding(text: Union[str, List[str]], model_use: EmbeddingModel) -> List[List[float]]:
+    return await mk_cog_embedding_priotized(text, model_use)
+
 async def url_graph_chunking(url_or_texts: str, model_use: EmbeddingModel) -> AsyncGenerator:
     gk = get_gk()
     chunks = await call_docling_server(url_or_texts, model_use.tokenizer)
@@ -99,8 +104,9 @@ async def url_graph_chunking(url_or_texts: str, model_use: EmbeddingModel) -> As
 
         if isinstance(graph_result, Exception) or graph_result.status != APIStatus.OK:
             shortened_item = item[:100].replace('\n', '\\n')
-            err_msg = graph_result.error if isinstance(graph_result, Exception) else graph_result.error
+            err_msg = graph_result.error if not isinstance(graph_result, Exception) else graph_result
             logger.error(f"Failed to construct graph from {shortened_item}. Reason: {err_msg}")
+            yield item, None
         else:
             for triplet in graph_result.result:
                 yield item, triplet
@@ -168,6 +174,38 @@ mk_cog_embedding_retry_wrapper = retry(
     interval_multiply=2
 )
 
+mk_cog_embedding_retry_wrapper_priotized = retry(
+    mk_cog_embedding_priotized, 
+    max_retry=2,
+    first_interval=2, 
+    interval_multiply=2
+)
+
+
+async def embedd_normal_text(
+    chunks: List[str], 
+    model_use: EmbeddingModel, 
+) -> AsyncGenerator:
+    global mk_cog_embedding_retry_wrapper
+    
+    if len(chunks) == 0:
+        return
+
+    for sub_chunks in batching(chunks, 16):
+        chunks_e = await mk_cog_embedding_retry_wrapper(
+            sub_chunks, 
+            model_use
+        )
+
+        for chunk, e in zip(sub_chunks, chunks_e):
+            yield GraphEmbeddedItem(
+                embedding=e, 
+                raw_text=chunk,
+                kb_postfix="",
+                head=0,
+                tail=0
+            )
+
 async def embedd_triplet(
     chunk: str, 
     triplet: Triplet, 
@@ -175,8 +213,9 @@ async def embedd_triplet(
 ) -> Optional[tuple]:
     global mk_cog_embedding_retry_wrapper
 
-    head_e, tail_e, relation_e = await mk_cog_embedding_retry_wrapper(
-        [triplet.s1, triplet.s2, triplet.fact()], 
+    relation = triplet.fact()
+    head_e, tail_e, relation_e, raw_e = await mk_cog_embedding_retry_wrapper(
+        [triplet.s1, triplet.s2, relation, chunk], 
         model_use
     )
 
@@ -187,20 +226,29 @@ async def embedd_triplet(
             embedding=head_e, 
             raw_text=chunk,
             kb_postfix=const.ENTITY_SUFFIX,
-            head = head_h,
-            tail = tail_h
-        ), GraphEmbeddedItem(
+            head=head_h,
+            tail=tail_h
+        ), 
+        GraphEmbeddedItem(
             embedding=tail_e, 
             raw_text=chunk,
             kb_postfix=const.ENTITY_SUFFIX,
-            head = tail_h,
-            tail = head_h
-        ), GraphEmbeddedItem(
+            head=tail_h,
+            tail=head_h
+        ), 
+        GraphEmbeddedItem(
             embedding=relation_e, 
             raw_text=chunk,
             kb_postfix=const.RELATION_SUFFIX,
-            head = head_h,
-            tail = tail_h
+            head=head_h,
+            tail=tail_h
+        ),
+        GraphEmbeddedItem(
+            embedding=raw_e, 
+            raw_text=chunk,
+            kb_postfix="",
+            head=0,
+            tail=0
         )
     )
 
@@ -211,10 +259,14 @@ async def chunking_and_embedding(
 ) -> AsyncGenerator:
     futures = []
     counter = counter or InsertionCounter()
+    failed: List[str] = []
 
     if isinstance(url_or_texts, str):
         async for chunk, triplet in url_graph_chunking(url_or_texts, model_use):
-            futures.append(asyncio.ensure_future(embedd_triplet(chunk, triplet, model_use)))
+            if triplet is not None:
+                futures.append(asyncio.ensure_future(embedd_triplet(chunk, triplet, model_use)))
+            else:
+                failed.append(chunk)
 
     elif isinstance(url_or_texts, list):
         gk = get_gk()
@@ -224,6 +276,7 @@ async def chunking_and_embedding(
 
             if resp.status != APIStatus.OK:
                 logger.error(f"Failed to get embedding for {item[:100] + '...'!r} Reason: {resp.error}")
+                failed.append(item)
 
             else:
                 futures.extend([
@@ -234,7 +287,7 @@ async def chunking_and_embedding(
     else:
         raise ValueError("Invalid input type; Expecting str or list of str, got {}".format(type(url_or_texts)))
 
-    counter.total = len(futures) * 3
+    counter.total = len(futures) * 4 + len(failed)
 
     for future in asyncio.as_completed(futures):
         try:
@@ -244,6 +297,11 @@ async def chunking_and_embedding(
         except Exception as err:
             counter.fails += 1
             logger.error(f"Exception raised while embedding triplet: {err}")
+    
+    async for item in embedd_normal_text(failed, model_use):
+        item: GraphEmbeddedItem
+        yield item
+    
 
 _running_tasks = set([])
 
@@ -323,7 +381,8 @@ async def inspect_by_file_identifier(file_identifier: str) -> CollectionInspecti
     it = milvus_cli.query_iterator(
         collection_name=get_default_embedding_model().identity(),
         filter=f"reference == {file_identifier!r}",
-        output_fields=["hash"]
+        output_fields=["hash"],
+        batch_size=1000 * 10
     )
     
     hashs = set([])
@@ -394,9 +453,15 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
                 ))
 
         for url in req.file_urls:
+            try:
+                local_filepath = await download_file_v2(url, tmp_dir)
+            except Exception as err:
+                logger.error(f"Failed to download {url} to read locally")
+                continue
+
             futures.append(asyncio.ensure_future(
                 smaller_task(
-                    url, kb, model_use, 
+                    local_filepath, kb, model_use, 
                     file_identifier=url,
                     request_identifier=req.ref
                 )
@@ -404,10 +469,16 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
             identifers.append(url)
 
         if len(futures) > 0:
-            results = await asyncio.gather(*futures)
+            results = await asyncio.gather(*futures, return_exceptions=True)
 
-            n_chunks = sum([r[0] for r in results])
-            fails_count = sum([r[1] for r in results])
+            for i, result in enumerate(results):
+                if isinstance(result, Exception):
+                    logger.error(f"Subtask {i} (out of {len(results)}) failed with error {result}")
+
+                else:
+                    total, fails = result
+                    n_chunks += total
+                    fails_count += fails
 
         logger.info(f"(overall) Inserted {n_chunks - fails_count} items to {kb} (collection: {model_use.identity()});")
 
@@ -448,7 +519,7 @@ def resume_pending_tasks():
     logger.info(f"Found {len(handler.get_all())} pending tasks")
     pending_tasks = handler.get_all()
 
-    for task in pending_tasks:
+    for task in pending_tasks[::-1]:
         if task.id in _running_tasks:
             continue
 
@@ -461,7 +532,6 @@ def resume_pending_tasks():
                 "is_re_submit": True
             }
         )
-        break
 
 async def get_collection_num_entities(collection_name: str) -> int:
     cli = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)
@@ -547,7 +617,7 @@ def deduplicate_task():
                     kb=item["kb"],
                     head=item["head"],
                     tail=item["tail"],
-                    ref=item["ref"]
+                    ref=item["reference"]
                 )
 
                 if item_key not in first_observation:
@@ -576,7 +646,7 @@ async def get_sample(kb: str, k: int) -> List[QueryResult]:
     model_identity = embedding_model.identity()
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
 
-    relational_kb = kb + const.RELATION_SUFFIX
+    relational_kb = kb # + const.RELATION_SUFFIX
 
     results = await sync2async(cli.query)(
         model_identity,
@@ -623,6 +693,7 @@ async def drop_kb(kb: str):
     logger.info(f"Deleted all data for kb {kb}")
     return removed_count
 
+@log_execution_time
 @redis_kit.cache_for(interval_seconds=300 // 5) # seconds
 async def run_query(req: QueryInputSchema) -> List[QueryResult]:
     if len(req.kb) == 0 or req.top_k <= 0:
@@ -630,13 +701,8 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
 
     embedding_model = get_default_embedding_model()
     model_identity = embedding_model.identity()
-    query_embedding = await mk_cog_embedding(req.query, embedding_model)
-    
-    cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
-    row_count = await get_collection_num_entities(model_identity)
 
-    if row_count == 0:
-        return []
+    logger.info(f"Searching for: {req.query!r} from {model_identity} [kbs={req.kb}; top_k={req.top_k}; threshold={req.threshold}]")
 
     entity_kb = [
         kb + const.ENTITY_SUFFIX 
@@ -652,16 +718,20 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
 
     # Extract named entities from the query
     resp  = await get_gk().extract_named_entities(req.query)
-    
+    logger.info(f"Extracted NER: {resp.result}")
+
     if resp.status != APIStatus.OK:
         logger.warning(f"No entities extracted from the given query. Message: {resp.error}")
 
     ner_query_list = resp.result or []
+    cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST) 
 
     if len(ner_query_list) > 0:
         res = await sync2async(cli.search)(
             collection_name=model_identity,
-            data=await mk_cog_embedding(ner_query_list, embedding_model),
+            data=await mk_cog_embedding_retry_wrapper_priotized(
+                ner_query_list, embedding_model
+            ),
             kb_filter=f"kb in {entity_kb}",
             anns_field="embedding",
             output_fields=["head", "tail"],
@@ -681,11 +751,25 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
         nodes = list(set(nodes))
         filter_str += f" and (head in {nodes} or tail in {nodes})"
 
+    query_embedding = await mk_cog_embedding_retry_wrapper_priotized(
+        req.query, embedding_model
+    )
+
     res = await sync2async(cli.search)(
         collection_name=model_identity,
         data=query_embedding,
         filter=filter_str,
-        limit=min(req.top_k, row_count),
+        limit=max(req.top_k, 1),
+        anns_field="embedding",
+        output_fields=["id", "content", "reference", "hash"],
+        search_params={"params": {"radius": req.threshold}},
+    )
+
+    res_raw = await sync2async(cli.search)(
+        collection_name=model_identity,
+        data=query_embedding,
+        filter=f"kb in {req.kb}",
+        limit=max(req.top_k, 1),
         anns_field="embedding",
         output_fields=["id", "content", "reference", "hash"],
         search_params={"params": {"radius": req.threshold}},
@@ -697,6 +781,26 @@ async def run_query(req: QueryInputSchema) -> List[QueryResult]:
             for item in res[0]
         }.values()
     )
+    
+    extended_hits = list(
+        {
+            item['entity']['hash']: item 
+            for item in res_raw[0]
+        }.values()
+    )
+    
+    m = {
+        e['entity']['hash']: i
+        for i, e in enumerate(hits)
+    }
+    
+    for hit in extended_hits:
+        if hit['entity']['hash'] in m:
+            index = m[hit['entity']['hash']]
+            hits[index]['distance'] = (hit['distance'] + hits[index]['distance']) / 2
+            continue
+
+        hits.append(hit)
 
     for i in range(len(hits)):
         hits[i]['score'] = estimate_ip_from_distance(

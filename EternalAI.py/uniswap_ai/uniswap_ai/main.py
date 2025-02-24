@@ -2,9 +2,10 @@ import decimal
 import logging
 import time
 import os
+import simplejson as json
 
 from dotenv import load_dotenv
-from uniswap_ai.const import RPC_URL, BSC_CHAIN_ID, BASE_CHAIN_ID
+from uniswap_ai.const import RPC_URL, BSC_CHAIN_ID, BASE_CHAIN_ID, ETH_CHAIN_ID, V1, V2
 from uniswap_ai.uniswap_ai import UniSwapAI, SwapReq
 from uniswap_ai.uniswap_ai_inference import HybridModelInference, InferenceProcessing, AgentInference
 
@@ -16,13 +17,13 @@ def call_uniswap(private_key: str, content: str):
     logging.info(f"call uniswap with content {content}")
     try:
         uniswap_obj = UniSwapAI()
-        # json_data = json.loads(content)
-        # req = SwapReq(**json_data)
-        req = SwapReq(
-            "0x0000000000000000000000000000000000000000",
-            decimal.Decimal("0.1"),
-            "0x7d29a64504629172a429e64183d6673b9dacbfce",
-            decimal.Decimal("0.1"))
+        json_data = json.loads(content)
+        req = SwapReq(**json_data)
+        # req = SwapReq(
+        #     "0x0000000000000000000000000000000000000000",
+        #     decimal.Decimal("0.1"),
+        #     "0x7d29a64504629172a429e64183d6673b9dacbfce"
+        # )
 
         tx_swap = uniswap_obj.swap_v3(private_key, req)
     except Exception as e:
@@ -33,12 +34,16 @@ def call_uniswap(private_key: str, content: str):
 
 
 def process_infer(chain_id: str, tx_hash: str, rpc: str, worker_address: str):
+    if chain_id not in V1 and chain_id not in V2:
+        logging.error(f'{chain_id} is not support')
+        return None
+
     infer_processing = InferenceProcessing()
-    infer_id = infer_processing.get_infer_id(worker_hub_address=worker_address, tx_hash=tx_hash, rpc=rpc)
+    infer_id = infer_processing.get_infer_id(worker_hub_address=worker_address, tx_hash_hex=tx_hash, rpc=rpc)
     logging.info(f"infer id: {infer_id}")
 
     result = ""
-    if chain_id == BASE_CHAIN_ID:
+    if chain_id in V1:
         while (True):
             try:
                 result = infer_processing.get_assignments_by_inference(worker_hub_address=worker_address,
@@ -48,7 +53,7 @@ def process_infer(chain_id: str, tx_hash: str, rpc: str, worker_address: str):
             except Exception as e:
                 logging.info(f'Can not get result for inference, try again')
                 time.sleep(30)
-    elif chain_id == BSC_CHAIN_ID:
+    elif chain_id in V2:
         while (True):
             try:
                 result = infer_processing.get_inference_by_inference_id(worker_hub_address=worker_address,
@@ -58,6 +63,9 @@ def process_infer(chain_id: str, tx_hash: str, rpc: str, worker_address: str):
             except Exception as e:
                 logging.info(f'Can not get result for inference, try again')
                 time.sleep(30)
+    else:
+        logging.error(f'{chain_id} is not support')
+        return None
     if result is not None:
         logging.info(f'result: {result}')
     else:

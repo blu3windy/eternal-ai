@@ -205,6 +205,27 @@ class GameRedisCache(object):
                 key, json.dumps(response_dict), ex=self.fact_check_expiry
             )
 
+    def reset_games_status_impl(self, status_from: str, status_to: str) -> int:
+        """Reset all games from one status to another.
+
+        Args:
+            status_from: Current status to match
+            status_to: New status to set
+
+        Returns:
+            Number of games updated
+        """
+        count = 0
+        running_games = self.get_running_games()
+        for tweet_id in [
+            t.decode() if isinstance(t, bytes) else t for t in running_games
+        ]:
+            current_status = self.get_game_status(tweet_id)
+            if current_status == status_from:
+                self.set_game_status(tweet_id, status_to)
+                count += 1
+        return count
+
 
 class ShadowReplyRedisCache(object):
 
