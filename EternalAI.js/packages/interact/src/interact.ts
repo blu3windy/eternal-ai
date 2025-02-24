@@ -2,7 +2,7 @@ import * as ethers from 'ethers';
 import { InferPayload } from './types';
 // import { CHAIN_MAPPING } from './constants';
 import * as methods from './methods';
-import { ChainId } from './methods/infer/types';
+import { CHAIN_MAPPING, ChainId } from './constants';
 
 class Interact {
   private _wallet: ethers.Wallet;
@@ -16,13 +16,12 @@ class Interact {
   }
 
   private getProvider(chainId: ChainId) {
-    // const rpcUrl = CHAIN_MAPPING[chainId];
-    // if (!rpcUrl) {
-    //   throw new Error(`Unsupported chainId: ${chainId}`);
-    // }
+    const rpcUrl = CHAIN_MAPPING[chainId];
+    if (!rpcUrl) {
+      throw new Error(`Unsupported chainId: ${chainId}`);
+    }
 
-    // return new ethers.providers.JsonRpcProvider(rpcUrl);
-    return new ethers.providers.JsonRpcProvider('https://base.llamarpc.com');
+    return new ethers.providers.JsonRpcProvider(rpcUrl);
   }
 
   public async infer(payload: InferPayload) {
