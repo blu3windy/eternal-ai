@@ -1394,7 +1394,7 @@ func (s *Service) PreviewStreamAgentSystemPromptV1(ctx context.Context, writerRe
 					return
 				}
 				writerResponse.Flush()
-				time.Sleep(2 * time.Second)
+				time.Sleep(5 * time.Second)
 			}
 		}
 	}
