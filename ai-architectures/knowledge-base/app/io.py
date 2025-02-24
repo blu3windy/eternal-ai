@@ -29,7 +29,7 @@ async def export_collection_data(
     include_embedding=True,
     include_identity=False
 ) -> str:
-    fields_output = ['content', 'reference', 'hash']
+    fields_output = ['content', 'reference', 'hash', 'head', 'tail']
 
     if include_embedding:
         fields_output.append('embedding')
@@ -39,7 +39,7 @@ async def export_collection_data(
 
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)
 
-    if not cli.has_collection(collection):
+    if not await sync2async(cli.has_collection)(collection):
         raise Exception(f"Collection {collection } not found")
 
     logger.info(f"Exporting {filter_expr} from {collection} to {workspace_directory}...")
@@ -48,7 +48,7 @@ async def export_collection_data(
         collection,
         filter=filter_expr,
         output_fields=fields_output,
-        batch_size=100
+        batch_size=1000 * 10
     )
 
     meta, vec = [], []
@@ -63,7 +63,11 @@ async def export_collection_data(
         
         scanned += len(batch)
 
-        h = [e['hash'] for e in batch]
+        h = [
+            '{}{}{}{}'.format(e['hash'], e['head'], e['tail'], e.get('kb', '')) 
+            for e in batch
+        ]
+
         mask = [True] * len(batch)
         removed = 0
 

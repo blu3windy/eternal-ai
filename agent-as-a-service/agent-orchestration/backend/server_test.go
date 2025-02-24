@@ -3,7 +3,6 @@ package main_test
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -66,15 +65,15 @@ func Test_JOB(t *testing.T) {
 }
 
 func Test_UTIL(t *testing.T) {
-	// ts.JobScanRepliesByLaunchpadTweetID(context.Background())
-	resp := map[string]interface{}{
-		"method": "getUserByUsername",
-		"params": map[string]interface{}{
-			"username": "Uniswap",
-		},
-	}
-	jsonString, _ := json.Marshal(resp)
-	ts.IpfsUploadDataForName(context.Background(), "infra_result_1", []byte(jsonString))
+	// ts.JobCreateTokenInfo(context.Background())
+	// resp := map[string]interface{}{
+	// 	"method": "getUserByUsername",
+	// 	"params": map[string]interface{}{
+	// 		"username": "Uniswap",
+	// 	},
+	// }
+	// jsonString, _ := json.Marshal(resp)
+	// ts.IpfsUploadDataForName(context.Background(), "infra_result_1", []byte(jsonString))
 }
 
 func Test_SRV(t *testing.T) {

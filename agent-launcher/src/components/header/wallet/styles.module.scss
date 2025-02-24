@@ -1,0 +1,237 @@
+.wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  .menuList {
+    padding: 16px;
+    min-width: 250px;
+    border-radius: 8px !important;
+    border: 1px solid #fff !important;
+    background: #202137 !important;
+    position: relative;
+    font-family: var(--font-inter) !important;
+
+    * {
+      font-family: var(--font-inter) !important;
+    }
+
+    --menu-bg: transparent !important;
+
+    &::before {
+      content: '';
+      background-color: transparent;
+      height: 10px;
+      position: absolute;
+      top: -10px;
+      width: 100%;
+      left: 0;
+    }
+  }
+
+  .menusAction {
+    * {
+      font-size: 12px !important;
+      font-weight: 700 !important;
+      line-height: 14px !important;
+      text-align: left;
+      font-family: var(--font-inter) !important;
+    }
+  }
+
+  .menusActionMobile {
+    //background-color: white;
+    //position: absolute;
+  }
+
+  .connect {
+    font-size: 12px !important;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 140%;
+    text-transform: uppercase;
+    font-family: var(--font-inter) !important;
+
+    &__white {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(black, 0.3);
+      color: white !important;
+      backdrop-filter: blur(12px) !important;
+
+      svg path {
+        stroke: white !important;
+      }
+    }
+
+    &__black {
+      background: #f8f9fa;
+      border: 1px solid #e5e7eb;
+      color: black !important;
+    }
+
+    svg {
+      path {
+        stroke: #000;
+      }
+    }
+  }
+}
+
+.userInfo__desktop {
+  position: relative;
+
+  .dropMenu_list {
+    margin-top: 27px;
+    width: 284px;
+    background: white;
+    position: absolute;
+    right: 0;
+    list-style: none;
+    display: flex;
+    border-radius: 8px;
+    flex-direction: column;
+    border: 1px solid rgba(black, 0.2);
+    top: 100%;
+    overflow: hidden;
+    backdrop-filter: blur(12px) !important;
+
+    &.dropMenu_list__dark {
+      background: #101216;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      // backdrop-filter: blur(12px) !important;
+
+      svg,
+      span {
+        filter: invert(100%);
+      }
+    }
+  }
+
+  .menuItem {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 20px;
+    min-height: 48px;
+    max-height: 48px;
+
+    &:hover {
+      opacity: 0.75;
+    }
+
+    .menuItem__icon {
+      filter: invert(100%);
+    }
+
+    .menuItem__label {
+      color: black;
+      display: flex;
+      align-items: center;
+      text-transform: uppercase;
+      justify-content: space-between;
+      cursor: pointer;
+      padding-left: 12px;
+    }
+
+    &__copy {
+      display: inline-flex;
+      gap: 4px;
+
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: 140%;
+      text-transform: uppercase;
+      background: var(--gradient-button,
+              linear-gradient(90deg, #ff8008 0%, #ffc837 100%));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    &__disconnect {
+      // background: #ffffff12;
+      background: #f6f6f6;
+
+      // margin-top: 12px;
+
+      .menuItem__label {
+        opacity: 0.5;
+      }
+
+      .menuItem__icon {
+        opacity: 0.5;
+      }
+    }
+
+    &__nakaWallet {
+      display: flex;
+      flex-direction: column;
+      min-height: unset;
+      max-height: unset;
+      align-items: flex-start;
+      padding-left: 24px;
+
+      &__label {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+
+        span {
+          font-size: 12px;
+          font-weight: 500;
+          line-height: 16.8px;
+          text-align: left;
+          color: #5b5b5b;
+        }
+      }
+
+      &__value {
+        span {
+          color: #000;
+          font-size: 18px;
+          font-weight: 500;
+          line-height: 25.2px;
+          text-align: left;
+        }
+      }
+    }
+  }
+}
+
+.wallets {
+  display: flex;
+  gap: 4px;
+  height: 40px;
+  overflow: hidden;
+  // padding: 2px;
+  width: max-content;
+
+  * {
+    //font-family: var(--font-jetbrains_mono);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: calc(15 / 14);
+    text-align: center;
+  }
+
+  .wallets__item {
+    border-radius: 8px;
+    padding: 10px 16px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  &__trading_connect {
+    border-radius: 8px !important;
+    padding: 12px 18px !important;
+    background: #000 !important;
+    display: flex;
+    flex-direction: row;
+    p {
+      color: white !important;
+      font-size: 14px !important;
+      font-weight: 400 !important;;
+    }
+  }
+}
