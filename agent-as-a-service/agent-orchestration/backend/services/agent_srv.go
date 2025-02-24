@@ -1051,7 +1051,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		}
 	}()
 	idRequest := time.Now().UnixMicro()
-	retrieveQuery, errGenerateQuery, conversation := s.GenerateKnowledgeQuery(messages)
+	retrieveQuery, errGenerateQuery, conversation := s.GenerateKnowledgeQuery(agentModel, messages)
 	if errGenerateQuery != nil {
 		errChan <- errs.NewError(errors.New("ERROR_GENERATE_QUERY"))
 		return
@@ -1196,8 +1196,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	s.openais["Agent"].CallStreamOnchainEternalLLM(ctx, url, apiKey, llmRequest, outputChan, errChan, doneChan)
 }
 
-func (s *Service) GenerateKnowledgeQuery(histories []openai2.ChatCompletionMessage) (*string, error, string) {
-	baseModel := "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
+func (s *Service) GenerateKnowledgeQuery(baseModel string, histories []openai2.ChatCompletionMessage) (*string, error, string) {
 	url := s.conf.AgentOffchainChatUrl
 	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
