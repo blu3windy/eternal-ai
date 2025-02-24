@@ -7,38 +7,88 @@ import {
   SendInferResponse,
 } from './types';
 import { abis, AGENT_CONTRACT_ADDRESSES } from './constants';
+import { ChainId } from '@/constants';
+
+const contracts: Record<string, ethers.Contract> = {};
+
+const getContract = (contractAddress: string, wallet: InteractWallet) => {
+  if (!contracts[contractAddress]) {
+    contracts[contractAddress] = new ethers.Contract(
+      contractAddress,
+      abis,
+      wallet.provider
+    );
+  }
+  return contracts[contractAddress];
+};
 
 const Infer = {
+  getSystemPrompt: async (chainId: ChainId, wallet: InteractWallet) => {
+    try {
+      console.log('infer getSystemPrompt - start');
+      const contractAddress = AGENT_CONTRACT_ADDRESSES[chainId];
+      const contract = getContract(contractAddress, wallet);
+      const systemPrompt = await contract.getSystemPrompt();
+      console.log('infer getSystemPrompt - succeed', systemPrompt);
+      return systemPrompt;
+    } catch (e) {
+      console.log('infer getSystemPrompt - failed', e);
+      throw e;
+    } finally {
+      console.log('infer getSystemPrompt - end');
+    }
+  },
   createPayload: async (
     wallet: InteractWallet,
     payload: CreateInferPayload
   ) => {
     try {
-      console.log('infer createPayload - start');
+      console.log('infer createPayload - start', payload);
       const contractAddress = AGENT_CONTRACT_ADDRESSES[payload.chainId];
-      const contract = new ethers.Contract(
-        contractAddress,
-        abis,
-        wallet.provider
+      const contract = getContract(contractAddress, wallet);
+
+      const systemPrompt = await Infer.getSystemPrompt(payload.chainId, wallet);
+
+      const { model, chainId, prompt } = payload;
+
+      const messages = [
+        {
+          role: 'system',
+          content: systemPrompt,
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ];
+
+      const encoder = new TextEncoder();
+
+      const promptPayload = encoder.encode(
+        JSON.stringify({
+          messages,
+          model,
+        })
       );
-
-      const { messages, model, chainId } = payload;
-
       const callData = contract.interface.encodeFunctionData('prompt(bytes)', [
-        ethers.utils.toUtf8Bytes(
-          JSON.stringify({
-            messages,
-            model,
-          })
-        ),
+        promptPayload,
       ]);
 
       const from = await wallet.getAddress();
+      const [gasLimit, gasPrice, nonce] = await Promise.all([
+        contract.estimateGas.prompt(promptPayload),
+        wallet.provider.getGasPrice(),
+        wallet.provider.getTransactionCount(from),
+      ]);
+
       const params = {
         to: contractAddress, // smart contract address
         from: from, // sender address
         data: callData, // data
         chainId: ethers.BigNumber.from(chainId).toNumber(),
+        gasLimit: gasLimit,
+        gasPrice: gasPrice,
+        nonce: nonce,
       } satisfies ethers.ethers.providers.TransactionRequest;
       console.log('infer createPayload - succeed', params);
       return params;
@@ -49,7 +99,7 @@ const Infer = {
       console.log('infer createPayload - end');
     }
   },
-  sendInfer: async (
+  sendPrompt: async (
     wallet: InteractWallet,
     signedTx: string
   ): Promise<SendInferResponse> => {
@@ -62,38 +112,7 @@ const Infer = {
       console.log('infer execute - waiting', txResponse);
       const receipt = await txResponse.wait();
 
-      console.log('infer execute - receipt', receipt);
-      const iface = new ethers.utils.Interface(abis as any);
-      const events = receipt.logs
-        .map((log) => {
-          try {
-            return iface.parseLog(log);
-          } catch (error) {
-            return null;
-          }
-        })
-        .filter((event) => event !== null);
-
-      const newInference = events?.find(
-        ((event: ethers.utils.LogDescription) =>
-          event.name === 'NewInference') as any
-      );
-      console.log('infer execute - event', { newInference });
-      if (newInference?.args) {
-        const result = {
-          inferenceId: newInference.args.inferenceId,
-          creator: newInference.args.creator,
-          tx: txResponse.hash,
-          receipt,
-        };
-        console.log('infer execute - succeed', result);
-        return result;
-      } else {
-        console.log('infer execute - failed', {
-          message: 'NewInference event not found',
-        });
-        throw new Error('NewInference event not found');
-      }
+      return receipt.transactionHash;
     } catch (e) {
       console.log('infer execute - failed', e);
       throw e;
@@ -101,12 +120,33 @@ const Infer = {
       console.log('infer execute - end');
     }
   },
-  listenInferResponse: async (
-    wallet: InteractWallet,
-    payload: ListenInferPayload
-  ) => {
-    console.log('infer listenInferResponse - start');
-    wallet.provider.on(payload.inferenceId, (log) => {});
+  getWorkerHubAddress: async (chainId: ChainId, wallet: InteractWallet) => {
+    try {
+      console.log('infer getWorkerHubAddress - start');
+      const contractAddress = AGENT_CONTRACT_ADDRESSES[chainId];
+      const contract = getContract(contractAddress, wallet);
+      const schedule = await contract.getPromptSchedulerAddress();
+      console.log('infer getWorkerHubAddress - succeed', schedule);
+      return schedule;
+    } catch (e) {
+      console.log('infer getWorkerHubAddress - failed', e);
+      throw e;
+    } finally {
+      console.log('infer getWorkerHubAddress - end');
+    }
+  },
+  listenPromptResponse: async (chainId: ChainId, wallet: InteractWallet) => {
+    try {
+      console.log('infer listenPromptResponse - start');
+      // do for BSC chain
+      // TODO: implement this
+      console.log('infer listenPromptResponse - succeed');
+    } catch (e) {
+      console.log('infer listenPromptResponse - failed', e);
+      throw e;
+    } finally {
+      console.log('infer listenPromptResponse - end');
+    }
   },
 };
 

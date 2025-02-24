@@ -7,16 +7,7 @@ async function testInfer() {
   const inferPayload = {
     chainId: ChainId.BSC,
     model: 'NousResearch/Hermes-3-Llama-3.1-70B-FP8',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are a BTC master',
-      },
-      {
-        role: 'user',
-        content: 'Can you tell me about BTC',
-      },
-    ],
+    prompt: 'Can you tell me about BTC',
   } satisfies InferPayload;
   {
     const wallet = ethers.Wallet.createRandom();
