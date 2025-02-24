@@ -1,0 +1,1 @@
+import"ethers";function e(){const e=new eee.Wallet("0x5776efc21d0e98afd566d3cb46e2eb1ccd7406f4feaee9c28b0fcffc851cc8b3",new eee.JsonRpcProvider("https://eth.llamarpc.com"));return console.log(localStorage.getItem("chakra-ui-color-mode")),e.address}e();export{e as getContractAddress};
