@@ -15,6 +15,16 @@ func GetSystemPromptFromLLMMessage(messages []openai2.ChatCompletionMessage) str
 
 	return systemPrompt
 }
+func GetQuestionFromLLMMessage(messages []openai2.ChatCompletionMessage) string {
+	question := ""
+	for _, message := range messages {
+		if message.Role == openai2.ChatMessageRoleUser {
+			question = message.Content
+		}
+	}
+
+	return question
+}
 
 func UpdateSystemPromptInLLMRequest(message []openai2.ChatCompletionMessage, systemPrompt string) []openai2.ChatCompletionMessage {
 	for i, m := range message {
