@@ -1151,7 +1151,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	}()
 	logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("analyzed Result", analysedResult))
 	options := map[string]interface{}{}
-	userPrompt := fmt.Sprintf("## Task:\n\nYour goal is to answer user questions only using the information available in the conversation history and relevant information from the website. Do not speculate, assume, or generate responses beyond what is explicitly given. If the conversation lacks sufficient detail, respond as an ETHDenver assistant while maintaining a professional, helpful, and informative tone.\n\n## Context:\n\nETHDenver is a major Web3 and blockchain-focused event, featuring hackathons, talks, workshops, and networking opportunities. Attendees may ask about schedules, speakers, sponsors, hackathon rules, travel logistics, and event-specific policies. Your responses must be strictly relevant to ETHDenver and avoid unrelated discussions.\n\n## Response Format:\n\n- Analyze the Context: Before answering, check the conversation history and relevant information from the website to determine if sufficient information exists.\n- Clarify if Needed: If the user's query is unclear or missing key details, prompt them to provide more specifics instead of making assumptions.\n- Provide a Focused Answer: Respond only with ETHDenver-relevant information, ensuring accuracy and conciseness.\n- Handle Missing Information Gracefully: If the necessary details are unavailable, politely inform the user and, if appropriate, suggest official sources for more information.\n\n## Input Template:\n\nConversation History:\n%v\n\nRelevant information from the Website:\n%v\n\nFinal Answer:\n(Provide a concise, ETHDenver-relevant response following the outlined guidelines.)\n",
+	userPrompt := fmt.Sprintf("Generate a response to the user's query based strictly on the conversation history and the provided information.\n\n### Guidelines:\n- The response must be concise and directly relevant.\n- Do not introduce any external knowledge.\n- Ensure clarity and alignment with ETHDenver-related context.\n\n### Conversation History:\n%v\n\n### Relevant Information from the Website:\n%v\n\n### Final Answer:\n(Provide a precise, ETHDenver-relevant response following these guidelines.)\n",
 		conversation, analysedResult)
 	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
@@ -1163,10 +1163,6 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 			Role:    openai2.ChatMessageRoleUser,
 			Content: userPrompt,
 		},
-	}
-	options = map[string]interface{}{
-		"temperature": 0.7,
-		"max_tokens":  4096,
 	}
 
 	url := s.conf.AgentOffchainChatUrl
@@ -1182,7 +1178,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		Stream:      true,
 		Messages:    payloadAgentChat,
 		Model:       agentModel,
-		Temperature: 0.7,
+		Temperature: 0.01,
 		MaxTokens:   4096,
 		Seed:        &seedAnswer,
 		Metadata: map[string]string{
@@ -1207,7 +1203,7 @@ func (s *Service) GenerateKnowledgeQuery(histories []openai2.ChatCompletionMessa
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
 
-	today := time.Now().Format("2006-01-02")
+	today := time.Now().Format("Jan 02, 2006")
 	conversation := fmt.Sprintf("Remember that today is: %v\n\n", today)
 	for _, item := range histories {
 		if item.Role == openai2.ChatMessageRoleSystem {
@@ -1242,7 +1238,10 @@ func (s *Service) GenerateKnowledgeQuery(histories []openai2.ChatCompletionMessa
 			time.Sleep(time.Second)
 		}
 
-		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{})
+		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{
+			"temperature": 0.01,
+			"max_tokens":  4096,
+		})
 		if err != nil || stringResp == "" {
 			continue
 		}
@@ -1279,7 +1278,7 @@ func (s *Service) AnalyseSearchResults(baseModel string, systemPrompt string, qu
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
 
-	generateQueryPrefix := "Analyze the search results below and extract the most critical insights directly relevant to the query.\n\n### Instructions:\n- Carefully review the search results.\n- Summarize only the most essential and relevant key points.\n- Ensure the summary is concise, precise, and highly relevant to the query.\n\n### Query:\n%v### Search Results:\n%v\n\n### Key Insights:\n"
+	generateQueryPrefix := "Analyze the search results below and extract only the most critical insights directly relevant to the question.\n\n### Instructions:\n- Carefully review the search results for accuracy in time, location, and context.\n- Extract only the most essential and directly relevant key points.\n- Ensure the summary is concise, precise, and strictly aligned with the query.\n- Avoid assumptions, speculation, or external knowledge.\n- Maintain consistency and exclude unnecessary details.\n\n### Question:\n%v\n\n### Search Results:\n%v\n### Key Insights:\n"
 	userPrompt := fmt.Sprintf(generateQueryPrefix, query, searchResult)
 	messages := []openai2.ChatCompletionMessage{
 		{
@@ -1301,7 +1300,7 @@ func (s *Service) AnalyseSearchResults(baseModel string, systemPrompt string, qu
 		}
 
 		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{
-			"temperature": 0.7,
+			"temperature": 0.01,
 			"max_tokens":  4096,
 		})
 		if err != nil || stringResp == "" {
