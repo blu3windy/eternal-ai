@@ -41,10 +41,19 @@ class Interact {
       const signedTx = await signer.signTransaction(params);
 
       console.log('infer call sendInfer', signedTx);
-      const inference = await methods.Infer.sendInfer(signer, signedTx);
+      const sendPromptTxHash = await methods.Infer.sendPrompt(signer, signedTx);
 
-      console.log('infer call listenInferResponse', inference);
-      const result = await methods.Infer.listenInferResponse(signer, inference);
+      console.log('infer call getWorkerHubAddress');
+      const workerHubAddress = await methods.Infer.getWorkerHubAddress(
+        payload.chainId,
+        signer
+      );
+
+      console.log('infer call listenInferResponse', sendPromptTxHash);
+      const result = await methods.Infer.listenPromptResponse(
+        payload.chainId,
+        signer
+      );
       console.log('infer - succeed', result);
       return result;
     } catch (e) {

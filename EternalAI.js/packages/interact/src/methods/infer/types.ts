@@ -9,14 +9,9 @@ export type Message = {
 export type CreateInferPayload = {
   model: string;
   chainId: ChainId;
-  messages: Message[];
+  prompt: string;
 };
 
-export type SendInferResponse = {
-  inferenceId: string;
-  creator: string;
-  tx: string;
-  receipt: ethers.providers.TransactionReceipt;
-};
+export type SendInferResponse = string;
 
 export type ListenInferPayload = SendInferResponse;
