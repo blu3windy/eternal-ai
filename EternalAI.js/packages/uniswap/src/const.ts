@@ -5,10 +5,25 @@ export const BASE_CHAIN_ID = "0x2105"
 export const V1 = [ETH_CHAIN_ID, BASE_CHAIN_ID]
 export const V2 = [BSC_CHAIN_ID]
 
+export const zeroAddress = '0x0000000000000000000000000000000000000000';
+
 export const RPC_URL: { [key: string]: string } = {
     ETH_CHAIN_ID: "https://eth.llamarpc.com",
-    BSC_CHAIN_ID: "https://bsc.llamarpc.com",
+    BSC_CHAIN_ID: "https://bsc-dataseed.binance.org/",
     BASE_CHAIN_ID: "https://base.llamarpc.com",
+}
+
+export const getRPC = (chain_id: string) => {
+    switch (chain_id) {
+        case ETH_CHAIN_ID:
+            return RPC_URL.ETH_CHAIN_ID;
+        case BSC_CHAIN_ID:
+            return RPC_URL.BSC_CHAIN_ID;
+        case BASE_CHAIN_ID:
+            return RPC_URL.BASE_CHAIN_ID;
+        default:
+            return RPC_URL.ETH_CHAIN_ID;
+    }
 }
 
 export const IPFS = "ipfs://"

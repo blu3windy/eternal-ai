@@ -1,5 +1,6 @@
 import {Web3} from "web3";
-import {AGENT_ABI, ETH_CHAIN_ID, IPFS, LIGHTHOUSE_IPFS, PROMPT_SCHEDULER_ABI, RPC_URL, WORKER_HUB_ABI} from "@/const";
+import {AGENT_ABI, ETH_CHAIN_ID, IPFS, LIGHTHOUSE_IPFS, PROMPT_SCHEDULER_ABI, RPC_URL, WORKER_HUB_ABI} from "./const";
+import {poaMiddleware, stringToBytes} from "./utils";
 
 export class InferenceResponse {
     result_uri: string
@@ -56,6 +57,15 @@ export class AgentInference {
             } else {
                 this.web3 = new Web3(RPC_URL.ETH_CHAIN_ID)
             }
+            this.web3.middleware = {
+                onion: {
+                    inject: async () => {
+                        const chain_id = await this.web3.eth.getChainId();
+                        this.web3.eth.sendTransaction = poaMiddleware({chain_id: chain_id})(this.web3.eth.sendTransaction);
+                    },
+                },
+            };
+            this.web3.middleware.onion.inject();
         }
     }
 
@@ -85,8 +95,9 @@ export class AgentInference {
         return ""
     }
 
-    get_worker_hub_address = async () => {
-        this.get_agent_address('')
+    get_worker_hub_address = async (agent_address: string, rpc: string) => {
+        this.create_web3(rpc)
+        this.get_agent_address(agent_address)
         const agent_contract = new this.web3.eth.Contract(AGENT_ABI, this.agent_address)
         return await agent_contract.methods.getPromptSchedulerAddress().call()
     }
@@ -99,13 +110,14 @@ export class AgentInference {
         this.create_web3(rpc)
         if (await this.web3.eth.net.isListening()) {
             this.get_agent_address(agent_address);
+            console.log("this.agent_address", this.agent_address)
             const account = this.web3.eth.accounts.privateKeyToAccount(private_key);
             this.web3.eth.accounts.wallet.add(account);
             const account_address = account.address
 
             const agent_contract = new this.web3.eth.Contract(AGENT_ABI, this.agent_address)
             const system_prompt = await this.get_system_prompt(agent_address, rpc)
-            console.log(`system_prompt: ${system_prompt}`)
+            // console.log(`system_prompt: ${system_prompt}`)
 
             const req = new LLMInferRequest()
             req.messages = [
@@ -114,16 +126,25 @@ export class AgentInference {
             ];
 
             const json_request = JSON.stringify(req)
-            const func = agent_contract.methods.agent_contract(json_request).encodeABI()
+            const func = agent_contract.methods.prompt(stringToBytes(json_request));
+            const gasPrice = await this.web3.eth.getGasPrice();
+            const gas = await func.estimateGas();
+            const nonce = await this.web3.eth.getTransactionCount(account.address);
             const transaction = {
                 from: account_address,
                 to: this.agent_address,
-                // gas: 2000000,
-                nonce: await this.web3.eth.getTransactionCount(account.address),
-                data: func,
+                gas: gas,
+                gaPrice: this.web3.utils.toWei("1", "gwei"),
+                nonce: nonce,
+                data: func.encodeABI(),
+                maxPriorityFeePerGas: this.web3.utils.toWei("1", "gwei"),
+                maxFeePerGas: this.web3.utils.toWei("1", "gwei")
             };
 
+            // console.log(transaction)
+
             const signedTransaction = await this.web3.eth.accounts.signTransaction(transaction, private_key);
+            console.log("----------------------")
             const tx = await this.web3.eth.sendSignedTransaction(signedTransaction.rawTransaction);
 
             const tx_receipt = await waitForTransactionReceipt(this.web3, tx.transactionHash);
@@ -167,7 +188,7 @@ export class InferenceProcessing {
 
     get_inference_by_inference_id = async (worker_hub_address: string, inference_id: number, rpc: string) => {
         this.create_web3(rpc);
-        if (await this.web3.ether.net.isListening()) {
+        if (await this.web3.eth.net.isListening()) {
             this.get_workerhub_address(worker_hub_address)
 
             const contract = new this.web3.eth.Contract(PROMPT_SCHEDULER_ABI, this.workerhub_address);
@@ -179,8 +200,11 @@ export class InferenceProcessing {
                     const result = await this.process_output_to_infer_response(bytesData);
                     if (result) {
                         return result;
+                    } else {
+                        return null;
                     }
                 } else {
+                    throw new Error(`waiting process inference ${inference_id}`)
                 }
             } catch (e) {
                 throw e;
@@ -226,23 +250,34 @@ export class InferenceProcessing {
 
     get_infer_id = async (worker_hub_address: string, tx_hash_hex: string, rpc: string) => {
         this.create_web3(rpc);
-        if (await this.web3.ether.net.isListening()) {
+        if (await this.web3.eth.net.isListening()) {
             console.log(`Get infer Id from tx ${tx_hash_hex}`)
             this.get_workerhub_address(worker_hub_address);
-            const tx_receipt = await this.web3.getTransactionReceipt(tx_hash_hex);
+            const tx_receipt = await this.web3.eth.getTransactionReceipt(tx_hash_hex);
             if (!tx_receipt || tx_receipt.status != 1) {
                 console.log("Transaction receipt not found.")
             } else {
                 const logs = tx_receipt.logs;
                 if (logs.length > 0) {
-                    const contract = this.web3.eth.contract(WORKER_HUB_ABI, this.workerhub_address);
+                    const contract = new this.web3.eth.Contract(WORKER_HUB_ABI, this.workerhub_address);
                     for (const log of logs) {
                         try {
-                            const event = contract.events.NewInference.decode(log.data, log.topics);
-                            const inferenceId = event.returnValues.inferenceId;
-                            console.log('Inference ID:', inferenceId);
-                            return inferenceId;
+                            const event = WORKER_HUB_ABI.find(event => (event.type === "event" && event.name === 'NewInference'))
+                            if (event) {
+                                const decoded = this.web3.eth.abi.decodeLog(
+                                    event.inputs,
+                                    log.data,
+                                    log.topics.slice(1)
+                                );
+                                // console.log("-------log.data", decoded);
+                                const inferenceId = decoded.inferenceId;
+                                // console.log('Inference ID:', inferenceId);
+                                return inferenceId;
+                            } else {
+                                throw new Error("No Infer Id")
+                            }
                         } catch (error) {
+                            continue;
                         }
                     }
                     throw new Error("No Infer Id")
