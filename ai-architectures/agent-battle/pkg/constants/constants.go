@@ -1,5 +1,7 @@
 package constants
 
+import "time"
+
 const (
 	FiberRequestTimeoutInSec         = 30
 	FiberRequestDownloadTimeoutInSec = 300
@@ -20,4 +22,7 @@ const (
 
 	// DefaultEthereumGasLimit is the default gas limit for Ethereum transfers
 	DefaultEthereumGasLimit = 30000
+
+	// MarkCompletedGameBufferTime is the buffer time to mark the game as completed, it is from the result updated time
+	MarkCompletedGameBufferTime = 15 * time.Minute
 )

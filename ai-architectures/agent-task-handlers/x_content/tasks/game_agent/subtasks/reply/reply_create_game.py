@@ -225,12 +225,29 @@ def _create_wallet_tweet(wallet_mapping, bet_time, timeout):
         hours=hours,
         minutes=minutes,
     )
+
+    wallet_tweet_list = []
+    wallet_tweet_list.append(wallet_tweet)
+
+    new_tweet = ""
+    user_count = 0
+    batching_username = 4
+
     for username, wallet in wallet_mapping.items():
-        wallet_tweet += f"{username}: {wallet}\n"
+        entry = f"{username}: {wallet}\n"
+        new_tweet += entry
+        user_count += 1
+        if user_count >= batching_username:
+            wallet_tweet_list.append(new_tweet.strip())
+            new_tweet = ""
+            user_count = 0
+    if new_tweet:
+        wallet_tweet_list.append(new_tweet.strip())
+
     logger.info(
         f"[_create_wallet_tweet] Created wallet announcement tweet with {len(wallet_mapping)} agent mappings"
     )
-    return wallet_tweet
+    return wallet_tweet_list
 
 
 async def _post_wallet_tweet(log: ReasoningLog, tweet_id, wallet_tweet):
@@ -301,8 +318,16 @@ async def _handle_create_game_request(log: ReasoningLog, _tweet_object):
             return None, err
 
         # Create and post wallet tweet
-        wallet_tweet = _create_wallet_tweet(wallet_mapping, bet_time, timeout)
-        return game_info, await _post_wallet_tweet(log, tweet_id, wallet_tweet)
+        # wallet_tweet = _create_wallet_tweet(wallet_mapping, bet_time, timeout)
+        # return game_info, await _post_wallet_tweet(log, tweet_id, wallet_tweet)
+
+        wallet_tweet_list = _create_wallet_tweet(
+            wallet_mapping, bet_time, timeout
+        )
+        for wallet_tweet in wallet_tweet_list:
+            await _post_wallet_tweet(log, tweet_id, wallet_tweet)
+
+        return game_info, None
 
     except Exception as err:
         traceback.print_exc()

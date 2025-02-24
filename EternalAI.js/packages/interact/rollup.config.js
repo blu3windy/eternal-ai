@@ -33,7 +33,7 @@ module.exports = {
   plugins: [
     resolve(),
     commonjs(),
-    typescript({ tsconfig: './tsconfig.json' }),
+    typescript({ tsconfig: './build.tsconfig.json' }),
     terser(),
   ],
   external: Object.keys(pkg.peerDependencies || {}),

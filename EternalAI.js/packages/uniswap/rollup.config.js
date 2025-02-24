@@ -3,6 +3,7 @@ const commonjs = require('@rollup/plugin-commonjs');
 const typescript = require('@rollup/plugin-typescript');
 const { terser } = require('rollup-plugin-terser');
 const pkg = require('./package.json');
+import json from '@rollup/plugin-json';
 
 module.exports = {
   input: 'src/index.ts',
@@ -35,6 +36,7 @@ module.exports = {
     commonjs(),
     typescript({ tsconfig: './tsconfig.json' }),
     terser(),
+    json(),
   ],
   external: Object.keys(pkg.peerDependencies || {}),
 };

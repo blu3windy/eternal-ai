@@ -329,6 +329,39 @@ func (c OpenAI) CallStreamDirectlyEternalLLM(ctx context.Context, messages, mode
 	return
 }
 
+func (c OpenAI) CallStreamOnchainEternalLLM(ctx context.Context, baseUrl string, apiKey string, llmRequest openai.ChatCompletionRequest, outputChan chan *models.ChatCompletionStreamResponse, errChan chan error, doneChan chan bool) {
+	config := openai.DefaultConfig(apiKey)
+	baseUrl = strings.Replace(baseUrl, "/chat/completions", "", 1)
+	config.BaseURL = baseUrl
+	client := openai.NewClientWithConfig(config)
+
+	stream, err := client.CreateChatCompletionStream(
+		ctx,
+		llmRequest,
+	)
+	if err != nil {
+		errChan <- err
+		return
+	}
+	defer stream.Close()
+	for {
+		body, err := stream.RecvRaw()
+		if errors.Is(err, io.EOF) {
+			doneChan <- true
+			break
+		}
+		var response models.ChatCompletionStreamResponse
+		err = json.Unmarshal(body, &response)
+		if err != nil {
+			errChan <- fmt.Errorf("error when receive data from ai server: %v", err)
+			return
+		}
+		outputChan <- &response
+	}
+
+	return
+}
+
 func (c OpenAI) TestAgentPersinalityV1(messages, baseUrl string) (string, error) {
 	seed := models.RandSeed()
 	bodyReq := map[string]interface{}{
