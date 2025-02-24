@@ -43,7 +43,7 @@ class SwapReq:
                 self.token_in = ETH_ADDRESS
             else:
                 self.token_in = token_address
-                
+
         if self.token_out.lower() == "eth":
             self.token_out = ETH_ADDRESS
         else:
