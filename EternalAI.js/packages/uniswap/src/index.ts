@@ -1,0 +1,92 @@
+import {BSC_CHAIN_ID, RPC_URL, V1, V2} from "@/const";
+import {AgentInference, InferenceProcessing} from "@/inference";
+import {sleep} from "@/utils";
+// import * as dotenv from 'dotenv';
+
+
+// dotenv.config();
+export const call_uniswap = (private_key: string, content: string) => {
+    console.log(`call uniswap with content ${content}`)
+    const tx_swap = "";
+    return tx_swap;
+}
+
+
+export const process_infer = async (chain_id: string, tx_hash: string, rpc: string, worker_address: string) => {
+    if (V1.includes(chain_id) && V2.includes(chain_id)) {
+        console.log(`${chain_id} is not support`)
+        return null
+    }
+
+    const infer_processing = new InferenceProcessing();
+    const infer_id = await infer_processing.get_infer_id(worker_address, tx_hash, rpc);
+    console.log(`infer id: ${infer_id}`)
+
+    const result = "";
+    if (V1.includes(chain_id)) {
+        while (true) {
+            try {
+                const result = await infer_processing.get_assignments_by_inference(
+                    worker_address,
+                    infer_id,
+                    rpc)
+                return result
+            } catch (e) {
+                console.log('Can not get result for inference, try again')
+                await sleep(30);
+            }
+            break;
+        }
+    } else if (V2.includes(chain_id)) {
+        while (true) {
+            try {
+                const result = await infer_processing.get_inference_by_inference_id(
+                    worker_address,
+                    infer_id,
+                    rpc)
+            } catch (e) {
+                console.log('Can not get result for inference, try again')
+                await sleep(30);
+            }
+            break;
+        }
+    } else {
+        return null;
+    }
+
+    if (result) {
+        console.log(`result: ${result}`)
+    } else {
+        console.log('result: None')
+    }
+    return result
+}
+
+export const create_agent_infer = async (private_key: string, chain_id: string, agent_address: string, prompt: string) => {
+    const rpc = RPC_URL[chain_id]
+    const agent_infer = new AgentInference()
+    const tx_hash = await agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
+    console.log(`infer tx_hash: ${tx_hash}`)
+
+    const worker_hub_address = await agent_infer.get_worker_hub_address()
+    console.log(`worker_hub_address : ${worker_hub_address}`)
+
+    const content_response = await process_infer(chain_id, tx_hash, rpc, worker_hub_address)
+    if (content_response) {
+        const tx_swap = call_uniswap(private_key, content_response);
+        return tx_swap
+    } else {
+        return null
+    }
+}
+
+export const uni_swap_ai = async (args: any) => {
+    if (args.command == "agent-infer") {
+        create_agent_infer(
+            args.pk,
+            args.chain_id || BSC_CHAIN_ID,
+            args.agent_address,
+            args.prompt
+        )
+    }
+}

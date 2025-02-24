@@ -54,7 +54,7 @@ export class AgentInference {
             if (rpc != "") {
                 this.web3 = new Web3(rpc || Web3.givenProvider)
             } else {
-                this.web3 = new Web3(RPC_URL[ETH_CHAIN_ID])
+                this.web3 = new Web3(RPC_URL.ETH_CHAIN_ID)
             }
         }
     }
@@ -147,7 +147,7 @@ export class InferenceProcessing {
             if (rpc != "") {
                 this.web3 = new Web3(rpc || Web3.givenProvider)
             } else {
-                this.web3 = new Web3(RPC_URL[ETH_CHAIN_ID])
+                this.web3 = new Web3(RPC_URL.ETH_CHAIN_ID)
             }
         }
     }
@@ -161,9 +161,13 @@ export class InferenceProcessing {
         }
     }
 
-    get_assignments_by_inference = (worker_hub_address: string, inference_id: number, rpc: string) => {
+    get_assignments_by_inference = async (worker_hub_address: string, inference_id: string, rpc: string) => {
+        return null;
+    }
+
+    get_inference_by_inference_id = async (worker_hub_address: string, inference_id: number, rpc: string) => {
         this.create_web3(rpc);
-        if (this.web3.ether.net.isListening()) {
+        if (await this.web3.ether.net.isListening()) {
             this.get_workerhub_address(worker_hub_address)
 
             const contract = new this.web3.eth.Contract(PROMPT_SCHEDULER_ABI, this.workerhub_address);
@@ -191,6 +195,7 @@ export class InferenceProcessing {
         const str: string = decoder.decode(out);
         try {
             const result = InferenceResponse.fromJSON(str)
+            return result;
         } catch (e) {
             return null;
         }
@@ -201,7 +206,7 @@ export class InferenceProcessing {
         if (!infer_reponse) {
             return null
         } else {
-            if (infer_reponse.storage == "lighthouse-filecoint" || "ipfs://" in infer_reponse.result_uri) {
+            if (infer_reponse.storage == "lighthouse-filecoint" || infer_reponse.result_uri.includes("ipfs://")) {
                 const light_house = infer_reponse.result_uri.replace(IPFS, LIGHTHOUSE_IPFS)
                 const light_house_reponse = await fetch(light_house)
                 if (light_house_reponse.ok) {
@@ -219,9 +224,9 @@ export class InferenceProcessing {
         }
     }
 
-    get_infer_id = (worker_hub_address: string, tx_hash_hex: string, rpc: string) => {
+    get_infer_id = async (worker_hub_address: string, tx_hash_hex: string, rpc: string) => {
         this.create_web3(rpc);
-        if (this.web3.ether.net.isListening()) {
+        if (await this.web3.ether.net.isListening()) {
             console.log(`Get infer Id from tx ${tx_hash_hex}`)
             this.get_workerhub_address(worker_hub_address);
             const tx_receipt = await this.web3.getTransactionReceipt(tx_hash_hex);
