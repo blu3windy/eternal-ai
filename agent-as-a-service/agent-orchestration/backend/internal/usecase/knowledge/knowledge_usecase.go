@@ -531,9 +531,7 @@ func (uc *knowledgeUsecase) ScanKnowledgeBaseStatusPaymentReceipt(ctx context.Co
 	limit := 30
 	statuses := []models.KnowledgeBaseStatus{models.KnowledgeBaseStatusCrawlDataDone, models.KnowledgeBaseStatusPaymentReceipt}
 	for {
-		resp, err := uc.knowledgeBaseRepo.GetByStatuses(
-			ctx, statuses, offset, limit,
-		)
+		resp, err := uc.knowledgeBaseRepo.GetByStatuses(ctx, statuses, offset, limit)
 		if err != nil {
 			return
 		}
