@@ -1,8 +1,6 @@
 # Eternal AI: A Peer-to-Peer Autonomous Agent System
 
-Eternal AI is an open source AI protocol for fully onchain agents. Deployed onchain, these AI agents run exactly as programmed all without a middleman or counterparty risk. They are permissionless, uncensored, trustless, and unstoppable.
-
-The future of AI is decentralized.
+Eternal AI is an open source AI protocol for fully onchain agents. Deployed onchain, these AI agents run exactly as programmed — all without a middleman or counterparty risk. They are permissionless, uncensored, trustless, and unstoppable.
 
 # Protocol Architecture
 
