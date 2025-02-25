@@ -85,19 +85,6 @@ func (s *Service) DeployAgentUtilityUpgradeable(ctx context.Context, agentInfoID
 		if agentInfo.AgentType != models.AgentInfoAgentTypeUtility {
 			return errs.NewError(errs.ErrBadRequest)
 		}
-		err = s.CreateTokenInfo(ctx, agentInfo.ID)
-		if err != nil {
-			return errs.NewError(err)
-		}
-		agentInfo, err = s.dao.FirstAgentInfoByID(
-			daos.GetDBMainCtx(ctx),
-			agentInfoID,
-			map[string][]any{},
-			false,
-		)
-		if err != nil {
-			return errs.NewError(err)
-		}
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.SourceUrl != "" {
 			if agentInfo.MintHash == "" {
 				switch agentInfo.NetworkID {

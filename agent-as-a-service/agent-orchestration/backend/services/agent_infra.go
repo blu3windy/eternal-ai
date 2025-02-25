@@ -262,19 +262,6 @@ func (s *Service) DeployAgentRealWorld(ctx context.Context, agentInfoID uint) er
 		if agentInfo.AgentType != models.AgentInfoAgentTypeRealWorld {
 			return errs.NewError(errs.ErrBadRequest)
 		}
-		err = s.CreateTokenInfo(ctx, agentInfo.ID)
-		if err != nil {
-			return errs.NewError(err)
-		}
-		agentInfo, err = s.dao.FirstAgentInfoByID(
-			daos.GetDBMainCtx(ctx),
-			agentInfoID,
-			map[string][]any{},
-			false,
-		)
-		if err != nil {
-			return errs.NewError(err)
-		}
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.Worker != "" {
 			if agentInfo.MintHash == "" {
 				switch agentInfo.NetworkID {
