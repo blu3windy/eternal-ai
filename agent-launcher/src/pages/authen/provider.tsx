@@ -16,7 +16,6 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       }
    }, [isAuthenticated])
 
-   return (
   return (
     <AuthContext.Provider value={values}>
       {/* <HomeAuthen /> */}

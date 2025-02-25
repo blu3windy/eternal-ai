@@ -5,13 +5,14 @@ import FieldWrapInput from "./Field.WrapInput";
 import s from "./styles.module.scss";
 import cs from "clsx";
 import InputNumber from "rc-input-number";
+import { ethers } from "ethers";
 
 const FieldAmountFormik: React.FC<any> = ({
   form,
   field,
   step = 1,
   min = 1,
-  max = window.ethers.constants.MaxUint256,
+  max = ethers.constants.MaxUint256,
   placeholder,
   fieldChanged,
   rightComp,

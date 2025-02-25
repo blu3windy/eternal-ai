@@ -21,7 +21,7 @@
     font-style: normal;
     font-weight: 500;
     font-size: 12px;
-    color: var(--naka-text);
+    color: #000;
     margin-bottom: 8px;
   }
   :global .labelRightWrapper {
@@ -292,5 +292,24 @@
         // background-color: transparent;
       }
     }
+  }
+}
+
+.inputAmountContainer {
+  flex: 1;
+  :global {
+    .contentContainer {
+      border: none;
+      outline: none !important;
+    }
+    .rc-input-number {
+      width: 100%;
+      flex: 1;
+    }
+  }
+  input {
+    border: none;
+    outline: none !important;
+    background-color: transparent !important;
   }
 }
