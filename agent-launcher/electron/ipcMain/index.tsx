@@ -1,7 +1,7 @@
 import ipcMainKeyChain from "./keychain.ts";
 
 const runIpcMain = () => {
-    ipcMainKeyChain();
+   ipcMainKeyChain();
 }
 
 export default runIpcMain;

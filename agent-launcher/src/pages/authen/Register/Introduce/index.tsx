@@ -1,12 +1,14 @@
 import { FC } from "react";
 import { Flex, Text } from "@chakra-ui/react";
 import BaseButton from "@components/BaseButton";
+import { RegisterType } from "@pages/authen/Register/types.ts";
 
 interface IProps {
-
+   setRegisterType: (_: RegisterType) => void;
 }
 
-const Introduce: FC<IProps> = (props: IProps) => {
+const Introduce = ({ setRegisterType, ...rest }: IProps) => {
+   console.log("setRegisterType", rest)
    return (
       <Flex
          display="flex"
@@ -42,8 +44,10 @@ const Introduce: FC<IProps> = (props: IProps) => {
             alignItems="center"
             gap="24px"
          >
-            <BaseButton>
-                    Create
+            <BaseButton
+               onClick={() => setRegisterType(RegisterType.create)}
+            >
+               Create
             </BaseButton>
             <Text
                as="a"
@@ -52,8 +56,9 @@ const Introduce: FC<IProps> = (props: IProps) => {
                fontStyle="italic"
                fontWeight="400"
                cursor="pointer"
+               onClick={() => setRegisterType(RegisterType.import)}
             >
-                    Import an existing account
+               Import an existing account
             </Text>
          </Flex>
       </Flex>

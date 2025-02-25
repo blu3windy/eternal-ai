@@ -7,20 +7,20 @@ import AgentProvider from "./provider";
 type Props = {};
 
 const Home = (_props: Props) => {
-  return (
-    <MainLayout>
-      <AgentProvider>
-        <Flex gap={"12px"}>
-          <Box flex={1}>
-            <ChatAgent />
-          </Box>
-          <Box w={"353px"}>
-            <TradeAgent />
-          </Box>
-        </Flex>
-      </AgentProvider>
-    </MainLayout>
-  );
+   return (
+      <MainLayout>
+         <AgentProvider>
+            <Flex gap={"12px"}>
+               <Box flex={1}>
+                  <ChatAgent />
+               </Box>
+               <Box w={"353px"}>
+                  <TradeAgent />
+               </Box>
+            </Flex>
+         </AgentProvider>
+      </MainLayout>
+   );
 };
 
 export default Home;

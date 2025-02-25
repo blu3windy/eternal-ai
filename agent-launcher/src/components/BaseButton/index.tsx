@@ -9,25 +9,25 @@ interface IProps extends ButtonProps{
 }
 
 const BaseButton: FC<IProps> = (props: IProps) => {
-    const {
-        size = "medium",
-        bgColor = "black",
-        txtColor = "white",
-        onClick,
-        children,
-        ...rest
-    } = props;
+   const {
+      size = "medium",
+      bgColor = "black",
+      txtColor = "white",
+      onClick,
+      children,
+      ...rest
+   } = props;
 
-    return (
-        <Button
-            {...rest}
-            className={`${styles.button} ${styles[size]}`}
-            style={{ backgroundColor: bgColor, color: txtColor }}
-            onClick={onClick}
-        >
-            {children}
-        </Button>
-    );
+   return (
+      <Button
+         {...rest}
+         className={`${styles.button} ${styles[size]}`}
+         style={{ backgroundColor: bgColor, color: txtColor }}
+         onClick={onClick}
+      >
+         {children}
+      </Button>
+   );
 };
 
 export default BaseButton;

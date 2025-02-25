@@ -1,6 +1,6 @@
 const ROUTERS = {
-  HOME: "/",
-  MINE: "/mine",
+   HOME: "/",
+   MINE: "/mine",
 };
 
 export default ROUTERS;
