@@ -38,8 +38,10 @@ export type TokenTrade = Trade<Token, Token, TradeType>
 // Trading Functions
 
 export async function createTrade(): Promise<TokenTrade> {
-    console.log("CurrentConfig", CurrentConfig)
+    console.log("--------> CurrentConfig", CurrentConfig)
+
     const poolInfo = await getPoolInfo()
+    console.log("--------> poolInfo", JSON.stringify(poolInfo, null, 4))
 
     const pool = new Pool(
         CurrentConfig.tokens.in,
@@ -55,6 +57,8 @@ export async function createTrade(): Promise<TokenTrade> {
         CurrentConfig.tokens.in,
         CurrentConfig.tokens.out
     )
+
+    console.log(`Rout: ${JSON.stringify(swapRoute)}`)
 
     const amountOut = await getOutputQuote(swapRoute)
 
@@ -73,7 +77,7 @@ export async function createTrade(): Promise<TokenTrade> {
         ),
         tradeType: TradeType.EXACT_INPUT,
     })
-
+    console.log(`Created uncheckedTrade: \n\n" ${JSON.stringify(uncheckedTrade)} \n\n`)
     return uncheckedTrade
 }
 

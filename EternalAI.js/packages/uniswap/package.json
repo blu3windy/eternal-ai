@@ -59,10 +59,10 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@uniswap/sdk-core": "^7.6.0",
-    "@uniswap/v3-sdk": "^3.24.1",
+    "@uniswap/sdk-core": "^3.1.0",
+    "@uniswap/v3-sdk": "^3.9.0",
+    "ethers": "^5.7.2",
     "commander": "^13.1.0",
-    "ethers": "^6.13.5",
     "vitest": "^3.0.6",
     "web3": "^4.16.0"
   }

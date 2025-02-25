@@ -1,8 +1,8 @@
-import {zeroAddress} from "./const";
+import {ETH_CHAIN_ID, getRPC, zeroAddress} from "./const";
 import {ethers} from "ethers";
 import {Token} from "@uniswap/sdk-core";
-import {createWallet_new, changeWallet} from "./libs/providers";
-import {createTrade, executeTrade} from "./libs/trading";
+import {changeWallet, createWallet} from "./libs/providers";
+import {createTrade} from "./libs/trading";
 import {CurrentConfig, Environment} from "./libs/config";
 
 export class SwapReq {
@@ -89,14 +89,18 @@ export interface PoolInfo {
 
 export class UniSwapAI {
     swap_v3 = async (privateKey: string, req: SwapReq, chain_id: number, rpc: string) => {
-        const newWallet = createWallet_new(privateKey, rpc);
-        /*changeWallet(newWallet);
+        if (privateKey == "") {
+            throw new Error("invalid private key")
+        }
         CurrentConfig.env = Environment.MAINNET
-        CurrentConfig.rpc.mainnet = rpc
+        // CurrentConfig.rpc.mainnet = rpc || getRPC(chain_id)
+        CurrentConfig.rpc.mainnet = getRPC(ETH_CHAIN_ID)
         CurrentConfig.wallet.privateKey = privateKey
         CurrentConfig.tokens.in = new Token(
-            chain_id,
-            req.token_in_address,
+            // chain_id,
+            parseInt(ETH_CHAIN_ID, 16),
+            // req.token_in_address,
+            "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
             18,
             req.token_in,
             req.token_in
@@ -105,16 +109,26 @@ export class UniSwapAI {
         CurrentConfig.tokens.amountIn = req.token_in_amount
 
         CurrentConfig.tokens.out = new Token(
-            chain_id,
+            // chain_id,
+            parseInt(ETH_CHAIN_ID, 16),
             req.token_out_address,
             18,
             req.token_out,
             req.token_out
         )
 
-        const trade = await createTrade()
-        const state = await executeTrade(trade)
-        return state*/
+
+        const newWallet = createWallet();
+        console.log("Wallet: ", newWallet.address)
+        changeWallet(newWallet);
+
+        try {
+            const trade = await createTrade()
+            /*const state = await executeTrade(trade)
+            return state*/
+        } catch (e) {
+            console.log(`Error ${e}`)
+        }
         return null
     }
 }

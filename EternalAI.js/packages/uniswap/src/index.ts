@@ -5,7 +5,7 @@ import {SwapReq, UniSwapAI} from "./swap";
 
 export const call_uniswap = async (private_key: string, chain_id: number, rpc: string, content: string) => {
     console.log(`**** call uniswap with content **** \n\n
-            ${content} \n\n****\n\n\n`)
+            ${content} \n\n end content ****\n\n\n`)
     try {
         const jsonMatch = content.match(/(\{.*?\})/s);
         if (jsonMatch) {
@@ -19,7 +19,7 @@ export const call_uniswap = async (private_key: string, chain_id: number, rpc: s
         const uniswap_obj = new UniSwapAI()
         const req = SwapReq.fromJSON(content)
         await req.convert_in_out()
-        console.log(`**** call uniswap with req **** \n\n\n ${JSON.stringify(req)}`)
+        console.log(`**** call uniswap with req **** \n ${JSON.stringify(req, null, 4)}`)
         const tx_swap = await uniswap_obj.swap_v3(private_key, req, chain_id, rpc)
         return tx_swap;
     } catch (e) {

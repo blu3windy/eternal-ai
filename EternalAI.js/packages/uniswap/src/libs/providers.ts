@@ -1,13 +1,7 @@
-import {BaseProvider} from '@ethersproject/providers'
-import {BigNumber, ethers, providers} from 'ethers'
-
+import {BigNumber, ethers, providers, Wallet} from 'ethers'
 import {CurrentConfig, Environment} from './config'
 
-// Single copies of provider and wallet
-const mainnetProvider = new ethers.providers.JsonRpcProvider(
-    CurrentConfig.rpc.mainnet
-)
-let wallet = createWallet()
+let wallet: ethers.Wallet;
 
 export function changeWallet(newWallet: any) {
     wallet = newWallet
@@ -26,10 +20,6 @@ export enum TransactionState {
 }
 
 // Provider and Wallet Functions
-
-export function getMainnetProvider(): BaseProvider {
-    return mainnetProvider
-}
 
 export function getProvider(): providers.Provider | null {
     return wallet.provider
@@ -53,17 +43,15 @@ export async function sendTransaction(
 // Internal Functionality
 
 export function createWallet(): ethers.Wallet {
-    let provider = mainnetProvider
+    let provider = new ethers.providers.JsonRpcProvider(
+        CurrentConfig.rpc.mainnet
+    )
     if (CurrentConfig.env == Environment.LOCAL) {
         provider = new ethers.providers.JsonRpcProvider(CurrentConfig.rpc.local)
     }
     return new ethers.Wallet(CurrentConfig.wallet.privateKey, provider)
 }
 
-export function createWallet_new(private_key: string, rpc: string): ethers.Wallet {
-    let provider = new ethers.providers.JsonRpcProvider(rpc)
-    return new ethers.Wallet(CurrentConfig.wallet.privateKey, provider)
-}
 
 // Transacting with a wallet extension via a Web3 Provider
 async function sendTransactionViaWallet(

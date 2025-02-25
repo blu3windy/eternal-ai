@@ -32,7 +32,7 @@ export interface ExampleConfig {
 // Example Configuration
 
 export let CurrentConfig: ExampleConfig = {
-    env: Environment.LOCAL,
+    env: Environment.MAINNET,
     rpc: {
         local: '',
         mainnet: '',

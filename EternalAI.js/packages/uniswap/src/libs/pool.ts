@@ -21,19 +21,21 @@ export async function getPoolInfo(): Promise<PoolInfo> {
     if (!provider) {
         throw new Error('No provider')
     }
-
     const currentPoolAddress = computePoolAddress({
         factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
         tokenA: CurrentConfig.tokens.in,
         tokenB: CurrentConfig.tokens.out,
         fee: CurrentConfig.tokens.poolFee,
     })
+    console.log("currentPoolAddress", currentPoolAddress)
 
     const poolContract = new ethers.Contract(
         currentPoolAddress,
         IUniswapV3PoolABI.abi,
         provider
     )
+
+    console.log("token0", await poolContract.token0())
 
     const [token0, token1, fee, tickSpacing, liquidity, slot0] =
         await Promise.all([
