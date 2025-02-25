@@ -8,7 +8,9 @@ export const AGENT_CONTRACT_ADDRESSES: Record<ChainId, string> = {
   8453: '0x643c45e89769a16bcb870092bd1efe4696cb2ce7',
 };
 
-const wallet = new ethers.Wallet('Your private key here');
+const wallet = new ethers.Wallet(
+  '0x1111f8bcb19845c1de391111e2f4acd389e13f37d50461a68c6c589b9288f260'
+);
 
 async function testInferV1() {
   const inferPayload = {
