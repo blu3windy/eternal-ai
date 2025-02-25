@@ -6,8 +6,7 @@ function App() {
   const [retrievedPassword, setRetrievedPassword] = useState("");
 
   const handleSavePassword = async () => {
-    console.log(window.electronAPI.savePassword)
-    const result = await window.electronAPI.savePassword(account, password);
+    const result = await window.electronAPI.keytarSave(account, password);
     if (result.success) {
       alert("Password saved successfully!");
     } else {
@@ -16,16 +15,16 @@ function App() {
   };
 
   const handleGetPassword = async () => {
-    const result = await window.electronAPI.getPassword(account);
+    const result = await window.electronAPI.keytarGet(account);
     if (result.success) {
-      setRetrievedPassword(result.password || "No password found");
+      setRetrievedPassword(result.value || "No password found");
     } else {
       alert("Error retrieving password: " + result.error);
     }
   };
 
   const handleDeletePassword = async () => {
-    const result = await window.electronAPI.deletePassword(account);
+    const result = await window.electronAPI.keytarRemove(account);
     if (result.success) {
       alert("Password deleted successfully!");
       setRetrievedPassword("");

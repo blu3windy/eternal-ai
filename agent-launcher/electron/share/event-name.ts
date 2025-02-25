@@ -1,7 +1,7 @@
 const EMIT_EVENT_NAME = {
-    SAVE_PASSWORD: "safe-save-password",
-    GET_PASSWORD: "safe-get-password",
-    DELETE_PASSWORD: "safe-delete-password",
+    KEYTAR_SAVE: "safe-keytar-save",
+    KEYTAR_GET: "safe-keytar-get",
+    KEYTAR_REMOVE: "safe-keytar-remove",
 }
 
 export {

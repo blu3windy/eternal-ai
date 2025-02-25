@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 });
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  savePassword: (name: string, password: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.SAVE_PASSWORD, name, password),
-  getPassword: (name: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.GET_PASSWORD, name),
-  deletePassword: (name: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DELETE_PASSWORD, name),
+  keytarSave: (key: string, value: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.KEYTAR_SAVE, key, value),
+  keytarGet: (key: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.KEYTAR_GET, key),
+  keytarRemove: (key: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.KEYTAR_REMOVE, key),
 });

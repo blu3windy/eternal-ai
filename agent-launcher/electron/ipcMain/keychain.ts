@@ -12,14 +12,14 @@ const ipcMainKeyChain = () => {
     /**
      * Handles the event to save a password.
      * @param {Electron.IpcMainInvokeEvent} _event - The event object.
-     * @param {string} name - The name associated with the password.
-     * @param {string} password - The password to save.
+     * @param {string} key - The key associated with the password.
+     * @param {string} value - The value to save.
      * @returns {Promise<{success: boolean, error?: string}>} - The result of the operation.
      */
-    ipcMain.handle(EMIT_EVENT_NAME.SAVE_PASSWORD, async (_event, name: string, password: string) => {
-        console.log(`[Main Process] Saving password for: ${name}`);
+    ipcMain.handle(EMIT_EVENT_NAME.KEYTAR_SAVE, async (_event, key: string, value: string) => {
+        console.log(`[Main Process] Saving password for: ${key}`);
         try {
-            await keytar.setPassword(SERVICE_NAME, name, password);
+            await keytar.setPassword(SERVICE_NAME, key, value);
             return { success: true };
         } catch (error: any) {
             console.error(`[Main Process] Error saving password: ${error.message}`);
@@ -30,14 +30,14 @@ const ipcMainKeyChain = () => {
     /**
      * Handles the event to retrieve a password.
      * @param {Electron.IpcMainInvokeEvent} _event - The event object.
-     * @param {string} name - The name associated with the password.
-     * @returns {Promise<{success: boolean, password?: string, error?: string}>} - The result of the operation.
+     * @param {string} key - The key associated with the password.
+     * @returns {Promise<{success: boolean, value?: string, error?: string}>} - The result of the operation.
      */
-    ipcMain.handle(EMIT_EVENT_NAME.GET_PASSWORD, async (_event, name: string) => {
-        console.log(`[Main Process] Retrieving password for: ${name}`);
+    ipcMain.handle(EMIT_EVENT_NAME.KEYTAR_GET, async (_event, key: string) => {
+        console.log(`[Main Process] Retrieving password for: ${key}`);
         try {
-            const password = await keytar.getPassword(SERVICE_NAME, name);
-            return { success: true, password };
+            const value = await keytar.getPassword(SERVICE_NAME, key);
+            return { success: true, value };
         } catch (error: any) {
             console.error(`[Main Process] Error retrieving password: ${error.message}`);
             return { success: false, error: error.message };
@@ -47,13 +47,13 @@ const ipcMainKeyChain = () => {
     /**
      * Handles the event to delete a password.
      * @param {Electron.IpcMainInvokeEvent} _event - The event object.
-     * @param {string} name - The name associated with the password.
+     * @param {string} key - The key associated with the password.
      * @returns {Promise<{success: boolean, error?: string}>} - The result of the operation.
      */
-    ipcMain.handle(EMIT_EVENT_NAME.DELETE_PASSWORD, async (_event, name: string) => {
-        console.log(`[Main Process] Deleting password for: ${name}`);
+    ipcMain.handle(EMIT_EVENT_NAME.KEYTAR_REMOVE, async (_event, key: string) => {
+        console.log(`[Main Process] Deleting password for: ${key}`);
         try {
-            await keytar.deletePassword(SERVICE_NAME, name);
+            await keytar.deletePassword(SERVICE_NAME, key);
             return { success: true };
         } catch (error: any) {
             console.error(`[Main Process] Error deleting password: ${error.message}`);

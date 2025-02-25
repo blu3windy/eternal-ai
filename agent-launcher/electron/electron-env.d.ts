@@ -21,7 +21,14 @@ declare namespace NodeJS {
   }
 }
 
+interface IElectronAPI {
+  keytarSave: (key: string, value: string) => Promise<{ success: boolean, error?: string }>
+  keytarGet: (key: string) => Promise<{ success: boolean, value?: string, error?: string }>
+  keytarRemove: (key: string) => Promise<{ success: boolean, error?: string }>
+}
+
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
   ipcRenderer: import('electron').IpcRenderer
+  electronAPI: IElectronAPI
 }
