@@ -1,3 +1,5 @@
+import {AgentType} from "../../../pages/home/list-agent";
+
 export interface TwitterInfo {
   twitter_id: string;
   twitter_avatar: string;
@@ -69,6 +71,7 @@ export interface IAgentToken {
   agent_base_model: string;
   inference_calls: string;
   token_desc: string;
+  agent_type: AgentType
 }
 
 export interface Meme {

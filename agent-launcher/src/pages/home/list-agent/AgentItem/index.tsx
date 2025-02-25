@@ -1,4 +1,4 @@
-import {Box, Center, Flex, Grid, Image, Text} from '@chakra-ui/react';
+import {Box, Center, Flex, Grid, Image, SimpleGrid, Text} from '@chakra-ui/react';
 import React, {useContext} from 'react';
 import Jazzicon, {jsNumberForAddress} from 'react-jazzicon';
 import s from './styles.module.scss';
@@ -10,6 +10,7 @@ import {addressFormater, compareString} from "../../../../utils/string.ts";
 import {FilterChains} from "../constants.ts";
 import {formatCurrency} from "../../../../utils/format.ts";
 import cs from "clsx";
+import {AgentTypeName} from "../index.tsx";
 
 const MAX_LENGTH_TEXT = 150;
 
@@ -135,77 +136,32 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
           <Flex justifyContent={'space-between'} w={'100%'}>
             <Flex gap="12px" flex={1}>
               <Flex flexDirection="column" gap="8px">
-                {token?.meme?.market_cap && (
-                  <Text color="#8AC3FC" fontSize="15px" fontWeight="600">
-                    MC{' '}
-                    <Text as={'span'}>
-                      {Number(token?.meme?.market_cap) > 0
-                        ? `$${formatCurrency(
-                            token?.meme?.market_cap,
-                            0,
-                            3,
-                            'BTC',
-                            false,
-                            true,
-                          )}`
-                        : '$0'}
-                    </Text>
+                <Flex gap={"6px"} alignItems={"center"}>
+                  <Text
+                    fontSize="14px"
+                    fontWeight="500"
+                    color="inherit"
+                  >
+                    {token?.agent_name}{' '}
                   </Text>
-                )}
-                <Text
-                  fontSize="14px"
-                  fontWeight="500"
-                  color="inherit"
-                >
-                  {token?.agent_name}{' '}
-                  {token.token_symbol && token?.meme?.market_cap && (
-                    <Text as={'span'} color={'#FFFFFF99'}>
-                      {token?.meme?.market_cap ? '$' : ''}
-                      {token.token_symbol}
-                    </Text>
-                  )}
-                </Text>
-                <Flex
-                  alignItems="center"
-                  gap="4px"
-                  onClick={handleClickCreator}
-                >
-                  <Text color="#657786" fontSize="14px" fontWeight="400">
-                    by
-                  </Text>
-                  {token?.tmp_twitter_info?.twitter_avatar ? (
-                    <Avatar
-                      url={token?.tmp_twitter_info?.twitter_avatar}
-                      width={16}
-                    />
-                  ) : (
-                    <Jazzicon
-                      diameter={16}
-                      seed={jsNumberForAddress(token?.creator || '')}
-                    />
-                  )}
-                  <Text color="#000" fontSize="14px" fontWeight="400">
-                    {token?.tmp_twitter_info?.twitter_username
-                      ? `@${token?.tmp_twitter_info?.twitter_username}`
-                      : addressFormater(token?.creator)}
-                  </Text>
-                  {chain && isAllChain && (
-                    <>
-                      <Text
-                        mx={'4px'}
-                        color="#657786"
-                        fontSize="14px"
-                        fontWeight="400"
-                      >
-                        ·
-                      </Text>
-                      <Image w={'14px'} h={'14px'} src={chain?.icon} />
-                      <Text color="#fff" fontSize="14px" fontWeight="400">
-                        {chain?.name}
-                      </Text>
-                    </>
-                  )}
+                  <Text className={s.noTokenTag}>{AgentTypeName[token?.agent_type]}</Text>
                 </Flex>
+                {chain && isAllChain && (
+                  <>
+                    <Text
+                      mx={'4px'}
+                      color="#657786"
+                      fontSize="14px"
+                      fontWeight="400"
+                    >
+                      ·
+                    </Text>
+                    <Image w={'14px'} h={'14px'} src={chain?.icon} />
+                    <Text color="#fff" fontSize="14px" fontWeight="400">
+                      {chain?.name}
+                    </Text>
+                  </>
+                )}
               </Flex>
             </Flex>
             {token?.meme?.market_cap ? (
@@ -224,34 +180,32 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
             )}
           </Flex>
 
-          {description && (
-            <Flex className={s.body}>
-              <Box maxW={{ base: '54vw', md: '308px' }}>
-                {description?.length <= MAX_LENGTH_TEXT || showFullText ? (
-                  <Text
-                    className={s.paragraph}
-                    fontSize="14px"
-                    fontWeight={'400'}
-                    color="rgb(0, 0, 0, 0.7)"
-                  >
-                    {description} {renderReadmore()}
+          <SimpleGrid columns={3}>
+            <Text className={s.infoText}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
+            <Text className={s.infoText}>
+              {token?.meme?.market_cap && (
+                <>
+                  <Text as={'span'}>
+                    {Number(token?.meme?.market_cap) > 0
+                      ? `$${formatCurrency(
+                        token?.meme?.market_cap,
+                        0,
+                        3,
+                        'BTC',
+                        false,
+                        true,
+                      )}`
+                      : '$0'}
                   </Text>
-                ) : (
-                  <Text
-                    className={s.paragraph}
-                    fontSize="14px"
-                    fontWeight={'400'}
-                    color="rgb(0, 0, 0, 0.7)"
-                  >
-                    {`${description
-                      ?.replaceAll(/([#]\w+)/g, '')
-                      .slice(0, MAX_LENGTH_TEXT)}...`}{' '}
-                    {renderReadmore()}
-                  </Text>
-                )}
-              </Box>
+                  {' '}<Text as={'span'} color={"#657786"}>MC</Text>
+                </>
+              )}
+            </Text>
+            <Flex>
+              <Text className={s.infoText}>{formatCurrency(12345)}</Text>
+              <Image src={'/icons/ic-chat.svg'} w={'16px'}/>
             </Flex>
-          )}
+          </SimpleGrid>
         </Flex>
       </Grid>
     </Flex>

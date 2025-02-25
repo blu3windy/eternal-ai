@@ -20,10 +20,24 @@ export enum SortOption {
   CreatedAt = 'created_at',
 }
 
-export enum SortAgentType {
-  All = '',
-  Social = '1',
-  Knowledge = '2',
+export enum AgentType {
+  Normal = 0,
+  Reasoning = 1,
+  KnowledgeBase = 2,
+  Eliza = 3,
+  Zerepy = 4,
+  Utility = 5,
+  RealWorld = 6,
+}
+
+export const AgentTypeName = {
+  [AgentType.Normal]: 'Normal',
+  [AgentType.Reasoning]: 'Reasoning',
+  [AgentType.KnowledgeBase]: 'Knowledge',
+  [AgentType.Eliza]: 'Eliza',
+  [AgentType.Zerepy]: 'Zerepy',
+  [AgentType.Utility]: 'Utility',
+  [AgentType.RealWorld]: 'Real-World',
 }
 
 const AgentsList = () => {

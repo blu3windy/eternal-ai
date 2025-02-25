@@ -5,10 +5,33 @@
   cursor: pointer;
   color: #000;
 
+  .infoText {
+    font-size: 12px;
+    font-weight: 400;
+    color: #000;
+  }
+
+  .noTokenTag {
+    font-size: 12px;
+    font-weight: 400;
+    background: #0000000D;
+    padding: 4px 8px;
+    border-radius: 100px;
+  }
+
   &.isSelected {
     color: #FFF;
     background: #000;
+
+    .infoText {
+      color: #FFF;
+    }
+
+    .noTokenTag {
+      background: #686A6C;
+    }
   }
+
 }
 
 .brain {
@@ -35,13 +58,7 @@
   border-radius: 50%;
 }
 
-.noTokenTag {
-  p {
-    color: #687684;
-    font-size: 13px;
-    font-weight: 500;
-  }
-}
+
 
 .body {
   width: 100%;
@@ -69,23 +86,4 @@
   line-break: auto !important;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-}
-
-.item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  &__hideSpace {
-    gap: 0px;
-  }
-
-  .icon {
-  }
-
-  .value {
-    font-weight: 500;
-    font-size: 13px;
-    color: #687684;
-  }
 }
