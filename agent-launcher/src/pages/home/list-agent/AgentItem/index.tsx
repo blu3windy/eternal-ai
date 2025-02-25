@@ -157,7 +157,7 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
                       ·
                     </Text>
                     <Image w={'14px'} h={'14px'} src={chain?.icon} />
-                    <Text color="#fff" fontSize="14px" fontWeight="400">
+                    <Text color="#000" fontSize="14px" fontWeight="400">
                       {chain?.name}
                     </Text>
                   </>

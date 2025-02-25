@@ -2,7 +2,7 @@ export const FilterChains = [
   {
     name: 'All chains',
     chainId: 0,
-    icon: '/icons/coins/ic-btc.svg',
+    icon: '/icons/blockchains/ic-btc.svg',
     banner: '/images/banners/bg-all-chain-min.png',
     path: 'all',
     label: 'All chains',
@@ -13,7 +13,7 @@ export const FilterChains = [
   {
     name: 'Bitcoin',
     chainId: 222671,
-    icon: '/icons/coins/ic-btc.svg',
+    icon: '/icons/blockchains/ic-btc.svg',
     explorer: 'https://mempool.space/',
     path: 'bitcoin',
     banner: '/images/banners/bg-bitcoin.png',
@@ -25,7 +25,7 @@ export const FilterChains = [
   {
     name: 'Ethereum',
     chainId: 1,
-    icon: '/icons/coins/ic-eth.svg',
+    icon: '/icons/blockchains/ic-ether.png',
     explorer: 'https://etherscan.io/',
     path: 'ethereum',
     banner: '/images/banners/bg-ethereum.png',
@@ -39,7 +39,7 @@ export const FilterChains = [
   {
     name: 'Base',
     chainId: 8453,
-    icon: '/images/ic-base.png',
+    icon: '/icons/blockchains/ic-base.png',
     explorer: 'https://basescan.org/',
     path: 'base',
     banner: '/images/banners/bg-base.png',
@@ -69,7 +69,7 @@ export const FilterChains = [
   {
     name: 'Solana',
     chainId: 101,
-    icon: '/icons/coins/ic-sol.png',
+    icon: '/icons/blockchains/ic_solana.svg',
     explorer: 'https://solscan.io/',
     path: 'solana',
     banner: '/images/banners/bg-solana.png',
@@ -110,7 +110,7 @@ export const FilterChains = [
   {
     name: 'BNB Chain',
     chainId: 56,
-    icon: '/icons/coins/ic-bsc.png',
+    icon: '/icons/blockchains/ic-bsc.png',
     explorer: 'https://bscscan.com/',
     path: 'bsc',
     banner: '/images/banners/bg-bnb.png',
@@ -235,7 +235,7 @@ export const FilterChains = [
   {
     name: 'Symbiosis',
     chainId: 45762,
-    icon: '/icons/ic-symplic.svg',
+    icon: '/icons/blockchains/ic_nbs.svg',
     explorer: 'https://explorer.symbiosis.eternalai.org/',
     path: 'symbiosis',
     banner: '/images/banners/bg-symbiosis.png',
