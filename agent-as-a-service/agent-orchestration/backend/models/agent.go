@@ -114,6 +114,7 @@ type AgentInfo struct {
 	Creator              string
 	AgentContractID      string
 	AgentContractAddress string
+	AgentLogicAddress    string
 	AgentNftMinted       bool `gorm:"default:0"`
 	ScanEnabled          bool `gorm:"default:1"`
 	ScanLatestTime       *time.Time

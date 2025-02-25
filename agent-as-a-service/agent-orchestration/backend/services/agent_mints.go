@@ -261,7 +261,7 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 					case models.AgentInfoAgentTypeUtility:
 						{
 							for range 2 {
-								err = s.DeployAgentUtility(ctx, agent.ID)
+								err = s.DeployAgentUtilityUpgradeable(ctx, agent.ID)
 								if err == nil {
 									break
 								}
