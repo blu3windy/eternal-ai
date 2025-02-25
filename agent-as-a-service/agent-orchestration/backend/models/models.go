@@ -53,6 +53,7 @@ const (
 	HYPE_CHAIN_ID             = uint64(999)
 	MONAD_TESTNET_CHAIN_ID    = uint64(10143)
 	MEGAETH_TESTNET_CHAIN_ID  = uint64(1338)
+	BASE_SEPOLIA_CHAIN_ID     = uint64(84532)
 )
 
 var CHAIN_NAME_MAP = map[uint64]string{
@@ -80,6 +81,7 @@ var CHAIN_NAME_MAP = map[uint64]string{
 	HYPE_CHAIN_ID:             "HYPER EVM",
 	MONAD_TESTNET_CHAIN_ID:    "MONAD TESTNET",
 	MEGAETH_TESTNET_CHAIN_ID:  "MEGAETH TESTNET",
+	BASE_SEPOLIA_CHAIN_ID:     "BASE SEPOLIA",
 }
 
 var MAP_TOOLSET_NAME = map[string]string{
