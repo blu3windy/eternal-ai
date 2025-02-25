@@ -8,6 +8,6 @@
   },
   "file_path_infer": "/tmp/eternal-data",
   "submit_file_path": false,
-  "chat_completion_url": "",
+  "chat_completion_url": "https://api.eternalai.org/v1/chat/completions",
   "api_key_chat_completion": ""
 }
