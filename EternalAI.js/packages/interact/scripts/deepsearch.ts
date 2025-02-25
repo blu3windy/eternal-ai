@@ -8,6 +8,11 @@ import { Message } from '../src/methods/infer/types';
 import { InferPayloadWithMessages } from '../src/types';
 // npm install typescript jsdom luxon jsonrepair
 
+export const AGENT_CONTRACT_ADDRESSES: Record<ChainId, string> = {
+  56: '0x3B9710bA5578C2eeD075D8A23D8c596925fa4625',
+  8453: '0x643c45e89769a16bcb870092bd1efe4696cb2ce7',
+};
+
 const DEEPSEEK_LLM_URL = 'https://vcr6xaelfq1f77-8000.proxy.runpod.net/v1';
 const DEEPSEEK_MODEL_ID = 'DeepSeek-R1-Distill-Llama-70B';
 const LLAMA_LLM_URL = 'https://6k2x3hq1kul5um-8000.proxy.runpod.net/v1';
@@ -15,8 +20,12 @@ const LLAMA_MODEL_ID = 'Llama3.3';
 const API_KEY = 'd50b6ba5169ea538a71fe7b0685b755823a3746934fa3cc4';
 const BING_SEARCH_API_KEY = 'f1ae6f4e1fb644758ac06cbdf1ce99ab';
 
-const wallet = new ethers.Wallet('YOUR PRIVATE KEY');
+const wallet = new ethers.Wallet('private key');
 const interact = new Interact(wallet);
+
+function getAnswerFromResponse(response: string): string {
+  return response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+}
 
 function parseDeepseekResult(content: string): {
   think: string;
@@ -32,6 +41,21 @@ function parseDeepseekResult(content: string): {
   }
 
   return result;
+}
+
+async function interactContractLLM(messages: Message[]): Promise<string> {
+  const inferPayload = {
+    chainId: ChainId.BSC,
+    agentAddress: AGENT_CONTRACT_ADDRESSES[ChainId.BSC],
+    messages: messages,
+  } satisfies InferPayloadWithMessages;
+
+  try {
+    const response = await interact.infer(inferPayload); // Type assertion
+    return response;
+  } catch (error) {
+    return error instanceof Error ? error.message : 'Unknown error';
+  }
 }
 
 async function callThinkingLLM(messages: any[]): Promise<[any, string | null]> {
@@ -316,7 +340,7 @@ async function process_link(
 
 async function generateSearchQueries(
   userQuery: string,
-  maxIterations: number = 4
+  maxIterations: number = 1
 ): Promise<string[]> {
   /**
    * Ask the LLM to produce up to four precise search queries (in Python list format)
@@ -348,28 +372,25 @@ The response should contain ONLY the list.
 
   try {
     // const llmCall = await callThinkingLLM(messages); // Type assertion
-    const inferPayload = {
-      chainId: ChainId.BSC,
-      model: 'NousResearch/Hermes-3-Llama-3.1-70B-FP8',
-      messages: messages,
-    } satisfies InferPayloadWithMessages;
+    const response = await interactContractLLM(messages); // Type assertion
 
-    const llmCall = await interact.infer(inferPayload); // Type assertion
-    console.log('🚀 ~ resFromContract:', llmCall);
-    const response = llmCall[0];
+    // const response = await interact.infer(inferPayload); // Type assertion
+    // console.log('🚀 ~ resFromContract:', llmCall);
+    // const response = llmCall;
 
-    if (response && response.answer) {
+    const answer = getAnswerFromResponse(response);
+
+    if (response && answer) {
       try {
-        const repairedJsonString = jsonrepair(response.answer); // Get the repaired string
+        const repairedJsonString = answer; // Get the repaired string
+        console.log('🚀 ~ repairedJsonString:', repairedJsonString);
         const searchQueries = JSON.parse(repairedJsonString); // Parse the string into a JavaScript array
+        console.log('🚀 ~ searchQueries:', searchQueries);
 
         if (Array.isArray(searchQueries)) {
           return searchQueries as string[]; // Type assertion
         } else {
-          console.error(
-            'LLM did not return a list. Response:',
-            response.answer
-          );
+          console.error('LLM did not return a list. Response:', response);
           return [];
         }
       } catch (e) {
@@ -377,7 +398,7 @@ The response should contain ONLY the list.
           'Error parsing search queries:',
           e,
           '\nResponse:',
-          response.answer
+          response
         );
         return [];
       }
@@ -408,7 +429,7 @@ If further research is needed, provide up to four new search queries as a Python
 ['new query1', 'new query2']). If you believe no further research is needed, respond with exactly <done>.
 \nOutput only a Python list or the token <done> without any additional text.
 `;
-  const messages = [
+  const messages: Message[] = [
     { role: 'system', content: 'You are a systematic research planner.' },
     {
       role: 'user',
@@ -417,17 +438,20 @@ If further research is needed, provide up to four new search queries as a Python
   ];
 
   try {
-    const llmCall = await callThinkingLLM(messages); // Type assertion
-    const response = llmCall[0];
-    const answer = response?.answer || '';
+    // const llmCall = await callThinkingLLM(messages); // Type assertion
+    // const response = llmCall[0];
+    const response = await interactContractLLM(messages); // Type assertion
+    console.log('🚀 ~ callThinkingLLM response:', response);
+    // const answer = response?.answer || '';
+    const answer = getAnswerFromResponse(response);
 
-    if (answer) {
-      const cleaned = answer.trim();
+    if (response) {
+      const cleaned = response.trim();
       if (cleaned === '<done>') {
         return '<done>';
       }
       try {
-        const repairedJsonString = jsonrepair(response.answer); // Get the repaired string
+        const repairedJsonString = jsonrepair(answer); // Get the repaired string
         const newQueries = JSON.parse(repairedJsonString); // Parse the string into a JavaScript array
 
         if (Array.isArray(newQueries)) {
@@ -470,7 +494,7 @@ You are an expert researcher and report writer. Based on the gathered contexts b
 write a comprehensive, well-structured, and detailed report that addresses the query thoroughly. 
 Include all relevant insights and conclusions without extraneous commentary.
 `;
-  const messages = [
+  const messages: Message[] = [
     { role: 'system', content: 'You are a skilled report writer.' },
     {
       role: 'user',
@@ -479,9 +503,8 @@ Include all relevant insights and conclusions without extraneous commentary.
   ];
 
   try {
-    const llmCall = await callThinkingLLM(messages); // Type assertion
-    const response = llmCall[0];
-    const report = response.answer;
+    const response = await interactContractLLM(messages); // Type assertion
+    const report = getAnswerFromResponse(response);
     return report;
   } catch (error) {
     console.error('Error generating final report', error);
@@ -500,6 +523,7 @@ async function main(
   console.log('🚀 ~ userQuery:', userQuery);
 
   let newSearchQueries = await generateSearchQueries(userQuery);
+  console.log('🚀 ~ newSearchQueries:', newSearchQueries);
 
   if (!newSearchQueries || newSearchQueries.length === 0) {
     console.log('No search queries were generated by the LLM. Exiting.');

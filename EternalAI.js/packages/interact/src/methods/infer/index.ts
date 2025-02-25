@@ -338,6 +338,7 @@ const Infer = {
 
       let result: string | null = null;
       const inferId = await Infer.getInferId(wallet, promptedTxHash);
+      console.log('🚀 ~ inferId:', inferId);
 
       if (LISTEN_PROMPTED_RESPONSE_CHAIN.v1.includes(chainId)) {
         // TODO: unsupported
@@ -352,7 +353,10 @@ const Infer = {
             );
             break;
           } catch (e) {
-            console.log('Can not get result for inference, try again', e);
+            console.log(
+              `Can not get result for inference ${inferId.toNumber()}, try again`,
+              e
+            );
             await sleep(30);
           }
         }
