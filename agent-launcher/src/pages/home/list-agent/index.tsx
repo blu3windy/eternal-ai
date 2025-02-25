@@ -109,7 +109,7 @@ const AgentsList = () => {
         <Image
           ml={'16px'}
           width="20px"
-          src="/icons/pump/ic-search.svg"
+          src="/icons/ic-search.svg"
           onClick={() => refInput?.current?.focus()}
         />
         <input
@@ -134,7 +134,7 @@ const AgentsList = () => {
           {!!refParams.current?.search && (
             <Image
               width="12px"
-              src="/icons/pump/ic_search_close.svg"
+              src="/icons/ic_search_close.svg"
               onClick={() => {
                 if (refInput?.current?.value) {
                   refInput.current.value = '';
