@@ -666,10 +666,12 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
     )
 
     logger.info(
-        f"[_handle_winner_with_llm] Calling LLM for {game_id} summarize_judge_commentary : {summarize_judge_commentary}"
+        f"[_handle_winner_with_llm] Calling LLM for {game_id} summarize_judge_commentary : {summarize}"
     )
 
-    err = await _post_wallet_tweet(log, game_id, summarize)
+    # err = await _post_wallet_tweet(log, game_id, summarize)
+    for key, reason in summarize.items():
+        err = await _post_wallet_tweet(log, game_id, reason)
 
     if err is not None:
         logger.error(
