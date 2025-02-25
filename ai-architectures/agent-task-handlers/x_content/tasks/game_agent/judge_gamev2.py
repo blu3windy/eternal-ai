@@ -26,6 +26,8 @@ from x_content.wrappers.game import (
     GameStatus,
     GameState,
 )
+from x_content.wrappers.llm_tasks import summarize_judge_commentary
+from x_content.tasks.game_agent.subtasks.reply.reply_create_game import _post_wallet_tweet
 from x_content.services import fact_service
 from x_content.services.fact.fact_check import SearchResponse
 
@@ -653,6 +655,20 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
     infer_result: OnchainInferResult = await llm.agenerate(
         conversation_thread, temperature=0.7
     )
+
+    summarize = summarize_judge_commentary(
+        infer_result.generations[0].message.content
+    )
+
+    logger.info(f"[_handle_winner_with_llm] summarize =->>> {summarize}")
+
+    err = await _post_wallet_tweet(log, game_id, summarize)
+
+    if err is not None:
+        logger.error(
+            f"[_handle_winner_with_llm] Error posting game summarize: {err}"
+        )
+        return None, None, err
 
     winning_agent, err = _get_winner_from(
         infer_result.generations[0].message.content
