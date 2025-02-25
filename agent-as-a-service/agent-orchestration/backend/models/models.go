@@ -54,6 +54,7 @@ const (
 	MONAD_TESTNET_CHAIN_ID    = uint64(10143)
 	MEGAETH_TESTNET_CHAIN_ID  = uint64(1338)
 	BASE_SEPOLIA_CHAIN_ID     = uint64(84532)
+	CELO_CHAIN_ID             = uint64(42220)
 )
 
 var CHAIN_NAME_MAP = map[uint64]string{
@@ -82,6 +83,7 @@ var CHAIN_NAME_MAP = map[uint64]string{
 	MONAD_TESTNET_CHAIN_ID:    "MONAD TESTNET",
 	MEGAETH_TESTNET_CHAIN_ID:  "MEGAETH TESTNET",
 	BASE_SEPOLIA_CHAIN_ID:     "BASE SEPOLIA",
+	CELO_CHAIN_ID:             "CELO",
 }
 
 var MAP_TOOLSET_NAME = map[string]string{

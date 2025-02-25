@@ -32,6 +32,15 @@ class Interact {
     };
   }
 
+  private normalizePayload(
+    payload: InferPayloadWithPrompt | InferPayloadWithMessages
+  ) {
+    return {
+      ...payload,
+      isLightHouse: payload.isLightHouse ?? false,
+    };
+  }
+
   // Overload signatures
   // @ts-ignore
   public async infer(payload: InferPayloadWithPrompt): Promise<any>;
@@ -45,14 +54,21 @@ class Interact {
     payload: InferPayloadWithPrompt | InferPayloadWithMessages
   ) {
     try {
-      console.log('infer - start');
-      if (typeof (payload as InferPayloadWithPrompt).prompt === 'string') {
-        const result = this.inferWithPrompt(payload as InferPayloadWithPrompt);
+      const normalizedPayload = this.normalizePayload(payload);
+      console.log('infer - start', {
+        payload: normalizedPayload,
+      });
+      if (
+        typeof (normalizedPayload as InferPayloadWithPrompt).prompt === 'string'
+      ) {
+        const result = await this.inferWithPrompt(
+          normalizedPayload as InferPayloadWithPrompt
+        );
         console.log('infer - succeed', result);
         return result;
       } else {
-        const result = this.inferWithMessages(
-          payload as InferPayloadWithMessages
+        const result = await this.inferWithMessages(
+          normalizedPayload as InferPayloadWithMessages
         );
         console.log('infer - succeed', result);
         return result;

@@ -230,7 +230,7 @@ func (s *Service) DeployAgentRealWorldAddress(
 ) (string, string, error) {
 	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
 	eaiTokenAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "eai_contract_address"))
-	contractAddress, txHash, err := s.GetEthereumClient(ctx, networkID).
+	contractAddress, txHash, err := s.GetEVMClient(ctx, networkID).
 		DeployERC20RealWorldAgent(
 			s.GetAddressPrk(memePoolAddress),
 			tokenName,
@@ -261,19 +261,6 @@ func (s *Service) DeployAgentRealWorld(ctx context.Context, agentInfoID uint) er
 	if agentInfo != nil {
 		if agentInfo.AgentType != models.AgentInfoAgentTypeRealWorld {
 			return errs.NewError(errs.ErrBadRequest)
-		}
-		err = s.CreateTokenInfo(ctx, agentInfo.ID)
-		if err != nil {
-			return errs.NewError(err)
-		}
-		agentInfo, err = s.dao.FirstAgentInfoByID(
-			daos.GetDBMainCtx(ctx),
-			agentInfoID,
-			map[string][]any{},
-			false,
-		)
-		if err != nil {
-			return errs.NewError(err)
 		}
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.Worker != "" {
 			if agentInfo.MintHash == "" {

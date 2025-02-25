@@ -1,18 +1,18 @@
-import { Interact } from "@eternalai.js/interact";
+import { ChainId, Interact } from "@eternalai.js/interact";
 import "./Styles.css";
 import { ethers } from "ethers";
 import {
   InferPayloadWithPrompt,
   InferPayloadWithMessages,
 } from "@eternalai.js/interact/dist/types";
-import { ChainId } from "@eternalai.js/interact/dist/constants";
 
 const AGENT_CONTRACT_ADDRESSES: Record<ChainId, string> = {
-  56: "0x3B9710bA5578C2eeD075D8A23D8c596925fa4625",
-  8453: "0x643c45e89769a16bcb870092bd1efe4696cb2ce7",
+  [ChainId.BSC]: "0x3B9710bA5578C2eeD075D8A23D8c596925fa4625",
+  [ChainId.BASE]: "0x643c45e89769a16bcb870092bd1efe4696cb2ce7",
 };
 
-const wallet = new ethers.Wallet("Your private key here");
+// const wallet = new ethers.Wallet("Your private key here");
+const wallet = ethers.Wallet.createRandom();
 
 function PackageInteract() {
   return (

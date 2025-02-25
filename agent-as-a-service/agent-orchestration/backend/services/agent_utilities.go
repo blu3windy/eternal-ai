@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"math/big"
 	"strings"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
@@ -11,7 +11,8 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/erc20utilityagent"
-	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/utilityagentupgradeable"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/evmapi"
 )
 
 func (s *Service) ERC20UtilityAgentFetchCode(
@@ -44,52 +45,33 @@ func (s *Service) ERC20UtilityAgentGetStorageInfo(
 	return resp, nil
 }
 
-func (s *Service) DeployAgentUtilityAddress(
+func (s *Service) DeployAgentUtilityUpgradeableAddress(
 	ctx context.Context,
 	networkID uint64,
-	tokenName string,
-	tokenSymbol string,
 	systemPrompt string,
-	fsContractAddress string,
-	fileName string,
-) (string, string, error) {
+	storageInfos []utilityagentupgradeable.IUtilityAgentStorageInfo,
+) (string, string, string, error) {
 	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
-	typeAddress, err := abi.NewType("address", "", nil)
+	proxyAdminAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "proxy_admin_address"))
+	logicAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "utilityagentupgradeable_address"))
+	initializeData, err := evmapi.UtilityAgentUpgradeableInitializeData(systemPrompt, storageInfos)
 	if err != nil {
-		return "", "", errs.NewError(err)
+		return "", "", "", errs.NewError(err)
 	}
-	typeString, err := abi.NewType("string", "", nil)
-	if err != nil {
-		return "", "", errs.NewError(err)
-	}
-	storageInfoArgs := abi.Arguments{
-		{Type: typeAddress},
-		{Type: typeString},
-	}
-	storageInfo, err := storageInfoArgs.Pack(
-		helpers.HexToAddress(fsContractAddress),
-		fileName,
-	)
-	if err != nil {
-		return "", "", errs.NewError(err)
-	}
-	contractAddress, txHash, err := s.GetEthereumClient(ctx, networkID).
-		DeployERC20UtilityAgent(
+	contractAddress, txHash, err := s.GetEVMClient(ctx, networkID).
+		DeployTransparentUpgradeableProxy(
 			s.GetAddressPrk(memePoolAddress),
-			tokenName,
-			tokenSymbol,
-			big.NewInt(0),
-			helpers.HexToAddress(memePoolAddress),
-			systemPrompt,
-			storageInfo,
+			helpers.HexToAddress(logicAddress),
+			helpers.HexToAddress(proxyAdminAddress),
+			initializeData,
 		)
 	if err != nil {
-		return "", "", errs.NewError(err)
+		return "", "", "", errs.NewError(err)
 	}
-	return contractAddress, txHash, nil
+	return contractAddress, logicAddress, txHash, nil
 }
 
-func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) error {
+func (s *Service) DeployAgentUtilityUpgradeable(ctx context.Context, agentInfoID uint) error {
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
 		agentInfoID,
@@ -103,19 +85,6 @@ func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) erro
 		if agentInfo.AgentType != models.AgentInfoAgentTypeUtility {
 			return errs.NewError(errs.ErrBadRequest)
 		}
-		err = s.CreateTokenInfo(ctx, agentInfo.ID)
-		if err != nil {
-			return errs.NewError(err)
-		}
-		agentInfo, err = s.dao.FirstAgentInfoByID(
-			daos.GetDBMainCtx(ctx),
-			agentInfoID,
-			map[string][]any{},
-			false,
-		)
-		if err != nil {
-			return errs.NewError(err)
-		}
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.SourceUrl != "" {
 			if agentInfo.MintHash == "" {
 				switch agentInfo.NetworkID {
@@ -123,30 +92,42 @@ func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) erro
 					models.ARBITRUM_CHAIN_ID,
 					models.BSC_CHAIN_ID,
 					models.APE_CHAIN_ID,
-					models.AVALANCHE_C_CHAIN_ID:
+					models.AVALANCHE_C_CHAIN_ID,
+					models.CELO_CHAIN_ID:
 					{
-						var fsContractAddress, fileName string
-						if strings.HasPrefix(agentInfo.SourceUrl, "ethfs_") {
-							fsContractAddress = strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "ethfs_address"))
-							fileName = strings.TrimPrefix(agentInfo.SourceUrl, "ethfs_")
-						} else if strings.HasPrefix(agentInfo.SourceUrl, "ipfs_") {
-							fsContractAddress = models.ETH_ZERO_ADDRESS
-							fileName = strings.TrimPrefix(agentInfo.SourceUrl, "ipfs_")
-						} else {
+						var fileNames []string
+						err = json.Unmarshal([]byte(agentInfo.SourceUrl), &fileNames)
+						if err != nil {
+							return errs.NewError(err)
+						}
+						if len(fileNames) == 0 {
 							return errs.NewError(errs.ErrBadRequest)
+						}
+						storageInfos := []utilityagentupgradeable.IUtilityAgentStorageInfo{}
+						for _, fileName := range fileNames {
+							if strings.HasPrefix(fileName, "ethfs_") {
+								storageInfos = append(storageInfos, utilityagentupgradeable.IUtilityAgentStorageInfo{
+									ContractAddress: helpers.HexToAddress(strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "ethfs_address"))),
+									Filename:        strings.TrimPrefix(fileName, "ethfs_"),
+								})
+							} else if strings.HasPrefix(fileName, "ipfs_") {
+								storageInfos = append(storageInfos, utilityagentupgradeable.IUtilityAgentStorageInfo{
+									ContractAddress: helpers.HexToAddress(models.ETH_ZERO_ADDRESS),
+									Filename:        strings.TrimPrefix(fileName, "ipfs_"),
+								})
+							} else {
+								return errs.NewError(errs.ErrBadRequest)
+							}
 						}
 						systemContentHash, err := s.IpfsUploadDataForName(ctx, fmt.Sprintf("%v_%v", agentInfo.AgentID, "system_content"), []byte(agentInfo.SystemPrompt))
 						if err != nil {
 							return errs.NewError(err)
 						}
-						contractAddress, txHash, err := s.DeployAgentUtilityAddress(
+						contractAddress, logicAddress, txHash, err := s.DeployAgentUtilityUpgradeableAddress(
 							ctx,
 							agentInfo.NetworkID,
-							agentInfo.TokenName,
-							agentInfo.TokenSymbol,
 							systemContentHash,
-							fsContractAddress,
-							fileName,
+							storageInfos,
 						)
 						if err != nil {
 							return errs.NewError(err)
@@ -156,6 +137,7 @@ func (s *Service) DeployAgentUtility(ctx context.Context, agentInfoID uint) erro
 							Updates(
 								map[string]any{
 									"agent_contract_address": strings.ToLower(contractAddress),
+									"agent_logic_address":    strings.ToLower(logicAddress),
 									"agent_contract_id":      "0",
 									"mint_hash":              txHash,
 									"status":                 models.AssistantStatusReady,

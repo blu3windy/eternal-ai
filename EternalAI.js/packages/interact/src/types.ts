@@ -3,6 +3,7 @@ import { Message } from './methods/infer/types';
 
 type InferPayloadBase = {
   agentAddress: string;
+  isLightHouse?: boolean;
 };
 
 export type InferPayloadWithPrompt = InferPayloadBase & {

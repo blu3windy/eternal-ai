@@ -111,6 +111,7 @@ func (s *Service) JobAgentSnapshotPostCreate(ctx context.Context) error {
 							models.HYPE_CHAIN_ID,
 							models.MONAD_TESTNET_CHAIN_ID,
 							models.MEGAETH_TESTNET_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 					`agent_snapshot_missions.infer_at is null
