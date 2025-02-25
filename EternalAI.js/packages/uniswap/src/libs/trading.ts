@@ -32,7 +32,7 @@ import {
     TransactionState,
 } from './providers'
 import {fromReadableAmount} from './utils'
-import {zeroAddress} from "@/const";
+import {zeroAddress} from "../const";
 
 export type TokenTrade = Trade<Token, Token, TradeType>
 
@@ -45,8 +45,8 @@ export async function createTrade(): Promise<TokenTrade> {
 
     if (CurrentConfig.tokens.in.address == zeroAddress ||
         CurrentConfig.tokens.out.address == zeroAddress ||
-        CurrentConfig.tokens.in.address == WETH_TOKEN ||
-        CurrentConfig.tokens.out.address == WETH_TOKEN
+        CurrentConfig.tokens.in.address == WETH_TOKEN.address ||
+        CurrentConfig.tokens.out.address == WETH_TOKEN.address
     ) {
         const poolInfo = await getPoolInfo()
         console.log("--------> poolInfo", JSON.stringify(poolInfo, null, 4))
@@ -60,7 +60,6 @@ export async function createTrade(): Promise<TokenTrade> {
         )
         listPools.push(pool)
     } else {
-        console.log("Pool error", e)
         // get getPoolInfoByToken
         const pool1 = await getPoolInfoByToken(CurrentConfig.tokens.in, WETH_TOKEN, CurrentConfig.tokens.poolFee)
         const pool2 = await getPoolInfoByToken(WETH_TOKEN, CurrentConfig.tokens.out, CurrentConfig.tokens.poolFee)

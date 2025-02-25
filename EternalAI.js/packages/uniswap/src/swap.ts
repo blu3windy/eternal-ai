@@ -2,7 +2,7 @@ import {ETH_CHAIN_ID, getRPC, zeroAddress} from "./const";
 import {ethers} from "ethers";
 import {Token} from "@uniswap/sdk-core";
 import {changeWallet, createWallet} from "./libs/providers";
-import {createTrade} from "./libs/trading";
+import {createTrade, executeTrade} from "./libs/trading";
 import {CurrentConfig, Environment} from "./libs/config";
 
 export class SwapReq {
@@ -124,8 +124,8 @@ export class UniSwapAI {
 
         try {
             const trade = await createTrade()
-            /*const state = await executeTrade(trade)
-            return state*/
+            const state = await executeTrade(trade)
+            /*return state*/
         } catch (e) {
             console.log(`Error ${e}`)
         }
