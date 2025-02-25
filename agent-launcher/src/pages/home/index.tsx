@@ -1,8 +1,9 @@
-import { Box, Flex } from "@chakra-ui/react";
+import {Box, Flex, SimpleGrid} from "@chakra-ui/react";
 import MainLayout from "../../components/layout";
 import ChatAgent from "./chat-agent";
 import TradeAgent from "./trade-agent";
 import AgentProvider from "./provider";
+import AgentsList from "./list-agent";
 
 type Props = {};
 
@@ -11,9 +12,10 @@ const Home = (_props: Props) => {
       <MainLayout>
          <AgentProvider>
             <Flex gap={"12px"}>
-               <Box flex={1}>
-                  <ChatAgent />
-               </Box>
+              <SimpleGrid gridTemplateColumns={"365px 1fr"} flex={1} bg={"#FFF"}>
+                <AgentsList />
+                <ChatAgent />
+              </SimpleGrid>
                <Box w={"353px"}>
                   <TradeAgent />
                </Box>

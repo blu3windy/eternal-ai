@@ -1,0 +1,89 @@
+.container {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fff;
+  cursor: pointer;
+  color: #000;
+
+  .infoText {
+    font-size: 12px;
+    font-weight: 400;
+    color: #000;
+  }
+
+  .noTokenTag {
+    font-size: 12px;
+    font-weight: 400;
+    background: #0000000D;
+    padding: 4px 8px;
+    border-radius: 100px;
+  }
+
+  &.isSelected {
+    color: #FFF;
+    background: #000;
+
+    .infoText {
+      color: #FFF;
+    }
+
+    .noTokenTag {
+      background: #686A6C;
+    }
+  }
+
+}
+
+.brain {
+  background: #5400fb;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.noToken {
+  padding: 4px 8px;
+  border-radius: 100px;
+  background: #2e2e2e;
+
+  color: #cecece;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.message {
+  background: #000;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+
+
+.body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.footer {
+  width: 100%;
+  display: flex;
+  //justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+}
+
+.paragraph {
+  white-space: pre-wrap;
+  white-space-collapse: preserve;
+  overflow-wrap: break-word !important;
+  text-wrap: wrap !important;
+  word-wrap: break-word; /* All browsers since IE 5.5+ */
+  overflow-wrap: break-word;
+  line-break: auto !important;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
