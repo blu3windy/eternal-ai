@@ -1,7 +1,7 @@
 import * as ethers from 'ethers';
 
 import { InteractWallet } from '../types';
-import { SendInferResponse } from './types';
+import { Message, SendInferResponse } from './types';
 import {
   AGENT_ABI,
   IPFS,
@@ -14,6 +14,7 @@ import { ChainId } from '../../constants';
 import { InferPayloadWithMessages, InferPayloadWithPrompt } from '../../types';
 import { sleep } from '../../utils/time';
 import { Fragment, LogDescription } from 'ethers/lib/utils';
+import LightHouse from '@/services/light_house';
 
 const contracts: Record<string, ethers.Contract> = {};
 
@@ -60,11 +61,22 @@ export class InferenceResponse {
 }
 
 const Infer = {
-  getSystemPrompt: async (
-    chainId: ChainId,
-    contractAddress: string,
-    wallet: InteractWallet
+  convertMessagesToBytes: async (
+    messages: Message[],
+    isLightHouse: boolean
   ) => {
+    if (isLightHouse) {
+      const uploadedUrl = await LightHouse.upload(JSON.stringify(messages));
+      return ethers.utils.toUtf8Bytes(uploadedUrl);
+    }
+
+    return ethers.utils.toUtf8Bytes(
+      JSON.stringify({
+        messages,
+      })
+    );
+  },
+  getSystemPrompt: async (contractAddress: string, wallet: InteractWallet) => {
     try {
       console.log('infer getSystemPrompt - start');
       const contract = getAgentContract(contractAddress, wallet);
@@ -87,29 +99,22 @@ const Infer = {
       const contractAddress = payload.agentAddress;
       const contract = getAgentContract(contractAddress, wallet);
 
-      const systemPrompt = await Infer.getSystemPrompt(
-        payload.chainId,
-        contractAddress,
-        wallet
-      );
+      const systemPrompt = await Infer.getSystemPrompt(contractAddress, wallet);
 
-      const { chainId, prompt } = payload;
+      const { chainId, prompt, isLightHouse } = payload;
 
-      const messages = [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ];
-
-      const promptPayload = ethers.utils.toUtf8Bytes(
-        JSON.stringify({
-          messages,
-        })
+      const promptPayload = await Infer.convertMessagesToBytes(
+        [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        !!isLightHouse
       );
       const callData = contract.interface.encodeFunctionData('prompt(bytes)', [
         promptPayload,
@@ -149,12 +154,11 @@ const Infer = {
       const contractAddress = payload.agentAddress;
       const contract = getAgentContract(contractAddress, wallet);
 
-      const { chainId, messages } = payload;
+      const { chainId, messages, isLightHouse } = payload;
 
-      const promptPayload = ethers.utils.toUtf8Bytes(
-        JSON.stringify({
-          messages,
-        })
+      const promptPayload = await Infer.convertMessagesToBytes(
+        messages,
+        !!isLightHouse
       );
       const callData = contract.interface.encodeFunctionData('prompt(bytes)', [
         promptPayload,
@@ -168,9 +172,9 @@ const Infer = {
       ]);
 
       const params = {
-        to: contractAddress, // smart contract address
-        from: from, // sender address
-        data: callData, // data
+        to: contractAddress,
+        from: from,
+        data: callData,
         chainId: ethers.BigNumber.from(chainId).toNumber(),
         gasLimit: gasLimit,
         gasPrice: gasPrice,
@@ -265,6 +269,7 @@ const Infer = {
       return null;
     }
   },
+
   processOutputToInferResponse: async (output: ethers.Bytes) => {
     const inferResponse = Infer.processOutput(output);
     if (!inferResponse) {
@@ -352,7 +357,7 @@ const Infer = {
             );
             break;
           } catch (e) {
-            console.log('Can not get result for inference, try again', e);
+            console.log('Retry to get inference by reference id');
             await sleep(30);
           }
         }
