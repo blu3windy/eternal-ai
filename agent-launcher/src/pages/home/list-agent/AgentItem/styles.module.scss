@@ -1,17 +1,13 @@
 .container {
-  // border: 1px solid #e5e7eb;
-   padding: 14px 16px;
-  // border-radius: 20px;
-  // background: #fff;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fff;
   cursor: pointer;
+  color: #000;
 
-  .content {
-    cursor: pointer;
-    color: #000;
-
-    &.isSelected {
-      color: #FFF;
-    }
+  &.isSelected {
+    color: #FFF;
+    background: #000;
   }
 }
 

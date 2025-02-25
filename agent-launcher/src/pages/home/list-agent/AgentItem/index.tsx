@@ -9,6 +9,7 @@ import {DefaultAvatar} from "../../../../components/DefaultAvatar";
 import {addressFormater, compareString} from "../../../../utils/string.ts";
 import {FilterChains} from "../constants.ts";
 import {formatCurrency} from "../../../../utils/format.ts";
+import cs from "clsx";
 
 const MAX_LENGTH_TEXT = 150;
 
@@ -22,6 +23,7 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
 
   console.log('stephen: token', token)
   console.log('stephen: selectedAgent', selectedAgent)
+  console.log('stephen: ================================================')
 
   const [showFullText, setShowFullText] = React.useState(false);
 
@@ -97,7 +99,7 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
   return (
     <Flex
       key={token.id}
-      className={s.container}
+      className={cs(s.container, token?.id === selectedAgent?.id ? s.isSelected : '')}
       flexDirection="column"
       position={'relative'}
       onClick={(e) =>

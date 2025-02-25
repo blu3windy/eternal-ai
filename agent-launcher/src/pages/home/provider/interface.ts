@@ -1,5 +1,7 @@
+import {IAgentToken} from "../../../services/api/agents-token/interface.ts";
+
 export interface IAgentContext {
   loading: boolean;
-  selectedAgent?: IAgentContext;
+  selectedAgent?: IAgentToken;
   setSelectedAgent: any;
 }

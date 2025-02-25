@@ -22,6 +22,8 @@ const AgentProvider: React.FC<
   const contextValues: any = useMemo(() => {
     return {
       loading,
+      selectedAgent,
+      setSelectedAgent,
     };
   }, [
     loading,
