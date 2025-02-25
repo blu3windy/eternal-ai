@@ -230,7 +230,7 @@ func (s *Service) DeployAgentRealWorldAddress(
 ) (string, string, error) {
 	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
 	eaiTokenAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "eai_contract_address"))
-	contractAddress, txHash, err := s.GetEthereumClient(ctx, networkID).
+	contractAddress, txHash, err := s.GetEVMClient(ctx, networkID).
 		DeployERC20RealWorldAgent(
 			s.GetAddressPrk(memePoolAddress),
 			tokenName,

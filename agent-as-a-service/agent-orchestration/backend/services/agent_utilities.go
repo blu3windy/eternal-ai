@@ -58,7 +58,7 @@ func (s *Service) DeployAgentUtilityUpgradeableAddress(
 	if err != nil {
 		return "", "", "", errs.NewError(err)
 	}
-	contractAddress, txHash, err := s.GetEthereumClient(ctx, networkID).
+	contractAddress, txHash, err := s.GetEVMClient(ctx, networkID).
 		DeployTransparentUpgradeableProxy(
 			s.GetAddressPrk(memePoolAddress),
 			helpers.HexToAddress(logicAddress),
