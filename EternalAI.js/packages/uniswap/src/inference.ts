@@ -1,6 +1,7 @@
 import {Web3} from "web3";
 import {AGENT_ABI, ETH_CHAIN_ID, IPFS, LIGHTHOUSE_IPFS, PROMPT_SCHEDULER_ABI, RPC_URL, WORKER_HUB_ABI} from "./const";
 import {poaMiddleware, stringToBytes} from "./utils";
+import {MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS} from "@/libs/constants";
 
 export class InferenceResponse {
     result_uri: string
@@ -127,18 +128,16 @@ export class AgentInference {
 
             const json_request = JSON.stringify(req)
             const func = agent_contract.methods.prompt(stringToBytes(json_request));
-            const gasPrice = await this.web3.eth.getGasPrice();
-            const gas = await func.estimateGas();
             const nonce = await this.web3.eth.getTransactionCount(account.address);
             const transaction = {
                 from: account_address,
                 to: this.agent_address,
-                gas: gas,
-                gaPrice: this.web3.utils.toWei("1", "gwei"),
+                gas: await func.estimateGas(),
+                // gaPrice: this.web3.utils.toWei("1", "gwei"),
                 nonce: nonce,
                 data: func.encodeABI(),
-                maxPriorityFeePerGas: this.web3.utils.toWei("1", "gwei"),
-                maxFeePerGas: this.web3.utils.toWei("1", "gwei")
+                maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+                maxFeePerGas: MAX_FEE_PER_GAS
             };
 
             // console.log(transaction)
