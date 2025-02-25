@@ -38,9 +38,7 @@ export type TokenTrade = Trade<Token, Token, TradeType>
 
 // Trading Functions
 
-export async function createTrade(): Promise<TokenTrade> {
-    console.log("--------> CurrentConfig", CurrentConfig)
-
+export async function buildPools() {
     let listPools: any[] = []
 
     if (CurrentConfig.tokens.in.address == zeroAddress ||
@@ -66,14 +64,19 @@ export async function createTrade(): Promise<TokenTrade> {
         listPools.push(pool1)
         listPools.push(pool2)
     }
+    return listPools
+}
 
+export async function createTrade(): Promise<TokenTrade> {
+    // console.log("--------> CurrentConfig", CurrentConfig)
+    const listPools = await buildPools();
     const swapRoute = new Route(
         listPools,
         CurrentConfig.tokens.in,
         CurrentConfig.tokens.out
     )
 
-    console.log(`Rout: ${JSON.stringify(swapRoute)}`)
+    // console.log(`Rout: ${JSON.stringify(swapRoute)}`)
 
     const amountOut = await getOutputQuote(swapRoute)
 
@@ -92,7 +95,7 @@ export async function createTrade(): Promise<TokenTrade> {
         ),
         tradeType: TradeType.EXACT_INPUT,
     })
-    console.log(`Created uncheckedTrade: \n\n ${JSON.stringify(uncheckedTrade, null, 4)} \n\n`)
+    // console.log(`Created uncheckedTrade: \n\n ${JSON.stringify(uncheckedTrade, null, 4)} \n\n`)
     return uncheckedTrade
 }
 
@@ -133,7 +136,7 @@ export async function executeTrade(
 
     const res = await sendTransaction(tx)
 
-    return res
+    return (res, tx)
 }
 
 // Helper Quoting and Pool Functions

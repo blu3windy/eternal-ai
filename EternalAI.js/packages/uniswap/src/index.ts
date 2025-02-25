@@ -20,8 +20,8 @@ export const call_uniswap = async (private_key: string, chain_id: number, rpc: s
         const req = SwapReq.fromJSON(content)
         await req.convert_in_out()
         console.log(`**** call uniswap with req **** \n ${JSON.stringify(req, null, 4)}`)
-        const tx_swap = await uniswap_obj.swap_v3(private_key, req, chain_id, rpc)
-        return tx_swap;
+        const {state, tx} = await uniswap_obj.swap_v3(private_key, req, chain_id, rpc)
+        return {state, tx};
     } catch (e) {
         return null
     }
@@ -94,8 +94,8 @@ export const create_agent_infer = async (private_key: string, chain_id: string, 
 
     const content_response = await process_infer(chain_id, tx_hash, rpc, worker_hub_address)
     if (content_response) {
-        const tx_swap = await call_uniswap(private_key, parseInt(chain_id, 16), rpc, content_response);
-        return tx_swap
+        const {state, tx} = await call_uniswap(private_key, parseInt(chain_id, 16), rpc, content_response);
+        return {state, tx}
     } else {
         return null
     }
@@ -104,13 +104,13 @@ export const create_agent_infer = async (private_key: string, chain_id: string, 
 export const uni_swap_ai = async (command: string, args: any) => {
     switch (command) {
         case "agent-infer": {
-            const tx_swap = await create_agent_infer(
+            const {state, tx} = await create_agent_infer(
                 args.private_key || process.env.PRIVATE_KEY,
                 args.chain_id || BSC_CHAIN_ID,
                 args.agent_address || process.env.AGENT_ADDRESS,
                 args.prompt
             )
-            console.log(`swap tx ${tx_swap}`);
+            console.log(`swap tx ${tx} state ${state}`);
         }
     }
 }
