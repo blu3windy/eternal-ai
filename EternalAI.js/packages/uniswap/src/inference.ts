@@ -183,6 +183,8 @@ export class InferenceProcessing {
     }
 
     get_assignments_by_inference = async (worker_hub_address: string, inference_id: string, rpc: string) => {
+        // TODO: still not implement
+        console.log("TODO TODO TODO")
         return null;
     }
 
@@ -262,10 +264,10 @@ export class InferenceProcessing {
                     const contract = new this.web3.eth.Contract(WORKER_HUB_ABI, this.workerhub_address);
                     for (const log of logs) {
                         try {
-                            const event = WORKER_HUB_ABI.find(event => (event.type === "event" && event.name === 'NewInference'))
+                            const event = WORKER_HUB_ABI.find(event => (event["type"] === "event" && event["name"] === 'NewInference'))
                             if (event) {
                                 const decoded = this.web3.eth.abi.decodeLog(
-                                    event.inputs,
+                                    event["inputs"],
                                     log.data,
                                     log.topics.slice(1)
                                 );

@@ -84,8 +84,8 @@ export const create_agent_infer = async (private_key: string, chain_id: string, 
     }
     console.log("rpc", rpc)
     const agent_infer = new AgentInference()
-    const tx_hash = await agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
-    // const tx_hash = '0x731dd5cafe4b5e9b530ec60900285eb6e46cf0a244bd5a664be8946e1e0f1523';
+    // const tx_hash = await agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
+    const tx_hash = '0x731dd5cafe4b5e9b530ec60900285eb6e46cf0a244bd5a664be8946e1e0f1523';
     console.log(`infer tx_hash: ${tx_hash}`)
 
     const worker_hub_address = await agent_infer.get_worker_hub_address(agent_address, rpc)
