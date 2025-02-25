@@ -1,8 +1,7 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import vm from "vm";
-import * as electron from "electron"; // Import Electron safely
+import runIpcMain from "./ipcMain";
 
 // const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,15 +28,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 
 let win: BrowserWindow | null;
 
-ipcMain.handle("execute-bundled-code", async (_, code: string) => {
-  try {
-    const context = vm.createContext({ console, require }); // ✅ Enable require inside VM
-    const script = new vm.Script(`(function() { ${code} })()`);
-    return script.runInContext(context);
-  } catch (error: any) {
-    return `Error: ${error.message}`;
-  }
-});
+runIpcMain();
 
 function createWindow() {
   win = new BrowserWindow({

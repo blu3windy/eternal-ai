@@ -1,4 +1,5 @@
 import { ipcRenderer, contextBridge } from "electron";
+import {EMIT_EVENT_NAME} from "./share/event-name.ts";
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld("ipcRenderer", {
@@ -26,6 +27,7 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 });
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  executeCode: async (code: string) =>
-    ipcRenderer.invoke("execute-bundled-code", code),
+  savePassword: (name: string, password: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.SAVE_PASSWORD, name, password),
+  getPassword: (name: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.GET_PASSWORD, name),
+  deletePassword: (name: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DELETE_PASSWORD, name),
 });
