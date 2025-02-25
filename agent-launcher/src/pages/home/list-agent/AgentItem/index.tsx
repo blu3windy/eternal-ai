@@ -1,16 +1,14 @@
-import Avatar from '@/components/Avatar';
-import { RoutePathManager } from '@/constants/route-path';
-import { IAgentToken } from '@/services/api/agents-token/interface';
-import { formatCurrency } from '@/utils/format';
-import { addressFormater, compareString } from '@/utils/string';
-import { Box, Center, Flex, Grid, Image, Text } from '@chakra-ui/react';
-import { useRouter } from 'next/navigation';
-import React, { useContext } from 'react';
-import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
+import {Box, Center, Flex, Grid, Image, Text} from '@chakra-ui/react';
+import React, {useContext} from 'react';
+import Jazzicon, {jsNumberForAddress} from 'react-jazzicon';
 import s from './styles.module.scss';
-import { DefaultAvatar } from '@/components/DefaultAvatar';
-import { FilterChains } from '@/modules/AgentsHome/AgentsList/constants';
-import { PumpTradeContext } from '@/modules/Pump/Trade/Provider';
+import {IAgentToken} from "../../../../services/api/agents-token/interface.ts";
+import {AgentContext} from "../../provider";
+import Avatar from "../../../../components/Avatar";
+import {DefaultAvatar} from "../../../../components/DefaultAvatar";
+import {addressFormater, compareString} from "../../../../utils/string.ts";
+import {FilterChains} from "../constants.ts";
+import {formatCurrency} from "../../../../utils/format.ts";
 
 const MAX_LENGTH_TEXT = 150;
 
@@ -20,11 +18,10 @@ interface IProps {
 }
 
 const AgentItem = ({ token, isAllChain }: IProps) => {
-  const router = useRouter();
-  const { pumpToken } = useContext(PumpTradeContext);
+  const { selectedAgent, setSelectedAgent } = useContext(AgentContext);
 
-  console.log('STEPHEN: token', token)
-  console.log('STEPHEN: pumpToken', pumpToken)
+  console.log('stephen: token', token)
+  console.log('stephen: selectedAgent', selectedAgent)
 
   const [showFullText, setShowFullText] = React.useState(false);
 
@@ -34,19 +31,12 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
     setShowFullText(!showFullText);
   };
 
-  const handleGoToBrain = (e: any) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-    router.push(
-      `${RoutePathManager.AGENT}/${token?.agent_contract_address}/${token?.agent_contract_id}`,
-    );
-  };
-
   const handleGoToChat = (e: any, token_address?: any) => {
     if (token_address) {
       e?.preventDefault();
       e?.stopPropagation();
-      router.push(`/${token_address}`);
+
+      setSelectedAgent(token);
     }
   };
 
@@ -192,7 +182,7 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
                       seed={jsNumberForAddress(token?.creator || '')}
                     />
                   )}
-                  <Text color="#fff" fontSize="14px" fontWeight="400">
+                  <Text color="#000" fontSize="14px" fontWeight="400">
                     {token?.tmp_twitter_info?.twitter_username
                       ? `@${token?.tmp_twitter_info?.twitter_username}`
                       : addressFormater(token?.creator)}
@@ -240,7 +230,7 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
                     className={s.paragraph}
                     fontSize="14px"
                     fontWeight={'400'}
-                    color="rgb(255, 255, 255, 0.7)"
+                    color="rgb(0, 0, 0, 0.7)"
                   >
                     {description} {renderReadmore()}
                   </Text>
@@ -249,7 +239,7 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
                     className={s.paragraph}
                     fontSize="14px"
                     fontWeight={'400'}
-                    color="rgb(255, 255, 255, 0.7)"
+                    color="rgb(0, 0, 0, 0.7)"
                   >
                     {`${description
                       ?.replaceAll(/([#]\w+)/g, '')
@@ -260,63 +250,6 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
               </Box>
             </Flex>
           )}
-
-          {/* <Flex mt="12px" flexDirection="column" gap="8px">
-            <Flex alignItems={'center'} gap={'8px'}>
-              <Center
-                className={styles.brain}
-                bg={!!token?.twitter_info?.twitter_name ? '#5400fb' : '#000'}
-                onClick={handleGoToBrain}
-                opacity={!!token?.twitter_info?.twitter_name ? 1 : 0.3}
-              >
-                <Image src={`/icons/pump/ic_brain.svg`} />
-              </Center>
-
-              <Tooltip
-                label={
-                  <Text fontSize="12px" fontWeight="400" color="black">
-                    {!!token?.twitter_info?.twitter_name
-                      ? `This ${AI_AGENT_NAME}'s X account is @${token?.twitter_info?.twitter_name}.`
-                      : `This ${AI_AGENT_NAME} has not linked to any X account yet.`}
-                  </Text>
-                }
-                bg="#fff"
-                padding="8px 12px"
-                borderRadius="6px"
-              >
-                <Center
-                  className={styles.message}
-                  opacity={!!token?.twitter_info?.twitter_name ? 1 : 0.3}
-                  onClick={handleClickX}
-                >
-                  <Image src={`/icons/pump/ic_x.svg`} />
-                </Center>
-              </Tooltip>
-
-              <Center
-                className={styles.message}
-                onClick={(e: any) => {
-                  handleGoToChat(
-                    e,
-                    token?.id || token?.token_address || token?.agent_id,
-                  );
-                }}
-                bg={'#000'}
-              >
-                <Image src={`/icons/pump/ic_message.svg`} />
-              </Center>
-
-              <Center
-                className={styles.message}
-                onClick={(e: any) => {
-                  handleClickDexscaner(e, token?.dex_url);
-                }}
-                bg={!!token?.dex_url ? '#000' : '#BFBFBF'}
-              >
-                <Image w={'16px'} src={`/icons/pump/ic_dex.svg`} />
-              </Center>
-            </Flex>
-          </Flex> */}
         </Flex>
       </Grid>
     </Flex>

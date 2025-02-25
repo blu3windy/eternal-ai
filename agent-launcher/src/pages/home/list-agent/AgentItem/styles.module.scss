@@ -30,12 +30,6 @@
   color: #cecece;
   font-size: 13px;
   font-weight: 500;
-
-  @include is-mobile {
-    position: absolute;
-    right: 0;
-    top: -4px;
-  }
 }
 
 .message {

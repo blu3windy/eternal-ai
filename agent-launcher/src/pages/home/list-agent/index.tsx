@@ -228,13 +228,10 @@ const AgentsList = () => {
         >
           {agents.map((item: IAgentToken, i) => (
             <GridItem key={item.id}>
-              <Box>
-                dsfasdfs
-              </Box>
-{/*              <AgentItem
+              <AgentItem
                 token={item}
                 isAllChain
-              />*/}
+              />
             </GridItem>
           ))}
         </Grid>
