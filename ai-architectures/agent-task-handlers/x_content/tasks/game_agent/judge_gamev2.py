@@ -651,12 +651,14 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
         f"[_handle_winner_with_llm] Created conversation thread for {game_id} judging: {conversation_thread}"
     )
 
-    logger.info("[_handle_winner_with_llm] Calling LLM for {game_id} judgment")
+    logger.info(
+        f"[_handle_winner_with_llm] Calling LLM for {game_id} judgment"
+    )
     infer_result: OnchainInferResult = await llm.agenerate(
         conversation_thread, temperature=0.7
     )
     logger.info(
-        "[_handle_winner_with_llm] Calling LLM for {game_id} llm.agenerate complete"
+        f"[_handle_winner_with_llm] Calling LLM for {game_id} llm.agenerate complete"
     )
 
     summarize = await sync2async(summarize_judge_commentary)(
@@ -664,7 +666,7 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
     )
 
     logger.info(
-        "[_handle_winner_with_llm] Calling LLM for {game_id} summarize_judge_commentary : {summarize_judge_commentary}"
+        f"[_handle_winner_with_llm] Calling LLM for {game_id} summarize_judge_commentary : {summarize_judge_commentary}"
     )
 
     err = await _post_wallet_tweet(log, game_id, summarize)
