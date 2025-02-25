@@ -99,8 +99,8 @@ export class UniSwapAI {
         CurrentConfig.tokens.in = new Token(
             // chain_id,
             parseInt(ETH_CHAIN_ID, 16),
-            // req.token_in_address,
-            "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            req.token_in_address,
+            // "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
             18,
             req.token_in,
             req.token_in

@@ -21,10 +21,10 @@ import {
     ERC20_ABI,
     QUOTER_CONTRACT_ADDRESS,
     SWAP_ROUTER_ADDRESS,
-    TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER,
+    TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER, WETH_TOKEN,
 } from './constants'
 import {MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS} from './constants'
-import {getPoolInfo} from './pool'
+import {getPoolInfo, getPoolInfoByToken} from './pool'
 import {
     getProvider,
     getWalletAddress,
@@ -32,6 +32,7 @@ import {
     TransactionState,
 } from './providers'
 import {fromReadableAmount} from './utils'
+import {zeroAddress} from "@/const";
 
 export type TokenTrade = Trade<Token, Token, TradeType>
 
@@ -40,20 +41,35 @@ export type TokenTrade = Trade<Token, Token, TradeType>
 export async function createTrade(): Promise<TokenTrade> {
     console.log("--------> CurrentConfig", CurrentConfig)
 
-    const poolInfo = await getPoolInfo()
-    console.log("--------> poolInfo", JSON.stringify(poolInfo, null, 4))
+    let listPools: any[] = []
 
-    const pool = new Pool(
-        CurrentConfig.tokens.in,
-        CurrentConfig.tokens.out,
-        CurrentConfig.tokens.poolFee,
-        poolInfo.sqrtPriceX96.toString(),
-        poolInfo.liquidity.toString(),
-        poolInfo.tick
-    )
+    if (CurrentConfig.tokens.in.address == zeroAddress ||
+        CurrentConfig.tokens.out.address == zeroAddress ||
+        CurrentConfig.tokens.in.address == WETH_TOKEN ||
+        CurrentConfig.tokens.out.address == WETH_TOKEN
+    ) {
+        const poolInfo = await getPoolInfo()
+        console.log("--------> poolInfo", JSON.stringify(poolInfo, null, 4))
+        const pool = new Pool(
+            CurrentConfig.tokens.in,
+            CurrentConfig.tokens.out,
+            CurrentConfig.tokens.poolFee,
+            poolInfo.sqrtPriceX96.toString(),
+            poolInfo.liquidity.toString(),
+            poolInfo.tick
+        )
+        listPools.push(pool)
+    } else {
+        console.log("Pool error", e)
+        // get getPoolInfoByToken
+        const pool1 = await getPoolInfoByToken(CurrentConfig.tokens.in, WETH_TOKEN, CurrentConfig.tokens.poolFee)
+        const pool2 = await getPoolInfoByToken(WETH_TOKEN, CurrentConfig.tokens.out, CurrentConfig.tokens.poolFee)
+        listPools.push(pool1)
+        listPools.push(pool2)
+    }
 
     const swapRoute = new Route(
-        [pool],
+        listPools,
         CurrentConfig.tokens.in,
         CurrentConfig.tokens.out
     )
@@ -77,7 +93,7 @@ export async function createTrade(): Promise<TokenTrade> {
         ),
         tradeType: TradeType.EXACT_INPUT,
     })
-    console.log(`Created uncheckedTrade: \n\n" ${JSON.stringify(uncheckedTrade)} \n\n`)
+    console.log(`Created uncheckedTrade: \n\n ${JSON.stringify(uncheckedTrade, null, 4)} \n\n`)
     return uncheckedTrade
 }
 
