@@ -1051,7 +1051,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		}
 	}()
 	idRequest := time.Now().UnixMicro()
-	retrieveQuery, errGenerateQuery, conversation := s.GenerateKnowledgeQuery(agentModel, messages)
+	retrieveQuery, errGenerateQuery, _ := s.GenerateKnowledgeQuery(agentModel, messages)
 	if errGenerateQuery != nil {
 		errChan <- errs.NewError(errors.New("ERROR_GENERATE_QUERY"))
 		return
@@ -1124,19 +1124,23 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	// wait finish get analysedResult
 	analysedResult := <-analysedResultChanel
 	options := map[string]interface{}{}
-	userPrompt := fmt.Sprintf("Generate a response to the user's query based strictly on the conversation history and the provided information.\n\n### Guidelines:\n- Prioritize database data over website data when answering.\n- The response must be concise and directly relevant.\n- No external knowledge should be introduced beyond the provided sources.\n- Ensure clarity and alignment with ETHDenver-related context.\n- Prefer structured lists over paragraphs whenever possible to enhance readability.\n- If the response involves listing events, ensure they are formatted as follows:\n\nRequired Format for Events:\n```\n<Event name> (<Speaker 1>; <Speaker 2>; ...; <Speaker n>) - <Local start time> - <Stage/Location name>\n```\n\n- Speakers should be listed in the order provided. If they have an affiliation, include it exactly as given.\n- The local start time must be preserved in its original format.\n- The stage or location name should appear at the end.\n- If only one speaker is listed, follow the same format without modification.\n- If no speaker is listed, ignore the speaker listing part of the format.\n- If multiple events are listed, each should follow the format on a new line.\n\nExample of correct event with speakers output:\n- Easy-to-Miss Solidity Bugs (Jonathan Mevs - Quantstamp; Michael Boyle - Quantstamp) - February 24, 2025 at 10:50 AM - Captain Ethereum Stage\n\nExample of correct event without speakers output:\n- Messari - Feb 27, 2025 at 1:30 PM - BUIDL Event Hall\n\n### Conversation History:\n%v\n\n### Relevant Information from Database (Primary Source):\n%v\n\n### Relevant Information from the Website:\n%v\n\n### Final Answer:\n(Provide a precise, ETHDenver-relevant response following these guidelines.)\n",
-		conversation, toolCallData, analysedResult)
 	//answer prompt
+	question := openai.GetQuestionFromLLMMessage(messages)
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
 			Role:    openai2.ChatMessageRoleSystem,
 			Content: systemPrompt,
-		},
-		{
-			Role:    openai2.ChatMessageRoleUser,
-			Content: userPrompt,
-		},
+		}}
+
+	if len(messages) > 0 {
+		payloadAgentChat = messages[:len(messages)-1]
 	}
+	questionPrompt := fmt.Sprintf("Generate a response to the user's query based strictly on the user question and the provided information.\n\n### Guidelines:\n- Prioritize database data over website data when answering.\n- The response must be concise and directly relevant.\n- No external knowledge should be introduced beyond the provided sources.\n- Ensure clarity and alignment with ETHDenver-related context.\n- Prefer structured lists over paragraphs whenever possible to enhance readability.\n- If the response involves listing events, ensure they are formatted as follows:\n\nRequired Format for Events:\n```\n<Event name> (<Speaker 1>; <Speaker 2>; ...; <Speaker n>) - <Local start time> - <Stage/Location name>\n```\n\n- Speakers should be listed in the order provided. If they have an affiliation, include it exactly as given.\n- The local start time must be preserved in its original format.\n- The stage or location name should appear at the end.\n- If only one speaker is listed, follow the same format without modification.\n- If no speaker is listed, ignore the speaker listing part of the format.\n- If multiple events are listed, each should follow the format on a new line.\n\nExample of correct event with speakers output:\n- Easy-to-Miss Solidity Bugs (Jonathan Mevs - Quantstamp; Michael Boyle - Quantstamp) - February 24, 2025 at 10:50 AM - Captain Ethereum Stage\n\nExample of correct event without speakers output:\n- Messari - Feb 27, 2025 at 1:30 PM - BUIDL Event Hall\n\n### User Question:\n%v\n\n### Relevant Information from Database (Primary Source):\n%v\n\n### Relevant Information from the Website:\n%v\n\n### Final Answer:\n(Provide a precise, ETHDenver-relevant response following these guidelines.)\n",
+		question, toolCallData, analysedResult)
+	payloadAgentChat = append(payloadAgentChat, openai2.ChatCompletionMessage{
+		Role:    openai2.ChatMessageRoleUser,
+		Content: questionPrompt,
+	})
 
 	url := s.conf.AgentOffchainChatUrl
 	apiKey := s.conf.KnowledgeBaseConfig.OnchainAPIKey
