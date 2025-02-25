@@ -1062,80 +1062,67 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		retrieveQuery = &str
 	}
 
-	topKQuery := 20
-	if topK != nil {
-		topKQuery = *topK
-	}
-	th := 0.2
-	if threshold != nil {
-		th = *threshold
-	}
-
-	request := serializers.RetrieveKnowledgeBaseRequest{
-		Query: *retrieveQuery,
-		TopK:  topKQuery,
-		Kb: []string{
-			knowledgeBases[0].KbId,
-		},
-		Threshold: th,
-	}
+	analysedResultChanel := make(chan string)
 	go func() {
-		outputChan <- &models.ChatCompletionStreamResponse{
-			Message: "Start searching query in the RAG system.",
-			Code:    http.StatusProcessing,
+		topKQuery := 20
+		if topK != nil {
+			topKQuery = *topK
 		}
+		th := 0.2
+		if threshold != nil {
+			th = *threshold
+		}
+
+		request := serializers.RetrieveKnowledgeBaseRequest{
+			Query: *retrieveQuery,
+			TopK:  topKQuery,
+			Kb: []string{
+				knowledgeBases[0].KbId,
+			},
+			Threshold: th,
+		}
+		go func() {
+			outputChan <- &models.ChatCompletionStreamResponse{
+				Message: "Start searching query in the RAG system.",
+				Code:    http.StatusProcessing,
+			}
+		}()
+		searchResponse, err := s.GetResultFromRagSearch(&request)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		searchedResult := []string{}
+		for _, item := range searchResponse.Result {
+			searchedResult = append(searchedResult, item.Content)
+		}
+
+		go func() {
+			outputChan <- &models.ChatCompletionStreamResponse{
+				Message: "Start analyzing the search result.",
+				Code:    http.StatusProcessing,
+			}
+		}()
+		logger.Info("stream_retrieve_knowledge", "searched result", zap.Any("id_request", idRequest), zap.Any("searchedResult", searchedResult), zap.Any("input", request))
+
+		analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, *retrieveQuery, searchedResult)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("analyzed Result", analysedResult))
+		analysedResultChanel <- analysedResult
 	}()
-	// retry
-	var (
-		body string
-		err  error
-	)
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		body, err = helpers.CurlURLString(
-			s.conf.KnowledgeBaseConfig.QueryServiceUrl,
-			"POST",
-			map[string]string{},
-			&request,
-		)
-		if err == nil {
-			break
-		}
-		time.Sleep(time.Second)
-	}
 
-	response := &serializers.RetrieveKnowledgeBaseResponse{}
-	err = json.Unmarshal([]byte(body), response)
-	if err != nil {
-		errChan <- err
-		return
-	}
-
-	searchedResult := []string{}
-	for _, item := range response.Result {
-		searchedResult = append(searchedResult, item.Content)
-	}
-
-	go func() {
-		outputChan <- &models.ChatCompletionStreamResponse{
-			Message: "Start analyzing the search result.",
-			Code:    http.StatusProcessing,
-		}
-	}()
-	logger.Info("stream_retrieve_knowledge", "searched result", zap.Any("id_request", idRequest), zap.Any("searchedResult", searchedResult), zap.Any("input", request))
-
-	analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, *retrieveQuery, searchedResult)
-	if err != nil {
-		errChan <- err
-		return
-	}
 	toolCallData, err := s.GetResultFromToolCall(*retrieveQuery)
 	if err != nil {
 		errChan <- err
 		return
 	}
-
-	logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("analyzed Result", analysedResult))
+	logger.Info("stream_retrieve_knowledge", "tool call data", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("tool call data", toolCallData))
+	// wait finish get analysedResult
+	analysedResult := <-analysedResultChanel
 	options := map[string]interface{}{}
 	userPrompt := fmt.Sprintf("Generate a response to the user's query based strictly on the conversation history and the provided information.\n\n### Guidelines:\n- Prioritize database data over website data when answering.\n- The response must be concise and directly relevant.\n- No external knowledge should be introduced beyond the provided sources.\n- Ensure clarity and alignment with ETHDenver-related context.\n- Prefer structured lists over paragraphs whenever possible to enhance readability.\n- If the response involves listing events, ensure they are formatted as follows:\n\nRequired Format for Events:\n```\n<Event name> (<Speaker 1>; <Speaker 2>; ...; <Speaker n>) - <Local start time> - <Stage/Location name>\n```\n\n- Speakers should be listed in the order provided. If they have an affiliation, include it exactly as given.\n- The local start time must be preserved in its original format.\n- The stage or location name should appear at the end.\n- If only one speaker is listed, follow the same format without modification.\n- If no speaker is listed, ignore the speaker listing part of the format.\n- If multiple events are listed, each should follow the format on a new line.\n\nExample of correct event with speakers output:\n- Easy-to-Miss Solidity Bugs (Jonathan Mevs - Quantstamp; Michael Boyle - Quantstamp) - February 24, 2025 at 10:50 AM - Captain Ethereum Stage\n\nExample of correct event without speakers output:\n- Messari - Feb 27, 2025 at 1:30 PM - BUIDL Event Hall\n\n### Conversation History:\n%v\n\n### Relevant Information from Database (Primary Source):\n%v\n\n### Relevant Information from the Website:\n%v\n\n### Final Answer:\n(Provide a precise, ETHDenver-relevant response following these guidelines.)\n",
 		conversation, toolCallData, analysedResult)
@@ -1317,23 +1304,58 @@ func (s *Service) GetResultFromToolCall(query string) (string, error) {
 	if len(query) == 0 {
 		return "", fmt.Errorf("empty query")
 	}
-	body, err := helpers.CurlURLString(
-		fmt.Sprintf("%v?question=%v", s.conf.KnowledgeBaseConfig.ToolCallServiceUrl, query),
-		"GET",
-		map[string]string{},
-		nil,
-	)
-	res := make(map[string]interface{})
-	err = json.Unmarshal([]byte(body), &res)
-	if err != nil {
-		return "", err
+	url := fmt.Sprintf("%v?question=%v", s.conf.KnowledgeBaseConfig.ToolCallServiceUrl, query)
+	for i := 0; i < 10; i++ {
+		body, err := helpers.CurlURLString(
+			url,
+			"GET",
+			map[string]string{},
+			nil,
+		)
+		if err != nil {
+			continue
+		}
+		res := make(map[string]interface{})
+		err = json.Unmarshal([]byte(body), &res)
+		if err != nil {
+			return "[]", nil
+		}
+		if res["result"] == nil {
+			return "[]", nil
+		}
+		result, ok := res["result"].(map[string]interface{})
+		if !ok {
+			return "[]", nil
+		}
+		data, _ := json.Marshal(result["data"])
+		return string(data), nil
 	}
-	result, ok := res["result"].(map[string]interface{})
-	if !ok {
-		return "", fmt.Errorf("result is not of type map[string]string")
+	return "", fmt.Errorf("can not get tool call result with query %v", query)
+}
+
+func (s *Service) GetResultFromRagSearch(request *serializers.RetrieveKnowledgeBaseRequest) (*serializers.RetrieveKnowledgeBaseResponse, error) {
+	if request == nil {
+		return nil, fmt.Errorf("empty query")
 	}
-	data, _ := json.Marshal(result["data"])
-	return string(data), nil
+
+	for i := 1; i <= 10; i++ {
+		body, err := helpers.CurlURLString(
+			s.conf.KnowledgeBaseConfig.QueryServiceUrl,
+			"POST",
+			map[string]string{},
+			&request,
+		)
+		if err != nil {
+			continue
+		}
+		var response serializers.RetrieveKnowledgeBaseResponse
+		err = json.Unmarshal([]byte(body), &response)
+		if err != nil {
+			break
+		}
+		return &response, nil
+	}
+	return nil, fmt.Errorf("can not get search result with request %v", request)
 }
 
 func (s *Service) PreviewAgentSystemPrompV1(ctx context.Context,
