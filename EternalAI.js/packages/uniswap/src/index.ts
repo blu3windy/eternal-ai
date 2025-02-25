@@ -3,7 +3,7 @@ import {AgentInference, InferenceProcessing} from "./inference";
 import {sleep} from "./utils";
 import {SwapReq, UniSwapAI} from "./swap";
 
-export const call_uniswap = async (private_key: string, content: string) => {
+export const call_uniswap = async (private_key: string, chain_id: number, rpc: string, content: string) => {
     console.log(`**** call uniswap with content ${content} ****`)
     try {
         const jsonMatch = content.match(/(\{.*?\})/s);
@@ -19,7 +19,7 @@ export const call_uniswap = async (private_key: string, content: string) => {
         const req = SwapReq.fromJSON(content)
         await req.convert_in_out()
         console.log(`**** call uniswap with req ${JSON.stringify(req)}`)
-        const tx_swap = await uniswap_obj.swap_v3(private_key, req, "")
+        const tx_swap = await uniswap_obj.swap_v3(private_key, req, chain_id, rpc)
         return tx_swap;
     } catch (e) {
         return null
@@ -93,7 +93,7 @@ export const create_agent_infer = async (private_key: string, chain_id: string, 
 
     const content_response = await process_infer(chain_id, tx_hash, rpc, worker_hub_address)
     if (content_response) {
-        const tx_swap = await call_uniswap(private_key, content_response);
+        const tx_swap = await call_uniswap(private_key, parseInt(chain_id, 16), rpc, content_response);
         return tx_swap
     } else {
         return null
