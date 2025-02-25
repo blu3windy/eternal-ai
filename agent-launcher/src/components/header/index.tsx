@@ -1,8 +1,6 @@
-import { Flex, Link } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import HeaderMenu from "./menu";
-import HeaderWallet from "./wallet";
 import s from "./styles.module.scss";
-import ROUTERS from "../../constants/route-path.ts";
 
 type Props = {};
 

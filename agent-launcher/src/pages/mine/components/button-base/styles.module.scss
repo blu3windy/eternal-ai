@@ -1,0 +1,55 @@
+.button {
+  --border-color: #2E2E2E;
+  --background-color: #fff;
+  --text-color: #000;
+
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 9999px;
+  border: 1px solid var(--border-color);
+  background: var(--background-color);
+  will-change: opacity;
+  transition: opacity 0.3s;
+
+  &__primary {
+    --border-color: transparent;
+    --background-color: #1FC337;
+    --text-color: #fff;
+  }
+
+  &__losePaddingLeft {
+    padding-left: 8px;
+  }
+
+  &__losePaddingRight {
+    padding-right: 8px;
+  }
+
+  &_icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &_text {
+    color: var(--text-color);
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 140%; /* 21px */
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
