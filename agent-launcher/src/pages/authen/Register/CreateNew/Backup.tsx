@@ -5,17 +5,17 @@ import { safeCopy } from "@utils/copy.ts";
 import BaseButton from "@components/BaseButton";
 
 interface IProps {
-    onNext: (_: string) => void;
+   onNext: (_: string) => void;
+   prvKey: string;
 }
 
 const Backup = (props: IProps) => {
-   const { onNext } = props;
-   const [prvKey, setPrvKey] = useState("");
+   const [prvKey, setPrvKey] = useState(props.prvKey);
    const [backedUp, setBackedUp] = useState(false);
    const [showKey, setShowKey] = useState(false);
 
    const _onNext = () => {
-      onNext(prvKey);
+      props.onNext(prvKey);
    }
    const generatePrvKey = () => {
       const prvKey = eaiCrypto.generatePrivateKey();
@@ -56,6 +56,7 @@ const Backup = (props: IProps) => {
                fontSize="24px"
                fontWeight="400"
                lineHeight="34px"
+               color="#2E2E2E"
             >
                Your private key makes it easy to back up and restore your account.
             </Text>
@@ -91,6 +92,7 @@ const Backup = (props: IProps) => {
                   lineHeight="20px"
                   color="#000000"
                   textAlign="center"
+                  userSelect="none"
                >
                   {prvKey}
                </Text>
