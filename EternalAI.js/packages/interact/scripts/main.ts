@@ -38,6 +38,7 @@ async function testInferV2() {
         content: 'Can you tell me about BTC',
       },
     ],
+    isLightHouse: true,
   } satisfies InferPayloadWithMessages;
   {
     const interact = new Interact(wallet);
