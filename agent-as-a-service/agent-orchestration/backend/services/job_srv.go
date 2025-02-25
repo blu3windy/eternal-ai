@@ -177,6 +177,7 @@ func (s *Service) RunJobs(ctx context.Context) error {
 	gocron.Every(5).Minute().Do(s.JobLuckyMoneyCollectPost, context.Background())
 	gocron.Every(5).Minute().Do(s.JobLuckyMoneyProcessUserReward, context.Background())
 
+	gocron.Every(1).Minute().Do(s.JobUpdateOffchainAutoOutputForMission, context.Background())
 	gocron.Every(5).Minute().Do(s.JobUpdateOffchainAutoOutput, context.Background())
 	gocron.Every(30).Minute().Do(s.JobUpdateOffchainAutoOutput3Hour, context.Background())
 	gocron.Every(5).Minute().Do(s.JobAgentSnapshotPostStatusInferRefund, context.Background())

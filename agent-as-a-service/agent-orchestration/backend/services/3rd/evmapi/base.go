@@ -17,4 +17,6 @@ type BaseClient interface {
 	ConvertAddressForIn(addr string) string
 	ConvertAddressForOut(addr string) string
 	Erc721Transfer(contractAddr string, prkHex string, toAddr string, tokenId *big.Int) (string, error)
+	DeployERC20RealWorldAgent(prkHex string, name string, symbol string, amount *big.Int, recipient common.Address, minFeeToUse *big.Int, timeout uint32, tokenFee common.Address, worker common.Address) (string, string, error)
+	DeployERC20UtilityAgent(prkHex string, name string, symbol string, amount *big.Int, recipient common.Address, systemPrompt string, storageInfo []byte) (string, string, error)
 }

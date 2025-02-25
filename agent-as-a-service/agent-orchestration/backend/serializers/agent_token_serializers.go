@@ -81,6 +81,7 @@ func NewMemeResp(m *models.Meme) *MemeResp {
 		ID:              m.ID,
 		CreatedAt:       m.CreatedAt,
 		UpdatedAt:       m.UpdatedAt,
+		NetworkID:       m.NetworkID,
 		OwnerAddress:    m.OwnerAddress,
 		TokenAddress:    m.TokenAddress,
 		TokenId:         m.TokenId,
@@ -111,7 +112,6 @@ func NewMemeResp(m *models.Meme) *MemeResp {
 		TotalBalance:    m.TotalBalance,
 		Holders:         m.Holders,
 		Shared:          m.Shared,
-		NetworkID:       m.NetworkID,
 	}
 
 	if m.AgentInfo != nil {

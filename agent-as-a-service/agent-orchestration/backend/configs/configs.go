@@ -257,6 +257,10 @@ type Config struct {
 		OauthClientId     string `json:"oauth_client_id"`
 		OauthClientSecret string `json:"oauth_client_secret"`
 		RedirectUri       string `json:"redirect_uri"`
+		InfraAuthUri      string `json:"infra_auth_uri"`
+		NetworkID         uint64 `json:"network_id"`
+		AgentAddress      string `json:"agent_address"`
+		WorkerAddress     string `json:"worker_address"`
 	} `json:"infra_twitter_app"`
 }
 
@@ -321,4 +325,6 @@ type KnowledgeBaseConfig struct {
 	KBErrorTelegramAlert      string `json:"kb_error_telegram_alert"`
 	KBActivitiesTelegramAlert string `json:"kb_activities_telegram_alert"`
 	BackendWallet             string `json:"backend_wallet"`
+	OnchainAPIKey             string `json:"onchain_api_key"`
+	OnChainUrl                string `json:"on_chain_url"`
 }

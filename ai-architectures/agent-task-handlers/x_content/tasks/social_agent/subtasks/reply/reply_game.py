@@ -12,23 +12,33 @@ from x_content.wrappers.api.twitter_v2.models.response import (
     Response,
 )
 from x_content.wrappers.conversation import (
-    get_enhance_tweet_conversation,
     get_llm_result_by_model_name,
     get_reply_game_conversation,
 )
-from x_content.wrappers.postprocess import postprocess_tweet_by_prompts
-
 from x_content.tasks.reply_subtask_base import ReplySubtaskBase
 
 from x_content.llm.base import OnchainInferResult
-from x_content.wrappers.twin_agent import get_random_example_tweets
 
 logging.basicConfig(level=logging.INFO if not __debug__ else logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 MINIMUM_REPLY_LENGTH = 32
 
+from x_content.wrappers.game import GameAPIClient, GameState
 from x_content.wrappers.magic import get_agent_llm_first_interval, retry, sync2async
+
+
+def is_game_created(_tweet_id):
+    try:
+        game_info, err = GameAPIClient.get_game_info_by_tweet_id(_tweet_id)
+        if err:
+            raise err
+        return game_info.status == GameState.RUNNING
+    except Exception as err:
+        logger.error(
+            f"[is_game_created] Failed to check done status for tweet {_tweet_id}: {err}"
+        )
+        return False
 
 
 class ReplyGameSubtask(ReplySubtaskBase):
@@ -37,9 +47,11 @@ class ReplyGameSubtask(ReplySubtaskBase):
         self.tweet_info: ExtendedTweetInfo = await sync2async(
             twitter_v2.get_tweet_with_image_description_appended_to_text
         )(self.tweet_info)
+
         context_resp: Response[ExtendedTweetInfosDto] = await sync2async(
             twitter_v2.get_full_context_of_tweet
         )(self.tweet_info)
+
         if context_resp.is_error():
             tweets_context = []
         else:
@@ -99,9 +111,7 @@ class ReplyGameSubtask(ReplySubtaskBase):
 
         if len(base_reply) >= MINIMUM_REPLY_LENGTH:
             await sync2async(twitter_v2.reply)(
-                auth=await sync2async(create_twitter_auth_from_reasoning_log)(
-                    self.log
-                ),
+                auth=create_twitter_auth_from_reasoning_log(self.log),
                 tweet_id=self.tweet_info.tweet_object.tweet_id,
                 reply_content=base_reply,
                 tx_hash=base_reply_tx_hash,

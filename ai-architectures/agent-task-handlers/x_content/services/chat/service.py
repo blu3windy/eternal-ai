@@ -20,8 +20,10 @@ class ChatService:
         messages = chat_request.messages.copy()
         if len(messages) == 0:
             raise ValueError("Input messages must not be empty")
+
         if messages[-1].role != "user":
             raise ValueError("Input messages must end with a user message")
+
         if messages[0].role == "system":
             messages = messages[1:]
         if len(messages) == 0:
@@ -47,6 +49,7 @@ class ChatService:
         )
 
         events = [x async for x in events]
+
         if len(events) == 0:
             raise Exception("No result return from langgraph")
 

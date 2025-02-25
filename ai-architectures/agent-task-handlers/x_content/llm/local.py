@@ -61,9 +61,6 @@ class SyncBasedEternalAI(OpenAILLMBase):
                     timeout=httpx.Timeout(120.0),
                 ) as response:
                     if response.status_code != 200:
-                        logger.info(
-                            f"Failed to send request to '{url}'; code: {response.status_code}"
-                        )
                         raise ValueError(
                             f"Failed to send request to '{url}'; code: {response.status_code}"
                         )
@@ -142,7 +139,7 @@ class SyncBasedEternalAI(OpenAILLMBase):
             "presence_penalty": 0.1,
             "n": self.n,
             "logit_bias": None,
-            "frequency_penalty": self.frequency_penalty,
+            "frequency_penalty": self.frequency_penalty or 0.0,
             "seed": self.seed,
             "stream": True,
         }

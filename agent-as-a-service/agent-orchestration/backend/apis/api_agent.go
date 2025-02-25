@@ -267,24 +267,32 @@ func (s *Server) PreviewAgentSystemPromp(c *gin.Context) {
 
 func (s *Server) PreviewAgentSystemPrompV1(c *gin.Context) {
 	ctx := s.requestContext(c)
-	var req struct {
-		Messages  string  `json:"messages"`
-		AgentID   *uint   `json:"agent_id"`
-		KbId      *string `json:"kb_id"`
-		ModelName *string `json:"model_name"`
-	}
-
+	var req serializers.PreviewRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
 	}
 
-	resp, err := s.nls.PreviewAgentSystemPrompV1(ctx, req.Messages, req.AgentID, req.KbId, req.ModelName)
-	if err != nil {
-		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
-		return
+	if !req.Stream {
+		resp, err := s.nls.PreviewAgentSystemPrompV1(ctx, req.Messages, req.AgentID, req.KbId, req.ModelName)
+		if err != nil {
+			ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+			return
+		}
+		ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+	} else {
+		c.Writer.Header().Set("Content-Type", "text/event-stream")
+		c.Writer.Header().Set("Connection", "keep-alive")
+		c.Writer.Header().Set("Cache-Control", "no-cache")
+		c.Writer.WriteHeader(http.StatusOK)
+		c.Writer.WriteHeaderNow()
+		outputChan := make(chan *models.ChatCompletionStreamResponse)
+		errChan := make(chan error)
+		doneChan := make(chan bool)
+		go s.nls.ProcessStreamAgentSystemPromptV1(c, &req, outputChan, errChan, doneChan)
+		s.nls.PreviewStreamAgentSystemPromptV1(c, c.Writer, outputChan, errChan, doneChan)
 	}
-	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+
 }
 
 func (s *Server) AgentChatSupport(c *gin.Context) {
@@ -524,4 +532,32 @@ func (s *Server) GetAgentChainFees(c *gin.Context) {
 		return
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: ms})
+}
+
+func (s *Server) GetAgentInfoInstallInfo(c *gin.Context) {
+	ctx := s.requestContext(c)
+
+	obj, err := s.nls.GetAgentInfoInstall(ctx, s.stringFromContextQuery(c, "code"))
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: obj.User.Address})
+}
+
+func (s *Server) GetAgentInfoInstallCode(c *gin.Context) {
+	ctx := s.requestContext(c)
+	agentStoreID := s.uintFromContextParam(c, "id")
+	agentInfoID := s.uintFromContextParam(c, "agent_info_id")
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+	res, err := s.nls.CreateAgentStoreInstallCode(ctx, userAddress, agentStoreID, agentInfoID)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: res.Code})
 }

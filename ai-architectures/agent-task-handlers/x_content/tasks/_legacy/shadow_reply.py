@@ -19,23 +19,23 @@ logger = logging.getLogger(__name__)
 
 from x_content.wrappers.magic import sync2async
 import asyncio
+from x_content.models import ReasoningLog
 
 
 class ShadowReplyTask(MultiStepTaskBase):
     resumable = True
 
-    async def process_task(self, log):
+    async def process_task(self, log: ReasoningLog):
 
         if log.state == MissionChainState.NEW:
             resp: Response[TweetInfosDto] = await sync2async(
                 twitter_v2.get_full_conversation_from_liked_tweets
             )(
-                auth=await sync2async(create_twitter_auth_from_reasoning_log)(
-                    log
-                ),
+                auth=create_twitter_auth_from_reasoning_log(log),
                 num_tweets=5,
                 ignore_replied_tweets=True,
             )
+
             if resp.is_error():
                 return await a_move_state(
                     log,
@@ -59,6 +59,7 @@ class ShadowReplyTask(MultiStepTaskBase):
                         tweet_info["tweet_object"]["tweet_id"]
                     )
                 )
+
                 if context_resp.is_error():
                     tweets_context = []
                 else:
@@ -70,6 +71,7 @@ class ShadowReplyTask(MultiStepTaskBase):
                     self.kn_base,
                     tweets=tweets_context,
                 )
+
                 knowledge_v2 = (
                     StructuredInformation(knowledge=[], news=[])
                     if info_resp.is_error()
@@ -105,43 +107,35 @@ class ShadowReplyTask(MultiStepTaskBase):
                 for conversation_thread in log.execute_info["conversation"]
             ]
 
-            for idx, infer in enumerate(asyncio.as_completed(futures)):
-
-                try:
-                    infer_result: OnchainInferResult = await infer
-                except Exception as err:
+            for idx, infer in enumerate(await asyncio.gather(*futures, return_exceptions=True)):
+                if isinstance(infer, Exception):
                     logger.info(
-                        f"[{log.id}] Error while processing index {idx}: {err} (inference fails)."
+                        f"[{log.id}] Error while processing index {idx}: {infer} (inference fails)."
                     )
                     continue
 
-                result = await sync2async(post_process_tweet)(
-                    infer_result.generations[0].message.content
-                )
+                infer: OnchainInferResult
+                result = post_process_tweet(infer.generations[0].message.content)
                 liked_tweet = log.execute_info["tweets"][idx]["tweet_object"]
                 liked_tweet_id = liked_tweet["tweet_id"]
 
                 await sync2async(twitter_v2.shadow_reply)(
-                    await sync2async(create_twitter_auth_from_reasoning_log)(
-                        log
-                    ),
+                    create_twitter_auth_from_reasoning_log(log),
                     tweet_id=liked_tweet_id,
                     reply_content=result,
-                    tx_hash=infer_result.tx_hash,
+                    tx_hash=infer.tx_hash,
                 )
 
                 log.execute_info["task_result"].append(
                     {
                         "tweet_id": liked_tweet_id,
                         "reply_content": result,
-                        "tx_hash": infer_result.tx_hash,
+                        "tx_hash": infer.tx_hash,
                     }
                 )
 
-                log = await self.commit_log(log)
-
             return await a_move_state(
-                log, MissionChainState.DONE, "Replied to all {} liked tweets"
+                log, MissionChainState.DONE, f"Replied to all {len(futures)} liked tweets"
             )
 
         return log

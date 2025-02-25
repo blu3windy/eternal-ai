@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
 	"github.com/gin-gonic/gin"
 )
@@ -208,14 +209,13 @@ func (s *Server) GetListAgentStoreInstall(c *gin.Context) {
 
 func (s *Server) GetAgentStoreInstallCode(c *gin.Context) {
 	ctx := s.requestContext(c)
-	agentStoreID := s.uintFromContextParam(c, "id")
-	agentInfoID := s.uintFromContextParam(c, "agent_info_id")
+	agentInfoID := s.uintFromContextParam(c, "id")
 	userAddress, err := s.getUserAddressFromTK1Token(c)
 	if err != nil || userAddress == "" {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
 		return
 	}
-	res, err := s.nls.CreateAgentStoreInstallCode(ctx, userAddress, agentStoreID, agentInfoID)
+	res, err := s.nls.CreateAgentInfoInstallCode(ctx, userAddress, agentInfoID)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
@@ -235,7 +235,7 @@ func (s *Server) RunMission(c *gin.Context) {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
 		return
 	}
-	obj, err := s.nls.AgentSnapshotPostCreateForUser(ctx, req.NetworkID, userAddress, req.Prompt, req.Model, req.ID)
+	obj, err := s.nls.AgentSnapshotPostCreateForUser(ctx, models.HERMES_CHAIN_ID, userAddress, req.Prompt, req.Model, req.ID)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
@@ -257,4 +257,52 @@ func (s *Server) MissionStoreResult(c *gin.Context) {
 		return
 	}
 	ctxSTRING(c, http.StatusOK, resp)
+}
+
+func (s *Server) GetInstallInfo(c *gin.Context) {
+	ctx := s.requestContext(c)
+
+	obj, err := s.nls.GetAgentStoreInstall(ctx, s.stringFromContextQuery(c, "code"))
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	if obj != nil && obj.User != nil && obj.Type == models.AgentStoreInstallTypeUser {
+		ctxJSON(c, http.StatusOK, &serializers.Resp{Result: obj.User.Address})
+	} else {
+		ctxJSON(c, http.StatusOK, &serializers.Resp{Result: ""})
+	}
+}
+
+func (s *Server) GetTryHistory(c *gin.Context) {
+	ctx := s.requestContext(c)
+	agentStoreID, _ := s.uint64FromContextQuery(c, "agent_store_id")
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+	res, err := s.nls.GetTryHistory(ctx, userAddress, uint(agentStoreID))
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: res.ID})
+}
+
+func (s *Server) GetTryHistoryDetail(c *gin.Context) {
+	ctx := s.requestContext(c)
+	historyID := s.uintFromContextParam(c, "id")
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+	page, limit := s.pagingFromContext(c)
+	res, err := s.nls.GetTryHistoryDetail(ctx, userAddress, historyID, page, limit)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentStoreTryDetailRespArray(res)})
 }

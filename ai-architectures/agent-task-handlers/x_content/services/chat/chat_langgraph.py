@@ -57,6 +57,7 @@ def get_chat_langgraph(llm: OpenAILLMBase) -> CompiledStateGraph:
 
         infer_result = await llm.agenerate(messages)
         content = infer_result.generations[0].message.content
+        messages.append(ChatMessage(role="assistant", content=content))
 
         tool_calls = []
         try:

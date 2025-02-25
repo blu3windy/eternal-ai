@@ -89,13 +89,6 @@ def _get_shadow_reply_redis_cache():
 def _get_tweet_inscription_redis_cache():
     return TweetInscriptionRedisCache()
 
-
-def _preprocess_twitter_id(twitter_id: str):
-    if twitter_id.startswith("twitter_id="):
-        twitter_id = twitter_id.split("=")[1].strip(' "')
-    return twitter_id
-
-
 def _preprocess_username(username: str):
     username = username.lstrip("@")
     if username.startswith("username="):
@@ -240,7 +233,6 @@ def optimize_twitter_query(
             res += ee
 
     return res
-
 
 @log_function_call
 def search_twitter_news(
@@ -404,7 +396,7 @@ def get_recent_mentioned_tweets_by_username_v2(
 
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nSomething went wrong (status code: {resp.status_code}, resp: {resp.json()}, url: {resp.url})\n```",
+                f"<pre>\nSomething went wrong (status code: {resp.status_code}, resp: {resp.json()}, url: {resp.url})\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
 
@@ -421,7 +413,7 @@ def get_recent_mentioned_tweets_by_username_v2(
 
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nError occurred when calling API: {resp_json['error']['message']}, url: {resp.url}\n```",
+                f"<pre>\nError occurred when calling API: {resp_json['error']['message']}, url: {resp.url}\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
             return Response(
@@ -527,61 +519,6 @@ def get_recent_mentioned_tweets_by_username_v2(
         return Response(error=f"An unexpected error occured")
 
 
-# TODO: Is this function really unused?
-def get_user_info_by_twitter_id(
-    twitter_id: str,
-) -> Response[TwitterUserObjectDto]:
-    try:
-        twitter_id = _preprocess_twitter_id(twitter_id)
-
-        url = f"{const.TWITTER_API_URL}/user/{twitter_id}"
-        resp = requests.get(url, headers=_get_api_headers())
-
-        if resp.status_code != 200:
-            logger.error(
-                f"[get_user_info_by_twitter_id] Something went wrong (status code: {resp.status_code}, resp: {resp.json()}, url: {resp.url})"
-            )
-            return Response(
-                error=f"Something went wrong (status code: {resp.status_code})"
-            )
-
-        resp = resp.json()
-
-        if resp["error"] is not None:
-            logger.error(
-                "[get_user_info_by_twitter_id] Error occurred when calling api: "
-                + resp["error"]["message"]
-            )
-            return Response(
-                error="Error occurred when calling api",
-            )
-
-        info = resp["result"]
-
-        if info["id"] == "":
-            logger.error(
-                "[get_user_info_by_twitter_id] No user found with id: "
-                + twitter_id
-            )
-            return Response(
-                error="No user found with id: " + twitter_id,
-            )
-
-        user = TwitterUserObject(
-            twitter_id=info["id"],
-            username=info["username"],
-            name=info["name"],
-            followers_count=info["public_metrics"]["followers_count"],
-            followings_count=info["public_metrics"]["following_count"],
-            is_blue_verified=info["verified"],
-        )
-        return Response(data=TwitterUserObjectDto(user=user))
-    except Exception as err:
-        logger.error(
-            f"[get_user_info_by_twitter_id] An unexpected error occured: {err}"
-        )
-        return Response(error=f"An unexpected error occured")
-
 
 # TODO: Combine this and get_tweets_by_username_v2
 def get_tweets_by_username(
@@ -612,12 +549,14 @@ def get_tweets_by_username(
         if resp.status_code != 200:
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nSomething went wrong (status code: {resp.status_code}; resp: {resp.json()}; url: {url})\n```",
+                f"<pre>\nSomething went wrong (status code: {resp.status_code}; resp: {resp.json()}; url: {url})\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
+
             logger.error(
                 f"[get_tweets_by_username] Something went wrong (status code: {resp.status_code}; resp: {resp.json()}; url: {url})"
             )
+
             return Response(
                 error=f"Something went wrong (status code: {resp.status_code})",
             )
@@ -627,7 +566,7 @@ def get_tweets_by_username(
         if resp["error"] is not None:
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n```",
+                f"<pre>\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
             logger.error(
@@ -786,6 +725,7 @@ async def get_relevent_information_v2(
         resp: Response[ExtendedTweetInfosDto] = await sync2async(
             get_full_context_by_tweet_id
         )(tweet_id)
+
         if resp.is_error():
             return Response(error="Retrieving full context failed")
 
@@ -927,7 +867,7 @@ def _get_tweet_info_from_tweet_id(
         traceback.print_exc()
         telegram.send_message(
             "junk_nofitications",
-            f"""```bash\n{traceback.format_exc()}\n```""",
+            f"""<pre>\n{traceback.format_exc()}\n</pre>""",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         logger.error(
@@ -1040,7 +980,7 @@ def generate_action(
         traceback.print_exc()
         telegram.send_message(
             "junk_nofitications",
-            f"""```bash\n{traceback.format_exc()}\n```""",
+            f"""<pre>\n{traceback.format_exc()}\n</pre>""",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         logger.error(f"[generate_action] An unexpected error occurred: {err}")
@@ -1112,7 +1052,7 @@ def reply(
         traceback.print_exc()
         telegram.send_message(
             "junk_nofitications",
-            f"""```bash\n{traceback.format_exc()}\n```""",
+            f"""<pre>\n{traceback.format_exc()}\n</pre>""",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         logger.error(f"[reply] An unexpected error occurred: {err}")
@@ -1334,7 +1274,7 @@ def inscribe_tweet_by_id(
         traceback.print_exc()
         telegram.send_message(
             "junk_nofitications",
-            f"""```bash\n{traceback.format_exc()}\n```""",
+            f"""<pre>\n{traceback.format_exc()}\n</pre>""",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         logger.error(f"[create_token] An unexpected error occurred: {err}")
@@ -1400,7 +1340,7 @@ def create_token(
         traceback.print_exc()
         telegram.send_message(
             "junk_nofitications",
-            f"""```bash\n{traceback.format_exc()}\n```""",
+            f"""<pre>\n{traceback.format_exc()}\n</pre>""",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         logger.error(f"[create_token] An unexpected error occurred: {err}")
@@ -1470,7 +1410,7 @@ def get_posts_or_reply_by_username(
     if resp.status_code != 200:
         telegram.send_message(
             "junk_nofitications",
-            f"```bash\nSomething went wrong (status code: {resp.status_code}; response body: {resp.text}; url: {url})\n```",
+            f"<pre>\nSomething went wrong (status code: {resp.status_code}; response body: {resp.text}; url: {url})\n</pre>",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
 
@@ -1483,7 +1423,7 @@ def get_posts_or_reply_by_username(
     if resp["error"] is not None:
         telegram.send_message(
             "junk_nofitications",
-            f"```bash\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n```",
+            f"<pre>\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n</pre>",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
 
@@ -1632,7 +1572,7 @@ def get_tweets_by_username_v2(
 
                 telegram.send_message(
                     "junk_nofitications",
-                    f"```bash\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; text: {resp.text})\n```",
+                    f"<pre>\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; text: {resp.text})\n</pre>",
                     room=telegram.TELEGRAM_ALERT_ROOM,
                 )
 
@@ -1649,7 +1589,7 @@ def get_tweets_by_username_v2(
 
                 telegram.send_message(
                     "junk_nofitications",
-                    f"```bash\nError occurred when calling API: {resp_json['error']['message']}, url: {resp.url}\n```",
+                    f"<pre>\nError occurred when calling API: {resp_json['error']['message']}, url: {resp.url}\n</pre>",
                     room=telegram.TELEGRAM_ALERT_ROOM,
                 )
 
@@ -1706,7 +1646,7 @@ def get_tweets_by_username_v2(
         traceback.print_exc()
         telegram.send_message(
             "junk_nofitications",
-            f"""```bash\n{traceback.format_exc()}\n```""",
+            f"""<pre>\n{traceback.format_exc()}\n</pre>""",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         logger.error(
@@ -1821,7 +1761,7 @@ def get_full_conversation_from_liked_tweets(
     except Exception as e:
         telegram.send_message(
             "junk_nofitications",
-            f"""```bash\n{traceback.format_exc()}\n```""",
+            f"""<pre>\n{traceback.format_exc()}\n</pre>""",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         traceback.print_exc()
@@ -1854,7 +1794,7 @@ def search_users(query: str) -> Response[TwitterUsersDto]:
     if resp.status_code != 200:
         telegram.send_message(
             "junk_nofitications",
-            f"```bash\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; text: {resp.text})\n```",
+            f"<pre>\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; text: {resp.text})\n</pre>",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         return Response(
@@ -1865,7 +1805,7 @@ def search_users(query: str) -> Response[TwitterUsersDto]:
     if resp["error"] is not None:
         telegram.send_message(
             "junk_nofitications",
-            f"```bash\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n```",
+            f"<pre>\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n</pre>",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         return Response(
@@ -1921,7 +1861,7 @@ def search_recent_retweeted_users(
     if resp.status_code != 200:
         telegram.send_message(
             "junk_nofitications",
-            f"```bash\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; text: {resp.text})\n```",
+            f"<pre>\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; text: {resp.text})\n</pre>",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         return Response(
@@ -1934,7 +1874,7 @@ def search_recent_retweeted_users(
     if resp["error"] is not None:
         telegram.send_message(
             "junk_nofitications",
-            f"```bash\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n```",
+            f"<pre>\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n</pre>",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         return Response(
@@ -1965,7 +1905,7 @@ def search_recent_retweeted_users(
     if resp.status_code != 200:
         telegram.send_message(
             "junk_nofitications",
-            f"```bash\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; text: {resp.text})\n```",
+            f"<pre>\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; text: {resp.text})\n</pre>",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         return Response(
@@ -1977,7 +1917,7 @@ def search_recent_retweeted_users(
     if resp["error"] is not None:
         telegram.send_message(
             "junk_nofitications",
-            f"```bash\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n```",
+            f"<pre>\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n</pre>",
             room=telegram.TELEGRAM_ALERT_ROOM,
         )
         return Response(error="No tweets found")
@@ -2036,7 +1976,7 @@ def search_recent_tweet_by_tweetid(
         if resp.status_code != 200:
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; resp: {resp.json()})\n```",
+                f"<pre>\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; resp: {resp.json()})\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
             return Response(
@@ -2049,7 +1989,7 @@ def search_recent_tweet_by_tweetid(
         if resp["error"] is not None:
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n```",
+                f"<pre>\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
 
@@ -2153,7 +2093,7 @@ def search_recent_tweets(
         if resp.status_code != 200:
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; resp: {resp.json()})\n```",
+                f"<pre>\nSomething went wrong (status code: {resp.status_code}; url: {resp.url}; resp: {resp.json()})\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
             return Response(
@@ -2166,7 +2106,7 @@ def search_recent_tweets(
         if resp["error"] is not None:
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n```",
+                f"<pre>\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
 
@@ -2280,7 +2220,7 @@ def get_user_info_by_username(username: str) -> Response[TwitterUserObjectDto]:
         if resp.status_code != 200:
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nSomething went wrong (status code: {resp.status_code}; url: {url}; text: {resp.text})\n```",
+                f"<pre>\nSomething went wrong (status code: {resp.status_code}; url: {url}; text: {resp.text})\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
 
@@ -2296,9 +2236,10 @@ def get_user_info_by_username(username: str) -> Response[TwitterUserObjectDto]:
         if resp["error"] is not None:
             telegram.send_message(
                 "junk_nofitications",
-                f"```bash\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n```",
+                f"<pre>\nError occurred when calling api (msg: {resp['error']['message']}; url: {url})\n</pre>",
                 room=telegram.TELEGRAM_ALERT_ROOM,
             )
+
             logger.error(
                 f"[get_user_info_by_username] Error occurred when calling api (msg: {resp['error']['message']})"
             )

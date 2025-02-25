@@ -99,25 +99,27 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			for pool := range poolMap {
 				poolArr = append(poolArr, pool)
 			}
-			memes, err := s.dao.FindMeme(
-				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
-					"token_address in (?)": {poolArr},
-				},
-				map[string][]interface{}{},
-				[]string{},
-				0,
-				999999,
-			)
-			if err != nil {
-				return errs.NewError(err)
-			}
 			poolMap = map[string]bool{}
 			if s.conf.ExistsedConfigKey(networkID, "eai_contract_address") {
 				poolMap[strings.ToLower(strings.ToLower(s.conf.GetConfigKeyString(networkID, "eai_contract_address")))] = true
 			}
-			for _, meme := range memes {
-				poolMap[strings.ToLower(meme.TokenAddress)] = true
+			if len(poolArr) > 0 {
+				memes, err := s.dao.FindMeme(
+					daos.GetDBMainCtx(ctx),
+					map[string][]interface{}{
+						"token_address in (?)": {poolArr},
+					},
+					map[string][]interface{}{},
+					[]string{},
+					0,
+					999999,
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				for _, meme := range memes {
+					poolMap[strings.ToLower(meme.TokenAddress)] = true
+				}
 			}
 			eventTransfers := []*ethapi.Erc20TokenTransferEventResp{}
 			for _, event := range eventResp.Transfer {
@@ -129,7 +131,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			eventResp.NftTransfer = []*ethapi.NftTransferEventResp{}
 			eventResp.ERC1155Transfer = []*ethapi.ERC1155ransferEventResp{}
 			for i := 0; i < 3; i++ {
-				err = s.TokenTransferEventsByTransactionV2(
+				err := s.TokenTransferEventsByTransactionV2(
 					ctx,
 					networkID,
 					eventResp,
@@ -149,40 +151,42 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 				poolArr = append(poolArr, pool)
 			}
 			poolMap = map[string]bool{}
-			{
-				agents, err := s.dao.FindAgentInfo(
-					daos.GetDBMainCtx(ctx),
-					map[string][]interface{}{
-						"eth_address in (?)": {poolArr},
-					},
-					map[string][]interface{}{},
-					[]string{},
-					0,
-					999999,
-				)
-				if err != nil {
-					return errs.NewError(err)
+			if len(poolArr) > 0 {
+				{
+					agents, err := s.dao.FindAgentInfo(
+						daos.GetDBMainCtx(ctx),
+						map[string][]interface{}{
+							"eth_address in (?)": {poolArr},
+						},
+						map[string][]interface{}{},
+						[]string{},
+						0,
+						999999,
+					)
+					if err != nil {
+						return errs.NewError(err)
+					}
+					for _, agent := range agents {
+						poolMap[strings.ToLower(agent.ETHAddress)] = true
+					}
 				}
-				for _, agent := range agents {
-					poolMap[strings.ToLower(agent.ETHAddress)] = true
-				}
-			}
-			{
-				users, err := s.dao.FindUser(
-					daos.GetDBMainCtx(ctx),
-					map[string][]interface{}{
-						"eth_address in (?)": {poolArr},
-					},
-					map[string][]interface{}{},
-					[]string{},
-					0,
-					999999,
-				)
-				if err != nil {
-					return errs.NewError(err)
-				}
-				for _, user := range users {
-					poolMap[strings.ToLower(user.EthAddress)] = true
+				{
+					users, err := s.dao.FindUser(
+						daos.GetDBMainCtx(ctx),
+						map[string][]interface{}{
+							"eth_address in (?)": {poolArr},
+						},
+						map[string][]interface{}{},
+						[]string{},
+						0,
+						999999,
+					)
+					if err != nil {
+						return errs.NewError(err)
+					}
+					for _, user := range users {
+						poolMap[strings.ToLower(user.EthAddress)] = true
+					}
 				}
 			}
 			for _, event := range eventResp.Transfer {
@@ -203,26 +207,28 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			for pool := range poolMap {
 				poolArr = append(poolArr, pool)
 			}
-			lps, err := s.dao.FindLaunchpad(
-				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
-					"address in (?)": {poolArr},
-				},
-				map[string][]interface{}{},
-				[]string{},
-				0,
-				999999,
-			)
-			if err != nil {
-				return errs.NewError(err)
-			}
-			poolMap = map[string]bool{}
-			for _, lp := range lps {
-				poolMap[strings.ToLower(lp.Address)] = true
+			if len(poolArr) > 0 {
+				lps, err := s.dao.FindLaunchpad(
+					daos.GetDBMainCtx(ctx),
+					map[string][]interface{}{
+						"address in (?)": {poolArr},
+					},
+					map[string][]interface{}{},
+					[]string{},
+					0,
+					999999,
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				poolMap = map[string]bool{}
+				for _, lp := range lps {
+					poolMap[strings.ToLower(lp.Address)] = true
+				}
 			}
 			for _, event := range eventResp.Transfer {
 				if poolMap[strings.ToLower(event.To)] {
-					err = s.CreateErc20TokenTransferEventLaunchpad(ctx, networkID, event)
+					err := s.CreateErc20TokenTransferEventLaunchpad(ctx, networkID, event)
 					if err != nil {
 						return errs.NewError(err)
 					}
@@ -239,7 +245,6 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 		if s.conf.ExistsedConfigKey(networkID, "eai_contract_address") {
 			baseTokenEAI = strings.ToLower(s.conf.GetConfigKeyString(networkID, "eai_contract_address"))
 		}
-		// TODO
 		poolMap := map[string]bool{}
 		for _, event := range eventResp.MemePoolCreated {
 			if !strings.EqualFold(event.Token0, baseTokenETH) && !strings.EqualFold(event.Token0, baseTokenEAI) {
@@ -368,6 +373,15 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			err := s.OrderpaymentOrderPaidEvent(
 				ctx, networkID, event,
 			)
+			if err != nil {
+				retErr = errs.MergeError(retErr, err)
+			}
+		}
+	}
+
+	{
+		for _, event := range eventResp.RealWorldAgentExecutionRequested {
+			err := s.CreateInfraTwitterAppRequest(ctx, event)
 			if err != nil {
 				retErr = errs.MergeError(retErr, err)
 			}
@@ -731,7 +745,9 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 									Status:         models.AgentEaiTopupStatusDone,
 									ToAddress:      agent.ETHAddress,
 								}
-								if m.NetworkID == models.ABSTRACT_TESTNET_CHAIN_ID && m.NetworkID != agent.NetworkID {
+								if (m.NetworkID == models.ABSTRACT_TESTNET_CHAIN_ID ||
+									m.NetworkID == models.MONAD_TESTNET_CHAIN_ID ||
+									m.NetworkID == models.MEGAETH_TESTNET_CHAIN_ID) && m.NetworkID != agent.NetworkID {
 									m.Status = models.AgentEaiTopupStatusCancelled
 								}
 								err = s.dao.Create(
@@ -810,7 +826,9 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 									Amount:      numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Value, 18)),
 									Status:      models.UserTransactionStatusDone,
 								}
-								if m.NetworkID == models.ABSTRACT_TESTNET_CHAIN_ID {
+								if m.NetworkID == models.ABSTRACT_TESTNET_CHAIN_ID ||
+									m.NetworkID == models.MONAD_TESTNET_CHAIN_ID ||
+									m.NetworkID == models.MEGAETH_TESTNET_CHAIN_ID {
 									m.Status = models.UserTransactionStatusCancelled
 								}
 								err = s.dao.Create(
@@ -1209,6 +1227,10 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 						addrs, err := s.GetFilterAddrs(ctx, chain.NetworkID)
 						if err != nil {
 							return errs.NewError(err)
+						}
+						if s.conf.InfraTwitterApp.NetworkID == networkID &&
+							s.conf.InfraTwitterApp.AgentAddress != "" {
+							addrs = append(addrs, s.conf.InfraTwitterApp.AgentAddress)
 						}
 						startBlocks := chain.LastBlockNumber + 1
 						endBlocks := (chain.LastBlockNumber + chain.NumBlocks - 1)

@@ -288,6 +288,8 @@
     "enable_simulation": false,
     "query_service_url": "",
     "direct_service_url": "",
-     "kb_chat_top_k": 5
+     "kb_chat_top_k": 5,
+     "on_chain_url": "https://api.eternalai.org/v1/chat/completions",
+     "onchain_api_key": ""
   }
 }

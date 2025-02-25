@@ -251,8 +251,9 @@ func (uc *knowledgeUsecase) Webhook(ctx context.Context, req *models.RagHookResp
 						map[string]interface{}{"status": file.Status},
 					)
 					if err != nil {
-						return nil, fmt.Errorf("failed to update knowledge base file status %s", file.Status)
+						return nil, fmt.Errorf("failed to update knowledge base file status %d", file.Status)
 					}
+
 					uc.SendMessage(ctx, fmt.Sprintf("process kb file  for kb agent via webhook DONE (kb_id: %d: %s : %v)", kn.ID, req.Result.Kb, req.Result.Identifier), uc.notiActChanId)
 
 				} else if req.Status == "error" {
@@ -266,7 +267,7 @@ func (uc *knowledgeUsecase) Webhook(ctx context.Context, req *models.RagHookResp
 						},
 					)
 					if err != nil {
-						return nil, fmt.Errorf("failed to update knowledge base file status %s", file.Status)
+						return nil, fmt.Errorf("failed to update knowledge base file status %d", file.Status)
 					}
 					uc.SendMessage(ctx, fmt.Sprintf("webhook update kb file status failed: %s (%d) %s - error %s", kn.Name, kn.ID, req.Result.Identifier, file.LastErrorMessage), uc.notiActChanId)
 				}
@@ -356,7 +357,7 @@ func (uc *knowledgeUsecase) CreateKnowledgeBase(ctx context.Context, req *serial
 
 	model.KnowledgeBaseFiles = files
 	model.Fee, _ = uc.knowledgeBaseFileRepo.CalcTotalFee(ctx, model.ID)
-	model.ChargeMore = model.CalcChargeMore()
+	model.ChargeMore = model.Fee
 
 	updatedFields := make(map[string]interface{})
 	updatedFields["fee"] = model.Fee
@@ -418,7 +419,6 @@ func (uc *knowledgeUsecase) GetKnowledgeBaseByStatus(ctx context.Context, status
 }
 
 func (uc *knowledgeUsecase) UpdateListKnowledgeBaseFile(ctx context.Context, kbId uint, files []*serializers.File) (bool, error) {
-
 	fileIds := []uint{}
 	grFileId := time.Now().Unix()
 	updated := false
@@ -444,26 +444,27 @@ func (uc *knowledgeUsecase) UpdateListKnowledgeBaseFile(ctx context.Context, kbI
 	}
 
 	// still not support delete
-	/*currentFiles, err := uc.knowledgeBaseFileRepo.ListByKbId(ctx, kbId)
-	if err != nil {
-		return err
-	}
-	mapFiles := make(map[uint]*models.KnowledgeBaseFile)
-	for _, f := range currentFiles {
-		mapFiles[f.ID] = f
-	}
-
-	deletedIds := []uint{}
-	for k, v := range mapFiles {
-		if v.Status == models.KnowledgeBaseFileStatusDone {
-			continue
+	/*
+		currentFiles, err := uc.knowledgeBaseFileRepo.ListByKbId(ctx, kbId)
+		if err != nil {
+			return err
 		}
-		if !slices.Contains(fileIds, k) {
-			deletedIds = append(deletedIds, v.ID)
+		mapFiles := make(map[uint]*models.KnowledgeBaseFile)
+		for _, f := range currentFiles {
+			mapFiles[f.ID] = f
 		}
-	}
 
-	return uc.knowledgeBaseFileRepo.DeleteByIds(ctx, deletedIds)
+		deletedIds := []uint{}
+		for k, v := range mapFiles {
+			if v.Status == models.KnowledgeBaseFileStatusDone {
+				continue
+			}
+			if !slices.Contains(fileIds, k) {
+				deletedIds = append(deletedIds, v.ID)
+			}
+		}
+
+		return uc.knowledgeBaseFileRepo.DeleteByIds(ctx, deletedIds)
 	*/
 	return updated, nil
 }
@@ -553,12 +554,7 @@ func (uc *knowledgeUsecase) ScanKnowledgeBaseStatusPaymentReceipt(ctx context.Co
 }
 
 func (uc *knowledgeUsecase) CheckBalance(ctx context.Context, kn *models.KnowledgeBase) error {
-	price, err := uc.knowledgeBaseFileRepo.CalcTotalFee(ctx, kn.ID)
-	if err != nil {
-		return err
-	}
-
-	knPrice := new(big.Float).SetFloat64(price)
+	knPrice := new(big.Float).SetFloat64(kn.Fee)
 	knPrice = knPrice.Mul(knPrice, big.NewFloat(1e18))
 	_knPrice := new(big.Int)
 	_knPrice, _ = knPrice.Int(_knPrice)
@@ -735,11 +731,20 @@ func (uc *knowledgeUsecase) uploadKBFileToLighthouseAndProcess(ctx context.Conte
 		}
 
 		rw, _ := json.Marshal(r)
+		if len(r.Files) > 0 {
+			f.FilecoinHash = r.Files[0].Hash
+		}
 		f.FilecoinHashRawData = string(rw)
-		uc.knowledgeBaseFileRepo.UpdateByKnowledgeBaseId(
+		err = uc.knowledgeBaseFileRepo.UpdateByKnowledgeBaseId(
 			ctx, f.ID,
-			map[string]interface{}{"filecoin_hash_raw_data": f.FilecoinHashRawData},
+			map[string]interface{}{
+				"filecoin_hash":          f.FilecoinHash,
+				"filecoin_hash_raw_data": f.FilecoinHashRawData,
+			},
 		)
+		if err != nil {
+			return "", nil, err
+		}
 		kbFileIds = append(kbFileIds, f.ID)
 		r.IsInserted = false
 		result = append(result, r)

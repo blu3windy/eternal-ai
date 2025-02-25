@@ -124,7 +124,9 @@ func (s *Service) CreateDecentralizeInferV2(ctx context.Context, info *models.De
 	fullUrl := "http://localhost:8004/v1/chat/completions"
 	input, _ := json.Marshal(chatRequest)
 
-	fmt.Println("Full request to LLM :", string(input))
+	fmt.Println("fullUrl:", fullUrl)
+	fmt.Println("Full request to LLM:", string(input))
+
 	chatCompletionResp, statusCode, err := http_client.RequestHttp(fullUrl, http.MethodPost, map[string]string{}, bytes.NewBuffer(input), 10)
 	if err != nil {
 		return nil, err
@@ -432,40 +434,47 @@ func (s *Service) CreateDecentralizeInferV2WithStream(ctx context.Context, info 
 	fmt.Println(fmt.Sprintf("Client is chatting with agent: %v, contractAddress: %v", info.AgentId, info.AgentContractAddress))
 	var systemPromptStr = "You are a helpful assistant."
 	var err error
-	systemPromptStrFromAAAS := s.GetSystemPromptFromAAAS(info.AgentId)
-	if systemPromptStrFromAAAS != "" {
-		systemPromptStr = systemPromptStrFromAAAS
-	} else {
-		systemPromptStr, err = func() (string, error) {
-			agentId, ok := new(big.Int).SetString(info.AgentId, 10)
-			if !ok {
-				return "", fmt.Errorf("agentId :%v is not valid", info.AgentId)
-			}
 
-			ethClient, _err := client.NewClient(info.ChainInfo.Rpc, models.ChainTypeEth,
-				false,
-				"", "")
-			if _err != nil {
-				return "", fmt.Errorf("init ethClient err: %w", err)
-			}
+	systemPromptStr, err = func() (string, error) {
+		agentId, ok := new(big.Int).SetString(info.AgentId, 10)
+		if !ok {
+			return "", fmt.Errorf("agentId :%v is not valid", info.AgentId)
+		}
 
-			agentContract, _err := abi.NewAI721Contract(common.HexToAddress(info.AgentContractAddress), ethClient.ETHClient)
-			if _err != nil {
-				return "", _err
-			}
+		ethClient, _err := client.NewClient(info.ChainInfo.Rpc, models.ChainTypeEth,
+			false,
+			"", "")
+		if _err != nil {
+			return "", fmt.Errorf("init ethClient err: %w", err)
+		}
 
-			systemPromptContract, _err := agentContract.GetAgentSystemPrompt(nil, agentId)
+		agentContract, _err := abi.NewAI721Contract(common.HexToAddress(info.AgentContractAddress), ethClient.ETHClient)
+		if _err != nil {
+			return "", _err
+		}
+
+		systemPromptContract, _err := agentContract.GetAgentSystemPrompt(nil, agentId)
+		if _err != nil {
+			return "", fmt.Errorf("get agent system prompt err: %w", err)
+		}
+
+		if len(systemPromptContract) > 0 {
+			systemPromptStr = string(systemPromptContract[0])
+		}
+
+		if strings.Contains(systemPromptStr, "ipfs") {
+			cid := strings.ReplaceAll(systemPromptStr, "ipfs://", "")
+			url := fmt.Sprintf("https://ipfs.io/ipfs/%s", cid)
+			_byte, _, err := http_client.RequestHttp(url, "GET", map[string]string{}, nil, 10)
 			if _err != nil {
 				return "", fmt.Errorf("get agent system prompt err: %w", err)
 			}
 
-			if len(systemPromptContract) > 0 {
-				systemPromptStr = string(systemPromptContract[0])
-			}
+			return string(_byte), nil
+		}
 
-			return systemPromptStr, nil
-		}()
-	}
+		return systemPromptStr, nil
+	}()
 
 	if err != nil {
 		return nil, fmt.Errorf("get system prompt err: %w", err)
@@ -493,12 +502,24 @@ func (s *Service) CreateDecentralizeInferV2WithStream(ctx context.Context, info 
 		Stream:    true,
 	}
 
-	fullUrl := "http://localhost:8004/v1/chat/completions"
+	fullUrl := s.conf.ChatCompletionUrl
+	if fullUrl == "" {
+		fullUrl = "http://localhost:8004/v1/chat/completions"
+	}
+
 	input, _ := json.Marshal(chatRequest)
 
-	fmt.Println("Full request to LLM :", string(input))
+	header := map[string]string{}
+	if s.conf.APIKeyChatCompletion != "" {
+		header["Authorization"] = fmt.Sprintf("Bearer %v", s.conf.APIKeyChatCompletion)
+		header["Accept"] = "text/event-stream"
+	}
 
-	go http_client.RequestHttpWithStream(fullUrl, http.MethodPost, map[string]string{}, bytes.NewBuffer(input), 10, printChan)
+	fmt.Println("fullUrl:", fullUrl)
+	fmt.Println("Full request to LLM:", string(input))
+	fmt.Println("Headers", header)
+
+	go http_client.RequestHttpWithStream(fullUrl, http.MethodPost, header, bytes.NewBuffer(input), 10, printChan)
 
 	/*
 		if err != nil {

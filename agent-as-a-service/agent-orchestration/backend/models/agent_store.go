@@ -51,6 +51,9 @@ type AgentStore struct {
 	NumInstall         uint             `gorm:"default:0"`
 	NumUsage           uint             `gorm:"default:0"`
 	Volume             numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	MemeID             uint
+	Meme               *Meme
+	TokkenAddress      string
 }
 
 type AgentStoreMission struct {

@@ -13,6 +13,7 @@ import (
 	brigde "github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/bridge"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/erc1155"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/erc20"
+	realworldagent "github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/erc20realworldagent"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/erc721"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/imagehub"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/iworkerhub"
@@ -26,6 +27,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
+
+type RealWorldAgentExecutionRequested struct {
+	TxHash          string   `json:"tx_hash"`
+	ContractAddress string   `json:"contract_address"`
+	Timestamp       uint64   `json:"timestamp"`
+	Index           uint     `json:"log_index"`
+	TxIndex         uint     `json:"tx_index"`
+	BlockNumber     uint64   `json:"block_number"`
+	ActId           *big.Int `json:"act_id"`
+	Uuid            string   `json:"uuid"`
+	Creator         string   `json:"creator"`
+	Data            string   `json:"data"`
+}
 
 type BridgeMint struct {
 	TxHash          string     `json:"tx_hash"`
@@ -147,6 +161,7 @@ type BlockChainEventResp struct {
 	SystemPromptManagerAgentDataUpdates []*systempromptmanager.SystemPromptManagerAgentDataUpdate `json:"system_prompt_manager_agent_data_updates"`
 	SystemPromptManagerAgentURIUpdates  []*systempromptmanager.SystemPromptManagerAgentURIUpdate  `json:"system_prompt_manager_agent_uri_updates"`
 	OrderpaymentOrderPaids              []*orderpayment.OrderpaymentOrderPaid                     `json:"orderpayment_order_paid"`
+	RealWorldAgentExecutionRequested    []*RealWorldAgentExecutionRequested                       `json:"real_world_agent_execution_requested"`
 }
 
 func (c *Client) NewEventResp() *BlockChainEventResp {
@@ -239,6 +254,9 @@ func (c *Client) ScanEvents(contractAddrs []string, startBlock, endBlock int64) 
 					common.HexToHash("0x706a4e8eb2f354c7f4d96e5ea1984f36e72482629987edad78c9940ea037c362"),
 					// OrderPayment
 					common.HexToHash("0xc2522570932e6dff27df2e5c31cfd70be3653d564375e29575d4360aafca4eb5"),
+
+					//RealWorldAgent
+					common.HexToHash("0x9096741026bdd638bcc5cb995f0f00b4574b81f120a23c4a7086347116bf58a1"),
 				},
 			},
 		},
@@ -775,6 +793,32 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 					logParsed,
 				)
 			}
+		}
+	}
+
+	//realworld agent
+	infra, err := realworldagent.NewERC20RealWorldAgent(log.Address, client)
+	if err != nil {
+		return err
+	}
+	{
+		logParsed, err := infra.ParseExecutionRequested(*log)
+		if err == nil {
+			resp.RealWorldAgentExecutionRequested = append(
+				resp.RealWorldAgentExecutionRequested,
+				&RealWorldAgentExecutionRequested{
+					TxHash:          log.TxHash.Hex(),
+					ContractAddress: logParsed.Raw.Address.Hex(),
+					Timestamp:       blockTime,
+					Index:           log.Index,
+					TxIndex:         log.TxIndex,
+					BlockNumber:     log.BlockNumber,
+					ActId:           logParsed.ActId,
+					Uuid:            common.Bytes2Hex(logParsed.Uuid[:]),
+					Creator:         logParsed.Creator.Hex(),
+					Data:            string(logParsed.Data[:]),
+				},
+			)
 		}
 	}
 	return nil

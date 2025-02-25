@@ -75,7 +75,9 @@ class EternalKnowledgeBase(KnowledgeBase):
 
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    url, headers=headers, timeout=httpx.Timeout(60.0)
+                    url, 
+                    headers=headers, 
+                    timeout=httpx.Timeout(60.0)
                 )
 
             if response.status_code != 200:
@@ -132,6 +134,6 @@ class EternalKnowledgeBase(KnowledgeBase):
         receipt = await self.submit_async_request(query, top_k)
         assert receipt is not None, "Expect non-None receipt"
         logger.info(
-            f"Submitted async request; Receipt: {receipt}; query: {json.dumps(query)}, kbs: {self.kbs}, top_k: {top_k}, threshold: {threshold}"
+            f"Submitted async request; Receipt: {receipt}; query: {json.dumps(query)[:100]}, kbs: {self.kbs}, top_k: {top_k}, threshold: {threshold}"
         )
         return await self.wait(receipt, threshold, *args, **kwargs)

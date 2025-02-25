@@ -92,7 +92,6 @@ var BINANCE_TOKENS = []string{
 	"SAND",
 	"NMR",
 	"DOT",
-	"LUNA",
 	"RSR",
 	"PAXG",
 	"TRB",
@@ -1657,11 +1656,6 @@ var MISSION_TOKEN_CONFIGS = []map[string]string{
 		"name":      "Threshold",
 		"symbol":    "T",
 		"image_url": "https://s2.coinmarketcap.com/static/img/coins/64x64/17751.png",
-	},
-	{
-		"name":      "Terra",
-		"symbol":    "LUNA",
-		"image_url": "https://s2.coinmarketcap.com/static/img/coins/64x64/20314.png",
 	},
 	{
 		"name":      "Clearpool",
@@ -3367,16 +3361,6 @@ var MISSION_TOKEN_CONFIGS = []map[string]string{
 		"name":      "Euler",
 		"symbol":    "EUL",
 		"image_url": "https://s2.coinmarketcap.com/static/img/coins/64x64/14280.png",
-	},
-	{
-		"name":      "Luna by Virtuals",
-		"symbol":    "LUNA",
-		"image_url": "https://s2.coinmarketcap.com/static/img/coins/64x64/33543.png",
-	},
-	{
-		"name":      "Luna by Virtuals",
-		"symbol":    "LUNA",
-		"image_url": "https://s2.coinmarketcap.com/static/img/coins/64x64/33543.png",
 	},
 	{
 		"name":      "RACA",

@@ -2,6 +2,8 @@ package serializers
 
 import (
 	"time"
+
+	"github.com/sashabaranov/go-openai"
 )
 
 type CreateKnowledgeRequest struct {
@@ -14,6 +16,7 @@ type CreateKnowledgeRequest struct {
 	DepositAddress       string  `json:"-" form:"-"`
 	ThumbnailUrl         string  `json:"thumbnail_url" form:"thumbnail_url"`
 	SolanaDepositAddress string  `json:"-" form:"-"`
+	DomainUrl            string  `json:"domain_url" form:"domain_url"`
 }
 
 type UpdateKnowledgeRequest struct {
@@ -22,6 +25,7 @@ type UpdateKnowledgeRequest struct {
 	NetworkID   uint64  `json:"network_id"`
 	UserAddress string  `json:"user_address" form:"-"`
 	Files       []*File `json:"files" form:"files"`
+	DomainUrl   string  `json:"domain_url" form:"domain_url"`
 }
 
 type File struct {
@@ -58,16 +62,18 @@ type KnowledgeBase struct {
 	UsageCount             int64                `json:"usage_count"`
 	ChargeMore             float64              `json:"charge_more"`
 	FilecoinHash           string               `json:"filecoin_hash"`
+	DomainUrl              string               `json:"domain_url"`
 }
 
 type KnowledgeBaseFile struct {
-	Id              uint   `json:"id"`
-	KnowledgeBaseId uint   `json:"knowledge_base_id"`
-	FileUrl         string `json:"file_url"`
-	FileName        string `json:"file_name"`
-	FileSize        uint   `json:"file_size"`
-	FilecoinHash    string `json:"filecoin_hash"`
-	Status          int    `json:"status"`
+	Id               uint   `json:"id"`
+	KnowledgeBaseId  uint   `json:"knowledge_base_id"`
+	FileUrl          string `json:"file_url"`
+	FileName         string `json:"file_name"`
+	FileSize         uint   `json:"file_size"`
+	FilecoinHash     string `json:"filecoin_hash"`
+	Status           int    `json:"status"`
+	LastErrorMessage string `json:"last_error_message"`
 }
 
 type AgentUseKnowledgeBaseRequest struct {
@@ -109,8 +115,10 @@ type UpdateKnowledgeBaseWithSignatureRequest struct {
 }
 
 type RetrieveKnowledgeRequest struct {
-	Prompt    string  `json:"prompt"`
-	KbId      string  `json:"kb_id"`
-	TopK      int     `json:"top_k"`
-	Threshold float64 `json:"threshold"`
+	Prompt    string                         `json:"prompt"`
+	KbId      string                         `json:"kb_id"`
+	TopK      int                            `json:"top_k"`
+	Threshold float64                        `json:"threshold"`
+	Messages  []openai.ChatCompletionMessage `json:"messages"`
+	Stream    *bool                          `json:"stream"`
 }

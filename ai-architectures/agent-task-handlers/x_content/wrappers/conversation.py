@@ -8,7 +8,6 @@ from x_content.wrappers.api.twitter_v2.models.objects import (
     TweetObject,
 )
 from x_content.wrappers.llm_tasks import choose_suitable_language
-from x_content.wrappers.knowledge_base.base import KnowledgeBase
 from x_content.wrappers.magic import sync2async
 
 logging.basicConfig(level=logging.INFO if not __debug__ else logging.DEBUG)
@@ -180,18 +179,24 @@ async def get_reply_game_conversation(
 
     return conversational_chat
 
+import re
 
 def parse_deepseek_r1_result(content: str):
     result = {}
-    start = content.find("<think>")
-    end = content.find("</think>")
-    if start == -1:
-        start = 0
-    if end == -1:
-        result["answer"] = content.strip()
+
+    pat = re.compile(
+        r"<think>(.*?)</think>(.*)", 
+        re.DOTALL | re.MULTILINE | re.IGNORECASE
+    )
+    
+    match = pat.match(content)
+
+    if match is not None:
+        result["think"] = match.group(1).strip()
+        result["answer"] = match.group(2).strip()
     else:
-        result["think"] = content[start + len("<think>") : end].strip()
-        result["answer"] = content[end + len("</think>") :].strip()
+        result["answer"] = content.strip()
+
     return result
 
 

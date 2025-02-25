@@ -8,11 +8,12 @@ import (
 )
 
 type AgentStoreReq struct {
-	ID          uint `json:"id"`
-	Type        models.AgentStoreType
+	ID          uint                    `json:"id"`
+	Type        models.AgentStoreType   `json:"type"`
 	Name        string                  `json:"name"`
 	Description string                  `json:"description"`
 	AuthenUrl   string                  `json:"authen_url"`
+	ApiUrl      string                  `json:"api_url"`
 	Icon        string                  `json:"icon"`
 	Docs        string                  `json:"docs"`
 	Price       numeric.BigFloat        `json:"price"`
@@ -53,6 +54,15 @@ type AgentStoreResp struct {
 	NumUsage           uint                     `json:"num_usage"`
 	Type               string                   `json:"type"`
 	AgentStoreMissions []*AgentStoreMissionResp `json:"agent_store_missions"`
+}
+
+type AgentStoreTryDetailResp struct {
+	HistoryID         uint                   `json:"history_id"`
+	DetailID          uint                   `json:"detail_id"`
+	FromUser          bool                   `json:"from_user"`
+	Content           string                 `json:"content"`
+	AgentSnapshotPost *AgentSnapshotPostResp `json:"id"`
+	CreatedAt         time.Time              `json:"created_at"`
 }
 
 func NewAgentStoreResp(m *models.AgentStore) *AgentStoreResp {
@@ -130,6 +140,28 @@ func NewAgentStoreRespArrayFromInstall(arr []*models.AgentStoreInstall) []*Agent
 	resps := []*AgentStoreResp{}
 	for _, r := range arr {
 		resps = append(resps, NewAgentStoreResp(r.AgentStore))
+	}
+	return resps
+}
+
+func NewAgentStoreTryDetailResp(m *models.AgentStoreTryDetail) *AgentStoreTryDetailResp {
+	if m == nil {
+		return nil
+	}
+	return &AgentStoreTryDetailResp{
+		CreatedAt:         m.CreatedAt,
+		HistoryID:         m.AgentStoreTryID,
+		DetailID:          m.ID,
+		FromUser:          m.FromUser,
+		Content:           m.Content,
+		AgentSnapshotPost: NewAgentSnapshotPostResp(m.AgentSnapshotPost),
+	}
+}
+
+func NewAgentStoreTryDetailRespArray(arr []*models.AgentStoreTryDetail) []*AgentStoreTryDetailResp {
+	resps := []*AgentStoreTryDetailResp{}
+	for _, r := range arr {
+		resps = append(resps, NewAgentStoreTryDetailResp(r))
 	}
 	return resps
 }

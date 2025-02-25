@@ -19,25 +19,26 @@ func (s *Server) proxyAgentStoreMiddleware(prefixPath string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		r := c.Request
 		w := c.Writer
-		StoreId := s.stringFromContextParam(c, "Store_id")
-		// apiKey := c.GetHeader("api-key")
-		Store, err := s.nls.GetAgentStore(context.Background(), StoreId)
+		storeId := s.stringFromContextParam(c, "store_id")
+		// infraCode := c.GetHeader("infra-code")
+		agenStore, err := s.nls.GetAgentStore(context.Background(), storeId)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 			return
 		}
-		if Store.Status != models.AgentStoreStatusActived {
+		if agenStore.Status != models.AgentStoreStatusActived ||
+			agenStore.Type != models.AgentStoreTypeInfra {
 			c.AbortWithStatusJSON(http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrBadRequest)})
 			return
 		}
-		// agentStoreInstall, err := s.nls.ValidateUserStoreFee(context.Background(), apiKey)
+		// agentStoreInstall, err := s.nls.ValidateUserStoreFee(context.Background(), infraCode)
 		// if err != nil {
 		// 	c.AbortWithStatusJSON(http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		// 	return
 		// }
 		var urlPath string
 		director := func(req *http.Request) {
-			hostURL, err := url.Parse(Store.ApiUrl)
+			hostURL, err := url.Parse(agenStore.ApiUrl)
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 				return
@@ -50,7 +51,7 @@ func (s *Server) proxyAgentStoreMiddleware(prefixPath string) gin.HandlerFunc {
 				c.AbortWithStatusJSON(http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrBadRequest)})
 				return
 			}
-			prefixPath = prefixPath + "/" + StoreId
+			prefixPath = prefixPath + "/" + storeId
 			req.URL.Scheme = hostURL.Scheme
 			req.URL.Host = hostURL.Host
 			req.Host = hostURL.Host

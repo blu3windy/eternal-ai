@@ -2,6 +2,7 @@ package cryptoamount
 
 import (
 	"math/big"
+	"reflect"
 	"testing"
 )
 
@@ -85,4 +86,45 @@ func newBigIntWithString(value string) *big.Int {
 	bigInt := new(big.Int)
 	bigInt.SetString(value, 10)
 	return bigInt
+}
+
+func TestCryptoAmount_ToBigInt(t *testing.T) {
+	tests := []struct {
+		name string
+		a    CryptoAmount
+		want *big.Int
+	}{
+		{
+			name: "Test with 100000000000000000000 = 1e20 = 100 EAI",
+			a: NewCryptoAmountFromBigInt(newBigIntWithString("100000000000000000000")),
+			want: newBigIntWithString("100000000000000000000"),
+		},
+		{
+			name: "Test with 10000000000000000000 = 1e19 = 10 EAI",
+			a: NewCryptoAmountFromBigInt(newBigIntWithString("10000000000000000000")),
+			want: newBigIntWithString("10000000000000000000"),
+		},
+		{
+			name: "Test with 1000000000000000000 = 1e18 = 1 EAI",
+			a: NewCryptoAmountFromBigInt(newBigIntWithString("1000000000000000000")),
+			want: newBigIntWithString("1000000000000000000"),
+		},
+		{
+			name: "Test with 100000000000000000 = 1e17 = 0.1 EAI",
+			a: NewCryptoAmountFromBigInt(newBigIntWithString("100000000000000000")),
+			want: newBigIntWithString("100000000000000000"),
+		},
+		{
+			name: "Test with 6000702858264400936 - round down 5 last digits",
+			a: NewCryptoAmountFromBigInt(newBigIntWithString("6000702858264400936")),
+			want: newBigIntWithString("6000702858264399872"), // accept rounding down
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.a.ToBigInt(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ToBigInt() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

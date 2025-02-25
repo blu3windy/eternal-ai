@@ -2,14 +2,15 @@ package apis
 
 import (
 	"errors"
+	"io"
+	"net/http"
+
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/pkg/utils"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
 	"github.com/gin-gonic/gin"
 	openai2 "github.com/sashabaranov/go-openai"
-	"io"
-	"net/http"
 )
 
 func (s *Server) createKnowledge(c *gin.Context) {
@@ -222,6 +223,10 @@ func (s *Server) updateKnowledge(c *gin.Context) {
 		updateMap["description"] = req.Description
 	}
 
+	if req.DomainUrl != "" {
+		updateMap["domain_url"] = req.DomainUrl
+	}
+
 	if req.NetworkID != 0 {
 		updateMap["network_id"] = req.NetworkID
 	}
@@ -299,6 +304,7 @@ func (s *Server) updateKnowledgeBaseInContractWithSignature(c *gin.Context) {
 }
 
 func (s *Server) retrieveKnowledge(c *gin.Context) {
+	ctx := s.requestContext(c)
 	req := &serializers.RetrieveKnowledgeRequest{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
@@ -306,6 +312,12 @@ func (s *Server) retrieveKnowledge(c *gin.Context) {
 	}
 	if req.Prompt == "" || req.KbId == "" {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errors.New("Prompt and KbId are required")})
+		return
+	}
+
+	knowledgeBase, err := s.nls.KnowledgeUsecase.GetKnowledgeBaseByKBId(ctx, req.KbId)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errors.New("Knowledge agent not found"))})
 		return
 	}
 
@@ -320,19 +332,52 @@ func (s *Server) retrieveKnowledge(c *gin.Context) {
 	if req.Threshold > 0 {
 		threshold = &req.Threshold
 	}
-
-	resp, err := s.nls.RetrieveKnowledge("", []openai2.ChatCompletionMessage{{
-		Content: req.Prompt,
-		Role:    openai2.ChatMessageRoleUser,
-	}}, []*models.KnowledgeBase{{
-		KbId: req.KbId,
-	}}, &chatTopK, threshold)
-	if err != nil {
-		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
-		return
+	chatCompletionMessages := []openai2.ChatCompletionMessage{}
+	if len(req.Messages) > 0 {
+		chatCompletionMessages = req.Messages
+	} else {
+		chatCompletionMessages = []openai2.ChatCompletionMessage{{
+			Content: req.Prompt,
+			Role:    openai2.ChatMessageRoleUser,
+		}}
 	}
 
-	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+	systemPrompt := knowledgeBase.AgentInfo.SystemPrompt
+	if chatCompletionMessages[0].Role != openai2.ChatMessageRoleSystem {
+		newChatCompletionMessages := []openai2.ChatCompletionMessage{{
+			Content: systemPrompt,
+			Role:    openai2.ChatMessageRoleSystem,
+		}}
+		newChatCompletionMessages = append(newChatCompletionMessages, chatCompletionMessages...)
+
+		chatCompletionMessages = newChatCompletionMessages
+	}
+
+	if req.Stream != nil && *req.Stream {
+		c.Writer.Header().Set("Content-Type", "text/event-stream")
+		c.Writer.Header().Set("Connection", "keep-alive")
+		c.Writer.Header().Set("Cache-Control", "no-cache")
+		c.Writer.WriteHeader(http.StatusOK)
+		c.Writer.WriteHeaderNow()
+
+		outputChan := make(chan *models.ChatCompletionStreamResponse)
+		errChan := make(chan error)
+		doneChan := make(chan bool)
+		go s.nls.StreamRetrieveKnowledge(ctx, "", chatCompletionMessages, []*models.KnowledgeBase{knowledgeBase},
+			&chatTopK, threshold, outputChan, errChan, doneChan)
+		s.nls.PreviewStreamAgentSystemPromptV1(c, c.Writer, outputChan, errChan, doneChan)
+	} else {
+		resp, err := s.nls.RetrieveKnowledge("", chatCompletionMessages, []*models.KnowledgeBase{{
+			KbId: req.KbId,
+		}}, &chatTopK, threshold)
+
+		if err != nil {
+			ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+			return
+		}
+
+		ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+	}
 }
 
 func (s *Server) checkBalance(c *gin.Context) {

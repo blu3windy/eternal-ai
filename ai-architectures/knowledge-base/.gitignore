@@ -309,3 +309,4 @@ utils/ethresearch_posts_hot.json
 ab_tweet.json
 
 db/**
+.tmp/**

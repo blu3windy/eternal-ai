@@ -42,7 +42,7 @@ func init() {
 }
 
 func Test_JOB(t *testing.T) {
-	// ts.JobAgentSnapshotPostCreate(context.Background())
+	ts.MemeEventsByTransaction(context.Background(), 33139, "0xa9c5a7718f9919f311a2b554cdf756da198dfe371a8c3879ba3626c1c33d823a")
 	// ts.AgentSnapshotPostCreate(context.Background(), 59166, "", "")
 	// ts.JobScanAgentTwitterPostForTA(context.Background())
 	// ts.RetryAgentDeployToken(context.Background(), 51265)
@@ -65,11 +65,18 @@ func Test_JOB(t *testing.T) {
 }
 
 func Test_UTIL(t *testing.T) {
-	// ts.JobScanRepliesByLaunchpadTweetID(context.Background())
-	ts.UpdateOffchainAutoOutputV2ForId(context.Background(), 210823)
+	// ts.JobCreateTokenInfo(context.Background())
+	// resp := map[string]interface{}{
+	// 	"method": "getUserByUsername",
+	// 	"params": map[string]interface{}{
+	// 		"username": "Uniswap",
+	// 	},
+	// }
+	// jsonString, _ := json.Marshal(resp)
+	// ts.IpfsUploadDataForName(context.Background(), "infra_result_1", []byte(jsonString))
 }
 
 func Test_SRV(t *testing.T) {
-	ts.JobScanAgentTwitterPostForCreateLaunchpad(context.Background())
-	// ts.AgentTwitterPostCreateLaunchpad(context.Background(), 34285)
+	// ts.JobExecuteInfraTwitterAppRequest(context.Background())
+	ts.RetrySubmitResultByID(context.Background(), 1)
 }
