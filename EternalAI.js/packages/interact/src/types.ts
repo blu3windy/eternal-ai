@@ -2,7 +2,7 @@ import { ChainId } from './constants';
 import { Message } from './methods/infer/types';
 
 type InferPayloadBase = {
-  model: string;
+  agentAddress: string;
 };
 
 export type InferPayloadWithPrompt = InferPayloadBase & {

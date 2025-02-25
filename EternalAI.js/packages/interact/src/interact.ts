@@ -62,14 +62,16 @@ class Interact {
 
       console.log('infer call getWorkerHubAddress');
       const workerHubAddress = await methods.Infer.getWorkerHubAddress(
-        payload.chainId,
+        payload.agentAddress,
         signer
       );
 
       console.log('infer call listenInferResponse', sendPromptTxHash);
       const result = await methods.Infer.listenPromptResponse(
         payload.chainId,
-        signer
+        signer,
+        workerHubAddress,
+        sendPromptTxHash
       );
       console.log('infer - succeed', result);
       return result;
@@ -101,14 +103,19 @@ class Interact {
 
       console.log('infer call getWorkerHubAddress');
       const workerHubAddress = await methods.Infer.getWorkerHubAddress(
-        payload.chainId,
+        payload.agentAddress,
         signer
       );
 
-      console.log('infer call listenInferResponse', sendPromptTxHash);
+      console.log('infer call listenInferResponse', {
+        sendPromptTxHash,
+        workerHubAddress,
+      });
       const result = await methods.Infer.listenPromptResponse(
         payload.chainId,
-        signer
+        signer,
+        workerHubAddress,
+        sendPromptTxHash
       );
       console.log('infer - succeed', result);
       return result;
