@@ -1,4 +1,9 @@
-import {zeroAddress} from "./const";
+import {ETH_CHAIN_ID, getRPC, zeroAddress} from "./const";
+import {ethers} from "ethers";
+import {Token} from "@uniswap/sdk-core";
+import {changeWallet, createWallet, TransactionState} from "./libs/providers";
+import {createTrade, executeTrade} from "./libs/trading";
+import {CurrentConfig, Environment} from "./libs/config";
 
 export class SwapReq {
     token_in: string = ""
@@ -22,19 +27,19 @@ export class SwapReq {
 
     convert_in_out = async () => {
         if (this.token_in.toLowerCase() == "eth") {
-            this.token_in = zeroAddress;
+            this.token_in_address = zeroAddress;
         } else {
             const token_address = await this.convert_token_address(this.token_in.toLowerCase())
-            if (!token_address) this.token_in = zeroAddress
-            else this.token_in = token_address
+            if (!token_address) this.token_in_address = zeroAddress
+            else this.token_in_address = token_address
         }
 
         if (this.token_out.toLowerCase() == "eth") {
-            this.token_out = zeroAddress;
+            this.token_out_address = zeroAddress;
         } else {
             const token_address = await this.convert_token_address(this.token_out.toLowerCase())
-            if (!token_address) this.token_out = zeroAddress
-            else this.token_out = token_address
+            if (!token_address) this.token_out_address = zeroAddress
+            else this.token_out_address = token_address
         }
     }
 
@@ -71,10 +76,62 @@ export class SwapReq {
     }
 }
 
-export class UniSwapAI {
-    web3: any = null
 
-    swap_v3 = async (privateKey: string, req: SwapReq, rpc: string) => {
-        return ""
+export interface PoolInfo {
+    token0: string
+    token1: string
+    fee: number
+    tickSpacing: number
+    sqrtPriceX96: ethers.BigNumberish
+    liquidity: ethers.BigNumberish
+    tick: number
+}
+
+export class UniSwapAI {
+    swap_v3 = async (privateKey: string, req: SwapReq, chain_id: number, rpc: string): Promise<{
+        state: TransactionState | null,
+        tx: any
+    }> => {
+        if (privateKey == "") {
+            throw new Error("invalid private key")
+        }
+        CurrentConfig.env = Environment.MAINNET
+        // CurrentConfig.rpc.mainnet = rpc || getRPC(chain_id)
+        CurrentConfig.rpc.mainnet = getRPC(ETH_CHAIN_ID)
+        CurrentConfig.wallet.privateKey = privateKey
+        CurrentConfig.tokens.in = new Token(
+            // chain_id,
+            parseInt(ETH_CHAIN_ID, 16),
+            req.token_in_address,
+            // "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+            18,
+            req.token_in,
+            req.token_in
+        )
+
+        CurrentConfig.tokens.amountIn = req.token_in_amount
+
+        CurrentConfig.tokens.out = new Token(
+            // chain_id,
+            parseInt(ETH_CHAIN_ID, 16),
+            req.token_out_address,
+            18,
+            req.token_out,
+            req.token_out
+        )
+
+
+        const newWallet = createWallet();
+        console.log("Wallet: ", newWallet.address)
+        changeWallet(newWallet);
+
+        try {
+            const trade = await createTrade()
+            const {state, tx} = await executeTrade(trade)
+            return {state, tx}
+        } catch (e) {
+            console.log(`Error executeTrade ${e}`)
+        }
+        return {state: null, tx: null}
     }
 }

@@ -4,39 +4,24 @@ const typescript = require('@rollup/plugin-typescript');
 const { terser } = require('rollup-plugin-terser');
 const pkg = require('./package.json');
 import json from '@rollup/plugin-json';
+import nodePolyfills from 'rollup-plugin-polyfill-node';
 
 module.exports = {
   input: 'src/index.ts',
   output: [
     {
-      file: pkg.main,
-      format: 'cjs',
-      sourcemap: true,
-    },
-    {
-      file: pkg.module,
-      format: 'es',
-      sourcemap: true,
-    },
-    {
       file: 'dist/bundle.iife.js',
       format: 'iife',
       name: 'UniSwap',
-      sourcemap: true,
-    },
-    {
-      file: 'dist/bundle.umd.js',
-      format: 'umd',
-      name: 'UniSwap',
-      sourcemap: true,
-    },
+    }
   ],
   plugins: [
     resolve(),
     commonjs(),
-    typescript({ tsconfig: './tsconfig.json' }),
+    typescript({ tsconfig: './build.tsconfig.json' }),
     terser(),
     json(),
+    nodePolyfills()
   ],
   external: Object.keys(pkg.peerDependencies || {}),
 };
