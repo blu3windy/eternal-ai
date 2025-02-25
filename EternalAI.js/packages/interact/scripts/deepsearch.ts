@@ -1,11 +1,11 @@
-import { JSDOM } from 'jsdom';
-import { DateTime } from 'luxon';
-import { jsonrepair } from 'jsonrepair';
 import { ethers } from 'ethers';
-import Interact from '../src/interact';
-import { InferPayload } from '../src/types';
+import { JSDOM } from 'jsdom';
+import { jsonrepair } from 'jsonrepair';
+import { DateTime } from 'luxon';
 import { ChainId } from '../src/constants';
+import Interact from '../src/interact';
 import { Message } from '../src/methods/infer/types';
+import { InferPayloadWithMessages } from '../src/types';
 // npm install typescript jsdom luxon jsonrepair
 
 const DEEPSEEK_LLM_URL = 'https://vcr6xaelfq1f77-8000.proxy.runpod.net/v1';
@@ -15,9 +15,7 @@ const LLAMA_MODEL_ID = 'Llama3.3';
 const API_KEY = 'd50b6ba5169ea538a71fe7b0685b755823a3746934fa3cc4';
 const BING_SEARCH_API_KEY = 'f1ae6f4e1fb644758ac06cbdf1ce99ab';
 
-const wallet = new ethers.Wallet(
-  '40275f435e12a48fb0b3e5698ff7860afb72b25a974ecb6602fcf3507e6c6917'
-);
+const wallet = new ethers.Wallet('YOUR PRIVATE KEY');
 const interact = new Interact(wallet);
 
 function parseDeepseekResult(content: string): {
@@ -354,10 +352,10 @@ The response should contain ONLY the list.
       chainId: ChainId.BSC,
       model: 'NousResearch/Hermes-3-Llama-3.1-70B-FP8',
       messages: messages,
-    } satisfies InferPayload;
+    } satisfies InferPayloadWithMessages;
 
-    const resFromContract = await interact.infer(inferPayload); // Type assertion
-    console.log('🚀 ~ resFromContract:', resFromContract);
+    const llmCall = await interact.infer(inferPayload); // Type assertion
+    console.log('🚀 ~ resFromContract:', llmCall);
     const response = llmCall[0];
 
     if (response && response.answer) {
