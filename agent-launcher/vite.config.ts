@@ -30,4 +30,13 @@ export default defineConfig({
       renderer: process.env.NODE_ENV === 'test' ? undefined : {},
     }),
   ],
+  resolve: {
+    alias: {
+      '@components': path.resolve(__dirname, 'src/components'),
+      '@constants': path.resolve(__dirname, 'src/constants'),
+      '@hooks': path.resolve(__dirname, 'src/hooks'),
+      '@styles': path.resolve(__dirname, 'src/styles'),
+      '@pages': path.resolve(__dirname, 'src/pages'),
+    }
+  }
 })

@@ -1,4 +1,3 @@
-import React from "react";
 import MainLayout from "../../components/layout";
 import { Box } from "@chakra-ui/react";
 
