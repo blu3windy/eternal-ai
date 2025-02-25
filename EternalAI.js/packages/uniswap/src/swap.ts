@@ -1,9 +1,9 @@
 import {zeroAddress} from "./const";
 import {ethers} from "ethers";
 import {Token} from "@uniswap/sdk-core";
-import {createWallet_new, wallet} from "@/libs/providers";
-import {createTrade, executeTrade} from "@/libs/trading";
-import {CurrentConfig, Environment} from "@/libs/config";
+import {createWallet_new, changeWallet} from "./libs/providers";
+import {createTrade, executeTrade} from "./libs/trading";
+import {CurrentConfig, Environment} from "./libs/config";
 
 export class SwapReq {
     token_in: string = ""
@@ -89,7 +89,8 @@ export interface PoolInfo {
 
 export class UniSwapAI {
     swap_v3 = async (privateKey: string, req: SwapReq, chain_id: number, rpc: string) => {
-        wallet = createWallet_new(privateKey, rpc);
+        const newWallet = createWallet_new(privateKey, rpc);
+        /*changeWallet(newWallet);
         CurrentConfig.env = Environment.MAINNET
         CurrentConfig.rpc.mainnet = rpc
         CurrentConfig.wallet.privateKey = privateKey
@@ -113,6 +114,7 @@ export class UniSwapAI {
 
         const trade = await createTrade()
         const state = await executeTrade(trade)
-        return state
+        return state*/
+        return null
     }
 }
