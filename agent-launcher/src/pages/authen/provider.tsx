@@ -3,7 +3,6 @@ import HomeAuthen from "./Home";
 
 interface AuthContextType {
   isAuthenticated: boolean;
-
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

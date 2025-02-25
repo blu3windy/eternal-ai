@@ -1,5 +1,5 @@
 import { FC, PropsWithChildren } from "react";
-import {Box, Flex} from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import RegisterIntroduce from "../Register/Introduce";
 import styles from "./styles.module.scss";
 

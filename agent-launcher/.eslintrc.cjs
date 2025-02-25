@@ -16,7 +16,15 @@ module.exports = {
     ],
     "no-unused-vars": [
       "warn",
-      { allowConstantExport: true, varsIgnorePattern: "^_" },
+      {
+        vars: "all", // Warn about all unused variables
+        args: "after-used", // Ignore unused function arguments if they are used after
+        ignoreRestSiblings: true, // Ignore unused variables from object destructuring
+        varsIgnorePattern: "^_" // Ignore variables that start with _
+      }
     ],
+    "max-len": ["error", { "code": 120, "ignoreComments": true }],
+    "object-curly-spacing": ["error", "always"],
+    "object-curly-newline": ["error", { "multiline": true, "consistent": true }],
   },
 };
