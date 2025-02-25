@@ -17,14 +17,17 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
+    opacity: 0.5;
 
-    &.isActive {
+    &.isActive,
+    &:hover {
+      opacity: 1;
       .borderLeft {
         &.green {
           background: #1fc337;
         }
         &.blue {
-          background: #0079FE;
+          background: #0079fe;
         }
       }
     }
@@ -38,11 +41,6 @@
 
       background: transparent;
       border-radius: 0px 4px 4px 0px;
-    }
-
-    &.onBtc,
-    &:hover {
-      opacity: 0.5;
     }
   }
 }
