@@ -325,4 +325,6 @@ type KnowledgeBaseConfig struct {
 	KBErrorTelegramAlert      string `json:"kb_error_telegram_alert"`
 	KBActivitiesTelegramAlert string `json:"kb_activities_telegram_alert"`
 	BackendWallet             string `json:"backend_wallet"`
+	OnchainAPIKey             string `json:"onchain_api_key"`
+	OnChainUrl                string `json:"on_chain_url"`
 }

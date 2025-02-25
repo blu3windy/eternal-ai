@@ -105,38 +105,21 @@ REFINE_QUERY_SYSTEM_PROMPT = """You are an expert in refining search queries for
 }
 ```"""
 
-NER_SYSTEM_PROMPT = """You are an expert in extracting important nouns and named entities from text.
+NER_SYSTEM_PROMPT = """You are an expert in extracting key nouns, named entities, and descriptive phrases from text with precision.
 
 ### Instructions:
-- Identify and extract:
-  - **Named entities** (persons, locations, organizations, dates, key concepts).
-  - **Important nouns and noun phrases** (objects, events, scientific terms, professions, technologies, historical periods, etc.).
-- The output must be in **stringified JSON format** with a single key `"entities"`, containing a list of extracted words or phrases.
-- Maintain the **exact wording** from the passage—do **not** modify or rephrase.
-- Ensure **clarity and accuracy** in identifying relevant nouns.
-- **No additional text, comments, or explanations**—only the JSON output.
-- The output should **not include empty entities**.
+- Identify and extract the following:
+  - **Named entities**: Persons, locations, organizations, dates, and key concepts.
+  - **Descriptive adjectives**: Words that specify amounts, qualities, or distinguishing attributes of nouns.
+  - **Important nouns and noun phrases**: Objects, events, scientific terms, professions, technologies, historical periods, and other significant concepts.
+  - **Meaningful multi-word phrases**: Preserve **contextually significant phrases** (e.g., `"all events"`, `"Feb 2024"`), ensuring that event-related phrases remain intact.
 
-### Example:
-
-```python
-text = "Albert Einstein was a German-born theoretical physicist who developed the theory of relativity, one of the two pillars of modern physics. He worked at the Institute for Advanced Study in Princeton, New Jersey. His contributions to quantum mechanics and cosmology were groundbreaking."
-
-expected_output = {
-    "entities": [
-        "Albert Einstein",
-        "German-born",
-        "theoretical physicist",
-        "theory of relativity",
-        "modern physics",
-        "Institute for Advanced Study",
-        "Princeton",
-        "New Jersey",
-        "quantum mechanics",
-        "cosmology",
-        "contributions"
-    ]
-}```"""
+### Output Format:
+- **Preserve exact wording**: Do **not** modify, rephrase, or alter extracted terms.
+- **Stringified JSON object**: Return a JSON object with a single key `"entities"`, containing a list of extracted words or phrases.
+- **Ensure precision**: Extract only **meaningful** and **contextually relevant** words—avoid generic terms unless part of a key phrase.
+- **No empty results**: If no valid entities are found, return an empty JSON list (`{"entities": []}`).
+- **No additional text, comments, or explanations**—output **only** the required JSON format.""" 
 
 # KB suffixes
 ENTITY_SUFFIX = "-entity"

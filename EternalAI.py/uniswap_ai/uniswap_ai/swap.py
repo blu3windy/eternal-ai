@@ -1,7 +1,7 @@
 import logging
-import os
 import decimal
 
+import requests
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 from uniswap.constants import ETH_ADDRESS
@@ -33,6 +33,51 @@ class SwapReq:
     token_in: str = ""
     token_in_amount: decimal = 0
     token_out: str = ""
+
+    def convert_in_out(self):
+        if self.token_in.lower() == "eth":
+            self.token_in = ETH_ADDRESS
+        else:
+            token_address = self.convert_token_address(self.token_in.lower())
+            if token_address is None:
+                self.token_in = ETH_ADDRESS
+            else:
+                self.token_in = token_address
+
+        if self.token_out.lower() == "eth":
+            self.token_out = ETH_ADDRESS
+        else:
+            token_address = self.convert_token_address(self.token_out.lower())
+            if token_address is None:
+                self.token_out = ETH_ADDRESS
+            else:
+                self.token_out = token_address
+
+    def get_token_address_from_info(self, token_info: dict, symbol: str):
+        result = None
+        if token_info.get("symbol") != "" and token_info.get("symbol") is not None and token_info.get(
+                "symbol") == symbol:
+            if token_info.get("platforms") is not None:
+                if token_info.get("platforms").get("ethereum") is not None and token_info.get("platforms").get(
+                        "ethereum") != "":
+                    result = token_info.get("platforms").get("ethereum")
+        return result
+
+    def convert_token_address(self, symbol: str):
+        result = None
+        token_info_response = requests.get(f"https://api.coingecko.com/api/v3/coins/{symbol}")
+        if token_info_response.status_code == 200:
+            result = self.get_token_address_from_info(token_info_response.json(), symbol)
+        if result is None:
+            token_info_list_response = requests.get(
+                "https://api.coingecko.com/api/v3/coins/list?include_platform=true&status=active")
+            if token_info_list_response.status_code == 200:
+                for token_info in token_info_list_response.json():
+                    result = self.get_token_address_from_info(token_info, symbol)
+                    if result is not None:
+                        break
+
+        return result
 
 
 @dataclass

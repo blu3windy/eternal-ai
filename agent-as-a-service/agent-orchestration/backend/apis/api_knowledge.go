@@ -363,9 +363,8 @@ func (s *Server) retrieveKnowledge(c *gin.Context) {
 		outputChan := make(chan *models.ChatCompletionStreamResponse)
 		errChan := make(chan error)
 		doneChan := make(chan bool)
-		go s.nls.StreamRetrieveKnowledge(ctx, "", chatCompletionMessages, []*models.KnowledgeBase{{
-			KbId: req.KbId,
-		}}, &chatTopK, threshold, outputChan, errChan, doneChan)
+		go s.nls.StreamRetrieveKnowledge(ctx, "", chatCompletionMessages, []*models.KnowledgeBase{knowledgeBase},
+			&chatTopK, threshold, outputChan, errChan, doneChan)
 		s.nls.PreviewStreamAgentSystemPromptV1(c, c.Writer, outputChan, errChan, doneChan)
 	} else {
 		resp, err := s.nls.RetrieveKnowledge("", chatCompletionMessages, []*models.KnowledgeBase{{

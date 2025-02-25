@@ -21,12 +21,6 @@ class InferenceResponse:
     data: str
 
 
-@dataclass
-class Inference:
-    user_prompt: str
-    system_prompt: str
-
-
 @dataclass()
 class LLMInferMessage:
     content: str = ""
@@ -76,8 +70,9 @@ class AgentInference:
                 raise e
         return ""
 
-    def get_worker_hub_address(self):
-        self.get_agent_address('')
+    def get_worker_hub_address(self, agent_address: str, rpc: str):
+        self.get_agent_address(agent_address)
+        self.create_web3(rpc)
         agent_contract = self.web3.eth.contract(address=Web3.to_checksum_address(self.agent_address),
                                                 abi=AGENT_ABI)
         return agent_contract.functions.getPromptSchedulerAddress().call()

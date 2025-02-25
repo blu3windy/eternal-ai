@@ -124,6 +124,8 @@ func MigrateDBMain(db *gorm.DB) error {
 
 		(*models.AgentInfoInstall)(nil),
 		(*models.InfraRequest)(nil),
+
+		(*models.AgentLibrary)(nil),
 	}
 
 	if err := db.AutoMigrate(allTables...).Error; err != nil {
