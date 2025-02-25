@@ -1061,12 +1061,6 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		str := ""
 		retrieveQuery = &str
 	}
-	go func() {
-		outputChan <- &models.ChatCompletionStreamResponse{
-			Message: "Finish generating the query.",
-			Code:    http.StatusProcessing,
-		}
-	}()
 
 	topKQuery := 20
 	if topK != nil {
@@ -1124,13 +1118,6 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 
 	go func() {
 		outputChan <- &models.ChatCompletionStreamResponse{
-			Message: "Finish the search query in the RAG system.",
-			Code:    http.StatusProcessing,
-		}
-	}()
-
-	go func() {
-		outputChan <- &models.ChatCompletionStreamResponse{
 			Message: "Start analyzing the search result.",
 			Code:    http.StatusProcessing,
 		}
@@ -1142,17 +1129,16 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		errChan <- err
 		return
 	}
+	toolCallData, err := s.GetResultFromToolCall(*retrieveQuery)
+	if err != nil {
+		errChan <- err
+		return
+	}
 
-	go func() {
-		outputChan <- &models.ChatCompletionStreamResponse{
-			Message: "Finish analyzing the search result.",
-			Code:    http.StatusProcessing,
-		}
-	}()
 	logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("analyzed Result", analysedResult))
 	options := map[string]interface{}{}
-	userPrompt := fmt.Sprintf("Generate a response to the user's query based strictly on the conversation history and the provided information.\n\n### Guidelines:\n- The response must be concise and directly relevant.\n- Do not introduce any external knowledge.\n- Ensure clarity and alignment with ETHDenver-related context.\n- Prefer structured lists over paragraphs whenever possible to enhance readability.\n- If the response involves listing events or presentations, ensure they are formatted as follows:\n\nRequired Format for Events/Presentations:\n<Speaker 1>, <Speaker 2>, ..., <Speaker n> (<Event/Presentation name>) - <Local start time> - <Stage/Location name>\n\n- Speakers should be listed in the order provided. If they have an affiliation, include it exactly as given.\n- The event or presentation name should be placed in parentheses immediately after the speakers.\n- The local start time must be preserved in its original format.\n- The stage or location name should appear at the end.\n- If only one speaker is listed, follow the same format without modification.\n- If multiple events or presentations are listed, each should follow the format on a new line.\n\nExample of correct event/presentation output:\n- Alice, Bob (Future of ETH) - February 23, 2025 at 9:00 AM - Wheat Ridge, Colorado\n- Jonathan Mevs - Quantstamp, Michael Boyle - Quantstamp (Easy-to-Miss Solidity Bugs) - February 24, 2025 at 10:50 AM - Captain Ethereum Stage\n\n### Conversation History:\n%v\n\n### Relevant Information from the Website:\n%v\n\n### Final Answer:\n(Provide a precise, ETHDenver-relevant response following these guidelines.)\n",
-		conversation, analysedResult)
+	userPrompt := fmt.Sprintf("Generate a response to the user's query based strictly on the conversation history and the provided information.\n\n### Guidelines:\n- Prioritize database data over website data when answering.\n- The response must be concise and directly relevant.\n- No external knowledge should be introduced beyond the provided sources.\n- Ensure clarity and alignment with ETHDenver-related context.\n- Prefer structured lists over paragraphs whenever possible to enhance readability.\n- If the response involves listing events, ensure they are formatted as follows:\n\nRequired Format for Events:\n```\n<Event name> (<Speaker 1>; <Speaker 2>; ...; <Speaker n>) - <Local start time> - <Stage/Location name>\n```\n\n- Speakers should be listed in the order provided. If they have an affiliation, include it exactly as given.\n- The local start time must be preserved in its original format.\n- The stage or location name should appear at the end.\n- If only one speaker is listed, follow the same format without modification.\n- If no speaker is listed, ignore the speaker listing part of the format.\n- If multiple events are listed, each should follow the format on a new line.\n\nExample of correct event with speakers output:\n- Easy-to-Miss Solidity Bugs (Jonathan Mevs - Quantstamp; Michael Boyle - Quantstamp) - February 24, 2025 at 10:50 AM - Captain Ethereum Stage\n\nExample of correct event without speakers output:\n- Messari - Feb 27, 2025 at 1:30 PM - BUIDL Event Hall\n\n### Conversation History:\n%v\n\n### Relevant Information from Database (Primary Source):\n%v\n\n### Relevant Information from the Website:\n%v\n\n### Final Answer:\n(Provide a precise, ETHDenver-relevant response following these guidelines.)\n",
+		conversation, toolCallData, analysedResult)
 	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
@@ -1325,6 +1311,29 @@ func (s *Service) AnalyseSearchResults(baseModel string, systemPrompt string, qu
 		start = end
 	}
 	return analyzeResult, nil
+}
+
+func (s *Service) GetResultFromToolCall(query string) (string, error) {
+	if len(query) == 0 {
+		return "", fmt.Errorf("empty query")
+	}
+	body, err := helpers.CurlURLString(
+		fmt.Sprintf("%v?question=%v", s.conf.KnowledgeBaseConfig.ToolCallServiceUrl, query),
+		"GET",
+		map[string]string{},
+		nil,
+	)
+	res := make(map[string]interface{})
+	err = json.Unmarshal([]byte(body), &res)
+	if err != nil {
+		return "", err
+	}
+	result, ok := res["result"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("result is not of type map[string]string")
+	}
+	data, _ := json.Marshal(result["data"])
+	return string(data), nil
 }
 
 func (s *Service) PreviewAgentSystemPrompV1(ctx context.Context,
