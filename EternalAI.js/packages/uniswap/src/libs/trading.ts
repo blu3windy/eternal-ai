@@ -101,7 +101,7 @@ export async function createTrade(): Promise<TokenTrade> {
 
 export async function executeTrade(
     trade: TokenTrade
-): Promise<TransactionState> {
+): Promise<any> {
     const walletAddress = getWalletAddress()
     const provider = getProvider()
 
@@ -114,7 +114,7 @@ export async function executeTrade(
 
     // Fail if transfer approvals do not go through
     if (tokenApproval !== TransactionState.Sent) {
-        return TransactionState.Failed
+        return TransactionState.Failed, null
     }
 
     const options: SwapOptions = {
@@ -134,9 +134,9 @@ export async function executeTrade(
         maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
     }
 
-    const res = await sendTransaction(tx)
+    const state = await sendTransaction(tx)
 
-    return (res, tx)
+    return {state, tx}
 }
 
 // Helper Quoting and Pool Functions

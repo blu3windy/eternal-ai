@@ -2,8 +2,12 @@ import {BSC_CHAIN_ID, getRPC, RPC_URL, V1, V2} from "./const";
 import {AgentInference, InferenceProcessing} from "./inference";
 import {sleep} from "./utils";
 import {SwapReq, UniSwapAI} from "./swap";
+import {TransactionState} from "@/libs/providers";
 
-export const call_uniswap = async (private_key: string, chain_id: number, rpc: string, content: string) => {
+export const call_uniswap = async (private_key: string, chain_id: number, rpc: string, content: string): Promise<{
+    state: TransactionState | null,
+    tx: any
+}> => {
     console.log(`**** call uniswap with content **** \n\n
             ${content} \n\n end content ****\n\n\n`)
     try {
@@ -23,7 +27,7 @@ export const call_uniswap = async (private_key: string, chain_id: number, rpc: s
         const {state, tx} = await uniswap_obj.swap_v3(private_key, req, chain_id, rpc)
         return {state, tx};
     } catch (e) {
-        return null
+        return {state: null, tx: null}
     }
 }
 
@@ -78,7 +82,7 @@ export const process_infer = async (chain_id: string, tx_hash: string, rpc: stri
     return result
 }
 
-export const create_agent_infer = async (private_key: string, chain_id: string, agent_address: string, prompt: string) => {
+export const create_agent_infer = async (private_key: string, chain_id: string, agent_address: string, prompt: string): Promise<any> => {
     const rpc = getRPC(chain_id)
     if (!rpc) {
         return null;
@@ -102,6 +106,7 @@ export const create_agent_infer = async (private_key: string, chain_id: string, 
 }
 
 export const uni_swap_ai = async (command: string, args: any) => {
+    console.log(command)
     switch (command) {
         case "agent-infer": {
             const {state, tx} = await create_agent_infer(
@@ -113,4 +118,8 @@ export const uni_swap_ai = async (command: string, args: any) => {
             console.log(`swap tx ${tx} state ${state}`);
         }
     }
+}
+
+export const sum = (a: number, b: number) => {
+    return a + b
 }

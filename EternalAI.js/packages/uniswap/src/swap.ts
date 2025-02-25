@@ -1,7 +1,7 @@
 import {ETH_CHAIN_ID, getRPC, zeroAddress} from "./const";
 import {ethers} from "ethers";
 import {Token} from "@uniswap/sdk-core";
-import {changeWallet, createWallet} from "./libs/providers";
+import {changeWallet, createWallet, TransactionState} from "./libs/providers";
 import {createTrade, executeTrade} from "./libs/trading";
 import {CurrentConfig, Environment} from "./libs/config";
 
@@ -88,7 +88,10 @@ export interface PoolInfo {
 }
 
 export class UniSwapAI {
-    swap_v3 = async (privateKey: string, req: SwapReq, chain_id: number, rpc: string) => {
+    swap_v3 = async (privateKey: string, req: SwapReq, chain_id: number, rpc: string): Promise<{
+        state: TransactionState | null,
+        tx: any
+    }> => {
         if (privateKey == "") {
             throw new Error("invalid private key")
         }
@@ -127,8 +130,8 @@ export class UniSwapAI {
             const {state, tx} = await executeTrade(trade)
             return {state, tx}
         } catch (e) {
-            console.log(`Error ${e}`)
+            console.log(`Error executeTrade ${e}`)
         }
-        return null
+        return {state: null, tx: null}
     }
 }
