@@ -38,6 +38,7 @@ export type TokenTrade = Trade<Token, Token, TradeType>
 // Trading Functions
 
 export async function createTrade(): Promise<TokenTrade> {
+    console.log("CurrentConfig", CurrentConfig)
     const poolInfo = await getPoolInfo()
 
     const pool = new Pool(

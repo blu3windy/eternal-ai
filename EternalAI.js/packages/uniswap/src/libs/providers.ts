@@ -7,7 +7,7 @@ import {CurrentConfig, Environment} from './config'
 const mainnetProvider = new ethers.providers.JsonRpcProvider(
     CurrentConfig.rpc.mainnet
 )
-const wallet = createWallet()
+export let wallet = createWallet()
 
 const browserExtensionProvider = createBrowserExtensionProvider()
 let walletExtensionAddress: string | null = null

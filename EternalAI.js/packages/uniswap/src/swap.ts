@@ -1,20 +1,9 @@
-import {RPC_URL, zeroAddress} from "./const";
+import {zeroAddress} from "./const";
 import {ethers} from "ethers";
-import {ChainId, Currency, CurrencyAmount, Percent, Token, TradeType} from "@uniswap/sdk-core";
-import {computePoolAddress, FeeAmount, Pool, Route, SwapOptions, SwapQuoter, SwapRouter, Trade} from "@uniswap/v3-sdk";
-import {
-    ERC20_ABI,
-    MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS,
-    POOL_FACTORY_CONTRACT_ADDRESS,
-    QUOTER_CONTRACT_ADDRESS,
-    SWAP_ROUTER_ADDRESS, TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER, TransactionState
-} from "@/swap_const";
-import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
-import {fromReadableAmount} from "@/utils";
-import {createWallet_new} from "@/libs/providers";
-import {createTrade} from "@/libs/trading";
-
-export type TokenTrade = Trade<Token, Token, TradeType>
+import {Token} from "@uniswap/sdk-core";
+import {createWallet_new, wallet} from "@/libs/providers";
+import {createTrade, executeTrade} from "@/libs/trading";
+import {CurrentConfig, Environment} from "@/libs/config";
 
 export class SwapReq {
     token_in: string = ""
@@ -100,7 +89,30 @@ export interface PoolInfo {
 
 export class UniSwapAI {
     swap_v3 = async (privateKey: string, req: SwapReq, chain_id: number, rpc: string) => {
-        const wallet = createWallet_new(privateKey, rpc);
-        createTrade()
+        wallet = createWallet_new(privateKey, rpc);
+        CurrentConfig.env = Environment.MAINNET
+        CurrentConfig.rpc.mainnet = rpc
+        CurrentConfig.wallet.privateKey = privateKey
+        CurrentConfig.tokens.in = new Token(
+            chain_id,
+            req.token_in_address,
+            18,
+            req.token_in,
+            req.token_in
+        )
+
+        CurrentConfig.tokens.amountIn = req.token_in_amount
+
+        CurrentConfig.tokens.out = new Token(
+            chain_id,
+            req.token_out_address,
+            18,
+            req.token_out,
+            req.token_out
+        )
+
+        const trade = await createTrade()
+        const state = await executeTrade(trade)
+        return state
     }
 }
