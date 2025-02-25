@@ -561,3 +561,14 @@ func (s *Server) GetAgentInfoInstallCode(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: res.Code})
 }
+
+func (s *Server) GetAgentLibrary(c *gin.Context) {
+	ctx := s.requestContext(c)
+	networkID, err := s.uint64FromContextQuery(c, "network_id")
+	obj, err := s.nls.GetListAgentLibrary(ctx, networkID)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentLibraryRespArray(obj)})
+}

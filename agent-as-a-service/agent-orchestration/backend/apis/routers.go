@@ -166,6 +166,7 @@ func (s *Server) Routers() {
 			agentAPI.GET("/:id/install-code", s.authCheckTK1TokenMiddleware(), s.GetAgentStoreInstallCode)
 			agentAPI.GET("/install/info", s.GetAgentInfoInstallInfo)
 			//
+			agentAPI.GET("/library", s.GetAgentLibrary)
 
 		}
 
