@@ -117,6 +117,9 @@ export const uni_swap_ai = async (command: string, args: any) => {
             )
             console.log(`swap tx ${tx} state ${state}`);
         }
+        case "models-infer": {
+            break;
+        }
     }
 }
 
