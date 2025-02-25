@@ -6,17 +6,6 @@ export type Message = {
   content: string;
 };
 
-export type CreateInferPayload = {
-  model: string;
-  chainId: ChainId;
-  messages: Message[];
-};
-
-export type SendInferResponse = {
-  inferenceId: string;
-  creator: string;
-  tx: string;
-  receipt: ethers.providers.TransactionReceipt;
-};
+export type SendInferResponse = string;
 
 export type ListenInferPayload = SendInferResponse;
