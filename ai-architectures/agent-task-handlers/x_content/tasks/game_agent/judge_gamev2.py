@@ -658,7 +658,8 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
     logger.info(
         "[_handle_winner_with_llm] Calling LLM for {game_id} llm.agenerate complete"
     )
-    summarize = summarize_judge_commentary(
+
+    summarize = await sync2async(summarize_judge_commentary)(
         infer_result.generations[0].message.content
     )
 
