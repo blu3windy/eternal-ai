@@ -17,6 +17,7 @@ const LightHouse = {
 
     const data = await res.json();
     console.log('LightHouse - Upload succeed - url', data.data);
+    // https://gateway.lighthouse.storage/ipfs/bafkreiddf4lmd3nfd5ebusz2ho3usvivmknwf3u6dabjfu2fcptgvrhbvm
     return data.data;
   },
 };

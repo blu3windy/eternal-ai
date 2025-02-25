@@ -4,6 +4,7 @@ import { Message } from './methods/infer/types';
 type InferPayloadBase = {
   agentAddress: string;
   isLightHouse?: boolean;
+  rpcUrl?: string;
 };
 
 export type InferPayloadWithPrompt = InferPayloadBase & {

@@ -6,7 +6,6 @@ import {
   AGENT_ABI,
   IPFS,
   LIGHTHOUSE_IPFS,
-  LISTEN_PROMPTED_RESPONSE_CHAIN,
   PROMPT_SCHEDULER_ABI,
   WORKER_HUB_ABI,
 } from './constants';
@@ -298,12 +297,13 @@ const Infer = {
       }
     }
   },
-  getInferenceByInferenceId: async (
+  getInferenceById: async (
     wallet: InteractWallet,
     workerHubAddress: string,
-    inferId: string
+    inferId: string,
+    chainId: ChainId
   ) => {
-    try {
+    if (chainId === ChainId.BSC) {
       const contract = getWorkerHubContract(workerHubAddress, wallet);
       const inferenceInfo = await contract.getInferenceInfo(inferId);
       const output = inferenceInfo[10];
@@ -318,8 +318,31 @@ const Infer = {
       } else {
         throw new Error(`waiting process inference ${inferId}`);
       }
-    } catch (e) {
-      throw e;
+    } else if (chainId === ChainId.BASE) {
+      const contract = getWorkerHubContract(workerHubAddress, wallet);
+      const assignIds = await contract.getInferenceInfo(inferId);
+      if (assignIds.length == 0) {
+        throw new Error('No assignment found');
+      }
+      const assignId = assignIds[0];
+      const assignInfo = await contract.getAssignmentInfo(assignId);
+      if (assignInfo.length == 0) {
+        throw new Error('Inference result not ready');
+      }
+      const output = assignInfo[7];
+      const bytesData = ethers.utils.arrayify(output);
+      if (bytesData.length != 0) {
+        const result = await Infer.processOutputToInferResponse(bytesData);
+        if (result) {
+          return result;
+        } else {
+          return null;
+        }
+      } else {
+        throw new Error(`waiting process inference ${inferId}`);
+      }
+    } else {
+      throw Error('Unsupported chainId');
     }
   },
   listenPromptResponse: async (
@@ -334,36 +357,23 @@ const Infer = {
         workerHubAddress,
         promptedTxHash,
       });
-      if (
-        LISTEN_PROMPTED_RESPONSE_CHAIN.v1.includes(chainId) &&
-        LISTEN_PROMPTED_RESPONSE_CHAIN.v2.includes(chainId)
-      ) {
-        throw Error('Not supported chain');
-      }
 
       let result: string | null = null;
       const inferId = await Infer.getInferId(wallet, promptedTxHash);
 
-      if (LISTEN_PROMPTED_RESPONSE_CHAIN.v1.includes(chainId)) {
-        // TODO: unsupported
-        throw Error('Not supported chain');
-      } else if (LISTEN_PROMPTED_RESPONSE_CHAIN.v2.includes(chainId)) {
-        while (true) {
-          try {
-            result = await Infer.getInferenceByInferenceId(
-              wallet,
-              workerHubAddress,
-              inferId
-            );
-            break;
-          } catch (e) {
-            console.log('Retry to get inference by reference id');
-            await sleep(30);
-          }
+      while (true) {
+        try {
+          result = await Infer.getInferenceById(
+            wallet,
+            workerHubAddress,
+            inferId,
+            chainId
+          );
+          break;
+        } catch (e) {
+          console.log('Retry to get inference by reference id');
+          await sleep(30);
         }
-      } else {
-        console.log('infer listenPromptResponse - succeed', null);
-        return null;
       }
 
       console.log('infer listenPromptResponse - succeed', result);
