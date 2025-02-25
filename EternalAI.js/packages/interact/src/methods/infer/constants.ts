@@ -1,4 +1,4 @@
-import { ChainId } from '@/constants';
+import { ChainId } from '../../constants';
 import * as ethers from 'ethers';
 
 export const AGENT_ABI: ethers.ContractInterface = [

@@ -8,9 +8,9 @@ import {
   PROMPT_SCHEDULER_ABI,
   WORKER_HUB_ABI,
 } from './constants';
-import { ChainId } from '@/constants';
-import { InferPayloadWithMessages, InferPayloadWithPrompt } from '@/types';
-import { sleep } from '@/utils/time';
+import { ChainId } from '../../constants';
+import { InferPayloadWithMessages, InferPayloadWithPrompt } from '../../types';
+import { sleep } from '../../utils/time';
 
 const contracts: Record<string, ethers.Contract> = {};
 
