@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, FC, PropsWithChildren, useMemo, useEffect } from 'react';
 import HomeAuthen from "./Home";
+import { Wallet } from "ethers";
 
 interface AuthContextType {
-  isAuthenticated: boolean;
+   signer: Wallet | undefined;
 }
 
 const TESTING_AUTHEN_FLAG = false;
@@ -10,8 +11,8 @@ const TESTING_AUTHEN_FLAG = false;
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
-   const [isAuthenticated, setIsAuthenticated] = useState(false);
    const [loading, setLoading] = useState(true);
+   const [signer, setSigner] = useState<Wallet | undefined>();
 
    useEffect(() => {
       setInterval(() => {
@@ -21,16 +22,16 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 
    const values = useMemo(() => {
       return {
-         isAuthenticated,
+         signer,
       }
-   }, [isAuthenticated]);
+   }, [signer]);
 
    if (TESTING_AUTHEN_FLAG) {
       return (
          <AuthContext.Provider value={values}>
             {loading
                ? <div>Loading...</div>
-               : isAuthenticated
+               : signer
                   ? (children)
                   : (<HomeAuthen />)
             }
