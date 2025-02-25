@@ -1151,8 +1151,8 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	}()
 	logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("analyzed Result", analysedResult))
 	options := map[string]interface{}{}
-	userPrompt := fmt.Sprintf("Generate a response to the user's query based strictly on the conversation history and the provided information.\n\n### Guidelines:\n- The response must be concise and directly relevant.\n- Do not introduce any external knowledge.\n- Ensure clarity and alignment with ETHDenver-related context.\n\n### Conversation History:\n%v\n\n### Relevant Information from the Website:\n%v\n\n### Final Answer:\n(Provide a precise, ETHDenver-relevant response following these guidelines.)\n",
-		conversation, analysedResult)
+	userPrompt := fmt.Sprintf("Generate a response to the user's query based strictly on the conversation history and the provided information.\n\n### Guidelines:\n- The response must be concise and directly relevant.\n- Do not introduce any external knowledge.\n- Ensure clarity and alignment with ETHDenver-related context.\n- Prefer structured lists over paragraphs whenever possible to enhance readability.\n- If the response involves listing events or presentations, ensure they are formatted as follows:\n\nRequired Format for Events/Presentations:\n<Speaker 1>, <Speaker 2>, ..., <Speaker n> (<Event/Presentation name>) - <Local start time> - <Stage/Location name>\n\n- Speakers should be listed in the order provided. If they have an affiliation, include it exactly as given.\n- The event or presentation name should be placed in parentheses immediately after the speakers.\n- The local start time must be preserved in its original format.\n- The stage or location name should appear at the end.\n- If only one speaker is listed, follow the same format without modification.\n- If multiple events or presentations are listed, each should follow the format on a new line.\n\nExample of correct event/presentation output:\n- Alice, Bob (Future of ETH) - February 23, 2025 at 9:00 AM - Wheat Ridge, Colorado  \n- Jonathan Mevs - Quantstamp, Michael Boyle - Quantstamp (Easy-to-Miss Solidity Bugs) - February 24, 2025 at 10:50 AM - Captain Ethereum Stage  \n\n### Conversation History:\n%v\n\n### Relevant Information from the Website:\n%v\n\n### Final Answer:\n(Provide a precise, ETHDenver-relevant response following these guidelines.)\n\"\"\"\n\nAGENT_QUERY_GENERATION_PROMPT = \"\"\"Based on the conversation below, generate a precise query that can be used to retrieve relevant information.\n\n### Instruction:\n- Generate a precise query based on the user's question and the available context.\n- Output the query in **stringified JSON format** with a key `\"query\"`.\n- Do not include additional explanations or comments—just the JSON.\n\nExample:\n\n**Conversation:**  \nuser: What is French cuisine?\nassistant: French cuisine refers to the traditional cooking styles of France, famous for its rich flavors and varied dishes.\nuser: What is the most popular?\n\n**Output:**  \n```json\n{{\n    \"query\": \"popular French cuisine\"\n}}\n```\n\nHere is the conversation:   \n\n%v\n\nAnswer:",
+		conversation, analysedResult, conversation)
 	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
@@ -1176,8 +1176,8 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	llmRequest := openai2.ChatCompletionRequest{
 		Stream:      true,
 		Messages:    payloadAgentChat,
-		Model:       "NousResearch/Hermes-3-Llama-3.1-70B-FP8",
-		Temperature: 0.7,
+		Model:       agentModel,
+		Temperature: 0.01,
 		MaxTokens:   4096,
 		Seed:        &seedAnswer,
 		Metadata: map[string]string{
@@ -1237,7 +1237,7 @@ func (s *Service) GenerateKnowledgeQuery(baseModel string, histories []openai2.C
 		}
 
 		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{
-			"temperature": 0.01,
+			"temperature": 0.7,
 			"max_tokens":  4096,
 		})
 		if err != nil || stringResp == "" {
@@ -1267,47 +1267,64 @@ func (s *Service) GenerateKnowledgeQuery(baseModel string, histories []openai2.C
 	return queryStringResp, nil, conversation
 }
 func (s *Service) AnalyseSearchResults(baseModel string, systemPrompt string, query string, searchedResult []string) (string, error) {
-	searchResult := ""
-	for _, item := range searchedResult {
-		searchResult = searchResult + item + "\n\n"
-	}
-	url := s.conf.AgentOffchainChatUrl
-	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
-		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
-	}
-
-	generateQueryPrefix := "Analyze the search results below and extract only the most critical insights directly relevant to the question.\n\n### Instructions:\n- Carefully review the search results for accuracy in time, location, and context.\n- Extract only the most essential and directly relevant key points.\n- Ensure the summary is concise, precise, and strictly aligned with the query.\n- Avoid assumptions, speculation, or external knowledge.\n- Maintain consistency and exclude unnecessary details.\n\n### Question:\n%v\n\n### Search Results:\n%v\n### Key Insights:\n"
-	userPrompt := fmt.Sprintf(generateQueryPrefix, query, searchResult)
-	messages := []openai2.ChatCompletionMessage{
-		{
-			Role:    openai2.ChatMessageRoleSystem,
-			Content: systemPrompt,
-		},
-		{
-			Role:    openai2.ChatMessageRoleUser,
-			Content: userPrompt,
-		},
-	}
-
-	maxRetry := 10
-	messageCallLLM, _ := json.Marshal(&messages)
-
-	for i := 1; i <= maxRetry; i++ {
-		if i > 1 {
-			time.Sleep(time.Second)
+	batchSize := 5
+	start := 0
+	analyzeResult := ""
+	for {
+		end := start + batchSize
+		if start >= len(searchedResult) {
+			break
+		}
+		if end >= len(searchedResult) {
+			end = len(searchedResult)
+		}
+		searchResult := ""
+		for _, item := range searchedResult[start:end] {
+			searchResult = searchResult + item + "\n\n"
+		}
+		url := s.conf.AgentOffchainChatUrl
+		if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
+			url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 		}
 
-		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{
-			"temperature": 0.01,
-			"max_tokens":  4096,
-		})
-		if err != nil || stringResp == "" {
-			continue
+		generateQueryPrefix := "Act as a critical information analyst, skilled in extracting only the most essential insights from search results.\n\n## Task:\nAnalyze the provided search results and extract only the most critical insights directly relevant to the given question.\n\n## Instructions:\n- Strictly extract only essential information. No introductions, summaries, or extra context—only the key insights.\n- Ensure accuracy. Verify time, location, and context before including any insight.\n- Be concise and precise. Remove redundant details, filler content, and tangential information.\n- No assumptions or external knowledge. Only use information explicitly stated in the search results.\n- Maintain neutrality and clarity. Present insights objectively without speculation.\n\n## Input:\nQuestion: %v\nSearch Results: %v\n\n## Response Format (Strictly Follow This):\n- Directly list the critical insights only—no introductions or explanations.\n- If multiple key insights exist, format them as bullet points.\n- Each point should be as concise as possible while preserving meaning.\n\n## Example Output:\n- [Critical insight 1]\n- [Critical insight 2]\n- [Critical insight 3]\n"
+		userPrompt := fmt.Sprintf(generateQueryPrefix, query, searchResult)
+		messages := []openai2.ChatCompletionMessage{
+			{
+				Role:    openai2.ChatMessageRoleSystem,
+				Content: systemPrompt,
+			},
+			{
+				Role:    openai2.ChatMessageRoleUser,
+				Content: userPrompt,
+			},
 		}
-		return stringResp, nil
-	}
 
-	return "", fmt.Errorf("can not get analysed results after %v retries", maxRetry)
+		maxRetry := 10
+		messageCallLLM, _ := json.Marshal(&messages)
+		stringResp := ""
+		var err error
+		for i := 1; i <= maxRetry; i++ {
+			if i > 1 {
+				time.Sleep(time.Second)
+			}
+
+			stringResp, err = s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{
+				"temperature": 0.7,
+				"max_tokens":  4096,
+			})
+			if err != nil || stringResp == "" {
+				continue
+			}
+			break
+		}
+		if len(stringResp) == 0 {
+			return "", fmt.Errorf("error when try get analyze search result")
+		}
+		analyzeResult = analyzeResult + stringResp + "\n"
+		start = end
+	}
+	return analyzeResult, nil
 }
 
 func (s *Service) PreviewAgentSystemPrompV1(ctx context.Context,
