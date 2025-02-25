@@ -50,6 +50,7 @@ async function interactContractLLM(messages: Message[]): Promise<string> {
     chainId: ChainId.BSC,
     agentAddress: AGENT_CONTRACT_ADDRESSES[ChainId.BSC],
     messages: messages,
+    isLightHouse: true,
   } satisfies InferPayloadWithMessages;
 
   try {
