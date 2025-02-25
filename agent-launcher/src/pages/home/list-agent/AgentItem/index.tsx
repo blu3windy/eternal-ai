@@ -147,20 +147,12 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
                   <Text className={s.noTokenTag}>{AgentTypeName[token?.agent_type]}</Text>
                 </Flex>
                 {chain && isAllChain && (
-                  <>
-                    <Text
-                      mx={'4px'}
-                      color="#657786"
-                      fontSize="14px"
-                      fontWeight="400"
-                    >
-                      ·
+                  <Flex gap={"4px"} alignItems={"center"}>
+                    <Image w={'16px'} h={'16px'} src={chain?.icon} />
+                    <Text fontSize="12px" fontWeight="400">
+                      {formatCurrency(token?.wallet_balance)} EAI
                     </Text>
-                    <Image w={'14px'} h={'14px'} src={chain?.icon} />
-                    <Text color="#000" fontSize="14px" fontWeight="400">
-                      {chain?.name}
-                    </Text>
-                  </>
+                  </Flex>
                 )}
               </Flex>
             </Flex>

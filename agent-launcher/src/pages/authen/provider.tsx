@@ -8,7 +8,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
-   const [isAuthenticated, setIsAuthenticated] = useState(false);
+   // const [isAuthenticated, setIsAuthenticated] = useState(false);
+   const isAuthenticated = true;
 
    const values = useMemo(() => {
       return {
