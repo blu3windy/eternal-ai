@@ -1,7 +1,7 @@
-import {Web3} from "web3";
 import {AGENT_ABI, ETH_CHAIN_ID, IPFS, LIGHTHOUSE_IPFS, PROMPT_SCHEDULER_ABI, RPC_URL, WORKER_HUB_ABI} from "./const";
 import {poaMiddleware, stringToBytes} from "./utils";
-import {MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS} from "@/libs/constants";
+import {MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS} from "./libs/constants";
+import {ethers} from "ethers";
 
 export class InferenceResponse {
     result_uri: string
@@ -54,15 +54,15 @@ export class AgentInference {
     create_web3 = (rpc: string) => {
         if (this.web3 == null) {
             if (rpc != "") {
-                this.web3 = new Web3(rpc || Web3.givenProvider)
+                this.web3 = new ethers.providers.JsonRpcProvider(rpc)
             } else {
-                this.web3 = new Web3(RPC_URL.ETH_CHAIN_ID)
+                this.web3 = new ethers.providers.JsonRpcProvider(RPC_URL.ETH_CHAIN_ID)
             }
             this.web3.middleware = {
                 onion: {
                     inject: async () => {
-                        const chain_id = await this.web3.eth.getChainId();
-                        this.web3.eth.sendTransaction = poaMiddleware({chain_id: chain_id})(this.web3.eth.sendTransaction);
+                        // const chain_id = await this.web3.eth.getChainId();
+                        // this.web3.eth.sendTransaction = poaMiddleware({chain_id: chain_id})(this.web3.eth.sendTransaction);
                     },
                 },
             };
@@ -99,8 +99,8 @@ export class AgentInference {
     get_worker_hub_address = async (agent_address: string, rpc: string) => {
         this.create_web3(rpc)
         this.get_agent_address(agent_address)
-        const agent_contract = new this.web3.eth.Contract(AGENT_ABI, this.agent_address)
-        return await agent_contract.methods.getPromptSchedulerAddress().call()
+        const agent_contract = new ethers.Contract(this.agent_address, AGENT_ABI, this.web3)
+        return await agent_contract.getPromptSchedulerAddress()
     }
 
     create_inference_agent = async (private_key: string, agent_address: string, prompt: string, rpc: string) => {
@@ -165,9 +165,9 @@ export class InferenceProcessing {
     create_web3 = (rpc: string) => {
         if (this.web3 == null) {
             if (rpc != "") {
-                this.web3 = new Web3(rpc || Web3.givenProvider)
+                this.web3 = new ethers.providers.JsonRpcProvider(rpc)
             } else {
-                this.web3 = new Web3(RPC_URL.ETH_CHAIN_ID)
+                this.web3 = new ethers.providers.JsonRpcProvider(RPC_URL.ETH_CHAIN_ID)
             }
         }
     }
@@ -209,14 +209,14 @@ export class InferenceProcessing {
 
     get_inference_by_inference_id = async (worker_hub_address: string, inference_id: number, rpc: string) => {
         this.create_web3(rpc);
-        if (await this.web3.eth.net.isListening()) {
+        if (await this.web3.getNetwork()) {
             this.get_workerhub_address(worker_hub_address)
 
-            const contract = new this.web3.eth.Contract(PROMPT_SCHEDULER_ABI, this.workerhub_address);
+            const contract = new ethers.Contract(this.workerhub_address, PROMPT_SCHEDULER_ABI, this.web3);
             try {
-                const inference_info = await contract.methods.getInferenceInfo(inference_id).call()
+                const inference_info = await contract.getInferenceInfo(inference_id)
                 const output = inference_info[10]
-                const bytesData = this.web3.utils.hexToBytes(output);
+                const bytesData = ethers.utils.arrayify(output);
                 if (bytesData.length != 0) {
                     const result = await this.process_output_to_infer_response(bytesData);
                     if (result) {
@@ -271,28 +271,22 @@ export class InferenceProcessing {
 
     get_infer_id = async (worker_hub_address: string, tx_hash_hex: string, rpc: string) => {
         this.create_web3(rpc);
-        if (await this.web3.eth.net.isListening()) {
+        if (await this.web3.getNetwork()) {
             console.log(`Get infer Id from tx ${tx_hash_hex}`)
             this.get_workerhub_address(worker_hub_address);
-            const tx_receipt = await this.web3.eth.getTransactionReceipt(tx_hash_hex);
+            const tx_receipt = await this.web3.getTransactionReceipt(tx_hash_hex);
             if (!tx_receipt || tx_receipt.status != 1) {
                 console.log("Transaction receipt not found.")
             } else {
                 const logs = tx_receipt.logs;
                 if (logs.length > 0) {
-                    const contract = new this.web3.eth.Contract(WORKER_HUB_ABI, this.workerhub_address);
+                    const contract = new ethers.Contract(this.workerhub_address, WORKER_HUB_ABI, this.web3);
                     for (const log of logs) {
                         try {
-                            const event = WORKER_HUB_ABI.find(event => (event["type"] === "event" && event["name"] === 'NewInference'))
-                            if (event) {
-                                const decoded = this.web3.eth.abi.decodeLog(
-                                    event["inputs"],
-                                    log.data,
-                                    log.topics.slice(1)
-                                );
-                                // console.log("-------log.data", decoded);
-                                const inferenceId = decoded.inferenceId;
-                                // console.log('Inference ID:', inferenceId);
+                            const iface = new ethers.utils.Interface(WORKER_HUB_ABI)
+                            const decodedLog = iface.parseLog(log)
+                            if (decodedLog.name == "NewInference") {
+                                const inferenceId = decodedLog.args.inferenceId;
                                 return inferenceId;
                             } else {
                                 throw new Error("No Infer Id")
