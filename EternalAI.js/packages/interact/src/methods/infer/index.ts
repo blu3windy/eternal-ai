@@ -4,6 +4,8 @@ import { InteractWallet } from '../types';
 import { SendInferResponse } from './types';
 import {
   AGENT_ABI,
+  IPFS,
+  LIGHTHOUSE_IPFS,
   LISTEN_PROMPTED_RESPONSE_CHAIN,
   PROMPT_SCHEDULER_ABI,
   WORKER_HUB_ABI,
@@ -11,6 +13,7 @@ import {
 import { ChainId } from '../../constants';
 import { InferPayloadWithMessages, InferPayloadWithPrompt } from '../../types';
 import { sleep } from '../../utils/time';
+import { Fragment, LogDescription } from 'ethers/lib/utils';
 
 const contracts: Record<string, ethers.Contract> = {};
 
@@ -38,6 +41,23 @@ const getWorkerHubContract = (
   }
   return contracts[contractAddress];
 };
+
+export class InferenceResponse {
+  result_uri: string;
+  storage: string;
+  data: string;
+
+  constructor(result_uri: string, storage: string, data: string) {
+    this.result_uri = result_uri;
+    this.storage = storage;
+    this.data = data;
+  }
+
+  static fromJSON(json: string): InferenceResponse {
+    const parsed = JSON.parse(json);
+    return Object.assign(new InferenceResponse('', '', ''), parsed);
+  }
+}
 
 const Infer = {
   getSystemPrompt: async (
@@ -188,7 +208,9 @@ const Infer = {
   },
   getWorkerHubAddress: async (agentAddress: string, wallet: InteractWallet) => {
     try {
-      console.log('infer getWorkerHubAddress - start');
+      console.log('infer getWorkerHubAddress - start', {
+        agentAddress,
+      });
       const contractAddress = agentAddress;
       const contract = getAgentContract(contractAddress, wallet);
       const schedule = await contract.getPromptSchedulerAddress();
@@ -201,50 +223,99 @@ const Infer = {
       console.log('infer getWorkerHubAddress - end');
     }
   },
-  getInferId: async (
-    wallet: InteractWallet,
-    workerHubAddress: string,
-    promptedTxHash: string
-  ) => {
+  getInferId: async (wallet: InteractWallet, promptedTxHash: string) => {
     const txReceipt = await wallet.provider.getTransactionReceipt(
       promptedTxHash
     );
+
     if (!txReceipt || txReceipt.status != 1) {
       throw new Error('Transaction receipt not found.');
     } else {
-      const logs = txReceipt.logs;
-      if (logs.length > 0) {
-        for (const log of logs) {
-          try {
-            const event = (WORKER_HUB_ABI as Array<any>).find(
-              (event) => event.type === 'event' && event.name === 'NewInference'
-            );
-            if (event) {
-              // TODO: update this to use ethers.utils.defaultAbiCoder.decode
-              const decoded = ethers.utils.defaultAbiCoder.decode(
-                event.inputs,
-                log.data
-              );
-              const inferenceId = decoded.inferenceId;
-              return inferenceId;
-            } else {
-              throw new Error('No Infer Id');
+      try {
+        const iface = new ethers.utils.Interface(
+          WORKER_HUB_ABI as ReadonlyArray<Fragment>
+        );
+
+        const events = txReceipt.logs
+          .map((log) => {
+            try {
+              return iface.parseLog(log);
+            } catch (error) {
+              return null;
             }
-          } catch (error) {
-            continue;
-          }
-        }
+          })
+          .filter((event) => event !== null);
+
+        const newInference = events?.find(
+          ((event: LogDescription) => event.name === 'NewInference') as any
+        );
+        return newInference?.args?.inferenceId;
+      } catch (e) {
         throw new Error('No Infer Id');
       }
     }
   },
 
+  processOutput: (out: any) => {
+    const str: string = ethers.utils.toUtf8String(out);
+    try {
+      const result = InferenceResponse.fromJSON(str);
+      return result;
+    } catch (e) {
+      return null;
+    }
+  },
+  processOutputToInferResponse: async (output: ethers.Bytes) => {
+    const inferResponse = Infer.processOutput(output);
+    if (!inferResponse) {
+      return null;
+    } else {
+      if (
+        inferResponse.storage == 'lighthouse-filecoint' ||
+        inferResponse.result_uri.includes('ipfs://')
+      ) {
+        const light_house = inferResponse.result_uri.replace(
+          IPFS,
+          LIGHTHOUSE_IPFS
+        );
+        const light_house_reponse = await fetch(light_house);
+        if (light_house_reponse.ok) {
+          const result = await light_house_reponse.text();
+          return result;
+        }
+        return null;
+      } else {
+        if (inferResponse.data != '') {
+          const decodedString = atob(inferResponse.data);
+          return decodedString;
+        }
+        return null;
+      }
+    }
+  },
   getInferenceByInferenceId: async (
     wallet: InteractWallet,
     workerHubAddress: string,
     inferId: string
   ) => {
-    const contract = getWorkerHubContract(workerHubAddress, wallet);
+    try {
+      const contract = getWorkerHubContract(workerHubAddress, wallet);
+      const inferenceInfo = await contract.getInferenceInfo(inferId);
+      const output = inferenceInfo[10];
+      const bytesData = ethers.utils.arrayify(output);
+      if (bytesData.length != 0) {
+        const result = await Infer.processOutputToInferResponse(bytesData);
+        if (result) {
+          return result;
+        } else {
+          return null;
+        }
+      } else {
+        throw new Error(`waiting process inference ${inferId}`);
+      }
+    } catch (e) {
+      throw e;
+    }
   },
   listenPromptResponse: async (
     chainId: ChainId,
@@ -253,7 +324,11 @@ const Infer = {
     promptedTxHash: string
   ) => {
     try {
-      console.log('infer listenPromptResponse - start');
+      console.log('infer listenPromptResponse - start', {
+        chainId,
+        workerHubAddress,
+        promptedTxHash,
+      });
       if (
         LISTEN_PROMPTED_RESPONSE_CHAIN.v1.includes(chainId) &&
         LISTEN_PROMPTED_RESPONSE_CHAIN.v2.includes(chainId)
@@ -261,12 +336,8 @@ const Infer = {
         throw Error('Not supported chain');
       }
 
-      let result: any;
-      const inferId = await Infer.getInferId(
-        wallet,
-        workerHubAddress,
-        promptedTxHash
-      );
+      let result: string | null = null;
+      const inferId = await Infer.getInferId(wallet, promptedTxHash);
 
       if (LISTEN_PROMPTED_RESPONSE_CHAIN.v1.includes(chainId)) {
         // TODO: unsupported
