@@ -3,10 +3,13 @@ import s from './styles.module.scss';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import AgentItem from './AgentItem';
 import AppLoading from "../../../components/AppLoading";
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useContext, useEffect, useRef, useState} from 'react';
 import throttle from 'lodash.throttle';
 import {IAgentToken} from "../../../services/api/agents-token/interface.ts";
 import debounce from 'lodash.debounce';
+import {AgentContext} from "../provider";
+import uniqBy from 'lodash.uniqby';
+import CAgentTokenAPI from "../../../services/api/agents-token";
 
 export enum SortOption {
   MarketCap = 'meme_market_cap',
@@ -32,6 +35,8 @@ const AgentsList = () => {
 
   const [agents, setAgents] = useState<IAgentToken[]>([]);
 
+  const { setSelectedAgent } = useContext(AgentContext);
+
   const refParams = useRef({
     page: 1,
     limit: 30,
@@ -40,47 +45,43 @@ const AgentsList = () => {
     search: '',
   });
 
+  const cPumpAPI = new CAgentTokenAPI();
+
   const getTokens = async (isNew: boolean) => {
-    // if (refLoading.current) return;
-    // try {
-    //   setLoaded(false);
-    //   if (isNew) {
-    //     setAgents([]);
-    //   }
-    //
-    //   refLoading.current = true;
-    //   refParams.current = {
-    //     ...refParams.current,
-    //     page: isNew ? 1 : refParams.current.page + 1,
-    //   };
-    //
-    //   const { agents: newTokens } = await cPumpAPI.getAgentTokenList({
-    //     page: refParams.current.page,
-    //     limit: refParams.current.limit,
-    //     sort_type: refParams.current.order,
-    //     sort_col: refParams.current.sort,
-    //     agent_type: refParams.current.agentType,
-    //     search: refParams.current.search,
-    //     chain: refParams.current?.chain
-    //       ? refParams.current?.chain === 0
-    //         ? ''
-    //         : refParams.current?.chain
-    //       : '',
-    //     model: refParams.current?.model,
-    //   });
-    //
-    //   if (isNew) {
-    //     setAgents(newTokens);
-    //   } else {
-    //     setAgents((prevTokens) =>
-    //       uniqBy([...prevTokens, ...newTokens], (token) => token.id),
-    //     );
-    //   }
-    // } catch (error) {
-    // } finally {
-    //   refLoading.current = false;
-    //   setLoaded(true);
-    // }
+    if (refLoading.current) return;
+    try {
+      setLoaded(false);
+      if (isNew) {
+        setAgents([]);
+      }
+
+      refLoading.current = true;
+      refParams.current = {
+        ...refParams.current,
+        page: isNew ? 1 : refParams.current.page + 1,
+      };
+
+      const { agents: newTokens } = await cPumpAPI.getAgentTokenList({
+        page: refParams.current.page,
+        limit: refParams.current.limit,
+        sort_col: refParams.current.sort,
+        search: refParams.current.search,
+        chain: ''
+      });
+
+      if (isNew) {
+        setAgents(newTokens);
+        setSelectedAgent(newTokens[0]);
+      } else {
+        setAgents((prevTokens) =>
+          uniqBy([...prevTokens, ...newTokens], (token) => token.id),
+        );
+      }
+    } catch (error) {
+    } finally {
+      refLoading.current = false;
+      setLoaded(true);
+    }
   };
 
   const throttleGetTokens = useCallback(throttle(getTokens, 500), []);
