@@ -183,7 +183,29 @@ export class InferenceProcessing {
     }
 
     get_assignments_by_inference = async (worker_hub_address: string, inference_id: string, rpc: string) => {
-        return null;
+        this.create_web3(rpc);
+        if (await this.web3.eth.net.isListening()) {
+            this.get_workerhub_address(worker_hub_address)
+            const worker_hub_contract = new this.web3.eth.Contract(WORKER_HUB_ABI, this.workerhub_address);
+            const assignments_info = await worker_hub_contract.methods.getAssignmentsByInference(inference_id).call()
+            for (const assignment of assignments_info) {
+                const assignment_info = await worker_hub_contract.methods.getAssignmentInfo(assignment).call()
+                const output = assignment_info[7]
+                const bytesData = this.web3.utils.hexToBytes(output);
+                if (bytesData.length != 0) {
+                    const result = await this.process_output_to_infer_response(bytesData);
+                    if (result) {
+                        return result;
+                    } else {
+                        return null;
+                    }
+                } else {
+                    throw new Error(`waiting process inference ${inference_id}`)
+                }
+            }
+        } else {
+            throw new Error("Web3 not connected");
+        }
     }
 
     get_inference_by_inference_id = async (worker_hub_address: string, inference_id: number, rpc: string) => {
@@ -262,10 +284,10 @@ export class InferenceProcessing {
                     const contract = new this.web3.eth.Contract(WORKER_HUB_ABI, this.workerhub_address);
                     for (const log of logs) {
                         try {
-                            const event = WORKER_HUB_ABI.find(event => (event.type === "event" && event.name === 'NewInference'))
+                            const event = WORKER_HUB_ABI.find(event => (event["type"] === "event" && event["name"] === 'NewInference'))
                             if (event) {
                                 const decoded = this.web3.eth.abi.decodeLog(
-                                    event.inputs,
+                                    event["inputs"],
                                     log.data,
                                     log.topics.slice(1)
                                 );
