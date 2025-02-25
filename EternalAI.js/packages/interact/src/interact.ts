@@ -14,17 +14,22 @@ class Interact {
     this._wallet = wallet;
   }
 
-  private getProvider(chainId: ChainId) {
-    const rpcUrl = CHAIN_MAPPING[chainId];
-    if (!rpcUrl) {
+  private getProvider(chainId: ChainId, rpcUrl?: string) {
+    // create provider from user optional
+    if (!!rpcUrl) {
+      return new ethers.providers.JsonRpcProvider(rpcUrl);
+    }
+
+    if (!CHAIN_MAPPING[chainId]) {
       throw new Error(`Unsupported chainId: ${chainId}`);
     }
 
-    return new ethers.providers.JsonRpcProvider(rpcUrl);
+    // create provider from default supported chainId
+    return new ethers.providers.JsonRpcProvider(CHAIN_MAPPING[chainId]);
   }
 
-  private getNetworkCredential(chainId: ChainId) {
-    const provider = this.getProvider(chainId);
+  private getNetworkCredential(chainId: ChainId, rpcUrl?: string) {
+    const provider = this.getProvider(chainId, rpcUrl);
     const signer = this._wallet.connect(provider);
     return {
       provider,
@@ -83,7 +88,10 @@ class Interact {
 
   private async inferWithPrompt(payload: InferPayloadWithPrompt) {
     console.log('inferWithPrompt - start');
-    const { signer } = this.getNetworkCredential(payload.chainId);
+    const { signer } = this.getNetworkCredential(
+      payload.chainId,
+      payload.rpcUrl
+    );
 
     const params = await methods.Infer.createPayloadWithPrompt(signer, payload);
 
@@ -106,7 +114,10 @@ class Interact {
 
   private async inferWithMessages(payload: InferPayloadWithMessages) {
     console.log('inferWithMessages - start');
-    const { signer } = this.getNetworkCredential(payload.chainId);
+    const { signer } = this.getNetworkCredential(
+      payload.chainId,
+      payload.rpcUrl
+    );
 
     const params = await methods.Infer.createPayloadWithMessages(
       signer,

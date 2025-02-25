@@ -4,11 +4,12 @@ import { InferPayloadWithMessages, InferPayloadWithPrompt } from '../src/types';
 import { ChainId } from '../src/constants';
 
 export const AGENT_CONTRACT_ADDRESSES: Record<ChainId, string> = {
-  56: '0x3B9710bA5578C2eeD075D8A23D8c596925fa4625',
-  8453: '0x643c45e89769a16bcb870092bd1efe4696cb2ce7',
+  [ChainId.BSC]: '0x3B9710bA5578C2eeD075D8A23D8c596925fa4625',
+  [ChainId.BASE]: '0x1E65FCa9b6640bC87AE41f1a897762c334821D1C',
 };
 
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string);
+// const wallet = new ethers.Wallet("Your private key here");
+const wallet = ethers.Wallet.createRandom();
 
 async function testInferV1() {
   const inferPayload = {
@@ -44,4 +45,4 @@ async function testInferV2() {
   }
 }
 
-testInferV2();
+testInferV1();

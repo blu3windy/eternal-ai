@@ -3781,10 +3781,5 @@ export const PROMPT_SCHEDULER_ABI: ethers.ContractInterface = [
   },
 ];
 
-export const LISTEN_PROMPTED_RESPONSE_CHAIN: Record<'v1' | 'v2', ChainId[]> = {
-  v1: [ChainId.BASE],
-  v2: [ChainId.BSC],
-};
-
 export const IPFS = 'ipfs://';
 export const LIGHTHOUSE_IPFS = 'https://gateway.lighthouse.storage/ipfs/';

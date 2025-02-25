@@ -1387,10 +1387,12 @@ func (s *Service) GetAgentChainFees(ctx context.Context) (map[string]interface{}
 	chainFeeMap := map[string]interface{}{}
 	for _, v := range res {
 		chainFeeMap[strconv.Itoa(int(v.NetworkID))] = map[string]interface{}{
-			"network_id": v.NetworkID,
-			"mint_fee":   numeric.BigFloat2Text(&v.MintFee.Float),
-			"post_fee":   numeric.BigFloat2Text(&v.InferFee.Float),
-			"token_fee":  numeric.BigFloat2Text(&v.TokenFee.Float),
+			"network_id":                 v.NetworkID,
+			"mint_fee":                   numeric.BigFloat2Text(&v.MintFee.Float),
+			"post_fee":                   numeric.BigFloat2Text(&v.InferFee.Float),
+			"token_fee":                  numeric.BigFloat2Text(&v.TokenFee.Float),
+			"utility_agent_deploy_fee":   numeric.BigFloat2Text(&v.UtilityAgentDeployFee.Float),
+			"realworld_agent_deploy_fee": numeric.BigFloat2Text(&v.RealworldAgentDeployFee.Float),
 		}
 	}
 	return chainFeeMap, nil
