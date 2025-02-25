@@ -5,6 +5,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
+const TESTING_AUTHEN_FLAG = true;
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
@@ -23,22 +25,25 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       }
    }, [isAuthenticated]);
 
-   // return (
-   //    <AuthContext.Provider value={values}>
-   //       {loading
-   //          ? <div>Loading...</div>
-   //          : isAuthenticated
-   //             ? (children)
-   //             : (<HomeAuthen />)
-   //       }
-   //    </AuthContext.Provider>
-   // );
-   return (
-      <AuthContext.Provider value={values}>
-         {/* <HomeAuthen /> */}
-         {children}
-      </AuthContext.Provider>
-   );
+   if (TESTING_AUTHEN_FLAG) {
+      return (
+         <AuthContext.Provider value={values}>
+            {loading
+               ? <div>Loading...</div>
+               : isAuthenticated
+                  ? (children)
+                  : (<HomeAuthen />)
+            }
+         </AuthContext.Provider>
+      );
+   } else {
+      return (
+         <AuthContext.Provider value={values}>
+            {/* <HomeAuthen /> */}
+            {children}
+         </AuthContext.Provider>
+      );
+   }
 };
 
 const useAuth = () => {

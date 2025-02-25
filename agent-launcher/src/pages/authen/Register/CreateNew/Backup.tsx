@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Box, Flex, Text } from "@chakra-ui/react";
+import { Box, Flex, Image, Text } from "@chakra-ui/react";
 import eaiCrypto from "@utils/crypto";
 import { safeCopy } from "@utils/copy.ts";
+import BaseButton from "@components/BaseButton";
 
 interface IProps {
     onNext: (_: string) => void;
@@ -13,11 +14,20 @@ const Backup = (props: IProps) => {
    const [backedUp, setBackedUp] = useState(false);
    const [showKey, setShowKey] = useState(false);
 
-   console.log("prvKey", prvKey);
-
+   const _onNext = () => {
+      onNext(prvKey);
+   }
    const generatePrvKey = () => {
       const prvKey = eaiCrypto.generatePrivateKey();
       setPrvKey(prvKey);
+   }
+
+   const onCopy = () => {
+      safeCopy(prvKey).then(() => {
+         const message = "Private key copied! For security, it will be cleared from your clipboard in 5 seconds.";
+         alert(message);
+         setBackedUp(true);
+      });
    }
 
    useEffect(() => {
@@ -52,7 +62,6 @@ const Backup = (props: IProps) => {
          </Flex>
          <Flex
             flexDirection="column"
-            gap="6px"
             alignItems="start"
             width="100%"
          >
@@ -64,7 +73,7 @@ const Backup = (props: IProps) => {
             >
                 YOUR PRIVATE KEY
             </Text>
-            <Box
+            <Flex
                padding="48px"
                borderRadius="8px"
                backgroundColor="#EFEFEF"
@@ -72,6 +81,9 @@ const Backup = (props: IProps) => {
                position="relative"
                overflow="hidden"
                cursor="pointer"
+               marginTop="6px"
+               justifyContent="center"
+               alignItems="center"
             >
                <Text
                   fontSize="16px"
@@ -79,12 +91,21 @@ const Backup = (props: IProps) => {
                   lineHeight="20px"
                   color="#000000"
                   textAlign="center"
-                  onClick={() => {
-                     alert("Copied to clipboard");
-                  }}
                >
                   {prvKey}
                </Text>
+               <Image
+                  width="24px"
+                  height="24px"
+                  marginLeft="8px"
+                  onClick={() => {
+                     onCopy();
+                  }}
+                  _hover={{
+                     opacity: 0.8
+                  }}
+                  src="/icons/ic_copy.svg"
+               />
                {!showKey && (
                   <Flex
                      position="absolute"
@@ -98,9 +119,7 @@ const Backup = (props: IProps) => {
                      backgroundColor="#EFEFEF"
                      transition="all 0.4s ease-in-out"
                      onClick={() => {
-                        safeCopy(prvKey).then(() => {
-                           alert("Copied to clipboard");
-                        });
+                        setShowKey(true);
                      }}
                   >
                      <Text
@@ -113,9 +132,30 @@ const Backup = (props: IProps) => {
                      </Text>
                   </Flex>
                )}
+            </Flex>
+            <Box
+               padding="6px 16px"
+               alignSelf="center"
+               borderRadius="8px"
+               border="1px solid #FF7E21"
+               marginTop="24px"
+            >
+               <Text
+                  color="#FF7E21"
+                  fontSize="14px"
+                  fontWeight="500"
+               >
+                  Never share this key with anyone; if they have it, your account is compromised.
+               </Text>
             </Box>
          </Flex>
-
+         <BaseButton
+            width="400px !important"
+            isDisabled={!backedUp}
+            onClick={_onNext}
+         >
+            Continue
+         </BaseButton>
       </Flex>
    )
 }
