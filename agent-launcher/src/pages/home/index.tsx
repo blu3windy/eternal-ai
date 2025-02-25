@@ -12,7 +12,7 @@ const Home = (_props: Props) => {
     <MainLayout>
       <AgentProvider>
         <Flex gap={"12px"}>
-          <SimpleGrid gridTemplateColumns={"365px 1fr"} flex={1}>
+          <SimpleGrid gridTemplateColumns={"365px 1fr"} flex={1} bg={"#FFF"}>
             <AgentsList />
             <ChatAgent />
           </SimpleGrid>

@@ -163,53 +163,47 @@ const AgentsList = () => {
           flexDirection="column"
           justifyContent="flex-start"
           gap="16px"
-          w={{ base: '50vw', lg: '320px' }}
+          w={{ base: '50vw', lg: 'calc(100% - 16px)' }}
         >
           {renderSearch()}
         </Flex>
 
         <Flex
-          flexDirection={"column"}
-          gap={{ base: '16px' }}
+          mt={"24px"}
+          flexDirection={'row'}
+          className={s.select}
           alignItems={'center'}
-          alignSelf={{ base: 'flex-start', lg: 'unset' }}
         >
-          <Flex
-            flexDirection={'row'}
-            className={s.select}
-            alignItems={'center'}
+          <Text
+            fontSize={'14px'}
+            opacity={'0.7'}
+            fontWeight={'400'}
+            whiteSpace={"nowrap"}
           >
-            <Text
-              fontSize={'14px'}
-              opacity={'0.7'}
-              fontWeight={'400'}
-              w={'50px'}
+            Sort by
+          </Text>
+          <Box w={"100%"}>
+            <Select
+              w={'100%'}
+              value={sort}
+              cursor="pointer"
+              onChange={(event) => {
+                const sort = event.target.value as SortOption;
+                setSort(sort);
+                refParams.current = {
+                  ...refParams.current,
+                  sort: sort,
+                };
+                throttleGetTokens(true);
+              }}
             >
-              Sort by
-            </Text>
-            <Box>
-              <Select
-                w={'124px'}
-                value={sort}
-                cursor="pointer"
-                onChange={(event) => {
-                  const sort = event.target.value as SortOption;
-                  setSort(sort);
-                  refParams.current = {
-                    ...refParams.current,
-                    sort: sort,
-                  };
-                  throttleGetTokens(true);
-                }}
-              >
-                <option value={SortOption.MarketCap}>Market cap</option>
-                {/* <option value={SortOption.Price}>Price</option> */}
-                <option value={SortOption.Percent}>24h%</option>
-                <option value={SortOption.CreatedAt}>Creation time</option>
-                <option value={SortOption.Volume24h}>24h volume</option>
-              </Select>
-            </Box>
-          </Flex>
+              <option value={SortOption.MarketCap}>Market cap</option>
+              {/* <option value={SortOption.Price}>Price</option> */}
+              <option value={SortOption.Percent}>24h%</option>
+              <option value={SortOption.CreatedAt}>Creation time</option>
+              <option value={SortOption.Volume24h}>24h volume</option>
+            </Select>
+          </Box>
         </Flex>
       </Flex>
       <Box h={'24px'} />
