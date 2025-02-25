@@ -6,7 +6,7 @@ import ImportKey from "@pages/authen/Register/ImportKey";
 
 const Register: FC = () => {
    const [registerType, setRegisterType]
-       = useState<RegisterType | undefined>(undefined);
+       = useState<RegisterType | undefined>(RegisterType.create);
 
    const renderContent = () => {
       switch (registerType) {

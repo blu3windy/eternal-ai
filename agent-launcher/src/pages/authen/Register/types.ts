@@ -3,6 +3,13 @@ enum RegisterType {
     import,
 }
 
+enum CreateNewStep {
+    backup,
+    confirmKey,
+    confirmPass
+}
+
 export {
-   RegisterType
+   RegisterType,
+   CreateNewStep
 }

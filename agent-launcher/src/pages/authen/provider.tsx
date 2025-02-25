@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, FC, PropsWithChildren, useMemo } from 'react';
+import { createContext, useContext, useState, FC, PropsWithChildren, useMemo, useEffect } from 'react';
 import HomeAuthen from "./Home";
 
 interface AuthContextType {
@@ -9,17 +9,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
    const [isAuthenticated, setIsAuthenticated] = useState(false);
+   const [loading, setLoading] = useState(true);
+
+   useEffect(() => {
+      setInterval(() => {
+         setLoading(false)
+      }, 0)
+   }, []);
 
    const values = useMemo(() => {
       return {
          isAuthenticated,
       }
-   }, [isAuthenticated])
+   }, [isAuthenticated]);
 
    return (
       <AuthContext.Provider value={values}>
-         {
-            isAuthenticated
+         {loading
+            ? <div>Loading...</div>
+            : isAuthenticated
                ? (children)
                : (<HomeAuthen />)
          }

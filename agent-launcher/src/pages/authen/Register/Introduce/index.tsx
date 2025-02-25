@@ -8,7 +8,6 @@ interface IProps {
 }
 
 const Introduce = ({ setRegisterType, ...rest }: IProps) => {
-   console.log("setRegisterType", rest)
    return (
       <Flex
          display="flex"

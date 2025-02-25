@@ -30,4 +30,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
    keytarSave: (key: string, value: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.KEYTAR_SAVE, key, value),
    keytarGet: (key: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.KEYTAR_GET, key),
    keytarRemove: (key: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.KEYTAR_REMOVE, key),
+
+   safeCopy: (text: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.SAFE_COPY, text),
 });

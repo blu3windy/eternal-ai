@@ -26,6 +26,8 @@
       "@constants/*": ["src/constants/*"],
       "@hooks/*": ["src/hooks/*"],
       "@styles/*": ["src/styles/*"],
+      "@utils/*": ["src/utils/*"],
+      "@electron/*": ["electron/*"]
     }
   },
   "include": ["src", "electron"],

@@ -37,6 +37,8 @@ export default defineConfig({
          '@hooks': path.resolve(__dirname, 'src/hooks'),
          '@styles': path.resolve(__dirname, 'src/styles'),
          '@pages': path.resolve(__dirname, 'src/pages'),
+         "@utils": path.resolve(__dirname, 'src/utils'),
+         "@electron": path.resolve(__dirname, 'electron'),
       }
    }
 })
