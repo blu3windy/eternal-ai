@@ -8,9 +8,6 @@ interface IProps extends PropsWithChildren {
 }
 
 const HomeAuthen: FC = (props: IProps) => {
-    const { children } = props;
-
-
     return (
         <Flex
             className={styles.container}

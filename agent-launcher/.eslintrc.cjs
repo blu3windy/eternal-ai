@@ -26,5 +26,7 @@ module.exports = {
     "max-len": ["error", { "code": 120, "ignoreComments": true }],
     "object-curly-spacing": ["error", "always"],
     "object-curly-newline": ["error", { "multiline": true, "consistent": true }],
+    "operator-linebreak": ["error", "before"], // Place `?` and `:` on the next line
+    "indent": ["error", 3], // Ensure proper indentation
   },
 };
