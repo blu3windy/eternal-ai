@@ -54,7 +54,7 @@ func (s *Service) DeployAgentUtilityUpgradeableAddress(
 	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
 	proxyAdminAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "proxy_admin_address"))
 	logicAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "utilityagentupgradeable_address"))
-	data, err := evmapi.UtilityAgentUpgradeableInitializeData(systemPrompt, storageInfos)
+	initializeData, err := evmapi.UtilityAgentUpgradeableInitializeData(systemPrompt, storageInfos)
 	if err != nil {
 		return "", "", "", errs.NewError(err)
 	}
@@ -63,7 +63,7 @@ func (s *Service) DeployAgentUtilityUpgradeableAddress(
 			s.GetAddressPrk(memePoolAddress),
 			helpers.HexToAddress(logicAddress),
 			helpers.HexToAddress(proxyAdminAddress),
-			data,
+			initializeData,
 		)
 	if err != nil {
 		return "", "", "", errs.NewError(err)
@@ -92,12 +92,16 @@ func (s *Service) DeployAgentUtilityUpgradeable(ctx context.Context, agentInfoID
 					models.ARBITRUM_CHAIN_ID,
 					models.BSC_CHAIN_ID,
 					models.APE_CHAIN_ID,
-					models.AVALANCHE_C_CHAIN_ID:
+					models.AVALANCHE_C_CHAIN_ID,
+					models.CELO_CHAIN_ID:
 					{
 						var fileNames []string
 						err = json.Unmarshal([]byte(agentInfo.SourceUrl), &fileNames)
 						if err != nil {
 							return errs.NewError(err)
+						}
+						if len(fileNames) == 0 {
+							return errs.NewError(errs.ErrBadRequest)
 						}
 						storageInfos := []utilityagentupgradeable.IUtilityAgentStorageInfo{}
 						for _, fileName := range fileNames {

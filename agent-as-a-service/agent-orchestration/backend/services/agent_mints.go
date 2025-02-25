@@ -81,6 +81,7 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 								models.HYPE_CHAIN_ID,
 								models.MONAD_TESTNET_CHAIN_ID,
 								models.MEGAETH_TESTNET_CHAIN_ID,
+								models.CELO_CHAIN_ID,
 							},
 						},
 					},
@@ -371,6 +372,7 @@ func (s *Service) JobRetryAgentMintNft(ctx context.Context) error {
 							models.STORY_CHAIN_ID,
 							models.HYPE_CHAIN_ID,
 							models.MONAD_TESTNET_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 				},
@@ -460,6 +462,7 @@ func (s *Service) JobRetryAgentMintNftError(ctx context.Context) error {
 							models.HYPE_CHAIN_ID,
 							models.MONAD_TESTNET_CHAIN_ID,
 							models.MEGAETH_TESTNET_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 				},
@@ -580,7 +583,8 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 				models.STORY_CHAIN_ID,
 				models.HYPE_CHAIN_ID,
 				models.MONAD_TESTNET_CHAIN_ID,
-				models.MEGAETH_TESTNET_CHAIN_ID:
+				models.MEGAETH_TESTNET_CHAIN_ID,
+				models.CELO_CHAIN_ID:
 				{
 					agentUriData := models.AgentUriData{
 						Name: agentInfo.AgentName,
@@ -936,6 +940,7 @@ func (s *Service) JobAgentStart(ctx context.Context) error {
 							models.STORY_CHAIN_ID,
 							models.HYPE_CHAIN_ID,
 							models.MONAD_TESTNET_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 				},
