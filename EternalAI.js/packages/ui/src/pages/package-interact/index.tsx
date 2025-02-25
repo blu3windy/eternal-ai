@@ -5,6 +5,14 @@ import {
   InferPayloadWithPrompt,
   InferPayloadWithMessages,
 } from "@eternalai.js/interact/dist/types";
+import { ChainId } from "@eternalai.js/interact/dist/constants";
+
+const AGENT_CONTRACT_ADDRESSES: Record<ChainId, string> = {
+  56: "0x3B9710bA5578C2eeD075D8A23D8c596925fa4625",
+  8453: "0x643c45e89769a16bcb870092bd1efe4696cb2ce7",
+};
+
+const wallet = new ethers.Wallet("Your private key here");
 
 function PackageInteract() {
   return (
@@ -21,11 +29,10 @@ function PackageInteract() {
             onClick={async () => {
               {
                 const inferPayload = {
-                  chainId: 56,
-                  model: "NousResearch/Hermes-3-Llama-3.1-70B-FP8",
+                  chainId: ChainId.BASE,
+                  agentAddress: AGENT_CONTRACT_ADDRESSES[ChainId.BASE],
                   prompt: "test",
                 } satisfies InferPayloadWithPrompt;
-                const wallet = ethers.Wallet.createRandom();
                 const interact = new Interact(wallet);
                 await interact.infer(inferPayload);
               }
@@ -37,8 +44,8 @@ function PackageInteract() {
             onClick={async () => {
               {
                 const inferPayload = {
-                  chainId: 56,
-                  model: "NousResearch/Hermes-3-Llama-3.1-70B-FP8",
+                  chainId: ChainId.BASE,
+                  agentAddress: AGENT_CONTRACT_ADDRESSES[ChainId.BASE],
                   messages: [
                     {
                       role: "system",
@@ -50,7 +57,6 @@ function PackageInteract() {
                     },
                   ],
                 } satisfies InferPayloadWithMessages;
-                const wallet = ethers.Wallet.createRandom();
                 const interact = new Interact(wallet);
                 await interact.infer(inferPayload);
               }
