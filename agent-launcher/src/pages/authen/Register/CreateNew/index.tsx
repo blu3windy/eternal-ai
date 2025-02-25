@@ -6,7 +6,7 @@ import ConfirmPass from "@pages/authen/Register/CreateNew/ConfirmPass.tsx";
 
 const CreateNew: FC = () => {
    const [step, setStep]
-       = useState<CreateNewStep>(CreateNewStep.confirmKey);
+       = useState<CreateNewStep>(CreateNewStep.backup);
    const [prvKey, setPrvKey] = useState<string>("");
 
    const renderContent = () => {

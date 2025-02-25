@@ -5,7 +5,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-const TESTING_AUTHEN_FLAG = true;
+const TESTING_AUTHEN_FLAG = false;
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

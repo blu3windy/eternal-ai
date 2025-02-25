@@ -1,6 +1,8 @@
 import { Flex, Text } from "@chakra-ui/react";
-import { useState } from "react";
-import ReactCodeInput from "react-code-input";
+import { useMemo, useState } from "react";
+import OTPInput from 'react-otp-input';
+import styles from "./styles.module.scss";
+import BaseButton from "@components/BaseButton";
 
 interface IProps {
     onNext: () => void;
@@ -11,7 +13,27 @@ const ConfirmKey = (props: IProps) => {
    const { prvKey, onNext } = props;
 
    const [confirmKey, setConfirmKey] = useState<string>("");
-   const [error, setError] = useState<string>("");
+   const [edited, setEdited] = useState<boolean>(false);
+
+   const errorMessage = useMemo(() => {
+      if (!edited) {
+         return "";
+      }
+
+      if (!confirmKey) {
+         return "Code is required.";
+      }
+
+      if (
+         confirmKey.length === 4
+         && confirmKey.toLowerCase()
+         !== prvKey.substring(prvKey.length - 4)?.toLowerCase()
+      ) {
+         return "Incorrect. Please check and try again.";
+      }
+   }, [confirmKey, edited, prvKey]);
+
+   console.log({ errorMessage, confirmKey, edited })
 
 
    return (
@@ -32,31 +54,36 @@ const ConfirmKey = (props: IProps) => {
               Enter the last 4 characters of your private key.
             </Text>
          </Flex>
-         <Flex>
-            <ReactCodeInput
-               type='text'
-               fields={4}
-               inputMode="latin"
-               name="confirm-key"
+         <Flex
+            className={styles.passCode}
+         >
+            <OTPInput
                value={confirmKey}
-               onChange={(value) => setConfirmKey(value)}
-               style={{
-                  display: "flex",
-                  gap: "24px",
+               onChange={(v) => {
+                  setConfirmKey(v);
+                  setEdited(true);
                }}
-
-               inputStyle={{
-                  width: "80px",
-                  height: "80px",
-                  fontSize: "16px",
-                  fontWeight: "500",
-                  textAlign: "center",
-                  border: "1px solid #B6B6B6",
-                  borderRadius: "8px",
-                  backgroundColor: "transparent",
-               }}
+               numInputs={4}
+               renderSeparator={<></>}
+               renderInput={(props) => <input {...props} />}
+               placeholder="----"
+               inputType="text"
+               containerStyle={styles.codeWrapper}
             />
          </Flex>
+         {(!!errorMessage) && (
+            <div className={styles.error}>
+               <p className="error">{errorMessage}</p>
+            </div>
+         )}
+         <BaseButton
+            width="400px !important"
+            marginTop="60px"
+            onClick={onNext}
+            disabled={!!errorMessage || !edited || confirmKey.length < 4}
+         >
+              Continue
+         </BaseButton>
       </Flex>
    );
 }
