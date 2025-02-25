@@ -17,14 +17,12 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
    }, [isAuthenticated])
 
    return (
-      <AuthContext.Provider value={values}>
-         {
-            isAuthenticated
-               ? (children)
-               : (<HomeAuthen />)
-         }
-      </AuthContext.Provider>
-   );
+  return (
+    <AuthContext.Provider value={values}>
+      {/* <HomeAuthen /> */}
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 const useAuth = () => {

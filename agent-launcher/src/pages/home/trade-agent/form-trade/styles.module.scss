@@ -1,0 +1,67 @@
+.container {
+}
+
+.col {
+  gap: 8px;
+  .title {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 15px;
+    text-align: center;
+
+    color: #000000;
+
+    opacity: 0.7;
+  }
+  .value {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 24px;
+    text-align: center;
+
+    color: #000000;
+  }
+}
+
+.formContainer {
+  flex-direction: column;
+  width: 100%;
+  .switch {
+    background: #fff;
+    // border: 1px solid #e5e7eb;
+    padding: 4px;
+    border-radius: 100px;
+    width: 100%;
+    gap: 4px;
+    > div {
+      height: 36px;
+      display: flex;
+      flex: 1;
+      justify-content: center;
+      align-items: center;
+      border-radius: 100px;
+      cursor: pointer;
+      &.buy {
+        background: #000;
+        p {
+          color: #ffffff !important;
+        }
+      }
+      &.sell {
+        background: #000;
+        p {
+          color: #ffffff !important;
+        }
+      }
+      p {
+        font-style: normal;
+        font-weight: 500;
+        font-size: 12px !important;
+        line-height: 20px;
+
+        color: rgba(0, 0, 0, 0.6);
+      }
+    }
+  }
+}
