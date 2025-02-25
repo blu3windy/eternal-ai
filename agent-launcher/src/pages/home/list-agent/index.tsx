@@ -224,7 +224,6 @@ const AgentsList = () => {
       <Box h={'24px'} />
 
       <InfiniteScroll
-        className={s.container}
         key={agents?.length}
         dataLength={agents?.length}
         next={() => {
