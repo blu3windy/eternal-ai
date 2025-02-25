@@ -1,0 +1,151 @@
+.container {
+}
+
+.col {
+  gap: 8px;
+  .title {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 15px;
+    text-align: center;
+
+    color: #000000;
+
+    opacity: 0.7;
+  }
+  .value {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 24px;
+    text-align: center;
+
+    color: #000000;
+  }
+}
+
+.formContainer {
+  flex-direction: column;
+  width: 100%;
+  gap: 8px;
+  .switch {
+    background: #fff;
+    // border: 1px solid #e5e7eb;
+    padding: 4px;
+    border-radius: 100px;
+    width: 100%;
+    gap: 4px;
+    > div {
+      height: 36px;
+      display: flex;
+      flex: 1;
+      justify-content: center;
+      align-items: center;
+      border-radius: 100px;
+      cursor: pointer;
+      &.buy {
+        background: #000;
+        p {
+          color: #ffffff !important;
+        }
+      }
+      &.sell {
+        background: #000;
+        p {
+          color: #ffffff !important;
+        }
+      }
+      p {
+        font-style: normal;
+        font-weight: 500;
+        font-size: 12px !important;
+        line-height: 20px;
+
+        color: rgba(0, 0, 0, 0.6);
+      }
+    }
+  }
+  .inputAmountWrapper {
+    background: #ffffff;
+    border: 1px solid #eaecf0;
+    padding: 16px;
+    border-radius: 16px;
+    :global {
+      .contentContainer {
+        border: none;
+      }
+    }
+    input {
+      padding: 0px;
+      max-height: 32px;
+      font-weight: 400;
+      font-size: 24px;
+      line-height: 32px;
+      /* identical to box height, or 133% */
+
+      color: #000000;
+    }
+  }
+  .btnSubmit {
+    /* Frame 427326658 */
+
+    /* Auto layout */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 32px;
+    gap: 12px;
+
+    height: 48px;
+
+    border-radius: 100px;
+
+    color: white;
+
+    &.buy {
+      background: #0fc30c;
+    }
+    &.sell {
+      background: red;
+    }
+
+    &:hover {
+      background: transparent !important;
+      opacity: 1 !important;
+    }
+
+    &.disabled {
+      cursor: default;
+      background-color: rgb(116, 116, 116) !important;
+    }
+  }
+}
+
+.itemChooseAmount {
+  /* Auto layout */
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 20px;
+  gap: 10px;
+
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+
+  p {
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 20px;
+    /* identical to box height, or 167% */
+
+    color: #000000;
+  }
+  &.itemChooseAmountActive {
+    background: #000;
+    p {
+      color: #fff;
+    }
+  }
+}

@@ -38,7 +38,7 @@ export default defineConfig({
          '@styles': path.resolve(__dirname, 'src/styles'),
          '@pages': path.resolve(__dirname, 'src/pages'),
          "@utils": path.resolve(__dirname, 'src/utils'),
-         "@electron": path.resolve(__dirname, 'electron'),
+         '@interfaces': path.resolve(__dirname, 'src/interfaces'),
       }
    }
 })

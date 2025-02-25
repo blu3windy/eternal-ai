@@ -23,14 +23,20 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       }
    }, [isAuthenticated]);
 
-   return (
+   // return (
+   //    <AuthContext.Provider value={values}>
+   //       {loading
+   //          ? <div>Loading...</div>
+   //          : isAuthenticated
+   //             ? (children)
+   //             : (<HomeAuthen />)
+   //       }
+   //    </AuthContext.Provider>
+   // );
+   // return (
       <AuthContext.Provider value={values}>
-         {loading
-            ? <div>Loading...</div>
-            : isAuthenticated
-               ? (children)
-               : (<HomeAuthen />)
-         }
+         {/* <HomeAuthen /> */}
+         {children}
       </AuthContext.Provider>
    );
 };
