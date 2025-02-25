@@ -81,7 +81,6 @@ const Backup = (props: IProps) => {
                minW="800px"
                position="relative"
                overflow="hidden"
-               cursor="pointer"
                marginTop="6px"
                justifyContent="center"
                alignItems="center"
@@ -100,11 +99,14 @@ const Backup = (props: IProps) => {
                   width="24px"
                   height="24px"
                   marginLeft="8px"
+                  cursor="pointer"
                   onClick={() => {
                      onCopy();
                   }}
                   _hover={{
-                     opacity: 0.8
+                     opacity: 0.8,
+                     transform: "scale(1.1)",
+                     transition: "all 0.4s ease-in-out"
                   }}
                   src="/icons/ic_copy.svg"
                />
@@ -156,7 +158,7 @@ const Backup = (props: IProps) => {
             isDisabled={!backedUp}
             onClick={_onNext}
          >
-            Continue
+            {backedUp ? "Continue" : "Please backup your key first"}
          </BaseButton>
       </Flex>
    )

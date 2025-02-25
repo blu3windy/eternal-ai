@@ -1,5 +1,8 @@
 .passCode {
   margin-top: 80px;
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
 
   .codeWrapper {
     justify-content: space-between;
@@ -27,15 +30,6 @@
 
     &:focus {
       border: 1px solid #007AFF !important;
-    }
-  }
-
-  .error  {
-    p {
-        font-size: 12px;
-        font-weight: 500;
-        margin-top: 4px;
-        color: #ff0000 !important;
     }
   }
 }

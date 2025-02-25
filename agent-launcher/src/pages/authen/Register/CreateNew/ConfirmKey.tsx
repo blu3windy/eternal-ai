@@ -70,12 +70,17 @@ const ConfirmKey = (props: IProps) => {
                inputType="text"
                containerStyle={styles.codeWrapper}
             />
+            {(!!errorMessage) && (
+               <Text
+                  color="#ff0000"
+                  fontSize="14px"
+                  mt="6px"
+                  fontWeight="400"
+               >
+                  {errorMessage}
+               </Text>
+            )}
          </Flex>
-         {(!!errorMessage) && (
-            <div className={styles.error}>
-               <p className="error">{errorMessage}</p>
-            </div>
-         )}
          <BaseButton
             width="400px !important"
             marginTop="60px"
