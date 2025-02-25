@@ -4,6 +4,8 @@ import { InteractWallet } from '../types';
 import { SendInferResponse } from './types';
 import {
   AGENT_ABI,
+  IPFS,
+  LIGHTHOUSE_IPFS,
   LISTEN_PROMPTED_RESPONSE_CHAIN,
   PROMPT_SCHEDULER_ABI,
   WORKER_HUB_ABI,
@@ -38,6 +40,23 @@ const getWorkerHubContract = (
   }
   return contracts[contractAddress];
 };
+
+export class InferenceResponse {
+  result_uri: string;
+  storage: string;
+  data: string;
+
+  constructor(result_uri: string, storage: string, data: string) {
+    this.result_uri = result_uri;
+    this.storage = storage;
+    this.data = data;
+  }
+
+  static fromJSON(json: string): InferenceResponse {
+    const parsed = JSON.parse(json);
+    return Object.assign(new InferenceResponse('', '', ''), parsed);
+  }
+}
 
 const Infer = {
   getSystemPrompt: async (
@@ -239,12 +258,66 @@ const Infer = {
     }
   },
 
+  processOutput: (out: any) => {
+    const str: string = ethers.utils.toUtf8String(out);
+    try {
+      const result = InferenceResponse.fromJSON(str);
+      return result;
+    } catch (e) {
+      return null;
+    }
+  },
+  processOutputToInferResponse: async (output: ethers.Bytes) => {
+    const inferResponse = Infer.processOutput(output);
+    if (!inferResponse) {
+      return null;
+    } else {
+      if (
+        inferResponse.storage == 'lighthouse-filecoint' ||
+        inferResponse.result_uri.includes('ipfs://')
+      ) {
+        const light_house = inferResponse.result_uri.replace(
+          IPFS,
+          LIGHTHOUSE_IPFS
+        );
+        const light_house_reponse = await fetch(light_house);
+        if (light_house_reponse.ok) {
+          const result = await light_house_reponse.text();
+          return result;
+        }
+        return null;
+      } else {
+        if (inferResponse.data != '') {
+          const decodedString = atob(inferResponse.data);
+          return decodedString;
+        }
+        return null;
+      }
+    }
+  },
   getInferenceByInferenceId: async (
     wallet: InteractWallet,
     workerHubAddress: string,
     inferId: string
   ) => {
     const contract = getWorkerHubContract(workerHubAddress, wallet);
+    try {
+      const inferenceInfo = await contract.getInferenceInfo(inferId);
+      const output = inferenceInfo[10];
+      const bytesData = ethers.utils.arrayify(output);
+      if (bytesData.length != 0) {
+        const result = await Infer.processOutputToInferResponse(bytesData);
+        if (result) {
+          return result;
+        } else {
+          return null;
+        }
+      } else {
+        throw new Error(`waiting process inference ${inferId}`);
+      }
+    } catch (e) {
+      throw e;
+    }
   },
   listenPromptResponse: async (
     chainId: ChainId,
