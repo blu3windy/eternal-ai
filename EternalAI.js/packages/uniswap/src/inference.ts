@@ -82,11 +82,11 @@ export class AgentInference {
     get_system_prompt = async (agent_address: string, rpc: string) => {
         console.log("Get system prompt from agent...")
         this.create_web3(rpc)
-        if (await this.web3.eth.net.isListening()) {
+        if (await this.web3.getNetwork()) {
             this.get_agent_address(agent_address)
-            const agent_contract = new this.web3.eth.Contract(AGENT_ABI, this.agent_address)
+            const agent_contract = new ethers.Contract(this.agent_address, AGENT_ABI, this.web3)
             try {
-                const system_prompt = await agent_contract.methods.getSystemPrompt().call();
+                const system_prompt = await agent_contract.getSystemPrompt();
                 return system_prompt;
             } catch (e) {
                 console.log(e);
@@ -109,14 +109,13 @@ export class AgentInference {
             throw new Error("Private key missing");
         }
         this.create_web3(rpc)
-        if (await this.web3.eth.net.isListening()) {
+        if (await this.web3.getNetwork()) {
             this.get_agent_address(agent_address);
             console.log("this.agent_address", this.agent_address)
-            const account = this.web3.eth.accounts.privateKeyToAccount(private_key);
-            this.web3.eth.accounts.wallet.add(account);
+            const account = new ethers.Wallet(private_key, this.web3)
             const account_address = account.address
 
-            const agent_contract = new this.web3.eth.Contract(AGENT_ABI, this.agent_address)
+            const agent_contract = new ethers.Contract(this.agent_address, AGENT_ABI, this.web3)
             const system_prompt = await this.get_system_prompt(agent_address, rpc)
             // console.log(`system_prompt: ${system_prompt}`)
 
@@ -127,7 +126,7 @@ export class AgentInference {
             ];
 
             const json_request = JSON.stringify(req)
-            const func = agent_contract.methods.prompt(stringToBytes(json_request));
+            const func = agent_contract.prompt(stringToBytes(json_request));
             const nonce = await this.web3.eth.getTransactionCount(account.address);
             const transaction = {
                 from: account_address,
