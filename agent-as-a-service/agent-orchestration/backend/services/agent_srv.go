@@ -1466,6 +1466,7 @@ func (s *Service) PreviewStreamAgentSystemPromptV1(ctx context.Context, writerRe
 				return
 			}
 			writerResponse.Flush()
+			logger.Error("stream_retrieve_knowledge", "return with err", zap.Any("err", err))
 			return
 		case output := <-outputChan:
 			if output.Code != http.StatusProcessing {
