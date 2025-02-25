@@ -1,9 +1,11 @@
 import { app, BrowserWindow, ipcMain } from "electron";
-import path from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "vm";
 import * as electron from "electron"; // Import Electron safely
 import fs from "fs";
+import express from "express";
+import getPort from "get-port";
+import path from "path";
 
 // const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,7 +31,6 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   : RENDERER_DIST;
 
 let win: BrowserWindow | null;
-let sandbox: BrowserWindow | null;
 
 ipcMain.handle("execute-bundled-code", async (_, code: string) => {
   try {

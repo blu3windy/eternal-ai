@@ -26,9 +26,9 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 });
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  executeCode: async (code: string) =>
-    ipcRenderer.invoke("execute-bundled-code", code),
-    copyBundle: () => ipcRenderer.invoke("copy-bundle"),
+  executeCode: async (code: string) => ipcRenderer.invoke("execute-bundled-code", code),
+  copyBundle: () => ipcRenderer.invoke("copy-bundle"),
+  startDynamicServer: () => ipcRenderer.invoke("start-dynamic-server"),
 });
 
 
