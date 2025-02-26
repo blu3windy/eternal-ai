@@ -4,6 +4,7 @@ import {Token} from "@uniswap/sdk-core";
 import {changeWallet, createWallet, TransactionState} from "./libs/providers";
 import {createTrade, executeTrade} from "./libs/trading";
 import {CurrentConfig, Environment} from "./libs/config";
+import {getCurrencyDecimal} from "./libs/wallet";
 
 export class SwapReq {
     token_in: string = ""
@@ -96,38 +97,39 @@ export class UniSwapAI {
             throw new Error("invalid private key")
         }
         CurrentConfig.env = Environment.MAINNET
+        //TODO
         // CurrentConfig.rpc.mainnet = rpc || getRPC(chain_id)
         CurrentConfig.rpc.mainnet = getRPC(ETH_CHAIN_ID)
         CurrentConfig.wallet.privateKey = privateKey
-        CurrentConfig.tokens.in = new Token(
-            // chain_id,
+        const newWallet = createWallet();
+
+        // init config token
+        const tokenIn = new Token(
+            // TODO chain_id,
             parseInt(ETH_CHAIN_ID, 16),
             req.token_in_address,
             // "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-            18,
+            await getCurrencyDecimal(newWallet.provider, req.token_in_address),
             req.token_in,
             req.token_in
         )
-
+        CurrentConfig.tokens.in = tokenIn
         CurrentConfig.tokens.amountIn = req.token_in_amount
-
-        CurrentConfig.tokens.out = new Token(
-            // chain_id,
+        const tokenOut = new Token(
+            // TODO chain_id,
             parseInt(ETH_CHAIN_ID, 16),
             req.token_out_address,
-            18,
+            await getCurrencyDecimal(newWallet.provider, req.token_out_address),
             req.token_out,
             req.token_out
         )
-
-
-        const newWallet = createWallet();
+        CurrentConfig.tokens.out = tokenOut
         console.log("Wallet: ", newWallet.address)
         changeWallet(newWallet);
 
         try {
             const trade = await createTrade()
-            const {state, tx} = await executeTrade(trade)
+            const {state, tx} = await executeTrade(trade, newWallet)
             return {state, tx}
         } catch (e) {
             console.log(`Error executeTrade ${e}`)

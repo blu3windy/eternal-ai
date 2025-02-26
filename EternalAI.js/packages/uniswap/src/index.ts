@@ -26,6 +26,7 @@ export const call_uniswap = async (private_key: string, chain_id: number, rpc: s
         console.log(`**** call uniswap with req **** \n ${JSON.stringify(req, null, 4)}`)
         const {state, tx} = await uniswap_obj.swap_v3(private_key, req, chain_id, rpc)
         return {state, tx};
+        // return {state: null, tx: null}
     } catch (e) {
         return {state: null, tx: null}
     }
@@ -89,8 +90,8 @@ export const create_agent_infer = async (private_key: string, chain_id: string, 
     }
     console.log("rpc", rpc)
     const agent_infer = new AgentInference()
-    const tx_hash = await agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
-    // const tx_hash = '0xbcb6bc224a88d9cbe3de1e3ca67b9b9358af31559617df545540639686e69e3f';
+    // const tx_hash = await agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
+    const tx_hash = '0xf05832974c4b8b002e68029be724e72ac3cc88f6387df6632f6f5e426b439fc3';
     console.log(`infer tx_hash: ${tx_hash}`)
 
     const worker_hub_address = await agent_infer.get_worker_hub_address(agent_address, rpc)

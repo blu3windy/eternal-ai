@@ -96,13 +96,13 @@ export class AgentInference {
             // console.log(await wallet.getBalance())
 
             const agent_contract = new ethers.Contract(this.agent_address, AGENT_ABI, wallet)
-            const system_prompt = await this.get_system_prompt(agent_address, rpc)
+            // const system_prompt = await this.get_system_prompt(agent_address, rpc)
             // console.log(`system_prompt: ${system_prompt}`)
 
             const req = new LLMInferRequest()
             req.messages = [
                 new LLMInferMessage(prompt, "user"),
-                new LLMInferMessage(system_prompt, "system")
+                // new LLMInferMessage(system_prompt, "system")
             ];
 
             const json_request = JSON.stringify(req)

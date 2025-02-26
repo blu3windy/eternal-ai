@@ -100,7 +100,7 @@ export async function createTrade(): Promise<TokenTrade> {
 }
 
 export async function executeTrade(
-    trade: TokenTrade
+    trade: TokenTrade, wallet: ethers.Wallet
 ): Promise<any> {
     const walletAddress = getWalletAddress()
     const provider = getProvider()
@@ -119,7 +119,7 @@ export async function executeTrade(
 
     const options: SwapOptions = {
         slippageTolerance: new Percent(50, 10_000), // 50 bips, or 0.50%
-        deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from the current Unix time
+        deadline: Math.floor(Date.now() / 1000) + 60 * 30, // 20 minutes from the current Unix time
         recipient: walletAddress,
     }
 
@@ -130,9 +130,13 @@ export async function executeTrade(
         to: SWAP_ROUTER_ADDRESS,
         value: methodParameters.value,
         from: walletAddress,
-        maxFeePerGas: MAX_FEE_PER_GAS,
-        maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+        // maxFeePerGas: MAX_FEE_PER_GAS,
+        // maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+        gasPrice: await wallet.provider.getGasPrice(),
+        gasLimit: 1000000,
     }
+
+    console.log(`Execute tx swap`, JSON.stringify(tx, null, 4))
 
     const state = await sendTransaction(tx)
 
