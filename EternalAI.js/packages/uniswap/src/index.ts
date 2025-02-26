@@ -1,10 +1,10 @@
-import {BSC_CHAIN_ID, getRPC, RPC_URL, V1, V2} from "./const";
+import {BSC_CHAIN_ID, ETH_CHAIN_ID, getRPC, RPC_URL, V1, V2} from "./const";
 import {AgentInference, InferenceProcessing} from "./inference";
 import {sleep} from "./utils";
 import {SwapReq, UniSwapAI} from "./swap";
 import {TransactionState} from "@/libs/providers";
 
-export const call_uniswap = async (private_key: string, chain_id: string, rpc: string, content: string): Promise<{
+export const call_uniswap = async (private_key: string, chain_id_swap: string, rpc: string, content: string): Promise<{
     state: TransactionState | null,
     tx: any
 }> => {
@@ -24,7 +24,7 @@ export const call_uniswap = async (private_key: string, chain_id: string, rpc: s
         const req = SwapReq.fromJSON(content)
         await req.convert_in_out()
         console.log(`**** call uniswap with req **** \n ${JSON.stringify(req, null, 4)}`)
-        const {state, tx} = await uniswap_obj.swap_v3(private_key, req, chain_id, rpc)
+        const {state, tx} = await uniswap_obj.swap_v3(private_key, req, chain_id_swap)
         return {state, tx};
         // return {state: null, tx: null}
     } catch (e) {
@@ -83,23 +83,23 @@ export const process_infer = async (chain_id: string, tx_hash: string, rpc: stri
     return result
 }
 
-export const create_agent_infer = async (private_key: string, chain_id: string, agent_address: string, prompt: string): Promise<any> => {
-    const rpc = getRPC(chain_id)
-    if (!rpc) {
+export const create_agent_infer = async (private_key: string, chain_id_infer: string, chain_id_swap: string, agent_address: string, prompt: string): Promise<any> => {
+    const rpc_infer = getRPC(chain_id_infer)
+    if (!rpc_infer) {
         return null;
     }
-    console.log("rpc", rpc)
+    console.log("rpc", rpc_infer)
     const agent_infer = new AgentInference()
-    const tx_hash = await agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
-    // const tx_hash = '0xf05832974c4b8b002e68029be724e72ac3cc88f6387df6632f6f5e426b439fc3';
+    // const tx_hash = await agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
+    const tx_hash = '0xf05832974c4b8b002e68029be724e72ac3cc88f6387df6632f6f5e426b439fc3';
     console.log(`infer tx_hash: ${tx_hash}`)
 
-    const worker_hub_address = await agent_infer.get_worker_hub_address(agent_address, rpc)
+    const worker_hub_address = await agent_infer.get_worker_hub_address(agent_address, rpc_infer)
     console.log(`worker_hub_address : ${worker_hub_address}`)
 
-    const content_response = await process_infer(chain_id, tx_hash, rpc, worker_hub_address)
+    const content_response = await process_infer(chain_id_infer, tx_hash, rpc_infer, worker_hub_address)
     if (content_response) {
-        const {state, tx} = await call_uniswap(private_key, chain_id, rpc, content_response);
+        const {state, tx} = await call_uniswap(private_key, chain_id_swap, rpc_infer, content_response);
         return {state, tx}
     } else {
         return null
@@ -113,10 +113,11 @@ export const uni_swap_ai = async (command: string, args: any) => {
             const {state, tx} = await create_agent_infer(
                 args.private_key || process.env.PRIVATE_KEY,
                 args.chain_id || BSC_CHAIN_ID,
+                ETH_CHAIN_ID || "0x1",
                 args.agent_address || process.env.AGENT_ADDRESS,
                 args.prompt
             )
-            console.log(`swap tx ${tx.hash} state ${state}`);
+            console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
         }
         case "models-infer": {
             break;

@@ -4,7 +4,7 @@ import {Token} from "@uniswap/sdk-core";
 import {changeWallet, createWallet, TransactionState} from "./libs/providers";
 import {createTrade, executeTrade} from "./libs/trading";
 import {CurrentConfig, Environment} from "./libs/config";
-import {getCurrencyDecimal} from "./libs/wallet";
+import {getCurrencyBalance, getCurrencyDecimal} from "./libs/wallet";
 
 export class SwapReq {
     token_in: string = ""
@@ -89,7 +89,7 @@ export interface PoolInfo {
 }
 
 export class UniSwapAI {
-    swap_v3 = async (privateKey: string, req: SwapReq, chain_id: string, rpc: string): Promise<{
+    swap_v3 = async (privateKey: string, req: SwapReq, chain_id: string): Promise<{
         state: TransactionState | null,
         tx: any
     }> => {
@@ -98,7 +98,7 @@ export class UniSwapAI {
         }
         CurrentConfig.env = Environment.MAINNET
         //
-        CurrentConfig.rpc.mainnet = rpc || getRPC(chain_id)
+        CurrentConfig.rpc.mainnet = getRPC(chain_id)
         CurrentConfig.wallet.privateKey = privateKey
         const newWallet = createWallet();
 
@@ -121,7 +121,8 @@ export class UniSwapAI {
             req.token_out
         )
         CurrentConfig.tokens.out = tokenOut
-        console.log("Wallet: ", newWallet.address)
+        const tokenInBalance = await getCurrencyBalance(newWallet.provider, newWallet.address, CurrentConfig.tokens.in)
+        console.log(`Wallet ${newWallet.address}: ${tokenInBalance} ${req.token_in}`)
         changeWallet(newWallet);
 
         try {
