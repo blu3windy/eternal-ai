@@ -1,0 +1,156 @@
+.wrapper {
+  padding: 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .content {
+    border-radius: 12px;
+    padding: 0 20px;
+
+    max-width: 100%;
+    width: fit-content;
+    gap: 8px;
+
+    &.reply {
+      margin-bottom: 0;
+      background: rgba(255, 255, 255, 0.07) !important;
+    }
+
+    &.failed {
+      background: transparent;
+    }
+  }
+
+  .reply_to {
+    //margin-left: 30px;
+    color: white;
+  }
+
+  .txLink {
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.6;
+    color: #FFF;
+    display: flex;
+    gap: 2px;
+  }
+}
+
+.normalText {
+  font-size: 16px;
+  font-weight: 400;
+  max-width: 560px;
+
+  span {
+    display: inline-block;
+    animation: streaming-text 5s linear infinite;
+  }
+}
+
+@keyframes streaming-text {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.markdown {
+  //margin-top: 8px;
+  //background: #000;
+  //border-radius: 12px;
+  //padding: 16px;
+  //padding-top: 0;
+  //padding-bottom: 0;
+  //border: 1px solid transparent;
+
+  &.markdown__failed {
+    // background: #ed8484;
+    // border: 1px solid #ed8484;
+    background: transparent;
+    padding: 16px;
+    color: #e92c2c;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    .retry {
+      cursor: pointer;
+
+      svg {
+        path {
+          stroke: white;
+        }
+      }
+    }
+  }
+
+  &.markdown__json {
+    background: transparent;
+    padding: 0;
+  }
+
+  pre {
+    code {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-all;
+      white-space: pre-wrap;
+      hyphens: auto;
+    }
+  }
+
+  :global(.__json-string__) {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-all;
+    white-space: pre-wrap;
+    hyphens: auto;
+  }
+
+  :global(.__json-pretty__) {
+    background: transparent;
+  }
+}
+
+.details {
+  summary {
+    list-style: none;
+    /* Remove default arrow */
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+
+    &::-webkit-details-marker {
+      display: none;
+      /* Remove arrow in Chrome, Safari */
+    }
+  }
+
+  .thinkText {
+    margin-top: 6px;
+    margin-bottom: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 15px;
+    border-left: 3px solid rgba(255, 255, 255, 0.3);
+    padding-left: 6px;
+    margin-left: 6px;
+    line-height: 140%;
+    font-weight: 300;
+  }
+
+  &.isLight {
+    .thinkText {
+      color: rgba(0, 0, 0, 0.5);
+      border-left-color: rgba(0, 0, 0, 0.3);
+    }
+  }
+}

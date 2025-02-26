@@ -33,4 +33,17 @@ const addressFormater = (address?: string, sliceLength?: number) => {
    }
 };
 
-export { compareString, getAvatarName, addressFormater };
+const tryToParseJsonString = (str: string): Record<string, unknown> & any => {
+   try {
+      return JSON.parse(str);
+   } catch (error) {
+      return {};
+   }
+};
+
+export {
+   compareString,
+   getAvatarName,
+   addressFormater,
+   tryToParseJsonString
+};

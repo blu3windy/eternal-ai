@@ -19,6 +19,8 @@ const AgentProvider: React.FC<
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
 
+  console.log('stephen: selectedAgent', selectedAgent);
+
   const contextValues: any = useMemo(() => {
     return {
       loading,

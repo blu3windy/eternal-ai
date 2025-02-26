@@ -1,0 +1,44 @@
+import {ChatCompletionPayload, ChatCompletionStreamHandler} from "./types.ts";
+import {IMAGINE_URL} from "../../../config.ts";
+import {THINK_TAG_REGEX} from "@components/CustomMarkdown/constants.ts";
+import {parseStreamAIResponse} from "@utils/api.ts";
+import {getClientHeaders} from "../http-client.ts";
+
+const AgentAPI = {
+  chatStreamCompletions: async ({
+    payload,
+    streamHandlers,
+  }: {
+    payload: ChatCompletionPayload;
+    streamHandlers: ChatCompletionStreamHandler;
+  }): Promise<any> => {
+    const messages = payload.messages.map((item) => ({
+      ...item,
+      content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
+    }));
+    const response = await fetch(`${IMAGINE_URL}/api/agent/preview/v1`, {
+      method: 'POST',
+      headers: {
+        ...getClientHeaders(),
+      },
+      body: JSON.stringify({
+        messages: JSON.stringify(messages),
+        agent_id: payload.agentId,
+        kb_id: payload.kb_id,
+        model_name: payload.model_name,
+        stream: true,
+      }),
+    });
+
+    if (response.status === 200) {
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw 'No reader';
+      }
+      return parseStreamAIResponse(reader, streamHandlers);
+    }
+    throw 'API error';
+  },
+}
+
+export default AgentAPI;

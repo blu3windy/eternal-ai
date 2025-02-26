@@ -1,0 +1,25 @@
+.codeHeader {
+  padding: 8px 16px;
+  justify-content: space-between;
+  background-color: #2f2f2f;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+
+.text {
+  margin: 0 !important;
+  font-size: 13px;
+  color: #b4b4b4;
+}
+
+.copyBtn {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+
+  svg {
+    path {
+      stroke: #b4b4b4;
+    }
+  }
+}

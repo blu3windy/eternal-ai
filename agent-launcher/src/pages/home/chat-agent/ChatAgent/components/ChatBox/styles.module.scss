@@ -1,0 +1,19 @@
+.container {
+  width: 100%;
+  background-color: #101216;
+
+  position: relative;
+  flex: 1;
+  max-height: calc(
+    70vh - env(safe-area-inset-bottom) - env(safe-area-inset-top)
+  );
+}
+
+.chatList {
+  max-height: calc(
+    70vh - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 60px
+  );
+  min-height: calc(
+    70vh - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 60px
+  );
+}
