@@ -3,26 +3,31 @@ const commonjs = require('@rollup/plugin-commonjs');
 const typescript = require('@rollup/plugin-typescript');
 const {terser} = require('rollup-plugin-terser');
 const pkg = require('./package.json');
-import json from '@rollup/plugin-json';
-import nodePolyfills from 'rollup-plugin-polyfill-node';
+
+const json = require('@rollup/plugin-json');
+const builtins = require('rollup-plugin-node-builtins');
+const globals = require('rollup-plugin-node-globals');
 
 module.exports = {
-    input: 'src/index.ts',
-    output: [
-        {
-            file: 'dist/bundle.iife.js',
-            format: 'iife',
-            name: 'UniSwap',
-            sourcemap: true
-        }
-    ],
-    plugins: [
-        resolve(),
-        commonjs(),
-        typescript({tsconfig: './build.tsconfig.json', sourceMap: true}),
-        terser(),
-        json(),
-        nodePolyfills()
-    ],
-    external: Object.keys(pkg.peerDependencies || {}),
+  input: 'src/index.ts',
+  output: [
+    {
+      file: 'dist/bundle.iife.js',
+      format: 'iife',
+      name: 'UniSwap',
+    },
+  ],
+  plugins: [
+    resolve({
+      browser: true,
+      preferBuiltins: true,
+    }),
+    commonjs(),
+    globals(),
+    builtins(),
+    typescript({ tsconfig: './build.tsconfig.json' }),
+    terser(),
+    json(),
+  ],
+  external: Object.keys(pkg.peerDependencies || {}),
 };
