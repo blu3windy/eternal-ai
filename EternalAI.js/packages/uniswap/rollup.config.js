@@ -5,6 +5,7 @@ const {terser} = require('rollup-plugin-terser');
 const pkg = require('./package.json');
 import json from '@rollup/plugin-json';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
+import replace from '@rollup/plugin-replace';
 
 module.exports = {
     input: 'src/index.ts',
@@ -22,7 +23,14 @@ module.exports = {
         typescript({tsconfig: './build.tsconfig.json', sourceMap: true}),
         terser(),
         json(),
-        nodePolyfills()
+        nodePolyfills(),
+        replace({
+            'process.env.NODE_ENV': JSON.stringify('production'),
+            'process.env.PRIVATE_KEY': JSON.stringify('production'),
+            'process.env.AGENT_ADDRESS': JSON.stringify('production'),
+            'process.env.API_KEY': JSON.stringify('production'),
+            preventAssignment: true,
+        }),
     ],
     external: Object.keys(pkg.peerDependencies || {}),
 };
