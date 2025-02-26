@@ -89,7 +89,7 @@ export interface PoolInfo {
 }
 
 export class UniSwapAI {
-    swap_v3 = async (privateKey: string, req: SwapReq, chain_id: number, rpc: string): Promise<{
+    swap_v3 = async (privateKey: string, req: SwapReq, chain_id: string, rpc: string): Promise<{
         state: TransactionState | null,
         tx: any
     }> => {
@@ -97,16 +97,14 @@ export class UniSwapAI {
             throw new Error("invalid private key")
         }
         CurrentConfig.env = Environment.MAINNET
-        //TODO
-        // CurrentConfig.rpc.mainnet = rpc || getRPC(chain_id)
-        CurrentConfig.rpc.mainnet = getRPC(ETH_CHAIN_ID)
+        //
+        CurrentConfig.rpc.mainnet = rpc || getRPC(chain_id)
         CurrentConfig.wallet.privateKey = privateKey
         const newWallet = createWallet();
 
         // init config token
         const tokenIn = new Token(
-            // TODO chain_id,
-            parseInt(ETH_CHAIN_ID, 16),
+            parseInt(chain_id, 16),
             req.token_in_address,
             // "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
             await getCurrencyDecimal(newWallet.provider, req.token_in_address),
@@ -116,8 +114,7 @@ export class UniSwapAI {
         CurrentConfig.tokens.in = tokenIn
         CurrentConfig.tokens.amountIn = req.token_in_amount
         const tokenOut = new Token(
-            // TODO chain_id,
-            parseInt(ETH_CHAIN_ID, 16),
+            parseInt(chain_id, 16),
             req.token_out_address,
             await getCurrencyDecimal(newWallet.provider, req.token_out_address),
             req.token_out,

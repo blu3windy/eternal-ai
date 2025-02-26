@@ -4,7 +4,7 @@ import {sleep} from "./utils";
 import {SwapReq, UniSwapAI} from "./swap";
 import {TransactionState} from "@/libs/providers";
 
-export const call_uniswap = async (private_key: string, chain_id: number, rpc: string, content: string): Promise<{
+export const call_uniswap = async (private_key: string, chain_id: string, rpc: string, content: string): Promise<{
     state: TransactionState | null,
     tx: any
 }> => {
@@ -99,7 +99,7 @@ export const create_agent_infer = async (private_key: string, chain_id: string, 
 
     const content_response = await process_infer(chain_id, tx_hash, rpc, worker_hub_address)
     if (content_response) {
-        const {state, tx} = await call_uniswap(private_key, parseInt(chain_id, 16), rpc, content_response);
+        const {state, tx} = await call_uniswap(private_key, chain_id, rpc, content_response);
         return {state, tx}
     } else {
         return null
