@@ -346,6 +346,7 @@ func (t *miner) streamData(dataFChan <-chan model.StreamingData, task *model.Tas
 	fmt.Print(pkg.Line)
 	fmt.Println(task.Params)
 	fmt.Printf("\n -> Streaming data on channel: %s \n", channel)
+	fmt.Print("\n -> msg: ")
 	for v := range dataFChan {
 		if v.Err != nil {
 			fmt.Println("[Err] - ", v.Err.Error())
@@ -356,7 +357,11 @@ func (t *miner) streamData(dataFChan <-chan model.StreamingData, task *model.Tas
 			//if len(v.Data.Choices) > 0 {
 			msg, _ := json.Marshal(v)
 
-			fmt.Println("[INFO][Publish Data] - ", v.Stop, v.Data)
+			if len(v.Data.Choices) > 0 {
+				fmt.Print(v.Data.Choices[0].Delta.Content)
+			}
+
+			//fmt.Println("[INFO][Publish Data] - ", v.Stop, v.Data)
 			/*
 				if t.rdb != nil {
 					err1 := t.rdb.Publish(channel, string(msg)).Err()
@@ -481,7 +486,9 @@ func (t *miner) inferChatCompletions(ctx context.Context, prompt string, modelNa
 			*logs = append(*logs, zap.Error(err))
 			logger.GetLoggerInstanceFromContext(ctx).Error(key, *logs...)
 		} else {
-			logger.GetLoggerInstanceFromContext(ctx).Info(key, *logs...)
+			if t.cnf.DebugMode {
+				logger.GetLoggerInstanceFromContext(ctx).Info(key, *logs...)
+			}
 		}
 		//}
 	}()
