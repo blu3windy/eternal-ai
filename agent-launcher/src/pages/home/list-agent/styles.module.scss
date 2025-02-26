@@ -1,9 +1,10 @@
 .container {
   padding: 16px;
+  border-right: 1px solid #EFEFEF;
 }
 
 .listContainer {
-  max-height: 1024px;
+  max-height: calc(100dvh - 119px - 24px - 16px - 16px);
 }
 
 .tableData {
