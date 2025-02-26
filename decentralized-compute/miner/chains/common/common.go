@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"solo/pkg"
@@ -89,8 +88,7 @@ func (c *common) FromBlock(block uint64) uint64 {
 }
 
 func (c *common) ToBlock() uint64 {
-	cblock := c.CurrentBlock()
-	return cblock
+	return c.CurrentBlock()
 }
 
 func (c *common) connect(rpc string) error {
@@ -141,7 +139,7 @@ func NewCommon(ctx context.Context, cnf *config.Config) (port.ICommon, error) {
 	}
 
 	if cnf.Account == "" {
-		return nil, errors.New(fmt.Sprintf("ACCOUNT_PRIV is empty. Use %s to set it", pkg.COMMAND_CONFIG))
+		return nil, fmt.Errorf("ACCOUNT_PRIV is empty. Use %s to set it", pkg.COMMAND_CONFIG)
 	}
 
 	if err = c.account(*cnf); err != nil {
@@ -166,9 +164,7 @@ func (b *common) GetConfig() *config.Config {
 }
 
 func (b *common) Erc20Balance() (*big.Int, error) {
-	erc20Contract := b.GetErc20contract()
-	bl, err := erc20Contract.BalanceOf(nil, b.GetWalletAddres())
-	return bl, err
+	return b.GetErc20contract().BalanceOf(nil, b.GetWalletAddres())
 }
 
 func (b *common) GetModelCollectionAddress() ethCommon.Address {
