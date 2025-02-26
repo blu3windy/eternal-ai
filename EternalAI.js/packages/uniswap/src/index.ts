@@ -1,10 +1,10 @@
 import {BSC_CHAIN_ID, ETH_CHAIN_ID, getRPC, RPC_URL, V1, V2} from "./const";
-import {AgentInference, InferenceProcessing} from "./inference";
+import {AgentInference, InferenceProcessing, LocalInference} from "./inference";
 import {sleep} from "./utils";
 import {SwapReq, UniSwapAI} from "./swap";
 import {TransactionState} from "@/libs/providers";
 
-export const call_uniswap = async (private_key: string, chain_id_swap: string, rpc: string, content: string): Promise<{
+export const call_uniswap = async (private_key: string, chain_id_swap: string, content: string): Promise<{
     state: TransactionState | null,
     tx: any
 }> => {
@@ -83,6 +83,26 @@ export const process_infer = async (chain_id: string, tx_hash: string, rpc: stri
     return result
 }
 
+export const create_local_infer = async (host: string, prompt: string, model: string, private_key: string, chain_id_swap: string, api_key: string): Promise<any> => {
+    const local_infer = new LocalInference(host);
+    local_infer.set_api_key(api_key)
+    try {
+        const resp = await local_infer.create_infer(prompt, model)
+        console.log(JSON.stringify(resp, null, 4));
+        const content_response = await local_infer.process_output(resp)
+        console.log(JSON.stringify(content_response, null, 4));
+        if (content_response) {
+            const {state, tx} = await call_uniswap(private_key, chain_id_swap, content_response);
+            return {state, tx}
+        } else {
+            return null
+        }
+    } catch (e) {
+        console.log(e)
+        return null
+    }
+}
+
 export const create_agent_infer = async (private_key: string, chain_id_infer: string, chain_id_swap: string, agent_address: string, prompt: string): Promise<any> => {
     const rpc_infer = getRPC(chain_id_infer)
     if (!rpc_infer) {
@@ -90,8 +110,8 @@ export const create_agent_infer = async (private_key: string, chain_id_infer: st
     }
     console.log("rpc", rpc_infer)
     const agent_infer = new AgentInference()
-    // const tx_hash = await agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
-    const tx_hash = '0xf05832974c4b8b002e68029be724e72ac3cc88f6387df6632f6f5e426b439fc3';
+    const tx_hash = await agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc_infer)
+    // const tx_hash = '0xf05832974c4b8b002e68029be724e72ac3cc88f6387df6632f6f5e426b439fc3';
     console.log(`infer tx_hash: ${tx_hash}`)
 
     const worker_hub_address = await agent_infer.get_worker_hub_address(agent_address, rpc_infer)
@@ -99,7 +119,7 @@ export const create_agent_infer = async (private_key: string, chain_id_infer: st
 
     const content_response = await process_infer(chain_id_infer, tx_hash, rpc_infer, worker_hub_address)
     if (content_response) {
-        const {state, tx} = await call_uniswap(private_key, chain_id_swap, rpc_infer, content_response);
+        const {state, tx} = await call_uniswap(private_key, chain_id_swap, content_response);
         return {state, tx}
     } else {
         return null
@@ -117,10 +137,26 @@ export const uni_swap_ai = async (command: string, args: any) => {
                 args.agent_address || process.env.AGENT_ADDRESS,
                 args.prompt
             )
-            console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
+            if (state != null) {
+                console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
+            }
         }
         case "models-infer": {
             break;
+        }
+        case "local-infer": {
+            const {state, tx} = await create_local_infer(
+                args.host || 'https://api.eternalai.org/v1',
+                args.prompt,
+                args.model,
+                args.private_key || process.env.PRIVATE_KEY,
+                args.chain_id_swap || ETH_CHAIN_ID || "0x1",
+                args.api_key || "ram1u19ycmwxlx455chxh67dpyb4q23nibltygrwlqed5lz1",
+            )
+            if (state != null) {
+                console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
+            }
+            return {state, tx};
         }
     }
 }

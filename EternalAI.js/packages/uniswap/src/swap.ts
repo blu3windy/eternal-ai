@@ -1,4 +1,4 @@
-import {ETH_CHAIN_ID, getRPC, zeroAddress} from "./const";
+import {ETH_CHAIN_ID, getRPC, ZeroAddress} from "./const";
 import {ethers} from "ethers";
 import {Token} from "@uniswap/sdk-core";
 import {changeWallet, createWallet, TransactionState} from "./libs/providers";
@@ -28,18 +28,18 @@ export class SwapReq {
 
     convert_in_out = async () => {
         if (this.token_in.toLowerCase() == "eth") {
-            this.token_in_address = zeroAddress;
+            this.token_in_address = ZeroAddress;
         } else {
             const token_address = await this.convert_token_address(this.token_in.toLowerCase())
-            if (!token_address) this.token_in_address = zeroAddress
+            if (!token_address) this.token_in_address = ZeroAddress
             else this.token_in_address = token_address
         }
 
         if (this.token_out.toLowerCase() == "eth") {
-            this.token_out_address = zeroAddress;
+            this.token_out_address = ZeroAddress;
         } else {
             const token_address = await this.convert_token_address(this.token_out.toLowerCase())
-            if (!token_address) this.token_out_address = zeroAddress
+            if (!token_address) this.token_out_address = ZeroAddress
             else this.token_out_address = token_address
         }
     }

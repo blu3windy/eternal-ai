@@ -32,7 +32,7 @@ import {
     TransactionState,
 } from './providers'
 import {fromReadableAmount} from './utils'
-import {zeroAddress} from "../const";
+import {ZeroAddress} from "../const";
 
 export type TokenTrade = Trade<Token, Token, TradeType>
 
@@ -41,8 +41,8 @@ export type TokenTrade = Trade<Token, Token, TradeType>
 export async function buildPools() {
     let listPools: any[] = []
 
-    if (CurrentConfig.tokens.in.address == zeroAddress ||
-        CurrentConfig.tokens.out.address == zeroAddress ||
+    if (CurrentConfig.tokens.in.address == ZeroAddress ||
+        CurrentConfig.tokens.out.address == ZeroAddress ||
         CurrentConfig.tokens.in.address == WETH_TOKEN.address ||
         CurrentConfig.tokens.out.address == WETH_TOKEN.address
     ) {
