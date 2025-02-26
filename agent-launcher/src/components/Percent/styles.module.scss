@@ -1,0 +1,16 @@
+.percent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  float: right;
+  align-self: flex-end;
+  gap: 4px;
+  position: relative;
+
+  &.hight {
+    color: #10ce16;
+  }
+  &.low {
+    color: #ff4747;
+  }
+}

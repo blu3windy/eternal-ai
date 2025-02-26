@@ -1,18 +1,18 @@
-import {compareString} from "./string.ts";
+import { compareString } from "./string";
 
 export const abbreviateNumber = (
   value: any,
   minimumFractionDigits: number,
-  significantDigits?: boolean,
+  significantDigits?: boolean
 ) => {
   const config: any = {
-    notation: 'compact',
-    compactDisplay: 'short',
+    notation: "compact",
+    compactDisplay: "short",
     maximumSignificantDigits: significantDigits ? 3 : undefined,
     maximumFractionDigits: 2,
     minimumFractionDigits,
   };
-  const result = new Intl.NumberFormat('en-US', config);
+  const result = new Intl.NumberFormat("en-US", config);
   return result.format(value);
 };
 
@@ -20,12 +20,12 @@ export const formatCurrency = (
   value: any = 0,
   minimumFractionDigits = 2,
   maximumFractionDigits = 2,
-  symbol = 'EAI',
+  symbol = "EAI",
   hideAbbr = false,
   showZero = true,
-  significantDigits = true,
+  significantDigits = true
 ): string => {
-  if (isNaN(Number(value)) || Number(value) === 0 || !value) return '0';
+  if (isNaN(Number(value)) || Number(value) === 0 || !value) return "0";
 
   let config: any = {
     maximumFractionDigits: maximumFractionDigits,
@@ -33,11 +33,11 @@ export const formatCurrency = (
   };
 
   if (!showZero && (Number(value) === 0 || !value)) {
-    return '-';
+    return "-";
   }
 
   if (Number(value) < 1) {
-    if (compareString(symbol, 'BTC')) {
+    if (compareString(symbol, "BTC")) {
       config = {
         maximumFractionDigits: 6,
         minimumFractionDigits: 0,
@@ -69,6 +69,6 @@ export const formatCurrency = (
     };
   }
 
-  const result = new Intl.NumberFormat('en-US', config);
+  const result = new Intl.NumberFormat("en-US", config);
   return result.format(value);
 };

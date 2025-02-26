@@ -2576,7 +2576,7 @@ function output(out, instance) {
    }
 }
 
-const crypto$1 = typeof globalThis === 'object' && 'crypto' in globalThis ? globalThis.crypto : undefined;
+const crypto$1 = typeof globalThis === 'object' && 'crypto' in globalThis ? globalThis.index : undefined;
 
 /*! noble-hashes - MIT License (c) 2022 Paul Miller (paulmillr.com) */
 // We use WebCrypto aka globalThis.crypto, which exists in browsers and node.js 16+.

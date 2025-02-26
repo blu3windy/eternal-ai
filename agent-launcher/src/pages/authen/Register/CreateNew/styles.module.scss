@@ -1,0 +1,35 @@
+.passCode {
+  margin-top: 80px;
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+
+  .codeWrapper {
+    justify-content: space-between;
+  }
+  > div:not(.error) {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 40px;
+  }
+  input {
+    border: 1px solid #B6B6B6;
+    background: transparent;
+    width: 80px !important;
+    height: 80px !important;
+    aspect-ratio: 1/1;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 20px;
+    color: black;
+    // placehoder color
+    &::placeholder {
+      color: #B6B6B6 !important;
+    }
+
+    &:focus {
+      border: 1px solid #007AFF !important;
+    }
+  }
+}

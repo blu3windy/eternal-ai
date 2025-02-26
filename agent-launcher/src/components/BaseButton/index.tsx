@@ -20,10 +20,10 @@ const BaseButton: FC<IProps> = (props: IProps) => {
 
    return (
       <Button
-         {...rest}
          className={`${styles.button} ${styles[size]}`}
          style={{ backgroundColor: bgColor, color: txtColor }}
          onClick={onClick}
+         {...rest}
       >
          {children}
       </Button>

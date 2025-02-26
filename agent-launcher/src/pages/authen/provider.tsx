@@ -1,31 +1,50 @@
-import { createContext, useContext, useState, FC, PropsWithChildren, useMemo } from 'react';
+import { createContext, useContext, useState, FC, PropsWithChildren, useMemo, useEffect } from 'react';
 import HomeAuthen from "./Home";
+import { Wallet } from "ethers";
 
 interface AuthContextType {
-  isAuthenticated: boolean;
+   signer: Wallet | undefined;
 }
+
+const TESTING_AUTHEN_FLAG = false;
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
-   // const [isAuthenticated, setIsAuthenticated] = useState(false);
-   const isAuthenticated = true;
+   const [loading, setLoading] = useState(true);
+   const [signer, setSigner] = useState<Wallet | undefined>();
+
+   useEffect(() => {
+      setInterval(() => {
+         setLoading(false)
+      }, 0)
+   }, []);
 
    const values = useMemo(() => {
       return {
-         isAuthenticated,
+         signer,
       }
-   }, [isAuthenticated])
+   }, [signer]);
 
-   return (
-      <AuthContext.Provider value={values}>
-         {
-            isAuthenticated
-               ? (children)
-               : (<HomeAuthen />)
-         }
-      </AuthContext.Provider>
-   );
+   if (TESTING_AUTHEN_FLAG) {
+      return (
+         <AuthContext.Provider value={values}>
+            {loading
+               ? <div>Loading...</div>
+               : signer
+                  ? (children)
+                  : (<HomeAuthen />)
+            }
+         </AuthContext.Provider>
+      );
+   } else {
+      return (
+         <AuthContext.Provider value={values}>
+            {/* <HomeAuthen /> */}
+            {children}
+         </AuthContext.Provider>
+      );
+   }
 };
 
 const useAuth = () => {
