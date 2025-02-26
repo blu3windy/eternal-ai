@@ -9,6 +9,8 @@ import (
 	"solo/pkg/db/sqlite"
 	"testing"
 
+	interCommon "solo/chains/common"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/go-redis/redis"
@@ -63,7 +65,8 @@ func Test_miner_saveSuccessTask(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.fields.cnf = &config.Config{
 				NodeID:  "0553",
-				Account: "0x1234567890abcdef1234567890abcdef12345678",
+				Account: "bdcb9fef30a0e89291df236a8cbcd6e4c9cd03ca5812e41c4d662b076c382181",
+				Rpc:     "https://base.llamarpc.com",
 			}
 
 			tr := &miner{
@@ -89,6 +92,11 @@ func Test_miner_saveSuccessTask(t *testing.T) {
 
 			db := model.SuccessTask{}
 			sqldb.CreateTable(db.CreateDB())
+
+			tr.common, err = interCommon.NewCommon(context.Background(), tt.fields.cnf)
+			if err != nil {
+				t.Errorf("miner.saveSuccessTask() error = %v, wantErr %v", err, tt.wantErr)
+			}
 			if err := tr.saveSuccessTask(tt.args.ctx, tt.args.task, tt.args.resultData, tt.args.tx); (err != nil) != tt.wantErr {
 				t.Errorf("miner.saveSuccessTask() error = %v, wantErr %v", err, tt.wantErr)
 			}

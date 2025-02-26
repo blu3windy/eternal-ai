@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"go.uber.org/zap"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"solo/pkg/logger"
+
+	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 type IResponse interface {
@@ -45,8 +46,7 @@ type RespondErr struct {
 	ErrorCode int    `json:"code"`
 }
 
-type httpResponse struct {
-}
+type httpResponse struct{}
 
 type StreamResponse struct {
 	Data        interface{}
@@ -65,19 +65,10 @@ func (h *httpResponse) RespondSuccess(w http.ResponseWriter, httpCode int, appCo
 	h.respondWithJSON(w, nil, httpCode, appCode, payload, customerMessage)
 }
 
-func (h *httpResponse) respondWithJSON(w http.ResponseWriter, respErr error, httpCode int, appCode int, payload interface{}, customerMessage string) {
-
+func (h *httpResponse) respondWithJSON(w http.ResponseWriter, respErr error, httpCode int, appCode int, payload interface{}, _ string) {
 	code := ResponseMessage[appCode].Code
-	//message := ResponseMessage[appCode].Message
 
-	if customerMessage != "" {
-		//message = customerMessage
-	}
-
-	jsr := JsonResponse{
-		Data:   payload,
-		Status: true,
-	}
+	jsr := JsonResponse{Data: payload, Status: true}
 
 	if respErr != nil {
 		errMessage := &RespondErr{}
@@ -90,20 +81,19 @@ func (h *httpResponse) respondWithJSON(w http.ResponseWriter, respErr error, htt
 	response, _ := json.Marshal(jsr)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpCode)
-	_, err := w.Write(response)
-	if err != nil {
-		panic(err)
+
+	if _, err := w.Write(response); err != nil {
+		logger.AtLog.Fatal(err)
 	}
 }
 
 func (h *httpResponse) RespondWithoutContainer(w http.ResponseWriter, httpCode int, payload interface{}) {
-
 	response, _ := json.Marshal(payload)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpCode)
-	_, err := w.Write(response)
-	if err != nil {
-		panic(err)
+
+	if _, err := w.Write(response); err != nil {
+		logger.AtLog.Fatal(err)
 	}
 }
 
@@ -153,6 +143,8 @@ var ResponseMessage = map[int]struct {
 }
 
 func (h *restHandlerTemplate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var err error
+
 	ctx := r.Context()
 	vars := mux.Vars(r)
 
@@ -171,37 +163,29 @@ func (h *restHandlerTemplate) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	// Capture request body
 	var requestBody []byte
 	if r.Body != nil {
-		bodyBytes, err := ioutil.ReadAll(r.Body)
+		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
+			h.httpResp.RespondWithError(w, http.StatusInternalServerError, Error, err)
 			return
 		}
 		requestBody = bodyBytes
-		r.Body.Close()                                        // Close the original body
-		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes)) // Restore the body
+		r.Body.Close()
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	}
 
 	// Log the request details
-	var _req map[string]interface{}
-	json.Unmarshal(requestBody, &_req)
-
-	url := r.URL.String()
-
-	if err != nil {
-		logger.AtLog.Logger.Error("request",
-			zap.String("method", r.Method),
-			zap.String("url", url),
-			zap.Any("request_body", _req),
-			zap.Error(err),
-			zap.Any("response", item),
-		)
-	} else {
-		logger.AtLog.Logger.Info("request",
-			zap.String("method", r.Method),
-			zap.String("url", url),
-			zap.Any("request_body", _req),
-			zap.Any("response", item),
-		)
+	var req map[string]interface{}
+	if err := json.Unmarshal(requestBody, &req); err != nil {
+		h.httpResp.RespondWithError(w, http.StatusInternalServerError, Error, err)
+		return
 	}
+
+	logger.AtLog.Logger.Info("request",
+		zap.String("method", r.Method),
+		zap.String("url", r.URL.String()),
+		zap.Any("request_body", req),
+		zap.Any("response", item),
+	)
 
 	h.httpResp.RespondSuccess(w, http.StatusOK, Success, item, "")
 }

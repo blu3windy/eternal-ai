@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -298,9 +299,7 @@ func (s *SuccessTask) CreateDB() string {
 }
 
 func (s *SuccessTask) Insert() (string, []any) {
-
 	insertData := []any{}
-
 	insertData = append(insertData, s.Task.TaskID)
 	insertData = append(insertData, s.Task.AssignmentID)
 	insertData = append(insertData, s.Task.ModelContract)
@@ -313,15 +312,11 @@ func (s *SuccessTask) Insert() (string, []any) {
 	insertData = append(insertData, s.SubmittedBy)
 	insertData = append(insertData, s.CreatedBy)
 
-	val := ""
-	for i, _ := range insertData {
-		suffix := ","
-		if i == (len(insertData) - 1) {
-			suffix = ""
-		}
-
-		val += "?" + suffix
+	placeholders := make([]string, len(insertData))
+	for i := range insertData {
+		placeholders[i] = "?"
 	}
+	val := strings.Join(placeholders, ",")
 
 	sqlStmt := fmt.Sprintf(`INSERT INTO %s(
                task_id, 
