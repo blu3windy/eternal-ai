@@ -4,7 +4,6 @@ import Backup from "@pages/authen/Register/CreateNew/Backup.tsx";
 import ConfirmKey from "@pages/authen/Register/CreateNew/ConfirmKey.tsx";
 import ConfirmPass from "@pages/authen/Register/CreateNew/ConfirmPass.tsx";
 import EaiSigner from "@helpers/signer";
-import sleep from "@utils/sleep.ts";
 import { compareString } from "@utils/string.ts";
 import { useAuth } from "@pages/authen/provider.tsx";
 
@@ -19,7 +18,6 @@ const CreateNew: FC = () => {
    const onCreateSigner = async (password: string) => {
       try {
          setLoading(true);
-         await sleep(1000);
 
          await EaiSigner.storageNewKey({
             prvKey,
@@ -28,7 +26,7 @@ const CreateNew: FC = () => {
 
          const _prvKey = await EaiSigner.getStorageKey({ pass: password });
 
-         if (compareString(prvKey, _prvKey)) {
+         if (!compareString(prvKey, _prvKey)) {
             throw new Error("Private key not match");
          }
 

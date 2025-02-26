@@ -40,7 +40,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       } catch (error) {
          console.error(error);
       } finally {
-         await sleep(1000)
+         await sleep(500)
          setInitLoading(false);
       }
    }
