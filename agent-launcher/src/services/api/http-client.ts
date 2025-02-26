@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosHeaders } from 'axios';
 
-import STORAGE_KEYS from '@constants/storage-key';
-
 export const TIMEOUT = 5 * 60000;
 export const HEADERS = { 'Content-Type': 'application/json' };
 
@@ -108,10 +106,10 @@ export const createCustomAxiosInstance = ({
 
   instance.interceptors.request.use(
     (config) => {
-      const authToken = LocalStorage.getItem(STORAGE_KEYS.NAKA_WALLET_AUTHEN);
-      if (authToken) {
-        config.headers.Authorization = `Bearer ${authToken}`;
-      }
+      // const authToken = LocalStorage.getItem(STORAGE_KEYS.NAKA_WALLET_AUTHEN);
+      // if (authToken) {
+      //   config.headers.Authorization = `Bearer ${authToken}`;
+      // }
       return config;
     },
     (error) => {
