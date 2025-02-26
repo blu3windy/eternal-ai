@@ -1051,7 +1051,8 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		}
 	}()
 	idRequest := time.Now().UnixMicro()
-	retrieveQuery, errGenerateQuery, _ := s.GenerateKnowledgeQuery(agentModel, messages)
+	retrieveQuery, errGenerateQuery, conversation := s.GenerateKnowledgeQuery(agentModel, messages)
+	_ = conversation
 	if errGenerateQuery != nil {
 		errChan <- errs.NewError(errors.New("ERROR_GENERATE_QUERY"))
 		return
