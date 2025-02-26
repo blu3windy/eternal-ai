@@ -77,10 +77,10 @@ func (t *miner) GetPendingTasks(ctx context.Context) {
 		err := t.chain.GetPendingTasks(ctx, fBlock, tBlock, t.tasksQueue)
 		if err != nil {
 			//if t.cnf.DebugMode {
-			logger.GetLoggerInstanceFromContext(ctx).Error("GetPendingTasks",
+			logger.GetLoggerInstanceFromContext(ctx).Info("GetPendingTasks",
 				zap.Uint64("from_block", fBlock),
 				zap.Uint64("to_block", tBlock),
-				zap.Error(err),
+				zap.String("ERR", err.Error()),
 			)
 			//}
 		}
