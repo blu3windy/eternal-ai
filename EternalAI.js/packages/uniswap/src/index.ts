@@ -163,11 +163,20 @@ export const uni_swap_ai = async (command: string, args: any) => {
 }
 
 export const prompt = (prompt: string, private_key: string) => {
-    const {state, tx} = uni_swap_ai("api-infer", {
-        host: "http://localhost:2000",
-        prompt: prompt,
-        private_key: private_key,
-    })
-    console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
-    return {state, tx};
+    try {
+        const {state, tx} = await uni_swap_ai("api-infer", {
+            prompt: prompt,
+            private_key: private_key,
+            model: "gpt-4o-mini",
+            api_key: "",
+            host: "https://api.openai.com/v1",
+        })
+        console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
+        return `Swapped with tx ${tx.transactionHash}`;
+    } catch (e) {
+        return `Swapped err ${e?.message}`;
+    }
+
 }
+
+window.prompt = prompt
