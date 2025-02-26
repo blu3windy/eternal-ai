@@ -81,6 +81,7 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 								models.HYPE_CHAIN_ID,
 								models.MONAD_TESTNET_CHAIN_ID,
 								models.MEGAETH_TESTNET_CHAIN_ID,
+								models.CELO_CHAIN_ID,
 							},
 						},
 					},
@@ -125,11 +126,27 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 						},
 						"agent_infos.network_id in (?)": {
 							[]uint64{
+								models.SHARDAI_CHAIN_ID,
+								models.ETHEREUM_CHAIN_ID,
+								models.BITTENSOR_CHAIN_ID,
 								models.BASE_CHAIN_ID,
+								models.HERMES_CHAIN_ID,
 								models.ARBITRUM_CHAIN_ID,
+								models.ZKSYNC_CHAIN_ID,
+								models.POLYGON_CHAIN_ID,
 								models.BSC_CHAIN_ID,
 								models.APE_CHAIN_ID,
 								models.AVALANCHE_C_CHAIN_ID,
+								models.ABSTRACT_TESTNET_CHAIN_ID,
+								models.DUCK_CHAIN_ID,
+								models.TRON_CHAIN_ID,
+								models.MODE_CHAIN_ID,
+								models.ZETA_CHAIN_ID,
+								models.STORY_CHAIN_ID,
+								models.HYPE_CHAIN_ID,
+								models.MONAD_TESTNET_CHAIN_ID,
+								models.MEGAETH_TESTNET_CHAIN_ID,
+								models.CELO_CHAIN_ID,
 							},
 						},
 					},
@@ -261,7 +278,7 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 					case models.AgentInfoAgentTypeUtility:
 						{
 							for range 2 {
-								err = s.DeployAgentUtility(ctx, agent.ID)
+								err = s.DeployAgentUtilityUpgradeable(ctx, agent.ID)
 								if err == nil {
 									break
 								}
@@ -371,6 +388,7 @@ func (s *Service) JobRetryAgentMintNft(ctx context.Context) error {
 							models.STORY_CHAIN_ID,
 							models.HYPE_CHAIN_ID,
 							models.MONAD_TESTNET_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 				},
@@ -460,6 +478,7 @@ func (s *Service) JobRetryAgentMintNftError(ctx context.Context) error {
 							models.HYPE_CHAIN_ID,
 							models.MONAD_TESTNET_CHAIN_ID,
 							models.MEGAETH_TESTNET_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 				},
@@ -580,7 +599,8 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 				models.STORY_CHAIN_ID,
 				models.HYPE_CHAIN_ID,
 				models.MONAD_TESTNET_CHAIN_ID,
-				models.MEGAETH_TESTNET_CHAIN_ID:
+				models.MEGAETH_TESTNET_CHAIN_ID,
+				models.CELO_CHAIN_ID:
 				{
 					agentUriData := models.AgentUriData{
 						Name: agentInfo.AgentName,
@@ -936,6 +956,7 @@ func (s *Service) JobAgentStart(ctx context.Context) error {
 							models.STORY_CHAIN_ID,
 							models.HYPE_CHAIN_ID,
 							models.MONAD_TESTNET_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 				},

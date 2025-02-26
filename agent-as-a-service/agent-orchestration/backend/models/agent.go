@@ -114,6 +114,7 @@ type AgentInfo struct {
 	Creator              string
 	AgentContractID      string
 	AgentContractAddress string
+	AgentLogicAddress    string
 	AgentNftMinted       bool `gorm:"default:0"`
 	ScanEnabled          bool `gorm:"default:1"`
 	ScanLatestTime       *time.Time
@@ -203,7 +204,8 @@ type AgentInfo struct {
 	TwinTrainingProgress    float64 `json:"twin_training_progress"`
 	TwinTrainingMessage     string  `gorm:"type:longtext"`
 
-	SourceUrl string `gorm:"type:text"` //ipfs_ || ethfs_
+	SourceUrl string `gorm:"type:text"` //ipfs_ || ethfs_ json
+	AuthenUrl string `gorm:"type:text"`
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string

@@ -227,10 +227,10 @@ func (s *Service) DeployAgentRealWorldAddress(
 	tokenSymbol string,
 	minFeeToUse *big.Float,
 	worker string,
-) (string, string, error) {
+) (string, string, string, error) {
 	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
 	eaiTokenAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "eai_contract_address"))
-	contractAddress, txHash, err := s.GetEthereumClient(ctx, networkID).
+	contractAddress, txHash, err := s.GetEVMClient(ctx, networkID).
 		DeployERC20RealWorldAgent(
 			s.GetAddressPrk(memePoolAddress),
 			tokenName,
@@ -243,9 +243,9 @@ func (s *Service) DeployAgentRealWorldAddress(
 			helpers.HexToAddress(worker),
 		)
 	if err != nil {
-		return "", "", errs.NewError(err)
+		return "", "", "", errs.NewError(err)
 	}
-	return contractAddress, txHash, nil
+	return contractAddress, "", txHash, nil
 }
 
 func (s *Service) DeployAgentRealWorld(ctx context.Context, agentInfoID uint) error {
@@ -262,19 +262,6 @@ func (s *Service) DeployAgentRealWorld(ctx context.Context, agentInfoID uint) er
 		if agentInfo.AgentType != models.AgentInfoAgentTypeRealWorld {
 			return errs.NewError(errs.ErrBadRequest)
 		}
-		err = s.CreateTokenInfo(ctx, agentInfo.ID)
-		if err != nil {
-			return errs.NewError(err)
-		}
-		agentInfo, err = s.dao.FirstAgentInfoByID(
-			daos.GetDBMainCtx(ctx),
-			agentInfoID,
-			map[string][]any{},
-			false,
-		)
-		if err != nil {
-			return errs.NewError(err)
-		}
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.Worker != "" {
 			if agentInfo.MintHash == "" {
 				switch agentInfo.NetworkID {
@@ -284,7 +271,7 @@ func (s *Service) DeployAgentRealWorld(ctx context.Context, agentInfoID uint) er
 					}
 				default:
 					{
-						contractAddress, txHash, err := s.DeployAgentRealWorldAddress(
+						contractAddress, logicAddress, txHash, err := s.DeployAgentRealWorldAddress(
 							ctx,
 							agentInfo.NetworkID,
 							agentInfo.TokenName,
@@ -300,6 +287,7 @@ func (s *Service) DeployAgentRealWorld(ctx context.Context, agentInfoID uint) er
 							Updates(
 								map[string]any{
 									"agent_contract_address": strings.ToLower(contractAddress),
+									"agent_logic_address":    strings.ToLower(logicAddress),
 									"agent_contract_id":      "0",
 									"mint_hash":              txHash,
 									"status":                 models.AssistantStatusReady,

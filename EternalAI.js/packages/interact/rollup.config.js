@@ -4,6 +4,10 @@ const typescript = require('@rollup/plugin-typescript');
 const { terser } = require('rollup-plugin-terser');
 const pkg = require('./package.json');
 
+const json = require('@rollup/plugin-json');
+const builtins = require('rollup-plugin-node-builtins');
+const globals = require('rollup-plugin-node-globals');
+
 module.exports = {
   input: 'src/index.ts',
   output: [
@@ -31,10 +35,16 @@ module.exports = {
     },
   ],
   plugins: [
-    resolve(),
+    resolve({
+      browser: true,
+      preferBuiltins: true,
+    }),
     commonjs(),
+    globals(),
+    builtins(),
     typescript({ tsconfig: './build.tsconfig.json' }),
     terser(),
+    json(),
   ],
   external: Object.keys(pkg.peerDependencies || {}),
 };

@@ -1,8 +1,7 @@
 import * as ethers from 'ethers';
-import { InferPayload } from './types';
-// import { CHAIN_MAPPING } from './constants';
+import { InferPayloadWithMessages, InferPayloadWithPrompt } from './types';
 import * as methods from './methods';
-import { ChainId } from './methods/infer/types';
+import { CHAIN_MAPPING, ChainId } from './constants';
 
 class Interact {
   private _wallet: ethers.Wallet;
@@ -15,45 +14,131 @@ class Interact {
     this._wallet = wallet;
   }
 
-  private getProvider(chainId: ChainId) {
-    // const rpcUrl = CHAIN_MAPPING[chainId];
-    // if (!rpcUrl) {
-    //   throw new Error(`Unsupported chainId: ${chainId}`);
-    // }
+  private getProvider(chainId: ChainId, rpcUrl?: string) {
+    // create provider from user optional
+    if (!!rpcUrl) {
+      return new ethers.providers.JsonRpcProvider(rpcUrl);
+    }
 
-    // return new ethers.providers.JsonRpcProvider(rpcUrl);
-    return new ethers.providers.JsonRpcProvider('https://base.llamarpc.com');
+    if (!CHAIN_MAPPING[chainId]) {
+      throw new Error(`Unsupported chainId: ${chainId}`);
+    }
+
+    // create provider from default supported chainId
+    return new ethers.providers.JsonRpcProvider(CHAIN_MAPPING[chainId]);
   }
 
-  public async infer(payload: InferPayload) {
+  private getNetworkCredential(chainId: ChainId, rpcUrl?: string) {
+    const provider = this.getProvider(chainId, rpcUrl);
+    const signer = this._wallet.connect(provider);
+    return {
+      provider,
+      signer,
+    };
+  }
+
+  private normalizePayload(
+    payload: InferPayloadWithPrompt | InferPayloadWithMessages
+  ) {
+    return {
+      ...payload,
+      isLightHouse: payload.isLightHouse ?? false,
+    };
+  }
+
+  // Overload signatures
+  // @ts-ignore
+  public async infer(payload: InferPayloadWithPrompt): Promise<any>;
+  // @ts-ignore
+  public async infer(payload: InferPayloadWithMessages): Promise<any>;
+
+  // Implementation
+  // @ts-ignore
+
+  public async infer(
+    payload: InferPayloadWithPrompt | InferPayloadWithMessages
+  ) {
     try {
-      console.log('infer - start');
-      const provider = this.getProvider(payload.chainId);
-      const signer = this._wallet.connect(provider);
-
-      console.log(
-        'infer call createPayload',
-        await provider.getNetwork(),
-        payload
-      );
-      const params = await methods.Infer.createPayload(signer, payload);
-
-      console.log('infer call signTransaction', params);
-      const signedTx = await signer.signTransaction(params);
-
-      console.log('infer call sendInfer', signedTx);
-      const inference = await methods.Infer.sendInfer(signer, signedTx);
-
-      console.log('infer call listenInferResponse', inference);
-      const result = await methods.Infer.listenInferResponse(signer, inference);
-      console.log('infer - succeed', result);
-      return result;
+      const normalizedPayload = this.normalizePayload(payload);
+      console.log('infer - start', {
+        payload: normalizedPayload,
+      });
+      if (
+        typeof (normalizedPayload as InferPayloadWithPrompt).prompt === 'string'
+      ) {
+        const result = await this.inferWithPrompt(
+          normalizedPayload as InferPayloadWithPrompt
+        );
+        console.log('infer - succeed', result);
+        return result;
+      } else {
+        const result = await this.inferWithMessages(
+          normalizedPayload as InferPayloadWithMessages
+        );
+        console.log('infer - succeed', result);
+        return result;
+      }
     } catch (e) {
       console.log('infer - failed', e);
       throw e;
     } finally {
       console.log('infer - end');
     }
+  }
+
+  private async inferWithPrompt(payload: InferPayloadWithPrompt) {
+    console.log('inferWithPrompt - start');
+    const { signer } = this.getNetworkCredential(
+      payload.chainId,
+      payload.rpcUrl
+    );
+
+    const params = await methods.Infer.createPayloadWithPrompt(signer, payload);
+
+    const signedTx = await signer.signTransaction(params);
+
+    const sendPromptTxHash = await methods.Infer.sendPrompt(signer, signedTx);
+
+    const workerHubAddress = await methods.Infer.getWorkerHubAddress(
+      payload.agentAddress,
+      signer
+    );
+
+    return await methods.Infer.listenPromptResponse(
+      payload.chainId,
+      signer,
+      workerHubAddress,
+      sendPromptTxHash
+    );
+  }
+
+  private async inferWithMessages(payload: InferPayloadWithMessages) {
+    console.log('inferWithMessages - start');
+    const { signer } = this.getNetworkCredential(
+      payload.chainId,
+      payload.rpcUrl
+    );
+
+    const params = await methods.Infer.createPayloadWithMessages(
+      signer,
+      payload
+    );
+
+    const signedTx = await signer.signTransaction(params);
+
+    const sendPromptTxHash = await methods.Infer.sendPrompt(signer, signedTx);
+
+    const workerHubAddress = await methods.Infer.getWorkerHubAddress(
+      payload.agentAddress,
+      signer
+    );
+
+    return await methods.Infer.listenPromptResponse(
+      payload.chainId,
+      signer,
+      workerHubAddress,
+      sendPromptTxHash
+    );
   }
 }
 

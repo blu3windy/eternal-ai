@@ -174,8 +174,9 @@ type Config struct {
 	AiImageApiKey string `json:"ai_image_api_key"`
 	CMCApiKey     string `json:"cmc_api_key"`
 	Ai            struct {
-		ChatUrl string `json:"chat_url"`
-		ApiKey  string `json:"api_key"`
+		ChatUrl         string `json:"chat_url"`
+		ApiKey          string `json:"api_key"`
+		ApiKeyMacStudio string `json:"api_key_mac_studio"`
 	} `json:"ai"`
 	Lighthouse struct {
 		Apikey string `json:"apikey"`
@@ -319,6 +320,7 @@ func (cf *Config) GetConfigKeyBool(networkID uint64, name string) bool {
 type KnowledgeBaseConfig struct {
 	EnableSimulation          bool   `json:"enable_simulation"`
 	QueryServiceUrl           string `json:"query_service_url"`
+	ToolCallServiceUrl        string `json:"tool_call_service_url"`
 	DirectServiceUrl          string `json:"direct_service_url"`
 	KbChatTopK                int    `json:"kb_chat_top_k"`
 	KBTelegramKey             string `json:"kb_telegram_key"`

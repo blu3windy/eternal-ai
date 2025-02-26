@@ -128,6 +128,7 @@ type AgentInfoResp struct {
 	AgentType                 models.AgentInfoAgentType `json:"agent_type"`
 	ConfigData                string                    `json:"config_data"`
 	SourceURL                 string                    `json:"source_url"`
+	AuthenURL                 string                    `json:"authen_url"`
 	AgentKBId                 uint                      `json:"kb_id"`
 }
 
@@ -287,6 +288,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		AgentType:            m.AgentType,
 		SourceURL:            m.SourceUrl,
 		AgentKBId:            m.AgentKBId,
+		AuthenURL:            m.AuthenUrl,
 	}
 
 	if m.NftTokenImage != "" {
