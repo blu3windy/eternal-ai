@@ -1,4 +1,7 @@
-import { useState } from "react";
+import React, {useState} from "react";
+import {Box} from "@chakra-ui/react";
+import ChatBox from "@pages/home/chat-agent/ChatAgent/components/ChatBox";
+import {ChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 
 function App() {
    const [account, setAccount] = useState("");
@@ -34,25 +37,30 @@ function App() {
    };
 
    return (
-      <div>
+     <Box>
+       <div>
          <h1>Secure Password Storage</h1>
          <input
-            type="text"
-            placeholder="Account"
-            value={account}
-            onChange={(e) => setAccount(e.target.value)}
+           type="text"
+           placeholder="Account"
+           value={account}
+           onChange={(e) => setAccount(e.target.value)}
          />
          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+           type="password"
+           placeholder="Password"
+           value={password}
+           onChange={(e) => setPassword(e.target.value)}
          />
          <button onClick={handleSavePassword}>Save Password</button>
          <button onClick={handleGetPassword}>Retrieve Password</button>
          <button onClick={handleDeletePassword}>Delete Password</button>
          <p>Retrieved Password: {retrievedPassword}</p>
-      </div>
+       </div>
+       <ChatAgentProvider>
+         <ChatBox />
+       </ChatAgentProvider>
+     </Box>
    );
 }
 

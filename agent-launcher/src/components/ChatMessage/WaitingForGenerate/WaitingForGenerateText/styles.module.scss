@@ -1,0 +1,220 @@
+.waitingForGenerateText {
+  width: fit-content;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  animation: fadeIn 200ms forwards;
+  position: relative;
+  // padding: 0px 20px 12px 12px;
+  padding-left: 12px;
+  border-radius: 8px;
+  // border: 1px solid rgba(0, 117, 255, 0.40);
+  // background: rgba(0, 117, 255, 0.07);
+  // backdrop-filter: blur(2px);
+
+
+  // padding-left: 24px;
+
+  @include is-mobile {
+    align-items: flex-start;
+  }
+
+  @include max-md {
+    flex-direction: column;
+  }
+
+  .imageWrapper {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+
+    position: relative;
+
+    .waitingForGenerate {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      top: 0%;
+      left: 0%;
+      width: 100%;
+      height: 100%;
+
+      img {
+        max-width: 100px;
+        max-height: 100px;
+      }
+    }
+  }
+}
+
+.text {
+  color: #FFF;
+  font-family: var(--font-jetbrains_mono);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 18px;
+  opacity: 0.6;
+
+  @include is-mobile {
+    max-width: 265px;
+  }
+}
+
+.actions {
+  // position: absolute;
+  width: fit-content;
+  // top: 10px;
+  // right: 10px;
+  z-index: 20;
+  cursor: pointer;
+
+  border-radius: 50%;
+  // border: 1px solid #fff;
+  overflow: hidden;
+  padding: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+
+  @include is-mobile {
+    svg {
+      width: 16px !important;
+      height: 16px !important;
+    }
+  }
+}
+
+.process {
+  position: absolute;
+  cursor: pointer;
+  width: 100%;
+  height: 50%;
+  bottom: 0;
+  left: 0;
+  z-index: 300;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  span {
+
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 20px;
+    color: #fff;
+
+    strong {
+      background: linear-gradient(90deg, #fdfc47 2.73%, #24fe41 30%);
+      // background: var(
+      //   --gradient-button,
+      //   linear-gradient(90deg, #ff8008 0%, #ffc837 100%)
+      // );
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      // text-decoration: underline;
+      border-bottom: 1px solid #24fe41;
+    }
+  }
+}
+
+.contentContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  .loading {
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+    aspect-ratio: 1/1;
+  }
+
+  .textContent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .generating {
+      width: fit-content;
+
+      position: relative;
+
+      span {
+        font-family: 'Inter';
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 28.8px;
+        letter-spacing: 0.03em;
+        color: #fff;
+        text-transform: capitalize;
+      }
+
+      // @keyframes flash {
+      //   0% {
+      //     background-color: rgba(255, 255, 255, 1);
+      //   }
+
+      //   50% {
+      //     background-color: rgba(255, 255, 255, 0);
+      //   }
+
+      //   100% {
+      //     background-color: rgba(255, 255, 255, 1);
+      //   }
+      // }
+      // &::after {
+      //   content: '';
+      //   position: absolute;
+      //   left: calc(100% + 2px);
+      //   top: 50%;
+      //   height: 16px;
+      //   transform: translateY(calc(-50% - 2px));
+      //   width: 5px;
+      //   animation: flash 2s infinite;
+      // }
+    }
+
+    .introduction {
+      font-family: 'Inter';
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 22.4px;
+      letter-spacing: 0.03em;
+      color: #fff;
+      opacity: 0.7;
+    }
+  }
+
+  .runANeuron {
+    background: linear-gradient(90deg, #fdfc47 0%, #24fe41 100%);
+    border-radius: 6px;
+    padding: 8px 10px;
+
+    text-align: center;
+
+    font-family: 'Space Mono' !important;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 20px;
+    color: #000;
+
+    text-transform: uppercase;
+    width: 100%;
+    cursor: pointer;
+  }
+}

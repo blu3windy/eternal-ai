@@ -1,12 +1,10 @@
-import {Box, Center, Flex, Grid, Image, SimpleGrid, Text} from '@chakra-ui/react';
+import {Flex, Grid, Image, SimpleGrid, Text} from '@chakra-ui/react';
 import React, {useContext} from 'react';
-import Jazzicon, {jsNumberForAddress} from 'react-jazzicon';
 import s from './styles.module.scss';
 import {IAgentToken} from "../../../../services/api/agents-token/interface.ts";
 import {AgentContext} from "../../provider";
-import Avatar from "../../../../components/Avatar";
 import {DefaultAvatar} from "../../../../components/DefaultAvatar";
-import {addressFormater, compareString} from "../../../../utils/string.ts";
+import {compareString} from "../../../../utils/string.ts";
 import {FilterChains} from "../constants.ts";
 import {formatCurrency} from "../../../../utils/format.ts";
 import cs from "clsx";
@@ -21,10 +19,6 @@ interface IProps {
 
 const AgentItem = ({ token, isAllChain }: IProps) => {
   const { selectedAgent, setSelectedAgent } = useContext(AgentContext);
-
-  console.log('stephen: token', token)
-  console.log('stephen: selectedAgent', selectedAgent)
-  console.log('stephen: ================================================')
 
   const [showFullText, setShowFullText] = React.useState(false);
 
@@ -132,80 +126,57 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
             />
           )}
         </Flex>
-        <Flex flexDirection="column" w={'100%'}>
-          <Flex justifyContent={'space-between'} w={'100%'}>
-            <Flex gap="12px" flex={1}>
-              <Flex flexDirection="column" gap="8px">
-                <Flex gap={"6px"} alignItems={"center"}>
-                  <Text
-                    fontSize="14px"
-                    fontWeight="500"
-                    color="inherit"
-                  >
-                    {token?.agent_name}{' '}
-                  </Text>
-                  <Text className={s.noTokenTag}>{AgentTypeName[token?.agent_type]}</Text>
-                </Flex>
-                {chain && isAllChain && (
-                  <>
-                    <Text
-                      mx={'4px'}
-                      color="#657786"
-                      fontSize="14px"
-                      fontWeight="400"
-                    >
-                      ·
-                    </Text>
-                    <Image w={'14px'} h={'14px'} src={chain?.icon} />
-                    <Text color="#000" fontSize="14px" fontWeight="400">
-                      {chain?.name}
-                    </Text>
-                  </>
-                )}
-              </Flex>
-            </Flex>
-            {token?.meme?.market_cap ? (
-              <Flex flexDirection="column" gap="4px"></Flex>
-            ) : (
-              <Flex flexDirection="column" gap="8px">
-                <Flex
-                  alignItems={'center'}
-                  justifyContent={'flex-end'}
-                  alignSelf={'flex-end'}
-                  gap={'4px'}
-                >
-                  <Center className={s.noToken}>No token</Center>
-                </Flex>
-              </Flex>
-            )}
-          </Flex>
-
-          <SimpleGrid columns={3}>
-            <Text className={s.infoText}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
-            <Text className={s.infoText}>
-              {token?.meme?.market_cap && (
-                <>
-                  <Text as={'span'}>
-                    {Number(token?.meme?.market_cap) > 0
-                      ? `$${formatCurrency(
-                        token?.meme?.market_cap,
-                        0,
-                        3,
-                        'BTC',
-                        false,
-                        true,
-                      )}`
-                      : '$0'}
-                  </Text>
-                  {' '}<Text as={'span'} color={"#657786"}>MC</Text>
-                </>
-              )}
+        <Flex flexDirection="column" w={'100%'} gap={"8px"}>
+          <Flex gap={"6px"} alignItems={"center"}>
+            <Text
+              fontSize="14px"
+              fontWeight="500"
+              color="inherit"
+            >
+              {token?.agent_name}{' '}
             </Text>
-            <Flex>
-              <Text className={s.infoText}>{formatCurrency(12345)}</Text>
-              <Image src={'/icons/ic-chat.svg'} w={'16px'}/>
-            </Flex>
-          </SimpleGrid>
+            <Text className={s.noTokenTag}>{AgentTypeName[token?.agent_type]}</Text>
+          </Flex>
+          {
+            Number(token?.wallet_balance) > 0 ? (
+              <SimpleGrid columns={2}>
+                <Flex gap={"4px"} alignItems={"center"}>
+                  <Image w={'16px'} h={'16px'} src={chain?.icon} />
+                  <Text className={s.infoText}>
+                    {formatCurrency(token?.wallet_balance)} EAI
+                  </Text>
+                </Flex>
+                <Text className={s.infoText}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
+              </SimpleGrid>
+            ) : (
+              <SimpleGrid columns={3}>
+                <Text className={s.infoText}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
+                <Text className={s.infoText}>
+                  {token?.meme?.market_cap && (
+                    <>
+                      <Text as={'span'}>
+                        {Number(token?.meme?.market_cap) > 0
+                          ? `$${formatCurrency(
+                            token?.meme?.market_cap,
+                            0,
+                            3,
+                            'BTC',
+                            false,
+                            true,
+                          )}`
+                          : '$0'}
+                      </Text>
+                      {' '}<Text as={'span'} color={"#657786"}>MC</Text>
+                    </>
+                  )}
+                </Text>
+                <Flex>
+                  <Text className={s.infoText}>{formatCurrency(12345)}</Text>
+                  <Image src={'/icons/ic-chat.svg'} w={'16px'}/>
+                </Flex>
+              </SimpleGrid>
+            )
+          }
         </Flex>
       </Grid>
     </Flex>

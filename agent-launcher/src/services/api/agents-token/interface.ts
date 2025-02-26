@@ -71,7 +71,8 @@ export interface IAgentToken {
   agent_base_model: string;
   inference_calls: string;
   token_desc: string;
-  agent_type: AgentType
+  agent_type: AgentType;
+  kb_id?: number;
 }
 
 export interface Meme {
