@@ -1,4 +1,13 @@
-import {AGENT_ABI, ETH_CHAIN_ID, IPFS, LIGHTHOUSE_IPFS, PROMPT_SCHEDULER_ABI, RPC_URL, WORKER_HUB_ABI} from "./const";
+import {
+    AGENT_ABI,
+    ETH_CHAIN_ID,
+    IPFS,
+    LIGHTHOUSE_IPFS,
+    PROMPT_SCHEDULER_ABI,
+    RPC_URL,
+    SYSTEM_PROMPT,
+    WORKER_HUB_ABI
+} from "./const";
 import {stringToBytes, waitForTransactionReceipt} from "./utils";
 import {ethers} from "ethers";
 
@@ -33,6 +42,7 @@ export class LLMInferRequest {
     messages: LLMInferMessage[] = []
     max_token?: number = 4096
     stream?: boolean = false
+    model: any = null
 }
 
 export class AgentInference {
@@ -96,13 +106,13 @@ export class AgentInference {
             // console.log(await wallet.getBalance())
 
             const agent_contract = new ethers.Contract(this.agent_address, AGENT_ABI, wallet)
-            const system_prompt = await this.get_system_prompt(agent_address, rpc)
+            // const system_prompt = await this.get_system_prompt(agent_address, rpc)
             // console.log(`system_prompt: ${system_prompt}`)
 
             const req = new LLMInferRequest()
             req.messages = [
                 new LLMInferMessage(prompt, "user"),
-                new LLMInferMessage(system_prompt, "system")
+                // new LLMInferMessage(system_prompt, "system")
             ];
 
             const json_request = JSON.stringify(req)
@@ -278,6 +288,62 @@ export class InferenceProcessing {
             }
         } else {
             throw new Error("not connected")
+        }
+    }
+}
+
+export class LocalInference {
+    host: string
+    api_key: string
+
+    constructor(host: string, api_key: string = "") {
+        this.host = host
+        this.api_key = api_key;
+    }
+
+    set_api_key = (api_key: string) => {
+        this.api_key = api_key
+    }
+
+    create_infer = async (prompt: string, model: string) => {
+        try {
+            const data = new LLMInferRequest()
+            data.messages = [
+                new LLMInferMessage(prompt, "user"),
+                new LLMInferMessage(SYSTEM_PROMPT, "system"),
+            ]
+            data.model = model
+            const url = this.host + "/chat/completions";
+            console.log(`URL call ${url}`)
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': "Bearer " + this.api_key
+                },
+                body: JSON.stringify(data),
+            });
+            console.log(`URL call status ${response.status}`)
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const responseData = await response.json();
+            return responseData;
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    process_output = async (responseData: any) => {
+        if (!responseData.choices) {
+            throw new Error("invalid data");
+        } else {
+            const choice = responseData.choices[0];
+            if (!choice.message) {
+                throw new Error("invalid data");
+            }
+            return choice.message.content;
         }
     }
 }

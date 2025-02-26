@@ -5,7 +5,21 @@ export const BASE_CHAIN_ID = "0x2105"
 export const V1 = [ETH_CHAIN_ID, BASE_CHAIN_ID]
 export const V2 = [BSC_CHAIN_ID]
 
-export const zeroAddress = '0x0000000000000000000000000000000000000000';
+export const ZeroAddress = '0x0000000000000000000000000000000000000000';
+
+export const SYSTEM_PROMPT = `
+You are an intelligent assistant specialized in cryptocurrency trading. When a user requests a transaction, please respond in a specific JSON format.
+
+For example, if the user says: "Swap 1 ETH to USDT on Uniswap with Ethereum Chain(or Base chain, BNB chain...)" you should respond as follows:
+
+{
+  "token_in": "symbol of Input token",
+  "token_in_amount": 1.0,
+  "token_out": "symbol of Output token",
+}
+
+Make sure that the token addresses are accurate and comply with ERC20 standards.
+`;
 
 export const RPC_URL: { [key: string]: string } = {
     ETH_CHAIN_ID: "https://eth.llamarpc.com",
