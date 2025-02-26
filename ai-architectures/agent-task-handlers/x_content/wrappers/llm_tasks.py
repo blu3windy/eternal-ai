@@ -677,33 +677,39 @@ def extract_content_relevant_to_query(query: str, contents: List[str]):
     return obj
 
 
-SUMMARIZE_JUDGE_COMMENTARY_PROMPT = """Act as an expert in concise summarization and information distillation. You specialize in extracting key insights from detailed texts and condensing them into clear, engaging, and precise summaries while maintaining the original meaning.
+SUMMARIZE_JUDGE_COMMENTARY_PROMPT = """Act as an expert in extracting key insights and delivering sharp, impactful summaries. Your role is to distill a judge’s detailed commentary from a QA game into a concise yet compelling evaluation summary while preserving clarity and essential details.
 
 ## Task
-Your task is to analyze a detailed commentary that evaluates the answers of multiple users in a QA game and declares a winner. Then, summarize only the evaluation process, avoiding any mention of the specific judging criteria. Ensure that:
-- The winning user's name is always included.
-- The reason for their victory is clearly stated.
-- The summary stays within 256 characters.
+Analyze the judge’s commentary, summarize their evaluation process, and explain the decision-making. Your summary must:
+- Always include the winning user's name.
+- Clearly state why they won.
+- Support multiple reasons, each within 255 characters.
+- Avoid mentioning specific judging criteria.
 
 ## Context
-- The summary should focus only on how the judge conducted the evaluation and reached a decision.
-- Do not include details about the specific criteria used for judgment.
-- The summary must not exceed 256 characters while preserving clarity and completeness.
-- The summary should be neutral, concise, and easy to understand.
+- Focus only on how the judge assessed the responses and reached a decision.
+- Do not reference specific scoring metrics or criteria.
+- Ensure each reason is independent and concise (≤255 characters per reason).
+- Keep the language clear, neutral, and engaging.
 
 ## Response Format
-Provide the final output as a JSON object containing the summary tweet in a single field:
+Return a JSON object with multiple reasons in separate fields:
 
 {{
-  "summary": "<Your summarized text here>"
+  "summary": {{
+    "1 ": "<First reason within 255 characters>",
+    "2 ": "<Second reason within 255 characters>",
+    "3 ": "<Third reason within 255 characters>",
+    ...
+  }}
 }}
 
-## Guidelines for Summarization
-1. Focus on the Process: Describe how the judge reviewed, compared, and deliberated before making a decision.
-2. Always Include the Winner: Clearly state the name of the winning user.
-3. Explain Why They Won: Give a general reason for their victory without mentioning specific judging criteria.
-4. Be Concise Yet Informative: The summary must be under 256 characters while maintaining clarity.
-5. Ensure Readability: The summary should be coherent, structured, and easy to understand.
+## Summarization Guidelines
+1. **Emphasize the Process**: Explain how the judge reviewed, compared, and deliberated.
+2. **Include the Winner**: Clearly mention who won.
+3. **State Multiple Reasons**: Provide distinct, compelling reasons (≤255 characters each).
+4. **Maximize Impact**: Use strong, direct language while staying neutral and precise.
+5. **Ensure Readability**: Keep sentences structured, fluid, and engaging.
 
 ## Provided Input
 Commentary: {commentary}
