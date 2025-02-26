@@ -292,7 +292,7 @@ export class InferenceProcessing {
     }
 }
 
-export class LocalInference {
+export class APIInference {
     host: string
     api_key: string
 

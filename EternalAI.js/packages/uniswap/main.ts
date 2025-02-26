@@ -3,11 +3,10 @@ import {Command} from 'commander';
 import {uni_swap_ai} from './src/index'
 
 dotenv.config();
-// const program_agent = new Command();
-const program_local = new Command();
+const program = new Command();
 
 const main = async () => {
-    /*program_agent.command('agent-infer')
+    program.command('agent-infer')
         .description('Infer to agent contract')
         .option('-p, --prompt <type>', 'user prompt', '')
         .option('-k, --private_key <type>', 'private key',)
@@ -16,9 +15,9 @@ const main = async () => {
         .option('-w, --chain_id_swap <type>', 'chain id swap',)
         .action(async (options, command) => {
             await uni_swap_ai(command.name(), options);
-        });*/
+        });
 
-    program_local.command('local-infer')
+    program.command('api-infer')
         .description('Infer to agent contract')
         .option('-p, --prompt <type>', 'user prompt', '')
         .option('-k, --private_key <type>', 'private key',)
@@ -32,12 +31,10 @@ const main = async () => {
 main().then(r => {
 });
 
-// program_agent.parse(process.argv);
-program_local.parse(process.argv);
+program.parse(process.argv);
 
 if (!process.argv.slice(2).length) {
-    // program_agent.outputHelp();
-    program_local.outputHelp();
+    program.outputHelp();
     process.exit(0);
 }
 
