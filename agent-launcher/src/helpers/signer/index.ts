@@ -39,6 +39,10 @@ class EaiSigner {
       }
       return undefined;
    }
+
+   static async removeStorageKey() {
+      await window.electronAPI.keytarRemove(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
+   }
 }
 
 export default EaiSigner;

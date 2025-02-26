@@ -4,6 +4,7 @@ import { Wallet } from "ethers";
 import EaiSigner from "../../helpers/signer";
 import sleep from "@utils/sleep.ts";
 import AuthenLoading from "@pages/authen/AuthenLoading";
+import TestingButton from "@pages/authen/TesingButton";
 
 interface AuthContextType {
    signer: Wallet | undefined;
@@ -72,6 +73,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
    return (
       <AuthContext.Provider value={values}>
          {renderContent()}
+         <TestingButton />
       </AuthContext.Provider>
    );
 };
