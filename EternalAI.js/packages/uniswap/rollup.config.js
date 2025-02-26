@@ -26,6 +26,9 @@ module.exports = {
         nodePolyfills(),
         replace({
             'process.env.NODE_ENV': JSON.stringify('production'),
+            'process.env.PRIVATE_KEY': JSON.stringify('production'),
+            'process.env.AGENT_ADDRESS': JSON.stringify('production'),
+            'process.env.API_KEY': JSON.stringify('production'),
             preventAssignment: true,
         }),
     ],

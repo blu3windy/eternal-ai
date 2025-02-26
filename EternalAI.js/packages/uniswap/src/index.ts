@@ -151,7 +151,7 @@ export const uni_swap_ai = async (command: string, args: any) => {
                 args.model,
                 args.private_key || process.env.PRIVATE_KEY,
                 args.chain_id_swap || ETH_CHAIN_ID || "0x1",
-                args.api_key || "ram1u19ycmwxlx455chxh67dpyb4q23nibltygrwlqed5lz1",
+                args.api_key || process.env.API_KEY,
             )
             if (state != null) {
                 console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
