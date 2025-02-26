@@ -38,6 +38,7 @@ type IChatAgentProviderContext = {
   chatInputRef: any;
   isFocusChatInput: boolean;
   setIsFocusChatInput: (_: boolean) => void;
+  isAllowChat: boolean;
 };
 
 const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
@@ -54,6 +55,7 @@ const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
   chatInputRef: undefined,
   isFocusChatInput: false,
   setIsFocusChatInput: () => {},
+  isAllowChat: false,
 });
 
 export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
@@ -83,6 +85,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
   const [isFocusChatInput, setIsFocusChatInput] = React.useState(false);
 
   const threadId = selectedAgent?.agent_name || 'Agent';
+
+  const isAllowChat = useMemo(() => {
+    if(selectedAgent) {
+      return Number(selectedAgent?.wallet_balance) > 0;
+    }
+
+    return false;
+  }, [selectedAgent]);
 
   useEffect(() => {
     chatAgentDatabase.loadChatItems(threadId).then((items) => {
@@ -389,6 +399,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       setIsFocusChatInput,
       onRetryErrorMessage,
       isStopReceiving,
+      isAllowChat,
     };
   }, [
     messages,
@@ -404,6 +415,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
     setIsFocusChatInput,
     onRetryErrorMessage,
     isStopReceiving,
+    isAllowChat,
   ]);
 
   return (

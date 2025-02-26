@@ -1,4 +1,4 @@
-import {Flex} from '@chakra-ui/react';
+import {Flex, Text} from '@chakra-ui/react';
 import React from 'react';
 import AutosizeTextarea from 'react-autosize-textarea';
 import {useChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
@@ -18,6 +18,7 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
     chatInputRef,
     isFocusChatInput,
     isStopReceiving,
+    isAllowChat,
   } = useChatAgentProvider();
 
   const [message, setMessage] = React.useState('');
@@ -32,6 +33,10 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
       setMessage('');
     }
   };
+
+  const handleDeposit = () => {
+    alert('Deposit')
+  }
 
   return (
     <Flex
@@ -83,10 +88,10 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
               const value = event?.target?.value || '';
               setMessage(value);
             }}
-            placeholder={`Write a message...`}
+            placeholder={isAllowChat ? `Write a message...` : ''}
             // onEnter
             onKeyDown={(event) => {
-              if (event.key === 'Enter') {
+              if (event.key === 'Enter' && isAllowChat) {
                 event.preventDefault();
                 event.stopPropagation();
                 onSendMessage(message);
@@ -114,7 +119,7 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
             backgroundColor="#FFF"
             opacity={isSending || isStopReceiving ? 0.2 : 1}
             onClick={() => {
-              if (isSending || isStopReceiving) {
+              if (isSending || isStopReceiving || !isAllowChat) {
                 return;
               }
               if (isSend) {
@@ -135,6 +140,18 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
               />
             </svg>
           </Flex>
+          {
+            !isAllowChat && (
+              <Flex
+                position="absolute"
+                left={'24px'}
+                top={'16px'}
+              >
+                <Text as={"span"} fontSize={"16px"} fontWeight={400} textDecoration={"underline"} cursor={'pointer'} onClick={handleDeposit}>Deposit</Text>&nbsp;
+                <Text as={"span"} fontSize={"16px"} fontWeight={400} opacity={0.7}>to chat (cost 1 EAI/chat)</Text>
+              </Flex>
+            )
+          }
         </Flex>
         {btnSubmit && btnSubmit}
       </Flex>
