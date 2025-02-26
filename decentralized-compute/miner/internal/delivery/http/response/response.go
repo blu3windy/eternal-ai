@@ -175,10 +175,7 @@ func (h *restHandlerTemplate) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	// Log the request details
 	var req map[string]interface{}
-	if err := json.Unmarshal(requestBody, &req); err != nil {
-		h.httpResp.RespondWithError(w, http.StatusInternalServerError, Error, err)
-		return
-	}
+	json.Unmarshal(requestBody, &req)
 
 	logger.AtLog.Logger.Info("request",
 		zap.String("method", r.Method),
