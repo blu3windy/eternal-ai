@@ -1,8 +1,8 @@
-import { Flex } from '@chakra-ui/react'
-import NodeCard from '../../components/node-card'
-import { useNodes } from '../../stores/useNodes'
-import CardBase from '../../components/card-base';
+import { Flex } from '@chakra-ui/react';
 import SVG from 'react-inlinesvg';
+import { useNodes } from '../../stores/useNodes';
+import CardBase from '../../components/card-base';
+import NodeCard from '../../components/node-card';
 import styles from './styles.module.scss';
 
 const NodeList = () => {

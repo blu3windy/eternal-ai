@@ -29,7 +29,7 @@ export type Device = {
   gpu_cores: number;
 }
 
-export type EarningsNode = {
+export type Node = {
   id: string;
   name: string;
   image: string;

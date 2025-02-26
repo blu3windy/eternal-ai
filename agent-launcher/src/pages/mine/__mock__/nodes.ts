@@ -1,6 +1,6 @@
-import type { EarningsNode } from '../../../types/data';
+import type { Node } from '../../../types/data';
 
-export const MOCK_NODES: EarningsNode[] = [
+export const MOCK_NODES: Node[] = [
   {
     id: "1",
     name: "node-1242",

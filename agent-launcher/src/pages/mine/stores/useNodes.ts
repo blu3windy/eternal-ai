@@ -1,14 +1,14 @@
-import { type EarningsNode } from "../../../types/data";
+import { type Node } from "../../../types/data";
 import { create } from "zustand";
 
 type UseNodesState = {
-  items: EarningsNode[];
-  selectedItem: EarningsNode | null;
+  items: Node[];
+  selectedItem: Node | null;
 }
 
 type UseNodesActions = {
-  setItems: (nodes: EarningsNode[]) => void;
-  setSelectedItem: (node: EarningsNode | null) => void;
+  setItems: (nodes: Node[]) => void;
+  setSelectedItem: (node: Node | null) => void;
 }
 
 export const useNodes = create<UseNodesState & UseNodesActions>((set) => ({
