@@ -3,6 +3,7 @@ import HomeAuthen from "./Home";
 import { Wallet } from "ethers";
 import EaiSigner from "../../helpers/signer";
 import sleep from "@utils/sleep.ts";
+import AuthenLoading from "@pages/authen/AuthenLoading";
 
 interface AuthContextType {
    signer: Wallet | undefined;
@@ -58,7 +59,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 
    const renderContent = () => {
       if (initLoading) {
-         return <div>Loading...</div>;
+         return <AuthenLoading/>;
       } else {
          if (signer) {
             return children;
