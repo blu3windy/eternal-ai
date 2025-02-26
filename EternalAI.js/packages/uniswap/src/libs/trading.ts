@@ -126,7 +126,7 @@ export async function executeTrade(
 
     const methodParameters = SwapRouter.swapCallParameters([trade], options)
 
-    const tx = {
+    const txs = {
         data: methodParameters.calldata,
         to: SWAP_ROUTER_ADDRESS,
         value: methodParameters.value,
@@ -137,9 +137,9 @@ export async function executeTrade(
         gasLimit: 1000000,
     }
 
-    console.log(`Execute tx swap`, JSON.stringify(tx, null, 4))
+    console.log(`Execute tx swap`, JSON.stringify(txs, null, 4))
 
-    const state = await sendTransaction(tx)
+    const {state, tx} = await sendTransaction(txs)
 
     return {state, tx}
 }

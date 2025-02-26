@@ -87,6 +87,8 @@ async function sendTransactionViaWallet(
 
     // Transaction was successful if status === 1
     if (receipt) {
+        console.log("receipt tx", receipt.transactionHash)
+
         return {state: TransactionState.Sent, tx: receipt}
     } else {
         return {state: TransactionState.Failed, tx: null}
