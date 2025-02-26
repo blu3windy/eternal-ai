@@ -1,12 +1,10 @@
-import {Box, Center, Flex, Grid, Image, SimpleGrid, Text} from '@chakra-ui/react';
+import {Flex, Grid, Image, SimpleGrid, Text} from '@chakra-ui/react';
 import React, {useContext} from 'react';
-import Jazzicon, {jsNumberForAddress} from 'react-jazzicon';
 import s from './styles.module.scss';
 import {IAgentToken} from "../../../../services/api/agents-token/interface.ts";
 import {AgentContext} from "../../provider";
-import Avatar from "../../../../components/Avatar";
 import {DefaultAvatar} from "../../../../components/DefaultAvatar";
-import {addressFormater, compareString} from "../../../../utils/string.ts";
+import {compareString} from "../../../../utils/string.ts";
 import {FilterChains} from "../constants.ts";
 import {formatCurrency} from "../../../../utils/format.ts";
 import cs from "clsx";
@@ -21,10 +19,6 @@ interface IProps {
 
 const AgentItem = ({ token, isAllChain }: IProps) => {
   const { selectedAgent, setSelectedAgent } = useContext(AgentContext);
-
-  console.log('stephen: token', token)
-  console.log('stephen: selectedAgent', selectedAgent)
-  console.log('stephen: ================================================')
 
   const [showFullText, setShowFullText] = React.useState(false);
 

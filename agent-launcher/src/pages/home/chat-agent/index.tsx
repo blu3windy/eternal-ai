@@ -57,9 +57,9 @@ function App() {
          <button onClick={handleDeletePassword}>Delete Password</button>
          <p>Retrieved Password: {retrievedPassword}</p>
        </div>
-{/*       <ChatAgentProvider>
+       <ChatAgentProvider>
          <ChatBox />
-       </ChatAgentProvider>*/}
+       </ChatAgentProvider>
      </Box>
    );
 }

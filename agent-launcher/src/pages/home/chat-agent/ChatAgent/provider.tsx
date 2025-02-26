@@ -17,6 +17,8 @@ import {ChatCompletionPayload, IChatMessage} from "../../../../services/api/agen
 import AgentAPI from "../../../../services/api/agent";
 import {AgentContext} from "@pages/home/provider";
 import chatAgentDatabase, {PersistedMessageType} from "../../../../database/chatAgentDatabase.ts";
+import {Wallet} from "ethers";
+import { JsonRpcProvider } from "@ethersproject/providers";
 
 type IChatAgentProviderContext = {
   isStopReceiving?: boolean;
@@ -67,8 +69,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
   // const { wallet } = useAppAuthenticated();
   // const { latestAddress } = useWagmiContext();
 
-  const wallet = null;
+  const id = selectedAgent?.id;
+
+  const wallet = new Wallet("0x5776efc21d0e98afd566d3cb46e2eb1ccd7406f4feaee9c28b0fcffc851cc8b3", new JsonRpcProvider("https://eth.llamarpc.com"));
   const latestAddress = '0x12345678';
+
+  console.log('stephen: wallet', wallet);
 
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [messages, setMessages] = useState<IChatMessage[]>([]);
