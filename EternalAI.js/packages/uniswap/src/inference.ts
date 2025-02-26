@@ -292,7 +292,7 @@ export class InferenceProcessing {
     }
 }
 
-export class LocalInference {
+export class APIInference {
     host: string
     api_key: string
 
@@ -313,6 +313,9 @@ export class LocalInference {
                 new LLMInferMessage(SYSTEM_PROMPT, "system"),
             ]
             data.model = model
+            if (this.host.includes("openai")) {
+                delete data.max_token
+            }
             const url = this.host + "/chat/completions";
             console.log(`URL call ${url}`)
             const response = await fetch(url, {

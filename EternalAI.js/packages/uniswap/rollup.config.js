@@ -3,31 +3,34 @@ const commonjs = require('@rollup/plugin-commonjs');
 const typescript = require('@rollup/plugin-typescript');
 const {terser} = require('rollup-plugin-terser');
 const pkg = require('./package.json');
-
-const json = require('@rollup/plugin-json');
-const builtins = require('rollup-plugin-node-builtins');
-const globals = require('rollup-plugin-node-globals');
+import json from '@rollup/plugin-json';
+import nodePolyfills from 'rollup-plugin-polyfill-node';
+import replace from '@rollup/plugin-replace';
 
 module.exports = {
-  input: 'src/index.ts',
-  output: [
-    {
-      file: 'dist/bundle.iife.js',
-      format: 'iife',
-      name: 'UniSwap',
-    },
-  ],
-  plugins: [
-    resolve({
-      browser: true,
-      preferBuiltins: true,
-    }),
-    commonjs(),
-    globals(),
-    builtins(),
-    typescript({ tsconfig: './build.tsconfig.json' }),
-    terser(),
-    json(),
-  ],
-  external: Object.keys(pkg.peerDependencies || {}),
+    input: 'src/index.ts',
+    output: [
+        {
+            file: 'dist/bundle.iife.js',
+            format: 'iife',
+            name: 'UniSwap',
+            sourcemap: true
+        }
+    ],
+    plugins: [
+        resolve(),
+        commonjs(),
+        typescript({tsconfig: './build.tsconfig.json', sourceMap: true}),
+        terser(),
+        json(),
+        nodePolyfills(),
+        replace({
+            'process.env.NODE_ENV': JSON.stringify('production'),
+            'process.env.PRIVATE_KEY': JSON.stringify('production'),
+            'process.env.AGENT_ADDRESS': JSON.stringify('production'),
+            'process.env.API_KEY': JSON.stringify('production'),
+            preventAssignment: true,
+        }),
+    ],
+    external: Object.keys(pkg.peerDependencies || {}),
 };

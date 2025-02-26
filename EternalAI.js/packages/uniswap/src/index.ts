@@ -1,5 +1,5 @@
 import {BSC_CHAIN_ID, ETH_CHAIN_ID, getRPC, RPC_URL, V1, V2} from "./const";
-import {AgentInference, InferenceProcessing, LocalInference} from "./inference";
+import {AgentInference, InferenceProcessing, APIInference} from "./inference";
 import {sleep} from "./utils";
 import {SwapReq, UniSwapAI} from "./swap";
 import {TransactionState} from "@/libs/providers";
@@ -28,6 +28,7 @@ export const call_uniswap = async (private_key: string, chain_id_swap: string, c
         return {state, tx};
         // return {state: null, tx: null}
     } catch (e) {
+        console.log(e)
         return {state: null, tx: null}
     }
 }
@@ -83,13 +84,13 @@ export const process_infer = async (chain_id: string, tx_hash: string, rpc: stri
     return result
 }
 
-export const create_local_infer = async (host: string, prompt: string, model: string, private_key: string, chain_id_swap: string, api_key: string): Promise<any> => {
-    const local_infer = new LocalInference(host);
-    local_infer.set_api_key(api_key)
+export const create_api_infer = async (host: string, prompt: string, model: string, private_key: string, chain_id_swap: string, api_key: string): Promise<any> => {
+    const api_infer = new APIInference(host);
+    api_infer.set_api_key(api_key)
     try {
-        const resp = await local_infer.create_infer(prompt, model)
+        const resp = await api_infer.create_infer(prompt, model)
         console.log(JSON.stringify(resp, null, 4));
-        const content_response = await local_infer.process_output(resp)
+        const content_response = await api_infer.process_output(resp)
         console.log(JSON.stringify(content_response, null, 4));
         if (content_response) {
             const {state, tx} = await call_uniswap(private_key, chain_id_swap, content_response);
@@ -144,14 +145,14 @@ export const uni_swap_ai = async (command: string, args: any) => {
         case "models-infer": {
             break;
         }
-        case "local-infer": {
-            const {state, tx} = await create_local_infer(
+        case "api-infer": {
+            const {state, tx} = await create_api_infer(
                 args.host || 'https://api.eternalai.org/v1',
                 args.prompt,
                 args.model,
                 args.private_key || process.env.PRIVATE_KEY,
                 args.chain_id_swap || ETH_CHAIN_ID || "0x1",
-                args.api_key || "ram1u19ycmwxlx455chxh67dpyb4q23nibltygrwlqed5lz1",
+                args.api_key || process.env.API_KEY,
             )
             if (state != null) {
                 console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
