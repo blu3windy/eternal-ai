@@ -129,7 +129,7 @@ export class UniSwapAI {
 
         try {
             const trade = await createTrade()
-            const {state, tx} = await executeTrade(trade, newWallet)
+            const {state, tx} = await executeTrade(trade)
             return {state, tx}
         } catch (e) {
             console.log(`Error executeTrade ${e}`)

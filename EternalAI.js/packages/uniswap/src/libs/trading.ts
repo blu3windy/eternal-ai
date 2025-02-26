@@ -26,7 +26,7 @@ import {
 import {MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS} from './constants'
 import {getPoolInfo, getPoolInfoByToken} from './pool'
 import {
-    getProvider,
+    getProvider, getWallet,
     getWalletAddress,
     sendTransaction,
     TransactionState,
@@ -100,9 +100,10 @@ export async function createTrade(): Promise<TokenTrade> {
 }
 
 export async function executeTrade(
-    trade: TokenTrade, wallet: ethers.Wallet
+    trade: TokenTrade
 ): Promise<any> {
     const walletAddress = getWalletAddress()
+    const wallet = getWallet();
     const provider = getProvider()
 
     if (!walletAddress || !provider) {

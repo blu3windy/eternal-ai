@@ -90,8 +90,8 @@ export const create_agent_infer = async (private_key: string, chain_id: string, 
     }
     console.log("rpc", rpc)
     const agent_infer = new AgentInference()
-    // const tx_hash = await agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
-    const tx_hash = '0xf05832974c4b8b002e68029be724e72ac3cc88f6387df6632f6f5e426b439fc3';
+    const tx_hash = await agent_infer.create_inference_agent(private_key, agent_address, prompt, rpc)
+    // const tx_hash = '0xf05832974c4b8b002e68029be724e72ac3cc88f6387df6632f6f5e426b439fc3';
     console.log(`infer tx_hash: ${tx_hash}`)
 
     const worker_hub_address = await agent_infer.get_worker_hub_address(agent_address, rpc)
@@ -116,7 +116,7 @@ export const uni_swap_ai = async (command: string, args: any) => {
                 args.agent_address || process.env.AGENT_ADDRESS,
                 args.prompt
             )
-            console.log(`swap tx ${tx} state ${state}`);
+            console.log(`swap tx ${tx.hash} state ${state}`);
         }
         case "models-infer": {
             break;
