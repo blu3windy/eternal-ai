@@ -32,5 +32,5 @@ module.exports = {
             preventAssignment: true,
         }),
     ],
-    external: Object.keys(pkg.peerDependencies || {}),
+    external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
 };
