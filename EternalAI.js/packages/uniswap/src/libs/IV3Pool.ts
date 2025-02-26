@@ -1,4 +1,4 @@
-{
+export const IV3PoolABI = {
   "_format": "hh-sol-artifact-1",
   "contractName": "IV3Pool",
   "sourceName": "contracts/interfaces/IV3Pool.sol",

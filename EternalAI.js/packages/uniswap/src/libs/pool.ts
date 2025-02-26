@@ -6,7 +6,7 @@ import {CurrentConfig} from './config'
 import {POOL_FACTORY_CONTRACT_ADDRESS} from './constants'
 import {getProvider} from './providers'
 import {Token} from "@uniswap/sdk-core";
-import IV3PoolABI from "./IV3Pool.json"
+import {IV3PoolABI} from "./IV3Pool"
 
 interface PoolInfo {
     token0: string
