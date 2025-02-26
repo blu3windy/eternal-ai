@@ -9,7 +9,7 @@ export const zeroAddress = '0x0000000000000000000000000000000000000000';
 
 export const RPC_URL: { [key: string]: string } = {
     ETH_CHAIN_ID: "https://eth.llamarpc.com",
-    BSC_CHAIN_ID: "https://bsc.llamarpc.com/",
+    BSC_CHAIN_ID: "https://bsc-dataseed.binance.org/",
     BASE_CHAIN_ID: "https://base.llamarpc.com",
 }
 

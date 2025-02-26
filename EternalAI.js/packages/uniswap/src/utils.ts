@@ -7,15 +7,13 @@ export function stringToBytes(str: string): any {
     return encoder.encode(str);
 }
 
-export const poaMiddleware = (options: any) => {
-    return (next: any) => {
-        return async (payload: any) => {
-            if (payload.method === 'eth_sendTransaction' || payload.method === 'eth_call') {
-                console.log("------options", options)
-                const {from} = payload.params[0];
-                payload.params[0].chainId = options.chain_id;
-            }
-            return next(payload);
-        };
-    };
-};
+export const waitForTransactionReceipt = async (web3: any, txHash: string, timeout: number = 120, poll_latency: number = 0.1) => {
+    let receipt = null;
+    while (receipt === null) {
+        receipt = await web3.eth.getTransactionReceipt(txHash);
+        if (receipt === null) {
+            await new Promise(resolve => setTimeout(resolve, timeout * 1000));
+        }
+    }
+    return receipt;
+}

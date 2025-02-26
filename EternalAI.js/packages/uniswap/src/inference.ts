@@ -1,6 +1,5 @@
 import {AGENT_ABI, ETH_CHAIN_ID, IPFS, LIGHTHOUSE_IPFS, PROMPT_SCHEDULER_ABI, RPC_URL, WORKER_HUB_ABI} from "./const";
-import {poaMiddleware, stringToBytes} from "./utils";
-import {MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS} from "./libs/constants";
+import {stringToBytes, waitForTransactionReceipt} from "./utils";
 import {ethers} from "ethers";
 
 export class InferenceResponse {
@@ -36,37 +35,17 @@ export class LLMInferRequest {
     stream?: boolean = false
 }
 
-export const waitForTransactionReceipt = async (web3: any, txHash: string, timeout: number = 120, poll_latency: number = 0.1) => {
-    let receipt = null;
-    while (receipt === null) {
-        receipt = await web3.eth.getTransactionReceipt(txHash);
-        if (receipt === null) {
-            await new Promise(resolve => setTimeout(resolve, timeout * 1000));
-        }
-    }
-    return receipt;
-}
-
 export class AgentInference {
-    web3: any = null
+    web3_provider: any = null
     agent_address: string = ""
 
-    create_web3 = (rpc: string) => {
-        if (this.web3 == null) {
+    create_web3_provider = (rpc: string) => {
+        if (this.web3_provider == null) {
             if (rpc != "") {
-                this.web3 = new ethers.providers.JsonRpcProvider(rpc)
+                this.web3_provider = new ethers.providers.JsonRpcProvider(rpc)
             } else {
-                this.web3 = new ethers.providers.JsonRpcProvider(RPC_URL.ETH_CHAIN_ID)
+                this.web3_provider = new ethers.providers.JsonRpcProvider(RPC_URL.ETH_CHAIN_ID)
             }
-            this.web3.middleware = {
-                onion: {
-                    inject: async () => {
-                        // const chain_id = await this.web3.eth.getChainId();
-                        // this.web3.eth.sendTransaction = poaMiddleware({chain_id: chain_id})(this.web3.eth.sendTransaction);
-                    },
-                },
-            };
-            this.web3.middleware.onion.inject();
         }
     }
 
@@ -81,10 +60,10 @@ export class AgentInference {
 
     get_system_prompt = async (agent_address: string, rpc: string) => {
         console.log("Get system prompt from agent...")
-        this.create_web3(rpc)
-        if (await this.web3.getNetwork()) {
+        this.create_web3_provider(rpc)
+        if (await this.web3_provider.getNetwork()) {
             this.get_agent_address(agent_address)
-            const agent_contract = new ethers.Contract(this.agent_address, AGENT_ABI, this.web3)
+            const agent_contract = new ethers.Contract(this.agent_address, AGENT_ABI, this.web3_provider)
             try {
                 const system_prompt = await agent_contract.getSystemPrompt();
                 return system_prompt;
@@ -97,9 +76,9 @@ export class AgentInference {
     }
 
     get_worker_hub_address = async (agent_address: string, rpc: string) => {
-        this.create_web3(rpc)
+        this.create_web3_provider(rpc)
         this.get_agent_address(agent_address)
-        const agent_contract = new ethers.Contract(this.agent_address, AGENT_ABI, this.web3)
+        const agent_contract = new ethers.Contract(this.agent_address, AGENT_ABI, this.web3_provider)
         return await agent_contract.getPromptSchedulerAddress()
     }
 
@@ -108,14 +87,15 @@ export class AgentInference {
         if (!private_key) {
             throw new Error("Private key missing");
         }
-        this.create_web3(rpc)
-        if (await this.web3.getNetwork()) {
+        this.create_web3_provider(rpc)
+        if (await this.web3_provider.getNetwork()) {
             this.get_agent_address(agent_address);
             console.log("this.agent_address", this.agent_address)
-            const account = new ethers.Wallet(private_key, this.web3)
-            const account_address = account.address
+            const wallet = new ethers.Wallet(private_key, this.web3_provider)
+            const account_address = wallet.address
+            // console.log(await wallet.getBalance())
 
-            const agent_contract = new ethers.Contract(this.agent_address, AGENT_ABI, this.web3)
+            const agent_contract = new ethers.Contract(this.agent_address, AGENT_ABI, wallet)
             const system_prompt = await this.get_system_prompt(agent_address, rpc)
             // console.log(`system_prompt: ${system_prompt}`)
 
@@ -126,26 +106,25 @@ export class AgentInference {
             ];
 
             const json_request = JSON.stringify(req)
-            const func = agent_contract.prompt(stringToBytes(json_request));
-            const nonce = await this.web3.eth.getTransactionCount(account.address);
+            const prompt_data = stringToBytes(json_request);
+            const call_data = agent_contract.interface.encodeFunctionData('prompt', [prompt_data]);
+            const [nonce, gasLimit, gasPrice] = await Promise.all([
+                this.web3_provider.getTransactionCount(wallet.address),
+                agent_contract.estimateGas.prompt(prompt_data),
+                wallet.provider.getGasPrice()
+            ])
             const transaction = {
                 from: account_address,
                 to: this.agent_address,
-                gas: await func.estimateGas(),
-                // gaPrice: this.web3.utils.toWei("1", "gwei"),
+                gasLimit: gasLimit,
+                gasPrice: gasPrice,
                 nonce: nonce,
-                data: func.encodeABI(),
-                maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-                maxFeePerGas: MAX_FEE_PER_GAS
+                data: call_data,
             };
 
-            // console.log(transaction)
+            const tx = await wallet.sendTransaction(transaction);
 
-            const signedTransaction = await this.web3.eth.accounts.signTransaction(transaction, private_key);
-            console.log("----------------------")
-            const tx = await this.web3.eth.sendSignedTransaction(signedTransaction.rawTransaction);
-
-            const tx_receipt = await waitForTransactionReceipt(this.web3, tx.transactionHash);
+            const tx_receipt = await waitForTransactionReceipt(this.web3_provider, tx.hash);
             console.log(`Transaction status: ${tx_receipt.status}`)
 
             console.log(`Transaction hash: ${tx_receipt.transactionHash}`)
@@ -158,15 +137,15 @@ export class AgentInference {
 }
 
 export class InferenceProcessing {
-    web3: any = null
+    web3_provider: any = null
     workerhub_address: string = ""
 
-    create_web3 = (rpc: string) => {
-        if (this.web3 == null) {
+    create_web3_provider = (rpc: string) => {
+        if (this.web3_provider == null) {
             if (rpc != "") {
-                this.web3 = new ethers.providers.JsonRpcProvider(rpc)
+                this.web3_provider = new ethers.providers.JsonRpcProvider(rpc)
             } else {
-                this.web3 = new ethers.providers.JsonRpcProvider(RPC_URL.ETH_CHAIN_ID)
+                this.web3_provider = new ethers.providers.JsonRpcProvider(RPC_URL.ETH_CHAIN_ID)
             }
         }
     }
@@ -181,15 +160,15 @@ export class InferenceProcessing {
     }
 
     get_assignments_by_inference = async (worker_hub_address: string, inference_id: string, rpc: string) => {
-        this.create_web3(rpc);
-        if (await this.web3.eth.net.isListening()) {
+        this.create_web3_provider(rpc);
+        if (await this.web3_provider.eth.net.isListening()) {
             this.get_workerhub_address(worker_hub_address)
-            const worker_hub_contract = new this.web3.eth.Contract(WORKER_HUB_ABI, this.workerhub_address);
+            const worker_hub_contract = new this.web3_provider.eth.Contract(WORKER_HUB_ABI, this.workerhub_address);
             const assignments_info = await worker_hub_contract.methods.getAssignmentsByInference(inference_id).call()
             for (const assignment of assignments_info) {
                 const assignment_info = await worker_hub_contract.methods.getAssignmentInfo(assignment).call()
                 const output = assignment_info[7]
-                const bytesData = this.web3.utils.hexToBytes(output);
+                const bytesData = this.web3_provider.utils.hexToBytes(output);
                 if (bytesData.length != 0) {
                     const result = await this.process_output_to_infer_response(bytesData);
                     if (result) {
@@ -207,11 +186,11 @@ export class InferenceProcessing {
     }
 
     get_inference_by_inference_id = async (worker_hub_address: string, inference_id: number, rpc: string) => {
-        this.create_web3(rpc);
-        if (await this.web3.getNetwork()) {
+        this.create_web3_provider(rpc);
+        if (await this.web3_provider.getNetwork()) {
             this.get_workerhub_address(worker_hub_address)
 
-            const contract = new ethers.Contract(this.workerhub_address, PROMPT_SCHEDULER_ABI, this.web3);
+            const contract = new ethers.Contract(this.workerhub_address, PROMPT_SCHEDULER_ABI, this.web3_provider);
             try {
                 const inference_info = await contract.getInferenceInfo(inference_id)
                 const output = inference_info[10]
@@ -269,17 +248,17 @@ export class InferenceProcessing {
     }
 
     get_infer_id = async (worker_hub_address: string, tx_hash_hex: string, rpc: string) => {
-        this.create_web3(rpc);
-        if (await this.web3.getNetwork()) {
+        this.create_web3_provider(rpc);
+        if (await this.web3_provider.getNetwork()) {
             console.log(`Get infer Id from tx ${tx_hash_hex}`)
             this.get_workerhub_address(worker_hub_address);
-            const tx_receipt = await this.web3.getTransactionReceipt(tx_hash_hex);
+            const tx_receipt = await this.web3_provider.getTransactionReceipt(tx_hash_hex);
             if (!tx_receipt || tx_receipt.status != 1) {
                 console.log("Transaction receipt not found.")
             } else {
                 const logs = tx_receipt.logs;
                 if (logs.length > 0) {
-                    const contract = new ethers.Contract(this.workerhub_address, WORKER_HUB_ABI, this.web3);
+                    const contract = new ethers.Contract(this.workerhub_address, WORKER_HUB_ABI, this.web3_provider);
                     for (const log of logs) {
                         try {
                             const iface = new ethers.utils.Interface(WORKER_HUB_ABI)
