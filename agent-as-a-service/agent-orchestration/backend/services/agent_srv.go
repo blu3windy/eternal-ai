@@ -1247,59 +1247,67 @@ func (s *Service) AnalyseSearchResults(baseModel string, systemPrompt string, qu
 	batchSize := 5
 	start := 0
 	analyzeResult := ""
-	for {
-		end := start + batchSize
-		if start >= len(searchedResult) {
-			break
-		}
-		if end >= len(searchedResult) {
-			end = len(searchedResult)
-		}
-		searchResult := ""
-		for _, item := range searchedResult[start:end] {
-			searchResult = searchResult + item + "\n\n"
-		}
-		url := s.conf.AgentOffchainChatUrl
-		if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
-			url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
-		}
-
-		generateQueryPrefix := "Act as a critical information analyst, skilled in extracting only the most essential insights from search results.\n\n## Task:\nAnalyze the provided search results and extract only the most critical insights directly relevant to the given question.\n\n## Instructions:\n- Strictly extract only essential information. No introductions, summaries, or extra context—only the key insights.\n- Ensure accuracy. Verify time, location, and context before including any insight.\n- Be concise and precise. Remove redundant details, filler content, and tangential information.\n- No assumptions or external knowledge. Only use information explicitly stated in the search results.\n- Maintain neutrality and clarity. Present insights objectively without speculation.\n\n## Input:\nQuestion: %v\nSearch Results: %v\n\n## Response Format (Strictly Follow This):\n- Directly list the critical insights only—no introductions or explanations.\n- If multiple key insights exist, format them as bullet points.\n- Each point should be as concise as possible while preserving meaning.\n\n## Example Output:\n- [Critical insight 1]\n- [Critical insight 2]\n- [Critical insight 3]\n"
-		userPrompt := fmt.Sprintf(generateQueryPrefix, query, searchResult)
-		messages := []openai2.ChatCompletionMessage{
-			{
-				Role:    openai2.ChatMessageRoleSystem,
-				Content: systemPrompt,
-			},
-			{
-				Role:    openai2.ChatMessageRoleUser,
-				Content: userPrompt,
-			},
-		}
-
-		maxRetry := 10
-		messageCallLLM, _ := json.Marshal(&messages)
-		stringResp := ""
-		var err error
-		for i := 1; i <= maxRetry; i++ {
-			if i > 1 {
-				time.Sleep(time.Second)
+	countRequest := len(searchedResult) / batchSize
+	if len(searchedResult)%batchSize != 0 {
+		countRequest++
+	}
+	listAnalyzeResult := make([]string, countRequest)
+	wg := sync.WaitGroup{}
+	wg.Add(countRequest)
+	for i := 0; i < countRequest; i++ {
+		go func(index int) {
+			defer wg.Done()
+			start = index * batchSize
+			end := start + batchSize
+			if end > len(searchedResult) {
+				end = len(searchedResult)
+			}
+			searchResult := ""
+			for _, item := range searchedResult[start:end] {
+				searchResult = searchResult + item + "\n\n"
+			}
+			url := s.conf.AgentOffchainChatUrl
+			if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
+				url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 			}
 
-			stringResp, err = s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{
-				"temperature": 0.7,
-				"max_tokens":  4096,
-			})
-			if err != nil || stringResp == "" {
-				continue
+			generateQueryPrefix := "Act as a critical information analyst, skilled in extracting only the most essential insights from search results.\n\n## Task:\nAnalyze the provided search results and extract only the most critical insights directly relevant to the given question.\n\n## Instructions:\n- Strictly extract only essential information. No introductions, summaries, or extra context—only the key insights.\n- Ensure accuracy. Verify time, location, and context before including any insight.\n- Be concise and precise. Remove redundant details, filler content, and tangential information.\n- No assumptions or external knowledge. Only use information explicitly stated in the search results.\n- Maintain neutrality and clarity. Present insights objectively without speculation.\n\n## Input:\nQuestion: %v\nSearch Results: %v\n\n## Response Format (Strictly Follow This):\n- Directly list the critical insights only—no introductions or explanations.\n- If multiple key insights exist, format them as bullet points.\n- Each point should be as concise as possible while preserving meaning.\n\n## Example Output:\n- [Critical insight 1]\n- [Critical insight 2]\n- [Critical insight 3]\n"
+			userPrompt := fmt.Sprintf(generateQueryPrefix, query, searchResult)
+			messages := []openai2.ChatCompletionMessage{
+				{
+					Role:    openai2.ChatMessageRoleSystem,
+					Content: systemPrompt,
+				},
+				{
+					Role:    openai2.ChatMessageRoleUser,
+					Content: userPrompt,
+				},
 			}
-			break
-		}
-		if len(stringResp) == 0 {
-			return "", fmt.Errorf("error when try get analyze search result")
-		}
-		analyzeResult = analyzeResult + stringResp + "\n"
-		start = end
+
+			maxRetry := 10
+			messageCallLLM, _ := json.Marshal(&messages)
+			stringResp := ""
+			var err error
+			for i := 1; i <= maxRetry; i++ {
+				if i > 1 {
+					time.Sleep(time.Second)
+				}
+
+				stringResp, err = s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{
+					"temperature": 0.7,
+					"max_tokens":  4096,
+				})
+				if err != nil || stringResp == "" {
+					continue
+				}
+				break
+			}
+			listAnalyzeResult[index] = stringResp
+		}(i)
+	}
+	wg.Wait()
+	for _, result := range listAnalyzeResult {
+		analyzeResult = analyzeResult + result + "\n"
 	}
 	return analyzeResult, nil
 }
