@@ -3,7 +3,7 @@ import SVG from 'react-inlinesvg';
 import ConfigInfoCard from '../../components/config-info-card';
 import { useNodes } from '../../stores/useNodes';
 import styles from './styles.module.scss';
-import { truncateAddress } from '../../../../utils/data';
+import { formatNumber, truncateAddress } from '../../../../utils/data';
 const NodeConfigInfo = () => {
   const selectedNode = useNodes(state => state.selectedItem);
 
@@ -62,7 +62,7 @@ const NodeConfigInfo = () => {
             <Flex width={"100%"} padding={'8.5px 0'} justifyContent={'space-between'} alignItems={'center'}>
               <p>Processing tasks</p>
               <a className={styles.right} href={`https://etherscan.io/address/${selectedNode?.onchain_data.address}`} target="_blank" rel="noreferrer">
-                <span className={styles.right_text}>{selectedNode?.onchain_data.processing_tasks}</span>
+                <span className={styles.right_text}>{formatNumber(selectedNode?.onchain_data.processing_tasks || 0)}</span>
                 <span className={styles.right_icon}><SVG src='/icons/ic_20_arrow-top-right.svg' /></span>
               </a>
             </Flex>

@@ -2,6 +2,7 @@ import type { EarningsNode } from '../../../../types/data';
 import { useNodes } from '../../stores/useNodes';
 import CardBase from '../card-base';
 import styles from './styles.module.scss';
+import { formatNumber } from '../../../../utils/data';
 type Props = EarningsNode
 
 const UNSELECTED_STYLE = {
@@ -25,7 +26,7 @@ const NodeCard = ({ id, name, image, earnings, status }: Props) => {
       <div className={styles.card_imageWrapper} style={{ background: `url(${image}) 50% / cover no-repeat` }}>
       </div>
 
-      <h4 className={styles.card_earnings}>{earnings} EAI</h4>
+      <h4 className={styles.card_earnings}>{formatNumber(earnings)} EAI</h4>
 
       <p className={styles.card_status}>{status}</p>
     </CardBase>
