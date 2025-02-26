@@ -40,11 +40,6 @@ const ChatMessage = ({
   const [minutes, setMinutes] = useState<number | null>(0);
   const [seconds, setSeconds] = useState<number | null>(0);
 
-  console.log('stephen: message', message);
-  console.log('stephen: minutes', minutes);
-  console.log('stephen: seconds', seconds);
-  console.log('======')
-
   const calcTime = () => {
     const diff = dayjs.duration(dayjs(message?.updatedAt).diff(dayjs(message?.createdAt)));
     if (diff.milliseconds() <= 0) {
