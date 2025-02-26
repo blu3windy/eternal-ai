@@ -28,6 +28,7 @@ export const call_uniswap = async (private_key: string, chain_id_swap: string, c
         return {state, tx};
         // return {state: null, tx: null}
     } catch (e) {
+        console.log(e)
         return {state: null, tx: null}
     }
 }
