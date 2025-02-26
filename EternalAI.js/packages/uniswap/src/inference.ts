@@ -25,7 +25,7 @@ export class LLMInferMessage {
 
     constructor(content: string, role: string) {
         this.content = content
-        this.role = content
+        this.role = role
     }
 }
 
@@ -121,10 +121,9 @@ export class AgentInference {
                 nonce: nonce,
                 data: call_data,
             };
-
             const tx = await wallet.sendTransaction(transaction);
-
-            const tx_receipt = await waitForTransactionReceipt(this.web3_provider, tx.hash);
+            console.log(`send tx: ${tx.hash}`)
+            const tx_receipt = await waitForTransactionReceipt(this.web3_provider, tx.hash, 3);
             console.log(`Transaction status: ${tx_receipt.status}`)
 
             console.log(`Transaction hash: ${tx_receipt.transactionHash}`)
@@ -231,6 +230,7 @@ export class InferenceProcessing {
         } else {
             if (infer_reponse.storage == "lighthouse-filecoint" || infer_reponse.result_uri.includes("ipfs://")) {
                 const light_house = infer_reponse.result_uri.replace(IPFS, LIGHTHOUSE_IPFS)
+                console.log("light", light_house)
                 const light_house_reponse = await fetch(light_house)
                 if (light_house_reponse.ok) {
                     const result = await light_house_reponse.text();

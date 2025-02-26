@@ -7,10 +7,10 @@ export function stringToBytes(str: string): any {
     return encoder.encode(str);
 }
 
-export const waitForTransactionReceipt = async (web3: any, txHash: string, timeout: number = 120, poll_latency: number = 0.1) => {
+export const waitForTransactionReceipt = async (web3_provider: any, txHash: string, timeout: number = 120, poll_latency: number = 0.1) => {
     let receipt = null;
     while (receipt === null) {
-        receipt = await web3.eth.getTransactionReceipt(txHash);
+        receipt = await web3_provider.getTransactionReceipt(txHash);
         if (receipt === null) {
             await new Promise(resolve => setTimeout(resolve, timeout * 1000));
         }
