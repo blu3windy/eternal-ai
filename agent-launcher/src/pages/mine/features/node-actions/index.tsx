@@ -5,7 +5,7 @@ import ButtonBase from '../../components/button-base'
 const NodeActions = () => {
   return (
     <Flex flexDirection="row" gap={'12px'}>
-      <ButtonBase primary icon={<SVG src='/icons/ic_24_coins.svg' />}>
+      <ButtonBase variant={'primary'} icon={<SVG src='/icons/ic_24_coins.svg' />}>
         Claim EAI
       </ButtonBase>
 

@@ -12,7 +12,7 @@ const NodeConfigInfo = () => {
       <Box flex={1} height={'100%'} alignSelf={'stretch'}>
         <ConfigInfoCard configName="Network">
           <Flex alignItems={'center'} gap={'24px'} padding={'12px 24px 0 24px'} height={'128px'}>
-            <Flex alignItems={'center'} justifyContent={'center'} width={'80px'} height={'80px'} style={{background: `url(${selectedNode?.network.image}) lightgray 50% / cover no-repeat`}}>
+            <Flex alignItems={'center'} justifyContent={'center'} width={'80px'} height={'80px'} style={{background: `url(${selectedNode?.network.image}) 50% / cover no-repeat`}}>
             </Flex>
 
             <Box>
@@ -31,7 +31,7 @@ const NodeConfigInfo = () => {
       <Box flex={1} height={'100%'} alignSelf={'stretch'}>
         <ConfigInfoCard configName="Model information">
           <Flex alignItems={'center'} gap={'24px'} padding={'0 24px'} height={'128px'}>
-            <Flex alignItems={'center'} justifyContent={'center'} width={'120px'} height={'120px'} borderRadius={'12px'} overflow={'cover'} style={{background: `url(${selectedNode?.model.image}) lightgray 50% / cover no-repeat`}}>
+            <Flex alignItems={'center'} justifyContent={'center'} width={'120px'} height={'120px'} borderRadius={'12px'} overflow={'cover'} style={{background: `url(${selectedNode?.model.image}) 50% / cover no-repeat`}}>
             </Flex>
 
             <Box>
@@ -47,17 +47,24 @@ const NodeConfigInfo = () => {
           <Flex flexDirection={'column'} gap={'4px'} height={'128px'}>
             <Flex width={"100%"} padding={'8.5px 0'} justifyContent={'space-between'} alignItems={'center'}>
               <p>Address</p>
-              <a href={`https://etherscan.io/address/${selectedNode?.onchain_data.address}`} target="_blank" rel="noreferrer"><span className={styles.link}>{truncateAddress(selectedNode?.onchain_data.address || '')}</span><span className={styles.externalLinkIcon}><SVG src='/icons/ic_20_external-link.svg' /></span></a>
+
+              <a className={styles.right} href={`https://etherscan.io/address/${selectedNode?.onchain_data.address}`} target="_blank" rel="noreferrer">
+                <span className={styles.right_text}>{truncateAddress(selectedNode?.onchain_data.address || '')}</span>
+                <span className={styles.right_icon}><SVG src='/icons/ic_20_arrow-top-right.svg' /></span>
+              </a>
             </Flex>
 
             <Flex width={"100%"} padding={'8.5px 0'} justifyContent={'space-between'} alignItems={'center'}>
               <p>ID</p>
-              <p>{selectedNode?.onchain_data.id}</p>
+              <p className={styles.right}>{selectedNode?.onchain_data.id}</p>
             </Flex>
 
             <Flex width={"100%"} padding={'8.5px 0'} justifyContent={'space-between'} alignItems={'center'}>
               <p>Processing tasks</p>
-              <a href={`https://etherscan.io/address/${selectedNode?.onchain_data.address}`} target="_blank" rel="noreferrer" className={styles.link}><span>{selectedNode?.onchain_data.processing_tasks}</span><span className={styles.externalLinkIcon}><SVG src='/icons/ic_20_external-link.svg' /></span></a>
+              <a className={styles.right} href={`https://etherscan.io/address/${selectedNode?.onchain_data.address}`} target="_blank" rel="noreferrer">
+                <span className={styles.right_text}>{selectedNode?.onchain_data.processing_tasks}</span>
+                <span className={styles.right_icon}><SVG src='/icons/ic_20_arrow-top-right.svg' /></span>
+              </a>
             </Flex>
           </Flex>
         </ConfigInfoCard>

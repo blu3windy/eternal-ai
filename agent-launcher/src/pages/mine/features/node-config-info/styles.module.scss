@@ -54,20 +54,25 @@
       font-style: normal;
       font-weight: 400;
       line-height: 150%; /* 27px */
+    }
 
-      &__right {
+    .right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      &_text {
         color: #000;
         font-size: 18px;
         font-style: normal;
         font-weight: 500;
         line-height: 150%; /* 27px */
       }
-    }
 
-    .externalLinkIcon {
-      width: 20px;
-      height: 20px;
+      &_icon {
+        width: 20px;
+        height: 20px;
+      }
     }
   }
-
 }

@@ -6,15 +6,17 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   icon?: React.ReactNode;
   losePaddingLeft?: boolean;
   losePaddingRight?: boolean;
-  primary?: boolean;
+  variant?: 'primary' | 'secondary' | 'plain';
+  size?: 'base' | 'lg' | 'md';
+  iconOnly?: boolean;
 }
 
-const ButtonBase = ({ icon, losePaddingLeft = false, losePaddingRight = false, primary = false, className, ...props }: Props) => {
+const ButtonBase = ({ icon, losePaddingLeft = false, losePaddingRight = false, variant = 'secondary', size = 'base', iconOnly = false, className, ...props }: Props) => {
   return (
-    <button className={cn(styles.button, className, {
+    <button className={cn(styles.button, styles[`button__${variant}`], styles[`button__${size}`], className, {
       [styles.button__losePaddingLeft]: losePaddingLeft,
       [styles.button__losePaddingRight]: losePaddingRight,
-      [styles.button__primary]: primary,
+      [styles.button__iconOnly]: iconOnly
     })} {...props}>
       {icon && <span className={styles.button_icon}>{icon}</span>}
 

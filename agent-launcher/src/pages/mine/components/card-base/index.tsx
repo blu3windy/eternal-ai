@@ -10,7 +10,7 @@ type Props = HTMLAttributes<HTMLDivElement> & {
   backgroundColor?: string;
 }
 
-const CardBase = ({ children, className, padding = '24px', borderRadius = '12px', borderWidth = '1px', borderColor = '#EFEFEF', backgroundColor = '#FAFAFA', ...props }: Props) => {
+const CardBase = ({ children, className, padding = '24px', borderRadius = '12px', borderWidth = '1px', borderColor = '#EFEFEF', backgroundColor = '#fff', ...props }: Props) => {
   return (
     <div className={styles.card} {...props} style={{
       '--real-padding': padding,

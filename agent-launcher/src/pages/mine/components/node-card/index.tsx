@@ -22,7 +22,7 @@ const NodeCard = ({ id, name, image, earnings, status }: Props) => {
     <CardBase className={styles.card} onClick={() => setSelectedItem(selectedItem )} {...(selectedItem?.id === id ? SELECTED_STYLE : UNSELECTED_STYLE)}>
       <h5 className={styles.card_name}>{name}</h5>
 
-      <div className={styles.card_imageWrapper} style={{ background: `url(${image}) lightgray 50% / cover no-repeat` }}>
+      <div className={styles.card_imageWrapper} style={{ background: `url(${image}) 50% / cover no-repeat` }}>
       </div>
 
       <h4 className={styles.card_earnings}>{earnings} EAI</h4>

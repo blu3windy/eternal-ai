@@ -4,20 +4,20 @@ export const MOCK_NODES: EarningsNode[] = [
   {
     id: "1",
     name: "node-1242",
-    image: "https://via.placeholder.com/150",
+    image: "/images/mocks/mac.png",
     earnings: 124.42,
     status: "EARNED",
     network: {
       id: "1",
       name: "network-1",
-      image: "https://via.placeholder.com/150",
+      image: "/images/mocks/arb.png",
       health_status: "HEALTHY",
       progress_status: "RUNNING",
     },
     model: {
       id: "1",
       name: "model-1",
-      image: "https://via.placeholder.com/150",
+      image: "/images/mocks/llama.png",
       memory: 2.32,
     },
     onchain_data: {
@@ -38,20 +38,20 @@ export const MOCK_NODES: EarningsNode[] = [
   {
     id: "2",
     name: "node-1242",
-    image: "https://via.placeholder.com/150",
+    image: "/images/mocks/mac.png",
     earnings: 124.42,
     status: "EARNED",
     network: {
       id: "1",
       name: "network-1",
-      image: "https://via.placeholder.com/150",
+      image: "/images/mocks/arb.png",
       health_status: "HEALTHY",
       progress_status: "RUNNING",
     },
     model: {
       id: "1",
       name: "model-1",
-      image: "https://via.placeholder.com/150",
+      image: "/images/mocks/llama.png",
       memory: 2.32,
     },
     onchain_data: {
