@@ -30,18 +30,15 @@ func NewObject(cnf *config.Config) (*InitObject, error) {
 				zap.String("chain", cnf.ChainID),
 				zap.Error(err),
 			)
-		} else {
-			// logger.GetLoggerInstanceFromContext(ctx).Info("chainFactory", zap.String("chain", cnf.ChainID))
 		}
 	}()
-
-	var miner port.IMiner
 
 	cm, err := interCommon.NewCommon(ctx, cnf)
 	if err != nil {
 		return nil, err
 	}
 
+	var miner port.IMiner
 	switch cnf.ChainID {
 	case pkg.CHAIN_BASE:
 		c, err := base_new.NewChain(ctx, cm)
@@ -49,7 +46,9 @@ func NewObject(cnf *config.Config) (*InitObject, error) {
 			return nil, err
 		}
 
-		sthub, err := gpu_manager.NewGpuManager(cm.GetStakingHubAddress(), cm.GetClient())
+		sthub, err := gpu_manager.NewGpuManager(
+			cm.GetStakingHubAddress(), cm.GetClient(),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -68,28 +67,24 @@ func NewObject(cnf *config.Config) (*InitObject, error) {
 	if err == nil {
 		miner.SetDB(sqldb)
 	} else {
-		logger.AtLog.Logger.Error("NewObject", zap.String("node_id", cnf.NodeID), zap.Error(err))
+		logger.AtLog.Logger.Error("NewObject",
+			zap.String("node_id", cnf.NodeID), zap.Error(err),
+		)
 	}
 
 	//migrate db
 	sqldb.Connect()
-
-	//create tables
 	defer sqldb.Close()
 
 	db := model.SuccessTask{}
-	_, err = sqldb.CreateTable(db.CreateDB())
-	if err != nil {
+	if _, err = sqldb.CreateTable(db.CreateDB()); err != nil {
 		logger.GetLoggerInstanceFromContext(ctx).Error("saveSuccessTask.CreateTable",
 			zap.Error(err),
 		)
 		return nil, err
 	}
 
-	return &InitObject{
-		Miner: miner,
-		//API:   api,
-	}, nil
+	return &InitObject{Miner: miner}, nil
 }
 
 func NewMiner(cnf *config.Config) (*InitObject, error) {
@@ -97,9 +92,5 @@ func NewMiner(cnf *config.Config) (*InitObject, error) {
 }
 
 func NewAPI(port int) (*InitObject, error) {
-	obj := new(InitObject)
-	api := usecase.NewAPI()
-	obj.API = api
-	obj.API.SetPort(port)
-	return obj, nil
+	return &InitObject{API: usecase.NewAPI(port)}, nil
 }

@@ -100,8 +100,6 @@ type IServer interface {
 }
 
 type IApi interface {
-	SetPort(port int)
-	GetPort() int
 	HealthCheck(ctx context.Context) (bool, error)
 	Chains(ctx context.Context) map[string]config.Chain
 	Information(ctx context.Context) (*model.DeviceInformation, error)

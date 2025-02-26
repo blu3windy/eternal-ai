@@ -4,21 +4,21 @@ import (
 	"flag"
 	"solo/internal/delivery/http"
 	"solo/internal/factory"
+	"solo/pkg/logger"
 	"strconv"
 )
 
 func main() {
-	port := ""
+	var port string
 	flag.StringVar(&port, "port", "9000", "Config file path")
 	flag.Parse()
 
 	portInt, err := strconv.Atoi(port)
 	if err != nil {
-		panic(err)
+		logger.AtLog.Fatal(err)
 	}
 
 	initObject, _ := factory.NewAPI(portInt)
-	api := initObject.API
-	_cmd, _ := http.NewHttp(api, api.GetPort())
-	_cmd.Run()
+	cmd, _ := http.NewHttp(initObject.API, portInt)
+	cmd.Run()
 }

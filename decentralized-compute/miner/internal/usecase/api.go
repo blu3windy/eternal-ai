@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"math/rand"
 	"os"
 	"solo/config"
@@ -19,6 +18,8 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -26,16 +27,8 @@ type api struct {
 	port int
 }
 
-func NewAPI() port.IApi {
-	return &api{}
-}
-
-func (a *api) SetPort(port int) {
-	a.port = port
-}
-
-func (a *api) GetPort() int {
-	return a.port
+func NewAPI(port int) port.IApi {
+	return &api{port: port}
 }
 
 func (a *api) HealthCheck(ctx context.Context) (bool, error) {

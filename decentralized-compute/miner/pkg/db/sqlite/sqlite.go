@@ -17,9 +17,7 @@ type SqliteDB struct {
 }
 
 func NewSqliteDB(dbName string) (*SqliteDB, error) {
-	s := new(SqliteDB)
-	s.dbName = dbName
-	return s, nil
+	return &SqliteDB{dbName: dbName}, nil
 }
 
 func (s *SqliteDB) GetDB() *sql.DB {
@@ -41,14 +39,12 @@ func (s *SqliteDB) Close() {
 func (s *SqliteDB) Connect() (*sql.DB, error) {
 	dbDir := fmt.Sprintf("%s/db", pkg.CurrentDir())
 	if _, err := os.Stat(dbDir); os.IsNotExist(err) {
-		err = os.MkdirAll(dbDir, 0755)
-		if err != nil {
+		if err = os.MkdirAll(dbDir, 0755); err != nil {
 			return nil, fmt.Errorf("failed to create db directory: %v", err)
 		}
 	}
 
-	dbName := fmt.Sprintf("%s/%s", dbDir, s.dbName)
-	db, err := sql.Open(DRIVER, dbName)
+	db, err := sql.Open(DRIVER, fmt.Sprintf("%s/%s", dbDir, s.dbName))
 	if err != nil {
 		return nil, err
 	}
@@ -67,11 +63,7 @@ sqlStmt := `
 	);`
 */
 func (s *SqliteDB) CreateTable(sqlStmt string) (interface{}, error) {
-	r, err := s.db.Exec(sqlStmt)
-	if err != nil {
-		return nil, err
-	}
-	return r, nil
+	return s.db.Exec(sqlStmt)
 }
 
 /*
@@ -79,12 +71,7 @@ func (s *SqliteDB) CreateTable(sqlStmt string) (interface{}, error) {
 "SELECT id, name, age FROM users"
 */
 func (s *SqliteDB) Query(sqlStmt string) (*sql.Rows, error) {
-	rows, err := s.db.Query(sqlStmt)
-	if err != nil {
-		return nil, err
-	}
-
-	return rows, nil
+	return s.db.Query(sqlStmt)
 }
 
 /*
@@ -98,10 +85,5 @@ func (s *SqliteDB) Insert(sqlStmt string, args ...any) (sql.Result, error) {
 	}
 	defer stmt.Close()
 
-	result, err := stmt.Exec(args...)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	return stmt.Exec(args...)
 }
