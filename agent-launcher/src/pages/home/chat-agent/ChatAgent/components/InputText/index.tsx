@@ -1,7 +1,9 @@
 import {Flex, Text} from '@chakra-ui/react';
-import React from 'react';
+import React, {useContext} from 'react';
 import AutosizeTextarea from 'react-autosize-textarea';
 import {useChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
+import useFundAgent from "../../../../../../providers/FundAgent/useFundAgent.ts";
+import {AgentContext} from "@pages/home/provider";
 
 interface IProps {
   inputRef?: any;
@@ -21,6 +23,9 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
     isAllowChat,
   } = useChatAgentProvider();
 
+  const { setDepositAgentID } = useFundAgent();
+  const { selectedAgent } = useContext(AgentContext);
+
   const [message, setMessage] = React.useState('');
 
   const isSend = React.useMemo(() => {
@@ -35,7 +40,7 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
   };
 
   const handleDeposit = () => {
-    alert('Deposit')
+    setDepositAgentID(selectedAgent?.agent_id);
   }
 
   return (

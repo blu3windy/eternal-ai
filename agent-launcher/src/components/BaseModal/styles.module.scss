@@ -1,0 +1,88 @@
+.modalContent {
+  background: #fff !important;
+  width: 100%;
+  padding: 32px !important;
+
+  :global {
+    .chakra-modal__body {
+      padding: 0;
+    }
+  }
+
+  &.supperSmall {
+    max-width: unset !important;
+    width: 240px !important;
+  }
+
+  &.small {
+    max-width: unset !important;
+    width: 600px;
+  }
+
+  &.normal {
+    max-width: unset !important;
+    width: 780px !important;
+  }
+
+  &.normal1 {
+    max-width: unset !important;
+    width: 720px !important;
+  }
+
+  &.extra {
+    max-width: unset !important;
+    width: 980px !important;
+  }
+
+  &.search {
+    max-width: 1440px !important;
+    width: 100% !important;
+  }
+}
+
+.modalHeader {
+  border: none;
+  padding: 0 !important;
+  margin-top: 40px;
+
+  &_title {
+    color: #000;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 120%;
+  }
+
+  &_titleDark {
+    color: #fff;
+  }
+
+  &_description {
+    color: #6b7280;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 160%;
+  }
+
+  &_closeBtn {
+    padding: 8px !important;
+    position: absolute !important;
+    right: 20px !important;
+    top: 20px !important;
+
+    :global(svg path) {
+      fill: white !important;
+      fill-opacity: 1 !important;
+    }
+
+    &:focus-visible {
+      outline: none;
+    }
+
+    &:hover {
+      transform: scale(1.1);
+      transition: all 0.3s;
+    }
+  }
+}

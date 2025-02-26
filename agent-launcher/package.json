@@ -32,11 +32,13 @@
     "react": "^18.2.0",
     "react-autosize-textarea": "^7.1.0",
     "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.5.2",
     "react-infinite-scroll-component": "^6.1.0",
     "react-jazzicon": "^1.0.4",
     "react-loading-skeleton": "^3.5.0",
     "react-markdown": "^10.0.0",
     "react-otp-input": "^3.1.1",
+    "react-qr-code": "^2.0.15",
     "react-router-dom": "^7.2.0",
     "react-scrollable-feed": "^2.0.2",
     "react-svg": "^16.3.0",
@@ -44,7 +46,8 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "sass": "^1.85.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",

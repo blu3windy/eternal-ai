@@ -4,6 +4,7 @@ import ChatAgent from "./chat-agent";
 import TradeAgent from "./trade-agent";
 import AgentProvider from "./provider";
 import AgentsList from "./list-agent";
+import FundAgentProvider from "../../providers/FundAgent";
 
 type Props = {};
 
@@ -11,15 +12,17 @@ const Home = (_props: Props) => {
   return (
     <MainLayout>
       <AgentProvider>
-        <Flex>
-          <SimpleGrid gridTemplateColumns={"500px 1fr"} flex={1} bg={"#FFF"}>
-            <AgentsList />
-            <ChatAgent />
-          </SimpleGrid>
-          <Box w={"353px"}>
-            <TradeAgent />
-          </Box>
-        </Flex>
+        <FundAgentProvider>
+          <Flex>
+            <SimpleGrid gridTemplateColumns={"500px 1fr"} flex={1} bg={"#FFF"}>
+              <AgentsList />
+              <ChatAgent />
+            </SimpleGrid>
+            <Box w={"353px"}>
+              <TradeAgent />
+            </Box>
+          </Flex>
+        </FundAgentProvider>
       </AgentProvider>
     </MainLayout>
   );

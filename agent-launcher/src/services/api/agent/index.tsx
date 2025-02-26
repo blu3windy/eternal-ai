@@ -1,10 +1,23 @@
-import {ChatCompletionPayload, ChatCompletionStreamHandler} from "./types.ts";
+import {AgentInfo, ChatCompletionPayload, ChatCompletionStreamHandler} from "./types.ts";
 import {IMAGINE_URL} from "../../../config.ts";
 import {THINK_TAG_REGEX} from "@components/CustomMarkdown/constants.ts";
 import {parseStreamAIResponse} from "@utils/api.ts";
 import {getClientHeaders} from "../http-client.ts";
+import CApiClient from "../agents-token/apiClient.ts";
 
 const AgentAPI = {
+  getAgent: async (agentID: string): Promise<AgentInfo | undefined> => {
+    // https://imagine-backend.dev.bvm.network/api/agent/671b39e41a57fd90616013e2
+    try {
+      const res: AgentInfo = await (new CApiClient()).api.get(
+        `${IMAGINE_URL}/api/agent/${agentID}`,
+      );
+      return res;
+    } catch (e) {
+      return undefined;
+    }
+  },
+
   chatStreamCompletions: async ({
     payload,
     streamHandlers,

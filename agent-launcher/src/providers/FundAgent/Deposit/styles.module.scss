@@ -1,0 +1,58 @@
+.addressBox {
+  line-break: anywhere;
+  display: flex;
+  padding: 0 16px;
+  height: 48px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 16px -6px rgba(0, 0, 0, 0.08);
+  width: 100%;
+
+  .address {
+    color: #000;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 140%;
+    /* 19.6px */
+    letter-spacing: 0.28px;
+  }
+
+  &_iconCopy {
+    cursor: pointer;
+    transition: all 0.2s ease-in;
+
+    &:hover {
+      opacity: 0.8;
+      transform: scale(1.1);
+    }
+  }
+}
+
+.wrapQR {
+  max-width: 200px;
+  background-color: white;
+  padding: 42px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  margin: auto;
+}
+
+.title {
+  text-align: left;
+  color: rgba(107, 114, 128, 1);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+  /* 19.6px */
+  letter-spacing: 0.28px;
+  width: 100%;
+
+  span {
+    font-weight: 600;
+    color: black;
+  }
+}
