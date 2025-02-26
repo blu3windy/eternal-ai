@@ -12,6 +12,7 @@ const main = async () => {
         .option('-k, --private_key <type>', 'private key',)
         .option('-a, --agent_address <type>', 'agent address',)
         .option('-c, --chain_id <type>', 'chain id',)
+        .option('-w, --chain_id_swap <type>', 'chain id swap',)
         .action(async (options, command) => {
             await uni_swap_ai(command.name(), options);
         });

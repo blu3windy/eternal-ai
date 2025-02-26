@@ -113,7 +113,7 @@ export const uni_swap_ai = async (command: string, args: any) => {
             const {state, tx} = await create_agent_infer(
                 args.private_key || process.env.PRIVATE_KEY,
                 args.chain_id || BSC_CHAIN_ID,
-                ETH_CHAIN_ID || "0x1",
+                args.chain_id_swap || ETH_CHAIN_ID || "0x1",
                 args.agent_address || process.env.AGENT_ADDRESS,
                 args.prompt
             )

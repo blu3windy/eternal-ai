@@ -37,7 +37,7 @@ export function getWallet(): ethers.Wallet {
 
 export async function sendTransaction(
     transaction: ethers.providers.TransactionRequest
-): Promise<TransactionState> {
+): Promise<{state: TransactionState, tx: any}> {
     if (transaction.value) {
         transaction.value = BigNumber.from(transaction.value)
     }
@@ -60,7 +60,7 @@ export function createWallet(): ethers.Wallet {
 // Transacting with a wallet extension via a Web3 Provider
 async function sendTransactionViaWallet(
     transaction: ethers.providers.TransactionRequest
-): Promise<TransactionState> {
+): Promise<{ state: TransactionState, tx: any }> {
     if (transaction.value) {
         transaction.value = BigNumber.from(transaction.value)
     }
@@ -69,7 +69,7 @@ async function sendTransactionViaWallet(
     let receipt = null
     const provider = getProvider()
     if (!provider) {
-        return TransactionState.Failed
+        return {state: TransactionState.Failed, tx: receipt}
     }
 
     while (receipt === null) {
@@ -87,8 +87,8 @@ async function sendTransactionViaWallet(
 
     // Transaction was successful if status === 1
     if (receipt) {
-        return TransactionState.Sent
+        return {state: TransactionState.Sent, tx: receipt}
     } else {
-        return TransactionState.Failed
+        return {state: TransactionState.Failed, tx: null}
     }
 }

@@ -114,7 +114,7 @@ export async function executeTrade(
     const tokenApproval = await getTokenTransferApproval(CurrentConfig.tokens.in)
 
     // Fail if transfer approvals do not go through
-    if (tokenApproval !== TransactionState.Sent) {
+    if (tokenApproval.state !== TransactionState.Sent) {
         return TransactionState.Failed, null
     }
 
@@ -178,12 +178,12 @@ async function getOutputQuote(route: Route<Currency, Currency>) {
 
 export async function getTokenTransferApproval(
     token: Token
-): Promise<TransactionState> {
+): Promise<{ state: TransactionState, tx: any }> {
     const provider = getProvider()
     const address = getWalletAddress()
     if (!provider || !address) {
         console.log('No Provider Found')
-        return TransactionState.Failed
+        return {state: TransactionState.Failed, tx: null}
     }
 
     try {
@@ -207,6 +207,6 @@ export async function getTokenTransferApproval(
         })
     } catch (e) {
         console.error(e)
-        return TransactionState.Failed
+        return {state: TransactionState.Failed, tx: null}
     }
 }
