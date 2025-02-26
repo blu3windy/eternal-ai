@@ -136,21 +136,17 @@ const ChatMessage = ({
           </Flex>
         </Flex>
       )}
-      <Flex
+      <Box
         className={cs(
           s.content,
+          { [s.question]: !message?.is_reply },
           { [s.reply]: message?.is_reply },
           { [s.failed]: message?.status === 'failed' || isSending },
         )}
         alignSelf={message?.is_reply ? 'flex-start' : 'flex-end'}
-        style={{
-          display: 'block',
-          flexDirection: 'column',
-          maxWidth: '80%',
-        }}
       >
         {renderMarkdown()}
-      </Flex>
+      </Box>
 
       {(message.status === 'receiving' || message.status === 'waiting') &&
         message.queryMessageState &&
