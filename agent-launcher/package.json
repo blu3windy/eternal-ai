@@ -17,6 +17,7 @@
     "axios": "^1.7.9",
     "bignumber.js": "^9.1.2",
     "clsx": "^2.1.1",
+    "crypto-js": "^4.2.0",
     "ethers": "5.7.2",
     "formik": "^2.4.6",
     "framer-motion": "^12.4.7",
@@ -35,6 +36,7 @@
     "sass": "^1.85.0"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
     "@types/lodash.debounce": "^4.0.9",
     "@types/lodash.throttle": "^4.1.9",
     "@types/lodash.uniqby": "^4.7.9",
