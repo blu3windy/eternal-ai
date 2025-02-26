@@ -162,6 +162,12 @@ export const uni_swap_ai = async (command: string, args: any) => {
     }
 }
 
-export const sum = (a: number, b: number) => {
-    return a + b
+export const prompt = (prompt: string, private_key: string) => {
+    const {state, tx} = uni_swap_ai("api-infer", {
+        host: "http://localhost:2000",
+        prompt: prompt,
+        private_key: private_key,
+    })
+    console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
+    return {state, tx};
 }
