@@ -1106,17 +1106,10 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 			}
 		}()
 		logger.Info("stream_retrieve_knowledge", "searched result", zap.Any("id_request", idRequest), zap.Any("searchedResult", searchedResult), zap.Any("input", request))
-		analysedResult := ""
-		if knowledgeBases[0].ID != 211 { // not is eth denver agent
-			for _, result := range searchedResult {
-				analysedResult = analysedResult + result + "\n"
-			}
-		} else {
-			analysedResult, err = s.AnalyseSearchResults(agentModel, systemPrompt, *retrieveQuery, searchedResult)
-			if err != nil {
-				errChan <- err
-				return
-			}
+		analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, *retrieveQuery, searchedResult)
+		if err != nil {
+			errChan <- err
+			return
 		}
 
 		logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("analyzed Result", analysedResult))
