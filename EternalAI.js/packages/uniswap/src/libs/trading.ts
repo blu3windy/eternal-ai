@@ -26,13 +26,13 @@ import {
 import {MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS} from './constants'
 import {getPoolInfo, getPoolInfoByToken} from './pool'
 import {
-    getProvider,
+    getProvider, getWallet,
     getWalletAddress,
     sendTransaction,
     TransactionState,
 } from './providers'
 import {fromReadableAmount} from './utils'
-import {zeroAddress} from "../const";
+import {ZeroAddress} from "../const";
 
 export type TokenTrade = Trade<Token, Token, TradeType>
 
@@ -41,8 +41,8 @@ export type TokenTrade = Trade<Token, Token, TradeType>
 export async function buildPools() {
     let listPools: any[] = []
 
-    if (CurrentConfig.tokens.in.address == zeroAddress ||
-        CurrentConfig.tokens.out.address == zeroAddress ||
+    if (CurrentConfig.tokens.in.address == ZeroAddress ||
+        CurrentConfig.tokens.out.address == ZeroAddress ||
         CurrentConfig.tokens.in.address == WETH_TOKEN.address ||
         CurrentConfig.tokens.out.address == WETH_TOKEN.address
     ) {
@@ -103,6 +103,7 @@ export async function executeTrade(
     trade: TokenTrade
 ): Promise<any> {
     const walletAddress = getWalletAddress()
+    const wallet = getWallet();
     const provider = getProvider()
 
     if (!walletAddress || !provider) {
@@ -113,28 +114,32 @@ export async function executeTrade(
     const tokenApproval = await getTokenTransferApproval(CurrentConfig.tokens.in)
 
     // Fail if transfer approvals do not go through
-    if (tokenApproval !== TransactionState.Sent) {
+    if (tokenApproval.state !== TransactionState.Sent) {
         return TransactionState.Failed, null
     }
 
     const options: SwapOptions = {
         slippageTolerance: new Percent(50, 10_000), // 50 bips, or 0.50%
-        deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from the current Unix time
+        deadline: Math.floor(Date.now() / 1000) + 60 * 30, // 20 minutes from the current Unix time
         recipient: walletAddress,
     }
 
     const methodParameters = SwapRouter.swapCallParameters([trade], options)
 
-    const tx = {
+    const txs = {
         data: methodParameters.calldata,
         to: SWAP_ROUTER_ADDRESS,
         value: methodParameters.value,
         from: walletAddress,
-        maxFeePerGas: MAX_FEE_PER_GAS,
-        maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+        // maxFeePerGas: MAX_FEE_PER_GAS,
+        // maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+        gasPrice: await wallet.provider.getGasPrice(),
+        gasLimit: 1000000,
     }
 
-    const state = await sendTransaction(tx)
+    console.log(`Execute tx swap`, JSON.stringify(txs, null, 4))
+
+    const {state, tx} = await sendTransaction(txs)
 
     return {state, tx}
 }
@@ -173,12 +178,12 @@ async function getOutputQuote(route: Route<Currency, Currency>) {
 
 export async function getTokenTransferApproval(
     token: Token
-): Promise<TransactionState> {
+): Promise<{ state: TransactionState, tx: any }> {
     const provider = getProvider()
     const address = getWalletAddress()
     if (!provider || !address) {
         console.log('No Provider Found')
-        return TransactionState.Failed
+        return {state: TransactionState.Failed, tx: null}
     }
 
     try {
@@ -202,6 +207,6 @@ export async function getTokenTransferApproval(
         })
     } catch (e) {
         console.error(e)
-        return TransactionState.Failed
+        return {state: TransactionState.Failed, tx: null}
     }
 }

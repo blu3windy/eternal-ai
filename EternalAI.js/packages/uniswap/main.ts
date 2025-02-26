@@ -12,6 +12,17 @@ const main = async () => {
         .option('-k, --private_key <type>', 'private key',)
         .option('-a, --agent_address <type>', 'agent address',)
         .option('-c, --chain_id <type>', 'chain id',)
+        .option('-w, --chain_id_swap <type>', 'chain id swap',)
+        .action(async (options, command) => {
+            await uni_swap_ai(command.name(), options);
+        });
+
+    program.command('api-infer')
+        .description('Infer to agent contract')
+        .option('-p, --prompt <type>', 'user prompt', '')
+        .option('-k, --private_key <type>', 'private key',)
+        .option('-w, --chain_id_swap <type>', 'chain id swap',)
+        .option('-a, --api_key <type>', 'api key',)
         .action(async (options, command) => {
             await uni_swap_ai(command.name(), options);
         });

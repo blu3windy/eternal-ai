@@ -1,4 +1,4 @@
-import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
+// import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import {computePoolAddress, Pool} from '@uniswap/v3-sdk'
 import {ethers} from 'ethers'
 
@@ -73,7 +73,7 @@ export async function getPoolInfo(): Promise<PoolInfo> {
 
     const poolContract = new ethers.Contract(
         currentPoolAddress,
-        IUniswapV3PoolABI.abi,
+        IV3PoolABI.abi,
         provider
     )
 

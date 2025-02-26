@@ -38,6 +38,21 @@ export async function getCurrencyBalance(
     return toReadableAmount(balance, decimals)
 }
 
+export async function getCurrencyDecimal(
+    provider: providers.Provider,
+    address: string
+): Promise<number> {
+    // Get currency otherwise
+    const ERC20Contract = new ethers.Contract(
+        address,
+        ERC20_ABI,
+        provider
+    )
+    const decimals: number = await ERC20Contract.decimals()
+
+    return decimals
+}
+
 // wraps ETH (rounding up to the nearest ETH for decimal places)
 export async function wrapETH(eth: number) {
     const provider = getProvider()
