@@ -1,5 +1,6 @@
 #!/bin/bash
 
+<<<<<<< HEAD
 rm -rf ./dist
 
 yarn build
