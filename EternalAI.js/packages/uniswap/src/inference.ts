@@ -329,7 +329,7 @@ export class LocalInference {
             }
 
             const responseData = await response.json();
-            console.log('Success:', responseData);
+            return responseData;
         } catch (error) {
             console.error('Error:', error);
         }
