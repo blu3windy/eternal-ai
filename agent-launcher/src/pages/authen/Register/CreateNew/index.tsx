@@ -9,9 +9,9 @@ import { compareString } from "@utils/string.ts";
 import { useAuth } from "@pages/authen/provider.tsx";
 
 const CreateNew: FC = () => {
-   const [prvKey, setPrvKey] = useState<string>("0x7c6774d76b85d2823c61827f35c576c894d19207c7f11cae7981828fbcf01b63");
+   const [prvKey, setPrvKey] = useState<string>("");
    const [step, setStep]
-       = useState<CreateNewStep>(prvKey ? CreateNewStep.confirmPass : CreateNewStep.backup);
+       = useState<CreateNewStep>(CreateNewStep.backup);
    const { onLogin } = useAuth();
 
    const [loading, setLoading] = useState<boolean>(false);
