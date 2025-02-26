@@ -33,9 +33,6 @@ const ConfirmKey = (props: IProps) => {
       }
    }, [confirmKey, edited, prvKey]);
 
-   console.log({ errorMessage, confirmKey, edited })
-
-
    return (
       <Flex
          flexDirection="column"
@@ -47,7 +44,7 @@ const ConfirmKey = (props: IProps) => {
             alignItems="center"
             gap="24px"
          >
-            <Text fontSize="48px" fontWeight="500">
+            <Text fontSize="48px" fontWeight="500" color="black">
               Confirm your private key
             </Text>
             <Text fontSize="24px" fontWeight="400" color="#2E2E2E">

@@ -3,11 +3,42 @@ import { CreateNewStep } from "@pages/authen/Register/types.ts";
 import Backup from "@pages/authen/Register/CreateNew/Backup.tsx";
 import ConfirmKey from "@pages/authen/Register/CreateNew/ConfirmKey.tsx";
 import ConfirmPass from "@pages/authen/Register/CreateNew/ConfirmPass.tsx";
+import EaiSigner from "@helpers/signer";
+import sleep from "@utils/sleep.ts";
+import { compareString } from "@utils/string.ts";
+import { useAuth } from "@pages/authen/provider.tsx";
 
 const CreateNew: FC = () => {
+   const [prvKey, setPrvKey] = useState<string>("0x7c6774d76b85d2823c61827f35c576c894d19207c7f11cae7981828fbcf01b63");
    const [step, setStep]
-       = useState<CreateNewStep>(CreateNewStep.backup);
-   const [prvKey, setPrvKey] = useState<string>("");
+       = useState<CreateNewStep>(prvKey ? CreateNewStep.confirmPass : CreateNewStep.backup);
+   const { onLogin } = useAuth();
+
+   const [loading, setLoading] = useState<boolean>(false);
+
+   const onCreateSigner = async (password: string) => {
+      try {
+         setLoading(true);
+         await sleep(1000);
+
+         await EaiSigner.storageNewKey({
+            prvKey,
+            pass: password
+         });
+
+         const _prvKey = await EaiSigner.getStorageKey({ pass: password });
+
+         if (compareString(prvKey, _prvKey)) {
+            throw new Error("Private key not match");
+         }
+
+         onLogin(password);
+      } catch (e) {
+         console.error(e);
+      } finally {
+         setLoading(false);
+      }
+   }
 
    const renderContent = () => {
       switch (step) {
@@ -29,7 +60,7 @@ const CreateNew: FC = () => {
             />
          );
       case CreateNewStep.confirmPass:
-         return <ConfirmPass />;
+         return <ConfirmPass onNext={onCreateSigner} loading={loading} />;
       default:
          return null;
       }

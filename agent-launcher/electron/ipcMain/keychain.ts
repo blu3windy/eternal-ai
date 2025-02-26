@@ -31,16 +31,17 @@ const ipcMainKeyChain = () => {
      * Handles the event to retrieve a password.
      * @param {Electron.IpcMainInvokeEvent} _event - The event object.
      * @param {string} key - The key associated with the password.
-     * @returns {Promise<{success: boolean, value?: string, error?: string}>} - The result of the operation.
+     * @returns {Promise<string>} - The result of the operation.
      */
    ipcMain.handle(EMIT_EVENT_NAME.KEYTAR_GET, async (_event, key: string) => {
       console.log(`[Main Process] Retrieving password for: ${key}`);
       try {
-         const value = await keytar.getPassword(SERVICE_NAME, key);
-         return { success: true, value };
+         const text = await keytar.getPassword(SERVICE_NAME, key);
+         return text;
       } catch (error: any) {
          console.error(`[Main Process] Error retrieving password: ${error.message}`);
-         return { success: false, error: error.message };
+         // return { success: false, error: error.message };
+         throw error;
       }
    });
 

@@ -31,7 +31,9 @@ const Backup = (props: IProps) => {
    }
 
    useEffect(() => {
-      generatePrvKey();
+      if (!prvKey) {
+         generatePrvKey();
+      }
    }, []);
 
    return (

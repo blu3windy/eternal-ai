@@ -23,7 +23,7 @@ declare namespace NodeJS {
 
 interface IElectronAPI {
   keytarSave: (key: string, value: string) => Promise<{ success: boolean, error?: string }>
-  keytarGet: (key: string) => Promise<{ success: boolean, value?: string, error?: string }>
+  keytarGet: (key: string) => Promise<string>
   keytarRemove: (key: string) => Promise<{ success: boolean, error?: string }>
 
   // Copy text to clipboard

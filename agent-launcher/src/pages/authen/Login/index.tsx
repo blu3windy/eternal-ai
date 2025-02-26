@@ -3,20 +3,59 @@ import BaseButton from "@components/BaseButton";
 import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import InputPassword from "@components/Input/InputPassword";
+import { useEffect, useState } from "react";
+import EaiSigner from "@helpers/signer";
+import eaiCrypto from "@utils/crypto";
+import { useAuth } from "@pages/authen/provider.tsx";
 
-interface IProps {
-   onNext: (_: string) => void;
-   loading?: boolean;
-}
+const Login = () => {
 
-const ConfirmPass = (props: IProps) => {
-   const { onNext, loading } = props;
+   const { onLogin } = useAuth();
+   const [cipherText, setCipherText] = useState<string | undefined>(undefined);
+   const [loading, setLoading] = useState<boolean>(true);
+
+   const onSubmit = async (values: { password: string }) => {
+      try {
+         await onLogin(values.password);
+      } catch (error) {
+         console.error(error);
+      }
+   }
 
    const validationSchema = Yup.object().shape({
       password: Yup.string()
          .min(8, "Password must be at least 8 characters")
+         .test("is-valid-password", "Incorrect password", (password) => {
+            if (!password) return false; // Required field check
+            try {
+               eaiCrypto.decryptAES({
+                  cipherText, // Make sure this is defined
+                  pass: password,
+               });
+               return true; // Valid password
+            } catch (error) {
+               return false; // Incorrect password
+            }
+         })
          .required("Password is required"),
    });
+
+
+   const init = async () => {
+      try {
+         setLoading(true);
+         const cipherText = await EaiSigner.getCipherText();
+         setCipherText(cipherText)
+      } catch (error) {
+         console.error(error);
+      } finally {
+         setLoading(false);
+      }
+   }
+
+   useEffect(() => {
+      init().then().catch();
+   }, []);
 
    return (
       <Flex
@@ -30,25 +69,18 @@ const ConfirmPass = (props: IProps) => {
             gap="24px"
          >
             <Text fontSize="48px" fontWeight="500" color="black">
-                Create a password
+                Welcome back!
             </Text>
             <Text fontSize="24px" fontWeight="400" color="#2E2E2E" textAlign="center">
-               <Text>
-                   This password encrypts your wallet on this device. If you forget it,
-               </Text>
-               <Text>
-                   you’ll need your private key to regain access.
-               </Text>
+                The decentralized AI awaits.
             </Text>
          </Flex>
          <Formik
             initialValues={{ password: '' }}
             validationSchema={validationSchema}
-            onSubmit={(values) => {
-               onNext(values.password);
-            }}
+            onSubmit={onSubmit}
          >
-            {({ dirty, setFieldValue }) => (
+            {({ dirty, setFieldValue, isSubmitting }) => (
                <Form>
                   <Flex flexDirection="column" width="500px" marginTop="60px">
                      <InputPassword
@@ -76,10 +108,10 @@ const ConfirmPass = (props: IProps) => {
                         type="submit"
                         width="100% !important"
                         marginTop="60px"
-                        disabled={!dirty}
-                        isLoading={!!loading}
+                        disabled={!dirty || isSubmitting || loading || !cipherText}
+                        isLoading={!cipherText || loading || isSubmitting}
                      >
-                        Create account
+                         Unlock
                      </BaseButton>
                   </Flex>
                </Form>
@@ -89,4 +121,4 @@ const ConfirmPass = (props: IProps) => {
    );
 }
 
-export default ConfirmPass;
+export default Login;

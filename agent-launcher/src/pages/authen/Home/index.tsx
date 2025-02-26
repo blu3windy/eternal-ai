@@ -1,13 +1,14 @@
-import { FC, PropsWithChildren } from "react";
+import { FC } from "react";
 import { Flex } from "@chakra-ui/react";
 import styles from "./styles.module.scss";
 import Register from "@pages/authen/Register";
+import { useAuth } from "@pages/authen/provider.tsx";
+import Login from "@pages/authen/Login";
 
-interface IProps extends PropsWithChildren {
+const HomeAuthen: FC = () => {
 
-}
+   const { hasUser } = useAuth()
 
-const HomeAuthen: FC = (props: IProps) => {
    return (
       <Flex
          className={styles.container}
@@ -16,7 +17,9 @@ const HomeAuthen: FC = (props: IProps) => {
          alignItems="center"
          justifyContent="center"
       >
-         <Register />
+         {
+            hasUser ? <Login /> : <Register />
+         }
       </Flex>
    );
 };

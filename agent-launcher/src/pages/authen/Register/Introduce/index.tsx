@@ -1,4 +1,3 @@
-import { FC } from "react";
 import { Flex, Text } from "@chakra-ui/react";
 import BaseButton from "@components/BaseButton";
 import { RegisterType } from "@pages/authen/Register/types.ts";
@@ -7,7 +6,7 @@ interface IProps {
    setRegisterType: (_: RegisterType) => void;
 }
 
-const Introduce = ({ setRegisterType, ...rest }: IProps) => {
+const Introduce = ({ setRegisterType }: IProps) => {
    return (
       <Flex
          display="flex"
