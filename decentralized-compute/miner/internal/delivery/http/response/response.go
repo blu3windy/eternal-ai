@@ -1,15 +1,12 @@
 package response
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"solo/pkg/logger"
 
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 type IResponse interface {
@@ -144,7 +141,6 @@ var ResponseMessage = map[int]struct {
 
 func (h *restHandlerTemplate) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var err error
-
 	ctx := r.Context()
 	vars := mux.Vars(r)
 
@@ -159,30 +155,6 @@ func (h *restHandlerTemplate) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			"status": true,
 		}
 	}
-
-	// Capture request body
-	var requestBody []byte
-	if r.Body != nil {
-		bodyBytes, err := io.ReadAll(r.Body)
-		if err != nil {
-			h.httpResp.RespondWithError(w, http.StatusInternalServerError, Error, err)
-			return
-		}
-		requestBody = bodyBytes
-		r.Body.Close()
-		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-	}
-
-	// Log the request details
-	var req map[string]interface{}
-	json.Unmarshal(requestBody, &req)
-
-	logger.AtLog.Logger.Info("request",
-		zap.String("method", r.Method),
-		zap.String("url", r.URL.String()),
-		zap.Any("request_body", req),
-		zap.Any("response", item),
-	)
 
 	h.httpResp.RespondSuccess(w, http.StatusOK, Success, item, "")
 }
