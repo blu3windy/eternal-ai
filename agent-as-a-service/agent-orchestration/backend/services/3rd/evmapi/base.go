@@ -40,7 +40,7 @@ func UtilityAgentUpgradeableInitializeData(systemPrompt string, storageInfos []u
 	return dataBytes, nil
 }
 
-func RealWorldAgentUpgradeableMetaDataInitializeData(name string, version string, gateway common.Address) ([]byte, error) {
+func RealWorldAgentUpgradeableInitializeData(name string, version string, gateway common.Address) ([]byte, error) {
 	instanceABI, err := realworldagentupgradeable.RealWorldAgentUpgradeableMetaData.GetAbi()
 	if err != nil {
 		return nil, err
