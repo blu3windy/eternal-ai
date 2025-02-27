@@ -191,7 +191,7 @@ const AgentsList = () => {
     );
   };
 
-  const renderMenuAddAbilities = () => {
+  const renderSortMenu = () => {
     return (
       <Flex
         mt={"24px"}
@@ -282,7 +282,7 @@ const AgentsList = () => {
           {renderSearch()}
         </Flex>
         <SimpleGrid columns={2}>
-          {renderMenuAddAbilities()}
+          {renderSortMenu()}
         </SimpleGrid>
       </Flex>
       <Box h={'24px'} />
