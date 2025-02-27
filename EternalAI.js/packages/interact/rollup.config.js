@@ -57,5 +57,10 @@ module.exports = {
     json(),
     uglify(),
   ],
-  external: [...Object.keys(pkg.peerDependencies || {}), 'ethers', 'immutable'],
+  external: [
+    ...Object.keys(pkg.peerDependencies || {}),
+    'ethers',
+    'immutable',
+    'uuid',
+  ],
 };
