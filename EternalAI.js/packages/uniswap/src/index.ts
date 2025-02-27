@@ -2,7 +2,7 @@ import {BSC_CHAIN_ID, ETH_CHAIN_ID, getRPC, RPC_URL, V1, V2} from "./const";
 import {AgentInference, InferenceProcessing, APIInference} from "./inference";
 import {sleep} from "./utils";
 import {SwapReq, UniSwapAI} from "./swap";
-import {TransactionState} from "@/libs/providers";
+import {TransactionState} from "./libs/providers";
 
 export const call_uniswap = async (private_key: string, chain_id_swap: string, content: string): Promise<{
     state: TransactionState | null,
@@ -162,8 +162,7 @@ export const uni_swap_ai = async (command: string, args: any) => {
 }
 
 // for browser
-/*
-export const prompt = async (prompt: string, private_key: string) => {
+/*export const prompt = async (prompt: string, private_key: string) => {
     try {
         const {state, tx} = await uni_swap_ai("api-infer", {
             prompt: prompt,

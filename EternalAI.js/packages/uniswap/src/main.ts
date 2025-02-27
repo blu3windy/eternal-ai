@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv';
 import {Command} from 'commander';
-import {uni_swap_ai} from './src/index'
+import {uni_swap_ai} from './index'
 
 dotenv.config();
 const program = new Command();
@@ -14,6 +14,7 @@ const main = async () => {
         .option('-c, --chain_id <type>', 'chain id',)
         .option('-w, --chain_id_swap <type>', 'chain id swap',)
         .action(async (options, command) => {
+            // console.log(command, options);
             await uni_swap_ai(command.name(), options);
         });
 
@@ -25,6 +26,7 @@ const main = async () => {
         .option('-w, --chain_id_swap <type>', 'chain id swap',)
         .option('-a, --api_key <type>', 'api key',)
         .action(async (options, command) => {
+            // console.log(command, options);
             await uni_swap_ai(command.name(), options);
         });
 }

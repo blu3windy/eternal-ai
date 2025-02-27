@@ -14,10 +14,10 @@
   },
   "scripts": {
     "build": "rollup -c",
+    "build-main": "rollup --config rollup.config.main.js",
     "build:watch": "rollup -c -w",
     "test": "vitest",
     "lint": "eslint . --ext .ts,.tsx",
-    "prepare": "rollup -c",
     "size": "size-limit",
     "analyze": "size-limit --why"
   },

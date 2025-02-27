@@ -66,7 +66,7 @@ export class SwapReq {
         if (!result) {
             const token_info_list_response = await fetch("https://api.coingecko.com/api/v3/coins/list?include_platform=true&status=active")
             if (token_info_list_response.ok) {
-                const list = await token_info_list_response.json();
+                const list: any = await token_info_list_response.json();
                 for (const token_info of list) {
                     result = this.get_token_address_from_info(token_info, symbol)
                     if (result) break
