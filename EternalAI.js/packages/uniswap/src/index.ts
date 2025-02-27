@@ -3,16 +3,13 @@ import { AgentInference, InferenceProcessing, APIInference } from './inference';
 import { sleep } from './utils';
 import { SwapReq, UniSwapAI } from './swap';
 import { TransactionState } from './libs/providers';
+import { TTransactionResponse } from './type';
 
 export const call_uniswap = async (
   private_key: string,
   chain_id_swap: string,
   content: string
-): Promise<{
-  state: TransactionState | null;
-  tx: any;
-  message?: string;
-}> => {
+): Promise<TTransactionResponse> => {
   console.log(`**** call uniswap with content **** \n\n
               ${content} \n\n end content ****\n\n\n`);
   try {
@@ -22,6 +19,7 @@ export const call_uniswap = async (
     console.log(
       `**** call uniswap with req **** \n ${JSON.stringify(req, null, 4)}`
     );
+
     const { state, tx, message } = await uniswap_obj.swap_v3(
       private_key,
       req,

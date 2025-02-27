@@ -5,6 +5,7 @@ import { changeWallet, createWallet, TransactionState } from './libs/providers';
 import { createTrade, executeTrade } from './libs/trading';
 import { CurrentConfig, Environment } from './libs/config';
 import { getCurrencyBalance, getCurrencyDecimal } from './libs/wallet';
+import { TTransactionResponse } from './type';
 
 export class SwapReq {
   token_in: string = '';
@@ -69,7 +70,7 @@ export class SwapReq {
   convert_token_address = async (symbol: string) => {
     let result = null;
     const token_info_response = await fetch(
-      'https://api.coingecko.com/api/v3/coins/' + symbol
+      ' https://api-dojo2.eternalai.org/api/coins/' + symbol
     );
     if (token_info_response.ok) {
       const data = await token_info_response.json();
@@ -77,7 +78,7 @@ export class SwapReq {
     }
     if (!result) {
       const token_info_list_response = await fetch(
-        'https://api.coingecko.com/api/v3/coins/list?include_platform=true&status=active'
+        ' https://api-dojo2.eternalai.org/api/coins/list?include_platform=true&status=active'
       );
       if (token_info_list_response.ok) {
         const list: any = await token_info_list_response.json();
@@ -96,11 +97,7 @@ export class UniSwapAI {
     privateKey: string,
     req: SwapReq,
     chain_id: string
-  ): Promise<{
-    state: TransactionState | null;
-    tx: any;
-    message?: string;
-  }> => {
+  ): Promise<TTransactionResponse> => {
     if (privateKey == '') {
       throw new Error('invalid private key');
     }
@@ -109,6 +106,8 @@ export class UniSwapAI {
     CurrentConfig.rpc.mainnet = getRPC(chain_id);
     CurrentConfig.wallet.privateKey = privateKey;
     const newWallet = createWallet();
+
+    // check if one token is ETH, change to WETH
 
     // init config token
     const tokenIn = new Token(
@@ -129,6 +128,7 @@ export class UniSwapAI {
       req.token_out
     );
     CurrentConfig.tokens.out = tokenOut;
+
     const tokenInBalance = await getCurrencyBalance(
       newWallet.provider,
       newWallet.address,

@@ -36,6 +36,7 @@ import {
 } from './providers';
 import { fromReadableAmount } from './utils';
 import { ZeroAddress } from '../const';
+import { TTransactionResponse } from '@/type';
 
 export type TokenTrade = Trade<Token, Token, TradeType>;
 
@@ -117,24 +118,33 @@ export async function isTokenApproved(
   spender: string,
   amount: string
 ): Promise<boolean> {
-  console.log('🚀 ~ isTokenApproved ~ params:', {
-    token,
-    owner,
-    spender,
-    amount,
-  });
-
   const provider = getProvider();
   if (!provider) {
     throw new Error('Provider required to check token approval');
   }
+  try {
+    const tokenContract = new ethers.Contract(
+      token.address,
+      ERC20_ABI,
+      provider
+    );
 
-  const tokenContract = new ethers.Contract(token.address, ERC20_ABI, provider);
-  const allowance = await tokenContract.allowance(owner, spender);
-  return allowance.gte(amount);
+    const transaction = await tokenContract.populateTransaction.allowance(
+      owner,
+      spender
+    );
+
+    return false;
+    // return allowance.gte(amount);
+  } catch (error) {
+    console.log('isTokenApproved error:', (error as Error).message);
+    return false;
+  }
 }
 
-export async function executeTrade(trade: TokenTrade): Promise<any> {
+export async function executeTrade(
+  trade: TokenTrade
+): Promise<TTransactionResponse> {
   const walletAddress = getWalletAddress();
   const wallet = getWallet();
   const provider = getProvider();
@@ -147,8 +157,12 @@ export async function executeTrade(trade: TokenTrade): Promise<any> {
   const tokenApproval = await getTokenTransferApproval(CurrentConfig.tokens.in);
 
   // Fail if transfer approvals do not go through
-  if (tokenApproval.state !== TransactionState.Sent) {
-    return TransactionState.Failed, null;
+  if (!!tokenApproval && tokenApproval.state !== TransactionState.Sent) {
+    return {
+      state: TransactionState.Failed,
+      tx: null,
+      message: 'Token transfer approval failed',
+    };
   }
 
   const options: SwapOptions = {
@@ -211,7 +225,7 @@ async function getOutputQuote(route: Route<Currency, Currency>) {
 
 export async function getTokenTransferApproval(
   token: Token
-): Promise<{ state: TransactionState; tx: any; message?: string }> {
+): Promise<TTransactionResponse> {
   const provider = getProvider();
   const address = getWalletAddress();
   if (!provider || !address) {
@@ -232,23 +246,31 @@ export async function getTokenTransferApproval(
       SWAP_ROUTER_ADDRESS,
       amountToApprove
     );
-    console.log('🚀 ~ alreadyApproved:', alreadyApproved);
     if (!alreadyApproved) {
       const tokenContract = new ethers.Contract(
         token.address,
         ERC20_ABI,
         provider
       );
-
-      const transaction = await tokenContract.populateTransaction.approve(
-        SWAP_ROUTER_ADDRESS,
-        amountToApprove
-      );
-
-      return sendTransaction({
-        ...transaction,
-        from: address,
-      });
+      let transaction;
+      try {
+        transaction = await tokenContract.populateTransaction.approve(
+          SWAP_ROUTER_ADDRESS,
+          amountToApprove
+        );
+        return sendTransaction({
+          ...transaction,
+          from: address,
+        });
+      } catch (error) {
+        console.log('getTokenTransferApproval error:', error);
+        return {
+          state: TransactionState.Failed,
+          tx: null,
+          message:
+            'getTokenTransferApproval error: ' + (error as Error).message,
+        };
+      }
     }
     return {
       state: TransactionState.Sent,
