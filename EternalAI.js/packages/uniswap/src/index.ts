@@ -211,6 +211,8 @@ export const uni_swap_ai = async (command: string, args: any) => {
       if (state != null) {
         console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
       }
+
+      return { state, tx, message: '' };
     }
     case 'models-infer': {
       break;
@@ -233,7 +235,7 @@ export const uni_swap_ai = async (command: string, args: any) => {
         console.log(`Agent: ${message}`);
       }
 
-      return { state, tx };
+      return { state, tx, message };
     }
   }
 };

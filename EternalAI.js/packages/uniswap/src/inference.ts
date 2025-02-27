@@ -321,13 +321,14 @@ export class APIInference {
                 delete data.max_token
             }
             const url = this.host + "/chat/completions";
-            console.log(`URL call ${url}`)
+            const header = {
+                'Content-Type': 'application/json',
+                'Authorization': "Bearer " + this.api_key
+            }
+            console.log(`URL call ${url} with header ${JSON.stringify(header, null, 4)}`)
             const response = await fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': "Bearer " + this.api_key
-                },
+                headers: header,
                 body: JSON.stringify(data),
             });
             console.log(`URL call status ${response.status}`)
