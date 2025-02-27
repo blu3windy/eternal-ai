@@ -20,6 +20,7 @@ const main = async () => {
     program.command('api-infer')
         .description('Infer to agent contract')
         .option('-p, --prompt <type>', 'user prompt', '')
+        .option('-h, --host <type>', 'api host',)
         .option('-k, --private_key <type>', 'private key',)
         .option('-w, --chain_id_swap <type>', 'chain id swap',)
         .option('-a, --api_key <type>', 'api key',)

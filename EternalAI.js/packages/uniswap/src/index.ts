@@ -146,7 +146,7 @@ export const uni_swap_ai = async (command: string, args: any) => {
         }
         case "api-infer": {
             const {state, tx} = await create_api_infer(
-                args.host || 'https://api.eternalai.org/v1',
+                args.host || process.env.HOST,
                 args.prompt,
                 args.model || process.env.MODEL,
                 args.private_key || process.env.PRIVATE_KEY,
@@ -162,6 +162,7 @@ export const uni_swap_ai = async (command: string, args: any) => {
 }
 
 // for browser
+/*
 export const prompt = async (prompt: string, private_key: string) => {
     try {
         const {state, tx} = await uni_swap_ai("api-infer", {
@@ -179,4 +180,4 @@ export const prompt = async (prompt: string, private_key: string) => {
 
 }
 
-window.prompt = prompt
+window.prompt = prompt*/
