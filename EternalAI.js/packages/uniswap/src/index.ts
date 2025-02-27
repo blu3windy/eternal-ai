@@ -116,11 +116,10 @@ export const create_api_infer = async (
 ): Promise<any> => {
   const api_infer = new APIInference(host);
   api_infer.set_api_key(api_key);
+
   try {
     const resp = await api_infer.create_infer(prompt, SYSTEM_PROMPT, model);
-    // console.log(JSON.stringify(resp, null, 4));
     let content_response = await api_infer.process_output(resp);
-    // console.log(JSON.stringify(content_response, null, 4));
     const jsonMatch = content_response.match(/(\{.*?\})/s);
     if (jsonMatch) {
       content_response = jsonMatch[0];
