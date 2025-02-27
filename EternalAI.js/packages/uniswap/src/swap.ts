@@ -148,7 +148,7 @@ export class UniSwapAI {
       return {
         state: TransactionState.Failed,
         tx: null,
-        message: (e as Error).message,
+        message: 'swap_v3 error: ' + (e as Error).message,
       };
     }
     // return {state: null, tx: null}
