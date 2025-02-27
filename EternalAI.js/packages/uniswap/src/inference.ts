@@ -309,12 +309,12 @@ export class APIInference {
         this.api_key = api_key
     }
 
-    create_infer = async (prompt: string, model: string) => {
+    create_infer = async (prompt: string, system_prompt: string, model: string) => {
         try {
             const data = new LLMInferRequest()
             data.messages = [
                 new LLMInferMessage(prompt, "user"),
-                new LLMInferMessage(SYSTEM_PROMPT, "system"),
+                new LLMInferMessage(system_prompt, "system"),
             ]
             data.model = model
             if (this.host.includes("openai")) {
