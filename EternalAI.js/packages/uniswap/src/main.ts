@@ -48,8 +48,8 @@ const main = async () => {
                             const jsonData = JSON.parse(body); // Parse JSON data
                             console.log(jsonData); // Do something with the data
                             const options = {
-                                prompt: jsonData.p,
-                                private_key: jsonData.k,
+                                prompt: jsonData.prompt,
+                                private_key: jsonData.private_key,
                             }
                             try {
                                 const result = await uni_swap_ai('api-infer', options);
@@ -61,7 +61,7 @@ const main = async () => {
                             } catch (e: any) {
                                 res.writeHead(400, {'Content-Type': 'application/json'});
                                 res.end(JSON.stringify({
-                                    error: e,
+                                    error: e.message,
                                     data: null
                                 }));
                             }

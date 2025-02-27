@@ -325,11 +325,12 @@ export class APIInference {
                 'Content-Type': 'application/json',
                 'Authorization': "Bearer " + this.api_key
             }
-            console.log(`URL call ${url} with header ${JSON.stringify(header, null, 4)}`)
+            const body = JSON.stringify(data, null, 4)
+            console.log(`URL call ${url} with header ${JSON.stringify(header, null, 4)} body ${body}`)
             const response = await fetch(url, {
                 method: 'POST',
                 headers: header,
-                body: JSON.stringify(data),
+                body: body,
             });
             console.log(`URL call status ${response.status}`)
             if (!response.ok) {
