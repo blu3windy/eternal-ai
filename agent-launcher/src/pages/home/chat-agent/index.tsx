@@ -1,62 +1,12 @@
-import React, {useState} from "react";
+import React from "react";
 import {Box} from "@chakra-ui/react";
 import ChatBox from "@pages/home/chat-agent/ChatAgent/components/ChatBox";
 import {ChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
+import s from "./styles.module.scss";
 
-function App() {
-   const [account, setAccount] = useState("");
-   const [password, setPassword] = useState("");
-   const [retrievedPassword, setRetrievedPassword] = useState("");
-
-   const handleSavePassword = async () => {
-      const result = await window.electronAPI.keytarSave(account, password);
-      if (result.success) {
-         alert("Password saved successfully!");
-      } else {
-         alert("Error saving password: " + result.error);
-      }
-   };
-
-   const handleGetPassword = async () => {
-      const result = await window.electronAPI.keytarGet(account);
-      if (result.success) {
-         setRetrievedPassword(result.value || "No password found");
-      } else {
-         alert("Error retrieving password: " + result.error);
-      }
-   };
-
-   const handleDeletePassword = async () => {
-      const result = await window.electronAPI.keytarRemove(account);
-      if (result.success) {
-         alert("Password deleted successfully!");
-         setRetrievedPassword("");
-      } else {
-         alert("Error deleting password: " + result.error);
-      }
-   };
-
+function ChatAgent() {
    return (
-     <Box>
-       <div>
-         <h1>Secure Password Storage</h1>
-         <input
-           type="text"
-           placeholder="Account"
-           value={account}
-           onChange={(e) => setAccount(e.target.value)}
-         />
-         <input
-           type="password"
-           placeholder="Password"
-           value={password}
-           onChange={(e) => setPassword(e.target.value)}
-         />
-         <button onClick={handleSavePassword}>Save Password</button>
-         <button onClick={handleGetPassword}>Retrieve Password</button>
-         <button onClick={handleDeletePassword}>Delete Password</button>
-         <p>Retrieved Password: {retrievedPassword}</p>
-       </div>
+     <Box className={s.container}>
        <ChatAgentProvider>
          <ChatBox />
        </ChatAgentProvider>
@@ -64,4 +14,4 @@ function App() {
    );
 }
 
-export default App;
+export default ChatAgent;
