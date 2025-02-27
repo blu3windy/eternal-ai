@@ -13,8 +13,8 @@ export const call_uniswap = async (
   tx: any;
   message?: string;
 }> => {
-  //   console.log(`**** call uniswap with content **** \n\n
-  //             ${content} \n\n end content ****\n\n\n`);
+    console.log(`**** call uniswap with content **** \n\n
+              ${content} \n\n end content ****\n\n\n`);
   try {
     // const jsonMatch = content.match(/(\{.*?\})/s);
     // if (jsonMatch) {
