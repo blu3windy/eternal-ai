@@ -23,6 +23,7 @@ type OpenAI struct {
 	BaseURL         string
 	ApiKey          string
 	AutoAgentApiUrl string
+	ModelName       string
 }
 
 type ChatResponse struct {
@@ -45,10 +46,11 @@ type ChatResponse struct {
 	} `json:"usage"`
 }
 
-func NewOpenAI(baseUrl, apiKey string) *OpenAI {
+func NewOpenAI(baseUrl, apiKey string, modelName string) *OpenAI {
 	return &OpenAI{
-		BaseURL: baseUrl,
-		ApiKey:  apiKey,
+		BaseURL:   baseUrl,
+		ApiKey:    apiKey,
+		ModelName: modelName,
 	}
 }
 
@@ -62,7 +64,7 @@ func (c OpenAI) ChatMessage(msgChat string) (string, error) {
 	seed := models.RandSeed()
 	path := fmt.Sprintf("%s/v1/chat/completions", c.BaseURL)
 	bodyReq := map[string]interface{}{
-		"model":  "NousResearch/Hermes-3-Llama-3.1-70B-FP8",
+		"model":  c.ModelName,
 		"stream": false,
 		"seed":   seed,
 	}
@@ -136,7 +138,7 @@ func (c OpenAI) ChatMessageWithSystemPromp(msgChat, systemContent string) (strin
 	seed := models.RandSeed()
 	path := fmt.Sprintf("%s/v1/chat/completions", c.BaseURL)
 	bodyReq := map[string]interface{}{
-		"model":  "NousResearch/Hermes-3-Llama-3.1-70B-FP8",
+		"model":  c.ModelName,
 		"stream": false,
 		"seed":   seed,
 	}
@@ -473,9 +475,13 @@ type AgentThinking struct {
 
 func (c OpenAI) AgentChats(systemPrompt, baseUrl string, messages serializers.AgentChatMessageReq) (*ChatResponse, error) {
 	m := ChatResponse{}
+	modelName := c.ModelName
+	if modelName == "" {
+		modelName = "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
+	}
 	seed := models.RandSeed()
 	bodyReq := map[string]interface{}{
-		"model":  "NousResearch/Hermes-3-Llama-3.1-70B-FP8",
+		"model":  modelName,
 		"stream": false,
 		"seed":   seed,
 	}
