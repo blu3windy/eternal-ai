@@ -70,7 +70,7 @@ export class SwapReq {
   convert_token_address = async (symbol: string) => {
     let result = null;
     const token_info_response = await fetch(
-      ' https://api-dojo2.eternalai.org/api/coins/' + symbol
+      'https://api-dojo2.eternalai.org/api/coins/' + symbol
     );
     if (token_info_response.ok) {
       const data = await token_info_response.json();
@@ -88,6 +88,7 @@ export class SwapReq {
         }
       }
     }
+
     return result;
   };
 }

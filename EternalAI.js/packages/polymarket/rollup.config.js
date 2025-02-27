@@ -8,28 +8,29 @@ import nodePolyfills from 'rollup-plugin-polyfill-node';
 import replace from '@rollup/plugin-replace';
 
 module.exports = {
-    input: 'src/main.ts',
+    input: 'src/index.ts',
     output: [
         {
-            file: 'dist-main/bundle.es.js',
-            format: 'es',
+            file: 'dist/bundle.iife.js',
+            format: 'iife',
+            name: 'PolyMarket',
             sourcemap: true
         }
     ],
     plugins: [
         resolve(),
         commonjs(),
-        typescript({tsconfig: './build.tsconfig.main.json', sourceMap: true}),
+        typescript({tsconfig: './build.tsconfig.json', sourceMap: true}),
         terser(),
         json(),
-        /*nodePolyfills(),
+        nodePolyfills(),
         replace({
             'process.env.NODE_ENV': JSON.stringify('production'),
             'process.env.PRIVATE_KEY': JSON.stringify('production'),
             'process.env.AGENT_ADDRESS': JSON.stringify('production'),
             'process.env.API_KEY': JSON.stringify('production'),
             preventAssignment: true,
-        }),*/
+        }),
     ],
-    // external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
+    external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
 };
