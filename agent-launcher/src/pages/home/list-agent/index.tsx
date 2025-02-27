@@ -1,4 +1,18 @@
-import {Box, Flex, Grid, GridItem, Select, Text, Image} from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Divider,
+  Flex,
+  Grid,
+  GridItem,
+  Image,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  SimpleGrid,
+  Text,
+  useDisclosure
+} from '@chakra-ui/react';
 import s from './styles.module.scss';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import AgentItem from './AgentItem';
@@ -19,6 +33,13 @@ export enum SortOption {
   Volume24h = 'meme_volume_last24h',
   CreatedAt = 'created_at',
 }
+
+export const SortBy = [
+  { value: SortOption.MarketCap, label: 'Market cap' },
+  { value: SortOption.Percent, label: '24h%' },
+  { value: SortOption.CreatedAt, label: 'Creation time' },
+  { value: SortOption.Volume24h, label: '24h volume' },
+];
 
 export enum AgentType {
   Normal = 0,
@@ -58,6 +79,8 @@ const AgentsList = () => {
     // order: OrderOption.Desc,
     search: '',
   });
+
+  const { isOpen: isOpenSort, onClose: onCloseSort, onToggle: onToggleSort } = useDisclosure();
 
   const cPumpAPI = new CAgentTokenAPI();
 
@@ -168,6 +191,82 @@ const AgentsList = () => {
     );
   };
 
+  const renderMenuAddAbilities = () => {
+    return (
+      <Flex
+        mt={"24px"}
+        flexDirection={'row'}
+        className={s.select}
+        alignItems={'center'}
+      >
+        <Text
+          fontSize={'14px'}
+          opacity={'0.7'}
+          fontWeight={'400'}
+          whiteSpace={"nowrap"}
+        >
+          Sort by
+        </Text>
+        <Popover w={"100%"} placement="bottom-end" isOpen={isOpenSort} onClose={onCloseSort}>
+          <PopoverTrigger>
+            <Box
+              className={s.btnTokenSetup}
+              as={Button}
+              onClick={onToggleSort}
+            >
+              <Text fontSize={'14px'} fontWeight={500}>
+                {SortBy.find(s => s.value === sort)?.label}
+              </Text>
+              <Image
+                src={'/icons/ic-angle-down.svg'}
+                alt={'add'}
+              />
+            </Box>
+          </PopoverTrigger>
+          <PopoverContent
+            width={'100%'}
+            className={s.menuTokenSetup}
+            border={'1px solid #E5E7EB'}
+            boxShadow={'0px 0px 24px -6px #0000001F'}
+            borderRadius={'16px'}
+            background={'#fff'}
+          >
+            {SortBy.map((option, index) => (
+              <>
+                <Flex
+                  gap={'12px'}
+                  alignItems={'center'}
+                  padding={'16px 16px'}
+                  _hover={{
+                    bg: '#5400FB0F',
+                  }}
+                  cursor="pointer"
+                  onClick={(e) => {
+                    const sort = option.value as SortOption;
+                    setSort(sort);
+                    refParams.current = {
+                      ...refParams.current,
+                      sort: sort,
+                    };
+                    throttleGetTokens(true);
+                    onCloseSort();
+                  }}
+                >
+                  <Text fontSize={'13px'} fontWeight={500}>
+                    {option.label}
+                  </Text>
+                </Flex>
+                {index < SortBy.length - 1 && (
+                  <Divider orientation={'horizontal'} my={'0px'} />
+                )}
+              </>
+            ))}
+          </PopoverContent>
+        </Popover>
+      </Flex>
+    )
+  };
+
   return (
     <Box className={s.container}>
       <Flex
@@ -182,44 +281,9 @@ const AgentsList = () => {
         >
           {renderSearch()}
         </Flex>
-
-        <Flex
-          mt={"24px"}
-          flexDirection={'row'}
-          className={s.select}
-          alignItems={'center'}
-        >
-          <Text
-            fontSize={'14px'}
-            opacity={'0.7'}
-            fontWeight={'400'}
-            whiteSpace={"nowrap"}
-          >
-            Sort by
-          </Text>
-          <Box w={"100%"}>
-            <Select
-              w={'100%'}
-              value={sort}
-              cursor="pointer"
-              onChange={(event) => {
-                const sort = event.target.value as SortOption;
-                setSort(sort);
-                refParams.current = {
-                  ...refParams.current,
-                  sort: sort,
-                };
-                throttleGetTokens(true);
-              }}
-            >
-              <option value={SortOption.MarketCap}>Market cap</option>
-              {/* <option value={SortOption.Price}>Price</option> */}
-              <option value={SortOption.Percent}>24h%</option>
-              <option value={SortOption.CreatedAt}>Creation time</option>
-              <option value={SortOption.Volume24h}>24h volume</option>
-            </Select>
-          </Box>
-        </Flex>
+        <SimpleGrid columns={2}>
+          {renderMenuAddAbilities()}
+        </SimpleGrid>
       </Flex>
       <Box h={'24px'} />
 
