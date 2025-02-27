@@ -1,12 +1,14 @@
-import { Flex, Text } from "@chakra-ui/react";
+import { Flex, Text, useDisclosure } from "@chakra-ui/react";
 import BaseButton from "@components/BaseButton";
 import useForgotPass from "@pages/authen/hooks/useForgotPass.ts";
 import EaiSigner from "@helpers/signer";
 import { useState } from "react";
+import Checkbox from "@components/Checkbox";
 
 const FormForgotPass = () => {
    const { onClose } = useForgotPass();
    const [loading, setLoading] = useState<boolean>(false);
+   const { isOpen: isChecked, onToggle } = useDisclosure();
 
 
    const onSubmit = async () => {
@@ -27,7 +29,8 @@ const FormForgotPass = () => {
          alignItems="center"
          justifyContent="center"
          width="50%"
-         minWidth="700px"
+         maxWidth="800px"
+         minWidth="600px"
       >
          <Flex
             flexDirection="column"
@@ -37,35 +40,50 @@ const FormForgotPass = () => {
             <Text fontSize="48px" fontWeight="500" color="black">
                 Reset your account access
             </Text>
-            <Text fontSize="16px" fontWeight="400" color="#2E2E2E" textAlign="center">
+            <Text
+               fontSize="18px"
+               fontWeight="400"
+               color="#000"
+               textAlign="center"
+               gap="8px"
+               display="flex"
+               flexDirection="column"
+            >
                <Text>
-                   Agent Launcher does not keep a copy of your password.
-                   If you’re having trouble unlocking your account, you will need to reset your wallet.
-                   You can do this by providing the Secret Private Key you used when you set up your wallet.
+                  Agent Launcher does not store your password.
+                  If you're unable to unlock your account,
+                  you will need to reset your wallet by providing the Private Key used during account setup.
                </Text>
                <Text>
-                   This action will delete your current wallet from this device.
+                  Resetting your wallet will remove your current account from this device.
                </Text>
                <Text>
-                   Make sure you’re using the correct Secret Private Key before proceeding.
-                   You will not be able to undo this.
+                  Ensure you are using the correct Private Key before proceeding. This action cannot be undone.
                </Text>
             </Text>
          </Flex>
          <Flex
             flexDirection="column"
-            width="400px"
+            width="500px"
             marginTop="60px"
             gap="24px"
+            alignItems="center"
          >
+            <Checkbox
+               ticked={isChecked}
+               onToggle={onToggle}
+               label="I understand the consequences of resetting my wallet"
+            />
             <BaseButton
                type="submit"
                width="100% !important"
+               maxW="400px"
                onClick={onSubmit}
-               isDisabled={loading}
+               isDisabled={loading || !isChecked}
                isLoading={loading}
+
             >
-                Reset & Unlock
+               Reset
             </BaseButton>
             <Text
                textAlign="center"
