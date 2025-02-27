@@ -54,7 +54,7 @@ async def notify_status_reasoning_log(log: ReasoningLog):
             twitter_username="junk_notifications",
             room=telegram.TELEGRAM_ALERT_ROOM,
             schedule=True,
-            message_to_send=system_message,
+            message_to_send=f"<b>Request</b>: {log.id}\nModel: {log.model}; Task: {log.task}; Agent: {log.meta_data.twitter_username}\nError: {system_message}",
             fmt="HTML"
         )
 
