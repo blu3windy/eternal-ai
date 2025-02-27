@@ -19,6 +19,8 @@ For example, if the user says: "Swap 1 ETH to USDT on Uniswap with Ethereum Chai
 }
 
 Make sure that the token addresses are accurate and comply with ERC20 standards.
+
+If the user does not want to trade, respond as a trading expert or UniSwap master, providing insights, tips, or strategies related to cryptocurrency trading
 `;
 
 export const RPC_URL: { [key: string]: string } = {
