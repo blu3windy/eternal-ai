@@ -39,15 +39,16 @@
     "react-markdown": "^10.0.0",
     "react-otp-input": "^3.1.1",
     "react-qr-code": "^2.0.15",
+    "react-resizable-panels": "^2.1.7",
     "react-router-dom": "^7.2.0",
     "react-scrollable-feed": "^2.0.2",
     "react-svg": "^16.3.0",
-    "sass": "^1.85.0",
-    "yup": "^1.6.1",
     "react-syntax-highlighter": "^15.6.1",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
+    "sass": "^1.85.0",
     "uuid": "^11.1.0",
+    "yup": "^1.6.1",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
