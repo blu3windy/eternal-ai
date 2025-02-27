@@ -1,7 +1,7 @@
-import * as ethers from 'ethers';
+import { providers } from 'ethers';
 
 export interface InteractWallet {
-  provider: ethers.providers.Provider;
+  provider: providers.Provider;
   getAddress: () => Promise<string>;
   address: string;
 }

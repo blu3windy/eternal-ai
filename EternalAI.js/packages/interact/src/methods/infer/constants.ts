@@ -1,7 +1,6 @@
-import { ChainId } from '../../constants';
-import * as ethers from 'ethers';
+import { ContractInterface } from 'ethers';
 
-export const AGENT_ABI: ethers.ContractInterface = [
+export const AGENT_ABI: ContractInterface = [
   {
     inputs: [
       {
@@ -1071,7 +1070,7 @@ export const AGENT_ABI: ethers.ContractInterface = [
   },
 ];
 
-export const HYBRID_MODEL_ABI: ethers.ContractInterface = [
+export const HYBRID_MODEL_ABI: ContractInterface = [
   {
     inputs: [],
     name: 'ModelIdAlreadySet',
@@ -1525,7 +1524,7 @@ export const HYBRID_MODEL_ABI: ethers.ContractInterface = [
   },
 ];
 
-export const WORKER_HUB_ABI: ethers.ContractInterface = [
+export const WORKER_HUB_ABI: ContractInterface = [
   {
     inputs: [],
     name: 'AlreadyCommitted',
@@ -2755,7 +2754,7 @@ export const WORKER_HUB_ABI: ethers.ContractInterface = [
   },
 ];
 
-export const PROMPT_SCHEDULER_ABI: ethers.ContractInterface = [
+export const PROMPT_SCHEDULER_ABI: ContractInterface = [
   {
     inputs: [],
     name: 'AlreadyCommitted',

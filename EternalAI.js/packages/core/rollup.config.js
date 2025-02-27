@@ -4,6 +4,12 @@ const typescript = require('@rollup/plugin-typescript');
 const { terser } = require('rollup-plugin-terser');
 const pkg = require('./package.json');
 
+const json = require('@rollup/plugin-json');
+const builtins = require('rollup-plugin-node-builtins');
+const globals = require('rollup-plugin-node-globals');
+
+const { uglify } = require('rollup-plugin-uglify');
+
 module.exports = {
   input: 'src/index.ts',
   output: [
@@ -24,17 +30,24 @@ module.exports = {
       sourcemap: true,
     },
     {
-      file: 'dist/bundle.umd.js',
+      file: 'dist/bundle.umd.mjs',
       format: 'umd',
       name: 'Core',
       sourcemap: true,
     },
   ],
   plugins: [
-    resolve(),
+    resolve({
+      browser: true,
+      preferBuiltins: true,
+    }),
     commonjs(),
-    typescript({ tsconfig: './tsconfig.json' }),
+    globals(),
+    builtins(),
+    typescript({ tsconfig: './build.tsconfig.json' }),
     terser(),
+    json(),
+    uglify(),
   ],
-  external: Object.keys(pkg.peerDependencies || {}),
+  external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
 };

@@ -13,11 +13,10 @@
     "node": ">=10"
   },
   "scripts": {
-    "build": "rollup -c",
+    "build": "rm -rf dist && rollup -c",
     "build:watch": "rollup -c -w",
     "test": "vitest",
     "lint": "eslint . --ext .ts,.tsx",
-    "prepare": "rollup -c",
     "size": "size-limit",
     "analyze": "size-limit --why",
     "run-main": "ts-node -r tsconfig-paths/register ./scripts/main.ts"
@@ -35,16 +34,6 @@
     "trailingComma": "es5"
   },
   "author": "Peter",
-  "size-limit": [
-    {
-      "path": "dist/bundle.cjs.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "dist/bundle.esm.js",
-      "limit": "10 KB"
-    }
-  ],
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-json": "^6.1.0",
@@ -62,6 +51,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@eternalai.js/core": "*",
     "ethers": "5.7.2"
   }
 }

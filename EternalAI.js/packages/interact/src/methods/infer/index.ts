@@ -1,5 +1,3 @@
-import * as ethers from 'ethers';
-
 import { InteractWallet } from '../types';
 import { Message, SendInferResponse } from './types';
 import {
@@ -12,10 +10,15 @@ import {
 import { ChainId } from '../../constants';
 import { InferPayloadWithMessages, InferPayloadWithPrompt } from '../../types';
 import { sleep } from '../../utils/time';
-import { Fragment, LogDescription } from 'ethers/lib/utils';
+import { Bytes, Fragment, LogDescription } from 'ethers/lib/utils';
 import LightHouse from '@/services/light_house';
 
-const contracts: Record<string, ethers.Contract> = {};
+import { utils } from '@eternalai.js/core';
+import { Contract, providers } from 'ethers';
+
+const ethers = utils.injects.injectEthers();
+
+const contracts: Record<string, Contract> = {};
 
 const getAgentContract = (contractAddress: string, wallet: InteractWallet) => {
   if (!contracts[contractAddress]) {
@@ -134,7 +137,7 @@ const Infer = {
         gasLimit: gasLimit,
         gasPrice: gasPrice,
         nonce: nonce,
-      } satisfies ethers.ethers.providers.TransactionRequest;
+      } satisfies providers.TransactionRequest;
       console.log('infer createPayloadWithPrompt - succeed', params);
       return params;
     } catch (e) {
@@ -178,7 +181,7 @@ const Infer = {
         gasLimit: gasLimit,
         gasPrice: gasPrice,
         nonce: nonce,
-      } satisfies ethers.ethers.providers.TransactionRequest;
+      } satisfies providers.TransactionRequest;
       console.log('infer createPayloadWithMessages - succeed', params);
       return params;
     } catch (e) {
@@ -269,7 +272,7 @@ const Infer = {
     }
   },
 
-  processOutputToInferResponse: async (output: ethers.Bytes) => {
+  processOutputToInferResponse: async (output: Bytes) => {
     const inferResponse = Infer.processOutput(output);
     if (!inferResponse) {
       return null;

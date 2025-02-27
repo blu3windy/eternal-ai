@@ -1,13 +1,17 @@
-import * as ethers from 'ethers';
 import { InferPayloadWithMessages, InferPayloadWithPrompt } from './types';
 import * as methods from './methods';
 import { ChainId } from './constants';
 import BaseInteract, { IInteract } from './baseInteract';
 
-class Interact extends BaseInteract implements IInteract {
-  private _wallet: ethers.Wallet;
+import { utils } from '@eternalai.js/core';
+import { Wallet } from 'ethers';
 
-  constructor(wallet: ethers.Wallet) {
+const ethers = utils.injects.injectEthers();
+
+class Interact extends BaseInteract implements IInteract {
+  private _wallet: Wallet;
+
+  constructor(wallet: Wallet) {
     super();
     if (!ethers.Wallet.isSigner(wallet)) {
       throw new Error('Provided wallet is not a signer');

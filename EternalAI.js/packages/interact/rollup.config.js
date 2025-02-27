@@ -37,7 +37,7 @@ module.exports = {
       globals: GLOBAL_PACKAGES,
     },
     {
-      file: 'dist/bundle.umd.js',
+      file: 'dist/bundle.umd.mjs',
       format: 'umd',
       name: 'Interact',
       sourcemap: true,

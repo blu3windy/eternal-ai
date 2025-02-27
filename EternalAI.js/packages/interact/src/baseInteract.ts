@@ -1,9 +1,10 @@
-import * as ethers from 'ethers';
-
 import { CHAIN_MAPPING, ChainId } from './constants';
 import { InferPayloadWithMessages, InferPayloadWithPrompt } from './types';
 import * as methods from './methods';
 import { InteractWallet } from './methods/types';
+import { utils } from '@eternalai.js/core';
+
+const ethers = utils.injects.injectEthers();
 
 class BaseInteract {
   protected getProvider(chainId: ChainId, rpcUrl?: string) {

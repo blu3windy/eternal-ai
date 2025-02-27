@@ -1,4 +1,4 @@
-import * as ethers from 'ethers';
+import { providers } from 'ethers';
 import { ChainId } from './constants';
 import { Message } from './methods/infer/types';
 import { InteractWallet } from './methods/types';
@@ -21,6 +21,6 @@ export type InferPayloadWithMessages = InferPayloadBase & {
 
 export type ExternalWallet = Pick<InteractWallet, 'getAddress' | 'address'> & {
   requestSignature: (
-    transaction: ethers.ethers.providers.TransactionRequest
+    transaction: providers.TransactionRequest
   ) => Promise<string>;
 };
