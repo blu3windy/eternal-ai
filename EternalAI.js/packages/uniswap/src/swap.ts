@@ -77,17 +77,6 @@ export class SwapReq {
     }
 }
 
-
-export interface PoolInfo {
-    token0: string
-    token1: string
-    fee: number
-    tickSpacing: number
-    sqrtPriceX96: ethers.BigNumberish
-    liquidity: ethers.BigNumberish
-    tick: number
-}
-
 export class UniSwapAI {
     swap_v3 = async (privateKey: string, req: SwapReq, chain_id: string): Promise<{
         state: TransactionState | null,
