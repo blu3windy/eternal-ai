@@ -145,6 +145,10 @@ export class AgentInference {
 
 }
 
+export class ModelInference {
+
+}
+
 export class InferenceProcessing {
     web3_provider: any = null
     workerhub_address: string = ""

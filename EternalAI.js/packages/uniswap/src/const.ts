@@ -14,11 +14,15 @@ For example, if the user says: "Swap 1 ETH to USDT on Uniswap with Ethereum Chai
 
 {
   "token_in": "symbol of Input token",
+  "token_in_address": "contract erc20 address of Input token",
   "token_in_amount": 1.0,
   "token_out": "symbol of Output token",
+  "token_out_address": "contract erc20 address of Output token",
 }
 
 Make sure that the token addresses are accurate and comply with ERC20 standards.
+
+If the user does not want to trade, respond as a trading expert or UniSwap master, providing insights, tips, or strategies related to cryptocurrency trading
 `;
 
 export const RPC_URL: { [key: string]: string } = {
