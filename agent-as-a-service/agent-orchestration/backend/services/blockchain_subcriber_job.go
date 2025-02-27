@@ -380,14 +380,6 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 		}
 	}
 
-	{
-		for _, event := range eventResp.RealWorldAgentExecutionRequested {
-			err := s.CreateInfraTwitterAppRequest(ctx, event)
-			if err != nil {
-				retErr = errs.MergeError(retErr, err)
-			}
-		}
-	}
 	return retErr
 }
 

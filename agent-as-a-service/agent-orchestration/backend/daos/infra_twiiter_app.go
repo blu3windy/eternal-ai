@@ -59,34 +59,3 @@ func (d *DAO) FindInfraTwitterAppJoinSelect(tx *gorm.DB, selected []string, join
 	}
 	return ms, nil
 }
-
-// /
-func (d *DAO) FirstInfraRequestByID(tx *gorm.DB, id uint, preloads map[string][]interface{}, forUpdate bool) (*models.InfraRequest, error) {
-	var m models.InfraRequest
-	if err := d.first(tx, &m, map[string][]interface{}{"id = ?": []interface{}{id}}, preloads, nil, forUpdate); err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &m, nil
-}
-
-func (d *DAO) FirstInfraRequest(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string) (*models.InfraRequest, error) {
-	var m models.InfraRequest
-	if err := d.first(tx, &m, filters, preloads, orders, false); err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &m, nil
-}
-
-func (d *DAO) FindInfraRequest(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string, offset int, limit int) ([]*models.InfraRequest, error) {
-	var ms []*models.InfraRequest
-	if err := d.find(tx, &ms, filters, preloads, orders, offset, limit, false); err != nil {
-		return nil, err
-	}
-	return ms, nil
-}

@@ -262,6 +262,7 @@ type Config struct {
 		NetworkID         uint64 `json:"network_id"`
 		AgentAddress      string `json:"agent_address"`
 		WorkerAddress     string `json:"worker_address"`
+		AgentID           uint   `json:"agent_id"`
 	} `json:"infra_twitter_app"`
 }
 
