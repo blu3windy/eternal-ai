@@ -1,4 +1,4 @@
-import {IAgentToken} from "../../../services/api/agents-token/interface.ts";
+import {IAgentToken, IChainConnected} from "../../../services/api/agents-token/interface.ts";
 
 export interface IAgentContext {
   loading: boolean;
@@ -6,4 +6,5 @@ export interface IAgentContext {
   setSelectedAgent: any;
   currentModel: any;
   setCurrentModel: any;
+  chainList: IChainConnected[];
 }

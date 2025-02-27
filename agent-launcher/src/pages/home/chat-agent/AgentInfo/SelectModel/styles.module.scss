@@ -1,5 +1,6 @@
 .container {
   width: 100%;
+  max-width: 300px;
   position: relative;
 
   :global {
@@ -44,20 +45,19 @@
   }
 
   .itemIcon {
-    width: 24px;
-    height: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
   }
 
   .itemTitle {
-    font-size: 13px;
+    font-size: 20px;
     font-weight: 500;
-    line-height: 20.8px;
   }
 
   .itemAmount {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 400;
-    line-height: 140%;
     opacity: 0.7;
 
     span {
@@ -71,9 +71,13 @@
     font-weight: 400;
     line-height: 160%;
     color: #000000b2;
+  }
 
-    @include is-mobile {
-      max-width: 55vw;
+  .itemDot {
+    border: 1.5px solid #5400FB;
+
+    >div {
+      background-color: #5400FB;
     }
   }
 }
