@@ -8,6 +8,8 @@ const json = require('@rollup/plugin-json');
 const builtins = require('rollup-plugin-node-builtins');
 const globals = require('rollup-plugin-node-globals');
 
+const { uglify } = require('rollup-plugin-uglify');
+
 const GLOBAL_PACKAGES = {
   ethers: 'ethers',
 };
@@ -53,6 +55,7 @@ module.exports = {
     typescript({ tsconfig: './build.tsconfig.json' }),
     terser(),
     json(),
+    uglify(),
   ],
   external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
 };
