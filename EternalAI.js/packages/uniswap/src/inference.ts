@@ -339,8 +339,9 @@ export class APIInference {
 
             const responseData = await response.json();
             return responseData;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error:', error);
+            throw error;
         }
     }
 
