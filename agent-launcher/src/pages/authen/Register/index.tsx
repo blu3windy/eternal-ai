@@ -6,14 +6,16 @@ import ImportKey from "@pages/authen/Register/ImportKey";
 
 const Register: FC = () => {
    const [registerType, setRegisterType]
-       = useState<RegisterType | undefined>(RegisterType.create);
+       = useState<RegisterType>(RegisterType.introduce);
 
    const renderContent = () => {
       switch (registerType) {
       case RegisterType.create:
-         return <CreateNew />;
+         return (
+            <CreateNew onBack={() => setRegisterType(RegisterType.introduce)} />
+         );
       case RegisterType.import:
-         return <ImportKey />;
+         return <ImportKey onBack={() => setRegisterType(RegisterType.introduce)} />;
       default:
          return (
             <Introduce

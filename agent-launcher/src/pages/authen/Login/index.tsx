@@ -7,12 +7,14 @@ import { useEffect, useState } from "react";
 import EaiSigner from "@helpers/signer";
 import eaiCrypto from "@utils/crypto";
 import { useAuth } from "@pages/authen/provider.tsx";
+import useForgotPass from "@pages/authen/hooks/useForgotPass.ts";
 
 const Login = () => {
 
    const { onLogin } = useAuth();
    const [cipherText, setCipherText] = useState<string | undefined>(undefined);
    const [loading, setLoading] = useState<boolean>(true);
+   const { onOpen } = useForgotPass();
 
    const onSubmit = async (values: { password: string }) => {
       try {
@@ -29,7 +31,7 @@ const Login = () => {
             if (!password) return false; // Required field check
             try {
                eaiCrypto.decryptAES({
-                  cipherText, // Make sure this is defined
+                  cipherText: cipherText || "", // Make sure this is defined
                   pass: password,
                });
                return true; // Valid password
@@ -86,6 +88,7 @@ const Login = () => {
                      <InputPassword
                         name="password"
                         placeholder="Enter password"
+                        autoFocus={true}
                         header={{ label: "Password"?.toUpperCase() }}
                         onChange={(e) =>
                            setFieldValue('password', e.target.value)
@@ -113,6 +116,19 @@ const Login = () => {
                      >
                          Unlock
                      </BaseButton>
+                     <Text
+                        textAlign="center"
+                        fontSize="16px"
+                        fontWeight="400"
+                        color="black"
+                        marginTop="24px"
+                        fontStyle="italic"
+                        cursor="pointer"
+                        textDecoration="underline"
+                        onClick={onOpen}
+                     >
+                        Forgot password?
+                     </Text>
                   </Flex>
                </Form>
             )}

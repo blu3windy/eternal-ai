@@ -1,0 +1,13 @@
+.container {
+  height: 100svh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(180deg, #E4E5D8 0%, #CBD6E8 100%)
+}

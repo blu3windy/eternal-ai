@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { useState } from "react";
 import { CreateNewStep } from "@pages/authen/Register/types.ts";
 import Backup from "@pages/authen/Register/CreateNew/Backup.tsx";
 import ConfirmKey from "@pages/authen/Register/CreateNew/ConfirmKey.tsx";
@@ -7,7 +7,12 @@ import EaiSigner from "@helpers/signer";
 import { compareString } from "@utils/string.ts";
 import { useAuth } from "@pages/authen/provider.tsx";
 
-const CreateNew: FC = () => {
+interface IProps {
+   onBack: () => void;
+}
+
+const CreateNew = (props: IProps) => {
+   const { onBack } = props;
    const [prvKey, setPrvKey] = useState<string>("");
    const [step, setStep]
        = useState<CreateNewStep>(CreateNewStep.backup);
@@ -30,7 +35,7 @@ const CreateNew: FC = () => {
             throw new Error("Private key not match");
          }
 
-         onLogin(password);
+         await onLogin(password);
       } catch (e) {
          console.error(e);
       } finally {
@@ -47,6 +52,10 @@ const CreateNew: FC = () => {
                onNext={(prvKey: string) => {
                   setPrvKey(prvKey);
                   setStep(CreateNewStep.confirmKey);
+               }}
+               onBack={() => {
+                  setPrvKey("");
+                  onBack();
                }}
             />
          );

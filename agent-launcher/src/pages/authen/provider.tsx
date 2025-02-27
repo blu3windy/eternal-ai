@@ -5,11 +5,12 @@ import EaiSigner from "../../helpers/signer";
 import sleep from "@utils/sleep.ts";
 import AuthenLoading from "@pages/authen/AuthenLoading";
 import TestingButton from "@pages/authen/TesingButton";
+import ForgotPass from "@pages/authen/ForgotPass";
 
 interface AuthContextType {
    signer: Wallet | undefined;
    hasUser: boolean;
-   onLogin: (pass: string) => void;
+   onLogin: (pass: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -74,6 +75,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       <AuthContext.Provider value={values}>
          {renderContent()}
          <TestingButton />
+         <ForgotPass />
       </AuthContext.Provider>
    );
 };
