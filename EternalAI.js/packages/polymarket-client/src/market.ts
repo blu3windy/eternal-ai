@@ -5,7 +5,7 @@ import {Chain, ClobClient} from "@polymarket/clob-client";
 dotenvConfig({path: resolve(__dirname, "../.env")});
 
 export class Market {
-    clobClient: any
+    clobClient: ClobClient
 
     constructor() {
         const host = process.env.CLOB_API_URL || "http://localhost:8080";
@@ -13,19 +13,23 @@ export class Market {
         this.clobClient = new ClobClient(host, chainId);
     }
 
-    getMarkets = async () => {
-        return await this.clobClient.getMarkets();
+    getMarket = async (condition_id: string) => {
+        return await this.clobClient.getMarket(condition_id);
     }
 
-    getSamplingMarkets = async () => {
-        return await this.clobClient.getSamplingMarkets();
+    getMarkets = async (next_cursor: string) => {
+        return await this.clobClient.getMarkets(next_cursor);
     }
 
-    getSimplifiedMarkets = async () => {
-        return await this.clobClient.getSimplifiedMarkets();
+    getSamplingMarkets = async (next_cursor: string) => {
+        return await this.clobClient.getSamplingMarkets(next_cursor);
     }
 
-    getSamplingSimplifiedMarkets = async () => {
-        return await this.clobClient.getSamplingSimplifiedMarkets();
+    getSimplifiedMarkets = async (next_cursor: string) => {
+        return await this.clobClient.getSimplifiedMarkets(next_cursor);
+    }
+
+    getSamplingSimplifiedMarkets = async (next_cursor: string) => {
+        return await this.clobClient.getSamplingSimplifiedMarkets(next_cursor);
     }
 }

@@ -3,18 +3,18 @@ info:
   title: Polka API
   version: 1.0.0
 paths:
-  /:
-    get:
-      summary: Returns a greeting message
-      responses:
-        '200':
-          description: A successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  status:
-                    type: string
+#  /:
+#    get:
+#      summary: Returns a greeting message
+#      responses:
+#        '200':
+#          description: A successful response
+#          content:
+#            application/json:
+#              schema:
+#                type: object
+#                properties:
+#                  message:
+#                    type: string
+#                  status:
+#                    type: string
