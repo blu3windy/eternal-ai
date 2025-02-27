@@ -41,6 +41,18 @@ export const SortBy = [
   { value: SortOption.Volume24h, label: '24h volume' },
 ];
 
+export enum FilterOption {
+  Poppular = 'poppular',
+  Model = 'model',
+  NonModel = 'non-model',
+};
+
+export const FilterBy = [
+  { value: FilterOption.Poppular, label: 'Popular' },
+  { value: FilterOption.Model, label: 'Model' },
+  { value: FilterOption.NonModel, label: 'Non-model' },
+];
+
 export enum AgentType {
   Normal = 0,
   Reasoning = 1,
@@ -65,6 +77,7 @@ const AgentsList = () => {
   const refInput = useRef<HTMLInputElement | null>(null);
 
   const [sort, setSort] = useState<SortOption>(SortOption.CreatedAt);
+  const [filter, setFilter] = useState<FilterOption>(FilterOption.Poppular);
   const [loaded, setLoaded] = useState(false);
   const refLoading = useRef(false);
 
@@ -76,10 +89,12 @@ const AgentsList = () => {
     page: 1,
     limit: 30,
     sort,
+    filter,
     // order: OrderOption.Desc,
     search: '',
   });
 
+  const { isOpen: isOpenFilter, onClose: onCloseFilter, onToggle: onToggleFilter } = useDisclosure();
   const { isOpen: isOpenSort, onClose: onCloseSort, onToggle: onToggleSort } = useDisclosure();
 
   const cPumpAPI = new CAgentTokenAPI();
@@ -103,6 +118,7 @@ const AgentsList = () => {
         limit: refParams.current.limit,
         sort_col: refParams.current.sort,
         search: refParams.current.search,
+        filter_col: refParams.current.filter,
         chain: ''
       });
 
@@ -189,6 +205,82 @@ const AgentsList = () => {
         </Flex>
       </Flex>
     );
+  };
+
+  const renderFilterMenu = () => {
+    return (
+      <Flex
+        mt={"24px"}
+        flexDirection={'row'}
+        className={s.select}
+        alignItems={'center'}
+      >
+        <Text
+          fontSize={'14px'}
+          opacity={'0.7'}
+          fontWeight={'400'}
+          whiteSpace={"nowrap"}
+        >
+          Filter by
+        </Text>
+        <Popover w={"100%"} placement="bottom-end" isOpen={isOpenFilter} onClose={onCloseFilter}>
+          <PopoverTrigger>
+            <Box
+              className={s.btnTokenSetup}
+              as={Button}
+              onClick={onToggleFilter}
+            >
+              <Text fontSize={'14px'} fontWeight={500}>
+                {FilterBy.find(s => s.value === filter)?.label}
+              </Text>
+              <Image
+                src={'/icons/ic-angle-down.svg'}
+                alt={'add'}
+              />
+            </Box>
+          </PopoverTrigger>
+          <PopoverContent
+            width={'100%'}
+            className={s.menuTokenSetup}
+            border={'1px solid #E5E7EB'}
+            boxShadow={'0px 0px 24px -6px #0000001F'}
+            borderRadius={'16px'}
+            background={'#fff'}
+          >
+            {FilterBy.map((option, index) => (
+              <>
+                <Flex
+                  gap={'12px'}
+                  alignItems={'center'}
+                  padding={'16px 16px'}
+                  _hover={{
+                    bg: '#5400FB0F',
+                  }}
+                  cursor="pointer"
+                  onClick={(e) => {
+                    const filter = option.value as FilterOption;
+                    setFilter(filter);
+                    refParams.current = {
+                      ...refParams.current,
+                      filter: filter,
+                    };
+                    throttleGetTokens(true);
+                    onCloseFilter();
+                  }}
+                >
+                  <Text fontSize={'13px'} fontWeight={500}>
+                    {option.label}
+                  </Text>
+                </Flex>
+                {index < SortBy.length - 1 && (
+                  <Divider orientation={'horizontal'} my={'0px'} />
+                )}
+              </>
+            ))}
+          </PopoverContent>
+        </Popover>
+      </Flex>
+    )
   };
 
   const renderSortMenu = () => {
@@ -281,7 +373,8 @@ const AgentsList = () => {
         >
           {renderSearch()}
         </Flex>
-        <SimpleGrid columns={2}>
+        <SimpleGrid columns={2} gap={"12px"}>
+          {renderFilterMenu()}
           {renderSortMenu()}
         </SimpleGrid>
       </Flex>
