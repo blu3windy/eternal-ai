@@ -137,46 +137,32 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
             </Text>
             <Text className={s.noTokenTag}>{AgentTypeName[token?.agent_type]}</Text>
           </Flex>
-          {
-            Number(token?.wallet_balance) > 0 ? (
-              <SimpleGrid columns={2}>
-                <Flex gap={"4px"} alignItems={"center"}>
-                  <Image w={'16px'} h={'16px'} src={chain?.icon} />
-                  <Text className={s.infoText}>
-                    {formatCurrency(token?.wallet_balance)} EAI
+          <SimpleGrid columns={3}>
+            <Text className={s.infoText}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
+            <Text className={s.infoText}>
+              {token?.meme?.market_cap && (
+                <>
+                  <Text as={'span'}>
+                    {Number(token?.meme?.market_cap) > 0
+                      ? `$${formatCurrency(
+                        token?.meme?.market_cap,
+                        0,
+                        3,
+                        'BTC',
+                        false,
+                        true,
+                      )}`
+                      : '$0'}
                   </Text>
-                </Flex>
-                <Text className={s.infoText}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
-              </SimpleGrid>
-            ) : (
-              <SimpleGrid columns={3}>
-                <Text className={s.infoText}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
-                <Text className={s.infoText}>
-                  {token?.meme?.market_cap && (
-                    <>
-                      <Text as={'span'}>
-                        {Number(token?.meme?.market_cap) > 0
-                          ? `$${formatCurrency(
-                            token?.meme?.market_cap,
-                            0,
-                            3,
-                            'BTC',
-                            false,
-                            true,
-                          )}`
-                          : '$0'}
-                      </Text>
-                      {' '}<Text as={'span'} color={"#657786"}>MC</Text>
-                    </>
-                  )}
-                </Text>
-                <Flex>
-                  <Text className={s.infoText}>{formatCurrency(12345)}</Text>
-                  <Image src={'/icons/ic-chat.svg'} w={'16px'}/>
-                </Flex>
-              </SimpleGrid>
-            )
-          }
+                  {' '}<Text as={'span'} color={"#657786"}>MC</Text>
+                </>
+              )}
+            </Text>
+            <Flex>
+              <Text className={s.infoText}>{formatCurrency(12345)}</Text>
+              <Image src={'/icons/ic-chat.svg'} w={'16px'}/>
+            </Flex>
+          </SimpleGrid>
         </Flex>
       </Grid>
     </Flex>
