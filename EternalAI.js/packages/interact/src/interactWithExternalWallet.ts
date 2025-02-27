@@ -1,32 +1,19 @@
-import * as ethers from 'ethers';
 import {
   ExternalWallet,
   InferPayloadWithMessages,
   InferPayloadWithPrompt,
 } from './types';
 import * as methods from './methods';
-import { CHAIN_MAPPING, ChainId } from './constants';
+import { ChainId } from './constants';
 import { InteractWallet } from './methods/types';
+import BaseInteract, { IInteract } from './baseInteract';
 
-class InteractWithExternalWallet {
+class InteractWithExternalWallet extends BaseInteract implements IInteract {
   private _wallet: ExternalWallet;
 
   constructor(wallet: ExternalWallet) {
+    super();
     this._wallet = wallet;
-  }
-
-  private getProvider(chainId: ChainId, rpcUrl?: string) {
-    // create provider from user optional
-    if (!!rpcUrl) {
-      return new ethers.providers.JsonRpcProvider(rpcUrl);
-    }
-
-    if (!CHAIN_MAPPING[chainId]) {
-      throw new Error(`Unsupported chainId: ${chainId}`);
-    }
-
-    // create provider from default supported chainId
-    return new ethers.providers.JsonRpcProvider(CHAIN_MAPPING[chainId]);
   }
 
   private getNetworkCredential(chainId: ChainId, rpcUrl?: string) {
@@ -38,15 +25,6 @@ class InteractWithExternalWallet {
     return {
       provider,
       signer,
-    };
-  }
-
-  private normalizePayload(
-    payload: InferPayloadWithPrompt | InferPayloadWithMessages
-  ) {
-    return {
-      ...payload,
-      isLightHouse: payload.isLightHouse ?? false,
     };
   }
 
@@ -102,18 +80,11 @@ class InteractWithExternalWallet {
 
     const signedTx = await signer.requestSignature(params);
 
-    const sendPromptTxHash = await methods.Infer.sendPrompt(signer, signedTx);
-
-    const workerHubAddress = await methods.Infer.getWorkerHubAddress(
-      payload.agentAddress,
-      signer
-    );
-
-    return await methods.Infer.listenPromptResponse(
-      payload.chainId,
+    return await this.sendSignedTransactionAndListenResult(
       signer,
-      workerHubAddress,
-      sendPromptTxHash
+      signedTx,
+      payload.agentAddress,
+      payload.chainId
     );
   }
 
@@ -134,18 +105,11 @@ class InteractWithExternalWallet {
 
     const signedTx = await signer.requestSignature(params);
 
-    const sendPromptTxHash = await methods.Infer.sendPrompt(signer, signedTx);
-
-    const workerHubAddress = await methods.Infer.getWorkerHubAddress(
-      payload.agentAddress,
-      signer
-    );
-
-    return await methods.Infer.listenPromptResponse(
-      payload.chainId,
+    return await this.sendSignedTransactionAndListenResult(
       signer,
-      workerHubAddress,
-      sendPromptTxHash
+      signedTx,
+      payload.agentAddress,
+      payload.chainId
     );
   }
 }

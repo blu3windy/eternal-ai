@@ -145,6 +145,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			poolMap := map[string]bool{}
 			for _, event := range eventResp.Transfer {
 				poolMap[strings.ToLower(event.To)] = true
+				poolMap[strings.ToLower(event.From)] = true
 			}
 			poolArr := []string{}
 			for pool := range poolMap {
@@ -190,7 +191,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 				}
 			}
 			for _, event := range eventResp.Transfer {
-				if poolMap[strings.ToLower(event.To)] {
+				if poolMap[strings.ToLower(event.To)] || poolMap[strings.ToLower(event.From)] {
 					err := s.CreateErc20TokenTransferEvent(ctx, networkID, event)
 					if err != nil {
 						return errs.NewError(err)
