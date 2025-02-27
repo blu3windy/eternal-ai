@@ -7,7 +7,7 @@ export async function readFileOnChain(chainId: number, fileName: string) {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const deploy = deploys[chainId];
-  const rpc = CHAIN_CONFIG[chainId as CHAIN_CONFIG_TYPE]?.rpcUrls?.default?.http;
+  const rpc = CHAIN_CONFIG[chainId as CHAIN_CONFIG_TYPE]?.rpcUrls?.default?.http[0];
         
   const provider = new ethers.providers.JsonRpcProvider(rpc);
   const contract = new ethers.Contract(
