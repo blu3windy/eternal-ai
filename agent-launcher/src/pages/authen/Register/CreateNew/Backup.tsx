@@ -6,6 +6,7 @@ import BaseButton from "@components/BaseButton";
 
 interface IProps {
    onNext: (_: string) => void;
+   onBack: () => void;
    prvKey: string;
 }
 
@@ -155,13 +156,31 @@ const Backup = (props: IProps) => {
                </Text>
             </Box>
          </Flex>
-         <BaseButton
-            width="400px !important"
-            isDisabled={!backedUp}
-            onClick={_onNext}
+         <Flex
+            flexDirection="column"
+            alignItems="center"
+            gap="24px"
          >
-            {backedUp ? "Continue" : "Please backup your key first"}
-         </BaseButton>
+            <BaseButton
+               width="400px !important"
+               isDisabled={!backedUp}
+               onClick={_onNext}
+            >
+               {backedUp ? "Continue" : "Please backup your key first"}
+            </BaseButton>
+            <Text
+               fontSize="16px"
+               fontWeight="400"
+               color="#000000"
+               cursor="pointer"
+               textDecoration="underline"
+               onClick={() => {
+                  props.onBack();
+               }}
+            >
+               Cancel
+            </Text>
+         </Flex>
       </Flex>
    )
 }

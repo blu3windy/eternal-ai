@@ -1,5 +1,4 @@
-import { Center } from "@chakra-ui/react";
-import AppLoading from "@components/AppLoading";
+import { Center, Image } from "@chakra-ui/react";
 
 const AuthenLoading = () => {
    return (
@@ -8,7 +7,7 @@ const AuthenLoading = () => {
          width="100dvw"
          height="100dvh"
       >
-         <AppLoading />
+         <Image src="icons/eai-loading.gif" alt="loading" width="50px" />
       </Center>
    )
 };

@@ -1,4 +1,5 @@
 import eaiCrypto from "@utils/crypto";
+import { ethers } from "ethers";
 
 const KEYTAR_STORAGE_NAME = {
    CIPHER_TEXT: 'KEYTAR_LAUNCHER_EAI_CIPHER_TEXT',
@@ -21,6 +22,11 @@ class EaiSigner {
 
    static async storageNewKey(params: { prvKey: string, pass: string }) {
       const { prvKey, pass } = params;
+      const signer = new ethers.Wallet(prvKey);
+      if (!signer?.address || !pass?.length) {
+         throw new Error("Invalid private key or password");
+      }
+
       const cipherText = eaiCrypto.encryptAES({
          value: prvKey,
          pass
@@ -41,6 +47,10 @@ class EaiSigner {
    }
 
    static async removeStorageKey() {
+      await window.electronAPI.keytarRemove(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
+   }
+
+   static async reset() {
       await window.electronAPI.keytarRemove(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
    }
 }

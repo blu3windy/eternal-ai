@@ -40,6 +40,8 @@ export default defineConfig({
          "@utils": path.resolve(__dirname, 'src/utils'),
          '@interfaces': path.resolve(__dirname, 'src/interfaces'),
          "@helpers": path.resolve(__dirname, 'src/helpers'),
+         "@contract": path.resolve(__dirname, 'src/contract'),
+         
       }
    }
 })

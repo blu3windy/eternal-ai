@@ -1,6 +1,7 @@
 enum RegisterType {
     create,
     import,
+    introduce
 }
 
 enum CreateNewStep {
