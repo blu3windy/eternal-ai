@@ -11,7 +11,7 @@ module.exports = {
     input: 'src/main.ts',
     output: [
         {
-            file: 'dist/bundle.main.js',
+            file: 'dist-main/bundle.es.js',
             format: 'es',
             sourcemap: true
         }
