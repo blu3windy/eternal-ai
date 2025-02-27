@@ -1,5 +1,12 @@
-export { default as Interact } from './interact';
-export { default as InteractWithExternalWallet } from './interactWithExternalWallet';
-export * as methods from './methods';
-export * from './types';
-export * from './constants';
+import * as Immutable from 'immutable';
+
+export const abc = () => {
+  console.log('abc', Immutable);
+  const map = Immutable.Map([
+    ['a', 1],
+    ['b', 2],
+  ]);
+  console.log(map);
+};
+
+abc();
