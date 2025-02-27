@@ -33,7 +33,6 @@ export const call_uniswap = async (private_key: string, chain_id_swap: string, c
     }
 }
 
-
 export const process_infer = async (chain_id: string, tx_hash: string, rpc: string, worker_address: string) => {
     if (V1.includes(chain_id) && V2.includes(chain_id)) {
         console.log(`${chain_id} is not support`)
@@ -149,7 +148,7 @@ export const uni_swap_ai = async (command: string, args: any) => {
             const {state, tx} = await create_api_infer(
                 args.host || 'https://api.eternalai.org/v1',
                 args.prompt,
-                args.model,
+                args.model || process.env.MODEL,
                 args.private_key || process.env.PRIVATE_KEY,
                 args.chain_id_swap || ETH_CHAIN_ID || "0x1",
                 args.api_key || process.env.API_KEY,
@@ -162,12 +161,14 @@ export const uni_swap_ai = async (command: string, args: any) => {
     }
 }
 
+// for browser
 export const prompt = async (prompt: string, private_key: string) => {
     try {
         const {state, tx} = await uni_swap_ai("api-infer", {
             prompt: prompt,
             private_key: private_key,
             model: "gpt-4o-mini",
+            api_key: "",
             host: "https://api.openai.com/v1",
         })
         console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
