@@ -5,6 +5,7 @@ import { changeWallet, createWallet, TransactionState } from './libs/providers';
 import { createTrade, executeTrade } from './libs/trading';
 import { CurrentConfig, Environment } from './libs/config';
 import { getCurrencyBalance, getCurrencyDecimal } from './libs/wallet';
+import { TTransactionResponse } from './type';
 
 export class SwapReq {
   token_in: string = '';
@@ -77,7 +78,7 @@ export class SwapReq {
     }
     if (!result) {
       const token_info_list_response = await fetch(
-        'https://api.coingecko.com/api/v3/coins/list?include_platform=true&status=active'
+        ' https://api-dojo2.eternalai.org/api/coins/list?include_platform=true&status=active'
       );
       if (token_info_list_response.ok) {
         const list: any = await token_info_list_response.json();
@@ -97,11 +98,7 @@ export class UniSwapAI {
     privateKey: string,
     req: SwapReq,
     chain_id: string
-  ): Promise<{
-    state: TransactionState | null;
-    tx: any;
-    message?: string;
-  }> => {
+  ): Promise<TTransactionResponse> => {
     if (privateKey == '') {
       throw new Error('invalid private key');
     }
@@ -110,6 +107,8 @@ export class UniSwapAI {
     CurrentConfig.rpc.mainnet = getRPC(chain_id);
     CurrentConfig.wallet.privateKey = privateKey;
     const newWallet = createWallet();
+
+    // check if one token is ETH, change to WETH
 
     // init config token
     const tokenIn = new Token(
@@ -130,6 +129,7 @@ export class UniSwapAI {
       req.token_out
     );
     CurrentConfig.tokens.out = tokenOut;
+
     const tokenInBalance = await getCurrencyBalance(
       newWallet.provider,
       newWallet.address,
@@ -149,7 +149,7 @@ export class UniSwapAI {
       return {
         state: TransactionState.Failed,
         tx: null,
-        message: (e as Error).message,
+        message: 'swap_v3 error: ' + (e as Error).message,
       };
     }
     // return {state: null, tx: null}
