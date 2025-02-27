@@ -4,6 +4,9 @@ const EMIT_EVENT_NAME = {
    KEYTAR_REMOVE: "safe-keytar-remove",
 
    SAFE_COPY: "safe-copy",
+   READ_FILE: "safe-read-file",
+   ACCESS_FILE: "safe-access-file",
+   WRITE_FILE: "safe-write-file",
 }
 
 export {

@@ -28,6 +28,10 @@ interface IElectronAPI {
 
   // Copy text to clipboard
   safeCopy: (text: string) => Promise<void>
+  // File
+  readFile: (fileName: string) => Promise<string>
+  accessFile: (fileName: string) => Promise<boolean>
+  writeFile: (fileName: string, data: string) => Promise<string>
 }
 
 // Used in Renderer process, expose in `preload.ts`
