@@ -1,27 +1,32 @@
-import { Box, Flex, SimpleGrid } from "@chakra-ui/react";
 import MainLayout from "../../components/layout";
 import ChatAgent from "./chat-agent";
 import TradeAgent from "./trade-agent";
 import AgentProvider from "./provider";
 import AgentsList from "./list-agent";
 import FundAgentProvider from "../../providers/FundAgent";
+import {Panel, PanelGroup, PanelResizeHandle} from "react-resizable-panels";
+import s from "./styles.module.scss";
 
 type Props = {};
 
 const Home = (_props: Props) => {
   return (
-    <MainLayout>
+    <MainLayout className={s.container}>
       <AgentProvider>
         <FundAgentProvider>
-          <Flex>
-            <SimpleGrid gridTemplateColumns={"500px 1fr"} flex={1} bg={"#FFF"}>
+          <PanelGroup direction="horizontal">
+            <Panel minSize={20} maxSize={25}>
               <AgentsList />
+            </Panel>
+            <PanelResizeHandle />
+            <Panel minSize={50} maxSize={60}>
               <ChatAgent />
-            </SimpleGrid>
-            <Box w={"353px"}>
+            </Panel>
+            <PanelResizeHandle />
+            <Panel minSize={20} maxSize={25}>
               <TradeAgent />
-            </Box>
-          </Flex>
+            </Panel>
+          </PanelGroup>
         </FundAgentProvider>
       </AgentProvider>
     </MainLayout>

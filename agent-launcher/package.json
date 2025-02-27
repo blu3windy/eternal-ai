@@ -39,6 +39,7 @@
     "react-markdown": "^10.0.0",
     "react-otp-input": "^3.1.1",
     "react-qr-code": "^2.0.15",
+    "react-resizable-panels": "^2.1.7",
     "react-router-dom": "^7.2.0",
     "react-scrollable-feed": "^2.0.2",
     "react-svg": "^16.3.0",

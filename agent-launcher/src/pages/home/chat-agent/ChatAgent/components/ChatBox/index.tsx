@@ -1,6 +1,6 @@
 import {motion} from 'framer-motion';
 import React, {useMemo} from 'react';
-import styles from './styles.module.scss';
+import s from './styles.module.scss';
 import {useChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import ChatList from "@pages/home/chat-agent/ChatAgent/components/ChatList";
 import InputText from "@pages/home/chat-agent/ChatAgent/components/InputText";
@@ -26,13 +26,13 @@ const ChatBox = () => {
 
   return (
     <motion.div
-      className={styles.container}
+      className={s.container}
       style={{
         maxHeight: containerMaxHeight,
       }}
     >
       <div
-        className={styles.chatList}
+        className={s.chatList}
         style={{
           maxHeight: innerMaxHeight,
           minHeight: innerMaxHeight,
