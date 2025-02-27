@@ -2,6 +2,8 @@ import * as ethers from 'ethers';
 
 import { CHAIN_MAPPING, ChainId } from './constants';
 import { InferPayloadWithMessages, InferPayloadWithPrompt } from './types';
+import * as methods from './methods';
+import { InteractWallet } from './methods/types';
 
 class BaseInteract {
   protected getProvider(chainId: ChainId, rpcUrl?: string) {
@@ -26,24 +28,33 @@ class BaseInteract {
       isLightHouse: payload.isLightHouse ?? false,
     };
   }
+
+  protected async sendSignedTransactionAndListenResult(
+    signer: InteractWallet,
+    signedTx: string,
+    agentAddress: string,
+    chainId: ChainId
+  ) {
+    const sendPromptTxHash = await methods.Infer.sendPrompt(signer, signedTx);
+
+    const workerHubAddress = await methods.Infer.getWorkerHubAddress(
+      agentAddress,
+      signer
+    );
+
+    return await methods.Infer.listenPromptResponse(
+      chainId,
+      signer,
+      workerHubAddress,
+      sendPromptTxHash
+    );
+  }
 }
 
 export interface IInteract {
-  // getNetworkCredential(
-  //   chainId: ChainId,
-  //   rpcUrl?: string
-  // ): {
-  //   provider: ethers.providers.JsonRpcProvider;
-  //   signer: ethers.ethers.Wallet | InteractWallet;
-  // };
   infer(
     payload: InferPayloadWithPrompt | InferPayloadWithMessages
   ): Promise<string | null>;
-  // Overload signatures
-  // // @ts-ignore
-  // public infer(payload: InferPayloadWithPrompt): Promise<string | null>;
-  // // @ts-ignore
-  // public infer(payload: InferPayloadWithMessages): Promise<string | null>;
 }
 
 export default BaseInteract;

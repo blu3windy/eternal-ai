@@ -77,18 +77,11 @@ class Interact extends BaseInteract implements IInteract {
 
     const signedTx = await signer.signTransaction(params);
 
-    const sendPromptTxHash = await methods.Infer.sendPrompt(signer, signedTx);
-
-    const workerHubAddress = await methods.Infer.getWorkerHubAddress(
-      payload.agentAddress,
-      signer
-    );
-
-    return await methods.Infer.listenPromptResponse(
-      payload.chainId,
+    return await this.sendSignedTransactionAndListenResult(
       signer,
-      workerHubAddress,
-      sendPromptTxHash
+      signedTx,
+      payload.agentAddress,
+      payload.chainId
     );
   }
 
@@ -108,18 +101,11 @@ class Interact extends BaseInteract implements IInteract {
 
     const signedTx = await signer.signTransaction(params);
 
-    const sendPromptTxHash = await methods.Infer.sendPrompt(signer, signedTx);
-
-    const workerHubAddress = await methods.Infer.getWorkerHubAddress(
-      payload.agentAddress,
-      signer
-    );
-
-    return await methods.Infer.listenPromptResponse(
-      payload.chainId,
+    return await this.sendSignedTransactionAndListenResult(
       signer,
-      workerHubAddress,
-      sendPromptTxHash
+      signedTx,
+      payload.agentAddress,
+      payload.chainId
     );
   }
 }
