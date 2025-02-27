@@ -12,6 +12,7 @@ const { uglify } = require('rollup-plugin-uglify');
 
 const GLOBAL_PACKAGES = {
   ethers: 'ethers',
+  immutable: 'immutable',
 };
 
 module.exports = {
@@ -37,7 +38,7 @@ module.exports = {
       globals: GLOBAL_PACKAGES,
     },
     {
-      file: 'dist/bundle.umd.js',
+      file: 'dist/bundle.umd.mjs',
       format: 'umd',
       name: 'Interact',
       sourcemap: true,
@@ -57,5 +58,5 @@ module.exports = {
     json(),
     uglify(),
   ],
-  external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
+  external: [...Object.keys(pkg.peerDependencies || {}), 'ethers', 'immutable'],
 };
