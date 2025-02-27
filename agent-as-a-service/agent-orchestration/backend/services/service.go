@@ -101,7 +101,7 @@ func NewService(conf *configs.Config) *Service {
 		gsClient: googlestorage.InitClient(conf.GsStorage.CredentialsFile, conf.GsStorage.BucketName),
 		openais: map[string]*openai.OpenAI{
 			"Agent": openai.NewAgentAI(conf.Ai.ApiKey),
-			"Lama":  openai.NewOpenAI(conf.Ai.ChatUrl, conf.Ai.ApiKey),
+			"Lama":  openai.NewOpenAI(conf.Ai.ChatUrl, conf.Ai.ApiKeyMacStudio),
 		},
 		ethApiMap: map[uint64]*ethapi.Client{},
 		zkApiMap:  map[uint64]*zkapi.Client{},

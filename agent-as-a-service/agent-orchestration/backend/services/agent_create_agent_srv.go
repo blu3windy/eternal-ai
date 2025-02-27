@@ -560,18 +560,18 @@ Hey, @JohnEnt, let's do something about this!
 	return nil
 }
 
-func (s *Service) GetImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc string) (string, error) {
-	stringBase64 := s.GenerateTokenImageBase64(context.Background(), tokenSymbol, tokenName, tokenDesc)
-	if stringBase64 != "" {
-		filename := fmt.Sprintf("%s.%s", uuid.NewString(), "jpg")
-		urlPath, err := s.gsClient.UploadPublicDataBase64("agent", filename, stringBase64)
-		if err != nil {
-			return "", errs.NewError(err)
-		}
-		return fmt.Sprintf("%s%s", s.conf.GsStorage.Url, urlPath), nil
-	}
-	return "", errs.NewError(errs.ErrBadRequest)
-}
+// func (s *Service) GetImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc string) (string, error) {
+// 	stringBase64 := s.GenerateTokenImageBase64(context.Background(), tokenSymbol, tokenName, tokenDesc)
+// 	if stringBase64 != "" {
+// 		filename := fmt.Sprintf("%s.%s", uuid.NewString(), "jpg")
+// 		urlPath, err := s.gsClient.UploadPublicDataBase64("agent", filename, stringBase64)
+// 		if err != nil {
+// 			return "", errs.NewError(err)
+// 		}
+// 		return fmt.Sprintf("%s%s", s.conf.GsStorage.Url, urlPath), nil
+// 	}
+// 	return "", errs.NewError(errs.ErrBadRequest)
+// }
 
 func (s *Service) GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc string) (string, error) {
 	stringBase64 := s.GenerateTokenImageBase64Gif(context.Background(), tokenSymbol, tokenName, tokenDesc)
@@ -943,16 +943,16 @@ func (s *Service) GetConversionHistory(tx *gorm.DB, tweetID string) ([]map[strin
 	return listContext, nil
 }
 
-func (s *Service) GenerateTokenImageBase64(ctx context.Context, tokenSymbol, tokenName, tokenDesc string) string {
-	imagePrompt := fmt.Sprintf(`
-		I want to create image for a token base on this info 
-		Token Symbol: %s
-		Token name: %s
-		Token Description: %s
-	`, tokenSymbol, tokenName, tokenDesc)
-	base64Str, _ := s.dojoAPI.GenerateImage(imagePrompt, s.conf.GenerateImageUrl)
-	return base64Str
-}
+// func (s *Service) GenerateTokenImageBase64(ctx context.Context, tokenSymbol, tokenName, tokenDesc string) string {
+// 	imagePrompt := fmt.Sprintf(`
+// 		I want to create image for a token base on this info
+// 		Token Symbol: %s
+// 		Token name: %s
+// 		Token Description: %s
+// 	`, tokenSymbol, tokenName, tokenDesc)
+// 	base64Str, _ := s.dojoAPI.GenerateImage(imagePrompt, s.conf.GenerateImageUrl)
+// 	return base64Str
+// }
 
 func (s *Service) GenerateTokenImageBase64Gif(ctx context.Context, tokenSymbol, tokenName, tokenDesc string) string {
 	imagePrompt := fmt.Sprintf(`

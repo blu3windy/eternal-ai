@@ -67,6 +67,7 @@ type AssistantsReq struct {
 	KbIds                  []uint                  `json:"kb_ids"`
 
 	SourceUrl string `json:"source_url"`
+	AuthenUrl string `json:"authen_url"`
 
 	MinFeeToUse numeric.BigFloat `json:"min_fee_to_use"`
 	Worker      string           `json:"worker"`

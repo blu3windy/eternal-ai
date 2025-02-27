@@ -174,8 +174,9 @@ type Config struct {
 	AiImageApiKey string `json:"ai_image_api_key"`
 	CMCApiKey     string `json:"cmc_api_key"`
 	Ai            struct {
-		ChatUrl string `json:"chat_url"`
-		ApiKey  string `json:"api_key"`
+		ChatUrl         string `json:"chat_url"`
+		ApiKey          string `json:"api_key"`
+		ApiKeyMacStudio string `json:"api_key_mac_studio"`
 	} `json:"ai"`
 	Lighthouse struct {
 		Apikey string `json:"apikey"`

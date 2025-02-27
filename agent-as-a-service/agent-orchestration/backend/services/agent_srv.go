@@ -1106,12 +1106,12 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 			}
 		}()
 		logger.Info("stream_retrieve_knowledge", "searched result", zap.Any("id_request", idRequest), zap.Any("searchedResult", searchedResult), zap.Any("input", request))
-
 		analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, *retrieveQuery, searchedResult)
 		if err != nil {
 			errChan <- err
 			return
 		}
+
 		logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("analyzed Result", analysedResult))
 		analysedResultChanel <- analysedResult
 	}()
@@ -1138,6 +1138,11 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	}
 	questionPrompt := fmt.Sprintf("Generate a response to the user's query based strictly on the user question and the provided information.\n\n### Guidelines:\n- Prioritize database data over website data when answering.\n- The response must be concise and directly relevant.\n- No external knowledge should be introduced beyond the provided sources.\n- Ensure clarity and alignment with ETHDenver-related context.\n- Prefer structured lists over paragraphs whenever possible to enhance readability.\n- If the response involves listing events, ensure they are formatted as follows:\n\nRequired Format for Events:\n```\n<Event name> (<Speaker 1>; <Speaker 2>; ...; <Speaker n>) - <Local start time> - <Stage/Location name>\n```\n\n- Speakers should be listed in the order provided. If they have an affiliation, include it exactly as given.\n- The local start time must be preserved in its original format.\n- The stage or location name should appear at the end.\n- If only one speaker is listed, follow the same format without modification.\n- If no speaker is listed, ignore the speaker listing part of the format.\n- If multiple events are listed, each should follow the format on a new line.\n\nExample of correct event with speakers output:\n- Easy-to-Miss Solidity Bugs (Jonathan Mevs - Quantstamp; Michael Boyle - Quantstamp) - February 24, 2025 at 10:50 AM - Captain Ethereum Stage\n\nExample of correct event without speakers output:\n- Messari - Feb 27, 2025 at 1:30 PM - BUIDL Event Hall\n\n### User Question:\n%v\n\n### Relevant Information from Database (Primary Source):\n%v\n\n### Relevant Information from the Website:\n%v\n\n### Final Answer:\n(Provide a precise, ETHDenver-relevant response following these guidelines.)\n",
 		question, toolCallData, analysedResult)
+	if knowledgeBases[0].ID != 211 { // not is eth denver agent
+		questionPrompt = fmt.Sprintf("Use the following context from the conversation to answer the question. If the context is insufficient, you may draw from external knowledge to provide a relevant answer.\n\nContext: \n%v\n\nQuestion: \n%v\n\nAnswer:",
+			analysedResult, question)
+	}
+
 	payloadAgentChat = append(payloadAgentChat, openai2.ChatCompletionMessage{
 		Role:    openai2.ChatMessageRoleUser,
 		Content: questionPrompt,
@@ -1192,8 +1197,23 @@ func (s *Service) GenerateKnowledgeQuery(baseModel string, histories []openai2.C
 	if systemPrompt == "" {
 		systemPrompt = "You are a helpfully assistant"
 	}
-	generateQueryPrefix := "Based on the conversation below, generate a precise query that can be used to retrieve relevant information.\n\n### Instruction:\n- Generate a precise query based on the user's question and the available context.\n- Output the query in **stringified JSON format** with a key `\"query\"`.\n- Do not include additional explanations or comments—just the JSON.\n\nExample:\n\n**Conversation:**  \nuser: What is French cuisine?\nassistant: French cuisine refers to the traditional cooking styles of France, famous for its rich flavors and varied dishes.\nuser: What is the most popular?\n\n**Output:**  \n```json\n{\n    \"query\": \"popular French cuisine\"\n}\n```\n\nHere is the conversation:   \n\n%v\n\nAnswer:"
-	userPrompt := fmt.Sprintf(generateQueryPrefix, conversation)
+	question := openai.GetQuestionFromLLMMessage(histories)
+	if question == "" {
+		question = "Hi"
+	}
+	type historyMsg struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+	historiesPrompt := []historyMsg{}
+	for i := 1; i < len(histories)-1; i++ {
+		historiesPrompt = append(historiesPrompt, historyMsg{
+			Role:    strings.ToLower(histories[i].Role),
+			Content: histories[i].Content,
+		})
+	}
+	generateQueryPrefix := "Based on the conversation history and the user question below, generate a concise query that can be used to retrieve relevant information.\n\n### Instruction:\n- Generate a concise query based on the conversation history and the user question.\n- Output the query in **stringified JSON format** with a key `\"query\"`.\n- Do not include additional explanations or comments—just the JSON.\n\n### Example\n\n**Conversation History:**\n[{{\"role\":\"user\",\"content\":\"What is French cuisine?\"}},{{\"role\":\"assistant\",\"content\":\"French cuisine refers to the traditional cooking styles of France, famous for its rich flavors and varied dishes.\"}}]\n\n**User Question:**\nWhat is the most popular?\n\n**Output:**  \n```json\n{{\n    \"query\": \"popular French cuisine\"\n}}\n```\n\n### Input\n\nRemember that today is: %v\n\n**Conversation History:**\n%v\n\n**User Question:**\n%v\n\n### Answer\n"
+	userPrompt := fmt.Sprintf(generateQueryPrefix, today, historiesPrompt, question)
 	messages := []openai2.ChatCompletionMessage{
 		{
 			Role:    openai2.ChatMessageRoleSystem,

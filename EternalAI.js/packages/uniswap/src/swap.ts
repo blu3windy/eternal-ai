@@ -1,9 +1,10 @@
-import {ETH_CHAIN_ID, getRPC, zeroAddress} from "./const";
+import {ETH_CHAIN_ID, getRPC, ZeroAddress} from "./const";
 import {ethers} from "ethers";
 import {Token} from "@uniswap/sdk-core";
 import {changeWallet, createWallet, TransactionState} from "./libs/providers";
 import {createTrade, executeTrade} from "./libs/trading";
 import {CurrentConfig, Environment} from "./libs/config";
+import {getCurrencyBalance, getCurrencyDecimal} from "./libs/wallet";
 
 export class SwapReq {
     token_in: string = ""
@@ -27,18 +28,18 @@ export class SwapReq {
 
     convert_in_out = async () => {
         if (this.token_in.toLowerCase() == "eth") {
-            this.token_in_address = zeroAddress;
+            this.token_in_address = ZeroAddress;
         } else {
             const token_address = await this.convert_token_address(this.token_in.toLowerCase())
-            if (!token_address) this.token_in_address = zeroAddress
+            if (!token_address) this.token_in_address = ZeroAddress
             else this.token_in_address = token_address
         }
 
         if (this.token_out.toLowerCase() == "eth") {
-            this.token_out_address = zeroAddress;
+            this.token_out_address = ZeroAddress;
         } else {
             const token_address = await this.convert_token_address(this.token_out.toLowerCase())
-            if (!token_address) this.token_out_address = zeroAddress
+            if (!token_address) this.token_out_address = ZeroAddress
             else this.token_out_address = token_address
         }
     }
@@ -88,7 +89,7 @@ export interface PoolInfo {
 }
 
 export class UniSwapAI {
-    swap_v3 = async (privateKey: string, req: SwapReq, chain_id: number, rpc: string): Promise<{
+    swap_v3 = async (privateKey: string, req: SwapReq, chain_id: string): Promise<{
         state: TransactionState | null,
         tx: any
     }> => {
@@ -96,33 +97,32 @@ export class UniSwapAI {
             throw new Error("invalid private key")
         }
         CurrentConfig.env = Environment.MAINNET
-        // CurrentConfig.rpc.mainnet = rpc || getRPC(chain_id)
-        CurrentConfig.rpc.mainnet = getRPC(ETH_CHAIN_ID)
+        //
+        CurrentConfig.rpc.mainnet = getRPC(chain_id)
         CurrentConfig.wallet.privateKey = privateKey
-        CurrentConfig.tokens.in = new Token(
-            // chain_id,
-            parseInt(ETH_CHAIN_ID, 16),
+        const newWallet = createWallet();
+
+        // init config token
+        const tokenIn = new Token(
+            parseInt(chain_id, 16),
             req.token_in_address,
             // "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-            18,
+            await getCurrencyDecimal(newWallet.provider, req.token_in_address),
             req.token_in,
             req.token_in
         )
-
+        CurrentConfig.tokens.in = tokenIn
         CurrentConfig.tokens.amountIn = req.token_in_amount
-
-        CurrentConfig.tokens.out = new Token(
-            // chain_id,
-            parseInt(ETH_CHAIN_ID, 16),
+        const tokenOut = new Token(
+            parseInt(chain_id, 16),
             req.token_out_address,
-            18,
+            await getCurrencyDecimal(newWallet.provider, req.token_out_address),
             req.token_out,
             req.token_out
         )
-
-
-        const newWallet = createWallet();
-        console.log("Wallet: ", newWallet.address)
+        CurrentConfig.tokens.out = tokenOut
+        const tokenInBalance = await getCurrencyBalance(newWallet.provider, newWallet.address, CurrentConfig.tokens.in)
+        console.log(`Wallet ${newWallet.address}: ${tokenInBalance} ${req.token_in}`)
         changeWallet(newWallet);
 
         try {

@@ -48,16 +48,15 @@ class Interact {
 
   // Overload signatures
   // @ts-ignore
-  public async infer(payload: InferPayloadWithPrompt): Promise<any>;
+  public async infer(payload: InferPayloadWithPrompt): Promise<string | null>;
   // @ts-ignore
-  public async infer(payload: InferPayloadWithMessages): Promise<any>;
+  public async infer(payload: InferPayloadWithMessages): Promise<string | null>;
 
   // Implementation
   // @ts-ignore
-
   public async infer(
     payload: InferPayloadWithPrompt | InferPayloadWithMessages
-  ) {
+  ): Promise<string | null> {
     try {
       const normalizedPayload = this.normalizePayload(payload);
       console.log('infer - start', {
@@ -86,7 +85,9 @@ class Interact {
     }
   }
 
-  private async inferWithPrompt(payload: InferPayloadWithPrompt) {
+  private async inferWithPrompt(
+    payload: InferPayloadWithPrompt
+  ): Promise<string | null> {
     console.log('inferWithPrompt - start');
     const { signer } = this.getNetworkCredential(
       payload.chainId,
@@ -112,7 +113,9 @@ class Interact {
     );
   }
 
-  private async inferWithMessages(payload: InferPayloadWithMessages) {
+  private async inferWithMessages(
+    payload: InferPayloadWithMessages
+  ): Promise<string | null> {
     console.log('inferWithMessages - start');
     const { signer } = this.getNetworkCredential(
       payload.chainId,
