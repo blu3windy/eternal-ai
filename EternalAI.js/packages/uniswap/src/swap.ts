@@ -5,6 +5,7 @@ import { changeWallet, createWallet, TransactionState } from './libs/providers';
 import { createTrade, executeTrade } from './libs/trading';
 import { CurrentConfig, Environment } from './libs/config';
 import { getCurrencyBalance, getCurrencyDecimal } from './libs/wallet';
+import { TokenInfo } from './models/token_info';
 
 export class SwapReq {
   token_in: string = '';
@@ -68,6 +69,16 @@ export class SwapReq {
 
   convert_token_address = async (symbol: string) => {
     let result = null;
+
+    const tokenInfo  = new TokenInfo()
+    await tokenInfo.createTable()
+
+    const  address = await tokenInfo.addressBySymbol(symbol)
+    if (address) {
+       console.log("===> address", address)
+       return  address
+    }
+
     const token_info_response = await fetch(
       'https://api.coingecko.com/api/v3/coins/' + symbol
     );
@@ -87,6 +98,8 @@ export class SwapReq {
         }
       }
     }
+
+    await tokenInfo.insert(symbol, result)
     return result;
   };
 }
