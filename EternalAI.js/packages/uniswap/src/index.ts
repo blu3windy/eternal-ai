@@ -132,7 +132,7 @@ export const create_api_infer = async (
       console.log(JSON.parse(content_response));
     } else {
       console.log('No JSON content found.');
-      return { state: null, tx: null, ai_response: content_response };
+      return { state: null, tx: null, message: content_response };
     }
 
     if (content_response) {
