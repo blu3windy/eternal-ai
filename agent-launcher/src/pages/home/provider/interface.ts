@@ -4,4 +4,6 @@ export interface IAgentContext {
   loading: boolean;
   selectedAgent?: IAgentToken;
   setSelectedAgent: any;
+  currentModel: any;
+  setCurrentModel: any;
 }
