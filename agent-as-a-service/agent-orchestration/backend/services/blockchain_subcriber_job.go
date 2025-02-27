@@ -145,6 +145,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			poolMap := map[string]bool{}
 			for _, event := range eventResp.Transfer {
 				poolMap[strings.ToLower(event.To)] = true
+				poolMap[strings.ToLower(event.From)] = true
 			}
 			poolArr := []string{}
 			for pool := range poolMap {
