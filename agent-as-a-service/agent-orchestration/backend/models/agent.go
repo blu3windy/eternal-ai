@@ -510,6 +510,7 @@ const (
 	AgentEaiTopupTypeSpent           AgentEaiTopupType = "spent"
 	AgentEaiTopupTypeRefund          AgentEaiTopupType = "refund"
 	AgentEaiTopupTypeRefundTrainFail AgentEaiTopupType = "refund_train_fail"
+	AgentEaiTopupTypeTransfer        AgentEaiTopupType = "transfer"
 
 	AgentEaiTopupStatusNew        AgentEaiTopupStatus = "new"
 	AgentEaiTopupStatusProcessing AgentEaiTopupStatus = "processing"

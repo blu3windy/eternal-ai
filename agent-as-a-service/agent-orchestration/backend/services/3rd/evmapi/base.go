@@ -3,7 +3,6 @@ package evmapi
 import (
 	"math/big"
 
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/realworldagentupgradeable"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/utilityagentupgradeable"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -33,23 +32,6 @@ func UtilityAgentUpgradeableInitializeData(systemPrompt string, storageInfos []u
 		"initialize",
 		systemPrompt,
 		storageInfos,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return dataBytes, nil
-}
-
-func RealWorldAgentUpgradeableInitializeData(name string, version string, gateway common.Address) ([]byte, error) {
-	instanceABI, err := realworldagentupgradeable.RealWorldAgentUpgradeableMetaData.GetAbi()
-	if err != nil {
-		return nil, err
-	}
-	dataBytes, err := instanceABI.Pack(
-		"initialize",
-		name,
-		version,
-		gateway,
 	)
 	if err != nil {
 		return nil, err

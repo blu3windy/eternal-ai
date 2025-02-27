@@ -27,10 +27,10 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, installCode 
 		}
 		infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 			daos.GetDBMainCtx(ctx),
-			map[string][]interface{}{
+			map[string][]any{
 				"install_code = ?": {installCode},
 			},
-			map[string][]interface{}{}, []string{},
+			map[string][]any{}, []string{},
 		)
 		if err != nil {
 			return errs.NewError(err)
@@ -110,10 +110,10 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installCode
 			}
 			twitterInfo, err := s.dao.FirstTwitterInfo(
 				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
+				map[string][]any{
 					"twitter_id = ?": {twitterUser.ID},
 				},
-				map[string][]interface{}{},
+				map[string][]any{},
 				false,
 			)
 			if err != nil {
@@ -144,10 +144,10 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installCode
 			}
 			infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
+				map[string][]any{
 					"install_code = ?": {installCode},
 				},
-				map[string][]interface{}{}, []string{},
+				map[string][]any{}, []string{},
 			)
 			if err != nil {
 				return nil, errs.NewError(err)
@@ -192,13 +192,13 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installCode
 
 // func (s *Service) InfraTwitterAppExecuteRequest(ctx context.Context, infraCode string, apiKey string, rawStr string) (string, error) {
 // 	rawReq := []byte(rawStr)
-// 	resp, err := func() (interface{}, error) {
+// 	resp, err := func() (any, error) {
 // 		obj, err := s.dao.FirstAgentStoreInstall(
 // 			daos.GetDBMainCtx(ctx),
-// 			map[string][]interface{}{
+// 			map[string][]any{
 // 				"code = ?": {infraCode},
 // 			},
-// 			map[string][]interface{}{},
+// 			map[string][]any{},
 // 			[]string{},
 // 		)
 // 		if err != nil {
@@ -209,10 +209,10 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, installCode
 // 		}
 // 		infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 // 			daos.GetDBMainCtx(ctx),
-// 			map[string][]interface{}{
+// 			map[string][]any{
 // 				"api_key = ?": {apiKey},
 // 			},
-// 			map[string][]interface{}{
+// 			map[string][]any{
 // 				"TwitterInfo": {},
 // 			},
 // 			[]string{},
@@ -440,11 +440,11 @@ func (s *Service) CreateInfraTwitterAppRequest(ctx context.Context, event *ethap
 			if strings.EqualFold(s.conf.InfraTwitterApp.AgentAddress, event.ContractAddress) {
 				eventHash := fmt.Sprintf("%s_%d", event.TxHash, event.Index)
 				inst, err := s.dao.FirstInfraRequest(tx,
-					map[string][]interface{}{
+					map[string][]any{
 						"contract_address = ?": {strings.ToLower(event.ContractAddress)},
 						"uuid = ?":             {event.Uuid},
 					},
-					map[string][]interface{}{},
+					map[string][]any{},
 					[]string{},
 				)
 				if err != nil {
@@ -453,10 +453,10 @@ func (s *Service) CreateInfraTwitterAppRequest(ctx context.Context, event *ethap
 
 				if inst == nil {
 					agentInfo, err := s.dao.FirstAgentInfo(tx,
-						map[string][]interface{}{
+						map[string][]any{
 							"agent_contract_address = ?": {strings.ToLower(event.ContractAddress)},
 						},
-						map[string][]interface{}{},
+						map[string][]any{},
 						[]string{},
 					)
 					inst = &models.InfraRequest{
@@ -502,10 +502,10 @@ func (s *Service) JobExecuteInfraTwitterAppRequest(ctx context.Context) error {
 		func() error {
 			agents, err := s.dao.FindInfraRequest(
 				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
+				map[string][]any{
 					`status = ?`: {models.InfraRequestStatusPending},
 				},
-				map[string][]interface{}{},
+				map[string][]any{},
 				[]string{},
 				0,
 				50,
@@ -535,25 +535,24 @@ func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID u
 		func() error {
 			reqInfo, err := s.dao.FirstInfraRequestByID(daos.GetDBMainCtx(ctx),
 				reqID,
-				map[string][]interface{}{},
+				map[string][]any{},
 				false,
 			)
 			if err != nil {
 				return errs.NewError(err)
 			}
-
 			if reqInfo != nil && reqInfo.Status == models.InfraRequestStatusPending {
 				rawReq, _, err := lighthouse.DownloadDataSimple(reqInfo.Data)
 				if err != nil {
 					return errs.NewError(err)
 				}
-				resp, err := func() (interface{}, error) {
+				resp, err := func() (any, error) {
 					infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 						daos.GetDBMainCtx(ctx),
-						map[string][]interface{}{
+						map[string][]any{
 							"address = ?": {reqInfo.Creator},
 						},
-						map[string][]interface{}{
+						map[string][]any{
 							"TwitterInfo": {},
 						},
 						[]string{},
@@ -678,10 +677,9 @@ func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID u
 				if err != nil {
 					return errs.NewError(err)
 				}
-				updateFields := map[string]interface{}{
+				updateFields := map[string]any{
 					"result": ipfsHash,
 				}
-
 				//TODO: call contract result
 				prk := s.GetAddressPrk(s.conf.InfraTwitterApp.WorkerAddress)
 				txHash, err := s.GetEthereumClient(ctx, reqInfo.NetworkID).
@@ -698,10 +696,10 @@ func (s *Service) InfraTwitterAppExecuteRequestByID(ctx context.Context, reqID u
 					updateFields["status"] = models.InfraRequestStatusExecuted
 					updateFields["result_hash"] = txHash
 				}
-
-				_ = daos.GetDBMainCtx(ctx).Model(&models.InfraRequest{}).
-					Where("id = ?", reqInfo.ID).
-					Updates(updateFields)
+				_ = daos.GetDBMainCtx(ctx).
+					Model(reqInfo).
+					Updates(updateFields).
+					Error
 			}
 
 			return nil
@@ -720,16 +718,15 @@ func (s *Service) RetrySubmitResultByID(ctx context.Context, reqID uint) error {
 		func() error {
 			reqInfo, err := s.dao.FirstInfraRequestByID(daos.GetDBMainCtx(ctx),
 				reqID,
-				map[string][]interface{}{},
+				map[string][]any{},
 				false,
 			)
 			if err != nil {
 				return errs.NewError(err)
 			}
-
 			if reqInfo != nil && reqInfo.Result != "" &&
 				reqInfo.Status == models.InfraRequestStatusError {
-				updateFields := map[string]interface{}{}
+				updateFields := map[string]any{}
 				//TODO: call contract result
 				prk := s.GetAddressPrk(s.conf.InfraTwitterApp.WorkerAddress)
 				txHash, err := s.GetEthereumClient(ctx, reqInfo.NetworkID).
@@ -745,10 +742,10 @@ func (s *Service) RetrySubmitResultByID(ctx context.Context, reqID uint) error {
 					updateFields["status"] = models.InfraRequestStatusExecuted
 					updateFields["result_hash"] = txHash
 				}
-
-				_ = daos.GetDBMainCtx(ctx).Model(&models.InfraRequest{}).
-					Where("id = ?", reqInfo.ID).
-					Updates(updateFields)
+				_ = daos.GetDBMainCtx(ctx).
+					Model(reqInfo).
+					Updates(updateFields).
+					Error
 			}
 			return nil
 		},

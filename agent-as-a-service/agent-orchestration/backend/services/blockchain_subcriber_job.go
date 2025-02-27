@@ -56,7 +56,7 @@ func (s *Service) MemeEventsByTransaction(ctx context.Context, networkID uint64,
 }
 
 func (s *Service) UpdateScanBlockError(ctx context.Context, chainID uint, lastBlockError error) error {
-	mapError := map[string]interface{}{}
+	mapError := map[string]any{}
 	if lastBlockError != nil {
 		mapError["last_block_error"] = lastBlockError.Error()
 	}
@@ -71,7 +71,7 @@ func (s *Service) UpdateScanBlockError(ctx context.Context, chainID uint, lastBl
 }
 
 func (s *Service) UpdateScanBlockNumber(ctx context.Context, chainID uint, lastBlockEvent int64) error {
-	mapError := map[string]interface{}{}
+	mapError := map[string]any{}
 	if lastBlockEvent > 0 {
 		mapError["last_block_number"] = lastBlockEvent
 		mapError["last_block_error"] = "OK"
@@ -106,10 +106,10 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			if len(poolArr) > 0 {
 				memes, err := s.dao.FindMeme(
 					daos.GetDBMainCtx(ctx),
-					map[string][]interface{}{
+					map[string][]any{
 						"token_address in (?)": {poolArr},
 					},
-					map[string][]interface{}{},
+					map[string][]any{},
 					[]string{},
 					0,
 					999999,
@@ -155,10 +155,10 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 				{
 					agents, err := s.dao.FindAgentInfo(
 						daos.GetDBMainCtx(ctx),
-						map[string][]interface{}{
+						map[string][]any{
 							"eth_address in (?)": {poolArr},
 						},
-						map[string][]interface{}{},
+						map[string][]any{},
 						[]string{},
 						0,
 						999999,
@@ -173,10 +173,10 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 				{
 					users, err := s.dao.FindUser(
 						daos.GetDBMainCtx(ctx),
-						map[string][]interface{}{
+						map[string][]any{
 							"eth_address in (?)": {poolArr},
 						},
-						map[string][]interface{}{},
+						map[string][]any{},
 						[]string{},
 						0,
 						999999,
@@ -210,10 +210,10 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			if len(poolArr) > 0 {
 				lps, err := s.dao.FindLaunchpad(
 					daos.GetDBMainCtx(ctx),
-					map[string][]interface{}{
+					map[string][]any{
 						"address in (?)": {poolArr},
 					},
-					map[string][]interface{}{},
+					map[string][]any{},
 					[]string{},
 					0,
 					999999,
@@ -261,10 +261,10 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 		if len(poolArr) > 0 {
 			memes, err := s.dao.FindMeme(
 				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
+				map[string][]any{
 					"token_address in (?)": {poolArr},
 				},
-				map[string][]interface{}{},
+				map[string][]any{},
 				[]string{},
 				0,
 				999999,
@@ -302,10 +302,10 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 		if len(poolArr) > 0 {
 			memes, err := s.dao.FindMeme(
 				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
+				map[string][]any{
 					"pool in (?) or uniswap_pool in (?)": {poolArr, poolArr},
 				},
-				map[string][]interface{}{},
+				map[string][]any{},
 				[]string{},
 				0,
 				999999,
@@ -554,7 +554,7 @@ func (s *Service) CreateErc20TransferEvent(ctx context.Context, networkID uint64
 				balance = big.NewInt(0)
 			}
 			fBalance := models.ConvertWeiToBigFloat(balance, 18)
-			valueArgs := []interface{}{}
+			valueArgs := []any{}
 			valueArgs = append(valueArgs, networkID)
 			valueArgs = append(valueArgs, conAddress)
 			valueArgs = append(valueArgs, userAddress)
@@ -583,7 +583,7 @@ func (s *Service) CreateErc721TransferEvent(ctx context.Context, event *ethapi.N
 			return errs.NewError(err)
 		}
 	}
-	valueArgs := []interface{}{}
+	valueArgs := []any{}
 	valueArgs = append(valueArgs, event.NetworkID)
 	valueArgs = append(valueArgs, strings.ToLower(event.ContractAddress))
 	valueArgs = append(valueArgs, uint(event.TokenId.Uint64()))
@@ -613,7 +613,7 @@ func (s *Service) CreateErc1155TransferEvent(ctx context.Context, networkID uint
 					return errs.NewError(err)
 				}
 				fBalance := models.ConvertWeiToBigFloat(balance, 18)
-				valueArgs := []interface{}{}
+				valueArgs := []any{}
 				valueArgs = append(valueArgs, networkID)
 				valueArgs = append(valueArgs, conAddress)
 				valueArgs = append(valueArgs, userAddress)
@@ -661,7 +661,7 @@ func (s *Service) ImageHubSubscriptionPriceUpdatedEvent(ctx context.Context, net
 						err = tx.Model(user).
 							Where("price30d_updated < ?", priceUpdated).
 							Updates(
-								map[string]interface{}{
+								map[string]any{
 									"price30d":         numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Price, 18)),
 									"price30d_updated": priceUpdated,
 								},
@@ -677,7 +677,7 @@ func (s *Service) ImageHubSubscriptionPriceUpdatedEvent(ctx context.Context, net
 						err = tx.Model(user).
 							Where("price90d_updated < ?", priceUpdated).
 							Updates(
-								map[string]interface{}{
+								map[string]any{
 									"price90d":         numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Price, 18)),
 									"price90d_updated": priceUpdated,
 								},
@@ -702,6 +702,7 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 		contractAddress := strings.ToLower(event.ContractAddress)
 		eaiAddress := s.conf.GetConfigKeyString(networkID, "eai_contract_address")
 		toAddress := strings.ToLower(event.To)
+		fromAddress := strings.ToLower(event.From)
 		if !strings.EqualFold(toAddress, models.ETH_ZERO_ADDRESS) && strings.EqualFold(contractAddress, eaiAddress) {
 			var agent *models.AgentInfo
 			err := daos.WithTransaction(
@@ -711,10 +712,10 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 					{
 						agent, err = s.dao.FirstAgentInfo(
 							tx,
-							map[string][]interface{}{
+							map[string][]any{
 								"eth_address = ?": {toAddress},
 							},
-							map[string][]interface{}{},
+							map[string][]any{},
 							[]string{},
 						)
 						if err != nil {
@@ -724,10 +725,10 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 							eventId := fmt.Sprintf("%d_%s_%d", networkID, event.TxHash, event.Index)
 							m, err := s.dao.FirstAgentEaiTopup(
 								tx,
-								map[string][]interface{}{
+								map[string][]any{
 									"event_id = ?": {eventId},
 								},
-								map[string][]interface{}{},
+								map[string][]any{},
 								[]string{},
 							)
 							if err != nil {
@@ -770,6 +771,53 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 						}
 					}
 					{
+						agent, err = s.dao.FirstAgentInfo(
+							tx,
+							map[string][]any{
+								"eth_address = ?": {fromAddress},
+							},
+							map[string][]any{},
+							[]string{},
+						)
+						if err != nil {
+							return errs.NewError(err)
+						}
+						if agent != nil {
+							eventId := fmt.Sprintf("%d_%s_%d", networkID, event.TxHash, event.Index)
+							m, err := s.dao.FirstAgentEaiTopup(
+								tx,
+								map[string][]any{
+									"event_id = ?": {eventId},
+								},
+								map[string][]any{},
+								[]string{},
+							)
+							if err != nil {
+								return errs.NewError(err)
+							}
+							if m == nil {
+								m = &models.AgentEaiTopup{
+									NetworkID:      networkID,
+									EventId:        eventId,
+									AgentInfoID:    agent.ID,
+									Type:           models.AgentEaiTopupTypeTransfer,
+									DepositAddress: strings.ToLower(event.From),
+									DepositTxHash:  event.TxHash,
+									Amount:         numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Value, 18)),
+									Status:         models.AgentEaiTopupStatusDone,
+									ToAddress:      agent.ETHAddress,
+								}
+								err = s.dao.Create(
+									tx,
+									m,
+								)
+								if err != nil {
+									return errs.NewError(err)
+								}
+							}
+						}
+					}
+					{
 						err = s.LaunchpadErc20TokenTransferEvent(tx, networkID, event)
 						if err != nil {
 							return errs.NewError(err)
@@ -792,10 +840,10 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 					{
 						user, err := s.dao.FirstUser(
 							tx,
-							map[string][]interface{}{
+							map[string][]any{
 								"eth_address = ?": {toAddress},
 							},
-							map[string][]interface{}{},
+							map[string][]any{},
 							false,
 						)
 						if err != nil {
@@ -805,10 +853,10 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 							eventId := fmt.Sprintf("%d_%s_%d", networkID, event.TxHash, event.Index)
 							m, err := s.dao.FirstUserTransaction(
 								tx,
-								map[string][]interface{}{
+								map[string][]any{
 									"event_id = ?": {eventId},
 								},
-								map[string][]interface{}{},
+								map[string][]any{},
 								[]string{},
 							)
 							if err != nil {
@@ -906,10 +954,10 @@ func (s *Service) CreateSolanaTokenTransferEvent(ctx context.Context, networkID 
 							{
 								agent, err = s.dao.FirstAgentInfo(
 									tx,
-									map[string][]interface{}{
+									map[string][]any{
 										"sol_address = ?": {toAddress},
 									},
-									map[string][]interface{}{},
+									map[string][]any{},
 									[]string{},
 								)
 								if err != nil {
@@ -919,10 +967,10 @@ func (s *Service) CreateSolanaTokenTransferEvent(ctx context.Context, networkID 
 									eventId := fmt.Sprintf("%d_%s_%d", networkID, event.TxReceivedDeposit, 0)
 									m, err := s.dao.FirstAgentEaiTopup(
 										tx,
-										map[string][]interface{}{
+										map[string][]any{
 											"event_id = ?": {eventId},
 										},
-										map[string][]interface{}{},
+										map[string][]any{},
 										[]string{},
 									)
 									if err != nil {
@@ -960,10 +1008,10 @@ func (s *Service) CreateSolanaTokenTransferEvent(ctx context.Context, networkID 
 							{
 								user, err := s.dao.FirstUser(
 									tx,
-									map[string][]interface{}{
+									map[string][]any{
 										"sol_address = ?": {toAddress},
 									},
-									map[string][]interface{}{},
+									map[string][]any{},
 									false,
 								)
 								if err != nil {
@@ -973,10 +1021,10 @@ func (s *Service) CreateSolanaTokenTransferEvent(ctx context.Context, networkID 
 									eventId := fmt.Sprintf("%d_%s_%d", networkID, event.TxReceivedDeposit, 0)
 									m, err := s.dao.FirstUserTransaction(
 										tx,
-										map[string][]interface{}{
+										map[string][]any{
 											"event_id = ?": {eventId},
 										},
-										map[string][]interface{}{},
+										map[string][]any{},
 										[]string{},
 									)
 									if err != nil {
@@ -1047,14 +1095,14 @@ func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]strin
 		true,
 		5*time.Minute,
 		&addrs,
-		func() (interface{}, error) {
+		func() (any, error) {
 			addrs := []string{}
 			memes, err := s.dao.FindMeme(
 				daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
+				map[string][]any{
 					"network_id = ?": {networkID},
 				},
-				map[string][]interface{}{},
+				map[string][]any{},
 				[]string{},
 				0,
 				999999,
@@ -1112,12 +1160,12 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 				err := func(networkID uint64) error {
 					chain, err := s.dao.FirstBlockScanInfo(
 						daos.GetDBMainCtx(ctx),
-						map[string][]interface{}{
+						map[string][]any{
 							"type = ?":              {"solana"},
 							"network_id = ?":        {networkID},
 							"last_block_number > 0": {},
 						},
-						map[string][]interface{}{},
+						map[string][]any{},
 						[]string{},
 					)
 					if err != nil {
@@ -1187,12 +1235,12 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 					for {
 						chain, err := s.dao.FirstBlockScanInfo(
 							daos.GetDBMainCtx(ctx),
-							map[string][]interface{}{
+							map[string][]any{
 								"type = ?":              {"evm"},
 								"network_id = ?":        {networkID},
 								"last_block_number > 0": {},
 							},
-							map[string][]interface{}{},
+							map[string][]any{},
 							[]string{},
 						)
 						if err != nil {
