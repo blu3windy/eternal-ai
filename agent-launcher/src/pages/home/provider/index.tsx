@@ -73,8 +73,8 @@ const AgentProvider: React.FC<
     fetchChainList();
   }, []);
 
-  const installAgent = (id: number) => {
-
+  const installAgent = (agent: IAgentToken) => {
+    installUtilityAgent(agent);
   }
 
   const contextValues: any = useMemo(() => {
@@ -99,16 +99,12 @@ const AgentProvider: React.FC<
     isInstalled,
   ]);
 
-  useEffect(() => {
-    installUtilityAgent();
-  }, [selectedAgent]);
-
-  const installUtilityAgent = async () => {
+  const installUtilityAgent = async (agent: IAgentToken) => {
     try {
-      if (selectedAgent && selectedAgent.agent_type === AgentType.Utility && selectedAgent.source_url && selectedAgent.source_url.length > 0) {
-        const sourceFile = selectedAgent?.source_url?.find((url) => url.startsWith('ethfs_'));
+      if (agent && agent.agent_type === AgentType.Utility && agent.source_url && agent.source_url.length > 0) {
+        const sourceFile = agent?.source_url?.find((url) => url.startsWith('ethfs_'));
         if (sourceFile) {
-          const filePath = await readSourceFile(sourceFile, `agent_${selectedAgent.agent_id}.js` ,selectedAgent?.network_id || BASE_CHAIN_ID);
+          const filePath = await readSourceFile(sourceFile, `agent_${agent.id}.js` ,agent?.network_id || BASE_CHAIN_ID);
           await handleRunDockerAgent(filePath);
         }
       }

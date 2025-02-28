@@ -12,7 +12,7 @@ function ChatAgent() {
   const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
   const handleInstall = () => {
-    installAgent(selectedAgent?.id);
+    installAgent(selectedAgent);
   }
 
    return (

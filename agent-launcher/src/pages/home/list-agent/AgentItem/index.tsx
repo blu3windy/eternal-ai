@@ -80,7 +80,7 @@ const AgentItem = ({ token }: IProps) => {
 
   const handleInstall = () => {
     setSelectedAgent(token);
-    installAgent(token?.id);
+    installAgent(token);
   }
 
   const avatarUrl =
