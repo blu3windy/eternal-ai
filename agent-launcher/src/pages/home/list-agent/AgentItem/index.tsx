@@ -6,7 +6,7 @@ import {AgentContext} from "../../provider";
 import {DefaultAvatar} from "../../../../components/DefaultAvatar";
 import {compareString} from "../../../../utils/string.ts";
 import {FilterChains} from "../constants.ts";
-import {formatCurrency} from "../../../../utils/format.ts";
+import {formatCurrency, labelAmountOrNumberAdds} from "../../../../utils/format.ts";
 import cs from "clsx";
 
 const MAX_LENGTH_TEXT = 150;
@@ -134,18 +134,22 @@ const AgentItem = ({ token }: IProps) => {
         </Flex>
         <Flex flexDirection="column" w={'100%'} gap={"8px"}>
           <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
-            <Text
-              fontSize="14px"
-              fontWeight="500"
-              color="inherit"
-            >
-              {token?.agent_name}{' '}
-            </Text>
+            <Flex gap={"6px"}>
+              <Text className={s.nameText}>
+                {token?.agent_name}{' '}
+              </Text>
+              <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
+            </Flex>
             {/*<Text className={s.agentTypeTag}>{AgentTypeName[token?.agent_type]}</Text>*/}
             {!isInstalled && <Button className={s.btnInstall} onClick={handleInstall}>Install</Button>}
           </Flex>
+          {
+            description && (
+              <Text className={s.descriptionText}>{description}</Text>
+            )
+          }
+
           <SimpleGrid columns={3}>
-            <Text className={s.infoText}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
             <Text className={s.infoText}>
               {token?.meme?.market_cap && (
                 <>
@@ -165,10 +169,7 @@ const AgentItem = ({ token }: IProps) => {
                 </>
               )}
             </Text>
-            <Flex>
-              <Text className={s.infoText}>{formatCurrency(12345)}</Text>
-              <Image src={'/icons/ic-chat.svg'} w={'16px'}/>
-            </Flex>
+            <Text className={s.infoText}>{formatCurrency(12345)}{' '}<Text as={'span'} color={"#657786"}>prompt{labelAmountOrNumberAdds(12345)}</Text></Text>
           </SimpleGrid>
         </Flex>
       </Grid>

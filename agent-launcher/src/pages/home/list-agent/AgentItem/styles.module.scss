@@ -5,6 +5,24 @@
   cursor: pointer;
   color: #000;
 
+  .nameText {
+    font-size: 14px;
+    font-weight: 400;
+    color: inherit;
+  }
+
+  .descriptionText {
+    font-size: 12px;
+    font-weight: 400;
+    color: inherit;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .infoText {
     font-size: 12px;
     font-weight: 400;
