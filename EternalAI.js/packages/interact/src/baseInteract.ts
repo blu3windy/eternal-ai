@@ -1,15 +1,19 @@
-import * as ethers from 'ethers';
-
 import { CHAIN_MAPPING, ChainId } from './constants';
 import { InferPayloadWithMessages, InferPayloadWithPrompt } from './types';
 import * as methods from './methods';
 import { InteractWallet } from './methods/types';
 
+import injectDependency from '@/inject';
+// this is inject supported packages
+const packages = {
+  ethers: injectDependency<InjectedTypes.ethers>('ethers'),
+};
+
 class BaseInteract {
   protected getProvider(chainId: ChainId, rpcUrl?: string) {
     // create provider from user optional
     if (!!rpcUrl) {
-      return new ethers.providers.JsonRpcProvider(rpcUrl);
+      return new packages.ethers.providers.JsonRpcProvider(rpcUrl);
     }
 
     if (!CHAIN_MAPPING[chainId]) {
@@ -17,7 +21,9 @@ class BaseInteract {
     }
 
     // create provider from default supported chainId
-    return new ethers.providers.JsonRpcProvider(CHAIN_MAPPING[chainId]);
+    return new packages.ethers.providers.JsonRpcProvider(
+      CHAIN_MAPPING[chainId]
+    );
   }
 
   protected normalizePayload(

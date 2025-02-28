@@ -17,10 +17,8 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true
+    "resolveJsonModule": true
   },
-  "include": ["src"],
+  "include": ["src", "src/types.d.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

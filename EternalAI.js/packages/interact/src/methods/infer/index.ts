@@ -15,11 +15,17 @@ import { sleep } from '../../utils/time';
 import { Fragment, LogDescription } from 'ethers/lib/utils';
 import LightHouse from '@/services/light_house';
 
+import injectDependency from '@/inject';
+// this is inject supported packages
+const packages = {
+  ethers: injectDependency<InjectedTypes.ethers>('ethers'),
+};
+
 const contracts: Record<string, ethers.Contract> = {};
 
 const getAgentContract = (contractAddress: string, wallet: InteractWallet) => {
   if (!contracts[contractAddress]) {
-    contracts[contractAddress] = new ethers.Contract(
+    contracts[contractAddress] = new packages.ethers.Contract(
       contractAddress,
       AGENT_ABI,
       wallet.provider
@@ -33,7 +39,7 @@ const getWorkerHubContract = (
   wallet: InteractWallet
 ) => {
   if (!contracts[contractAddress]) {
-    contracts[contractAddress] = new ethers.Contract(
+    contracts[contractAddress] = new packages.ethers.Contract(
       contractAddress,
       PROMPT_SCHEDULER_ABI,
       wallet.provider
@@ -66,10 +72,10 @@ const Infer = {
   ) => {
     if (isLightHouse) {
       const uploadedUrl = await LightHouse.upload(JSON.stringify(messages));
-      return ethers.utils.toUtf8Bytes(uploadedUrl);
+      return packages.ethers.utils.toUtf8Bytes(uploadedUrl);
     }
 
-    return ethers.utils.toUtf8Bytes(
+    return packages.ethers.utils.toUtf8Bytes(
       JSON.stringify({
         messages,
       })
@@ -130,7 +136,7 @@ const Infer = {
         to: contractAddress, // smart contract address
         from: from, // sender address
         data: callData, // data
-        chainId: ethers.BigNumber.from(chainId).toNumber(),
+        chainId: packages.ethers.BigNumber.from(chainId).toNumber(),
         gasLimit: gasLimit,
         gasPrice: gasPrice,
         nonce: nonce,
@@ -174,7 +180,7 @@ const Infer = {
         to: contractAddress,
         from: from,
         data: callData,
-        chainId: ethers.BigNumber.from(chainId).toNumber(),
+        chainId: packages.ethers.BigNumber.from(chainId).toNumber(),
         gasLimit: gasLimit,
         gasPrice: gasPrice,
         nonce: nonce,
@@ -235,7 +241,7 @@ const Infer = {
       throw new Error('Transaction receipt not found.');
     } else {
       try {
-        const iface = new ethers.utils.Interface(
+        const iface = new packages.ethers.utils.Interface(
           WORKER_HUB_ABI as ReadonlyArray<Fragment>
         );
 
@@ -260,7 +266,7 @@ const Infer = {
   },
 
   processOutput: (out: any) => {
-    const str: string = ethers.utils.toUtf8String(out);
+    const str: string = packages.ethers.utils.toUtf8String(out);
     try {
       const result = InferenceResponse.fromJSON(str);
       return result;
@@ -307,7 +313,7 @@ const Infer = {
       const contract = getWorkerHubContract(workerHubAddress, wallet);
       const inferenceInfo = await contract.getInferenceInfo(inferId);
       const output = inferenceInfo[10];
-      const bytesData = ethers.utils.arrayify(output);
+      const bytesData = packages.ethers.utils.arrayify(output);
       if (bytesData.length != 0) {
         const result = await Infer.processOutputToInferResponse(bytesData);
         if (result) {
@@ -330,7 +336,7 @@ const Infer = {
         throw new Error('Inference result not ready');
       }
       const output = assignInfo[7];
-      const bytesData = ethers.utils.arrayify(output);
+      const bytesData = packages.ethers.utils.arrayify(output);
       if (bytesData.length != 0) {
         const result = await Infer.processOutputToInferResponse(bytesData);
         if (result) {
