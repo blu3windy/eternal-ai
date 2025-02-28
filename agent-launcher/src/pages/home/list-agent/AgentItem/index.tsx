@@ -16,7 +16,7 @@ interface IProps {
 }
 
 const AgentItem = ({ token }: IProps) => {
-  const { selectedAgent, setSelectedAgent } = useContext(AgentContext);
+  const { selectedAgent, setSelectedAgent, installAgent } = useContext(AgentContext);
 
   const [showFullText, setShowFullText] = React.useState(false);
 
@@ -79,7 +79,8 @@ const AgentItem = ({ token }: IProps) => {
   };
 
   const handleInstall = () => {
-
+    setSelectedAgent(token);
+    installAgent(token?.id);
   }
 
   const avatarUrl =

@@ -1,3 +1,27 @@
 .container {
   padding: 16px 60px;
+
+
+  .installContainer {
+    .nameText {
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    .descriptionText {
+      font-size: 16px;
+      font-weight: 400;
+      color: #000
+    }
+
+    .btnInstall {
+      background-color: #000;
+      color: #fff;
+      border-radius: 100px;
+      width: 160px;
+      height: 48px;
+      font-size: 16px;
+      font-weight: 400;
+    }
+  }
 }

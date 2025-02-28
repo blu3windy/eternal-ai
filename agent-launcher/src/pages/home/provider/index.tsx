@@ -11,6 +11,7 @@ const initialValue: IAgentContext = {
   setCurrentModel: () => {},
   chainList: [],
   installAgent: () => {},
+  isInstalled: false,
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -33,6 +34,10 @@ const AgentProvider: React.FC<
     name: string;
     id: string;
   } | null>(null);
+
+  const isInstalled = useMemo(() => {
+    return Number(selectedAgent?.id || 0) % 2 === 0;
+  }, [selectedAgent]);
 
   const fetchChainList = useCallback(async () => {
     const chainList = await cPumpAPI.getChainList();
@@ -78,6 +83,7 @@ const AgentProvider: React.FC<
       setCurrentModel,
       chainList,
       installAgent,
+      isInstalled,
     };
   }, [
     loading,
@@ -87,6 +93,7 @@ const AgentProvider: React.FC<
     setCurrentModel,
     chainList,
     installAgent,
+    isInstalled,
   ]);
 
    return (

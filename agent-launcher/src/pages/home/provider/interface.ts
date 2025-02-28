@@ -8,4 +8,5 @@ export interface IAgentContext {
   setCurrentModel: any;
   chainList: IChainConnected[];
   installAgent: any;
+  isInstalled: boolean;
 }
