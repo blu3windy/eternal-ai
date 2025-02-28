@@ -15,6 +15,9 @@ const initialValue: IAgentContext = {
   chainList: [],
   installAgent: () => {},
   isInstalled: false,
+  isStarting: false,
+  isStopping: false,
+  handleStopDockerAgent: () => {},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -28,6 +31,8 @@ const AgentProvider: React.FC<
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
   const [chainList, setChainList] = useState<IChainConnected[]>([]);
+  const [isStarting, setIsStarting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
 
   console.log('stephen: selectedAgent', selectedAgent);
 
@@ -77,39 +82,20 @@ const AgentProvider: React.FC<
     installUtilityAgent(agent);
   }
 
-  const contextValues: any = useMemo(() => {
-    return {
-      loading,
-      selectedAgent,
-      setSelectedAgent,
-      currentModel,
-      setCurrentModel,
-      chainList,
-      installAgent,
-      isInstalled,
-    };
-  }, [
-    loading,
-    selectedAgent,
-    setSelectedAgent,
-    currentModel,
-    setCurrentModel,
-    chainList,
-    installAgent,
-    isInstalled,
-  ]);
-
   const installUtilityAgent = async (agent: IAgentToken) => {
     try {
       if (agent && agent.agent_type === AgentType.Utility && agent.source_url && agent.source_url.length > 0) {
         const sourceFile = agent?.source_url?.find((url) => url.startsWith('ethfs_'));
         if (sourceFile) {
+          setIsStarting(true);
           const filePath = await readSourceFile(sourceFile, `agent_${agent.id}.js`, agent?.network_id || BASE_CHAIN_ID);
           await handleRunDockerAgent(filePath);
         }
       }
     } catch (error: any) {
       alert(error?.message ||'Something went wrong');
+    } finally {
+      setIsStarting(false);
     }
   }
 
@@ -134,6 +120,46 @@ const AgentProvider: React.FC<
     if (!filePath) return;
     console.log('====: filePath', filePath);
   }
+
+  const handleStopDockerAgent = async (filePath?: string) => {
+    if (!filePath) return;
+    console.log('====: filePath', filePath);
+    try {
+      setIsStopping(true);
+    } catch (err) {
+
+    } finally {
+      setIsStopping(false);
+    }
+  }
+
+  const contextValues: any = useMemo(() => {
+    return {
+      loading,
+      selectedAgent,
+      setSelectedAgent,
+      currentModel,
+      setCurrentModel,
+      chainList,
+      installAgent,
+      isInstalled,
+      isStarting,
+      isStopping,
+      handleStopDockerAgent,
+    };
+  }, [
+    loading,
+    selectedAgent,
+    setSelectedAgent,
+    currentModel,
+    setCurrentModel,
+    chainList,
+    installAgent,
+    isInstalled,
+    isStarting,
+    isStopping,
+    handleStopDockerAgent,
+  ]);
 
    return (
       <AgentContext.Provider value={contextValues}>
