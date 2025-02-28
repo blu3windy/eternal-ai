@@ -10,6 +10,7 @@ const initialValue: IAgentContext = {
   currentModel: undefined,
   setCurrentModel: () => {},
   chainList: [],
+  installAgent: () => {},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -23,6 +24,8 @@ const AgentProvider: React.FC<
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
   const [chainList, setChainList] = useState<IChainConnected[]>([]);
+
+  console.log('stephen: selectedAgent', selectedAgent);
 
   const cPumpAPI = new CAgentTokenAPI();
 
@@ -62,6 +65,10 @@ const AgentProvider: React.FC<
     fetchChainList();
   }, []);
 
+  const installAgent = (id: number) => {
+
+  }
+
   const contextValues: any = useMemo(() => {
     return {
       loading,
@@ -70,6 +77,7 @@ const AgentProvider: React.FC<
       currentModel,
       setCurrentModel,
       chainList,
+      installAgent,
     };
   }, [
     loading,
@@ -77,7 +85,8 @@ const AgentProvider: React.FC<
     setSelectedAgent,
     currentModel,
     setCurrentModel,
-    chainList
+    chainList,
+    installAgent,
   ]);
 
    return (

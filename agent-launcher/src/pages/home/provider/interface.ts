@@ -7,4 +7,5 @@ export interface IAgentContext {
   currentModel: any;
   setCurrentModel: any;
   chainList: IChainConnected[];
+  installAgent: any;
 }
