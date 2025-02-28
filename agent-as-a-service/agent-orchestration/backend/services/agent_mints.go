@@ -604,7 +604,7 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 				models.MONAD_TESTNET_CHAIN_ID,
 				models.MEGAETH_TESTNET_CHAIN_ID,
 				models.CELO_CHAIN_ID,
-				models.SEPOLIA_CHAIN_ID:
+				models.BASE_SEPOLIA_CHAIN_ID:
 				{
 					agentUriData := models.AgentUriData{
 						Name: agentInfo.AgentName,
