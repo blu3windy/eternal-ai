@@ -416,6 +416,9 @@ type TweetParseInfo struct {
 	IsIntellect   bool
 	IsCreateAgent bool
 	Description   string
+
+	IsGenerateVideo      bool
+	GenerateVideoContent string
 }
 
 type UserTwitterPost struct {
