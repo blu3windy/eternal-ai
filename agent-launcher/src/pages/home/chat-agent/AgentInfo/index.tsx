@@ -16,6 +16,7 @@ const AgentInfo = () => {
         currentModel={currentModel}
         setCurrentModel={setCurrentModel}
         chainId={selectedAgent?.network_id}
+        showDescription={false}
       />
       <Flex gap={"6px"} alignItems={"center"}>
         <InfoTooltip iconSize="sm" label={selectedAgent?.meme?.description} placement="top" />
