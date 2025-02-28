@@ -30,6 +30,7 @@ interface IElectronAPI {
   safeCopy: (text: string) => Promise<void>
   // File
   readFile: (fileName: string) => Promise<string>
+  getFilePath: (fileName: string) => Promise<string>
   accessFile: (fileName: string) => Promise<boolean>
   writeFile: (fileName: string, data: string) => Promise<string>
 }

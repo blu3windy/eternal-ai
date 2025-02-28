@@ -5,6 +5,7 @@ const EMIT_EVENT_NAME = {
 
    SAFE_COPY: "safe-copy",
    READ_FILE: "safe-read-file",
+   GET_FILE_PATH: "safe-get-file-path",
    ACCESS_FILE: "safe-access-file",
    WRITE_FILE: "safe-write-file",
 }
