@@ -42,6 +42,11 @@ function createWindow() {
 
    win.loadURL("http://localhost:5173");
 
+   win.once("ready-to-show", () => {
+      win?.show();
+      win?.focus(); // Ensure the app is focused before running AppleScript
+   });
+
    // Test active push message to Renderer-process.
    win.webContents.on("did-finish-load", () => {
       win?.webContents.send("main-process-message", new Date().toLocaleString());

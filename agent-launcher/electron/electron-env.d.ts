@@ -33,6 +33,9 @@ interface IElectronAPI {
   getFilePath: (fileName: string) => Promise<string>
   accessFile: (fileName: string) => Promise<boolean>
   writeFile: (fileName: string, data: string) => Promise<string>
+
+  checkDocker: () => Promise<boolean>
+  installDocker: () => Promise<void>
 }
 
 // Used in Renderer process, expose in `preload.ts`

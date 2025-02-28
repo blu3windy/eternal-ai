@@ -1,0 +1,14 @@
+{
+  "name": "abc",
+  "version": "1.0.0",
+  "server": "server.js",
+  "scripts": {
+    "server": "node ./src/server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
