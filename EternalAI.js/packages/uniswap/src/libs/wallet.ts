@@ -71,7 +71,7 @@ export async function wrapETH(eth: number) {
   //   const BNethAmount = BigNumber.from(Number(eth));
   //   console.log('🚀 ~ wrapETH ~ BNethAmount:', BNethAmount);
 
-  //   const value = BigNumber.from(eth)
+  //   const value = BigNumber.from(Math.ceil(eth))
   //     .mul(JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18)).toString())
   //     .toString();
 

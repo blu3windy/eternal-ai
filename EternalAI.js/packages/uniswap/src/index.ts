@@ -116,7 +116,6 @@ export const create_api_infer = async (
 ): Promise<any> => {
   const api_infer = new APIInference(host);
   api_infer.set_api_key(api_key);
-
   try {
     const resp = await api_infer.create_infer(prompt, SYSTEM_PROMPT, model);
     let content_response = await api_infer.process_output(resp);
@@ -236,22 +235,20 @@ export const uni_swap_ai = async (command: string, args: any) => {
   }
 };
 
+export const prompt = async (prompt: string, private_key: string) => {
+  try {
+    const { state, tx } = await uni_swap_ai('api-infer', {
+      prompt: prompt,
+      private_key: private_key,
+      model: 'gpt-4o-mini',
+      api_key: '',
+      host: 'https://api.openai.com/v1',
+    });
+    console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
+    return `Swapped with tx ${tx.transactionHash}`;
+  } catch (e) {
+    return `Swapped err ${e?.message}`;
+  }
+};
 // for browser
-/*export const prompt = async (prompt: string, private_key: string) => {
-    try {
-        const {state, tx} = await uni_swap_ai("api-infer", {
-            prompt: prompt,
-            private_key: private_key,
-            model: "gpt-4o-mini",
-            api_key: "",
-            host: "https://api.openai.com/v1",
-        })
-        console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
-        return `Swapped with tx ${tx.transactionHash}`;
-    } catch (e) {
-        return `Swapped err ${e?.message}`;
-    }
-
-}
-
-window.prompt = prompt*/
+// window.prompt = prompt

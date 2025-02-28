@@ -141,7 +141,7 @@ export class UniSwapAI {
 
     if (Number(wethBalance) < req.token_in_amount) {
       // wrap eth with enough amount
-
+      await wrapETH(req.token_in_amount);
       // console.log('🚀 ~ UniSwapAI ~ ethBalance:', ethBalance);
     }
 
