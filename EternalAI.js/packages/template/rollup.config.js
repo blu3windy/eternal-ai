@@ -15,7 +15,7 @@ module.exports = {
     {
       dir: 'dist',
       format: 'cjs',
-      sourcemap: true,
+      sourcemap: false,
     },
   ],
   plugins: [

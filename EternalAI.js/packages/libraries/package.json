@@ -1,5 +1,5 @@
 {
-  "name": "@eternalai.js/core",
+  "name": "@eternalai.js/libraries",
   "version": "0.1.0",
   "license": "MIT",
   "main": "dist/bundle.cjs.js",
@@ -18,7 +18,9 @@
     "test": "vitest",
     "lint": "eslint . --ext .ts,.tsx",
     "size": "size-limit",
-    "analyze": "size-limit --why"
+    "analyze": "size-limit --why",
+    "build-packages": "rm -rf packages && npm run build-ethers",
+    "build-ethers": "rollup -c ./rollup.config-ethers.js"
   },
   "peerDependencies": {},
   "husky": {
