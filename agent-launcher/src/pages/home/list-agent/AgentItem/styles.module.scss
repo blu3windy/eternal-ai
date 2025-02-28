@@ -11,12 +11,22 @@
     color: #000;
   }
 
-  .noTokenTag {
+  .agentTypeTag {
     font-size: 12px;
     font-weight: 400;
     background: #0000000D;
     padding: 4px 8px;
     border-radius: 100px;
+  }
+
+  .btnInstall {
+    background-color: #000;
+    color: #fff;
+    border-radius: 4px;
+    width: 46px;
+    height: 18px;
+    font-size: 12px;
+    font-weight: 400;
   }
 
   &.isSelected {
@@ -27,8 +37,13 @@
       color: #FFF;
     }
 
-    .noTokenTag {
+    .agentTypeTag {
       background: #686A6C;
+    }
+
+    .btnInstall {
+      background-color: #FFF;
+      color: #000;
     }
   }
 

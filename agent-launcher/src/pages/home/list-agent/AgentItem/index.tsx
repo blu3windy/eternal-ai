@@ -1,5 +1,5 @@
-import {Flex, Grid, Image, SimpleGrid, Text} from '@chakra-ui/react';
-import React, {useContext} from 'react';
+import {Button, Flex, Grid, Image, SimpleGrid, Text} from '@chakra-ui/react';
+import React, {useContext, useMemo} from 'react';
 import s from './styles.module.scss';
 import {IAgentToken} from "../../../../services/api/agents-token/interface.ts";
 import {AgentContext} from "../../provider";
@@ -8,16 +8,14 @@ import {compareString} from "../../../../utils/string.ts";
 import {FilterChains} from "../constants.ts";
 import {formatCurrency} from "../../../../utils/format.ts";
 import cs from "clsx";
-import {AgentTypeName} from "../index.tsx";
 
 const MAX_LENGTH_TEXT = 150;
 
 interface IProps {
   token: IAgentToken;
-  isAllChain: boolean;
 }
 
-const AgentItem = ({ token, isAllChain }: IProps) => {
+const AgentItem = ({ token }: IProps) => {
   const { selectedAgent, setSelectedAgent } = useContext(AgentContext);
 
   const [showFullText, setShowFullText] = React.useState(false);
@@ -80,6 +78,10 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
     );
   };
 
+  const handleInstall = () => {
+
+  }
+
   const avatarUrl =
     token?.thumbnail ||
     token?.token_image_url ||
@@ -90,6 +92,10 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
       compareString(chain.chainId, token?.network_id) ||
       compareString(chain.name, token?.network_name),
   );
+
+  const isInstalled = useMemo(() => {
+    return Number(token.id) % 2 === 0;
+  }, [token]);
 
   return (
     <Flex
@@ -127,7 +133,7 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
           )}
         </Flex>
         <Flex flexDirection="column" w={'100%'} gap={"8px"}>
-          <Flex gap={"6px"} alignItems={"center"}>
+          <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
             <Text
               fontSize="14px"
               fontWeight="500"
@@ -135,7 +141,8 @@ const AgentItem = ({ token, isAllChain }: IProps) => {
             >
               {token?.agent_name}{' '}
             </Text>
-            <Text className={s.noTokenTag}>{AgentTypeName[token?.agent_type]}</Text>
+            {/*<Text className={s.agentTypeTag}>{AgentTypeName[token?.agent_type]}</Text>*/}
+            {!isInstalled && <Button className={s.btnInstall} onClick={handleInstall}>Install</Button>}
           </Flex>
           <SimpleGrid columns={3}>
             <Text className={s.infoText}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
