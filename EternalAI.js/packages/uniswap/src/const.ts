@@ -70,8 +70,7 @@ Why it happened: A simplified reason based on the error details.
 
 What to do: Practical suggestions to resolve or work around the issue.
 
-Use Markdown: Format your response with headings, bullet points, and code blocks to enhance readability.
-
+Keep it concise and straightforward, focusing on the user's needs and understanding. Avoid jargon, technical complexities, or irrelevant details that may confuse or overwhelm the user. Your goal is to empower users with the knowledge to address the error effectively and continue their blockchain activities with confidence.
 `;
 
 export const FORMAT_GET_PRICE_RESPONSE_SYSTEM_PROMPT = `
