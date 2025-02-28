@@ -237,8 +237,7 @@ export const uni_swap_ai = async (command: string, args: any) => {
   }
 };
 
-// for browser
-/*export const prompt = async (prompt: string, private_key: string) => {
+export const prompt = async (prompt: string, private_key: string) => {
     try {
         const {state, tx} = await uni_swap_ai("api-infer", {
             prompt: prompt,
@@ -254,5 +253,5 @@ export const uni_swap_ai = async (command: string, args: any) => {
     }
 
 }
-
-window.prompt = prompt*/
+// for browser
+// window.prompt = prompt

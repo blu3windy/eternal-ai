@@ -4,8 +4,8 @@ const typescript = require('@rollup/plugin-typescript');
 const {terser} = require('rollup-plugin-terser');
 const pkg = require('./package.json');
 import json from '@rollup/plugin-json';
-import nodePolyfills from 'rollup-plugin-polyfill-node';
-import replace from '@rollup/plugin-replace';
+// import nodePolyfills from 'rollup-plugin-polyfill-node';
+// import replace from '@rollup/plugin-replace';
 
 module.exports = {
     input: 'src/main.ts',
