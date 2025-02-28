@@ -10,6 +10,8 @@ import InfoTooltip from "@components/InfoTooltip";
 const AgentInfo = () => {
   const { currentModel, setCurrentModel, selectedAgent, stopAgent, isStopping, runningAgents } = useContext(AgentContext);
 
+  const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
+
   const isRunning = useMemo(() => {
     return runningAgents.includes(selectedAgent?.id as number);
   }, [runningAgents, selectedAgent]);
@@ -39,7 +41,7 @@ const AgentInfo = () => {
           )
         }
 
-        <InfoTooltip iconSize="sm" label={selectedAgent?.meme?.description} placement="top" />
+        <InfoTooltip iconSize="sm" label={description} placement="top" />
         <Text>{selectedAgent?.agent_name}</Text>
         <Text opacity={0.6}>${selectedAgent?.token_symbol}</Text>
         •
