@@ -20,7 +20,7 @@ async function loadEthers() {
 
 async function main() {
     const ethers = await loadEthers();
-    await prompt("Swap 1 EAI to USDT", "")
+    await prompt("How much for 1 EAI in USDT", "0x4a3dc71d1baa9405136dd496bd4a60193f37ccc6d5e47c1799e728339a007d1c")
 }
 
 main().catch(console.error);
