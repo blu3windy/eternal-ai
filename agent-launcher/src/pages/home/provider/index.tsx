@@ -104,7 +104,7 @@ const AgentProvider: React.FC<
       if (agent && agent.agent_type === AgentType.Utility && agent.source_url && agent.source_url.length > 0) {
         const sourceFile = agent?.source_url?.find((url) => url.startsWith('ethfs_'));
         if (sourceFile) {
-          const filePath = await readSourceFile(sourceFile, `agent_${agent.id}.js`, agent?.network_id || BASE_CHAIN_ID);
+          const filePath = await readSourceFile(sourceFile, `prompt.js`, `agent_${agent.id}`, selectedAgent?.network_id || BASE_CHAIN_ID);
           await handleRunDockerAgent(filePath);
         }
       }
@@ -113,15 +113,15 @@ const AgentProvider: React.FC<
     }
   }
 
-  const readSourceFile = async (filename: string, filenameOnLocal: string, chainId: number) => {
+  const readSourceFile = async (filename: string, fileNameOnLocal: string, folderName: string, chainId: number) => {
     try {
       let filePath: string | undefined = '';
-      const isExisted = await checkFileExistsOnLocal(filenameOnLocal);
+      const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderName);
       if (isExisted) {
-        filePath = await getFilePathOnLocal(filenameOnLocal);
+        filePath = await getFilePathOnLocal(fileNameOnLocal, folderName);
       } else {
         const data = await readFileOnChain(chainId, filename);
-        filePath = await writeFileToLocal(filenameOnLocal, data);
+        filePath = await writeFileToLocal(fileNameOnLocal, folderName, data);
       }
       return filePath;
     } catch (error: any) {
