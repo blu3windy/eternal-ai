@@ -68,16 +68,9 @@ export async function wrapETH(eth: number) {
     provider
   );
 
-  //   const BNethAmount = BigNumber.from(Number(eth));
-  //   console.log('🚀 ~ wrapETH ~ BNethAmount:', BNethAmount);
-
-  //   const value = BigNumber.from(Math.ceil(eth))
-  //     .mul(JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18)).toString())
-  //     .toString();
 
   const value = ethers.utils.parseEther(eth.toString());
 
-  //   console.log('🚀 ~ wrapETH ~ value:', value.toNumber());
 
   const transaction = {
     data: wethContract.interface.encodeFunctionData('deposit'),
