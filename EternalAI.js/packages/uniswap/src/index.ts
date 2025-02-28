@@ -36,7 +36,6 @@ export const call_uniswap = async (
                 case "getPrice": {
                     console.log(`**** call get price with req **** \n ${JSON.stringify(req, null, 4)}`);
                     req.token_in_address = await req.convert_token_address(req.token_in);
-                    console.log("aaaaaa", req.token_in_address)
                     const price = await req.get_price(req.token_in_address)
                     return {
                         state: null,
