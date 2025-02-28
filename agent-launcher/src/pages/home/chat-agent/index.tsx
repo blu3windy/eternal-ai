@@ -9,6 +9,11 @@ import {AgentContext} from "@pages/home/provider";
 function ChatAgent() {
   const { selectedAgent, isInstalled, installAgent } = useContext(AgentContext);
 
+  const avatarUrl =
+    selectedAgent?.thumbnail ||
+    selectedAgent?.token_image_url ||
+    selectedAgent?.twitter_info?.twitter_avatar;
+
   const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
   const handleInstall = () => {
@@ -25,9 +30,26 @@ function ChatAgent() {
            </ChatAgentProvider>
          ) : (
            <Flex className={s.installContainer} direction={"column"} w={'100%'} alignItems={"center"} gap={"20px"}>
-             <Flex direction={"column"} alignItems={"center"}>
+             <Flex direction={"column"} alignItems={"center"} position={"relative"}>
                <Image src="/images/bg-agent-chat.png" w={"80%"}/>
-               <Text className={s.nameText} mt={"-60px"}>{selectedAgent?.agent_name}</Text>
+               <Flex
+                 position="absolute"
+                 height="70px"
+                 w="70px"
+                 top={'50%'}
+                 left={'50%'}
+                 transform={"translate(-50%, -50%)"}
+               >
+                 <Flex className={s?.['glow-on-hover']}>
+                   <Image
+                     w="70px"
+                     h="70px"
+                     src={avatarUrl}
+                     borderRadius={'50%'}
+                   />
+                 </Flex>
+               </Flex>
+               <Text className={s.nameText}>{selectedAgent?.agent_name}</Text>
              </Flex>
              {
                description && (
