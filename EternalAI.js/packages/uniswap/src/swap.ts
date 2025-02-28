@@ -4,7 +4,12 @@ import { Token } from '@uniswap/sdk-core';
 import { changeWallet, createWallet, TransactionState } from './libs/providers';
 import { createTrade, executeTrade } from './libs/trading';
 import { CurrentConfig, Environment } from './libs/config';
-import { getCurrencyBalance, getCurrencyDecimal, wrapETH } from './libs/wallet';
+import {
+  getCurrencyBalance,
+  getCurrencyDecimal,
+  unwrapETH,
+  wrapETH,
+} from './libs/wallet';
 import { TTokenInfo, TTransactionResponse } from './type';
 
 export class SwapReq {
@@ -51,6 +56,8 @@ export class SwapReq {
 
     if (this.token_out.toLowerCase() == 'eth') {
       this.token_out_address = ZeroAddress;
+      // this.token_out_address = WETH_TOKEN.address;
+      // this.token_out = 'WETH';
     } else {
       const token_address = await this.convert_token_address(this.token_out);
       if (!token_address) this.token_out_address = ZeroAddress;
@@ -136,24 +143,38 @@ export class UniSwapAI {
     );
     CurrentConfig.tokens.in = tokenIn;
     CurrentConfig.tokens.amountIn = req.token_in_amount;
-    const tokenOut = new Token(
-      parseInt(chain_id, 16),
-      req.token_out_address,
-      await getCurrencyDecimal(newWallet.provider, req.token_out_address),
-      req.token_out,
-      req.token_out
-    );
+
+    let tokenOut: Token;
+    if (req.token_out_address == ZeroAddress) {
+      tokenOut = new Token(
+        parseInt(chain_id, 16),
+        WETH_TOKEN.address,
+        await getCurrencyDecimal(newWallet.provider, WETH_TOKEN.address),
+        WETH_TOKEN.symbol,
+        WETH_TOKEN.name
+      );
+    } else {
+      tokenOut = new Token(
+        parseInt(chain_id, 16),
+        req.token_out_address,
+        await getCurrencyDecimal(newWallet.provider, req.token_out_address),
+        req.token_out,
+        req.token_out
+      );
+    }
     CurrentConfig.tokens.out = tokenOut;
 
-    const wethBalance = await getCurrencyBalance(
-      newWallet.provider,
-      newWallet.address,
-      WETH_TOKEN
-    );
+    if (req.token_in_address == WETH_TOKEN.address) {
+      const wethBalance = await getCurrencyBalance(
+        newWallet.provider,
+        newWallet.address,
+        WETH_TOKEN
+      );
 
-    if (Number(wethBalance) < req.token_in_amount) {
-      // wrap eth with enough amount
-      await wrapETH(req.token_in_amount);
+      if (Number(wethBalance) < req.token_in_amount) {
+        // wrap eth with enough amount
+        await wrapETH(req.token_in_amount);
+      }
     }
 
     const tokenInBalance = await getCurrencyBalance(
@@ -166,10 +187,28 @@ export class UniSwapAI {
     );
     changeWallet(newWallet);
 
+    if (Number(tokenInBalance) <= req.token_in_amount) {
+      return {
+        state: TransactionState.Failed,
+        tx: null,
+        message: 'swap_v3 error: insufficient balance',
+      };
+    }
+
     try {
       const trade = await createTrade();
       const { state, tx } = await executeTrade(trade);
-      return { state, tx };
+
+      if (
+        tx &&
+        state === TransactionState.Sent &&
+        req.token_out_address == ZeroAddress
+      ) {
+        const amountOut = trade.swaps[0].outputAmount.toExact();
+        await unwrapETH(Number(amountOut));
+      }
+
+      return { state: null, tx: null };
     } catch (e) {
       //   console.log(`Error executeTrade ${e}`);
       return {
@@ -178,6 +217,6 @@ export class UniSwapAI {
         message: 'swap_v3 error: ' + (e as Error).message,
       };
     }
-    return { state: null, tx: null };
+    // return { state: null, tx: null };
   };
 }

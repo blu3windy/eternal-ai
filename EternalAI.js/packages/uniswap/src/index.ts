@@ -39,7 +39,18 @@ export const call_uniswap = async (
           req,
           chain_id_swap
         );
-        return { state, tx, message };
+
+        let _message = message;
+        if (!!message && api) {
+          const resp = await api.api_infer.create_infer(
+            message,
+            ERROR_TRANSACTION_RESPONSE_SYSTEM_PROMPT,
+            api.model
+          );
+          _message = await api.api_infer.process_output(resp);
+        }
+
+        return { state, tx, message: _message };
       }
       case 'getPrice': {
         console.log(
