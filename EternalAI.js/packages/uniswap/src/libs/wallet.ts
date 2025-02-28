@@ -68,9 +68,7 @@ export async function wrapETH(eth: number) {
     provider
   );
 
-
   const value = ethers.utils.parseEther(eth.toString());
-
 
   const transaction = {
     data: wethContract.interface.encodeFunctionData('deposit'),
@@ -79,6 +77,7 @@ export async function wrapETH(eth: number) {
     to: WETH_CONTRACT_ADDRESS,
     maxFeePerGas: MAX_FEE_PER_GAS,
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+    gasLimit: 1000000,
   };
 
   const { state, tx } = await sendTransaction(transaction);
@@ -101,12 +100,10 @@ export async function unwrapETH(eth: number) {
     provider
   );
 
+  const value = ethers.utils.parseEther(eth.toString());
+
   const transaction = {
-    data: wethContract.interface.encodeFunctionData('withdraw', [
-      BigNumber.from(Math.ceil(eth))
-        .mul(JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18)).toString())
-        .toString(),
-    ]),
+    data: wethContract.interface.encodeFunctionData('withdraw', [value]),
     from: address,
     to: WETH_CONTRACT_ADDRESS,
     maxFeePerGas: MAX_FEE_PER_GAS,
