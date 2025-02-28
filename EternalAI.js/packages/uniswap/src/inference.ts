@@ -9,7 +9,12 @@ import {
   WORKER_HUB_ABI,
 } from './const';
 import { stringToBytes, waitForTransactionReceipt } from './utils';
-import { ethers } from 'ethers';
+
+import injectDependency from '@/inject';
+
+const packages = {
+  ethers: injectDependency<InjectedTypes.ethers>('ethers'),
+};
 
 export class InferenceResponse {
   result_uri: string;
@@ -52,9 +57,9 @@ export class AgentInference {
   create_web3_provider = (rpc: string) => {
     if (this.web3_provider == null) {
       if (rpc != '') {
-        this.web3_provider = new ethers.providers.JsonRpcProvider(rpc);
+        this.web3_provider = new packages.ethers.providers.JsonRpcProvider(rpc);
       } else {
-        this.web3_provider = new ethers.providers.JsonRpcProvider(
+        this.web3_provider = new packages.ethers.providers.JsonRpcProvider(
           RPC_URL.ETH_CHAIN_ID
         );
       }
@@ -75,7 +80,7 @@ export class AgentInference {
     this.create_web3_provider(rpc);
     if (await this.web3_provider.getNetwork()) {
       this.get_agent_address(agent_address);
-      const agent_contract = new ethers.Contract(
+      const agent_contract = new packages.ethers.Contract(
         this.agent_address,
         AGENT_ABI,
         this.web3_provider
@@ -94,7 +99,7 @@ export class AgentInference {
   get_worker_hub_address = async (agent_address: string, rpc: string) => {
     this.create_web3_provider(rpc);
     this.get_agent_address(agent_address);
-    const agent_contract = new ethers.Contract(
+    const agent_contract = new packages.ethers.Contract(
       this.agent_address,
       AGENT_ABI,
       this.web3_provider
@@ -116,11 +121,14 @@ export class AgentInference {
     if (await this.web3_provider.getNetwork()) {
       this.get_agent_address(agent_address);
       console.log('this.agent_address', this.agent_address);
-      const wallet = new ethers.Wallet(private_key, this.web3_provider);
+      const wallet = new packages.ethers.Wallet(
+        private_key,
+        this.web3_provider
+      );
       const account_address = wallet.address;
       // console.log(await wallet.getBalance())
 
-      const agent_contract = new ethers.Contract(
+      const agent_contract = new packages.ethers.Contract(
         this.agent_address,
         AGENT_ABI,
         wallet
@@ -178,9 +186,9 @@ export class InferenceProcessing {
   create_web3_provider = (rpc: string) => {
     if (this.web3_provider == null) {
       if (rpc != '') {
-        this.web3_provider = new ethers.providers.JsonRpcProvider(rpc);
+        this.web3_provider = new packages.ethers.providers.JsonRpcProvider(rpc);
       } else {
-        this.web3_provider = new ethers.providers.JsonRpcProvider(
+        this.web3_provider = new packages.ethers.providers.JsonRpcProvider(
           RPC_URL.ETH_CHAIN_ID
         );
       }
@@ -242,7 +250,7 @@ export class InferenceProcessing {
     if (await this.web3_provider.getNetwork()) {
       this.get_workerhub_address(worker_hub_address);
 
-      const contract = new ethers.Contract(
+      const contract = new packages.ethers.Contract(
         this.workerhub_address,
         PROMPT_SCHEDULER_ABI,
         this.web3_provider
@@ -250,7 +258,7 @@ export class InferenceProcessing {
       try {
         const inference_info = await contract.getInferenceInfo(inference_id);
         const output = inference_info[10];
-        const bytesData = ethers.utils.arrayify(output);
+        const bytesData = packages.ethers.utils.arrayify(output);
         if (bytesData.length != 0) {
           const result = await this.process_output_to_infer_response(bytesData);
           if (result) {
@@ -327,14 +335,14 @@ export class InferenceProcessing {
       } else {
         const logs = tx_receipt.logs;
         if (logs.length > 0) {
-          const contract = new ethers.Contract(
+          const contract = new packages.ethers.Contract(
             this.workerhub_address,
             WORKER_HUB_ABI,
             this.web3_provider
           );
           for (const log of logs) {
             try {
-              const iface = new ethers.utils.Interface(WORKER_HUB_ABI);
+              const iface = new packages.ethers.utils.Interface(WORKER_HUB_ABI);
               const decodedLog = iface.parseLog(log);
               if (decodedLog.name == 'NewInference') {
                 const inferenceId = decodedLog.args.inferenceId;

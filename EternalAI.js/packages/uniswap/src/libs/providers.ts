@@ -1,8 +1,15 @@
 import { TTransactionResponse } from './../type';
-import { BigNumber, ethers, providers, Wallet } from 'ethers';
+// import { BigNumber, ethers, providers } from 'ethers';
 import { CurrentConfig, Environment } from './config';
+// import {ethers} from 'ethers';
+import * as ethers from 'ethers';
+import injectDependency from '@/inject';
 
-let wallet: ethers.Wallet;
+const packages = {
+  ethers: injectDependency<InjectedTypes.ethers>('ethers'),
+};
+
+let wallet: InstanceType<typeof packages.ethers.ethers.Wallet>;
 
 export function changeWallet(newWallet: any) {
   wallet = newWallet;
@@ -22,7 +29,9 @@ export enum TransactionState {
 
 // Provider and Wallet Functions
 
-export function getProvider(): providers.Provider | null {
+export function getProvider(): InstanceType<
+  typeof packages.ethers.providers.Provider
+> | null {
   if (!wallet) {
     wallet = createWallet();
   }
@@ -36,7 +45,9 @@ export function getWalletAddress(): string | null {
     : wallet.address;
 }
 
-export function getWallet(): ethers.Wallet {
+export function getWallet(): InstanceType<
+  typeof packages.ethers.ethers.Wallet
+> {
   return wallet;
 }
 
@@ -44,21 +55,25 @@ export async function sendTransaction(
   transaction: ethers.providers.TransactionRequest
 ): Promise<TTransactionResponse> {
   if (transaction.value) {
-    transaction.value = BigNumber.from(transaction.value);
+    transaction.value = packages.ethers.BigNumber.from(transaction.value);
   }
   return sendTransactionViaWallet(transaction);
 }
 
 // Internal Functionality
 
-export function createWallet(): ethers.Wallet {
-  let provider = new ethers.providers.JsonRpcProvider(
+export function createWallet(): InstanceType<
+  typeof packages.ethers.ethers.Wallet
+> {
+  let provider = new packages.ethers.providers.JsonRpcProvider(
     CurrentConfig.rpc.mainnet
   );
   if (CurrentConfig.env == Environment.LOCAL) {
-    provider = new ethers.providers.JsonRpcProvider(CurrentConfig.rpc.local);
+    provider = new packages.ethers.providers.JsonRpcProvider(
+      CurrentConfig.rpc.local
+    );
   }
-  return new ethers.Wallet(CurrentConfig.wallet.privateKey, provider);
+  return new packages.ethers.Wallet(CurrentConfig.wallet.privateKey, provider);
 }
 
 // Transacting with a wallet extension via a Web3 Provider
@@ -66,7 +81,7 @@ async function sendTransactionViaWallet(
   transaction: ethers.providers.TransactionRequest
 ): Promise<TTransactionResponse> {
   if (transaction.value) {
-    transaction.value = BigNumber.from(transaction.value);
+    transaction.value = packages.ethers.BigNumber.from(transaction.value);
   }
   const txRes = await wallet.sendTransaction(transaction);
 
