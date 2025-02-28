@@ -8,12 +8,11 @@ import json from '@rollup/plugin-json';
 // import replace from '@rollup/plugin-replace';
 
 module.exports = {
-    input: 'src/main.ts',
+    input: 'src/index.ts',
     output: [
         {
             file: 'dist-main/bundle.es.js',
             format: 'es',
-            sourcemap: true
         }
     ],
     plugins: [
@@ -31,5 +30,5 @@ module.exports = {
             preventAssignment: true,
         }),*/
     ],
-    // external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
+    external: [...Object.keys(pkg.peerDependencies || {}),],
 };

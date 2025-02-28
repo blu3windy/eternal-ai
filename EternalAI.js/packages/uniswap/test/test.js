@@ -1,3 +1,3 @@
-import {prompt} from "../dist-main/bundle.es.js";
+import {prompt} from "./bundle.es.js";
 
 await prompt("abc", "")
