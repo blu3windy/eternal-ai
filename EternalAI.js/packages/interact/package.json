@@ -13,14 +13,14 @@
     "node": ">=10"
   },
   "scripts": {
-    "build": "rollup -c",
+    "build": "rm -rf dist && rollup -c",
     "build:watch": "rollup -c -w",
     "test": "vitest",
     "lint": "eslint . --ext .ts,.tsx",
     "prepare": "rollup -c",
     "size": "size-limit",
     "analyze": "size-limit --why",
-    "run-main": "ts-node -r tsconfig-paths/register ./scripts/main.ts"
+    "run-main": "ts-node -r tsconfig-paths/register --transpile-only ./scripts/main.ts"
   },
   "peerDependencies": {},
   "husky": {
