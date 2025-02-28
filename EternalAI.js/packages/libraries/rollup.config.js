@@ -24,7 +24,7 @@ module.exports = {
     commonjs(),
     globals(),
     builtins(),
-    typescript({ tsconfig: './build.tsconfig.json' }),
+    typescript({ tsconfig: './tsconfig-build.json' }),
     terser(),
     json(),
   ],

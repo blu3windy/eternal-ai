@@ -88,7 +88,6 @@ export async function wrapETH(eth: number) {
 
 // unwraps ETH (rounding up to the nearest ETH for decimal places)
 export async function unwrapETH(eth: number) {
-  console.log('🚀 ~ unwrapETH ~ unwrapETH:', unwrapETH);
   const provider = getProvider();
   const address = getWalletAddress();
   if (!provider || !address) {

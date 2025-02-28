@@ -10,12 +10,13 @@ const globals = require('rollup-plugin-node-globals');
 const inject = require('@rollup/plugin-inject');
 
 module.exports = {
-  input: ['./src/index.ts'],
+  input: ['./src/ethers.ts'],
   output: [
     {
-      dir: 'dist',
-      format: 'cjs',
-      sourcemap: true,
+      dir: 'packages',
+      name: 'packages/ethers.js',
+      format: 'umd',
+      sourcemap: false,
     },
   ],
   plugins: [
@@ -24,9 +25,9 @@ module.exports = {
     commonjs(),
     globals(),
     builtins(),
-    typescript({ tsconfig: './build.tsconfig.json' }),
+    typescript({ tsconfig: './tsconfig-ethers.json' }),
     terser(),
     json(),
   ],
-  external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
+  external: [...Object.keys(pkg.peerDependencies || {})],
 };

@@ -947,7 +947,6 @@ func (s *Service) CreateSolanaTokenTransferEvent(ctx context.Context, networkID 
 	case models.SOLANA_CHAIN_ID:
 		{
 			toAddress := event.DepositNativeAddress
-			fromAddress := event.FromNativeAddress
 			contractAddress := event.Token
 			if s.conf.ExistsedConfigKey(networkID, "eai_contract_address") {
 				eaiAddress := s.conf.GetConfigKeyString(networkID, "eai_contract_address")
@@ -1005,53 +1004,6 @@ func (s *Service) CreateSolanaTokenTransferEvent(ctx context.Context, networkID 
 											UpdateColumn("eai_balance", gorm.Expr("eai_balance + ?", m.Amount)).
 											UpdateColumn("eai_wallet_balance", gorm.Expr("eai_wallet_balance + ?", m.Amount)).
 											Error
-										if err != nil {
-											return errs.NewError(err)
-										}
-									}
-								}
-							}
-							{
-								agent, err = s.dao.FirstAgentInfo(
-									tx,
-									map[string][]any{
-										"sol_address = ?": {fromAddress},
-									},
-									map[string][]any{},
-									[]string{},
-								)
-								if err != nil {
-									return errs.NewError(err)
-								}
-								if agent != nil {
-									eventId := fmt.Sprintf("%d_%s_%d", networkID, event.TxReceivedDeposit, 0)
-									m, err := s.dao.FirstAgentEaiTopup(
-										tx,
-										map[string][]any{
-											"event_id = ?": {eventId},
-										},
-										map[string][]any{},
-										[]string{},
-									)
-									if err != nil {
-										return errs.NewError(err)
-									}
-									if m == nil {
-										m = &models.AgentEaiTopup{
-											NetworkID:      networkID,
-											EventId:        eventId,
-											AgentInfoID:    agent.ID,
-											Type:           models.AgentEaiTopupTypeTransfer,
-											DepositAddress: event.DepositNativeAddress,
-											DepositTxHash:  event.TxReceivedDeposit,
-											Amount:         numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(&event.Amount.Int, 6)),
-											Status:         models.AgentEaiTopupStatusDone,
-											ToAddress:      agent.ETHAddress,
-										}
-										err = s.dao.Create(
-											tx,
-											m,
-										)
 										if err != nil {
 											return errs.NewError(err)
 										}

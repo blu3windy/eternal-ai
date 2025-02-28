@@ -18,14 +18,49 @@ import (
 	"github.com/mymmrac/telego"
 )
 
-func (s *Service) JobScanAgentTwitterPostForCreateAgent(ctx context.Context) error {
+// func (s *Service) JobScanAgentTwitterPostForCreateAgent(ctx context.Context) error {
+// 	err := s.JobRunCheck(
+// 		ctx, "JobScanAgentTwitterPostForCreateAgent",
+// 		func() error {
+// 			agents, err := s.dao.FindAgentInfo(
+// 				daos.GetDBMainCtx(ctx),
+// 				map[string][]interface{}{
+// 					`id in (?)`: {[]uint{s.conf.EternalAiAgentInfoId}},
+// 				},
+// 				map[string][]interface{}{},
+// 				[]string{
+// 					"scan_latest_time asc",
+// 				},
+// 				0,
+// 				2,
+// 			)
+// 			if err != nil {
+// 				return errs.NewError(err)
+// 			}
+// 			var retErr error
+// 			for _, agent := range agents {
+// 				err = s.ScanAgentTwitterPostFroCreateAgent(ctx, agent.ID)
+// 				if err != nil {
+// 					retErr = errs.MergeError(retErr, errs.NewError(err))
+// 				}
+// 			}
+// 			return retErr
+// 		},
+// 	)
+// 	if err != nil {
+// 		return errs.NewError(err)
+// 	}
+// 	return nil
+// }
+
+func (s *Service) JobScanAgentTwitterPostForGenerateVideo(ctx context.Context) error {
 	err := s.JobRunCheck(
-		ctx, "JobScanAgentTwitterPostForCreateAgent",
+		ctx, "JobScanAgentTwitterPostForGenerateVideo",
 		func() error {
 			agents, err := s.dao.FindAgentInfo(
 				daos.GetDBMainCtx(ctx),
 				map[string][]interface{}{
-					`id in (?)`: {[]uint{s.conf.EternalAiAgentInfoId}},
+					`id in (?)`: {[]uint{s.conf.EternalAiAgentInfoId}}, // TODO hard code, UPDATE LATER
 				},
 				map[string][]interface{}{},
 				[]string{
@@ -39,7 +74,7 @@ func (s *Service) JobScanAgentTwitterPostForCreateAgent(ctx context.Context) err
 			}
 			var retErr error
 			for _, agent := range agents {
-				err = s.ScanAgentTwitterPostFroCreateAgent(ctx, agent.ID)
+				err = s.ScanAgentTwitterPostForGenerateVideo(ctx, agent.ID)
 				if err != nil {
 					retErr = errs.MergeError(retErr, errs.NewError(err))
 				}
@@ -53,7 +88,52 @@ func (s *Service) JobScanAgentTwitterPostForCreateAgent(ctx context.Context) err
 	return nil
 }
 
-func (s *Service) ScanAgentTwitterPostFroCreateAgent(ctx context.Context, agentID uint) error {
+// func (s *Service) ScanAgentTwitterPostFroCreateAgent(ctx context.Context, agentID uint) error {
+// 	agent, err := s.dao.FirstAgentInfoByID(
+// 		daos.GetDBMainCtx(ctx),
+// 		agentID,
+// 		map[string][]interface{}{},
+// 		false,
+// 	)
+// 	if err != nil {
+// 		return errs.NewError(err)
+// 	}
+// 	twitterInfo, err := s.dao.FirstTwitterInfo(daos.GetDBMainCtx(ctx),
+// 		map[string][]interface{}{
+// 			"twitter_id = ?": {s.conf.TokenTwiterID},
+// 		},
+// 		map[string][]interface{}{},
+// 		false,
+// 	)
+// 	if err != nil {
+// 		return errs.NewError(err)
+// 	}
+// 	if twitterInfo != nil {
+// 		err = func() error {
+// 			tweetMentions, err := s.twitterWrapAPI.GetListUserMentions(agent.TwitterID, "", twitterInfo.AccessToken, 50)
+// 			if err != nil {
+// 				return errs.NewError(err)
+// 			}
+// 			err = s.CreateAgentTwitterPostForCreateAgent(daos.GetDBMainCtx(ctx), agent.ID, agent.TwitterUsername, tweetMentions)
+// 			if err != nil {
+// 				return errs.NewError(err)
+// 			}
+// 			return nil
+// 		}()
+// 		if err != nil {
+// 			s.UpdateAgentScanEventError(ctx, agent.ID, err)
+// 			return err
+// 		} else {
+// 			err = s.UpdateAgentScanEventSuccess(ctx, agent.ID, nil, "")
+// 			if err != nil {
+// 				return errs.NewError(err)
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }
+
+func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agentID uint) error {
 	agent, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
 		agentID,
@@ -79,7 +159,7 @@ func (s *Service) ScanAgentTwitterPostFroCreateAgent(ctx context.Context, agentI
 			if err != nil {
 				return errs.NewError(err)
 			}
-			err = s.CreateAgentTwitterPostForCreateAgent(daos.GetDBMainCtx(ctx), agent.ID, agent.TwitterUsername, tweetMentions)
+			err = s.CreateAgentTwitterPostForGenerateVideo(daos.GetDBMainCtx(ctx), agent.ID, agent.TwitterUsername, tweetMentions)
 			if err != nil {
 				return errs.NewError(err)
 			}
@@ -95,150 +175,309 @@ func (s *Service) ScanAgentTwitterPostFroCreateAgent(ctx context.Context, agentI
 			}
 		}
 	}
+
 	return nil
 }
 
-func (s *Service) CreateAgentTwitterPostForCreateAgent(tx *gorm.DB, agentInfoID uint, twitterUsername string, tweetMentions *twitter.UserTimeline) error {
-	if tweetMentions != nil {
-		agentInfo, err := s.dao.FirstAgentInfoByID(
-			tx,
-			agentInfoID,
-			map[string][]interface{}{},
-			false,
-		)
-		if err != nil {
-			return errs.NewError(err)
-		}
-		if agentInfo == nil {
-			return errs.NewError(errs.ErrBadRequest)
-		}
+// func (s *Service) CreateAgentTwitterPostForCreateAgent(tx *gorm.DB, agentInfoID uint, twitterUsername string, tweetMentions *twitter.UserTimeline) error {
+// 	if tweetMentions == nil {
+// 		return nil
+// 	}
 
-		twitterInfo, err := s.dao.FirstTwitterInfo(tx,
-			map[string][]interface{}{
-				"twitter_id = ?": {s.conf.TokenTwiterID},
-			},
-			map[string][]interface{}{},
-			false,
-		)
-		if err != nil {
-			return errs.NewError(errs.ErrBadRequest)
-		}
+// 	agentInfo, err := s.dao.FirstAgentInfoByID(
+// 		tx,
+// 		agentInfoID,
+// 		map[string][]interface{}{},
+// 		false,
+// 	)
+// 	if err != nil {
+// 		return errs.NewError(err)
+// 	}
+// 	if agentInfo == nil {
+// 		return errs.NewError(errs.ErrBadRequest)
+// 	}
 
-		for _, item := range tweetMentions.Tweets {
-			var checkTwitterID string
-			err := s.GetRedisCachedWithKey(fmt.Sprintf("CheckedForCreateAgent_%s", item.ID), &checkTwitterID)
-			if err != nil {
-				if !strings.EqualFold(item.AuthorID, agentInfo.TwitterID) {
-					author, err := s.CreateUpdateUserTwitter(tx, item.AuthorID)
+// 	twitterInfo, err := s.dao.FirstTwitterInfo(tx,
+// 		map[string][]interface{}{
+// 			"twitter_id = ?": {s.conf.TokenTwiterID},
+// 		},
+// 		map[string][]interface{}{},
+// 		false,
+// 	)
+// 	if err != nil {
+// 		return errs.NewError(errs.ErrBadRequest)
+// 	}
+
+// 	for _, item := range tweetMentions.Tweets {
+// 		var checkTwitterID string
+// 		err := s.GetRedisCachedWithKey(fmt.Sprintf("CheckedForCreateAgent_%s", item.ID), &checkTwitterID)
+// 		if err != nil {
+// 			if !strings.EqualFold(item.AuthorID, agentInfo.TwitterID) {
+// 				author, err := s.CreateUpdateUserTwitter(tx, item.AuthorID)
+// 				if err != nil {
+// 					return errs.NewError(errs.ErrBadRequest)
+// 				}
+// 				if author != nil {
+// 					// listContext, err := s.GetConversionHistory(tx, item.ID)
+// 					// if err != nil {
+// 					// 	return errs.NewError(errs.ErrBadRequest)
+// 					// }
+
+// 					// jsonString, _ := json.Marshal(listContext)
+
+// 					// tokenInfo, _ := s.GetAgentInfoInContent(context.Background(), author.TwitterUsername, string(jsonString))
+// 					// if tokenInfo != nil && (tokenInfo.IsCreateAgent) {
+// 					twIDs := []string{item.ID}
+// 					twitterDetail, err := s.twitterWrapAPI.LookupUserTweets(twitterInfo.AccessToken, twIDs)
+// 					if err != nil {
+// 						return errs.NewError(err)
+// 					}
+// 					if twitterDetail != nil {
+// 						for k, v := range *twitterDetail {
+// 							if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
+// 								if strings.EqualFold(k, item.ID) {
+// 									fullText := v.Tweet.NoteTweet.Text
+// 									if fullText == "" {
+// 										fullText = v.Tweet.Text
+// 									}
+
+// 									tokenInfo, _ := s.GetAgentInfoInContent(context.Background(), author.TwitterUsername, fullText)
+// 									if tokenInfo != nil && (tokenInfo.IsCreateAgent) {
+// 										existPosts, err := s.dao.FirstAgentTwitterPost(
+// 											tx,
+// 											map[string][]interface{}{
+// 												"twitter_post_id = ?": {v.Tweet.ID},
+// 											},
+// 											map[string][]interface{}{},
+// 											[]string{},
+// 										)
+// 										if err != nil {
+// 											return errs.NewError(err)
+// 										}
+
+// 										if existPosts == nil {
+// 											postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
+// 											m := &models.AgentTwitterPost{
+// 												NetworkID:             agentInfo.NetworkID,
+// 												AgentInfoID:           agentInfo.ID,
+// 												TwitterID:             v.User.ID,
+// 												TwitterUsername:       v.User.UserName,
+// 												TwitterName:           v.User.Name,
+// 												TwitterPostID:         v.Tweet.ID,
+// 												Content:               fullText,
+// 												Status:                models.AgentTwitterPostStatusNew,
+// 												PostAt:                postedAt,
+// 												TwitterConversationId: v.Tweet.ConversationID,
+// 												PostType:              models.AgentSnapshotPostActionTypeReply,
+// 												IsMigrated:            true,
+// 											}
+
+// 											m.TokenSymbol = tokenInfo.TokenSymbol
+// 											m.TokenName = tokenInfo.TokenName
+// 											m.TokenDesc = tokenInfo.TokenDesc
+// 											m.Prompt = tokenInfo.Personality
+// 											m.AgentChain = tokenInfo.ChainName
+// 											m.PostType = models.AgentSnapshotPostActionTypeCreateAgent
+// 											m.OwnerTwitterID = m.TwitterID
+// 											m.OwnerUsername = m.TwitterUsername
+// 											if strings.EqualFold(tokenInfo.ChainName, "base") && tokenInfo.IsIntellect {
+// 												m.ExtractContent = "PrimeIntellect/INTELLECT-1-Instruct"
+// 											}
+
+// 											// if tokenInfo.Owner != "" {
+// 											// 	twUser, _ := s.CreateUpdateUserTwitterByUserName(tx, tokenInfo.Owner)
+// 											// 	if twUser != nil {
+// 											// 		m.OwnerTwitterID = twUser.TwitterID
+// 											// 		m.OwnerUsername = twUser.TwitterUsername
+// 											// 	}
+// 											// }
+
+// 											err = s.dao.Create(tx, m)
+// 											if err != nil {
+// 												return errs.NewError(err)
+// 											}
+
+// 											_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
+// 										}
+// 									}
+// 								}
+// 							}
+// 						}
+// 					}
+// 					// }
+// 				}
+// 			}
+// 		}
+
+// 		err = s.SetRedisCachedWithKey(
+// 			fmt.Sprintf("CheckedForCreateAgent_%s", item.ID),
+// 			item.ID,
+// 			12*time.Hour,
+// 		)
+// 		if err != nil {
+// 			return errs.NewError(err)
+// 		}
+// 	}
+
+// 	return nil
+// }
+
+// func (s *Service) JobAgentTwitterPostCreateAgent(ctx context.Context) error {
+// 	err := s.JobRunCheck(
+// 		ctx,
+// 		"JobAgentTwitterPostCreateAgent",
+// 		func() error {
+// 			var retErr error
+// 			{
+// 				twitterPosts, err := s.dao.FindAgentTwitterPost(
+// 					daos.GetDBMainCtx(ctx),
+// 					map[string][]interface{}{
+// 						"agent_info_id in (?)": {[]uint{s.conf.EternalAiAgentInfoId}},
+// 						"status = ?":           {models.AgentTwitterPostStatusNew},
+// 						"post_type = ?":        {models.AgentSnapshotPostActionTypeCreateAgent},
+// 					},
+// 					map[string][]interface{}{},
+// 					[]string{
+// 						"post_at desc",
+// 					},
+// 					0,
+// 					5,
+// 				)
+// 				if err != nil {
+// 					return errs.NewError(err)
+// 				}
+// 				for _, twitterPost := range twitterPosts {
+// 					err = s.AgentTwitterPostCreateAgent(ctx, twitterPost.ID)
+// 					if err != nil {
+// 						retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
+// 					}
+// 				}
+// 			}
+// 			return retErr
+// 		},
+// 	)
+// 	if err != nil {
+// 		return errs.NewError(err)
+// 	}
+// 	return nil
+// }
+
+func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoID uint, twitterUsername string, tweetMentions *twitter.UserTimeline) error {
+	if tweetMentions == nil {
+		return nil
+	}
+
+	agentInfo, err := s.dao.FirstAgentInfoByID(
+		tx,
+		agentInfoID,
+		map[string][]interface{}{},
+		false,
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	if agentInfo == nil {
+		return errs.NewError(errs.ErrBadRequest)
+	}
+
+	twitterInfo, err := s.dao.FirstTwitterInfo(tx,
+		map[string][]interface{}{
+			"twitter_id = ?": {s.conf.TokenTwiterID},
+		},
+		map[string][]interface{}{},
+		false,
+	)
+	if err != nil {
+		return errs.NewError(errs.ErrBadRequest)
+	}
+
+	for _, item := range tweetMentions.Tweets {
+		var checkTwitterID string
+		err := s.GetRedisCachedWithKey(fmt.Sprintf("CheckedForTweetGenerateVideo_%s", item.ID), &checkTwitterID)
+		if err != nil {
+			if !strings.EqualFold(item.AuthorID, agentInfo.TwitterID) {
+				author, err := s.CreateUpdateUserTwitter(tx, item.AuthorID)
+				if err != nil {
+					return errs.NewError(errs.ErrBadRequest)
+				}
+				if author != nil {
+					twIDs := []string{item.ID}
+					twitterDetail, err := s.twitterWrapAPI.LookupUserTweets(twitterInfo.AccessToken, twIDs)
 					if err != nil {
-						return errs.NewError(errs.ErrBadRequest)
+						return errs.NewError(err)
 					}
-					if author != nil {
-						// listContext, err := s.GetConversionHistory(tx, item.ID)
-						// if err != nil {
-						// 	return errs.NewError(errs.ErrBadRequest)
-						// }
+					if twitterDetail != nil {
+						for k, v := range *twitterDetail {
+							if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
+								if strings.EqualFold(k, item.ID) {
+									fullText := v.Tweet.NoteTweet.Text
+									if fullText == "" {
+										fullText = v.Tweet.Text
+									}
 
-						// jsonString, _ := json.Marshal(listContext)
-
-						// tokenInfo, _ := s.GetAgentInfoInContent(context.Background(), author.TwitterUsername, string(jsonString))
-						// if tokenInfo != nil && (tokenInfo.IsCreateAgent) {
-						twIDs := []string{item.ID}
-						twitterDetail, err := s.twitterWrapAPI.LookupUserTweets(twitterInfo.AccessToken, twIDs)
-						if err != nil {
-							return errs.NewError(err)
-						}
-						if twitterDetail != nil {
-							for k, v := range *twitterDetail {
-								if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
-									if strings.EqualFold(k, item.ID) {
-										fullText := v.Tweet.NoteTweet.Text
-										if fullText == "" {
-											fullText = v.Tweet.Text
+									tokenInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), author.TwitterUsername, fullText)
+									if tokenInfo != nil && (tokenInfo.IsGenerateVideo) {
+										existPosts, err := s.dao.FirstAgentTwitterPost(
+											tx,
+											map[string][]interface{}{
+												"twitter_post_id = ?": {v.Tweet.ID},
+											},
+											map[string][]interface{}{},
+											[]string{},
+										)
+										if err != nil {
+											return errs.NewError(err)
 										}
 
-										tokenInfo, _ := s.GetAgentInfoInContent(context.Background(), author.TwitterUsername, fullText)
-										if tokenInfo != nil && (tokenInfo.IsCreateAgent) {
-											existPosts, err := s.dao.FirstAgentTwitterPost(
-												tx,
-												map[string][]interface{}{
-													"twitter_post_id = ?": {v.Tweet.ID},
-												},
-												map[string][]interface{}{},
-												[]string{},
-											)
+										if existPosts == nil {
+											postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
+											m := &models.AgentTwitterPost{
+												NetworkID:             agentInfo.NetworkID,
+												AgentInfoID:           agentInfo.ID,
+												TwitterID:             v.User.ID,
+												TwitterUsername:       v.User.UserName,
+												TwitterName:           v.User.Name,
+												TwitterPostID:         v.Tweet.ID, // bai reply
+												Content:               fullText,
+												ExtractContent:        tokenInfo.GenerateVideoContent,
+												Status:                models.AgentTwitterPostStatusNew,
+												PostAt:                postedAt,
+												TwitterConversationId: v.Tweet.ConversationID, // bai goc cua conversation
+												PostType:              models.AgentSnapshotPostActionTypeGenerateVideo,
+												IsMigrated:            true,
+											}
+
+											err = s.dao.Create(tx, m)
 											if err != nil {
 												return errs.NewError(err)
 											}
 
-											if existPosts == nil {
-												postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
-												m := &models.AgentTwitterPost{
-													NetworkID:             agentInfo.NetworkID,
-													AgentInfoID:           agentInfo.ID,
-													TwitterID:             v.User.ID,
-													TwitterUsername:       v.User.UserName,
-													TwitterName:           v.User.Name,
-													TwitterPostID:         v.Tweet.ID,
-													Content:               fullText,
-													Status:                models.AgentTwitterPostStatusNew,
-													PostAt:                postedAt,
-													TwitterConversationId: v.Tweet.ConversationID,
-													PostType:              models.AgentSnapshotPostActionTypeReply,
-													IsMigrated:            true,
-												}
-
-												m.TokenSymbol = tokenInfo.TokenSymbol
-												m.TokenName = tokenInfo.TokenName
-												m.TokenDesc = tokenInfo.TokenDesc
-												m.Prompt = tokenInfo.Personality
-												m.AgentChain = tokenInfo.ChainName
-												m.PostType = models.AgentSnapshotPostActionTypeCreateAgent
-												m.OwnerTwitterID = m.TwitterID
-												m.OwnerUsername = m.TwitterUsername
-												if strings.EqualFold(tokenInfo.ChainName, "base") && tokenInfo.IsIntellect {
-													m.ExtractContent = "PrimeIntellect/INTELLECT-1-Instruct"
-												}
-
-												// if tokenInfo.Owner != "" {
-												// 	twUser, _ := s.CreateUpdateUserTwitterByUserName(tx, tokenInfo.Owner)
-												// 	if twUser != nil {
-												// 		m.OwnerTwitterID = twUser.TwitterID
-												// 		m.OwnerUsername = twUser.TwitterUsername
-												// 	}
-												// }
-
-												err = s.dao.Create(tx, m)
-												if err != nil {
-													return errs.NewError(err)
-												}
-
-												_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
-											}
+											_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
 										}
 									}
 								}
 							}
 						}
-						// }
 					}
+					// }
 				}
 			}
+		}
 
-			err = s.SetRedisCachedWithKey(
-				fmt.Sprintf("CheckedForCreateAgent_%s", item.ID),
-				item.ID,
-				12*time.Hour,
-			)
-			if err != nil {
-				return errs.NewError(err)
-			}
+		err = s.SetRedisCachedWithKey(
+			fmt.Sprintf("CheckedForTweetGenerateVideo_%s", item.ID),
+			item.ID,
+			12*time.Hour,
+		)
+		if err != nil {
+			return errs.NewError(err)
 		}
 	}
+
 	return nil
 }
 
-func (s *Service) JobAgentTwitterPostCreateAgent(ctx context.Context) error {
+func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 	err := s.JobRunCheck(
 		ctx,
 		"JobAgentTwitterPostCreateAgent",
@@ -250,7 +489,7 @@ func (s *Service) JobAgentTwitterPostCreateAgent(ctx context.Context) error {
 					map[string][]interface{}{
 						"agent_info_id in (?)": {[]uint{s.conf.EternalAiAgentInfoId}},
 						"status = ?":           {models.AgentTwitterPostStatusNew},
-						"post_type = ?":        {models.AgentSnapshotPostActionTypeCreateAgent},
+						"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
 					},
 					map[string][]interface{}{},
 					[]string{
@@ -263,13 +502,105 @@ func (s *Service) JobAgentTwitterPostCreateAgent(ctx context.Context) error {
 					return errs.NewError(err)
 				}
 				for _, twitterPost := range twitterPosts {
-					err = s.AgentTwitterPostCreateAgent(ctx, twitterPost.ID)
+					err = s.AgentTwitterPostGenerateVideoByUserTweetId(ctx, twitterPost.ID)
 					if err != nil {
 						retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
 					}
 				}
 			}
 			return retErr
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
+
+func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context, twitterPostID uint) error {
+	err := s.JobRunCheck(
+		ctx,
+		fmt.Sprintf("AgentTwitterPostGenerateVideoByUserTweetId_%d", twitterPostID),
+		func() error {
+			err := daos.WithTransaction(
+				daos.GetDBMainCtx(ctx),
+				func(tx *gorm.DB) error {
+					twitterPost, err := s.dao.FirstAgentTwitterPostByID(
+						tx,
+						twitterPostID,
+						map[string][]interface{}{
+							"AgentInfo":             {},
+							"AgentInfo.TwitterInfo": {},
+						},
+						false,
+					)
+					if err != nil {
+						return errs.NewError(err)
+					}
+
+					isValid := true
+					existPosts, err := s.dao.FindAgentTwitterPost(
+						tx,
+						map[string][]interface{}{
+							"not EXISTS (select 1 from agent_twitter_posts atp2 where twitter_conversation_id=? and owner_twitter_id =? and post_type='generate_video' and twitter_post_id != agent_twitter_posts.twitter_post_id )": {twitterPost.TwitterConversationId, twitterPost.OwnerTwitterID},
+							"owner_twitter_id = ?": {twitterPost.OwnerTwitterID},
+							"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
+							"status = ?":           {models.AgentTwitterPostStatusReplied},
+							"created_at >= adddate(now(), interval -24 hour)": {},
+						},
+						map[string][]interface{}{},
+						[]string{}, 0, 5,
+					) // trong converstion_id chi reply 1 nguoi tag
+					if err != nil {
+						return errs.NewError(err)
+					}
+
+					if existPosts != nil && len(existPosts) >= 3 {
+						isValid = false
+					}
+
+					if isValid {
+						if twitterPost.Status == models.AgentTwitterPostStatusNew &&
+							twitterPost.PostType == models.AgentSnapshotPostActionTypeGenerateVideo &&
+							twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil {
+							//twitterPost.ExtractContent -> gen ra video
+							//imageUrl, _ = s.GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc)
+							videoUrl := ""
+							mediaID := ""
+							if videoUrl != "" {
+								mediaID, _ = s.twitterAPI.UploadImage(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
+							}
+
+							if mediaID != "" {
+								// post truc tiep reply, luu lai reply_id
+								refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, "", twitterPost.TwitterPostID, mediaID)
+								if err != nil {
+									return errs.NewError(err)
+								}
+								twitterPost.ReplyPostId = refId
+								twitterPost.Status = models.AgentTwitterPostStatusReplied
+								err = s.dao.Save(tx, twitterPost)
+								if err != nil {
+									return errs.NewError(err)
+								}
+							}
+						}
+					} else {
+						twitterPost.Status = models.AgentTwitterConversationInvalid
+						err = s.dao.Save(tx, twitterPost)
+						if err != nil {
+							return errs.NewError(err)
+						}
+					}
+
+					return nil
+				},
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -477,6 +808,89 @@ https://eternalai.org/%d
 	return strings.TrimSpace(replyContent)
 }
 
+func (s *Service) ReplyAferAutoGenerateVideo(tx *gorm.DB, twitterPostID, agentInfoId uint) error {
+	if twitterPostID > 0 && agentInfoId > 0 {
+		twitterPost, err := s.dao.FirstAgentTwitterPostByID(
+			tx,
+			twitterPostID,
+			map[string][]interface{}{
+				"AgentInfo":             {},
+				"AgentInfo.TwitterInfo": {},
+			},
+			false,
+		)
+		if err != nil {
+			return errs.NewError(err)
+		}
+
+		agentInfo, err := s.dao.FirstAgentInfoByID(
+			tx,
+			agentInfoId,
+			map[string][]interface{}{},
+			false,
+		)
+		if err != nil {
+			return errs.NewError(err)
+		}
+
+		if twitterPost != nil && agentInfo != nil && twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil && twitterPost.ReplyPostId == "" {
+			// replyContent := s.getContentTwiterForCreateAgent(twitterPost.GetAgentOnwerName(), agentInfo.AgentName, agentInfo.TokenSymbol, agentInfo.TokenDesc, agentInfo.TokenAddress)
+			replyContent := s.getContentTwiterForCreateAgentV1(twitterPost.GetAgentOnwerName(), agentInfo.AgentName, agentInfo.TokenSymbol,
+				agentInfo.TokenDesc, agentInfo.TokenAddress, agentInfo.NetworkName, agentInfo.ID)
+			refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, replyContent, twitterPost.TwitterPostID, "")
+			if err != nil {
+				tx.Model(twitterPost).Updates(
+					map[string]interface{}{
+						"error": err.Error(),
+					},
+				)
+			} else {
+				_ = tx.Model(twitterPost).Updates(
+					map[string]interface{}{
+						"reply_post_at": helpers.TimeNow(),
+						"reply_post_id": refId,
+						"error":         "",
+					},
+				).Error
+
+				//noti tele
+				bot, err := telego.NewBot(s.conf.Telebot.Alert.Botkey, telego.WithDefaultDebugLogger())
+				if err != nil {
+					return errs.NewError(err)
+				}
+				title := "🟡🟡🟡 New Agent Alert! 🟡🟡🟡"
+				msg := fmt.Sprintf(`just created agent %s https://eternalai.org/agent/%s 👀`, agentInfo.TokenSymbol, agentInfo.TokenAddress)
+				_, err = bot.SendMessage(
+					&telego.SendMessageParams{
+						ChatID: telego.ChatID{
+							ID: s.conf.Telebot.Alert.ChatID,
+						},
+						Text: strings.TrimSpace(
+							fmt.Sprintf(
+								`
+%s
+
+%s (@%s) %s
+
+Hey, @JohnEnt, let's do something about this!
+	`,
+								title,
+								twitterPost.TwitterName,
+								twitterPost.TwitterUsername,
+								msg,
+							),
+						),
+					},
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (s *Service) ReplyAferAutoCreateAgent(tx *gorm.DB, twitterPostID, agentInfoId uint) error {
 	if twitterPostID > 0 && agentInfoId > 0 {
 		twitterPost, err := s.dao.FirstAgentTwitterPostByID(
@@ -585,6 +999,97 @@ func (s *Service) GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc 
 		return url, nil
 	}
 	return "", errs.NewError(errs.ErrBadRequest)
+}
+
+func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
+	isGenerateVideo := false
+	if strings.Contains(fullText, "generate video") {
+		isGenerateVideo = true
+	}
+	return &models.TweetParseInfo{
+		IsGenerateVideo:      isGenerateVideo,
+		GenerateVideoContent: fullText,
+	}, nil
+
+	info := &models.TweetParseInfo{
+		IsCreateToken: false,
+		IsCreateAgent: false,
+	}
+	fullText = strings.ReplaceAll(fullText, "@CryptoEternalAI", "")
+
+	userPrompt := fmt.Sprintf(`
+	Detect Agent Creation Request
+	This is the user conversation: "%s".
+	
+	From this conversation determine if the user is requesting you to create an agent, also referred as a decentralized agent (dagent), look for a direct and unambiguous statement that explicitly asks to create an agent. This statement must be clear, concise, and isolated from any surrounding context that may alter its meaning.
+	
+	If yes, extract or generate the following information:
+	
+	Answer ("yes" or "no")
+	Owner (who is the owner of the agent)
+	Agent name (generate if not provided, make sure it not empty and not similar to "EAI" or "Eternal AI")
+	Agent token symbol (generate if not provided, generate if not provided, make sure it not empty and not similar to "EAI" or "Eternal AI")
+	Agent backstory (generate if not provided, generate if not provided, make sure it not empty and not referencing "EAI" or "Eternal AI")
+	Blockchain ("base" if not provided, "base" or "arbitrum" or "bsc" or "bnbchain" or "binancechain" or "polygon" or "avax" or "avalanche" or "apechain")
+	Is Intellect Model ("yes" or "no")
+	Agent personality (predefined instruction to guide the Agent's behavior during a conversation or task, generate if not provided)
+	
+	Return a JSON response with the following format:
+	{"answer": "yes/no", "owner": "", "name": "", "symbol": "", "story": "", "blockchain": "", "personality": "", , "is_intellect": ""}
+	
+	Respond with only the JSON string, without any additional explanation.
+	`, fullText)
+	fmt.Println(userPrompt)
+	aiStr, err := s.openais["Lama"].ChatMessage(strings.TrimSpace(userPrompt))
+	if err != nil {
+		return info, nil
+	}
+
+	if aiStr != "" {
+		mapInfo := helpers.ExtractMapInfoFromOpenAI(aiStr)
+		if mapInfo != nil {
+			answer := "no"
+			if v, ok := mapInfo["answer"]; ok {
+				answer = fmt.Sprintf(`%v`, v)
+			}
+
+			if strings.EqualFold(answer, "yes") {
+				info.IsCreateAgent = true
+				if v, ok := mapInfo["personality"]; ok {
+					info.Personality = fmt.Sprintf(`%v`, v)
+				}
+
+				if v, ok := mapInfo["name"]; ok {
+					info.TokenName = fmt.Sprintf(`%v`, v)
+				}
+
+				if v, ok := mapInfo["symbol"]; ok {
+					info.TokenSymbol = fmt.Sprintf(`%v`, v)
+				}
+
+				if v, ok := mapInfo["story"]; ok {
+					info.TokenDesc = fmt.Sprintf(`%v`, v)
+				}
+
+				if v, ok := mapInfo["blockchain"]; ok {
+					info.ChainName = strings.ToLower(fmt.Sprintf(`%v`, v))
+				}
+
+				if v, ok := mapInfo["owner"]; ok {
+					info.Owner = strings.ToLower(fmt.Sprintf(`%v`, v))
+				}
+
+				if v, ok := mapInfo["is_intellect"]; ok {
+					if strings.ToLower(fmt.Sprintf(`%v`, v)) == "yes" {
+						info.IsIntellect = true
+					}
+				}
+			}
+
+		}
+	}
+
+	return info, nil
 }
 
 func (s *Service) GetAgentInfoInContent(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
@@ -730,128 +1235,128 @@ func (s *Service) GetImageUrlForBase64(stringBase64 string) (string, error) {
 }
 
 // /////////////////
-func (s *Service) CreateAgentTwitterPostByTweetID(tx *gorm.DB, tweetID string) error {
-	agentInfo, err := s.dao.FirstAgentInfoByID(
-		tx,
-		s.conf.EternalAiAgentInfoId,
-		map[string][]interface{}{},
-		false,
-	)
-	if err != nil {
-		return errs.NewError(err)
-	}
-	if agentInfo == nil {
-		return errs.NewError(errs.ErrBadRequest)
-	}
+// func (s *Service) CreateAgentTwitterPostByTweetID(tx *gorm.DB, tweetID string) error {
+// 	agentInfo, err := s.dao.FirstAgentInfoByID(
+// 		tx,
+// 		s.conf.EternalAiAgentInfoId,
+// 		map[string][]interface{}{},
+// 		false,
+// 	)
+// 	if err != nil {
+// 		return errs.NewError(err)
+// 	}
+// 	if agentInfo == nil {
+// 		return errs.NewError(errs.ErrBadRequest)
+// 	}
 
-	twitterInfo, err := s.dao.FirstTwitterInfo(tx,
-		map[string][]interface{}{
-			"twitter_id = ?": {s.conf.TokenTwiterID},
-		},
-		map[string][]interface{}{},
-		false,
-	)
-	if err != nil {
-		return errs.NewError(errs.ErrBadRequest)
-	}
+// 	twitterInfo, err := s.dao.FirstTwitterInfo(tx,
+// 		map[string][]interface{}{
+// 			"twitter_id = ?": {s.conf.TokenTwiterID},
+// 		},
+// 		map[string][]interface{}{},
+// 		false,
+// 	)
+// 	if err != nil {
+// 		return errs.NewError(errs.ErrBadRequest)
+// 	}
 
-	twIDs := []string{tweetID}
-	twitterDetail, err := s.twitterWrapAPI.LookupUserTweets(twitterInfo.AccessToken, twIDs)
-	if err != nil {
-		return errs.NewError(err)
-	}
-	if twitterDetail != nil {
-		for k, v := range *twitterDetail {
-			if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
-				if strings.EqualFold(k, tweetID) {
-					fullText := v.Tweet.NoteTweet.Text
-					if fullText == "" {
-						fullText = v.Tweet.Text
-					}
-					// listContext, err := s.GetConversionHistory(tx, v.Tweet.ID)
-					// if err != nil {
-					// 	return errs.NewError(errs.ErrBadRequest)
-					// }
+// 	twIDs := []string{tweetID}
+// 	twitterDetail, err := s.twitterWrapAPI.LookupUserTweets(twitterInfo.AccessToken, twIDs)
+// 	if err != nil {
+// 		return errs.NewError(err)
+// 	}
+// 	if twitterDetail != nil {
+// 		for k, v := range *twitterDetail {
+// 			if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
+// 				if strings.EqualFold(k, tweetID) {
+// 					fullText := v.Tweet.NoteTweet.Text
+// 					if fullText == "" {
+// 						fullText = v.Tweet.Text
+// 					}
+// 					// listContext, err := s.GetConversionHistory(tx, v.Tweet.ID)
+// 					// if err != nil {
+// 					// 	return errs.NewError(errs.ErrBadRequest)
+// 					// }
 
-					// jsonString, _ := json.Marshal(listContext)
-					// tokenInfo, _ := s.GetAgentInfoInContent(context.Background(), v.User.UserName, string(jsonString))
-					tokenInfo, _ := s.GetAgentInfoInContent(context.Background(), v.User.UserName, fullText)
-					// tokenInfo := &models.TweetParseInfo{
-					// 	IsCreateAgent: true,
-					// 	TokenName:     "GrowkAI",
-					// 	TokenSymbol:   "GROWK",
-					// 	ChainName:     "arbitrum",
-					// 	TokenDesc:     "Growk is a frog based regen meme that will forever change the way we think of memes and public goods",
-					// 	Personality:   "Be friendly and helpful, and provide information about the Growk meme and its community",
-					// 	Owner:         v.User.UserName,
-					// }
-					if tokenInfo != nil && (tokenInfo.IsCreateAgent) {
-						isValid := true
-						existPosts, err := s.dao.FirstAgentTwitterPost(
-							tx,
-							map[string][]interface{}{
-								"twitter_post_id = ?": {v.Tweet.ID},
-							},
-							map[string][]interface{}{},
-							[]string{},
-						)
-						if err != nil {
-							return errs.NewError(err)
-						}
+// 					// jsonString, _ := json.Marshal(listContext)
+// 					// tokenInfo, _ := s.GetAgentInfoInContent(context.Background(), v.User.UserName, string(jsonString))
+// 					tokenInfo, _ := s.GetAgentInfoInContent(context.Background(), v.User.UserName, fullText)
+// 					// tokenInfo := &models.TweetParseInfo{
+// 					// 	IsCreateAgent: true,
+// 					// 	TokenName:     "GrowkAI",
+// 					// 	TokenSymbol:   "GROWK",
+// 					// 	ChainName:     "arbitrum",
+// 					// 	TokenDesc:     "Growk is a frog based regen meme that will forever change the way we think of memes and public goods",
+// 					// 	Personality:   "Be friendly and helpful, and provide information about the Growk meme and its community",
+// 					// 	Owner:         v.User.UserName,
+// 					// }
+// 					if tokenInfo != nil && (tokenInfo.IsCreateAgent) {
+// 						isValid := true
+// 						existPosts, err := s.dao.FirstAgentTwitterPost(
+// 							tx,
+// 							map[string][]interface{}{
+// 								"twitter_post_id = ?": {v.Tweet.ID},
+// 							},
+// 							map[string][]interface{}{},
+// 							[]string{},
+// 						)
+// 						if err != nil {
+// 							return errs.NewError(err)
+// 						}
 
-						if existPosts != nil {
-							isValid = false
-						}
+// 						if existPosts != nil {
+// 							isValid = false
+// 						}
 
-						if isValid {
-							postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
-							m := &models.AgentTwitterPost{
-								NetworkID:             agentInfo.NetworkID,
-								AgentInfoID:           agentInfo.ID,
-								TwitterID:             v.User.ID,
-								TwitterUsername:       v.User.UserName,
-								TwitterName:           v.User.Name,
-								TwitterPostID:         v.Tweet.ID,
-								Content:               fullText,
-								Status:                models.AgentTwitterPostStatusNew,
-								PostAt:                postedAt,
-								TwitterConversationId: v.Tweet.ConversationID,
-								PostType:              models.AgentSnapshotPostActionTypeReply,
-								IsMigrated:            true,
-							}
+// 						if isValid {
+// 							postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
+// 							m := &models.AgentTwitterPost{
+// 								NetworkID:             agentInfo.NetworkID,
+// 								AgentInfoID:           agentInfo.ID,
+// 								TwitterID:             v.User.ID,
+// 								TwitterUsername:       v.User.UserName,
+// 								TwitterName:           v.User.Name,
+// 								TwitterPostID:         v.Tweet.ID,
+// 								Content:               fullText,
+// 								Status:                models.AgentTwitterPostStatusNew,
+// 								PostAt:                postedAt,
+// 								TwitterConversationId: v.Tweet.ConversationID,
+// 								PostType:              models.AgentSnapshotPostActionTypeReply,
+// 								IsMigrated:            true,
+// 							}
 
-							m.TokenSymbol = tokenInfo.TokenSymbol
-							m.TokenName = tokenInfo.TokenName
-							m.TokenDesc = tokenInfo.TokenDesc
-							m.Prompt = tokenInfo.Personality
-							m.AgentChain = tokenInfo.ChainName
-							m.PostType = models.AgentSnapshotPostActionTypeCreateAgent
+// 							m.TokenSymbol = tokenInfo.TokenSymbol
+// 							m.TokenName = tokenInfo.TokenName
+// 							m.TokenDesc = tokenInfo.TokenDesc
+// 							m.Prompt = tokenInfo.Personality
+// 							m.AgentChain = tokenInfo.ChainName
+// 							m.PostType = models.AgentSnapshotPostActionTypeCreateAgent
 
-							m.OwnerTwitterID = m.TwitterID
-							m.OwnerUsername = m.TwitterUsername
+// 							m.OwnerTwitterID = m.TwitterID
+// 							m.OwnerUsername = m.TwitterUsername
 
-							if tokenInfo.Owner != "" {
-								twUser, _ := s.CreateUpdateUserTwitterByUserName(tx, tokenInfo.Owner)
-								if twUser != nil {
-									m.OwnerTwitterID = twUser.TwitterID
-									m.OwnerUsername = twUser.TwitterUsername
-								}
-							}
+// 							if tokenInfo.Owner != "" {
+// 								twUser, _ := s.CreateUpdateUserTwitterByUserName(tx, tokenInfo.Owner)
+// 								if twUser != nil {
+// 									m.OwnerTwitterID = twUser.TwitterID
+// 									m.OwnerUsername = twUser.TwitterUsername
+// 								}
+// 							}
 
-							err = s.dao.Create(tx, m)
-							if err != nil {
-								return errs.NewError(err)
-							}
+// 							err = s.dao.Create(tx, m)
+// 							if err != nil {
+// 								return errs.NewError(err)
+// 							}
 
-							_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
-						}
-					}
-				}
-			}
-		}
-	}
-	return nil
-}
+// 							_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
+// 						}
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }
 
 func (s *Service) BuildConversionHistory(tx *gorm.DB, tweetID string) (string, error) {
 	userPrompt := ""
