@@ -23,6 +23,10 @@ export enum TransactionState {
 // Provider and Wallet Functions
 
 export function getProvider(): providers.Provider | null {
+  if (!wallet) {
+    wallet = createWallet();
+  }
+
   return wallet.provider;
 }
 

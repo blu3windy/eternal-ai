@@ -7,6 +7,8 @@ export const V2 = [BSC_CHAIN_ID]
 
 export const ZeroAddress = '0x0000000000000000000000000000000000000000';
 
+export const API_URL = 'https://api-dojo2.eternalai.org/api/'
+
 export const SYSTEM_PROMPT = `
 You are an intelligent assistant specialized in cryptocurrency trading. When a user requests a transaction, please respond in a specific JSON format.
 
