@@ -947,7 +947,7 @@ func (s *Service) CreateSolanaTokenTransferEvent(ctx context.Context, networkID 
 	case models.SOLANA_CHAIN_ID:
 		{
 			toAddress := event.DepositNativeAddress
-			fromAddress := event.FromNativeAddress
+			fromAddress := event.FromTokenAddress
 			contractAddress := event.Token
 			if s.conf.ExistsedConfigKey(networkID, "eai_contract_address") {
 				eaiAddress := s.conf.GetConfigKeyString(networkID, "eai_contract_address")
@@ -1042,11 +1042,11 @@ func (s *Service) CreateSolanaTokenTransferEvent(ctx context.Context, networkID 
 											EventId:        eventId,
 											AgentInfoID:    agent.ID,
 											Type:           models.AgentEaiTopupTypeTransfer,
-											DepositAddress: event.DepositNativeAddress,
+											DepositAddress: event.FromTokenAddress,
 											DepositTxHash:  event.TxReceivedDeposit,
 											Amount:         numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(&event.Amount.Int, 6)),
 											Status:         models.AgentEaiTopupStatusDone,
-											ToAddress:      agent.ETHAddress,
+											ToAddress:      event.DepositTokenAddress,
 										}
 										err = s.dao.Create(
 											tx,
