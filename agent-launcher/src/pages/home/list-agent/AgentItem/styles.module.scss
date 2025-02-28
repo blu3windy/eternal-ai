@@ -5,18 +5,46 @@
   cursor: pointer;
   color: #000;
 
+  .nameText {
+    font-size: 14px;
+    font-weight: 400;
+    color: inherit;
+  }
+
+  .descriptionText {
+    font-size: 12px;
+    font-weight: 400;
+    color: inherit;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .infoText {
     font-size: 12px;
     font-weight: 400;
     color: #000;
   }
 
-  .noTokenTag {
+  .agentTypeTag {
     font-size: 12px;
     font-weight: 400;
     background: #0000000D;
     padding: 4px 8px;
     border-radius: 100px;
+  }
+
+  .btnInstall {
+    background-color: #000;
+    color: #fff;
+    border-radius: 4px;
+    width: 46px;
+    height: 18px;
+    font-size: 12px;
+    font-weight: 400;
   }
 
   &.isSelected {
@@ -27,8 +55,13 @@
       color: #FFF;
     }
 
-    .noTokenTag {
+    .agentTypeTag {
       background: #686A6C;
+    }
+
+    .btnInstall {
+      background-color: #FFF;
+      color: #000;
     }
   }
 

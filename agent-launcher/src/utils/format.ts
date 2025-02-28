@@ -81,3 +81,7 @@ export const formatLongAddress = (address?: string): string => {
     address.length,
   )}`;
 };
+
+export const labelAmountOrNumberAdds = (amount: number) => {
+   return Number(amount) !== 1 ? 's' : '';
+};

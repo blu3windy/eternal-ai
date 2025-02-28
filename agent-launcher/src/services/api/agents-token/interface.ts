@@ -73,6 +73,7 @@ export interface IAgentToken {
   token_desc: string;
   agent_type: AgentType;
   kb_id?: number;
+  source_url?: string[];
 }
 
 export interface Meme {
@@ -115,3 +116,30 @@ export interface Meme {
   trade_url: string;
   network_id: string;
 }
+
+export type IChainConnected = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  chain_id: string;
+  rpc: string;
+  name: string;
+  explorer: string;
+  eai_erc20: string;
+  nft_address: string;
+  paymaster_address: string;
+  paymaster_fee_zero: boolean;
+  paymaster_token: string;
+  workerhub_address: string;
+  zk_sync: boolean;
+  eai_native: boolean;
+  formatBalance?: string;
+  balance?: string;
+  thumbnail?: string;
+  tag?: string;
+  model_ids?: string[];
+  model_details?: any[];
+  support_model_names?: {
+    [key: string]: string;
+  };
+};

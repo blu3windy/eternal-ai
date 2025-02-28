@@ -1,0 +1,127 @@
+.container {
+  width: 100%;
+  max-width: 300px;
+  position: relative;
+
+  :global {
+    .chakra-popover__popper {
+      width: 100%;
+    }
+  }
+}
+
+.itemToken {
+  flex-direction: column;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px;
+  // border-radius: 16px;
+  cursor: pointer;
+
+  // &.active {
+  //   border: 1px solid #5400fb;
+  //   background: #5400fb0d;
+  //   .title {
+  //     color: #5400fb;
+  //   }
+  // }
+  &:last-child {
+    border-bottom: none;
+  }
+
+  // &.active {
+  //   border: 1px solid #5400fb;
+  //   background: #5400fb0d;
+  //   .title {
+  //     color: #5400fb;
+  //   }
+  // }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+  }
+
+  .itemIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+  }
+
+  .itemTitle {
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  .itemAmount {
+    font-size: 14px;
+    font-weight: 400;
+    opacity: 0.7;
+
+    span {
+      color: #000000b2;
+    }
+  }
+
+  .itemDesc {
+    max-width: 493px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 160%;
+    color: #000000b2;
+  }
+
+  .itemDot {
+    border: 1.5px solid #5400FB;
+
+    >div {
+      background-color: #5400FB;
+    }
+  }
+}
+
+.dropboxButton {
+  width: 100%;
+  align-items: center;
+  border-radius: 12px;
+  min-height: 48px;
+  padding: 6px 16px 6px 6px;
+  border: 1px solid #e5e7eb;
+  //background: #f3f4f6cc;
+  gap: 8px;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  .icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .title {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    color: #000;
+    line-height: 140%;
+  }
+
+  .amount {
+    font-size: 12px;
+    font-weight: 400;
+    white-space: nowrap;
+    line-height: 140%;
+    opacity: 0.7;
+
+    span {
+      color: #000000b2;
+    }
+  }
+}
+
+.poperContainer {
+  border: 1px solid #e5e7eb;
+}
