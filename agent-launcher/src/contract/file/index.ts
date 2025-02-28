@@ -36,6 +36,15 @@ export async function readFileOnLocal(fileName: string): Promise<string> {
   }
 }
 
+export async function getFilePathOnLocal(fileName: string): Promise<string> {
+  try {
+    const data = await window.electronAPI.getFilePath(fileName);
+    return data;
+  } catch (error) {
+    return '';
+  }
+}
+
 export async function checkFileExistsOnLocal(fileName: string) {
   try {
     return await window.electronAPI.accessFile(fileName); // Check if file exists

@@ -73,6 +73,7 @@ export interface IAgentToken {
   token_desc: string;
   agent_type: AgentType;
   kb_id?: number;
+  source_url?: string[];
 }
 
 export interface Meme {

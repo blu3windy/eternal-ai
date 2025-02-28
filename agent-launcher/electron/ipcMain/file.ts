@@ -24,7 +24,12 @@ const ipcMainSafeFile = () => {
    ipcMain.handle(EMIT_EVENT_NAME.READ_FILE, async (_, fileName) => {
       await checkAndCreateFolder(appDir);
       const filePath = path.join(appDir, fileName);
-      return fs.readFile(filePath, 'utf-8');
+      return await fs.readFile(filePath, 'utf-8');
+   });
+   ipcMain.handle(EMIT_EVENT_NAME.GET_FILE_PATH, async (_, fileName) => {
+      await checkAndCreateFolder(appDir);
+      const filePath = path.join(appDir, fileName);
+      return filePath;
    });
    ipcMain.handle(EMIT_EVENT_NAME.WRITE_FILE, async (_, fileName, content) => {
       await checkAndCreateFolder(appDir);
