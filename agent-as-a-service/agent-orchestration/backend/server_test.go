@@ -44,7 +44,7 @@ func init() {
 }
 
 func Test_JOB(t *testing.T) {
-	ts.MemeEventsByTransaction(context.Background(), 56, "0x4ee4c55d32bebc3c324463dc4358c2fbb0fe269057bffbadb22d71e355b39e65")
+	ts.MemeEventsByTransaction(context.Background(), 56, "")
 	// ts.AgentSnapshotPostCreate(context.Background(), 59166, "", "")
 	// ts.JobScanAgentTwitterPostForTA(context.Background())
 	// ts.RetryAgentDeployToken(context.Background(), 51265)

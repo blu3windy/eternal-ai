@@ -177,6 +177,7 @@ type Config struct {
 		ChatUrl         string `json:"chat_url"`
 		ApiKey          string `json:"api_key"`
 		ApiKeyMacStudio string `json:"api_key_mac_studio"`
+		ModelName       string `json:"model_name"`
 	} `json:"ai"`
 	Lighthouse struct {
 		Apikey string `json:"apikey"`
