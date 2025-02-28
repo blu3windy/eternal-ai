@@ -7,9 +7,10 @@ export interface IAgentContext {
   currentModel: any;
   setCurrentModel: any;
   chainList: IChainConnected[];
-  installAgent: any;
-  isInstalled: boolean;
+  startAgent: any;
+  stopAgent: any;
   isStarting: boolean;
   isStopping: boolean;
   handleStopDockerAgent: any;
+  runningAgents: number[];
 }

@@ -13,11 +13,12 @@ const initialValue: IAgentContext = {
   currentModel: undefined,
   setCurrentModel: () => {},
   chainList: [],
-  installAgent: () => {},
-  isInstalled: false,
+  startAgent: () => {},
+  stopAgent: () => {},
   isStarting: false,
   isStopping: false,
   handleStopDockerAgent: () => {},
+  runningAgents: [],
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -33,6 +34,7 @@ const AgentProvider: React.FC<
   const [chainList, setChainList] = useState<IChainConnected[]>([]);
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
+  const [runningAgents, setRunningAgents] = useState<number[]>([]);
 
   console.log('stephen: selectedAgent', selectedAgent);
 
@@ -42,10 +44,6 @@ const AgentProvider: React.FC<
     name: string;
     id: string;
   } | null>(null);
-
-  const isInstalled = useMemo(() => {
-    return Number(selectedAgent?.id || 0) % 2 === 0;
-  }, [selectedAgent]);
 
   const fetchChainList = useCallback(async () => {
     const chainList = await cPumpAPI.getChainList();
@@ -74,12 +72,28 @@ const AgentProvider: React.FC<
     }
   }, []);
 
+  const getRunningAgents = () => {
+    try {
+      setRunningAgents([14483]);
+    } catch (err) {
+
+    } finally {
+
+    }
+  }
+
   useEffect(() => {
     fetchChainList();
+    getRunningAgents();
   }, []);
 
-  const installAgent = (agent: IAgentToken) => {
+  const startAgent = (agent: IAgentToken) => {
     installUtilityAgent(agent);
+    setRunningAgents(prev => [...prev, agent.id]);
+  }
+
+  const stopAgent = (agent: IAgentToken) => {
+    setRunningAgents(prev => prev.filter(id => id !== agent.id));
   }
 
   const installUtilityAgent = async (agent: IAgentToken) => {
@@ -141,11 +155,11 @@ const AgentProvider: React.FC<
       currentModel,
       setCurrentModel,
       chainList,
-      installAgent,
-      isInstalled,
+      startAgent,
+      stopAgent,
       isStarting,
       isStopping,
-      handleStopDockerAgent,
+      runningAgents
     };
   }, [
     loading,
@@ -154,11 +168,11 @@ const AgentProvider: React.FC<
     currentModel,
     setCurrentModel,
     chainList,
-    installAgent,
-    isInstalled,
+    startAgent,
+    stopAgent,
     isStarting,
     isStopping,
-    handleStopDockerAgent,
+    runningAgents,
   ]);
 
    return (

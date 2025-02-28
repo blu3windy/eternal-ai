@@ -1,13 +1,13 @@
-import {Box, Button, Flex, Text, Image} from "@chakra-ui/react";
+import {Box, Button, Flex, Image, Text} from "@chakra-ui/react";
 import ChatBox from "@pages/home/chat-agent/ChatAgent/components/ChatBox";
 import {ChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import s from "./styles.module.scss";
 import AgentInfo from "@pages/home/chat-agent/AgentInfo";
-import React, {useContext} from "react";
+import React, {useContext, useMemo} from "react";
 import {AgentContext} from "@pages/home/provider";
 
 function ChatAgent() {
-  const { selectedAgent, isInstalled, installAgent } = useContext(AgentContext);
+  const { selectedAgent, startAgent, stopAgent, runningAgents, isStarting, isStopping } = useContext(AgentContext);
 
   const avatarUrl =
     selectedAgent?.thumbnail ||
@@ -16,15 +16,23 @@ function ChatAgent() {
 
   const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
+  const isRunning = useMemo(() => {
+    return runningAgents.includes(selectedAgent?.id as number);
+  }, [runningAgents, selectedAgent]);
+
   const handleInstall = () => {
-    installAgent(selectedAgent);
+    if (isRunning) {
+      stopAgent(selectedAgent);
+    } else {
+      startAgent(selectedAgent);
+    }
   }
 
    return (
      <Box className={s.container}>
        <AgentInfo />
        {
-         isInstalled ? (
+         isRunning ? (
            <ChatAgentProvider>
              <ChatBox />
            </ChatAgentProvider>
@@ -56,11 +64,16 @@ function ChatAgent() {
                  <Text className={s.descriptionText}>{description}</Text>
                )
              }
-             <Button className={s.btnInstall} onClick={handleInstall}>Install</Button>
+             <Button
+               className={s.btnInstall}
+               onClick={handleInstall}
+               isLoading={isStarting || isStopping}
+               isDisabled={isStarting || isStopping}
+               loadingText={isStarting ? 'Starting...' : 'Stopping...'}
+             >{isRunning ? 'Stop' : 'Start'}</Button>
            </Flex>
          )
        }
-
      </Box>
    );
 }

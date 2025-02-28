@@ -4,27 +4,27 @@ import s from './styles.module.scss';
 import {IAgentToken} from "../../../../services/api/agents-token/interface.ts";
 import {AgentContext} from "../../provider";
 import {DefaultAvatar} from "../../../../components/DefaultAvatar";
-import {compareString} from "../../../../utils/string.ts";
-import {FilterChains} from "../constants.ts";
 import {formatCurrency, labelAmountOrNumberAdds} from "../../../../utils/format.ts";
 import cs from "clsx";
-
-const MAX_LENGTH_TEXT = 150;
 
 interface IProps {
   token: IAgentToken;
 }
 
 const AgentItem = ({ token }: IProps) => {
-  const { selectedAgent, setSelectedAgent, installAgent } = useContext(AgentContext);
+  const { selectedAgent, setSelectedAgent, startAgent, stopAgent, runningAgents, isStarting, isStopping } = useContext(AgentContext);
 
-  const [showFullText, setShowFullText] = React.useState(false);
 
-  const toggleText = (e: any) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-    setShowFullText(!showFullText);
-  };
+  const description = token?.token_desc || token?.twitter_info?.description;
+
+  const avatarUrl =
+    token?.thumbnail ||
+    token?.token_image_url ||
+    token?.twitter_info?.twitter_avatar;
+
+  const isRunning = useMemo(() => {
+    return runningAgents.includes(token?.id as number);
+  }, [runningAgents, token]);
 
   const handleGoToChat = (e: any, token_address?: any) => {
     if (token_address) {
@@ -35,68 +35,16 @@ const AgentItem = ({ token }: IProps) => {
     }
   };
 
-  const handleClickCreator = (e: any) => {
+  const handleInstall = (e: any) => {
     e?.preventDefault();
     e?.stopPropagation();
-    if (!!token?.tmp_twitter_info?.twitter_username)
-      window.open(`https://x.com/${token?.tmp_twitter_info?.twitter_username}`);
-  };
 
-  const handleClickX = (e: any) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-    if (!!token?.twitter_info?.twitter_username)
-      window.open(
-        `https://x.com/${token?.twitter_info?.twitter_username}`,
-        '_blank',
-      );
-  };
-
-  const handleClickDexscaner = (e: any, dex_url?: string) => {
-    if (dex_url) {
-      e?.preventDefault();
-      e?.stopPropagation();
-      window.open(dex_url, '_blank');
+    if (isRunning) {
+      stopAgent(token);
+    } else {
+      startAgent(token);
     }
-  };
-
-  const description = token?.token_desc || token?.twitter_info?.description;
-
-  const renderReadmore = () => {
-    if ((description || '')?.length <= MAX_LENGTH_TEXT) return <></>;
-    return (
-      <Text
-        as="span"
-        onClick={toggleText}
-        cursor="pointer"
-        fontSize="14px"
-        color="#fff"
-        fontWeight="500"
-      >
-        {showFullText ? 'Read less' : 'Read more'}
-      </Text>
-    );
-  };
-
-  const handleInstall = () => {
-    setSelectedAgent(token);
-    installAgent(token);
   }
-
-  const avatarUrl =
-    token?.thumbnail ||
-    token?.token_image_url ||
-    token?.twitter_info?.twitter_avatar;
-
-  const chain = FilterChains.find(
-    (chain) =>
-      compareString(chain.chainId, token?.network_id) ||
-      compareString(chain.name, token?.network_name),
-  );
-
-  const isInstalled = useMemo(() => {
-    return Number(token.id) % 2 === 0;
-  }, [token]);
 
   return (
     <Flex
@@ -142,7 +90,13 @@ const AgentItem = ({ token }: IProps) => {
               <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
             </Flex>
             {/*<Text className={s.agentTypeTag}>{AgentTypeName[token?.agent_type]}</Text>*/}
-            {!isInstalled && <Button className={s.btnInstall} onClick={handleInstall}>Install</Button>}
+            <Button
+              className={s.btnInstall}
+              onClick={handleInstall}
+              isLoading={isStarting || isStopping}
+              isDisabled={isStarting || isStopping}
+              loadingText={isStarting ? 'Starting...' : 'Stopping...'}
+            >{isRunning ? 'Stop' : 'Start'}</Button>
           </Flex>
           {
             description && (
