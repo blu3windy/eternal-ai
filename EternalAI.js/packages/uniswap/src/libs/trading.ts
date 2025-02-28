@@ -224,7 +224,8 @@ async function getOutputQuote(route: Route<Currency, Currency>) {
 }
 
 export async function getTokenTransferApproval(
-  token: Token
+  token: Token,
+  amount?: number
 ): Promise<TTransactionResponse> {
   const provider = getProvider();
   const address = getWalletAddress();
@@ -234,7 +235,7 @@ export async function getTokenTransferApproval(
   }
 
   const amountToApprove = fromReadableAmount(
-    TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER,
+    amount || TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER,
     token.decimals
   ).toString();
 

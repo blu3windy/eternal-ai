@@ -1,10 +1,11 @@
-import { ETH_CHAIN_ID, getRPC, ZeroAddress } from './const';
+import { WETH_TOKEN } from './libs/constants';
+import { API_URL, ETH_CHAIN_ID, getRPC, ZeroAddress } from './const';
 import { ethers } from 'ethers';
 import { Token } from '@uniswap/sdk-core';
 import { changeWallet, createWallet, TransactionState } from './libs/providers';
 import { createTrade, executeTrade } from './libs/trading';
 import { CurrentConfig, Environment } from './libs/config';
-import { getCurrencyBalance, getCurrencyDecimal } from './libs/wallet';
+import { getCurrencyBalance, getCurrencyDecimal, wrapETH } from './libs/wallet';
 import { TTransactionResponse } from './type';
 
 export class SwapReq {
@@ -35,7 +36,11 @@ export class SwapReq {
 
   convert_in_out = async () => {
     if (this.token_in.toLowerCase() == 'eth') {
-      this.token_in_address = ZeroAddress;
+      // this.token_in_address = ZeroAddress;
+      this.token_in_address = WETH_TOKEN.address;
+      this.token_in = 'WETH';
+
+      // get balance of eth
     } else {
       const token_address = await this.convert_token_address(
         this.token_in.toLowerCase()
@@ -69,16 +74,14 @@ export class SwapReq {
 
   convert_token_address = async (symbol: string) => {
     let result = null;
-    const token_info_response = await fetch(
-      'https://api-dojo2.eternalai.org/api/coins/' + symbol
-    );
+    const token_info_response = await fetch(`${API_URL}coins/` + symbol);
     if (token_info_response.ok) {
       const data = await token_info_response.json();
       result = this.get_token_address_from_info(data, symbol);
     }
     if (!result) {
       const token_info_list_response = await fetch(
-        ' https://api-dojo2.eternalai.org/api/coins/list?include_platform=true&status=active'
+        `${API_URL}list-coins?include_platform=true&status=active`
       );
       if (token_info_list_response.ok) {
         const list: any = await token_info_list_response.json();
@@ -130,6 +133,18 @@ export class UniSwapAI {
     );
     CurrentConfig.tokens.out = tokenOut;
 
+    const wethBalance = await getCurrencyBalance(
+      newWallet.provider,
+      newWallet.address,
+      WETH_TOKEN
+    );
+
+    if (Number(wethBalance) < req.token_in_amount) {
+      // wrap eth with enough amount
+      await wrapETH(req.token_in_amount);
+      // console.log('🚀 ~ UniSwapAI ~ ethBalance:', ethBalance);
+    }
+
     const tokenInBalance = await getCurrencyBalance(
       newWallet.provider,
       newWallet.address,
@@ -141,9 +156,9 @@ export class UniSwapAI {
     changeWallet(newWallet);
 
     try {
-      const trade = await createTrade();
-      const { state, tx } = await executeTrade(trade);
-      return { state, tx };
+      // const trade = await createTrade();
+      // const { state, tx } = await executeTrade(trade);
+      return { state: null, tx: null };
     } catch (e) {
       //   console.log(`Error executeTrade ${e}`);
       return {
