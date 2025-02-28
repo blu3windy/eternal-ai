@@ -8,12 +8,11 @@ import json from '@rollup/plugin-json';
 // import replace from '@rollup/plugin-replace';
 
 module.exports = {
-    input: 'src/main.ts',
+    input: 'src/index.ts',
     output: [
         {
             file: 'dist-main/bundle.es.js',
             format: 'es',
-            sourcemap: true
         }
     ],
     plugins: [
@@ -22,14 +21,6 @@ module.exports = {
         typescript({tsconfig: './build.tsconfig.main.json', sourceMap: true}),
         terser(),
         json(),
-        /*nodePolyfills(),
-        replace({
-            'process.env.NODE_ENV': JSON.stringify('production'),
-            'process.env.PRIVATE_KEY': JSON.stringify('production'),
-            'process.env.AGENT_ADDRESS': JSON.stringify('production'),
-            'process.env.API_KEY': JSON.stringify('production'),
-            preventAssignment: true,
-        }),*/
     ],
-    // external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
+    external: [...Object.keys(pkg.peerDependencies || {}), "ethers"],
 };
