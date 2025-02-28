@@ -1556,3 +1556,30 @@ func (s *Service) GetPostTimeByTweetID(tx *gorm.DB, tweetID string) *time.Time {
 	}
 	return postTime
 }
+
+func (s *Service) TestVideo(ctx context.Context) {
+	videoUrl := "https://gateway.lighthouse.storage/ipfs/bafybeia7y5xp74komdtmiisunemiod56tqhotglzkke4ym66tvx4ywz7u4"
+	mediaID := ""
+	var err error
+	if videoUrl != "" {
+		mediaID, err = s.twitterAPI.UploadImage(models.GetImageUrl(videoUrl), []string{s.conf.TokenTwiterID})
+		fmt.Println(err.Error())
+	}
+
+	if mediaID != "" {
+		twitterInfo, err := s.dao.FirstTwitterInfo(daos.GetDBMainCtx(ctx),
+			map[string][]interface{}{
+				"twitter_id = ?": {s.conf.TokenTwiterID},
+			},
+			map[string][]interface{}{},
+			false,
+		)
+
+		// post truc tiep reply, luu lai reply_id
+		refId, err := helpers.ReplyTweetByToken(twitterInfo.AccessToken, "", "", mediaID)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		fmt.Println(refId)
+	}
+}
