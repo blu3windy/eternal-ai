@@ -8,6 +8,8 @@
       font-weight: 500;
       margin-top: -100px;
       margin-bottom: 40px;
+      position: absolute;
+      bottom: 0;
     }
 
     .descriptionText {
@@ -30,8 +32,8 @@
 
     .glow-on-hover {
       position: absolute;
-      top: calc(50% - 30px);
-      left: calc(50% - 30px);
+      // top: calc(50% - 30px);
+      // left: calc(50% - 30px);
       width: 70px;
       height: 70px;
       border-radius: 50%;
