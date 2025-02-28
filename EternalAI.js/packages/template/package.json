@@ -53,7 +53,6 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@eternalai.js/core": "*",
     "ethers": "5.7.2",
     "uuid": "^11.1.0"
   }
