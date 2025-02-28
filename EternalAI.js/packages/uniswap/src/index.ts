@@ -2,7 +2,6 @@ import {
   BSC_CHAIN_ID,
   ETH_CHAIN_ID,
   getRPC,
-  RPC_URL,
   SYSTEM_PROMPT,
   V1,
   V2,
@@ -23,17 +22,37 @@ export const call_uniswap = async (
   try {
     const uniswap_obj = new UniSwapAI();
     const req = SwapReq.fromJSON(content);
-    await req.convert_in_out();
-    console.log(
-      `**** call uniswap with req **** \n ${JSON.stringify(req, null, 4)}`
-    );
+    switch (req.function_name) {
+      case 'swap': {
+        await req.convert_in_out();
+        console.log(
+          `**** call uniswap with req **** \n ${JSON.stringify(req, null, 4)}`
+        );
+        const { state, tx, message } = await uniswap_obj.swap_v3(
+          private_key,
+          req,
+          chain_id_swap
+        );
+        return { state, tx, message };
+      }
+      case 'getPrice': {
+        console.log(
+          `**** call get price with req **** \n ${JSON.stringify(req, null, 4)}`
+        );
+        req.token_in_address = await req.convert_token_address(req.token_in);
+        console.log('aaaaaa', req.token_in_address);
+        const price = await req.get_price(req.token_in_address);
+        return {
+          state: null,
+          tx: null,
+          message: `token ${req.token_in} ${req.token_in_address}  price ${price}`,
+        };
+      }
+      default: {
+        return { state: null, tx: null, message: content };
+      }
+    }
 
-    const { state, tx, message } = await uniswap_obj.swap_v3(
-      private_key,
-      req,
-      chain_id_swap
-    );
-    return { state, tx, message };
     // return {state: null, tx: null}
   } catch (e) {
     // console.log(e)
@@ -235,20 +254,20 @@ export const uni_swap_ai = async (command: string, args: any) => {
   }
 };
 
-export const prompt = async (prompt: string, private_key: string) => {
-  try {
-    const { state, tx } = await uni_swap_ai('api-infer', {
-      prompt: prompt,
-      private_key: private_key,
-      model: 'gpt-4o-mini',
-      api_key: '',
-      host: 'https://api.openai.com/v1',
-    });
-    console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
-    return `Swapped with tx ${tx.transactionHash}`;
-  } catch (e) {
-    return `Swapped err ${e?.message}`;
-  }
-};
+// export const prompt = async (prompt: string, private_key: string) => {
+//   try {
+//     const { state, tx } = await uni_swap_ai('api-infer', {
+//       prompt: prompt,
+//       private_key: private_key,
+//       model: 'gpt-4o-mini',
+//       api_key: '',
+//       host: 'https://api.openai.com/v1',
+//     });
+//     console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
+//     return `Swapped with tx ${tx.transactionHash}`;
+//   } catch (e) {
+//     return `Swapped err ${e?.message}`;
+//   }
+// };
 // for browser
 // window.prompt = prompt

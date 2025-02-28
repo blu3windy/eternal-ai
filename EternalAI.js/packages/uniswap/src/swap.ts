@@ -1,6 +1,5 @@
 import { WETH_TOKEN } from './libs/constants';
-import { API_URL, ETH_CHAIN_ID, getRPC, ZeroAddress } from './const';
-import { ethers } from 'ethers';
+import { API_URL, getRPC, ZeroAddress } from './const';
 import { Token } from '@uniswap/sdk-core';
 import { changeWallet, createWallet, TransactionState } from './libs/providers';
 import { createTrade, executeTrade } from './libs/trading';
@@ -9,6 +8,7 @@ import { getCurrencyBalance, getCurrencyDecimal, wrapETH } from './libs/wallet';
 import { TTransactionResponse } from './type';
 
 export class SwapReq {
+  function_name: string;
   token_in: string = '';
   token_in_address: string = '';
   token_in_amount: number = 0;
@@ -16,12 +16,14 @@ export class SwapReq {
   token_out_address: string = '';
 
   constructor(
+    function_name: string,
     token_in: string,
     token_in_address: string,
     token_in_amount: number,
     token_out: string,
     token_out_address: string
   ) {
+    this.function_name = function_name;
     this.token_in = token_in;
     this.token_in_address = token_in_address;
     this.token_in_amount = token_in_amount;
@@ -31,7 +33,7 @@ export class SwapReq {
 
   static fromJSON(json: string): SwapReq {
     const parsed = JSON.parse(json);
-    return Object.assign(new SwapReq('', '', 0, '', ''), parsed);
+    return Object.assign(new SwapReq('', '', '', 0, '', ''), parsed);
   }
 
   convert_in_out = async () => {
@@ -42,9 +44,7 @@ export class SwapReq {
 
       // get balance of eth
     } else {
-      const token_address = await this.convert_token_address(
-        this.token_in.toLowerCase()
-      );
+      const token_address = await this.convert_token_address(this.token_in);
       if (!token_address) this.token_in_address = ZeroAddress;
       else this.token_in_address = token_address;
     }
@@ -52,9 +52,7 @@ export class SwapReq {
     if (this.token_out.toLowerCase() == 'eth') {
       this.token_out_address = ZeroAddress;
     } else {
-      const token_address = await this.convert_token_address(
-        this.token_out.toLowerCase()
-      );
+      const token_address = await this.convert_token_address(this.token_out);
       if (!token_address) this.token_out_address = ZeroAddress;
       else this.token_out_address = token_address;
     }
@@ -72,7 +70,13 @@ export class SwapReq {
     return result;
   };
 
+  get_price = async (token_address: string) => {
+    // TODO
+    return 0;
+  };
+
   convert_token_address = async (symbol: string) => {
+    symbol = symbol.toLowerCase();
     let result = null;
     const token_info_response = await fetch(`${API_URL}coins/` + symbol);
     if (token_info_response.ok) {
@@ -156,9 +160,9 @@ export class UniSwapAI {
     changeWallet(newWallet);
 
     try {
-      // const trade = await createTrade();
-      // const { state, tx } = await executeTrade(trade);
-      return { state: null, tx: null };
+      const trade = await createTrade();
+      const { state, tx } = await executeTrade(trade);
+      return { state, tx };
     } catch (e) {
       //   console.log(`Error executeTrade ${e}`);
       return {
@@ -167,6 +171,6 @@ export class UniSwapAI {
         message: 'swap_v3 error: ' + (e as Error).message,
       };
     }
-    // return {state: null, tx: null}
+    return { state: null, tx: null };
   };
 }
