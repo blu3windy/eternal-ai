@@ -108,7 +108,7 @@ const AgentProvider: React.FC<
       if (selectedAgent && selectedAgent.agent_type === AgentType.Utility && selectedAgent.source_url && selectedAgent.source_url.length > 0) {
         const sourceFile = selectedAgent?.source_url?.find((url) => url.startsWith('ethfs_'));
         if (sourceFile) {
-          const filePath = await readSourceFile(sourceFile, `agent_${selectedAgent.agent_id}.js` ,selectedAgent?.network_id || BASE_CHAIN_ID);
+          const filePath = await readSourceFile(sourceFile, `agent_${selectedAgent.id}.js`, selectedAgent?.network_id || BASE_CHAIN_ID);
           await handleRunDockerAgent(filePath);
         }
       }
