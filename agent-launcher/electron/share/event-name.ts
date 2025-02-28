@@ -7,6 +7,9 @@ const EMIT_EVENT_NAME = {
    READ_FILE: "safe-read-file",
    ACCESS_FILE: "safe-access-file",
    WRITE_FILE: "safe-write-file",
+
+   CHECK_DOCKER: "safe-check-docker",
+   INSTALL_DOCKER: "safe-install-docker",
 }
 
 export {

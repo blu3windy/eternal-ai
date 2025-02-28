@@ -3,9 +3,10 @@ import HomeAuthen from "./Home";
 import { Wallet } from "ethers";
 import EaiSigner from "../../helpers/signer";
 import sleep from "@utils/sleep.ts";
-import AuthenLoading from "@pages/authen/AuthenLoading";
 import TestingButton from "@pages/authen/TesingButton";
 import ForgotPass from "@pages/authen/ForgotPass";
+import useStarter from "@pages/authen/hooks/useStarter.ts";
+import Starter from "@pages/authen/Starter";
 
 interface AuthContextType {
    signer: Wallet | undefined;
@@ -16,9 +17,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
-   const [initLoading, setInitLoading] = useState<boolean>(true);
    const [signer, setSigner] = useState<Wallet | undefined>();
    const [hasUser, setHasUser] = useState<boolean>(false);
+   const [loading, setLoading] = useState<boolean>(true);
+   const { checking } = useStarter();
 
    const onLogin = async (pass: string) => {
       try {
@@ -33,22 +35,18 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       }
    }
 
-   const init = async () => {
+   const onCheckHasUser = async () => {
       try {
-         setInitLoading(true);
+         setLoading(true);
          const hasUser = await EaiSigner.hasUser();
          setHasUser(hasUser);
       } catch (error) {
          console.error(error);
       } finally {
          await sleep(500)
-         setInitLoading(false);
+         setLoading(false);
       }
    }
-
-   useEffect(() => {
-      init().then().catch();
-   }, []);
 
    const values = useMemo(() => {
       return {
@@ -60,15 +58,24 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 
 
    const renderContent = () => {
-      if (initLoading) {
-         return <AuthenLoading/>;
-      } else {
+      if (checking || loading) {
+         return (
+            <Starter
+               loadingUser={loading}
+               onCheckHasUser={onCheckHasUser}
+            />
+         )
+      }
+
+      if (!checking) {
          if (signer) {
             return children;
          } else {
             return <HomeAuthen />;
          }
       }
+
+      return <></>
    }
 
    return (

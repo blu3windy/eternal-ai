@@ -36,4 +36,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
    readFile: (fileName: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.READ_FILE, fileName),
    accessFile: (fileName: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.ACCESS_FILE, fileName),
    writeFile: (fileName: string, data: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.WRITE_FILE, fileName, data),
+
+   checkDocker: () => ipcRenderer.invoke(EMIT_EVENT_NAME.CHECK_DOCKER),
+   installDocker: () => ipcRenderer.invoke(EMIT_EVENT_NAME.INSTALL_DOCKER),
 });
