@@ -14,7 +14,6 @@ interface IProps {
 const AgentItem = ({ token }: IProps) => {
   const { selectedAgent, setSelectedAgent, startAgent, stopAgent, runningAgents, isStarting, isStopping } = useContext(AgentContext);
 
-
   const description = token?.token_desc || token?.twitter_info?.description;
 
   const avatarUrl =
@@ -25,6 +24,10 @@ const AgentItem = ({ token }: IProps) => {
   const isRunning = useMemo(() => {
     return runningAgents.includes(token?.id as number);
   }, [runningAgents, token]);
+
+  const isUtilityAgent = useMemo(() => {
+    return token?.id % 2 === 0;
+  }, [token]);
 
   const handleGoToChat = (e: any, token_address?: any) => {
     if (token_address) {
@@ -62,7 +65,7 @@ const AgentItem = ({ token }: IProps) => {
         gap="12px"
         w={'100%'}
       >
-        <Flex>
+        <Flex position={"relative"}>
           {avatarUrl ? (
             <Image
               w={'40px'}
@@ -80,6 +83,11 @@ const AgentItem = ({ token }: IProps) => {
               fontSize={14}
             />
           )}
+          {
+            isUtilityAgent && (
+              <Image src={'/icons/ic-utility-agent.svg'} w={"16px"} h={"16px"} position={"absolute"} top={"24px"} right={"0px"}/>
+            )
+          }
         </Flex>
         <Flex flexDirection="column" w={'100%'} gap={"8px"}>
           <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
