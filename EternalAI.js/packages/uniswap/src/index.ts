@@ -1,6 +1,8 @@
 import {
   BSC_CHAIN_ID,
+  ERROR_TRANSACTION_RESPONSE_SYSTEM_PROMPT,
   ETH_CHAIN_ID,
+  FORMAT_GET_PRICE_RESPONSE_SYSTEM_PROMPT,
   getRPC,
   SYSTEM_PROMPT,
   V1,
@@ -15,7 +17,11 @@ import { TTransactionResponse } from './type';
 export const call_uniswap = async (
   private_key: string,
   chain_id_swap: string,
-  content: string
+  content: string,
+  api?: {
+    api_infer: APIInference;
+    model: string;
+  }
 ): Promise<TTransactionResponse> => {
   console.log(`**** call uniswap with content **** \n\n
               ${content} \n\n end content ****\n\n\n`);
@@ -40,12 +46,23 @@ export const call_uniswap = async (
           `**** call get price with req **** \n ${JSON.stringify(req, null, 4)}`
         );
         req.token_in_address = await req.convert_token_address(req.token_in);
-        console.log('aaaaaa', req.token_in_address);
         const price = await req.get_price(req.token_in_address);
+        let content_response;
+        if (!!price && api) {
+          const prompt = `token ${req.token_in} ${req.token_in_address}  price ${price}`;
+
+          const resp = await api.api_infer.create_infer(
+            prompt,
+            FORMAT_GET_PRICE_RESPONSE_SYSTEM_PROMPT,
+            api.model
+          );
+          content_response = await api.api_infer.process_output(resp);
+        }
+
         return {
           state: null,
           tx: null,
-          message: `token ${req.token_in} ${req.token_in_address}  price ${price}`,
+          message: content_response,
         };
       }
       default: {
@@ -56,10 +73,23 @@ export const call_uniswap = async (
     // return {state: null, tx: null}
   } catch (e) {
     // console.log(e)
+    let content_response = `call_uniswap error: ${(e as Error).message}`;
+
+    if (api) {
+      const prompt = `${(e as Error).message}`;
+
+      const resp = await api.api_infer.create_infer(
+        prompt,
+        ERROR_TRANSACTION_RESPONSE_SYSTEM_PROMPT,
+        api.model
+      );
+      content_response = await api.api_infer.process_output(resp);
+    }
+
     return {
       state: TransactionState.Failed,
       tx: null,
-      message: `call_uniswap error: ${(e as Error).message}`,
+      message: content_response,
     };
   }
 };
@@ -125,6 +155,16 @@ export const process_infer = async (
   return result;
 };
 
+export const init_api_infer = (
+  host: string,
+  api_key: string,
+  model: string
+) => {
+  const api_infer = new APIInference(host);
+  api_infer.set_api_key(api_key);
+  return { api_infer, model };
+};
+
 export const create_api_infer = async (
   host: string,
   prompt: string,
@@ -133,11 +173,10 @@ export const create_api_infer = async (
   chain_id_swap: string,
   api_key: string
 ): Promise<any> => {
-  const api_infer = new APIInference(host);
-  api_infer.set_api_key(api_key);
+  const api = init_api_infer(host, api_key, model);
   try {
-    const resp = await api_infer.create_infer(prompt, SYSTEM_PROMPT, model);
-    let content_response = await api_infer.process_output(resp);
+    const resp = await api.api_infer.create_infer(prompt, SYSTEM_PROMPT, model);
+    let content_response = await api.api_infer.process_output(resp);
     const jsonMatch = content_response.match(/(\{.*?\})/s);
     if (jsonMatch) {
       content_response = jsonMatch[0];
@@ -151,7 +190,8 @@ export const create_api_infer = async (
       const { state, tx, message } = await call_uniswap(
         private_key,
         chain_id_swap,
-        content_response
+        content_response,
+        api
       );
       return { state, tx, message };
     } else {
@@ -173,7 +213,6 @@ export const create_agent_infer = async (
   if (!rpc_infer) {
     return null;
   }
-  console.log('rpc', rpc_infer);
   const agent_infer = new AgentInference();
   const tx_hash = await agent_infer.create_inference_agent(
     private_key,
@@ -207,6 +246,14 @@ export const create_agent_infer = async (
     return null;
   }
 };
+
+// export const formatResponse = (
+//   host: string,
+//   api_key: string,
+//   response: any
+// ) => {
+//   const api_infer = init_api_infer(host, api_key);
+// };
 
 export const uni_swap_ai = async (command: string, args: any) => {
   console.log(command, args);

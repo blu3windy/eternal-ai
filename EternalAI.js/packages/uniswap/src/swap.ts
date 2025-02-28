@@ -1,11 +1,11 @@
 import { WETH_TOKEN } from './libs/constants';
-import { API_URL, getRPC, ZeroAddress } from './const';
+import { API_URL, ETH_CHAIN_ID, getRPC, ZeroAddress } from './const';
 import { Token } from '@uniswap/sdk-core';
 import { changeWallet, createWallet, TransactionState } from './libs/providers';
 import { createTrade, executeTrade } from './libs/trading';
 import { CurrentConfig, Environment } from './libs/config';
 import { getCurrencyBalance, getCurrencyDecimal, wrapETH } from './libs/wallet';
-import { TTransactionResponse } from './type';
+import { TTokenInfo, TTransactionResponse } from './type';
 
 export class SwapReq {
   function_name: string;
@@ -70,9 +70,17 @@ export class SwapReq {
     return result;
   };
 
-  get_price = async (token_address: string) => {
+  get_price = async (token_address: string): Promise<TTokenInfo | null> => {
     // TODO
-    return 0;
+    const res = await fetch(
+      `${API_URL}coin-price/${token_address}?chain=${ETH_CHAIN_ID}`
+    );
+    if (res.ok) {
+      const data = await res.json();
+      return data.usdPriceFormatted;
+    } else {
+      return null;
+    }
   };
 
   convert_token_address = async (symbol: string) => {
@@ -146,7 +154,6 @@ export class UniSwapAI {
     if (Number(wethBalance) < req.token_in_amount) {
       // wrap eth with enough amount
       await wrapETH(req.token_in_amount);
-      // console.log('🚀 ~ UniSwapAI ~ ethBalance:', ethBalance);
     }
 
     const tokenInBalance = await getCurrencyBalance(
