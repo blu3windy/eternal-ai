@@ -19,9 +19,6 @@ import {AgentContext} from "@pages/home/provider";
 import chatAgentDatabase, {PersistedMessageType} from "../../../../database/chatAgentDatabase.ts";
 import {Wallet} from "ethers";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { BASE_SEPOLIA_CHAIN_ID } from '@constants/chains';
-import { checkFileExistsOnLocal, getFilePathOnLocal, readFileOnChain, writeFileToLocal } from '@contract/file';
-import { AgentType } from '@pages/home/list-agent/index.tsx';
 
 type IChatAgentProviderContext = {
   isStopReceiving?: boolean;
@@ -386,37 +383,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
     },
     [messages, id, isStopReceiving],
   );
-
-  useEffect(() => {
-    if (selectedAgent && selectedAgent.agent_type === AgentType.Utility && selectedAgent.source_url && selectedAgent.source_url.length > 0) {
-      const sourceFile = selectedAgent?.source_url?.find((url) => url.startsWith('ethfs_'));
-      if (sourceFile)
-        readSourceFile(sourceFile, `agent_${selectedAgent.agent_id}.js` ,selectedAgent?.network_id || BASE_SEPOLIA_CHAIN_ID);
-    }
-  }, [selectedAgent]);
-
-  const readSourceFile = async (filename: string, filenameOnLocal: string, chainId: number) => {
-    try {
-      let filePath: string | undefined = '';
-      const isExisted = await checkFileExistsOnLocal(filenameOnLocal);
-      if (isExisted) {
-        filePath = await getFilePathOnLocal(filenameOnLocal);
-      } else {
-        const data = await readFileOnChain(chainId, filename);
-        filePath = await writeFileToLocal(filenameOnLocal, data);
-      }
-      if (!!filePath) {
-        handleRunDockerAgent(filePath);
-      }
-    } catch (error: any) {
-      alert(error?.message ||'Something went wrong');
-    }
-  }
-
-  // handle run docker here
-  const handleRunDockerAgent = async (filePath: string) => {
-    console.log('====: filePath', filePath);
-  }
 
   const value = useMemo(() => {
     return {
