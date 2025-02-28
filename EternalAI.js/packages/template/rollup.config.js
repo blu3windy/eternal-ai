@@ -10,6 +10,7 @@ const globals = require('rollup-plugin-node-globals');
 const inject = require('@rollup/plugin-inject');
 
 const { uglify } = require('rollup-plugin-uglify');
+import gzipPlugin from 'rollup-plugin-gzip';
 
 module.exports = {
   input: ['./src/index.ts'],
@@ -38,6 +39,7 @@ module.exports = {
     terser(),
     json(),
     uglify(),
+    gzipPlugin(),
   ],
   external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
 };
