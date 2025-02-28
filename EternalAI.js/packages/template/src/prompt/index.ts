@@ -11,7 +11,7 @@ const packages = {
   ethers: injectDependency<InjectedTypes.ethers>('ethers'),
 };
 
-export const prompt = (payload: PromptPayload) => {
+export const prompt = async (payload: PromptPayload): Promise<string> => {
   // Your code here
   console.log('Prompting with payload:', payload);
   const wallet: InstanceType<typeof packages.ethers.ethers.Wallet> =
@@ -26,5 +26,9 @@ export const prompt = (payload: PromptPayload) => {
   console.log('provider - start');
   console.log(provider);
   console.log('provider - end');
+
+  const sleep = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+  await sleep(1000);
   return 'Done';
 };
