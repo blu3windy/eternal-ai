@@ -38,7 +38,7 @@ module.exports = {
       // dir: 'dist',
       format: 'umd',
       file: 'dist/index.umd.js',
-      name: 'template',
+      name: 'agentTemplate', // please specify the name of the module
       sourcemap: false,
       globals: { ethers: 'ethers' },
     },
@@ -53,7 +53,9 @@ module.exports = {
     commonjs(),
     globals(),
     builtins(),
-    typescript({ tsconfig: './build.tsconfig.json', declaration: false }),
+    typescript({
+      tsconfig: './build.tsconfig.json',
+    }),
     ...removeModulePackages(),
     terser(),
     json(),
