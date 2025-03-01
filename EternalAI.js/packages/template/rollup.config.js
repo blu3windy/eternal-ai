@@ -11,31 +11,50 @@ const inject = require('@rollup/plugin-inject');
 
 const { uglify } = require('rollup-plugin-uglify');
 import gzipPlugin from 'rollup-plugin-gzip';
+import replace from '@rollup/plugin-replace';
+
+const removeModulePackages = () => [
+  {
+    name: 'remove-require-ethers',
+    generateBundle(options, bundle) {
+      for (const fileName in bundle) {
+        const chunk = bundle[fileName];
+        if (chunk.type === 'chunk' && chunk.code) {
+          // Replace all occurrences of require("ethers") or require('ethers')
+          chunk.code = chunk.code.replace(
+            /require\((['"])ethers\1\)/g,
+            'global.ethers'
+          );
+        }
+      }
+    },
+  },
+];
 
 module.exports = {
   input: ['./src/index.ts'],
   output: [
     {
       // dir: 'dist',
-      format: 'cjs',
-      file: 'dist/index.cjs.js',
-      sourcemap: false,
-    },
-    {
-      // dir: 'dist',
       format: 'umd',
       file: 'dist/index.umd.js',
       name: 'template',
       sourcemap: false,
+      globals: { ethers: 'ethers' },
     },
   ],
   plugins: [
+    replace({
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+      preventAssignment: true,
+    }),
     resolve({}),
     inject({}),
     commonjs(),
     globals(),
     builtins(),
     typescript({ tsconfig: './build.tsconfig.json', declaration: false }),
+    ...removeModulePackages(),
     terser(),
     json(),
     uglify(),
