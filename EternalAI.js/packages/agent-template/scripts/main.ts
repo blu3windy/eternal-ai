@@ -1,7 +1,6 @@
 import { prompt } from '../src/index';
 import { PromptPayload } from '../src/prompt/types';
 
-// Example usage:
 const payload: PromptPayload = {
   privateKey: 'your private key',
   messages: [
@@ -37,4 +36,9 @@ const payload: PromptPayload = {
   seed: 42,
 };
 
-console.log(prompt(payload));
+const main = async () => {
+  const result = await prompt(payload);
+  console.log(result);
+};
+
+main();
