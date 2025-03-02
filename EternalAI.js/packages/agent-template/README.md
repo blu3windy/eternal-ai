@@ -15,6 +15,13 @@ npm run build | yarn build
 
 ## Packages built-in
 - ethers
+```jsx
+import * as ethers from 'ethers';
+```
+- @uniswap/sdk-core
+```jsx
+import * as uniswapSdkCore from '@uniswap/sdk-core';
+```
 
 ## Note
 Please don't change files as below. That is configuration for run test, and build production.

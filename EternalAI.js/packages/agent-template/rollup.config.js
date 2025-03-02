@@ -27,7 +27,7 @@ const removeModulePackages = () => [
           );
           chunk.code = chunk.code.replace(
             /require\((['"])@uniswap\/sdk-core\1\)/g,
-            'global.uniswap'
+            'global.uniswapSdkCore'
           );
         }
       }
