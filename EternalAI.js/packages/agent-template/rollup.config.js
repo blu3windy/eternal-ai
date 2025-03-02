@@ -15,7 +15,7 @@ import replace from '@rollup/plugin-replace';
 
 const removeModulePackages = () => [
   {
-    name: 'remove-require-ethers',
+    name: 'remove-require-packages',
     generateBundle(options, bundle) {
       for (const fileName in bundle) {
         const chunk = bundle[fileName];
@@ -24,6 +24,10 @@ const removeModulePackages = () => [
           chunk.code = chunk.code.replace(
             /require\((['"])ethers\1\)/g,
             'global.ethers'
+          );
+          chunk.code = chunk.code.replace(
+            /require\((['"])@uniswap\/sdk-core\1\)/g,
+            'global.uniswap'
           );
         }
       }
@@ -40,7 +44,10 @@ module.exports = {
       file: 'dist/index.umd.js',
       name: 'agentTemplate', // please specify the name of the module
       sourcemap: false,
-      globals: { ethers: 'ethers' },
+      globals: {
+        ethers: 'ethers',
+        uniswap: '@uniswap/sdk-core',
+      },
     },
   ],
   plugins: [
@@ -62,5 +69,9 @@ module.exports = {
     uglify(),
     gzipPlugin(),
   ],
-  external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
+  external: [
+    ...Object.keys(pkg.peerDependencies || {}),
+    'ethers',
+    '@uniswap/sdk-core',
+  ],
 };

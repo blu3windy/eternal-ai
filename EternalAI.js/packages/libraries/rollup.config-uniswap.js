@@ -10,11 +10,12 @@ const globals = require('rollup-plugin-node-globals');
 const inject = require('@rollup/plugin-inject');
 
 module.exports = {
-  input: ['./src/index.ts'],
+  input: ['./src/uniswap.ts'],
   output: [
     {
-      dir: 'dist',
-      format: 'cjs',
+      dir: 'packages',
+      name: 'packages/uniswap.js',
+      format: 'umd',
       sourcemap: false,
     },
   ],
@@ -24,9 +25,9 @@ module.exports = {
     commonjs(),
     globals(),
     builtins(),
-    typescript({ tsconfig: './tsconfig-build.json' }),
+    typescript({ tsconfig: './tsconfig-uniswap.json' }),
     terser(),
     json(),
   ],
-  external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
+  external: [...Object.keys(pkg.peerDependencies || {})],
 };
