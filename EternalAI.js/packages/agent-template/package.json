@@ -55,6 +55,7 @@
   },
   "dependencies": {
     "@rollup/plugin-replace": "^6.0.2",
+    "@uniswap/sdk-core": "^7.6.0",
     "ethers": "5.7.2",
     "uuid": "^11.1.0"
   }

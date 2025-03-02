@@ -19,8 +19,9 @@
     "lint": "eslint . --ext .ts,.tsx",
     "size": "size-limit",
     "analyze": "size-limit --why",
-    "build-packages": "rm -rf packages && npm run build-ethers",
-    "build-ethers": "rollup -c ./rollup.config-ethers.js"
+    "build-packages": "rm -rf packages && npm run build-ethers && npm run build-uniswap",
+    "build-ethers": "rollup -c ./rollup.config-ethers.js",
+    "build-uniswap": "rollup -c ./rollup.config-uniswap.js"
   },
   "peerDependencies": {},
   "husky": {
@@ -46,12 +47,13 @@
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-terser": "^7.0.2",
-     "rollup-plugin-uglify": "^6.0.4",
+    "rollup-plugin-uglify": "^6.0.4",
     "size-limit": "^11.1.6",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@uniswap/sdk-core": "^7.6.0",
     "ethers": "5.7.2"
   }
 }
