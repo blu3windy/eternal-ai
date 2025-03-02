@@ -19,9 +19,9 @@
     "lint": "eslint . --ext .ts,.tsx",
     "size": "size-limit",
     "analyze": "size-limit --why",
-    "build-packages": "rm -rf packages && npm run build-ethers && npm run build-uniswap",
+    "build-packages": "rm -rf packages && npm run build-ethers && npm run build-uniswap-sdk-core",
     "build-ethers": "rollup -c ./rollup.config-ethers.js",
-    "build-uniswap": "rollup -c ./rollup.config-uniswap.js"
+    "build-uniswap-sdk-core": "rollup -c ./rollup.config-uniswap-sdk-core.js"
   },
   "peerDependencies": {},
   "husky": {

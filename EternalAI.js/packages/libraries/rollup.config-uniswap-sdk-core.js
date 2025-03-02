@@ -10,11 +10,11 @@ const globals = require('rollup-plugin-node-globals');
 const inject = require('@rollup/plugin-inject');
 
 module.exports = {
-  input: ['./src/uniswap.ts'],
+  input: ['./src/uniswap-sdk-core.ts'],
   output: [
     {
       dir: 'packages',
-      name: 'packages/uniswap.js',
+      name: 'packages/uniswap-sdk-core.js',
       format: 'umd',
       sourcemap: false,
     },
@@ -25,7 +25,7 @@ module.exports = {
     commonjs(),
     globals(),
     builtins(),
-    typescript({ tsconfig: './tsconfig-uniswap.json' }),
+    typescript({ tsconfig: './tsconfig-uniswap-sdk-core.json' }),
     terser(),
     json(),
   ],
