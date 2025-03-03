@@ -13,7 +13,7 @@ interface AuthContextType {
    signer: Wallet | undefined;
    hasUser: boolean;
    onLogin: (pass: string) => Promise<void>;
-   genAgentSecretKey: (_: { chainId: string, agentName: string }) => Promise<void>;
+   genAgentSecretKey: (_: { chainId: string, agentName: string }) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

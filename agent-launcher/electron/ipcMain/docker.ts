@@ -3,12 +3,27 @@ import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 import fs from "fs";
 import path from "path";
 import net from "net";
+import sudo from "sudo-prompt";
 
 import { exec } from "child_process";
 import { promisify } from "util";
 import { getScriptPath, PUBLIC_SCRIPT, SCRIPTS_NAME, USER_DATA_FOLDER_NAME } from "../share/utils.ts";
 
 const execAsync = promisify(exec);
+const options = { name: "Electron App" };
+
+const runCommandAsAdmin = async (command: string) => {
+   return new Promise((resolve, reject) => {
+      sudo.exec(command, options, (error, stdout, stderr) => {
+         if (error) {
+            reject(error);
+            return;
+         }
+         resolve(stdout);
+      });
+   });
+};
+
 
 const option = {
    timeout: 0, // Set to 0 for no timeout, or increase it (e.g., 10 * 1000 for 10s)
@@ -125,7 +140,7 @@ const ipcMainDocker = () => {
          );
 
          try {
-            //               `cd "${folderPath}" && docker network create --internal network-agent-internal && docker network create network-agent-external && docker run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${USER_DATA_FOLDER_NAME.AGENT_ROUTER} ${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
+            // `cd "${folderPath}" && docker network create --internal network-agent-internal && docker network create network-agent-external && docker run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${USER_DATA_FOLDER_NAME.AGENT_ROUTER} ${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
             await execAsync(
                `cd "${folderPath}" && docker network create --internal network-agent-internal`
             );
@@ -206,8 +221,10 @@ const ipcMainDocker = () => {
          //    'cd "/Users/macbookpro/Library/Application Support/agent-launcher/agent-data" && docker run -d -p 3001:3000 -v ./agents/agent_1/prompt.js:/app/src/prompt.js --name agent1 agent'
          // )
          // console.log(stdout);
-         const { stderr } = await execAsync("docker -v");
-         return !stderr;
+         // const { stderr } = await execAsync("docker -v");
+         // return !stderr;
+
+         return false
       } catch (error) {
          console.log(error);
          return false;
@@ -217,7 +234,6 @@ const ipcMainDocker = () => {
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INSTALL, async (_event) => {
       const nixPath = getScriptPath(SCRIPTS_NAME.NIX_INSTALL_SCRIPT);
       const cmdNix = `/usr/bin/osascript -e 'do shell script "sh ${nixPath}" with administrator privileges'`;
-
       const dockerScriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT);
       const cmdDocker = `sh ${dockerScriptPath}`;
       // const cmd = '/usr/bin/osascript -e \'do shell script "echo some_command" with administrator privileges\''
