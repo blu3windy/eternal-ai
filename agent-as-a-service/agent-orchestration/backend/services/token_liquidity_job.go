@@ -249,7 +249,7 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 									},
 								)
 							}
-							_ = s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), m.AgentInfo.RefTweetID, m.AgentInfo.ID)
+							// _ = s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), m.AgentInfo.RefTweetID, m.AgentInfo.ID)
 						}
 					}
 				}
@@ -390,7 +390,7 @@ func (s *Service) RetryAgentDeployToken(ctx context.Context, memeID uint) error 
 							if err != nil {
 								return errs.NewError(err)
 							}
-							_ = s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), m.AgentInfo.RefTweetID, m.AgentInfo.ID)
+							// _ = s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), m.AgentInfo.RefTweetID, m.AgentInfo.ID)
 						}
 					}
 				}
