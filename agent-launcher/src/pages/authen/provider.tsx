@@ -64,7 +64,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
          onLogin,
          genAgentSecretKey,
       }
-   }, [signer, hasUser, genAgentSecretKey]);
+   }, [signer, hasUser]);
 
 
    const renderContent = () => {
