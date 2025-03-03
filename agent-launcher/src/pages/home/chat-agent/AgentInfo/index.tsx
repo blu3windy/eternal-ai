@@ -1,11 +1,12 @@
 import s from "./styles.module.scss";
-import {Button, Flex, Text} from "@chakra-ui/react";
+import {Box, Button, Flex, Text} from "@chakra-ui/react";
 import SelectModel from "@pages/home/chat-agent/AgentInfo/SelectModel";
 import React, {useContext} from "react";
 import {AgentContext} from "@pages/home/provider";
 import {formatCurrency} from "@utils/format.ts";
 import Percent24h from "@components/Percent";
 import InfoTooltip from "@components/InfoTooltip";
+import {AgentType} from "@pages/home/list-agent";
 
 const AgentInfo = () => {
   const {
@@ -28,12 +29,18 @@ const AgentInfo = () => {
 
   return (
     <Flex className={s.container} justifyContent={"space-between"}>
-      <SelectModel
-        currentModel={currentModel}
-        setCurrentModel={setCurrentModel}
-        chainId={selectedAgent?.network_id}
-        showDescription={false}
-      />
+      {
+        selectedAgent?.agent_type === AgentType.Utility ? (
+          <SelectModel
+            currentModel={currentModel}
+            setCurrentModel={setCurrentModel}
+            chainId={selectedAgent?.network_id}
+            showDescription={false}
+          />
+        ) : (
+          <Box/>
+        )
+      }
       <Flex gap={"6px"} alignItems={"center"}>
         {isRunning && (
           <Button
