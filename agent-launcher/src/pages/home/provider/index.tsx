@@ -1,12 +1,28 @@
-import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState,} from "react";
-import {IAgentContext} from "./interface";
-import {IAgentToken, IChainConnected,} from "../../../services/api/agents-token/interface.ts";
-import {BASE_CHAIN_ID} from "@constants/chains";
-import {checkFileExistsOnLocal, getFilePathOnLocal, readFileOnChain, writeFileToLocal,} from "@contract/file";
-import {AgentType} from "@pages/home/list-agent/index.tsx";
+import React, {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { ETradePlatform, IAgentContext } from "./interface";
+import {
+  IAgentToken,
+  IChainConnected,
+} from "../../../services/api/agents-token/interface.ts";
+import { BASE_CHAIN_ID } from "@constants/chains";
+import {
+  checkFileExistsOnLocal,
+  getFilePathOnLocal,
+  readFileOnChain,
+  writeFileToLocal,
+} from "@contract/file";
+import { AgentType } from "@pages/home/list-agent/index.tsx";
 import CAgentTokenAPI from "../../../services/api/agents-token";
-import {compareString} from "@utils/string.ts";
-import {Wallet} from "ethers";
+import { compareString } from "@utils/string.ts";
+import { Wallet } from "ethers";
+import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
+import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
 
 const initialValue: IAgentContext = {
   loading: false,
@@ -26,6 +42,8 @@ const initialValue: IAgentContext = {
   agentWallet: undefined,
   setAgentWallet: (v) => {},
   isRunning: false,
+  tradePlatform: ETradePlatform.eternal,
+  coinPrices: [],
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -46,6 +64,7 @@ const AgentProvider: React.FC<
   const [runningAgents, setRunningAgents] = useState<number[]>([]);
   const [isTrade, setIsTrade] = useState(false);
   const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
+  const [coinPrices, setCoinPrices] = useState([]);
 
   const cPumpAPI = new CAgentTokenAPI();
 
@@ -54,9 +73,30 @@ const AgentProvider: React.FC<
     id: string;
   } | null>(null);
 
-  console.log('stephen: selectedAgent', selectedAgent);
-  console.log('stephen: currentModel', currentModel);
-  console.log('================================');
+  console.log("stephen: selectedAgent", selectedAgent);
+  console.log("stephen: currentModel", currentModel);
+  console.log("================================");
+
+  const getTradePlatform = (_pumpToken: IAgentToken | undefined) => {
+    if (SUPPORT_TRADE_CHAIN.includes(_pumpToken?.meme?.network_id as any)) {
+      if (
+        compareString(_pumpToken?.meme?.status, EAgentTokenStatus.add_pool_2)
+      ) {
+        return ETradePlatform.exchange3th;
+      } else if (
+        compareString(_pumpToken?.meme?.status, EAgentTokenStatus.add_pool_1) ||
+        compareString(_pumpToken?.meme?.status, EAgentTokenStatus.reached_mc)
+      ) {
+        return ETradePlatform.eternal;
+      }
+    }
+
+    return ETradePlatform.none;
+  };
+
+  const tradePlatform = useMemo(() => {
+    return getTradePlatform(selectedAgent as any);
+  }, [selectedAgent]);
 
   const isRunning = useMemo(() => {
     return runningAgents.includes(selectedAgent?.id as number);
@@ -65,13 +105,16 @@ const AgentProvider: React.FC<
   useEffect(() => {
     if (selectedAgent && chainList) {
       const supportModelObj = chainList?.find((v) =>
-        compareString(v.chain_id, selectedAgent.network_id),
+        compareString(v.chain_id, selectedAgent.network_id)
       )?.support_model_names;
 
       if (supportModelObj) {
         setCurrentModel({
-          name: selectedAgent.agent_base_model || Object.keys(supportModelObj)[0],
-          id: supportModelObj[selectedAgent.agent_base_model] || Object.values(supportModelObj)[0],
+          name:
+            selectedAgent.agent_base_model || Object.keys(supportModelObj)[0],
+          id:
+            supportModelObj[selectedAgent.agent_base_model] ||
+            Object.values(supportModelObj)[0],
         });
       }
     }
@@ -104,6 +147,13 @@ const AgentProvider: React.FC<
     }
   }, []);
 
+  const fetchCoinPrices = async () => {
+    try {
+      const _resCoinPrices: any = await cPumpAPI.getCoinPrices();
+      setCoinPrices(_resCoinPrices);
+    } catch (error) {}
+  };
+
   const getRunningAgents = () => {
     try {
       setRunningAgents([14483]);
@@ -115,6 +165,7 @@ const AgentProvider: React.FC<
   useEffect(() => {
     fetchChainList();
     getRunningAgents();
+    fetchCoinPrices();
   }, []);
 
   // useEffect(() => {
@@ -219,6 +270,8 @@ const AgentProvider: React.FC<
       agentWallet,
       setAgentWallet,
       isRunning,
+      tradePlatform,
+      coinPrices,
     };
   }, [
     loading,
@@ -236,7 +289,9 @@ const AgentProvider: React.FC<
     setIsTrade,
     agentWallet,
     setAgentWallet,
-    isRunning
+    isRunning,
+    tradePlatform,
+    coinPrices,
   ]);
 
   return (

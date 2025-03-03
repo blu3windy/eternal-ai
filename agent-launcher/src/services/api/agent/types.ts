@@ -85,13 +85,13 @@ export type ChatCompletionPayload = {
 };
 
 export interface IOnchainData {
-  infer_id: string
-  pbft_committee: any
-  proposer: string
-  infer_tx: string
-  propose_tx: string
-  input_cid: string
-  output_cid: string
+  infer_id: string;
+  pbft_committee: any;
+  proposer: string;
+  infer_tx: string;
+  propose_tx: string;
+  input_cid: string;
+  output_cid: string;
 }
 
 export type StreamResponseOption = {
@@ -104,7 +104,7 @@ export type ChatCompletionStreamHandler = {
   onStream: (
     content: string,
     chunk: string,
-    options: StreamResponseOption,
+    options: StreamResponseOption
   ) => void;
   onFinish: (content: string, options: StreamResponseOption) => void;
   onFail: (err: any) => void;
@@ -117,21 +117,29 @@ export interface IChatMessage {
   is_reply: boolean;
   msg: string;
   name: string;
-  type: 'human' | 'ai';
+  type: "human" | "ai";
   status:
-    | 'sending'
-    | 'sent'
-    | 'waiting'
-    | 'receiving'
-    | 'received'
-    | 'read'
-    | 'failed'
-    | 'pre-done'
-    | 'done';
+    | "sending"
+    | "sent"
+    | "waiting"
+    | "receiving"
+    | "received"
+    | "read"
+    | "failed"
+    | "pre-done"
+    | "done";
   queryMessageState?: string;
 
   createdAt?: string;
   updatedAt?: string;
   tx_hash?: string;
   onchain_data?: IOnchainData;
+}
+
+export enum EAgentTokenStatus {
+  new = "new",
+  created = "created",
+  add_pool_1 = "add_pool_1",
+  reached_mc = "reached_mc",
+  add_pool_2 = "add_pool_2",
 }

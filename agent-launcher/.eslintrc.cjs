@@ -32,5 +32,6 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": "off", // Disable the rule that conflicts with the one above
     "no-empty": "off", // Allow empty blocks
     "no-useless-catch": "off", // Allow empty catch blocks
+    "no-console": "off"
   },
 };

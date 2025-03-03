@@ -26,6 +26,7 @@
     "formik": "^2.4.6",
     "framer-motion": "^12.4.7",
     "keytar": "^7.9.0",
+    "lightweight-charts": "^4.2.1",
     "lodash.debounce": "^4.0.8",
     "lodash.throttle": "^4.1.1",
     "lodash.uniqby": "^4.7.0",
@@ -91,5 +92,4 @@
       }
     ]
   }
-
 }
