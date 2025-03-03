@@ -42,6 +42,7 @@ export default defineConfig({
          "@helpers": path.resolve(__dirname, 'src/helpers'),
          "@contract": path.resolve(__dirname, 'src/contract'),
          "@stores": path.resolve(__dirname, 'src/stores'),
+         "@services": path.resolve(__dirname, 'src/services'),
       }
    }
 })
