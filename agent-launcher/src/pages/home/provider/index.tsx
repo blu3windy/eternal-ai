@@ -37,8 +37,6 @@ const AgentProvider: React.FC<
   const [isStopping, setIsStopping] = useState(false);
   const [runningAgents, setRunningAgents] = useState<number[]>([]);
 
-  console.log('stephen: selectedAgent', selectedAgent);
-
   const cPumpAPI = new CAgentTokenAPI();
 
   const [currentModel, setCurrentModel] = useState<{
