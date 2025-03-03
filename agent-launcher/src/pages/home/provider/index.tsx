@@ -52,8 +52,8 @@ const AgentProvider: React.FC<
   const [chainList, setChainList] = useState<IChainConnected[]>([]);
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
-  const [isTrade, setIsTrade] = useState(false);
   const [runningAgents, setRunningAgents] = useState<number[]>([]);
+  const [isTrade, setIsTrade] = useState(false);
 
   console.log("stephen: selectedAgent", selectedAgent);
 
@@ -68,7 +68,7 @@ const AgentProvider: React.FC<
     const chainList = await cPumpAPI.getChainList();
     if (!!chainList && chainList.length > 0) {
       const list = chainList.map((chain) => {
-        const modelDetailParams = !!chain?.model_details?.[0]?.params
+        const modelDetailParams = chain?.model_details?.[0]?.params
           ? JSON.parse(chain?.model_details?.[0]?.params)
           : {};
 
@@ -129,7 +129,7 @@ const AgentProvider: React.FC<
           const filePath = await readSourceFile(
             sourceFile,
             `prompt.js`,
-            `agent_${agent.id}`,
+            `${agent.id}.js`,
             agent?.network_id || BASE_CHAIN_ID
           );
           await handleRunDockerAgent(filePath);

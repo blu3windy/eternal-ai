@@ -4,7 +4,9 @@ import HeaderWallet from "./wallet";
 import s from "./styles.module.scss";
 import ROUTERS from "../../constants/route-path.ts";
 
-type Props = {};
+type Props = {
+    // some props
+};
 
 const Header = (_props: Props) => {
    const primaryColor = "black";

@@ -4,60 +4,60 @@ import FileStoreAbi from "./abi/FileStore.sol/FileStore.abi.json";
 import { ethers } from "ethers";
 
 export async function readFileOnChain(chainId: number, fileName: string) {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const deploy = deploys[chainId];
-  const rpc = CHAIN_CONFIG[chainId as CHAIN_CONFIG_TYPE]?.rpcUrls?.default?.http[0];
+   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+   // @ts-ignore
+   const deploy = deploys[chainId];
+   const rpc = CHAIN_CONFIG[chainId as CHAIN_CONFIG_TYPE]?.rpcUrls?.default?.http[0];
         
-  const provider = new ethers.providers.JsonRpcProvider(rpc);
-  const contract = new ethers.Contract(
-    deploy.contracts.FileStore.address,
-    FileStoreAbi,
-    provider
-  );
+   const provider = new ethers.providers.JsonRpcProvider(rpc);
+   const contract = new ethers.Contract(
+      deploy.contracts.FileStore.address,
+      FileStoreAbi,
+      provider
+   );
 
-  const fileExists = await contract.fileExists(fileName);
-  if (fileExists) {
-    const base64String = await contract.readFile(fileName);
-    const data = atob(base64String);
-    return data;
-  }
+   const fileExists = await contract.fileExists(fileName);
+   if (fileExists) {
+      const base64String = await contract.readFile(fileName);
+      const data = atob(base64String);
+      return data;
+   }
 
-  throw new Error('Filename is not exists');
+   throw new Error('Filename is not exists');
 }
 
 export async function readFileOnLocal(fileName: string, folderName: string): Promise<string> {
-  try {
-    const data = await window.electronAPI.readFile(fileName, folderName);
-    return data;
-  } catch (error) {
-    console.error("Error reading file:", error);
-    throw error; // Re-throw error if needed
-  }
+   try {
+      const data = await window.electronAPI.readFile(fileName, folderName);
+      return data;
+   } catch (error) {
+      console.error("Error reading file:", error);
+      throw error; // Re-throw error if needed
+   }
 }
 
 export async function getFilePathOnLocal(fileName: string, folderName: string): Promise<string> {
-  try {
-    const data = await window.electronAPI.getFilePath(fileName, folderName);
-    return data;
-  } catch (error) {
-    return '';
-  }
+   try {
+      const data = await window.electronAPI.getFilePath(fileName, folderName);
+      return data;
+   } catch (error) {
+      return '';
+   }
 }
 
 export async function checkFileExistsOnLocal(fileName: string, folderName: string) {
-  try {
-    return await window.electronAPI.accessFile(fileName, folderName); // Check if file exists
-  } catch {
-    // File does not exist
-    return false;
-  }
+   try {
+      return await window.electronAPI.accessFile(fileName, folderName); // Check if file exists
+   } catch {
+      // File does not exist
+      return false;
+   }
 }
 
 export async function writeFileToLocal(fileName: string, folderName: string, content: string) {
-  try {
-    return await window.electronAPI.writeFile(fileName, folderName, content);
-  } catch {
-    return undefined;
-  }
+   try {
+      return await window.electronAPI.writeFile(fileName, folderName, content);
+   } catch {
+      return undefined;
+   }
 }

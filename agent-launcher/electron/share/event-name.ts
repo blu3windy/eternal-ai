@@ -14,6 +14,8 @@ const EMIT_EVENT_NAME = {
 
    COPY_DOCKER_SOURCE: "safe-copy-docker-source",
    DOCKER_BUILD: "safe-docker-build",
+   DOCKER_RUN_AGENT: "safe-docker-run-agent",
+   DOCKER_STOP_AGENT: "safe-docker-stop-agent",
 }
 
 export {

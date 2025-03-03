@@ -1,4 +1,4 @@
-import {AgentType} from "../../../pages/home/list-agent";
+import { AgentType } from "../../../pages/home/list-agent";
 
 export interface TwitterInfo {
   twitter_id: string;
@@ -74,6 +74,8 @@ export interface IAgentToken {
   agent_type: AgentType;
   kb_id?: number;
   source_url?: string[];
+  depend_agents?: string[];
+  required_wallet?: boolean;
 }
 
 export interface Meme {

@@ -8,11 +8,11 @@ interface IProps {
 }
 
 const AppLoading = React.memo((props: IProps) => {
-  return (
-    <div className={cs(styles.container, props.className)}>
-      <Loading />
-    </div>
-  );
+   return (
+      <div className={cs(styles.container, props.className)}>
+         <Loading />
+      </div>
+   );
 });
 
 AppLoading.displayName = 'AppLoading';

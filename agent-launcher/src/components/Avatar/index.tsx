@@ -1,14 +1,14 @@
 'use client';
 
-import {Box, Center, Image} from '@chakra-ui/react';
+import { Box, Center, Image } from '@chakra-ui/react';
 import cx from 'clsx';
-import React, {useCallback, useEffect, useMemo, useRef, useState,} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, } from 'react';
 
 import styles from './styles.module.scss';
 import last from 'lodash/last';
 import SvgInset from '../SvgInset';
-import Jazzicon, {jsNumberForAddress} from 'react-jazzicon';
-import {compareString} from "../../utils/string.ts";
+import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
+import { compareString } from "../../utils/string.ts";
 
 interface IAvatarProps {
   className?: string;
@@ -26,24 +26,24 @@ interface IAvatarProps {
 }
 
 const gradientColor = [
-  '#FF7084',
-  '#FF4B5A',
-  '#65CDA0',
-  '#359E67',
-  '#FFD17E',
-  '#FF9427',
-  '#CD6AF2',
-  '#9B20EE',
-  '#4DADFF',
-  '#236EAF',
+   '#FF7084',
+   '#FF4B5A',
+   '#65CDA0',
+   '#359E67',
+   '#FFD17E',
+   '#FF9427',
+   '#CD6AF2',
+   '#9B20EE',
+   '#4DADFF',
+   '#236EAF',
 ];
 
 const DefaultAvatar = ({
-  name,
-  address,
-  placeHolderStyles,
-  fontSize,
-  hideDefault,
+   name,
+   address,
+   placeHolderStyles,
+   fontSize,
+   hideDefault,
 }: {
   name?: string | undefined;
   address?: string | undefined;
@@ -52,200 +52,200 @@ const DefaultAvatar = ({
   fontSize?: number | undefined;
   hideDefault?: boolean | undefined;
 }) => {
-  // if (name) {
-  //   let numColor = 0;
-  //
-  //   if (address) {
-  //     numColor =
-  //       parseFloat(
-  //         BigNumber.from(address).toBigInt().toString(10).slice(0, 4),
-  //       ) % 10;
-  //   }
-  //
-  //   const colors = gradientColor[numColor > 9 ? 0 : numColor];
-  //   return (
-  //     <Box
-  //       style={{
-  //         ...placeHolderStyles,
-  //         backgroundColor: colors,
-  //         alignItems: 'center',
-  //         justifyContent: 'center',
-  //         display: 'flex',
-  //       }}
-  //       className={'imgError'}
-  //     >
-  //       <Text
-  //         style={{
-  //           fontWeight: '700',
-  //           fontSize: `${fontSize ? fontSize : 16}px`,
-  //         }}
-  //       >
-  //         {getAvatarName(name).toUpperCase()}
-  //       </Text>
-  //     </Box>
-  //   );
-  // }
+   // if (name) {
+   //   let numColor = 0;
+   //
+   //   if (address) {
+   //     numColor =
+   //       parseFloat(
+   //         BigNumber.from(address).toBigInt().toString(10).slice(0, 4),
+   //       ) % 10;
+   //   }
+   //
+   //   const colors = gradientColor[numColor > 9 ? 0 : numColor];
+   //   return (
+   //     <Box
+   //       style={{
+   //         ...placeHolderStyles,
+   //         backgroundColor: colors,
+   //         alignItems: 'center',
+   //         justifyContent: 'center',
+   //         display: 'flex',
+   //       }}
+   //       className={'imgError'}
+   //     >
+   //       <Text
+   //         style={{
+   //           fontWeight: '700',
+   //           fontSize: `${fontSize ? fontSize : 16}px`,
+   //         }}
+   //       >
+   //         {getAvatarName(name).toUpperCase()}
+   //       </Text>
+   //     </Box>
+   //   );
+   // }
 
-  return (
-    <Box
-      style={{
-        ...placeHolderStyles,
-        alignItems: 'center',
-        justifyContent: 'center',
-        display: 'flex',
-      }}
-      className={'imgError'}
-    >
-      {!hideDefault && (
-        <Jazzicon
-          diameter={Number(
-            (placeHolderStyles.width || '40')?.replace('px', ''),
-          )}
-          seed={jsNumberForAddress(address || '')}
-        />
-      )}
-    </Box>
-  );
+   return (
+      <Box
+         style={{
+            ...placeHolderStyles,
+            alignItems: 'center',
+            justifyContent: 'center',
+            display: 'flex',
+         }}
+         className={'imgError'}
+      >
+         {!hideDefault && (
+            <Jazzicon
+               diameter={Number(
+                  (placeHolderStyles.width || '40')?.replace('px', ''),
+               )}
+               seed={jsNumberForAddress(address || '')}
+            />
+         )}
+      </Box>
+   );
 };
 
 const Avatar: React.FC<IAvatarProps> = ({
-  className,
-  url,
-  address = '',
-  width = 40,
-  onClick,
-  name,
-  fontSize,
-  imgStyles,
-  circle = false,
-  hideDefault,
-  showBorder = false,
-  onLoaded = () => {},
+   className,
+   url,
+   address = '',
+   width = 40,
+   onClick,
+   name,
+   fontSize,
+   imgStyles,
+   circle = false,
+   hideDefault,
+   showBorder = false,
+   onLoaded = () => {},
 }: IAvatarProps) => {
-  const targetRef = useRef<HTMLDivElement | null>(null);
+   const targetRef = useRef<HTMLDivElement | null>(null);
 
-  const imgSrc = useMemo(() => url, [url]);
+   const imgSrc = useMemo(() => url, [url]);
 
-  const [error, setError] = useState(false);
+   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    if (!url && onLoaded) {
-      onLoaded();
-    }
-  }, [url]);
+   useEffect(() => {
+      if (!url && onLoaded) {
+         onLoaded();
+      }
+   }, [url]);
 
-  const loader = useCallback(({ src }: any) => {
-    return src;
-  }, []);
+   const loader = useCallback(({ src }: any) => {
+      return src;
+   }, []);
 
-  const onError = useCallback(() => {
-    setError(true);
-  }, []);
+   const onError = useCallback(() => {
+      setError(true);
+   }, []);
 
-  const onLoadStart = useCallback(() => {
-    setError(false);
-  }, []);
+   const onLoadStart = useCallback(() => {
+      setError(false);
+   }, []);
 
-  const handleOnClick = useCallback(
-    (event: any) => {
-      onClick?.(event);
-    },
-    [onClick],
-  );
+   const handleOnClick = useCallback(
+      (event: any) => {
+         onClick?.(event);
+      },
+      [onClick],
+   );
 
-  const centerStyles = useMemo((): any => {
-    return {
-      height: `${width}px`,
-      width: `${width}px`,
-      minWidth: `${width}px`,
-      borderRadius: '50%',
-      overflow: 'hidden',
-    };
-  }, [width]);
+   const centerStyles = useMemo((): any => {
+      return {
+         height: `${width}px`,
+         width: `${width}px`,
+         minWidth: `${width}px`,
+         borderRadius: '50%',
+         overflow: 'hidden',
+      };
+   }, [width]);
 
-  const placeHolderStyles = useMemo((): any => {
-    return {
-      position: 'absolute',
-      zIndex: 1,
-      height: `${width}px`,
-      width: `${width}px`,
-      minWidth: `${width}px`,
-    };
-  }, [width]);
+   const placeHolderStyles = useMemo((): any => {
+      return {
+         position: 'absolute',
+         zIndex: 1,
+         height: `${width}px`,
+         width: `${width}px`,
+         minWidth: `${width}px`,
+      };
+   }, [width]);
 
-  const isSVG = useMemo(() => {
-    if (imgSrc) {
-      return compareString(last(imgSrc?.split('.')), 'svg');
-    }
-    return undefined;
-  }, [imgSrc]);
+   const isSVG = useMemo(() => {
+      if (imgSrc) {
+         return compareString(last(imgSrc?.split('.')), 'svg');
+      }
+      return undefined;
+   }, [imgSrc]);
 
-  if (!imgSrc) {
-    return (
+   if (!imgSrc) {
+      return (
+         <Center
+            onClick={handleOnClick}
+            className={cx(styles.container, className, {
+               [styles.container__circle || '']: circle,
+               [styles.container__border]: showBorder,
+            })}
+            style={centerStyles}
+         >
+            <DefaultAvatar
+               placeHolderStyles={placeHolderStyles}
+               name={name}
+               address={address}
+               width={width}
+               fontSize={fontSize}
+               hideDefault={hideDefault}
+            />
+         </Center>
+      );
+   }
+
+   return (
       <Center
-        onClick={handleOnClick}
-        className={cx(styles.container, className, {
-          [styles.container__circle || '']: circle,
-          [styles.container__border]: showBorder,
-        })}
-        style={centerStyles}
+         onClick={handleOnClick}
+         className={cx(styles.container, className, {
+            [styles.container__circle || '']: circle,
+            [styles.container__border]: showBorder,
+         })}
+         style={centerStyles}
+         ref={targetRef}
       >
-        <DefaultAvatar
-          placeHolderStyles={placeHolderStyles}
-          name={name}
-          address={address}
-          width={width}
-          fontSize={fontSize}
-          hideDefault={hideDefault}
-        />
+         <>
+            {isSVG ? (
+               <SvgInset size={imgStyles?.width as any} svgUrl={imgSrc} />
+            ) : (
+               <Image
+                  // loader={loader}
+                  loading="lazy"
+                  // blurDataURL="https://storage.googleapis.com/tc-cdn-prod/images/alpha_avatar_default.png"
+                  // placeholder="blur"
+                  src={url}
+                  alt="icon"
+                  // layout="fill"
+                  objectFit="cover"
+                  objectPosition="center"
+                  // onError={onError}
+                  // onLoadStart={onLoadStart}
+                  // style={imgStyles}
+                  // onLoadingComplete={onLoaded}
+               />
+            )}
+
+            {error && (
+               <DefaultAvatar
+                  placeHolderStyles={placeHolderStyles}
+                  name={name}
+                  address={address}
+                  width={width}
+                  fontSize={fontSize}
+                  hideDefault={hideDefault}
+               />
+            )}
+         </>
       </Center>
-    );
-  }
-
-  return (
-    <Center
-      onClick={handleOnClick}
-      className={cx(styles.container, className, {
-        [styles.container__circle || '']: circle,
-        [styles.container__border]: showBorder,
-      })}
-      style={centerStyles}
-      ref={targetRef}
-    >
-      <>
-        {isSVG ? (
-          <SvgInset size={imgStyles?.width as any} svgUrl={imgSrc} />
-        ) : (
-          <Image
-            // loader={loader}
-            loading="lazy"
-            // blurDataURL="https://storage.googleapis.com/tc-cdn-prod/images/alpha_avatar_default.png"
-            // placeholder="blur"
-            src={url}
-            alt="icon"
-            // layout="fill"
-            objectFit="cover"
-            objectPosition="center"
-            // onError={onError}
-            // onLoadStart={onLoadStart}
-            // style={imgStyles}
-            // onLoadingComplete={onLoaded}
-          />
-        )}
-
-        {error && (
-          <DefaultAvatar
-            placeHolderStyles={placeHolderStyles}
-            name={name}
-            address={address}
-            width={width}
-            fontSize={fontSize}
-            hideDefault={hideDefault}
-          />
-        )}
-      </>
-    </Center>
-  );
+   );
 };
 
 export default Avatar;

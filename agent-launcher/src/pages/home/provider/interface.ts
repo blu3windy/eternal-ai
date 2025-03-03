@@ -1,7 +1,4 @@
-import {
-  IAgentToken,
-  IChainConnected,
-} from "../../../services/api/agents-token/interface.ts";
+import { IAgentToken, IChainConnected } from "../../../services/api/agents-token/interface.ts";
 
 export interface IAgentContext {
   loading: boolean;

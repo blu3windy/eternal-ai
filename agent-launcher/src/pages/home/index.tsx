@@ -10,7 +10,9 @@ import TradeAgent from "./trade-agent";
 import AgentInfo from "./chat-agent/AgentInfo";
 import { Box } from "@chakra-ui/react";
 
-type Props = {};
+type Props = {
+   // some props
+};
 
 const HandleHome = () => {
   const { isTrade } = useContext(AgentContext);

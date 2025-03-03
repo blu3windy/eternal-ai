@@ -38,12 +38,20 @@ const ChatBox = () => {
           minHeight: innerMaxHeight,
         }}
       >
-        <ChatList
-          onRetryErrorMessage={onRetryErrorMessage}
-          isSending={loading}
-        />
+        <div
+          className={s.chatList}
+          style={{
+            maxHeight: innerMaxHeight,
+            minHeight: innerMaxHeight,
+          }}
+        >
+          <ChatList
+            onRetryErrorMessage={onRetryErrorMessage}
+            isSending={loading}
+          />
+        </div>
+        <InputText isSending={loading} />
       </div>
-      <InputText isSending={loading} />
     </motion.div>
   );
 };

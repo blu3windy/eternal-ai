@@ -1,53 +1,54 @@
-import {Button, Flex, Grid, Image, SimpleGrid, Text} from '@chakra-ui/react';
-import React, {useContext, useMemo} from 'react';
+import { Button, Flex, Grid, Image, SimpleGrid, Text } from '@chakra-ui/react';
+import React, { useContext, useMemo } from 'react';
 import s from './styles.module.scss';
-import {IAgentToken} from "../../../../services/api/agents-token/interface.ts";
-import {AgentContext} from "../../provider";
-import {DefaultAvatar} from "../../../../components/DefaultAvatar";
-import {formatCurrency, labelAmountOrNumberAdds} from "../../../../utils/format.ts";
+import { IAgentToken } from "../../../../services/api/agents-token/interface.ts";
+import { AgentContext } from "../../provider";
+import { DefaultAvatar } from "../../../../components/DefaultAvatar";
+import { formatCurrency, labelAmountOrNumberAdds } from "../../../../utils/format.ts";
 import cs from "clsx";
+import {AgentType} from "@pages/home/list-agent";
 
 interface IProps {
   token: IAgentToken;
 }
 
 const AgentItem = ({ token }: IProps) => {
-  const { selectedAgent, setSelectedAgent, startAgent, stopAgent, runningAgents, isStarting, isStopping } = useContext(AgentContext);
+   const { selectedAgent, setSelectedAgent, startAgent, stopAgent, runningAgents, isStarting, isStopping } = useContext(AgentContext);
 
-  const description = token?.token_desc || token?.twitter_info?.description;
+   const description = token?.token_desc || token?.twitter_info?.description;
 
-  const avatarUrl =
-    token?.thumbnail ||
-    token?.token_image_url ||
-    token?.twitter_info?.twitter_avatar;
+   const avatarUrl
+    = token?.thumbnail
+    || token?.token_image_url
+    || token?.twitter_info?.twitter_avatar;
 
-  const isRunning = useMemo(() => {
-    return runningAgents.includes(token?.id as number);
-  }, [runningAgents, token]);
+   const isRunning = useMemo(() => {
+      return runningAgents.includes(token?.id as number);
+   }, [runningAgents, token]);
 
   const isUtilityAgent = useMemo(() => {
-    return token?.id % 2 === 0;
+    return token?.agent_type === AgentType.Utility;
   }, [token]);
 
-  const handleGoToChat = (e: any, token_address?: any) => {
-    if (token_address) {
+   const handleGoToChat = (e: any, token_address?: any) => {
+      if (token_address) {
+         e?.preventDefault();
+         e?.stopPropagation();
+
+         setSelectedAgent(token);
+      }
+   };
+
+   const handleInstall = (e: any) => {
       e?.preventDefault();
       e?.stopPropagation();
 
-      setSelectedAgent(token);
-    }
-  };
-
-  const handleInstall = (e: any) => {
-    e?.preventDefault();
-    e?.stopPropagation();
-
-    if (isRunning) {
-      stopAgent(token);
-    } else {
-      startAgent(token);
-    }
-  }
+      if (isRunning) {
+         stopAgent(token);
+      } else {
+         startAgent(token);
+      }
+   }
 
   return (
     <Flex
@@ -98,13 +99,17 @@ const AgentItem = ({ token }: IProps) => {
               <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
             </Flex>
             {/*<Text className={s.agentTypeTag}>{AgentTypeName[token?.agent_type]}</Text>*/}
-            <Button
-              className={s.btnInstall}
-              onClick={handleInstall}
-              isLoading={isStarting || isStopping}
-              isDisabled={isStarting || isStopping}
-              loadingText={isStarting ? 'Starting...' : 'Stopping...'}
-            >{isRunning ? 'Stop' : 'Start'}</Button>
+            {
+              isUtilityAgent && (
+                <Button
+                  className={s.btnInstall}
+                  onClick={handleInstall}
+                  isLoading={isStarting || isStopping}
+                  isDisabled={isStarting || isStopping}
+                  loadingText={isStarting ? 'Starting...' : 'Stopping...'}
+                >{isRunning ? 'Stop' : 'Start'}</Button>
+              )
+            }
           </Flex>
           {
             description && (
@@ -112,32 +117,32 @@ const AgentItem = ({ token }: IProps) => {
             )
           }
 
-          <SimpleGrid columns={3}>
-            <Text className={s.infoText}>
-              {token?.meme?.market_cap && (
-                <>
-                  <Text as={'span'}>
-                    {Number(token?.meme?.market_cap) > 0
-                      ? `$${formatCurrency(
-                        token?.meme?.market_cap,
-                        0,
-                        3,
-                        'BTC',
-                        false,
-                        true,
-                      )}`
-                      : '$0'}
+               <SimpleGrid columns={3}>
+                  <Text className={s.infoText}>
+                     {token?.meme?.market_cap && (
+                        <>
+                           <Text as={'span'}>
+                              {Number(token?.meme?.market_cap) > 0
+                                 ? `$${formatCurrency(
+                                    token?.meme?.market_cap,
+                                    0,
+                                    3,
+                                    'BTC',
+                                    false,
+                                    true,
+                                 )}`
+                                 : '$0'}
+                           </Text>
+                           {' '}<Text as={'span'} color={"#657786"}>MC</Text>
+                        </>
+                     )}
                   </Text>
-                  {' '}<Text as={'span'} color={"#657786"}>MC</Text>
-                </>
-              )}
-            </Text>
-            <Text className={s.infoText}>{formatCurrency(12345)}{' '}<Text as={'span'} color={"#657786"}>prompt{labelAmountOrNumberAdds(12345)}</Text></Text>
-          </SimpleGrid>
-        </Flex>
-      </Grid>
-    </Flex>
-  );
+                  <Text className={s.infoText}>{formatCurrency(12345)}{' '}<Text as={'span'} color={"#657786"}>prompt{labelAmountOrNumberAdds(12345)}</Text></Text>
+               </SimpleGrid>
+            </Flex>
+         </Grid>
+      </Flex>
+   );
 };
 
 export default AgentItem;
