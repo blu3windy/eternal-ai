@@ -6,6 +6,7 @@ import {AgentContext} from "../../provider";
 import {DefaultAvatar} from "../../../../components/DefaultAvatar";
 import {formatCurrency, labelAmountOrNumberAdds} from "../../../../utils/format.ts";
 import cs from "clsx";
+import {AgentType} from "@pages/home/list-agent";
 
 interface IProps {
   token: IAgentToken;
@@ -26,7 +27,7 @@ const AgentItem = ({ token }: IProps) => {
   }, [runningAgents, token]);
 
   const isUtilityAgent = useMemo(() => {
-    return token?.id % 2 === 0;
+    return token?.agent_type === AgentType.Utility;
   }, [token]);
 
   const handleGoToChat = (e: any, token_address?: any) => {
@@ -98,13 +99,17 @@ const AgentItem = ({ token }: IProps) => {
               <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
             </Flex>
             {/*<Text className={s.agentTypeTag}>{AgentTypeName[token?.agent_type]}</Text>*/}
-            <Button
-              className={s.btnInstall}
-              onClick={handleInstall}
-              isLoading={isStarting || isStopping}
-              isDisabled={isStarting || isStopping}
-              loadingText={isStarting ? 'Starting...' : 'Stopping...'}
-            >{isRunning ? 'Stop' : 'Start'}</Button>
+            {
+              isUtilityAgent && (
+                <Button
+                  className={s.btnInstall}
+                  onClick={handleInstall}
+                  isLoading={isStarting || isStopping}
+                  isDisabled={isStarting || isStopping}
+                  loadingText={isStarting ? 'Starting...' : 'Stopping...'}
+                >{isRunning ? 'Stop' : 'Start'}</Button>
+              )
+            }
           </Flex>
           {
             description && (

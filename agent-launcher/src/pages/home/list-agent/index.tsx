@@ -45,12 +45,16 @@ export enum FilterOption {
   Poppular = 'poppular',
   Model = 'model',
   NonModel = 'non-model',
+  Installed = 'Installed',
+  NonInstalled = 'non-installed',
 };
 
 export const FilterBy = [
   { value: FilterOption.Poppular, label: 'Popular' },
   { value: FilterOption.Model, label: 'Model' },
   { value: FilterOption.NonModel, label: 'Non-model' },
+  { value: FilterOption.Installed, label: 'Installed' },
+  { value: FilterOption.NonInstalled, label: 'Non-installed' },
 ];
 
 export enum AgentType {
@@ -399,10 +403,7 @@ const AgentsList = () => {
         >
           {agents.map((item: IAgentToken, i) => (
             <GridItem key={item.id}>
-              <AgentItem
-                token={item}
-                isAllChain
-              />
+              <AgentItem token={item} />
             </GridItem>
           ))}
         </Grid>
