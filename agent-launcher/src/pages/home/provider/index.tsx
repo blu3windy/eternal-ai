@@ -134,24 +134,15 @@ const AgentProvider: React.FC<
 
   const installUtilityAgent = async (agent: IAgentToken) => {
     try {
-      if (
-        agent &&
-        agent.agent_type === AgentType.Utility &&
-        agent.source_url &&
-        agent.source_url.length > 0
-      ) {
-        const sourceFile = agent?.source_url?.find((url) =>
-          url.startsWith("ethfs_")
-        );
-        if (sourceFile) {
-          setIsStarting(true);
-          const filePath = await readSourceFile(
-            sourceFile,
-            `prompt.js`,
-            `${agent.id}.js`,
-            agent?.network_id || BASE_CHAIN_ID
-          );
-          await handleRunDockerAgent(filePath, agent);
+      if (agent && agent.agent_type === AgentType.Utility && agent.source_url) {
+        const source_urls: string[] = JSON.parse(agent.source_url);
+        if (source_urls?.length > 0) {
+          const sourceFile = source_urls?.find((url) => url.startsWith('ethfs_'));
+          if (sourceFile) {
+            setIsStarting(true);
+            const filePath = await readSourceFile(sourceFile, `prompt.js`, `${agent.id}.js`, agent?.network_id || BASE_CHAIN_ID);
+            await handleRunDockerAgent(filePath, agent);
+          }
         }
       }
     } catch (error: any) {
