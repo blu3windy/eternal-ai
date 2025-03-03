@@ -4,18 +4,18 @@ import s from "./styles.module.scss";
 import cs from "clsx";
 
 const FieldWrapInput: React.FC<any> = ({ children, isInvalid, right }) => {
-  return (
-    <Flex
-      className={cs(
-        s.contentContainer,
-        "contentContainer",
-        isInvalid && s.inputInvalid
-      )}
-    >
-      {children}
-      {right}
-    </Flex>
-  );
+   return (
+      <Flex
+         className={cs(
+            s.contentContainer,
+            "contentContainer",
+            isInvalid && s.inputInvalid
+         )}
+      >
+         {children}
+         {right}
+      </Flex>
+   );
 };
 
 export default FieldWrapInput;

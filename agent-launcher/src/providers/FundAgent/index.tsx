@@ -1,6 +1,6 @@
 'use client';
 
-import React, {createContext, useMemo} from 'react';
+import React, { createContext, useMemo } from 'react';
 import DepositModal from "./Deposit/Deposit.modal.tsx";
 
 interface IProps {}
@@ -8,17 +8,17 @@ interface IProps {}
 const context = createContext<IProps>({} as IProps);
 
 export default function FundAgentProvider({ children }: React.PropsWithChildren) {
-  const values = useMemo(() => {
-    return {
-    };
-  }, []);
+   const values = useMemo(() => {
+      return {
+      };
+   }, []);
 
-  return (
-    <context.Provider
-      value={values}
-    >
-      {children}
-      <DepositModal />
-    </context.Provider>
-  );
+   return (
+      <context.Provider
+         value={values}
+      >
+         {children}
+         <DepositModal />
+      </context.Provider>
+   );
 }

@@ -1,5 +1,5 @@
-import {create} from "zustand";
-import {AgentInfo} from "../../services/api/agent/types.ts";
+import { create } from "zustand";
+import { AgentInfo } from "../../services/api/agent/types.ts";
 
 interface IProps {
   depositAgentID?: string;
@@ -10,15 +10,15 @@ interface IProps {
 }
 
 const useFundAgent = create<IProps, any>((set, get) => ({
-  depositAgentID: '',
-  setDepositAgentID: (depositAgentID) => {
-    set({ depositAgentID });
-  },
+   depositAgentID: '',
+   setDepositAgentID: (depositAgentID) => {
+      set({ depositAgentID });
+   },
 
-  depositAgentInfo: undefined,
-  setDepositAgentInfo: (depositAgentInfo) => {
-    set({ depositAgentInfo });
-  },
+   depositAgentInfo: undefined,
+   setDepositAgentInfo: (depositAgentInfo) => {
+      set({ depositAgentInfo });
+   },
 }));
 
 export default useFundAgent;

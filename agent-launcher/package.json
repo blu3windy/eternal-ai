@@ -1,7 +1,7 @@
 {
   "name": "agent-launcher",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -21,6 +21,7 @@
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.13",
     "dexie": "^4.0.11",
+    "electron-updater": "^6.3.9",
     "ethers": "5.7.2",
     "formik": "^2.4.6",
     "framer-motion": "^12.4.7",
@@ -29,6 +30,7 @@
     "lodash.throttle": "^4.1.1",
     "lodash.uniqby": "^4.7.0",
     "lottie-react": "^2.4.1",
+    "net": "^1.0.2",
     "rc-input-number": "^9.4.0",
     "react": "^18.2.0",
     "react-autosize-textarea": "^7.1.0",
@@ -76,5 +78,18 @@
     "vite-plugin-electron": "^0.28.6",
     "vite-plugin-electron-renderer": "^0.14.5"
   },
-  "main": "dist-electron/main.js"
+  "main": "dist-electron/main.js",
+  "build": {
+    "appId": "com.eternalai.agent-launcher",
+    "asar": true,
+    "productName": "Agent Launcher",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "your-github-username",
+        "repo": "your-repo-name"
+      }
+    ]
+  }
+
 }

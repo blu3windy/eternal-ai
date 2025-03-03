@@ -34,10 +34,13 @@ interface IElectronAPI {
   accessFile: (fileName: string, folderName: string) => Promise<boolean>
   writeFile: (fileName: string, folderName: string, data: string) => Promise<string>
 
-  checkDocker: () => Promise<boolean>
-  installDocker: () => Promise<void>
-  copyDockerSource: () => Promise<void>
+  dockerCopyBuild: () => Promise<void>
+
   dockerBuild: () => Promise<void>
+  dockerCheckInstall: () => Promise<boolean>
+  dockerInstall: () => Promise<void>
+  dockerRunAgent: () => Promise<void>
+  dockerStopAgent: () => Promise<void>
 }
 
 // Used in Renderer process, expose in `preload.ts`

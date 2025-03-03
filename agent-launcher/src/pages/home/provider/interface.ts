@@ -1,4 +1,4 @@
-import {IAgentToken, IChainConnected} from "../../../services/api/agents-token/interface.ts";
+import { IAgentToken, IChainConnected } from "../../../services/api/agents-token/interface.ts";
 
 export interface IAgentContext {
   loading: boolean;
@@ -13,4 +13,6 @@ export interface IAgentContext {
   isStopping: boolean;
   handleStopDockerAgent: any;
   runningAgents: number[];
+  isTrade: boolean;
+  setIsTrade: (v: any) => void;
 }

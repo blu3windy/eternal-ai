@@ -13,11 +13,11 @@ import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 const appDir = path.join(app.getPath('userData'), 'agent-data', 'agents');
 
 const checkAndCreateFolder = async (folderPath: string) => {
-  try {
-    await fs.access(folderPath);
-  } catch (error) {
-    await fs.mkdir(folderPath, { recursive: true });
-  }
+   try {
+      await fs.access(folderPath);
+   } catch (error) {
+      await fs.mkdir(folderPath, { recursive: true });
+   }
 }
 
 const ipcMainSafeFile = () => {

@@ -1,9 +1,23 @@
-import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState} from "react";
-import {IAgentContext} from "./interface";
-import {IAgentToken, IChainConnected} from "../../../services/api/agents-token/interface.ts";
-import {BASE_CHAIN_ID} from '@constants/chains';
-import {checkFileExistsOnLocal, getFilePathOnLocal, readFileOnChain, writeFileToLocal} from '@contract/file';
-import {AgentType} from '@pages/home/list-agent/index.tsx';
+import React, {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { IAgentContext } from "./interface";
+import {
+  IAgentToken,
+  IChainConnected,
+} from "../../../services/api/agents-token/interface.ts";
+import { BASE_CHAIN_ID } from "@constants/chains";
+import {
+  checkFileExistsOnLocal,
+  getFilePathOnLocal,
+  readFileOnChain,
+  writeFileToLocal,
+} from "@contract/file";
+import { AgentType } from "@pages/home/list-agent/index.tsx";
 import CAgentTokenAPI from "../../../services/api/agents-token";
 import {compareString} from "@utils/string.ts";
 
@@ -20,6 +34,8 @@ const initialValue: IAgentContext = {
   isStopping: false,
   handleStopDockerAgent: () => {},
   runningAgents: [],
+  isTrade: false,
+  setIsTrade(v) {},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -27,15 +43,18 @@ export const AgentContext = React.createContext<IAgentContext>(initialValue);
 const AgentProvider: React.FC<
   PropsWithChildren & { tokenAddress?: string }
 > = ({
-   children,
-   tokenAddress: _tokenAddress,
+  children,
+  tokenAddress: _tokenAddress,
 }: PropsWithChildren & { tokenAddress?: string }): React.ReactElement => {
   const [loading, setLoading] = useState(true);
-  const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
+  const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(
+    undefined
+  );
   const [chainList, setChainList] = useState<IChainConnected[]>([]);
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
   const [runningAgents, setRunningAgents] = useState<number[]>([]);
+  const [isTrade, setIsTrade] = useState(false);
 
   const cPumpAPI = new CAgentTokenAPI();
 
@@ -67,26 +86,26 @@ const AgentProvider: React.FC<
     const chainList = await cPumpAPI.getChainList();
     if (!!chainList && chainList.length > 0) {
       const list = chainList.map((chain) => {
-        const modelDetailParams = !!chain?.model_details?.[0]?.params
+        const modelDetailParams = chain?.model_details?.[0]?.params
           ? JSON.parse(chain?.model_details?.[0]?.params)
           : {};
 
         const _chain = {
           ...chain,
-          tag: `@${modelDetailParams?.model_name || ''}`,
+          tag: `@${modelDetailParams?.model_name || ""}`,
         };
 
         if (!chain.balance) {
           return {
             ..._chain,
-            balance: '0',
-            formatBalance: '0',
+            balance: "0",
+            formatBalance: "0",
           };
         }
         return _chain;
       });
 
-      setChainList(list)
+      setChainList(list);
     }
   }, []);
 
@@ -94,11 +113,9 @@ const AgentProvider: React.FC<
     try {
       setRunningAgents([14483]);
     } catch (err) {
-
     } finally {
-
     }
-  }
+  };
 
   useEffect(() => {
     fetchChainList();
@@ -107,34 +124,54 @@ const AgentProvider: React.FC<
 
   const startAgent = (agent: IAgentToken) => {
     installUtilityAgent(agent);
-    setRunningAgents(prev => [...prev, agent.id]);
-  }
+    setRunningAgents((prev) => [...prev, agent.id]);
+  };
 
   const stopAgent = (agent: IAgentToken) => {
-    setRunningAgents(prev => prev.filter(id => id !== agent.id));
-  }
+    setRunningAgents((prev) => prev.filter((id) => id !== agent.id));
+  };
 
   const installUtilityAgent = async (agent: IAgentToken) => {
     try {
-      if (agent && agent.agent_type === AgentType.Utility && agent.source_url && agent.source_url.length > 0) {
-        const sourceFile = agent?.source_url?.find((url) => url.startsWith('ethfs_'));
+      if (
+        agent &&
+        agent.agent_type === AgentType.Utility &&
+        agent.source_url &&
+        agent.source_url.length > 0
+      ) {
+        const sourceFile = agent?.source_url?.find((url) =>
+          url.startsWith("ethfs_")
+        );
         if (sourceFile) {
           setIsStarting(true);
-          const filePath = await readSourceFile(sourceFile, `prompt.js`, `${agent.id}.js`, agent?.network_id || BASE_CHAIN_ID);
+          const filePath = await readSourceFile(
+            sourceFile,
+            `prompt.js`,
+            `${agent.id}.js`,
+            agent?.network_id || BASE_CHAIN_ID
+          );
           await handleRunDockerAgent(filePath);
         }
       }
     } catch (error: any) {
-      alert(error?.message ||'Something went wrong');
+      alert(error?.message || "Something went wrong");
     } finally {
       setIsStarting(false);
     }
-  }
+  };
 
-  const readSourceFile = async (filename: string, fileNameOnLocal: string, folderName: string, chainId: number) => {
+  const readSourceFile = async (
+    filename: string,
+    fileNameOnLocal: string,
+    folderName: string,
+    chainId: number
+  ) => {
     try {
-      let filePath: string | undefined = '';
-      const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderName);
+      let filePath: string | undefined = "";
+      const isExisted = await checkFileExistsOnLocal(
+        fileNameOnLocal,
+        folderName
+      );
       if (isExisted) {
         filePath = await getFilePathOnLocal(fileNameOnLocal, folderName);
       } else {
@@ -145,25 +182,24 @@ const AgentProvider: React.FC<
     } catch (error: any) {
       throw error;
     }
-  }
+  };
 
   // handle run docker here
   const handleRunDockerAgent = async (filePath?: string) => {
     if (!filePath) return;
-    console.log('====: filePath', filePath);
-  }
+    console.log("====: filePath", filePath);
+  };
 
   const handleStopDockerAgent = async (filePath?: string) => {
     if (!filePath) return;
-    console.log('====: filePath', filePath);
+    console.log("====: filePath", filePath);
     try {
       setIsStopping(true);
     } catch (err) {
-
     } finally {
       setIsStopping(false);
     }
-  }
+  };
 
   const contextValues: any = useMemo(() => {
     return {
@@ -177,7 +213,9 @@ const AgentProvider: React.FC<
       stopAgent,
       isStarting,
       isStopping,
-      runningAgents
+      runningAgents,
+      isTrade,
+      setIsTrade,
     };
   }, [
     loading,
@@ -191,13 +229,15 @@ const AgentProvider: React.FC<
     isStarting,
     isStopping,
     runningAgents,
+    isTrade,
+    setIsTrade,
   ]);
 
-   return (
-      <AgentContext.Provider value={contextValues}>
-         {children}
-      </AgentContext.Provider>
-   );
+  return (
+    <AgentContext.Provider value={contextValues}>
+      {children}
+    </AgentContext.Provider>
+  );
 };
 
 export default AgentProvider;

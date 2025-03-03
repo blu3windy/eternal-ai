@@ -14,15 +14,15 @@ interface IProps {
 }
 
 const QRCodeGenerator: React.FC<IProps> = (
-  props: IProps
+   props: IProps
 ): React.ReactElement => {
-  const { className, ...delegatedProps } = props as any;
+   const { className, ...delegatedProps } = props as any;
 
-  return (
-    <div className={cs(s.qrCodeGenerator, className)}>
-      <QRCode {...delegatedProps} />
-    </div>
-  );
+   return (
+      <div className={cs(s.qrCodeGenerator, className)}>
+         <QRCode {...delegatedProps} />
+      </div>
+   );
 };
 
 export default QRCodeGenerator;
