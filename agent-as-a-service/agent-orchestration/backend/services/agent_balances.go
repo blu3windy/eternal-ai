@@ -526,12 +526,12 @@ func (s *Service) CreateTokenInfo(ctx context.Context, agentID uint) error {
 											"token_position_hash": "ok",
 										},
 									).Error
-									if agentInfo.RefTweetID > 0 {
-										go s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), agentInfo.RefTweetID, agentInfo.ID)
-									} else {
-										// TODO: post twitter
-										go s.PostTwitterAferCreateToken(ctx, agentInfo.ID)
-									}
+									// if agentInfo.RefTweetID > 0 {
+									// 	go s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), agentInfo.RefTweetID, agentInfo.ID)
+									// } else {
+									// 	// TODO: post twitter
+									// 	go s.PostTwitterAferCreateToken(ctx, agentInfo.ID)
+									// }
 									if tokenFee.Cmp(big.NewFloat(0)) > 0 {
 										_ = func() error {
 											_ = daos.GetDBMainCtx(ctx).
