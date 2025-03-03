@@ -7,11 +7,13 @@ import TestingButton from "@pages/authen/TesingButton";
 import ForgotPass from "@pages/authen/ForgotPass";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
 import Starter from "@pages/authen/Starter";
+import eaiCrypto from "@utils/crypto";
 
 interface AuthContextType {
    signer: Wallet | undefined;
    hasUser: boolean;
    onLogin: (pass: string) => Promise<void>;
+   genAgentSecretKey: (_: { agentId: string, agentName: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,13 +50,21 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       }
    }
 
+
+   const genAgentSecretKey = async (params: { agentId: string, agentName: string }) => {
+      const signature = await signer?.signMessage(`This message generate secret key for agent ${params.agentName} networkId ${params.agentId}`);
+      // derive signature to private key
+      return eaiCrypto.derivePrivateKeyFromSignature(signature || "");
+   }
+
    const values = useMemo(() => {
       return {
          signer,
          hasUser,
-         onLogin
+         onLogin,
+         genAgentSecretKey,
       }
-   }, [signer, hasUser]);
+   }, [signer, hasUser, genAgentSecretKey]);
 
 
    const renderContent = () => {
