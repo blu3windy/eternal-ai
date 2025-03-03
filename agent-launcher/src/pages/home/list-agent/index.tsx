@@ -47,14 +47,14 @@ export enum FilterOption {
   NonModel = 'non-model',
   Installed = 'Installed',
   NonInstalled = 'non-installed',
-};
+}
 
 export const FilterBy = [
-  { value: FilterOption.Poppular, label: 'Popular' },
-  { value: FilterOption.Model, label: 'Model' },
-  { value: FilterOption.NonModel, label: 'Non-model' },
-  { value: FilterOption.Installed, label: 'Installed' },
-  { value: FilterOption.NonInstalled, label: 'Non-installed' },
+   { value: FilterOption.Poppular, label: 'Popular' },
+   { value: FilterOption.Model, label: 'Model' },
+   { value: FilterOption.NonModel, label: 'Non-model' },
+   { value: FilterOption.Installed, label: 'Installed' },
+   { value: FilterOption.NonInstalled, label: 'Non-installed' },
 ];
 
 export enum AgentType {
@@ -384,32 +384,32 @@ const AgentsList = () => {
          </Flex>
          <Box h={'24px'} />
 
-      <InfiniteScroll
-        className={s.listContainer}
-        key={agents?.length}
-        dataLength={agents?.length}
-        next={() => {
-          debounceGetTokens(false);
-        }}
-        hasMore
-        loader={<></>}
-      >
-        {!loaded && <AppLoading />}
-        <Grid
-          w="100%"
-          templateColumns={"1fr"}
-          gridRowGap={"8px"}
-          overflow={'hidden !important'}
-        >
-          {agents.map((item: IAgentToken, i) => (
-            <GridItem key={item.id}>
-              <AgentItem token={item} />
-            </GridItem>
-          ))}
-        </Grid>
-      </InfiniteScroll>
-    </Box>
-  );
+         <InfiniteScroll
+            className={s.listContainer}
+            key={agents?.length}
+            dataLength={agents?.length}
+            next={() => {
+               debounceGetTokens(false);
+            }}
+            hasMore
+            loader={<></>}
+         >
+            {!loaded && <AppLoading />}
+            <Grid
+               w="100%"
+               templateColumns={"1fr"}
+               gridRowGap={"8px"}
+               overflow={'hidden !important'}
+            >
+               {agents.map((item: IAgentToken, i) => (
+                  <GridItem key={item.id}>
+                     <AgentItem token={item} />
+                  </GridItem>
+               ))}
+            </Grid>
+         </InfiniteScroll>
+      </Box>
+   );
 };
 
 export default AgentsList;
