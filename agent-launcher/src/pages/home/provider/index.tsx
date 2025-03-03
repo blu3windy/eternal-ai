@@ -1,27 +1,12 @@
-import React, {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { IAgentContext } from "./interface";
-import {
-  IAgentToken,
-  IChainConnected,
-} from "../../../services/api/agents-token/interface.ts";
-import { BASE_CHAIN_ID } from "@constants/chains";
-import {
-  checkFileExistsOnLocal,
-  getFilePathOnLocal,
-  readFileOnChain,
-  writeFileToLocal,
-} from "@contract/file";
-import { AgentType } from "@pages/home/list-agent/index.tsx";
+import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState,} from "react";
+import {IAgentContext} from "./interface";
+import {IAgentToken, IChainConnected,} from "../../../services/api/agents-token/interface.ts";
+import {BASE_CHAIN_ID} from "@constants/chains";
+import {checkFileExistsOnLocal, getFilePathOnLocal, readFileOnChain, writeFileToLocal,} from "@contract/file";
+import {AgentType} from "@pages/home/list-agent/index.tsx";
 import CAgentTokenAPI from "../../../services/api/agents-token";
 import {compareString} from "@utils/string.ts";
 import {Wallet} from "ethers";
-import {JsonRpcProvider} from "@ethersproject/providers";
 
 const initialValue: IAgentContext = {
   loading: false,
@@ -40,6 +25,7 @@ const initialValue: IAgentContext = {
   setIsTrade(v) {},
   agentWallet: undefined,
   setAgentWallet: (v) => {},
+  isRunning: false,
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -71,6 +57,10 @@ const AgentProvider: React.FC<
   console.log('stephen: selectedAgent', selectedAgent);
   console.log('stephen: currentModel', currentModel);
   console.log('================================');
+
+  const isRunning = useMemo(() => {
+    return runningAgents.includes(selectedAgent?.id as number);
+  }, [runningAgents, selectedAgent]);
 
   useEffect(() => {
     if (selectedAgent && chainList) {
@@ -127,10 +117,10 @@ const AgentProvider: React.FC<
     getRunningAgents();
   }, []);
 
-  useEffect(() => {
-    const wallet = new Wallet("0x5776efc21d0e98afd566d3cb46e2eb1ccd7406f4feaee9c28b0fcffc851cc8b3", new JsonRpcProvider("https://eth.llamarpc.com"));
-    setAgentWallet(wallet);
-  }, []);
+  // useEffect(() => {
+  //   const wallet = new Wallet("0x5776efc21d0e98afd566d3cb46e2eb1ccd7406f4feaee9c28b0fcffc851cc8b3", new JsonRpcProvider("https://eth.llamarpc.com"));
+  //   setAgentWallet(wallet);
+  // }, []);
 
   const startAgent = (agent: IAgentToken) => {
     installUtilityAgent(agent);
@@ -228,6 +218,7 @@ const AgentProvider: React.FC<
       setIsTrade,
       agentWallet,
       setAgentWallet,
+      isRunning,
     };
   }, [
     loading,
@@ -245,6 +236,7 @@ const AgentProvider: React.FC<
     setIsTrade,
     agentWallet,
     setAgentWallet,
+    isRunning
   ]);
 
   return (
