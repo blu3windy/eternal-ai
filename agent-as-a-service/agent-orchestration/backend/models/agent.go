@@ -319,6 +319,7 @@ const (
 	AgentTwitterPostTypeUnReview AgentTwitterPostType = "unreview"
 
 	AgentTwitterPostStatusNew              AgentTwitterPostStatus = "new"
+	AgentTwitterPostWaitSubmitVideoInfer   AgentTwitterPostStatus = "wait_submit_video_infer"
 	AgentTwitterPostStatusInvalid          AgentTwitterPostStatus = "invalid"
 	AgentTwitterConversationInvalid        AgentTwitterPostStatus = "conversation_invalid"
 	AgentTwitterPostStatusValid            AgentTwitterPostStatus = "valid"
@@ -389,6 +390,10 @@ type AgentTwitterPost struct {
 	AgentChain            string
 	OwnerUsername         string
 	OwnerTwitterID        string
+}
+
+func (m AgentTwitterPost) IsValidSubmitVideoInfer() bool {
+	return m.PostType == AgentSnapshotPostActionTypeGenerateVideo && m.Status == AgentTwitterPostWaitSubmitVideoInfer
 }
 
 func (m *AgentTwitterPost) GetAgentOnwerName() string {
