@@ -193,10 +193,17 @@ const ipcMainDocker = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INSTALL, async (_event) => {
-      const scriptPath = getScriptPath(SCRIPTS_NAME.NIX_INSTALL_SCRIPT);
-      const cmd = `/usr/bin/osascript -e 'do shell script "sh ${scriptPath}" with administrator privileges'`;
+      const nixPath = getScriptPath(SCRIPTS_NAME.NIX_INSTALL_SCRIPT);
+      const cmdNix = `/usr/bin/osascript -e 'do shell script "sh ${nixPath}" with administrator privileges'`;
+
+      const dockerScriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT);
+      const cmdDocker = `sh ${dockerScriptPath}`;
       // const cmd = '/usr/bin/osascript -e \'do shell script "echo some_command" with administrator privileges\''
-      const { stdout, stderr } = await execAsync(cmd)
+      await execAsync(cmdNix)
+      await execAsync(cmdDocker)
+
+      const { stdout, stderr } = await execAsync("docker -v");
+
       // const { stdout, stderr } = await execAsync(`sh ${scriptPath}`);
 
       if (stderr) {

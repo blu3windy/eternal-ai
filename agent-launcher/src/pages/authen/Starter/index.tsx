@@ -29,11 +29,13 @@ const Starter = (props: IProps) => {
    const [installing, setInstalling] = useState<boolean>(false);
    const [installError, setInstallError] = useState<string | undefined>();
 
-   const onInit = async () => {
+   const onInit = async (ignoreCopy?: boolean) => {
       try {
          console.log("onInit");
          await onCheckHasUser();
-         await window.electronAPI.dockerCopyBuild();
+         if (!ignoreCopy) {
+            await window.electronAPI.dockerCopyBuild();
+         }
          const hasDocker = await window.electronAPI.dockerCheckInstall();
          if (hasDocker) {
             await window.electronAPI.dockerBuild();
@@ -51,9 +53,9 @@ const Starter = (props: IProps) => {
          setInstalling(true);
          await sleep(2000)
          await window.electronAPI.dockerInstall();
-         await onInit();
+         await onInit(true);
          setInstalling(false);
-      } catch (error) {
+      } catch (error: any) {
          setInstalling(false);
          setInstallError(error?.message);
       }
@@ -86,6 +88,9 @@ const Starter = (props: IProps) => {
                >
                   Install Docker
                </BaseButton>
+               <Text color="red" fontSize="14px">
+                  {installError}
+               </Text>
             </Center>
          )
       }
