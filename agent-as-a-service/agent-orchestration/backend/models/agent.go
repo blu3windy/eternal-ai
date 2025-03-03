@@ -360,6 +360,7 @@ type AgentTwitterPost struct {
 	RePostId              string
 	ImageUrl              string
 	InferTxHash           string
+	InferId               string
 	InferAt               *time.Time
 	InferNum              uint                   `gorm:"default:0"`
 	Status                AgentTwitterPostStatus `gorm:"index"`

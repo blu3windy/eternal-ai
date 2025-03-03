@@ -174,6 +174,7 @@ func (s *Service) RunJobs(ctx context.Context) error {
 		gocron.Every(40).Minute().Do(s.JobScanAgentTwitterPostForGenerateVideo, context.Background())
 		gocron.Every(1).Minute().Do(s.JobAgentTwitterPostSubmitVideoInfer, context.Background())
 		gocron.Every(1).Minute().Do(s.JobAgentTwitterPostGenerateVideo, context.Background())
+		gocron.Every(5).Minute().Do(s.JobAgentTwitterScanResultGenerateVideo, context.Background())
 	}
 
 	// trading analyze
