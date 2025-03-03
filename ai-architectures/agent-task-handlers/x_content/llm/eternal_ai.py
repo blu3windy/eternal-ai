@@ -119,7 +119,9 @@ class ASyncBasedEternalAI(OpenAILLMBase):
             current_time = time.time()
 
             if current_time - started_at > self.timeout_seconds:
-                raise Exception("Inference request timed out")
+                raise Exception(
+                    f"Inference request timed out; Model: {self.model_name}; Receipt: {receipt}"
+                )
 
             check_result: ServerInferenceResult = (
                 await check_and_get_infer_result(url, headers)
@@ -182,8 +184,6 @@ class ASyncBasedEternalAI(OpenAILLMBase):
         receipt: str = await self.submit_async_request(messages, **kwargs)
         submit_time = time.time()
         estimation = get_time_estimation()
-
-
 
         try:
             result: dict = await self.wait(
