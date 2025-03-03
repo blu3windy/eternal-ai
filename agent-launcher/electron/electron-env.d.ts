@@ -35,12 +35,11 @@ interface IElectronAPI {
   writeFile: (fileName: string, folderName: string, data: string) => Promise<string>
 
   dockerCopyBuild: () => Promise<void>
-
   dockerBuild: () => Promise<void>
   dockerCheckInstall: () => Promise<boolean>
   dockerInstall: () => Promise<void>
-  dockerRunAgent: () => Promise<void>
-  dockerStopAgent: () => Promise<void>
+  dockerRunAgent: (agentName: string, chainId: string) => Promise<void>
+  dockerStopAgent: (agentName: string, chainId: string) => Promise<void>
 }
 
 // Used in Renderer process, expose in `preload.ts`

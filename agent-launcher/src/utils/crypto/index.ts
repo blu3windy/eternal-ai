@@ -1,5 +1,6 @@
 import * as CryptoJS from 'crypto-js';
 import { DecryptParams, EncryptParams } from "@utils/crypto/types.ts";
+import { ethers } from "ethers";
 
 /**
  * Generates a random private key.
@@ -46,11 +47,24 @@ const decryptAES = (params: DecryptParams): string => {
    throw new Error('Error decrypting');
 };
 
+// Function to derive a private key from a signature
+const derivePrivateKeyFromSignature = (signature: string): string => {
+   // Hash the signature using HMAC-SHA256 with a fixed salt
+   const hash = CryptoJS.HmacSHA256(signature, "fixed-salt").toString(CryptoJS.enc.Hex);
+   const privateKey = ethers.utils.hexZeroPad("0x" + hash, 32);
+   const _signer = new ethers.Wallet(privateKey);
+   if (!_signer.address) {
+      throw new Error("Invalid private key");
+   }
+   return privateKey;
+};
+
 const eaiCrypto = {
    generatePrivateKey,
    doubleHash,
    encryptAES,
-   decryptAES
+   decryptAES,
+   derivePrivateKeyFromSignature
 }
 
 export default eaiCrypto;

@@ -227,7 +227,7 @@ const AgentsList = () => {
             >
           Filter by
             </Text>
-            <Popover w={"100%"} placement="bottom-end" isOpen={isOpenFilter} onClose={onCloseFilter}>
+            <Popover width={"100%"} placement="bottom-end" isOpen={isOpenFilter} onClose={onCloseFilter}>
                <PopoverTrigger>
                   <Box
                      className={s.btnTokenSetup}

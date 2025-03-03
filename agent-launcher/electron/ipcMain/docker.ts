@@ -6,10 +6,17 @@ import net from "net";
 
 import { exec } from "child_process";
 import { promisify } from "util";
-import { getScriptPath, SCRIPTS_NAME, USER_DATA_FOLDER_NAME } from "../share/utils.ts";
+import { getScriptPath, PUBLIC_SCRIPT, SCRIPTS_NAME, USER_DATA_FOLDER_NAME } from "../share/utils.ts";
 
 const execAsync = promisify(exec);
+
+const option = {
+   timeout: 0, // Set to 0 for no timeout, or increase it (e.g., 10 * 1000 for 10s)
+   maxBuffer: 1024 * 1024 * 10, // Increase buffer to 10MB (default is 1MB)
+}
+
 const DOCKER_NAME = 'launcher-agent';
+const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
 
 const checkPort = (port: number): Promise<boolean> => {
    return new Promise((resolve) => {
@@ -59,22 +66,41 @@ const findAvailablePort = async (startPort: number, maxPort = 65535): Promise<nu
 const dockerCopyBuild = async () => {
    const userDataPath = app.getPath("userData");
 
-   const REQUIRE_COPY_FILES = [
+   const REQUIRE_COPY_AGENT_JS_FILES = [
       SCRIPTS_NAME.DOCKER_FILE,
       SCRIPTS_NAME.PACKAGE_JSON,
       SCRIPTS_NAME.SERVER_JS
    ];
 
-   const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
+   const REQUIRE_COPY_AGENT_ROUTER_FILES = [...REQUIRE_COPY_AGENT_JS_FILES];
+
+   const folderPathAgentJS = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.AGENT_JS);
+   const folderPathAgentRouter = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.AGENT_ROUTER);
+
+   console.log("dockerCopyBuild", {
+      folderPathAgentJS,
+      folderPathAgentRouter
+   })
 
    // Ensure the folder exists
-   if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
+   if (!fs.existsSync(folderPathAgentJS)) {
+      fs.mkdirSync(folderPathAgentJS, { recursive: true });
    }
 
-   for (const file of REQUIRE_COPY_FILES) {
-      const source = getScriptPath(file);
-      const destination = path.join(folderPath, file);
+   if (!fs.existsSync(folderPathAgentRouter)) {
+      fs.mkdirSync(folderPathAgentRouter, { recursive: true });
+   }
+
+   for (const file of REQUIRE_COPY_AGENT_JS_FILES) {
+      const source = getScriptPath(file, `${PUBLIC_SCRIPT}/${USER_DATA_FOLDER_NAME.AGENT_JS}`);
+      const destination = path.join(folderPathAgentJS, file);
+      fs.copyFileSync(source, destination);
+      console.log("File copied:", source, destination);
+   }
+
+   for (const file of REQUIRE_COPY_AGENT_ROUTER_FILES) {
+      const source = getScriptPath(file, `${PUBLIC_SCRIPT}/${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`);
+      const destination = path.join(folderPathAgentRouter, file);
       fs.copyFileSync(source, destination);
       console.log("File copied:", source, destination);
    }
@@ -91,11 +117,63 @@ const ipcMainDocker = () => {
          });
 
          await execAsync(
-            `cd "${folderPath}" && docker build -t ${DOCKER_NAME} .`
+            `cd "${folderPath}" && docker build -t ${DOCKER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
          );
-         console.log('LEON docker build done');
+
+         await execAsync(
+            `cd "${folderPath}" && docker build -t ${DOCKER_ROUTER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
+         );
+
+         try {
+            //               `cd "${folderPath}" && docker network create --internal network-agent-internal && docker network create network-agent-external && docker run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${USER_DATA_FOLDER_NAME.AGENT_ROUTER} ${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
+            await execAsync(
+               `cd "${folderPath}" && docker network create --internal network-agent-internal`
+            );
+         } catch (error) {
+            console.log('error', error);
+         }
+
+         try {
+            await execAsync(
+               `cd "${folderPath}" && docker network create network-agent-external`
+            );
+         } catch (error) {
+            console.log('error', error);
+         }
+
+         try {
+            await execAsync(
+               `docker stop ${DOCKER_ROUTER_NAME}`
+            );
+         } catch (error) {
+            console.log('error', error);
+         }
+
+         try {
+            await execAsync(
+               `docker rm ${DOCKER_ROUTER_NAME}`
+            );
+         } catch (error) {
+            console.log('error', error);
+         }
+
+         try {
+            await execAsync(
+               `docker run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
+            );
+         } catch (error) {
+            console.log('error', error);
+         }
+
+
+         // docker network create --internal network-agent-internal
+         // docker network create network-agent-external
+         //
+         // docker run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name agentrouter agentrouter
+
+         console.log('docker build done');
       } catch (error) {
-         console.log('LEON error', error);
+         console.log('error', error);
       }
    })
 
@@ -137,10 +215,17 @@ const ipcMainDocker = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INSTALL, async (_event) => {
-      const scriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL);
-      const cmd = `/usr/bin/osascript -e 'do shell script "sh ${scriptPath}" with administrator privileges'`;
+      const nixPath = getScriptPath(SCRIPTS_NAME.NIX_INSTALL_SCRIPT);
+      const cmdNix = `/usr/bin/osascript -e 'do shell script "sh ${nixPath}" with administrator privileges'`;
+
+      const dockerScriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT);
+      const cmdDocker = `sh ${dockerScriptPath}`;
       // const cmd = '/usr/bin/osascript -e \'do shell script "echo some_command" with administrator privileges\''
-      const { stdout, stderr } = await execAsync(cmd)
+      await execAsync(cmdNix, { ...option })
+      await execAsync(cmdDocker, { ...option })
+
+      const { stdout, stderr } = await execAsync("docker -v");
+
       // const { stdout, stderr } = await execAsync(`sh ${scriptPath}`);
 
       if (stderr) {
@@ -151,17 +236,39 @@ const ipcMainDocker = () => {
       console.log(`stdout: ${stdout}`);
    });
 
-   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, async (_event, agentID: string, agentName: string) => {
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, async (_event, agentName: string, chainId: string) => {
       try {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
+
+
+         // docker run -d -v /Users/nqhieu84/Work/testjs/abc/agents/app/1/prompt.js:/app/src/prompt.js --network network-agent-internal --name 1-agent1 agent
+         // docker run -d -v /Users/nqhieu84/Work/testjs/abc/agents/app/2/prompt.js:/app/src/prompt.js --network network-agent-external --network network-agent-internal --name 1-agent2 agent
 
          // Start checking from port 3000
          const startPort = 3000;
          const port = await findAvailablePort(startPort);
 
+         const dnsHost = `${chainId}-${agentName}`;
+
+         try {
+            await execAsync(
+               `cd "${folderPath}" && docker stop ${dnsHost}`
+            );
+         } catch (error) {
+            console.log(error);
+         }
+
+         try {
+            await execAsync(
+               `cd "${folderPath}" && docker rm ${dnsHost}`
+            );
+         } catch (error) {
+            console.log(error);
+         }
+
          const { stdout } = await execAsync(
-            `cd "${folderPath}" && docker run -d -p ${port}:3000 -v ./agents/${agentID}/prompt.js:/app/src/prompt.js --name ${agentID} ${DOCKER_NAME}`
+            `cd "${folderPath}" && docker run -d -v ./agents/${dnsHost}/prompt.js:/app/src/prompt.js --network network-agent-internal --name ${dnsHost} ${DOCKER_NAME}`
          );
          console.log(stdout);
       } catch (error) {
@@ -169,12 +276,27 @@ const ipcMainDocker = () => {
       }
    });
 
-   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_STOP_AGENT, async (_event, agentID: string) => {
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_STOP_AGENT, async (_event, agentName: string, chainId: string) => {
       try {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
-         const { stdout } = await execAsync(`cd "${folderPath}" &&  docker stop ${agentID}`);
-         console.log(stdout);
+         const dnsHost = `${chainId}-${agentName}`;
+
+         try {
+            await execAsync(
+               `docker stop ${dnsHost}`
+            );
+         } catch (error) {
+            console.log(error);
+         }
+
+         try {
+            await execAsync(
+               `docker rm ${dnsHost}`
+            );
+         } catch (error) {
+            console.log(error);
+         }
       } catch (error) {
          console.log(error);
       }
