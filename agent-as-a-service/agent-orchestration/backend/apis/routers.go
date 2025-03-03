@@ -411,6 +411,7 @@ func (s *Server) Routers() {
 		utilityApi := rootAPI.Group("/utility", s.authCheckSignatureMiddleware())
 		{
 			utilityApi.POST("/twitter/post", s.UtilityPostTwitter)
+			utilityApi.POST("/twitter/verify-deposit", s.UtilityTwitterVerifyDeposit)
 		}
 	}
 }

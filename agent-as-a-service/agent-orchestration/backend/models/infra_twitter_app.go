@@ -14,3 +14,15 @@ type InfraTwitterApp struct {
 	TotalRequest  uint64
 	RemainRequest uint64
 }
+
+type InfraTwitterTopupTx struct {
+	gorm.Model
+	NetworkID      uint64
+	EventId        string            `gorm:"unique_index"`
+	Type           AgentEaiTopupType `gorm:"default:'deposit'"`
+	DepositAddress string
+	ToAddress      string
+	TxHash         string
+	Amount         numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	Status         AgentEaiTopupStatus
+}

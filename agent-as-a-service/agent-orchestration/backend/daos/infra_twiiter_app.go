@@ -59,3 +59,14 @@ func (d *DAO) FindInfraTwitterAppJoinSelect(tx *gorm.DB, selected []string, join
 	}
 	return ms, nil
 }
+
+func (d *DAO) FirstInfraTwitterTopupTx(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string) (*models.InfraTwitterTopupTx, error) {
+	var m models.InfraTwitterTopupTx
+	if err := d.first(tx, &m, filters, preloads, orders, false); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &m, nil
+}
