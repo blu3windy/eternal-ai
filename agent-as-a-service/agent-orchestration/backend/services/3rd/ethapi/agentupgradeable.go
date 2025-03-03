@@ -3,11 +3,11 @@ package ethapi
 import (
 	"math/big"
 
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/utilityagentupgradeable"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/agentupgradeable"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-func (c *Client) DeployUtilityAgentUpgradeable(prkHex string) (string, string, error) {
+func (c *Client) DeployAgentUpgradeable(prkHex string) (string, string, error) {
 	_, prk, err := c.parsePrkAuth(prkHex)
 	if err != nil {
 		return "", "", err
@@ -29,7 +29,7 @@ func (c *Client) DeployUtilityAgentUpgradeable(prkHex string) (string, string, e
 		return "", "", err
 	}
 	auth.GasPrice = gasPrice
-	address, tx, _, err := utilityagentupgradeable.DeployUtilityAgentUpgradeable(auth, client)
+	address, tx, _, err := agentupgradeable.DeployAgentUpgradeable(auth, client)
 	if err != nil {
 		return "", "", err
 	}

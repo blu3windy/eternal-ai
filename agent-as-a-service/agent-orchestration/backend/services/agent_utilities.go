@@ -3,16 +3,16 @@ package services
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/agentupgradeable"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/erc20utilityagent"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/utilityagentupgradeable"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/evmapi"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func (s *Service) ERC20UtilityAgentFetchCode(
@@ -45,16 +45,29 @@ func (s *Service) ERC20UtilityAgentGetStorageInfo(
 	return resp, nil
 }
 
-func (s *Service) DeployAgentUtilityUpgradeableAddress(
+func (s *Service) DeployAgentUpgradeableAddress(
 	ctx context.Context,
 	networkID uint64,
-	systemPrompt string,
-	storageInfos []utilityagentupgradeable.IUtilityAgentStorageInfo,
+	agentName string,
+	agentVersion string,
+	codeLanguage string,
+	pointers []agentupgradeable.IAgentCodePointer,
+	depsAgents []common.Address,
+	agentOwner common.Address,
+	isOnchain bool,
 ) (string, string, string, error) {
 	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
 	proxyAdminAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "proxy_admin_address"))
 	logicAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "utilityagentupgradeable_address"))
-	initializeData, err := evmapi.UtilityAgentUpgradeableInitializeData(systemPrompt, storageInfos)
+	initializeData, err := evmapi.AgentUpgradeableInitializeData(
+		agentName,
+		agentVersion,
+		codeLanguage,
+		pointers,
+		depsAgents,
+		agentOwner,
+		isOnchain,
+	)
 	if err != nil {
 		return "", "", "", errs.NewError(err)
 	}
@@ -71,7 +84,7 @@ func (s *Service) DeployAgentUtilityUpgradeableAddress(
 	return contractAddress, logicAddress, txHash, nil
 }
 
-func (s *Service) DeployAgentUtilityUpgradeable(ctx context.Context, agentInfoID uint) error {
+func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) error {
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
 		agentInfoID,
@@ -88,12 +101,7 @@ func (s *Service) DeployAgentUtilityUpgradeable(ctx context.Context, agentInfoID
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.SourceUrl != "" {
 			if agentInfo.MintHash == "" {
 				switch agentInfo.NetworkID {
-				case models.BASE_CHAIN_ID,
-					models.ARBITRUM_CHAIN_ID,
-					models.BSC_CHAIN_ID,
-					models.APE_CHAIN_ID,
-					models.AVALANCHE_C_CHAIN_ID,
-					models.CELO_CHAIN_ID:
+				case models.BASE_SEPOLIA_CHAIN_ID:
 					{
 						var fileNames []string
 						err = json.Unmarshal([]byte(agentInfo.SourceUrl), &fileNames)
@@ -103,31 +111,45 @@ func (s *Service) DeployAgentUtilityUpgradeable(ctx context.Context, agentInfoID
 						if len(fileNames) == 0 {
 							return errs.NewError(errs.ErrBadRequest)
 						}
-						storageInfos := []utilityagentupgradeable.IUtilityAgentStorageInfo{}
+						storageInfos := []agentupgradeable.IAgentCodePointer{}
 						for _, fileName := range fileNames {
 							if strings.HasPrefix(fileName, "ethfs_") {
-								storageInfos = append(storageInfos, utilityagentupgradeable.IUtilityAgentStorageInfo{
-									ContractAddress: helpers.HexToAddress(strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "ethfs_address"))),
-									Filename:        strings.TrimPrefix(fileName, "ethfs_"),
+								storageInfos = append(storageInfos, agentupgradeable.IAgentCodePointer{
+									RetrieveAddress: helpers.HexToAddress(strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "ethfs_address"))),
+									FileType:        0,
+									FileName:        strings.TrimPrefix(fileName, "ethfs_"),
 								})
 							} else if strings.HasPrefix(fileName, "ipfs_") {
-								storageInfos = append(storageInfos, utilityagentupgradeable.IUtilityAgentStorageInfo{
-									ContractAddress: helpers.HexToAddress(models.ETH_ZERO_ADDRESS),
-									Filename:        strings.TrimPrefix(fileName, "ipfs_"),
+								storageInfos = append(storageInfos, agentupgradeable.IAgentCodePointer{
+									RetrieveAddress: helpers.HexToAddress(models.ETH_ZERO_ADDRESS),
+									FileType:        0,
+									FileName:        strings.TrimPrefix(fileName, "ipfs_"),
 								})
 							} else {
 								return errs.NewError(errs.ErrBadRequest)
 							}
 						}
-						systemContentHash, err := s.IpfsUploadDataForName(ctx, fmt.Sprintf("%v_%v", agentInfo.AgentID, "system_content"), []byte(agentInfo.SystemPrompt))
-						if err != nil {
-							return errs.NewError(err)
+						dependAgentAddrs := []common.Address{}
+						if agentInfo.DependAgents != "" {
+							var dependAgents []string
+							err = json.Unmarshal([]byte(agentInfo.DependAgents), &dependAgents)
+							if err != nil {
+								return errs.NewError(err)
+							}
+							for _, v := range dependAgents {
+								dependAgentAddrs = append(dependAgentAddrs, helpers.HexToAddress(v))
+							}
 						}
-						contractAddress, logicAddress, txHash, err := s.DeployAgentUtilityUpgradeableAddress(
+						contractAddress, logicAddress, txHash, err := s.DeployAgentUpgradeableAddress(
 							ctx,
 							agentInfo.NetworkID,
-							systemContentHash,
+							agentInfo.AgentName,
+							"1",
+							"js",
 							storageInfos,
+							dependAgentAddrs,
+							helpers.HexToAddress(agentInfo.Creator),
+							agentInfo.IsOnchain,
 						)
 						if err != nil {
 							return errs.NewError(err)
