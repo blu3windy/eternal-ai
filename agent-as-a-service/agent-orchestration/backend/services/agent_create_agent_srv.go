@@ -525,7 +525,7 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 					err = daos.WithTransaction(
 						daos.GetDBMainCtx(ctx),
 						func(tx *gorm.DB) error {
-							twitterPost.Status = models.AgentTwitterPostStatusInferSubmitted
+							twitterPost.Status = models.AgentTwitterPostStatusNew
 							twitterPost.ImageUrl = strings.ReplaceAll(response.Data.ResultLink, "ipfs://", "https://gateway.lighthouse.storage/ipfs/")
 							err = s.dao.Save(tx, twitterPost)
 							if err != nil {
