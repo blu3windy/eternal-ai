@@ -556,17 +556,17 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 						if twitterPost.Status == models.AgentTwitterPostStatusNew &&
 							twitterPost.PostType == models.AgentSnapshotPostActionTypeGenerateVideo &&
 							twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil {
-							//twitterPost.ExtractContent -> gen ra video
+							//TODO: twitterPost.ExtractContent -> gen ra video
 							//imageUrl, _ = s.GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc)
-							videoUrl := ""
+							videoUrl := "https://gateway.lighthouse.storage/ipfs/bafybeia7y5xp74komdtmiisunemiod56tqhotglzkke4ym66tvx4ywz7u4"
 							mediaID := ""
 							if videoUrl != "" {
-								mediaID, _ = s.twitterAPI.UploadImage(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
+								mediaID, _ = s.twitterAPI.UploadVideo(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
 							}
 
 							if mediaID != "" {
 								// post truc tiep reply, luu lai reply_id
-								refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, "", twitterPost.TwitterPostID, mediaID)
+								refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, "DONE", twitterPost.TwitterPostID, mediaID)
 								if err != nil {
 									return errs.NewError(err)
 								}
@@ -1389,7 +1389,7 @@ func (s *Service) GetPostTimeByTweetID(tx *gorm.DB, tweetID string) *time.Time {
 	return postTime
 }
 
-func (s *Service) CreateAgentTwitterPostByTweetID(tx *gorm.DB, tweetID string) error {
+func (s *Service) CreateGenerateVideoByTweetID(tx *gorm.DB, tweetID string) error {
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		tx,
 		s.conf.EternalAiAgentInfoId,

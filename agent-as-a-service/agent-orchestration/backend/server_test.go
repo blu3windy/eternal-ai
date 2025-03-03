@@ -106,6 +106,6 @@ func Test_SRV(t *testing.T) {
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
-	ts.UpdateTokenPriceInfo(context.Background(), 14469)
-	ts.UpdateTokenPriceInfo(context.Background(), 14448)
+	// ts.CreateGenerateVideoByTweetID(daos.GetDBMainCtx(context.Background()), "1895369759690219863")
+	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 34578)
 }
