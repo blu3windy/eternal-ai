@@ -9,6 +9,12 @@ import { promisify } from "util";
 import { getScriptPath, PUBLIC_SCRIPT, SCRIPTS_NAME, USER_DATA_FOLDER_NAME } from "../share/utils.ts";
 
 const execAsync = promisify(exec);
+
+const option = {
+   timeout: 0, // Set to 0 for no timeout, or increase it (e.g., 10 * 1000 for 10s)
+   maxBuffer: 1024 * 1024 * 10, // Increase buffer to 10MB (default is 1MB)
+}
+
 const DOCKER_NAME = 'launcher-agent';
 const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
 
@@ -137,7 +143,23 @@ const ipcMainDocker = () => {
 
          try {
             await execAsync(
-               `cd "${folderPath}" && docker run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
+               `docker stop ${DOCKER_ROUTER_NAME}`
+            );
+         } catch (error) {
+            console.log('error', error);
+         }
+
+         try {
+            await execAsync(
+               `docker rm ${DOCKER_ROUTER_NAME}`
+            );
+         } catch (error) {
+            console.log('error', error);
+         }
+
+         try {
+            await execAsync(
+               `docker run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
             console.log('error', error);
@@ -199,8 +221,8 @@ const ipcMainDocker = () => {
       const dockerScriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT);
       const cmdDocker = `sh ${dockerScriptPath}`;
       // const cmd = '/usr/bin/osascript -e \'do shell script "echo some_command" with administrator privileges\''
-      await execAsync(cmdNix)
-      await execAsync(cmdDocker)
+      await execAsync(cmdNix, { ...option })
+      await execAsync(cmdDocker, { ...option })
 
       const { stdout, stderr } = await execAsync("docker -v");
 
@@ -262,7 +284,7 @@ const ipcMainDocker = () => {
 
          try {
             await execAsync(
-               `cd "${folderPath}" && docker stop ${dnsHost}`
+               `docker stop ${dnsHost}`
             );
          } catch (error) {
             console.log(error);
@@ -270,7 +292,7 @@ const ipcMainDocker = () => {
 
          try {
             await execAsync(
-               `cd "${folderPath}" && docker rm ${dnsHost}`
+               `docker rm ${dnsHost}`
             );
          } catch (error) {
             console.log(error);
