@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "commonjs",
+    "module": "esnext",
     "lib": ["dom", "esnext"],
     "jsx": "react-jsx",
     "strict": true,
@@ -9,16 +9,16 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "dist",
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "outDir": "packages",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     },
     "resolveJsonModule": true
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", "src/types.d.ts"],
+  "exclude": ["node_modules", "packages"]
 }

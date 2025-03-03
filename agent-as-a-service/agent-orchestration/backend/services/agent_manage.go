@@ -108,6 +108,8 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		ConfigData:       req.ConfigData,
 		SourceUrl:        req.SourceUrl,
 		AuthenUrl:        req.AuthenUrl,
+		DependAgents:     req.DependAgents,
+		RequiredWallet:   req.RequiredWallet,
 	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
@@ -469,6 +471,8 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				agent.SocialInfo = req.GetAssistantCharacter(req.SocialInfo)
 				agent.SourceUrl = req.SourceUrl
 				agent.AuthenUrl = req.AuthenUrl
+				agent.DependAgents = req.DependAgents
+				agent.RequiredWallet = req.RequiredWallet
 				agent.MinFeeToUse = req.MinFeeToUse
 				agent.Worker = req.Worker
 				if req.TokenImageUrl != "" {

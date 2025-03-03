@@ -9,23 +9,13 @@ const builtins = require('rollup-plugin-node-builtins');
 const globals = require('rollup-plugin-node-globals');
 const inject = require('@rollup/plugin-inject');
 
-const { uglify } = require('rollup-plugin-uglify');
-import gzipPlugin from 'rollup-plugin-gzip';
-
 module.exports = {
-  input: ['./src/index.ts'],
+  input: ['./src/ethers.ts'],
   output: [
     {
-      // dir: 'dist',
-      format: 'cjs',
-      file: 'dist/index.cjs.js',
-      sourcemap: false,
-    },
-    {
-      // dir: 'dist',
+      dir: 'packages',
+      name: 'packages/ethers.js',
       format: 'umd',
-      file: 'dist/index.umd.js',
-      name: 'Interact',
       sourcemap: false,
     },
   ],
@@ -35,11 +25,9 @@ module.exports = {
     commonjs(),
     globals(),
     builtins(),
-    typescript({ tsconfig: './build.tsconfig.json', declaration: false }),
+    typescript({ tsconfig: './tsconfig-ethers.json' }),
     terser(),
     json(),
-    uglify(),
-    gzipPlugin(),
   ],
-  external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
+  external: [...Object.keys(pkg.peerDependencies || {})],
 };

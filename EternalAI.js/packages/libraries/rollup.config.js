@@ -9,23 +9,12 @@ const builtins = require('rollup-plugin-node-builtins');
 const globals = require('rollup-plugin-node-globals');
 const inject = require('@rollup/plugin-inject');
 
-const { uglify } = require('rollup-plugin-uglify');
-import gzipPlugin from 'rollup-plugin-gzip';
-
 module.exports = {
   input: ['./src/index.ts'],
   output: [
     {
-      // dir: 'dist',
+      dir: 'dist',
       format: 'cjs',
-      file: 'dist/index.cjs.js',
-      sourcemap: false,
-    },
-    {
-      // dir: 'dist',
-      format: 'umd',
-      file: 'dist/index.umd.js',
-      name: 'Interact',
       sourcemap: false,
     },
   ],
@@ -35,11 +24,9 @@ module.exports = {
     commonjs(),
     globals(),
     builtins(),
-    typescript({ tsconfig: './build.tsconfig.json', declaration: false }),
+    typescript({ tsconfig: './tsconfig-build.json' }),
     terser(),
     json(),
-    uglify(),
-    gzipPlugin(),
   ],
   external: [...Object.keys(pkg.peerDependencies || {}), 'ethers'],
 };
