@@ -7,75 +7,86 @@ import React, { useContext, useMemo } from "react";
 import { AgentContext } from "@pages/home/provider";
 
 function ChatAgent() {
-   const { selectedAgent, startAgent, stopAgent, runningAgents, isStarting, isStopping } = useContext(AgentContext);
+  const {
+    selectedAgent,
+    startAgent,
+    stopAgent,
+    runningAgents,
+    isStarting,
+    isStopping,
+  } = useContext(AgentContext);
 
-   const avatarUrl
-    = selectedAgent?.thumbnail
-    || selectedAgent?.token_image_url
-    || selectedAgent?.twitter_info?.twitter_avatar;
+  const avatarUrl =
+    selectedAgent?.thumbnail ||
+    selectedAgent?.token_image_url ||
+    selectedAgent?.twitter_info?.twitter_avatar;
 
-   const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
+  const description =
+    selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
-   const isRunning = useMemo(() => {
-      return runningAgents.includes(selectedAgent?.id as number);
-   }, [runningAgents, selectedAgent]);
+  const isRunning = useMemo(() => {
+    return runningAgents.includes(selectedAgent?.id as number);
+  }, [runningAgents, selectedAgent]);
 
-   const handleInstall = () => {
-      if (isRunning) {
-         stopAgent(selectedAgent);
-      } else {
-         startAgent(selectedAgent);
-      }
-   }
+  const handleInstall = () => {
+    if (isRunning) {
+      stopAgent(selectedAgent);
+    } else {
+      startAgent(selectedAgent);
+    }
+  };
 
-   return (
-      <Box className={s.container}>
-         <AgentInfo />
-         {
-            isRunning ? (
-               <ChatAgentProvider>
-                  <ChatBox />
-               </ChatAgentProvider>
-            ) : (
-               <Flex className={s.installContainer} direction={"column"} w={'100%'} alignItems={"center"} gap={"20px"}>
-                  <Flex direction={"column"} alignItems={"center"} position={"relative"}>
-                     <Image src="/images/bg-agent-chat.png" w={"80%"}/>
-                     <Flex
-                        position="absolute"
-                        height="70px"
-                        w="70px"
-                        top={'50%'}
-                        left={'50%'}
-                        transform={"translate(-50%, -50%)"}
-                     >
-                        <Flex className={s?.['glow-on-hover']}>
-                           <Image
-                              w="70px"
-                              h="70px"
-                              src={avatarUrl}
-                              borderRadius={'50%'}
-                           />
-                        </Flex>
-                     </Flex>
-                     <Text className={s.nameText}>{selectedAgent?.agent_name}</Text>
-                  </Flex>
-                  {
-                     description && (
-                        <Text className={s.descriptionText}>{description}</Text>
-                     )
-                  }
-                  <Button
-                     className={s.btnInstall}
-                     onClick={handleInstall}
-                     isLoading={isStarting || isStopping}
-                     isDisabled={isStarting || isStopping}
-                     loadingText={isStarting ? 'Starting...' : 'Stopping...'}
-                  >{isRunning ? 'Stop' : 'Start'}</Button>
-               </Flex>
-            )
-         }
-      </Box>
-   );
+  return (
+    <Box className={s.container}>
+      {/* <AgentInfo /> */}
+      {isRunning ? (
+        <ChatAgentProvider>
+          <ChatBox />
+        </ChatAgentProvider>
+      ) : (
+        <Flex
+          className={s.installContainer}
+          direction={"column"}
+          w={"100%"}
+          alignItems={"center"}
+          gap={"20px"}
+        >
+          <Flex
+            direction={"column"}
+            alignItems={"center"}
+            position={"relative"}
+          >
+            <Image src="/images/bg-agent-chat.png" w={"80%"} />
+            <Flex
+              position="absolute"
+              height="70px"
+              w="70px"
+              top={"50%"}
+              left={"50%"}
+              transform={"translate(-50%, -50%)"}
+            >
+              <Flex className={s?.["glow-on-hover"]}>
+                <Image w="70px" h="70px" src={avatarUrl} borderRadius={"50%"} />
+              </Flex>
+            </Flex>
+            <Text className={s.nameText}>{selectedAgent?.agent_name}</Text>
+          </Flex>
+          {description && (
+            <Text className={s.descriptionText}>{description}</Text>
+          )}
+          <Button
+            className={s.btnInstall}
+            onClick={handleInstall}
+            isLoading={isStarting || isStopping}
+            isDisabled={isStarting || isStopping}
+            loadingText={isStarting ? "Starting..." : "Stopping..."}
+          >
+            {isRunning ? "Stop" : "Start"}
+          </Button>
+        </Flex>
+      )}
+    </Box>
+  );
 }
 
 export default ChatAgent;

@@ -13,4 +13,6 @@ export interface IAgentContext {
   isStopping: boolean;
   handleStopDockerAgent: any;
   runningAgents: number[];
+  isTrade: boolean;
+  setIsTrade: (v: any) => void;
 }

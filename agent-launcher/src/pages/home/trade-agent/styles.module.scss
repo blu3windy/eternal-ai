@@ -1,7 +1,15 @@
 .container {
-  background-color: #F0F0F5;
-  flex-direction: column;
-
-  width: 100%;
+  max-height: calc(
+    100vh - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 48px - 16px
+  );
+  overflow: auto;
   height: 100vh;
+  width: 100%;
+  padding: 16px;
+}
+.tradeContainer {
+  background-color: #f0f0f5;
+  flex-direction: column;
+  max-width: 350px;
+  border-radius: 16px;
 }
