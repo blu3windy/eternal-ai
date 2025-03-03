@@ -7,22 +7,27 @@ import { persistor, store } from "@stores";
 
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
+import { useEffect } from "react";
 
 function App() {
-  return (
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path={ROUTERS.HOME} element={<Home />} />
-              <Route path={ROUTERS.MINE} element={<Mine />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </PersistGate>
-    </Provider>
-  );
+
+   useEffect(() => {
+      console.log('LEON useEffect');
+   }, []);
+   return (
+      <Provider store={store}>
+         <PersistGate loading={null} persistor={persistor}>
+            <AuthProvider>
+               <BrowserRouter>
+                  <Routes>
+                     <Route path={ROUTERS.HOME} element={<Home />} />
+                     <Route path={ROUTERS.MINE} element={<Mine />} />
+                  </Routes>
+               </BrowserRouter>
+            </AuthProvider>
+         </PersistGate>
+      </Provider>
+   );
 }
 
 export default App;

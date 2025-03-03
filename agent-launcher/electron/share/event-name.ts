@@ -11,6 +11,9 @@ const EMIT_EVENT_NAME = {
 
    CHECK_DOCKER: "safe-check-docker",
    INSTALL_DOCKER: "safe-install-docker",
+
+   COPY_DOCKER_SOURCE: "safe-copy-docker-source",
+   DOCKER_BUILD: "safe-docker-build",
 }
 
 export {

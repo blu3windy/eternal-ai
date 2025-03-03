@@ -12,7 +12,14 @@ interface IProps {
 
 type Step = "INITIALIZING" | "REQUEST_INSTALL_DOCKER";
 
-const LoadingIcon = () => <Image src="icons/eai-loading.gif" alt="loading" width="80px" />
+const LoadingIcon = () => (
+   <Image
+      src="icons/eai-loading.gif"
+      alt="loading"
+      width="80px"
+      mixBlendMode="exclusion"
+   />
+)
 
 const Starter = (props: IProps) => {
    const { onCheckHasUser } = props;
@@ -24,13 +31,14 @@ const Starter = (props: IProps) => {
 
    const onInit = async () => {
       try {
+         console.log("onInit");
          await onCheckHasUser();
+         await window.electronAPI.copyDockerSource();
          const hasDocker = await window.electronAPI.checkDocker();
-         console.log(window.electronAPI)
          if (hasDocker) {
+            await window.electronAPI.dockerBuild();
             setChecking(false);
          } else {
-            setChecking(false);
             setStep("REQUEST_INSTALL_DOCKER");
          }
       } catch (error) {

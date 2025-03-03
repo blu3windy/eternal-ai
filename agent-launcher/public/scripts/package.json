@@ -1,14 +1,17 @@
 {
-  "name": "abc",
+  "name": "agent-launcher-serverjs",
   "version": "1.0.0",
-  "server": "server.js",
+  "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "server": "node ./src/server.js"
   },
+  "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "nodemon": "^3.1.9"
   }
 }

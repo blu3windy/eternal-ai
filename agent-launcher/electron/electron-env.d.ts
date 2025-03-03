@@ -36,6 +36,8 @@ interface IElectronAPI {
 
   checkDocker: () => Promise<boolean>
   installDocker: () => Promise<void>
+  copyDockerSource: () => Promise<void>
+  dockerBuild: () => Promise<void>
 }
 
 // Used in Renderer process, expose in `preload.ts`
