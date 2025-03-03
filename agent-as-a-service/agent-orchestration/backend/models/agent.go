@@ -60,7 +60,6 @@ const (
 	AgentInfoAgentTypeEliza         AgentInfoAgentType = 3
 	AgentInfoAgentTypeZerepy        AgentInfoAgentType = 4
 	AgentInfoAgentTypeUtility       AgentInfoAgentType = 5
-	AgentInfoAgentTypeRealWorld     AgentInfoAgentType = 6
 )
 
 type (
@@ -614,12 +613,11 @@ type AgentExternalInfo struct {
 
 type AgentChainFee struct {
 	gorm.Model
-	NetworkID               uint64           `gorm:"unique_index"`
-	InferFee                numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	MintFee                 numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	TokenFee                numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	RealworldAgentDeployFee numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	UtilityAgentDeployFee   numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	NetworkID      uint64           `gorm:"unique_index"`
+	InferFee       numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	MintFee        numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	TokenFee       numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	AgentDeployFee numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 }
 
 type AgentStudioChildren struct {

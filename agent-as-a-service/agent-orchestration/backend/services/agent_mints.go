@@ -119,10 +119,8 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 						"agent_infos.agent_nft_minted = ?":  {false},
 						"agent_infos.eai_balance > 0":       {},
 						`(1 != 1
-							or (agent_infos.agent_type = ? and agent_infos.eai_balance >= agent_chain_fees.realworld_agent_deploy_fee)
-							or (agent_infos.agent_type = ? and agent_infos.eai_balance >= agent_chain_fees.utility_agent_deploy_fee)
+							or (agent_infos.agent_type = ? and agent_infos.eai_balance >= agent_chain_fees.agent_deploy_fee)
 						)`: {
-							models.AgentInfoAgentTypeRealWorld,
 							models.AgentInfoAgentTypeUtility,
 						},
 						"agent_infos.network_id in (?)": {
@@ -219,15 +217,10 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 							mintFee = &agentChainFee.MintFee.Float
 							checkFee = &agentChainFee.MintFee.Float
 						}
-					case models.AgentInfoAgentTypeRealWorld:
-						{
-							mintFee = &agentChainFee.RealworldAgentDeployFee.Float
-							checkFee = &agentChainFee.RealworldAgentDeployFee.Float
-						}
 					case models.AgentInfoAgentTypeUtility:
 						{
-							mintFee = &agentChainFee.UtilityAgentDeployFee.Float
-							checkFee = &agentChainFee.UtilityAgentDeployFee.Float
+							mintFee = &agentChainFee.AgentDeployFee.Float
+							checkFee = &agentChainFee.AgentDeployFee.Float
 						}
 					default:
 						{
@@ -263,15 +256,6 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 						{
 							for range 5 {
 								err = s.MintAgent(ctx, agent.ID)
-								if err == nil {
-									break
-								}
-							}
-						}
-					case models.AgentInfoAgentTypeRealWorld:
-						{
-							for range 2 {
-								err = s.DeployAgentRealWorld(ctx, agent.ID)
 								if err == nil {
 									break
 								}
