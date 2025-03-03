@@ -30,7 +30,7 @@ function ChatAgent() {
 
    return (
      <Box className={s.container}>
-       <AgentInfo />
+       {/* <AgentInfo /> */}
        {
          isRunning ? (
            <ChatAgentProvider>
