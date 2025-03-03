@@ -58,7 +58,7 @@ func (s *Service) DeployAgentUpgradeableAddress(
 ) (string, string, string, error) {
 	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
 	proxyAdminAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "proxy_admin_address"))
-	logicAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "utilityagentupgradeable_address"))
+	logicAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "agentupgradeable_address"))
 	initializeData, err := evmapi.AgentUpgradeableInitializeData(
 		agentName,
 		agentVersion,
