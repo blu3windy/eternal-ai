@@ -57,14 +57,14 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		req.SystemContent = "default"
 	}
 	switch req.AgentType {
-	case models.AgentInfoAgentTypeRealWorld,
-		models.AgentInfoAgentTypeUtility:
+	case models.AgentInfoAgentTypeUtility:
 		{
 			switch req.ChainID {
 			case models.BASE_CHAIN_ID,
 				models.ARBITRUM_CHAIN_ID,
 				models.BSC_CHAIN_ID,
 				models.APE_CHAIN_ID,
+				models.SEPOLIA_CHAIN_ID,
 				models.AVALANCHE_C_CHAIN_ID:
 				{
 				}
@@ -108,6 +108,9 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		ConfigData:       req.ConfigData,
 		SourceUrl:        req.SourceUrl,
 		AuthenUrl:        req.AuthenUrl,
+		DependAgents:     req.DependAgents,
+		RequiredWallet:   req.RequiredWallet,
+		IsOnchain:        req.IsOnchain,
 	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
@@ -469,6 +472,9 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				agent.SocialInfo = req.GetAssistantCharacter(req.SocialInfo)
 				agent.SourceUrl = req.SourceUrl
 				agent.AuthenUrl = req.AuthenUrl
+				agent.DependAgents = req.DependAgents
+				agent.RequiredWallet = req.RequiredWallet
+				agent.IsOnchain = req.IsOnchain
 				agent.MinFeeToUse = req.MinFeeToUse
 				agent.Worker = req.Worker
 				if req.TokenImageUrl != "" {
@@ -1389,12 +1395,11 @@ func (s *Service) GetAgentChainFees(ctx context.Context) (map[string]interface{}
 	chainFeeMap := map[string]interface{}{}
 	for _, v := range res {
 		chainFeeMap[strconv.Itoa(int(v.NetworkID))] = map[string]interface{}{
-			"network_id":                 v.NetworkID,
-			"mint_fee":                   numeric.BigFloat2Text(&v.MintFee.Float),
-			"post_fee":                   numeric.BigFloat2Text(&v.InferFee.Float),
-			"token_fee":                  numeric.BigFloat2Text(&v.TokenFee.Float),
-			"utility_agent_deploy_fee":   numeric.BigFloat2Text(&v.UtilityAgentDeployFee.Float),
-			"realworld_agent_deploy_fee": numeric.BigFloat2Text(&v.RealworldAgentDeployFee.Float),
+			"network_id":       v.NetworkID,
+			"mint_fee":         numeric.BigFloat2Text(&v.MintFee.Float),
+			"post_fee":         numeric.BigFloat2Text(&v.InferFee.Float),
+			"token_fee":        numeric.BigFloat2Text(&v.TokenFee.Float),
+			"agent_deploy_fee": numeric.BigFloat2Text(&v.AgentDeployFee.Float),
 		}
 	}
 	return chainFeeMap, nil

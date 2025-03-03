@@ -696,6 +696,7 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 		eaiAddress := s.conf.GetConfigKeyString(networkID, "eai_contract_address")
 		toAddress := strings.ToLower(event.To)
 		fromAddress := strings.ToLower(event.From)
+		var istelePost bool
 		if !strings.EqualFold(toAddress, models.ETH_ZERO_ADDRESS) && strings.EqualFold(contractAddress, eaiAddress) {
 			var agent *models.AgentInfo
 			err := daos.WithTransaction(
@@ -741,7 +742,8 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 								}
 								if (m.NetworkID == models.ABSTRACT_TESTNET_CHAIN_ID ||
 									m.NetworkID == models.MONAD_TESTNET_CHAIN_ID ||
-									m.NetworkID == models.MEGAETH_TESTNET_CHAIN_ID) && m.NetworkID != agent.NetworkID {
+									m.NetworkID == models.MEGAETH_TESTNET_CHAIN_ID ||
+									m.NetworkID == models.BASE_SEPOLIA_CHAIN_ID) && m.NetworkID != agent.NetworkID {
 									m.Status = models.AgentEaiTopupStatusCancelled
 								}
 								err = s.dao.Create(
@@ -760,6 +762,7 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 										return errs.NewError(err)
 									}
 								}
+								istelePost = true
 							}
 						}
 					}
@@ -869,7 +872,8 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 								}
 								if m.NetworkID == models.ABSTRACT_TESTNET_CHAIN_ID ||
 									m.NetworkID == models.MONAD_TESTNET_CHAIN_ID ||
-									m.NetworkID == models.MEGAETH_TESTNET_CHAIN_ID {
+									m.NetworkID == models.MEGAETH_TESTNET_CHAIN_ID ||
+									m.NetworkID == models.BASE_SEPOLIA_CHAIN_ID {
 									m.Status = models.UserTransactionStatusCancelled
 								}
 								err = s.dao.Create(
@@ -896,7 +900,7 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 			if err != nil {
 				return errs.NewError(err)
 			}
-			if agent != nil {
+			if istelePost && agent != nil {
 				if event.Value.Cmp(common.Big0) > 0 {
 					go s.AgentTeleAlertByID(ctx, agent.ID, event.TxHash, models.ConvertWeiToBigFloat(event.Value, 18), networkID)
 				}

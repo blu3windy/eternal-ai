@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
@@ -167,6 +168,13 @@ func (s *Service) RunJobs(ctx context.Context) error {
 	// create agent
 	// gocron.Every(5).Minute().Do(s.JobScanAgentTwitterPostForCreateAgent, context.Background())
 	// gocron.Every(1).Minute().Do(s.JobAgentTwitterPostCreateAgent, context.Background())
+
+	// generate video
+	if os.Getenv("GENERATE_VIDEO") != "" {
+		gocron.Every(40).Minute().Do(s.JobScanAgentTwitterPostForGenerateVideo, context.Background())
+		gocron.Every(1).Minute().Do(s.JobAgentTwitterPostSubmitVideoInfer, context.Background())
+		gocron.Every(1).Minute().Do(s.JobAgentTwitterPostGenerateVideo, context.Background())
+	}
 
 	// trading analyze
 	gocron.Every(5).Minute().Do(s.JobScanAgentTwitterPostForTA, context.Background())

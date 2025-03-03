@@ -82,6 +82,7 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 								models.MONAD_TESTNET_CHAIN_ID,
 								models.MEGAETH_TESTNET_CHAIN_ID,
 								models.CELO_CHAIN_ID,
+								models.BASE_SEPOLIA_CHAIN_ID,
 							},
 						},
 					},
@@ -118,10 +119,8 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 						"agent_infos.agent_nft_minted = ?":  {false},
 						"agent_infos.eai_balance > 0":       {},
 						`(1 != 1
-							or (agent_infos.agent_type = ? and agent_infos.eai_balance >= agent_chain_fees.realworld_agent_deploy_fee)
-							or (agent_infos.agent_type = ? and agent_infos.eai_balance >= agent_chain_fees.utility_agent_deploy_fee)
+							or (agent_infos.agent_type = ? and agent_infos.eai_balance >= agent_chain_fees.agent_deploy_fee)
 						)`: {
-							models.AgentInfoAgentTypeRealWorld,
 							models.AgentInfoAgentTypeUtility,
 						},
 						"agent_infos.network_id in (?)": {
@@ -147,6 +146,7 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 								models.MONAD_TESTNET_CHAIN_ID,
 								models.MEGAETH_TESTNET_CHAIN_ID,
 								models.CELO_CHAIN_ID,
+								models.BASE_SEPOLIA_CHAIN_ID,
 							},
 						},
 					},
@@ -217,15 +217,10 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 							mintFee = &agentChainFee.MintFee.Float
 							checkFee = &agentChainFee.MintFee.Float
 						}
-					case models.AgentInfoAgentTypeRealWorld:
-						{
-							mintFee = &agentChainFee.RealworldAgentDeployFee.Float
-							checkFee = &agentChainFee.RealworldAgentDeployFee.Float
-						}
 					case models.AgentInfoAgentTypeUtility:
 						{
-							mintFee = &agentChainFee.UtilityAgentDeployFee.Float
-							checkFee = &agentChainFee.UtilityAgentDeployFee.Float
+							mintFee = &agentChainFee.AgentDeployFee.Float
+							checkFee = &agentChainFee.AgentDeployFee.Float
 						}
 					default:
 						{
@@ -266,19 +261,10 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 								}
 							}
 						}
-					case models.AgentInfoAgentTypeRealWorld:
-						{
-							for range 2 {
-								err = s.DeployAgentRealWorld(ctx, agent.ID)
-								if err == nil {
-									break
-								}
-							}
-						}
 					case models.AgentInfoAgentTypeUtility:
 						{
 							for range 2 {
-								err = s.DeployAgentUtilityUpgradeable(ctx, agent.ID)
+								err = s.DeployAgentUpgradeable(ctx, agent.ID)
 								if err == nil {
 									break
 								}
@@ -479,6 +465,7 @@ func (s *Service) JobRetryAgentMintNftError(ctx context.Context) error {
 							models.MONAD_TESTNET_CHAIN_ID,
 							models.MEGAETH_TESTNET_CHAIN_ID,
 							models.CELO_CHAIN_ID,
+							models.BASE_SEPOLIA_CHAIN_ID,
 						},
 					},
 				},
@@ -600,7 +587,8 @@ func (s *Service) MintAgent(ctx context.Context, agentInfoID uint) error {
 				models.HYPE_CHAIN_ID,
 				models.MONAD_TESTNET_CHAIN_ID,
 				models.MEGAETH_TESTNET_CHAIN_ID,
-				models.CELO_CHAIN_ID:
+				models.CELO_CHAIN_ID,
+				models.BASE_SEPOLIA_CHAIN_ID:
 				{
 					agentUriData := models.AgentUriData{
 						Name: agentInfo.AgentName,

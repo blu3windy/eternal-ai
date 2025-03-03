@@ -1102,3 +1102,41 @@ func (c *Client) extractNextToken(data map[string]interface{}) string {
 	}
 	return ""
 }
+
+func (c *Client) PostTweetWithVideo(tweetContent, videoURL string, additionalOwners []string) error {
+	config := oauth1.NewConfig(c.ConsumerKey, c.ConsumerSecret)
+	token := oauth1.NewToken(c.AccessToken, c.AccessSecret)
+	httpClient := config.Client(oauth1.NoContext, token)
+	twitterApiUrl := "https://api.twitter.com/2/tweets"
+	mediaID, err := c.UploadVideo(videoURL, additionalOwners)
+	if err != nil {
+		return err
+	}
+	body := map[string]interface{}{
+		"text": tweetContent,
+	}
+	if mediaID != "" {
+		body["media"] = map[string]interface{}{
+			"media_ids": []string{mediaID},
+		}
+	}
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("POST", twitterApiUrl, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusCreated {
+		return nil
+	} else {
+		return errs.ErrBadRequest
+	}
+}

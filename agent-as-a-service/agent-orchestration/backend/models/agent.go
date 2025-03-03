@@ -60,7 +60,6 @@ const (
 	AgentInfoAgentTypeEliza         AgentInfoAgentType = 3
 	AgentInfoAgentTypeZerepy        AgentInfoAgentType = 4
 	AgentInfoAgentTypeUtility       AgentInfoAgentType = 5
-	AgentInfoAgentTypeRealWorld     AgentInfoAgentType = 6
 )
 
 type (
@@ -204,8 +203,11 @@ type AgentInfo struct {
 	TwinTrainingProgress    float64 `json:"twin_training_progress"`
 	TwinTrainingMessage     string  `gorm:"type:longtext"`
 
-	SourceUrl string `gorm:"type:text"` //ipfs_ || ethfs_ json
-	AuthenUrl string `gorm:"type:text"`
+	SourceUrl      string `gorm:"type:text"` //ipfs_ || ethfs_ json
+	AuthenUrl      string `gorm:"type:text"`
+	DependAgents   string `gorm:"type:longtext"`
+	RequiredWallet bool
+	IsOnchain      bool
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string
@@ -317,6 +319,7 @@ const (
 	AgentTwitterPostTypeUnReview AgentTwitterPostType = "unreview"
 
 	AgentTwitterPostStatusNew              AgentTwitterPostStatus = "new"
+	AgentTwitterPostWaitSubmitVideoInfer   AgentTwitterPostStatus = "wait_submit_video_infer"
 	AgentTwitterPostStatusInvalid          AgentTwitterPostStatus = "invalid"
 	AgentTwitterConversationInvalid        AgentTwitterPostStatus = "conversation_invalid"
 	AgentTwitterPostStatusValid            AgentTwitterPostStatus = "valid"
@@ -389,6 +392,10 @@ type AgentTwitterPost struct {
 	OwnerTwitterID        string
 }
 
+func (m AgentTwitterPost) IsValidSubmitVideoInfer() bool {
+	return m.PostType == AgentSnapshotPostActionTypeGenerateVideo && m.Status == AgentTwitterPostWaitSubmitVideoInfer
+}
+
 func (m *AgentTwitterPost) GetAgentOnwerName() string {
 	if m.OwnerUsername != "" {
 		return m.OwnerUsername
@@ -416,6 +423,9 @@ type TweetParseInfo struct {
 	IsIntellect   bool
 	IsCreateAgent bool
 	Description   string
+
+	IsGenerateVideo      bool
+	GenerateVideoContent string
 }
 
 type UserTwitterPost struct {
@@ -608,12 +618,11 @@ type AgentExternalInfo struct {
 
 type AgentChainFee struct {
 	gorm.Model
-	NetworkID               uint64           `gorm:"unique_index"`
-	InferFee                numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	MintFee                 numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	TokenFee                numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	RealworldAgentDeployFee numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	UtilityAgentDeployFee   numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	NetworkID      uint64           `gorm:"unique_index"`
+	InferFee       numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	MintFee        numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	TokenFee       numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	AgentDeployFee numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 }
 
 type AgentStudioChildren struct {
