@@ -164,6 +164,10 @@ class ASyncBasedEternalAI(OpenAILLMBase):
                             f"Bad response from LLM-server. Receipt: {receipt}; Tx Hash: {tx_hash}; Raw Output: {prompt_output}"
                         )
 
+                    logger.info(
+                        f"Inference request succeeded; Model: {self.model_name}; Receipt: {receipt}"
+                    )
+
                     content = choices[0].get("message", {}).get("content", "")
                     token_usage = prompt_output.get("usage", {})
 
