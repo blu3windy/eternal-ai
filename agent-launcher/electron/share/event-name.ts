@@ -9,10 +9,9 @@ const EMIT_EVENT_NAME = {
    ACCESS_FILE: "safe-access-file",
    WRITE_FILE: "safe-write-file",
 
-   CHECK_DOCKER: "safe-check-docker",
-   INSTALL_DOCKER: "safe-install-docker",
-
-   COPY_DOCKER_SOURCE: "safe-copy-docker-source",
+   DOCKER_COPY_BUILD: "safe-docker-copy-build",
+   DOCKER_CHECK_INSTALL: "safe-docker-check-install",
+   DOCKER_INSTALL: "safe-docker-install",
    DOCKER_BUILD: "safe-docker-build",
    DOCKER_RUN_AGENT: "safe-docker-run-agent",
    DOCKER_STOP_AGENT: "safe-docker-stop-agent",

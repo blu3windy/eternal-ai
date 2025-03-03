@@ -56,7 +56,7 @@ const findAvailablePort = async (startPort: number, maxPort = 65535): Promise<nu
    return port;
 };
 
-const copyDockerSource = async () => {
+const dockerCopyBuild = async () => {
    const userDataPath = app.getPath("userData");
 
    const REQUIRE_COPY_FILES = [
@@ -78,12 +78,6 @@ const copyDockerSource = async () => {
       fs.copyFileSync(source, destination);
       console.log("File copied:", source, destination);
    }
-
-   // const { stdout } = await execAsync(
-   //    'cd "/Users/macbookpro/Library/Application Support/agent-launcher/agent-data" && docker build -t agent .'
-   // );
-
-   // console.log(stdout);
 }
 
 
@@ -91,13 +85,10 @@ const ipcMainDocker = () => {
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_BUILD, async (_event) => {
       try {
          const userDataPath = app.getPath("userData");
-         // await execAsync(
-         //    'cd "/Users/macbookpro/Library/Application Support/agent-launcher/agent-data" && docker build -t agent .'
-         // );
-
-         // cd "/Users/macbookpro/Library/Application Support/agent-launcher/agent-data" && docker run -d -p 3001:3000 -v ./agents/agent_1/prompt.js:/app/src/prompt.js --name agent1 launcher-agent
-
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
+         console.log(EMIT_EVENT_NAME.DOCKER_BUILD, {
+            folderPath
+         });
 
          await execAsync(
             `cd "${folderPath}" && docker build -t ${DOCKER_NAME} .`
@@ -108,9 +99,9 @@ const ipcMainDocker = () => {
       }
    })
 
-   ipcMain.handle(EMIT_EVENT_NAME.COPY_DOCKER_SOURCE, async (_event) => {
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_COPY_BUILD, async (_event) => {
       try {
-         await copyDockerSource();
+         await dockerCopyBuild();
          return true;
       } catch (error) {
          console.log(error);
@@ -118,7 +109,7 @@ const ipcMainDocker = () => {
       }
    })
 
-   ipcMain.handle(EMIT_EVENT_NAME.CHECK_DOCKER, async (_event) => {
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL, async (_event) => {
       try {
          // await copySource();
          // check docker version
@@ -145,7 +136,7 @@ const ipcMainDocker = () => {
       }
    });
 
-   ipcMain.handle(EMIT_EVENT_NAME.INSTALL_DOCKER, async (_event) => {
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INSTALL, async (_event) => {
       const scriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL);
       const cmd = `/usr/bin/osascript -e 'do shell script "sh ${scriptPath}" with administrator privileges'`;
       // const cmd = '/usr/bin/osascript -e \'do shell script "echo some_command" with administrator privileges\''

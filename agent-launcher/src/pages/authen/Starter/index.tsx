@@ -33,8 +33,8 @@ const Starter = (props: IProps) => {
       try {
          console.log("onInit");
          await onCheckHasUser();
-         await window.electronAPI.copyDockerSource();
-         const hasDocker = await window.electronAPI.checkDocker();
+         await window.electronAPI.dockerCopyBuild();
+         const hasDocker = await window.electronAPI.dockerCheckInstall();
          if (hasDocker) {
             await window.electronAPI.dockerBuild();
             setChecking(false);
@@ -50,7 +50,7 @@ const Starter = (props: IProps) => {
       try {
          setInstalling(true);
          await sleep(2000)
-         await window.electronAPI.installDocker();
+         await window.electronAPI.dockerInstall();
          await onInit();
          setInstalling(false);
       } catch (error) {
