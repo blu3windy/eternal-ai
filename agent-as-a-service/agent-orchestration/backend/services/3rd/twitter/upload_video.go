@@ -226,22 +226,3 @@ func (c *Client) uploadFinalize(httpClient *http.Client, mediaID string) error {
 
 	return fmt.Errorf("failed to finalize upload")
 }
-
-// func main() {
-// 	client := &Client{
-// 		ConsumerKey:    "M4swiFNNuyKG6xbWXzkiU8x9v",
-// 		ConsumerSecret: "SiPehX9t6stHGbvi2O1rPvzUH2NY4QD8bFrXsrU7ZImc5esPjA",
-// 		AccessToken:    "842580814499999744-l26RhyyeCaZ3xJsR7pvsbnGCvThIj0Z",
-// 		AccessSecret:   "89fbwHT9D5mugCK2nLBGbUDjix1mlnkXG0OYyT29FsDMc",
-// 	}
-
-// 	// Replace with your video URL
-// 	videoURL := "https://cdn.bvm.network/imagine/267d20dc-123a-41b8-8913-f69be86817f6.mp4"
-// 	mediaID, err := client.UploadVideo(videoURL)
-// 	if err != nil {
-// 		fmt.Println("Error uploading video:", err)
-// 		return
-// 	}
-
-// 	fmt.Println("Video uploaded successfully, media ID:", mediaID)
-// }
