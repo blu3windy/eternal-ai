@@ -2,10 +2,11 @@ import {Box, Button, Flex, Image, Text} from "@chakra-ui/react";
 import ChatBox from "@pages/home/chat-agent/ChatAgent/components/ChatBox";
 import {ChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import s from "./styles.module.scss";
-import React, {useContext} from "react";
+import React, {useContext, useMemo} from "react";
 import {AgentContext} from "@pages/home/provider";
 import {Wallet} from "ethers";
 import {JsonRpcProvider} from "@ethersproject/providers";
+import {AgentType} from "@pages/home/list-agent";
 
 function ChatAgent() {
   const {
@@ -27,6 +28,10 @@ function ChatAgent() {
   const description =
     selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
+  const isUtilityAgent = useMemo(() => {
+    return selectedAgent?.agent_type === AgentType.Utility;
+  }, [selectedAgent]);
+
   const handleInstall = () => {
     if (isRunning) {
       stopAgent(selectedAgent);
@@ -43,7 +48,7 @@ function ChatAgent() {
   return (
     <Box className={s.container}>
       {/* <AgentInfo /> */}
-      {isRunning && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet)) ? (
+      {!isUtilityAgent || (isUtilityAgent && isRunning && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet))) ? (
         <ChatAgentProvider>
           <ChatBox />
         </ChatAgentProvider>
