@@ -7,24 +7,24 @@ import reducer from "./reducer";
 const reducers = combineReducers(reducer);
 
 const persistConfig = getPersistConfig({
-  key: "root",
-  storage: persistLocalStorage,
-  blacklist: [],
-  rootReducer: reducers,
+   key: "root",
+   storage: persistLocalStorage,
+   blacklist: [],
+   rootReducer: reducers,
 });
 
 const persistedReducer = persistCombineReducers(persistConfig, reducer);
 
 export const makeStore = () => {
-  return configureStore({
-    reducer: persistedReducer,
-    devTools: true,
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({
-        serializableCheck: false,
-        immutableCheck: false,
-      }),
-  });
+   return configureStore({
+      reducer: persistedReducer,
+      devTools: true,
+      middleware: (getDefaultMiddleware) =>
+         getDefaultMiddleware({
+            serializableCheck: false,
+            immutableCheck: false,
+         }),
+   });
 };
 
 export const store = makeStore();

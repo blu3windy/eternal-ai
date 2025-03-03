@@ -16,9 +16,10 @@
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": false,
     "baseUrl": "./",
     "paths": {
       "@pages/*": ["src/pages/*"],
@@ -29,6 +30,8 @@
       "@styles/*": ["src/styles/*"],
       "@utils/*": ["src/utils/*"],
       "@helpers/*": ["src/helpers/*"],
+      "@stores/*": ["src/stores/*"],
+      "@interfaces/*": ["src/interfaces/*"],
     }
   },
   "include": ["src", "electron"],

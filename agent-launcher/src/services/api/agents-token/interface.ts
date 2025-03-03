@@ -1,4 +1,4 @@
-import {AgentType} from "../../../pages/home/list-agent";
+import { AgentType } from "../../../pages/home/list-agent";
 
 export interface TwitterInfo {
   twitter_id: string;

@@ -24,46 +24,46 @@ interface IProps {
 }
 
 const useChatAgent = create<IProps, any>(
-  persist(
-    (set, get) => ({
-      chatInfo: undefined,
-      setChatInfo: (chatInfo) => {
-        // if (!chatInfo) {
-        //   set({ messages: [] });
-        // }
-        set({ messages: [] });
-        set({ chatInfo });
-      },
+   persist(
+      (set, get) => ({
+         chatInfo: undefined,
+         setChatInfo: (chatInfo) => {
+            // if (!chatInfo) {
+            //   set({ messages: [] });
+            // }
+            set({ messages: [] });
+            set({ chatInfo });
+         },
 
-      messages: [],
-      setMessages: (messages) => {
-        set({ messages });
-      },
-      addMessage: (message) => {
-        set((state) => ({
-          messages: [...state.messages, message],
-        }));
-      },
+         messages: [],
+         setMessages: (messages) => {
+            set({ messages });
+         },
+         addMessage: (message) => {
+            set((state) => ({
+               messages: [...state.messages, message],
+            }));
+         },
 
-      resetMessages: () => {
-        set({ messages: [] });
-      },
-      animatedId: [],
-      addAnimatedId: (id) => {
-        set((state) => ({
-          animatedId: [...state.animatedId, id],
-        }));
-      },
-    }),
-    {
-      name: 'chat-agent', // name of the item in the storage (must be unique)
-      storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
-      partialize: (state) => ({
-        // messages: state.messages,
-        animatedId: state.animatedId,
+         resetMessages: () => {
+            set({ messages: [] });
+         },
+         animatedId: [],
+         addAnimatedId: (id) => {
+            set((state) => ({
+               animatedId: [...state.animatedId, id],
+            }));
+         },
       }),
-    },
-  ),
+      {
+         name: 'chat-agent', // name of the item in the storage (must be unique)
+         storage: createJSONStorage(() => localStorage), // (optional) by default, 'localStorage' is used
+         partialize: (state) => ({
+            // messages: state.messages,
+            animatedId: state.animatedId,
+         }),
+      },
+   ),
 );
 
 export default useChatAgent;

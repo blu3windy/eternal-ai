@@ -16,7 +16,7 @@ const MainLayout = (props: Props & PropsWithChildren) => {
       <Flex className={cs(s.container, className)}>
          <Header />
          <Box className={cs(s.content, bodyClassName)}>{children}</Box>
-        <ToastOverlay />
+         <ToastOverlay />
       </Flex>
    );
 };

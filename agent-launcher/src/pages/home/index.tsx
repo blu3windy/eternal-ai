@@ -6,27 +6,29 @@ import AgentsList from "./list-agent";
 import AgentProvider from "./provider";
 import s from "./styles.module.scss";
 
-type Props = {};
+type Props = {
+   // some props
+};
 
 const Home = (_props: Props) => {
-  return (
-    <MainLayout className={s.container}>
-      <AgentProvider>
-        <FundAgentProvider>
-          <PanelGroup direction="horizontal">
-            <Panel minSize={20} maxSize={25}>
-              <AgentsList />
-            </Panel>
-            <PanelResizeHandle />
-            <Panel minSize={50} maxSize={60}>
-              <ChatAgent />
-            </Panel>
-            <PanelResizeHandle />
-          </PanelGroup>
-        </FundAgentProvider>
-      </AgentProvider>
-    </MainLayout>
-  );
+   return (
+      <MainLayout className={s.container}>
+         <AgentProvider>
+            <FundAgentProvider>
+               <PanelGroup direction="horizontal">
+                  <Panel minSize={20} maxSize={25}>
+                     <AgentsList />
+                  </Panel>
+                  <PanelResizeHandle />
+                  <Panel minSize={50} maxSize={60}>
+                     <ChatAgent />
+                  </Panel>
+                  <PanelResizeHandle />
+               </PanelGroup>
+            </FundAgentProvider>
+         </AgentProvider>
+      </MainLayout>
+   );
 };
 
 export default Home;

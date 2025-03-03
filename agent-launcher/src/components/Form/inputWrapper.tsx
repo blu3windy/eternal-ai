@@ -19,48 +19,48 @@ interface InputWrapperProps {
 }
 
 const InputWrapper = (props: InputWrapperProps) => {
-  const {
-    className,
-    label,
-    children,
-    rightLabel,
-    theme = "light",
-    labelColor,
-    note,
-    desc,
-    error,
-    isShowRequired,
-  } = props;
+   const {
+      className,
+      label,
+      children,
+      rightLabel,
+      theme = "light",
+      labelColor,
+      note,
+      desc,
+      error,
+      isShowRequired,
+   } = props;
 
-  return (
-    <div
-      className={cx([
-        styles.inputWrapper,
-        className,
-        theme === "dark" && styles.inputWrapperDark,
-      ])}
-    >
-      {label && (
-        <div className={cx(styles.labelWrapper, "labelWrapper")}>
-          <Flex alignItems="flex-end" justifyContent={"space-between"} gap={1}>
-            <Flex alignItems={"center"} gap={"4px"}>
-              <label style={{ color: labelColor, fontSize: "14px" }}>
-                {label}{" "}
-                {isShowRequired && <span style={{ color: "red" }}>*</span>}
-              </label>
-              {desc && (
-                <InfoTooltip iconSize="sm" label={desc} placement="top" />
-              )}
-            </Flex>
-            <Box className="labelRightWrapper">{rightLabel}</Box>
-          </Flex>
-        </div>
-      )}
-      {children}
-      {error && <div className={styles.error}>{error}</div>}
-      {note && <div className="field-note">{note}</div>}
-    </div>
-  );
+   return (
+      <div
+         className={cx([
+            styles.inputWrapper,
+            className,
+            theme === "dark" && styles.inputWrapperDark,
+         ])}
+      >
+         {label && (
+            <div className={cx(styles.labelWrapper, "labelWrapper")}>
+               <Flex alignItems="flex-end" justifyContent={"space-between"} gap={1}>
+                  <Flex alignItems={"center"} gap={"4px"}>
+                     <label style={{ color: labelColor, fontSize: "14px" }}>
+                        {label}{" "}
+                        {isShowRequired && <span style={{ color: "red" }}>*</span>}
+                     </label>
+                     {desc && (
+                        <InfoTooltip iconSize="sm" label={desc} placement="top" />
+                     )}
+                  </Flex>
+                  <Box className="labelRightWrapper">{rightLabel}</Box>
+               </Flex>
+            </div>
+         )}
+         {children}
+         {error && <div className={styles.error}>{error}</div>}
+         {note && <div className="field-note">{note}</div>}
+      </div>
+   );
 };
 
 export default InputWrapper;

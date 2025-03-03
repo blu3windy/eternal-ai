@@ -8,13 +8,13 @@ import { CustomComponentProps } from './types';
 import { THINK_TAG_REGEX } from './constants';
 
 const preprocessMarkdown = (content: string) => {
-  let result = content.replace(
-    THINK_TAG_REGEX,
-    (_, innerText) =>
-      `<think>${innerText.trim().replace(/\n/g, '<br />')}</think>`,
-  );
+   const result = content.replace(
+      THINK_TAG_REGEX,
+      (_, innerText) =>
+         `<think>${innerText.trim().replace(/\n/g, '<br />')}</think>`,
+   );
 
-  return result;
+   return result;
 };
 
 type ComponentExtended = {
@@ -23,44 +23,44 @@ type ComponentExtended = {
 };
 
 function CustomMarkdown({
-  content,
-  components = {},
-  isLight = true,
-  removeThink = false,
+   content,
+   components = {},
+   isLight = true,
+   removeThink = false,
 }: {
   content: string;
   components?: ComponentExtended;
   isLight?: boolean;
   removeThink?: boolean;
 }) {
-  const customComponents = useMemo(() => {
-    return {
-      code: (props: any) => {
-        return <GeneralCode {...props} />;
-      },
-      think: (props: any) => {
-        return (
-          <DeepThinking
-            {...props}
-            isLight={isLight}
-            removeThink={removeThink}
-          />
-        );
-      },
-      ...components,
-    } satisfies any;
-  }, [components, isLight, removeThink]);
+   const customComponents = useMemo(() => {
+      return {
+         code: (props: any) => {
+            return <GeneralCode {...props} />;
+         },
+         think: (props: any) => {
+            return (
+               <DeepThinking
+                  {...props}
+                  isLight={isLight}
+                  removeThink={removeThink}
+               />
+            );
+         },
+         ...components,
+      } satisfies any;
+   }, [components, isLight, removeThink]);
 
-  const children = useMemo(() => preprocessMarkdown(content), [content]);
+   const children = useMemo(() => preprocessMarkdown(content), [content]);
 
-  return (
-    <Markdown
-      remarkPlugins={[remarkGfm]} // Enables GitHub Flavored Markdown
-      rehypePlugins={[rehypeRaw]} // Enables raw HTML parsing
-      children={children}
-      components={customComponents as Components}
-    />
-  );
+   return (
+      <Markdown
+         remarkPlugins={[remarkGfm]} // Enables GitHub Flavored Markdown
+         rehypePlugins={[rehypeRaw]} // Enables raw HTML parsing
+         children={children}
+         components={customComponents as Components}
+      />
+   );
 }
 
 export default CustomMarkdown;

@@ -1,1 +1,3 @@
-export type IToken = {};
+export interface IToken {
+    // some props
+}
