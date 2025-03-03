@@ -21,26 +21,30 @@ const checkAndCreateFolder = async (folderPath: string) => {
 }
 
 const ipcMainSafeFile = () => {
-   ipcMain.handle(EMIT_EVENT_NAME.READ_FILE, async (_, fileName) => {
-      await checkAndCreateFolder(appDir);
-      const filePath = path.join(appDir, fileName);
+   ipcMain.handle(EMIT_EVENT_NAME.READ_FILE, async (_, fileName, folderName) => {
+      const _appDir = path.join(appDir, folderName);
+      await checkAndCreateFolder(_appDir);
+      const filePath = path.join(_appDir, fileName);
       return await fs.readFile(filePath, 'utf-8');
    });
-   ipcMain.handle(EMIT_EVENT_NAME.GET_FILE_PATH, async (_, fileName) => {
-      await checkAndCreateFolder(appDir);
-      const filePath = path.join(appDir, fileName);
+   ipcMain.handle(EMIT_EVENT_NAME.GET_FILE_PATH, async (_, fileName, folderName) => {
+      const _appDir = path.join(appDir, folderName);
+      await checkAndCreateFolder(_appDir);
+      const filePath = path.join(_appDir, fileName);
       return filePath;
    });
-   ipcMain.handle(EMIT_EVENT_NAME.WRITE_FILE, async (_, fileName, content) => {
-      await checkAndCreateFolder(appDir);
-      const filePath = path.join(appDir, fileName);
+   ipcMain.handle(EMIT_EVENT_NAME.WRITE_FILE, async (_, fileName, folderName, content) => {
+      const _appDir = path.join(appDir, folderName);
+      await checkAndCreateFolder(_appDir);
+      const filePath = path.join(_appDir, fileName);
       await fs.writeFile(filePath, content, "utf8");
       return filePath;
    });
-   ipcMain.handle(EMIT_EVENT_NAME.ACCESS_FILE, async (_, fileName) => {
+   ipcMain.handle(EMIT_EVENT_NAME.ACCESS_FILE, async (_, fileName, folderName) => {
       try {
-         await checkAndCreateFolder(appDir);
-         const filePath = path.join(appDir, fileName);
+         const _appDir = path.join(appDir, folderName);
+         await checkAndCreateFolder(_appDir);
+         const filePath = path.join(_appDir, fileName);
          await fs.access(filePath);
          return true;
       } catch (error) {

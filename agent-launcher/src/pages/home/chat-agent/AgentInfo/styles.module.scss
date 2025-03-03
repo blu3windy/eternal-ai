@@ -2,6 +2,7 @@
   .percent {
     font-size: 14px;
     font-weight: 400;
+    align-self: unset;
   }
 
   .btnBuy {
@@ -12,5 +13,15 @@
     border-radius: 100px;
     min-width: 50px;
     height: 25px;
+  }
+
+  .btnInstall {
+    background-color: #000;
+    color: #fff;
+    border-radius: 100px;
+    width: 120px;
+    height: 36px;
+    font-size: 16px;
+    font-weight: 400;
   }
 }

@@ -6,12 +6,18 @@
     .nameText {
       font-size: 24px;
       font-weight: 500;
+      margin-top: -100px;
+      margin-bottom: 40px;
+      position: absolute;
+      bottom: 0;
     }
 
     .descriptionText {
       font-size: 16px;
       font-weight: 400;
-      color: #000
+      color: #000;
+      max-width: 80%;
+      text-align: center;
     }
 
     .btnInstall {
@@ -22,6 +28,29 @@
       height: 48px;
       font-size: 16px;
       font-weight: 400;
+    }
+
+    .glow-on-hover {
+      position: absolute;
+      // top: calc(50% - 30px);
+      // left: calc(50% - 30px);
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      30% {
+        box-shadow: inset 0 0 10px #fff, inset 10px 0 20px #f0f,
+        inset -10px 0 20px #0ff, 10px 0 30px #f0f, -10px 0 30px #0ff,
+        0 0 15px #fff, -5px 0 20px #f0f, 5px 0 20px #0ff;
+      }
+      100% {
+        box-shadow: inset 0 0 30px #fff, inset 20px 0 30px #f0f,
+        inset -20px 0 30px #0ff, 20px 0 40px #f0f, -20px 0 40px #0ff,
+        0 0 25px #fff, -10px 0 40px #f0f, 10px 0 40px #0ff;
+      }
     }
   }
 }

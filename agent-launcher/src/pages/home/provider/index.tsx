@@ -13,8 +13,12 @@ const initialValue: IAgentContext = {
   currentModel: undefined,
   setCurrentModel: () => {},
   chainList: [],
-  installAgent: () => {},
-  isInstalled: false,
+  startAgent: () => {},
+  stopAgent: () => {},
+  isStarting: false,
+  isStopping: false,
+  handleStopDockerAgent: () => {},
+  runningAgents: [],
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -28,6 +32,9 @@ const AgentProvider: React.FC<
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
   const [chainList, setChainList] = useState<IChainConnected[]>([]);
+  const [isStarting, setIsStarting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [runningAgents, setRunningAgents] = useState<number[]>([]);
 
   console.log('stephen: selectedAgent', selectedAgent);
 
@@ -37,10 +44,6 @@ const AgentProvider: React.FC<
     name: string;
     id: string;
   } | null>(null);
-
-  const isInstalled = useMemo(() => {
-    return Number(selectedAgent?.id || 0) % 2 === 0;
-  }, [selectedAgent]);
 
   const fetchChainList = useCallback(async () => {
     const chainList = await cPumpAPI.getChainList();
@@ -69,63 +72,56 @@ const AgentProvider: React.FC<
     }
   }, []);
 
-  useEffect(() => {
-    fetchChainList();
-  }, []);
+  const getRunningAgents = () => {
+    try {
+      setRunningAgents([14483]);
+    } catch (err) {
 
-  const installAgent = (id: number) => {
+    } finally {
 
+    }
   }
 
-  const contextValues: any = useMemo(() => {
-    return {
-      loading,
-      selectedAgent,
-      setSelectedAgent,
-      currentModel,
-      setCurrentModel,
-      chainList,
-      installAgent,
-      isInstalled,
-    };
-  }, [
-    loading,
-    selectedAgent,
-    setSelectedAgent,
-    currentModel,
-    setCurrentModel,
-    chainList,
-    installAgent,
-    isInstalled,
-  ]);
-
   useEffect(() => {
-    installUtilityAgent();
-  }, [selectedAgent]);
+    fetchChainList();
+    getRunningAgents();
+  }, []);
 
-  const installUtilityAgent = async () => {
+  const startAgent = (agent: IAgentToken) => {
+    installUtilityAgent(agent);
+    setRunningAgents(prev => [...prev, agent.id]);
+  }
+
+  const stopAgent = (agent: IAgentToken) => {
+    setRunningAgents(prev => prev.filter(id => id !== agent.id));
+  }
+
+  const installUtilityAgent = async (agent: IAgentToken) => {
     try {
-      if (selectedAgent && selectedAgent.agent_type === AgentType.Utility && selectedAgent.source_url && selectedAgent.source_url.length > 0) {
-        const sourceFile = selectedAgent?.source_url?.find((url) => url.startsWith('ethfs_'));
+      if (agent && agent.agent_type === AgentType.Utility && agent.source_url && agent.source_url.length > 0) {
+        const sourceFile = agent?.source_url?.find((url) => url.startsWith('ethfs_'));
         if (sourceFile) {
-          const filePath = await readSourceFile(sourceFile, `agent_${selectedAgent.agent_id}.js` ,selectedAgent?.network_id || BASE_CHAIN_ID);
+          setIsStarting(true);
+          const filePath = await readSourceFile(sourceFile, `prompt.js`, `agent_${agent.id}`, agent?.network_id || BASE_CHAIN_ID);
           await handleRunDockerAgent(filePath);
         }
       }
     } catch (error: any) {
       alert(error?.message ||'Something went wrong');
+    } finally {
+      setIsStarting(false);
     }
   }
 
-  const readSourceFile = async (filename: string, filenameOnLocal: string, chainId: number) => {
+  const readSourceFile = async (filename: string, fileNameOnLocal: string, folderName: string, chainId: number) => {
     try {
       let filePath: string | undefined = '';
-      const isExisted = await checkFileExistsOnLocal(filenameOnLocal);
+      const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderName);
       if (isExisted) {
-        filePath = await getFilePathOnLocal(filenameOnLocal);
+        filePath = await getFilePathOnLocal(fileNameOnLocal, folderName);
       } else {
         const data = await readFileOnChain(chainId, filename);
-        filePath = await writeFileToLocal(filenameOnLocal, data);
+        filePath = await writeFileToLocal(fileNameOnLocal, folderName, data);
       }
       return filePath;
     } catch (error: any) {
@@ -138,6 +134,46 @@ const AgentProvider: React.FC<
     if (!filePath) return;
     console.log('====: filePath', filePath);
   }
+
+  const handleStopDockerAgent = async (filePath?: string) => {
+    if (!filePath) return;
+    console.log('====: filePath', filePath);
+    try {
+      setIsStopping(true);
+    } catch (err) {
+
+    } finally {
+      setIsStopping(false);
+    }
+  }
+
+  const contextValues: any = useMemo(() => {
+    return {
+      loading,
+      selectedAgent,
+      setSelectedAgent,
+      currentModel,
+      setCurrentModel,
+      chainList,
+      startAgent,
+      stopAgent,
+      isStarting,
+      isStopping,
+      runningAgents
+    };
+  }, [
+    loading,
+    selectedAgent,
+    setSelectedAgent,
+    currentModel,
+    setCurrentModel,
+    chainList,
+    startAgent,
+    stopAgent,
+    isStarting,
+    isStopping,
+    runningAgents,
+  ]);
 
    return (
       <AgentContext.Provider value={contextValues}>

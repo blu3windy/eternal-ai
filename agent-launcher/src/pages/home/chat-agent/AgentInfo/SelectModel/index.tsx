@@ -111,7 +111,6 @@ const SelectModel = ({
   setCurrentModel,
   chainId,
   disabled,
-  title = 'AI model',
   className,
   showDescription = true,
 }: Props) => {

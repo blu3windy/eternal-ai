@@ -29,10 +29,10 @@ interface IElectronAPI {
   // Copy text to clipboard
   safeCopy: (text: string) => Promise<void>
   // File
-  readFile: (fileName: string) => Promise<string>
-  getFilePath: (fileName: string) => Promise<string>
-  accessFile: (fileName: string) => Promise<boolean>
-  writeFile: (fileName: string, data: string) => Promise<string>
+  readFile: (fileName: string, folderName: string) => Promise<string>
+  getFilePath: (fileName: string, folderName: string) => Promise<string>
+  accessFile: (fileName: string, folderName: string) => Promise<boolean>
+  writeFile: (fileName: string, folderName: string, data: string) => Promise<string>
 
   checkDocker: () => Promise<boolean>
   installDocker: () => Promise<void>
