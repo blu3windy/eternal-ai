@@ -2,7 +2,10 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -471,6 +474,42 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 	return nil
 }
 
+func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) error {
+	err := s.JobRunCheck(
+		ctx,
+		"JobAgentTwitterPostCreateAgent",
+		func() error {
+			var retErr error
+			{
+				twitterPosts, err := s.dao.FindAgentTwitterPost(
+					daos.GetDBMainCtx(ctx),
+					map[string][]interface{}{
+						"status = ?": {models.AgentTwitterPostStatusInferSubmitted},
+						"infer_id IS NOT NULL  AND infer_id <> ? ":           {""},
+						"infer_tx_hash IS NOT NULL  AND infer_tx_hash <> ? ": {""},
+					},
+					map[string][]interface{}{},
+					[]string{},
+					0,
+					5,
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				for _, twitterPost := range twitterPosts {
+					//
+					_ = twitterPost
+				}
+			}
+			return retErr
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
+
 func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 	err := s.JobRunCheck(
 		ctx,
@@ -654,6 +693,52 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 						if twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil {
 
 							// TODO @jack
+							response, _, code, err := helpers.HttpRequest(s.conf.KnowledgeBaseConfig.OnChainUrl, "POST",
+								map[string]string{
+									"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
+								}, map[string]interface{}{
+									"chain_id":          strconv.FormatUint(twitterPost.AgentInfo.NetworkID, 10),
+									"model":             twitterPost.AgentInfo.AgentBaseModel,
+									"prompt":            twitterPost.Prompt,
+									"only_create_infer": true,
+								})
+							if err != nil {
+								return err
+							}
+							if code != http.StatusOK {
+								return fmt.Errorf("agent submit video infer response code %d", code)
+							}
+							type SubmitTaskResponse struct {
+								InferID uint64
+								TxHash  string
+							}
+							type DataResponse struct {
+								Data  SubmitTaskResponse `json:"data"`
+								Error string             `json:"error"`
+							}
+
+							dataResponse := DataResponse{}
+							err = json.Unmarshal(response, &dataResponse)
+							if err != nil {
+								return err
+							}
+							if dataResponse.Error != "" {
+								return fmt.Errorf("agent submit video infer response error: %s", dataResponse.Error)
+							}
+							if len(dataResponse.Data.TxHash) == 0 {
+								return fmt.Errorf("agent submit video infer response empty tx hash")
+							}
+							twitterPost.InferTxHash = dataResponse.Data.TxHash
+							twitterPost.InferId = strconv.FormatUint(dataResponse.Data.InferID, 10)
+							twitterPost.Status = models.AgentTwitterPostStatusInferSubmitted
+							err = s.dao.Save(tx, twitterPost)
+							if err != nil {
+								return errs.NewError(err)
+							}
+							//	twitterPost.ImageUrl = videoUrl
+							//	twitterPost.ReplyPostId = refId
+							//	twitterPost.Status = models.AgentTwitterPostStatusReplied
+							//	err = s.dao.Save(tx, twitterPost)
 
 							// call qua api.eternalai.org
 							// curl --location 'https://api.eternalai.org/v1/chat/completions' \
