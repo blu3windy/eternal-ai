@@ -508,7 +508,6 @@ async def process_data(req: InsertInputSchema, model_use: EmbeddingModel):
         shutil.rmtree(tmp_dir, ignore_errors=True)
         logger.info(f"Completed handling task: {req.id}")
 
-@schedule.every(5).minutes.do
 def resume_pending_tasks():
     if len(_running_tasks) > 0:
         return
