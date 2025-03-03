@@ -102,7 +102,7 @@ const AgentProvider: React.FC<
         const sourceFile = agent?.source_url?.find((url) => url.startsWith('ethfs_'));
         if (sourceFile) {
           setIsStarting(true);
-          const filePath = await readSourceFile(sourceFile, `prompt.js`, `agent_${agent.id}`, agent?.network_id || BASE_CHAIN_ID);
+          const filePath = await readSourceFile(sourceFile, `prompt.js`, `${agent.id}.js`, agent?.network_id || BASE_CHAIN_ID);
           await handleRunDockerAgent(filePath);
         }
       }
