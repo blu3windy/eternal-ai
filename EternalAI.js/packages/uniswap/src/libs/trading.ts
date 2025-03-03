@@ -13,9 +13,9 @@ import {
   SwapRouter,
   Trade,
 } from '@uniswap/v3-sdk';
-import { ethers } from 'ethers';
+
 import JSBI from 'jsbi';
-import { BigNumber } from 'ethers';
+import * as ethers from 'ethers';
 
 import { CurrentConfig } from './config';
 import {
@@ -36,7 +36,7 @@ import {
 } from './providers';
 import { fromReadableAmount } from './utils';
 import { ZeroAddress } from '../const';
-import { TTransactionResponse } from '@/type';
+import { TTransactionResponse } from '@/types';
 
 export type TokenTrade = Trade<Token, Token, TradeType>;
 

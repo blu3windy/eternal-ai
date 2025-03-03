@@ -1,5 +1,6 @@
-import { TTransactionResponse } from './../type';
-import { BigNumber, ethers, providers, Wallet } from 'ethers';
+import { TTransactionResponse } from './../types';
+// import { BigNumber, ethers, providers, Wallet } from 'ethers';
+import * as ethers from 'ethers';
 import { CurrentConfig, Environment } from './config';
 
 let wallet: ethers.Wallet;
@@ -22,7 +23,7 @@ export enum TransactionState {
 
 // Provider and Wallet Functions
 
-export function getProvider(): providers.Provider | null {
+export function getProvider(): ethers.providers.Provider | null {
   if (!wallet) {
     wallet = createWallet();
   }
@@ -44,7 +45,7 @@ export async function sendTransaction(
   transaction: ethers.providers.TransactionRequest
 ): Promise<TTransactionResponse> {
   if (transaction.value) {
-    transaction.value = BigNumber.from(transaction.value);
+    transaction.value = ethers.BigNumber.from(transaction.value);
   }
   return sendTransactionViaWallet(transaction);
 }
@@ -66,7 +67,7 @@ async function sendTransactionViaWallet(
   transaction: ethers.providers.TransactionRequest
 ): Promise<TTransactionResponse> {
   if (transaction.value) {
-    transaction.value = BigNumber.from(transaction.value);
+    transaction.value = ethers.BigNumber.from(transaction.value);
   }
   const txRes = await wallet.sendTransaction(transaction);
 

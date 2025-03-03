@@ -7,9 +7,10 @@ import {
   RPC_URL,
   SYSTEM_PROMPT,
   WORKER_HUB_ABI,
-} from './const';
+} from '../const';
 import { stringToBytes, waitForTransactionReceipt } from './utils';
-import { ethers } from 'ethers';
+// import { ethers } from 'ethers';
+import * as ethers from 'ethers';
 
 export class InferenceResponse {
   result_uri: string;

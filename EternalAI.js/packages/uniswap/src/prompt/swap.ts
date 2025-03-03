@@ -1,16 +1,20 @@
-import { WETH_TOKEN } from './libs/constants';
-import { API_URL, ETH_CHAIN_ID, getRPC, ZeroAddress } from './const';
+import { WETH_TOKEN } from '../libs/constants';
+import { API_URL, ETH_CHAIN_ID, getRPC, ZeroAddress } from '../const';
 import { Token } from '@uniswap/sdk-core';
-import { changeWallet, createWallet, TransactionState } from './libs/providers';
-import { createTrade, executeTrade } from './libs/trading';
-import { CurrentConfig, Environment } from './libs/config';
+import {
+  changeWallet,
+  createWallet,
+  TransactionState,
+} from '../libs/providers';
+import { createTrade, executeTrade } from '../libs/trading';
+import { CurrentConfig, Environment } from '../libs/config';
 import {
   getCurrencyBalance,
   getCurrencyDecimal,
   unwrapETH,
   wrapETH,
-} from './libs/wallet';
-import { TTokenInfo, TTransactionResponse } from './type';
+} from '../libs/wallet';
+import { TTokenInfo, TTransactionResponse } from '../types';
 
 export class SwapReq {
   function_name: string;

@@ -1,8 +1,10 @@
 // This file contains code to easily connect to and get information from a wallet on chain
 
 import { Currency } from '@uniswap/sdk-core';
-import { BigNumber, ethers } from 'ethers';
-import { providers } from 'ethers';
+// import { BigNumber, ethers } from 'ethers';
+// import { providers } from 'ethers';
+import * as ethers from 'ethers';
+
 import JSBI from 'jsbi';
 
 import {
@@ -21,7 +23,7 @@ import {
 import { toReadableAmount } from './utils';
 
 export async function getCurrencyBalance(
-  provider: providers.Provider,
+  provider: ethers.providers.Provider,
   address: string,
   currency: Currency
 ): Promise<string> {
@@ -44,7 +46,7 @@ export async function getCurrencyBalance(
 }
 
 export async function getCurrencyDecimal(
-  provider: providers.Provider,
+  provider: ethers.providers.Provider,
   address: string
 ): Promise<number> {
   // Get currency otherwise
