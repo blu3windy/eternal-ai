@@ -247,6 +247,7 @@ type Config struct {
 	LuckyMoneyAdminAddressSol   string                       `json:"lucky_money_admin_address_sol"`
 	WebhookUrl                  string                       `json:"webhook_url"`
 	KnowledgeBaseConfig         KnowledgeBaseConfig          `json:"knowledge_base_config"`
+	GetResultInferUrl           string                       `json:"get_result_infer_url"`
 	AgentDeployer               struct {
 		Url    string `json:"url"`
 		ApiKey string `json:"api_key"`
