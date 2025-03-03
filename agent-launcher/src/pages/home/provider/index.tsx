@@ -5,6 +5,7 @@ import {BASE_CHAIN_ID} from '@constants/chains';
 import {checkFileExistsOnLocal, getFilePathOnLocal, readFileOnChain, writeFileToLocal} from '@contract/file';
 import {AgentType} from '@pages/home/list-agent/index.tsx';
 import CAgentTokenAPI from "../../../services/api/agents-token";
+import {compareString} from "@utils/string.ts";
 
 const initialValue: IAgentContext = {
   loading: false,
@@ -44,6 +45,25 @@ const AgentProvider: React.FC<
     name: string;
     id: string;
   } | null>(null);
+
+  console.log('stephen: selectedAgent', selectedAgent);
+  console.log('stephen: currentModel', currentModel);
+  console.log('================================');
+
+  useEffect(() => {
+    if (selectedAgent && chainList) {
+      const supportModelObj = chainList?.find((v) =>
+        compareString(v.chain_id, selectedAgent.network_id),
+      )?.support_model_names;
+
+      if (supportModelObj) {
+        setCurrentModel({
+          name: selectedAgent.agent_base_model || Object.keys(supportModelObj)[0],
+          id: supportModelObj[selectedAgent.agent_base_model] || Object.values(supportModelObj)[0],
+        });
+      }
+    }
+  }, [selectedAgent, chainList]);
 
   const fetchChainList = useCallback(async () => {
     const chainList = await cPumpAPI.getChainList();
