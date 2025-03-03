@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 @log_function_call
-def search_from_bing(query: str, top_k: int = 1) -> List[str]:
+def search_from_bing(
+    query: str, top_k: int = 1, task_name: str = "N/A"
+) -> List[str]:
     """
     Retrieves and integrates up-to-date information on topics where recent events or developments (2024 onward)
     are essential to accurately address the user's query.
@@ -33,6 +35,7 @@ def search_from_bing(query: str, top_k: int = 1) -> List[str]:
         params=[
             {"key": "query", "value": query},
             {"key": "top_k", "value": top_k},
+            {"key": "task_name", "value": task_name},
         ],
         append_uuid=True,
     )

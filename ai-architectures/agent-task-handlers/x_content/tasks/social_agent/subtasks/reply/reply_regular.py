@@ -53,6 +53,7 @@ class ReplyRegularSubtask(ReplySubtaskBase):
         resp = await twitter_v2.get_relevent_information_v2(
             self.kn_base,
             tweets=tweets_context,
+            task_name=self.log.task,
         )
         knowledge_v2 = (
             StructuredInformation(knowledge=[], news=[])
