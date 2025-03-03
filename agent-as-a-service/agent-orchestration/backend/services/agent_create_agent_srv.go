@@ -443,6 +443,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 												TwitterConversationId: v.Tweet.ConversationID, // bai goc cua conversation
 												PostType:              models.AgentSnapshotPostActionTypeGenerateVideo,
 												IsMigrated:            true,
+												InferId:               "20250",
 											}
 
 											err = s.dao.Create(tx, m)
@@ -729,7 +730,6 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 					if isValid {
 						if twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil {
 
-							// TODO @jack
 							response, _, code, err := helpers.HttpRequest(s.conf.KnowledgeBaseConfig.OnChainUrl, "POST",
 								map[string]string{
 									"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
