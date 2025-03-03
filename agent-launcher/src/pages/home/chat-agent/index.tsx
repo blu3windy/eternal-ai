@@ -1,19 +1,22 @@
-import { Box, Button, Flex, Image, Text } from "@chakra-ui/react";
+import {Box, Button, Flex, Image, Text} from "@chakra-ui/react";
 import ChatBox from "@pages/home/chat-agent/ChatAgent/components/ChatBox";
-import { ChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
+import {ChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import s from "./styles.module.scss";
-import AgentInfo from "@pages/home/chat-agent/AgentInfo";
-import React, { useContext, useMemo } from "react";
-import { AgentContext } from "@pages/home/provider";
+import React, {useContext} from "react";
+import {AgentContext} from "@pages/home/provider";
+import {Wallet} from "ethers";
+import {JsonRpcProvider} from "@ethersproject/providers";
 
 function ChatAgent() {
   const {
     selectedAgent,
     startAgent,
     stopAgent,
-    runningAgents,
     isStarting,
     isStopping,
+    agentWallet,
+    isRunning,
+    setAgentWallet,
   } = useContext(AgentContext);
 
   const avatarUrl =
@@ -24,10 +27,6 @@ function ChatAgent() {
   const description =
     selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
-  const isRunning = useMemo(() => {
-    return runningAgents.includes(selectedAgent?.id as number);
-  }, [runningAgents, selectedAgent]);
-
   const handleInstall = () => {
     if (isRunning) {
       stopAgent(selectedAgent);
@@ -36,10 +35,15 @@ function ChatAgent() {
     }
   };
 
+  const handleCreateWallet = () => {
+    const wallet = new Wallet("0x5776efc21d0e98afd566d3cb46e2eb1ccd7406f4feaee9c28b0fcffc851cc8b3", new JsonRpcProvider("https://eth.llamarpc.com"));
+    setAgentWallet(wallet);
+  }
+
   return (
     <Box className={s.container}>
       {/* <AgentInfo /> */}
-      {isRunning ? (
+      {isRunning && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet)) ? (
         <ChatAgentProvider>
           <ChatBox />
         </ChatAgentProvider>
@@ -74,15 +78,26 @@ function ChatAgent() {
           {description && (
             <Text className={s.descriptionText}>{description}</Text>
           )}
-          <Button
-            className={s.btnInstall}
-            onClick={handleInstall}
-            isLoading={isStarting || isStopping}
-            isDisabled={isStarting || isStopping}
-            loadingText={isStarting ? "Starting..." : "Stopping..."}
-          >
-            {isRunning ? "Stop" : "Start"}
-          </Button>
+          {
+            isRunning && selectedAgent?.required_wallet && !agentWallet ? (
+              <Button
+                className={s.btnInstall}
+                onClick={handleCreateWallet}
+              >
+                Create wallet
+              </Button>
+            ) : (
+              <Button
+                className={s.btnInstall}
+                onClick={handleInstall}
+                isLoading={isStarting || isStopping}
+                isDisabled={isStarting || isStopping}
+                loadingText={isStarting ? "Starting..." : "Stopping..."}
+              >
+                {isRunning ? "Stop" : "Start"}
+              </Button>
+            )
+          }
         </Flex>
       )}
     </Box>

@@ -1,24 +1,12 @@
-import React, {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { IAgentContext } from "./interface";
-import {
-  IAgentToken,
-  IChainConnected,
-} from "../../../services/api/agents-token/interface.ts";
-import { BASE_CHAIN_ID } from "@constants/chains";
-import {
-  checkFileExistsOnLocal,
-  getFilePathOnLocal,
-  readFileOnChain,
-  writeFileToLocal,
-} from "@contract/file";
-import { AgentType } from "@pages/home/list-agent/index.tsx";
+import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState,} from "react";
+import {IAgentContext} from "./interface";
+import {IAgentToken, IChainConnected,} from "../../../services/api/agents-token/interface.ts";
+import {BASE_CHAIN_ID} from "@constants/chains";
+import {checkFileExistsOnLocal, getFilePathOnLocal, readFileOnChain, writeFileToLocal,} from "@contract/file";
+import {AgentType} from "@pages/home/list-agent/index.tsx";
 import CAgentTokenAPI from "../../../services/api/agents-token";
+import {compareString} from "@utils/string.ts";
+import {Wallet} from "ethers";
 
 const initialValue: IAgentContext = {
   loading: false,
@@ -35,6 +23,9 @@ const initialValue: IAgentContext = {
   runningAgents: [],
   isTrade: false,
   setIsTrade(v) {},
+  agentWallet: undefined,
+  setAgentWallet: (v) => {},
+  isRunning: false,
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -54,8 +45,7 @@ const AgentProvider: React.FC<
   const [isStopping, setIsStopping] = useState(false);
   const [runningAgents, setRunningAgents] = useState<number[]>([]);
   const [isTrade, setIsTrade] = useState(false);
-
-  console.log("stephen: selectedAgent", selectedAgent);
+  const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
 
   const cPumpAPI = new CAgentTokenAPI();
 
@@ -63,6 +53,29 @@ const AgentProvider: React.FC<
     name: string;
     id: string;
   } | null>(null);
+
+  console.log('stephen: selectedAgent', selectedAgent);
+  console.log('stephen: currentModel', currentModel);
+  console.log('================================');
+
+  const isRunning = useMemo(() => {
+    return runningAgents.includes(selectedAgent?.id as number);
+  }, [runningAgents, selectedAgent]);
+
+  useEffect(() => {
+    if (selectedAgent && chainList) {
+      const supportModelObj = chainList?.find((v) =>
+        compareString(v.chain_id, selectedAgent.network_id),
+      )?.support_model_names;
+
+      if (supportModelObj) {
+        setCurrentModel({
+          name: selectedAgent.agent_base_model || Object.keys(supportModelObj)[0],
+          id: supportModelObj[selectedAgent.agent_base_model] || Object.values(supportModelObj)[0],
+        });
+      }
+    }
+  }, [selectedAgent, chainList]);
 
   const fetchChainList = useCallback(async () => {
     const chainList = await cPumpAPI.getChainList();
@@ -104,6 +117,11 @@ const AgentProvider: React.FC<
     getRunningAgents();
   }, []);
 
+  // useEffect(() => {
+  //   const wallet = new Wallet("0x5776efc21d0e98afd566d3cb46e2eb1ccd7406f4feaee9c28b0fcffc851cc8b3", new JsonRpcProvider("https://eth.llamarpc.com"));
+  //   setAgentWallet(wallet);
+  // }, []);
+
   const startAgent = (agent: IAgentToken) => {
     installUtilityAgent(agent);
     setRunningAgents((prev) => [...prev, agent.id]);
@@ -115,24 +133,15 @@ const AgentProvider: React.FC<
 
   const installUtilityAgent = async (agent: IAgentToken) => {
     try {
-      if (
-        agent &&
-        agent.agent_type === AgentType.Utility &&
-        agent.source_url &&
-        agent.source_url.length > 0
-      ) {
-        const sourceFile = agent?.source_url?.find((url) =>
-          url.startsWith("ethfs_")
-        );
-        if (sourceFile) {
-          setIsStarting(true);
-          const filePath = await readSourceFile(
-            sourceFile,
-            `prompt.js`,
-            `${agent.id}.js`,
-            agent?.network_id || BASE_CHAIN_ID
-          );
-          await handleRunDockerAgent(filePath);
+      if (agent && agent.agent_type === AgentType.Utility && agent.source_url) {
+        const source_urls: string[] = JSON.parse(agent.source_url);
+        if (source_urls?.length > 0) {
+          const sourceFile = source_urls?.find((url) => url.startsWith('ethfs_'));
+          if (sourceFile) {
+            setIsStarting(true);
+            const filePath = await readSourceFile(sourceFile, `prompt.js`, `${agent.id}.js`, agent?.network_id || BASE_CHAIN_ID);
+            await handleRunDockerAgent(filePath);
+          }
         }
       }
     } catch (error: any) {
@@ -198,6 +207,9 @@ const AgentProvider: React.FC<
       runningAgents,
       isTrade,
       setIsTrade,
+      agentWallet,
+      setAgentWallet,
+      isRunning,
     };
   }, [
     loading,
@@ -213,6 +225,9 @@ const AgentProvider: React.FC<
     runningAgents,
     isTrade,
     setIsTrade,
+    agentWallet,
+    setAgentWallet,
+    isRunning
   ]);
 
   return (

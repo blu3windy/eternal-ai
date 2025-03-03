@@ -1,9 +1,9 @@
 import s from "./styles.module.scss";
-import { Button, Flex, Text } from "@chakra-ui/react";
+import {Button, Flex, Text} from "@chakra-ui/react";
 import SelectModel from "@pages/home/chat-agent/AgentInfo/SelectModel";
-import React, { useContext, useMemo } from "react";
-import { AgentContext } from "@pages/home/provider";
-import { formatCurrency } from "@utils/format.ts";
+import React, {useContext} from "react";
+import {AgentContext} from "@pages/home/provider";
+import {formatCurrency} from "@utils/format.ts";
 import Percent24h from "@components/Percent";
 import InfoTooltip from "@components/InfoTooltip";
 
@@ -14,17 +14,13 @@ const AgentInfo = () => {
     selectedAgent,
     stopAgent,
     isStopping,
-    runningAgents,
     setIsTrade,
     isTrade,
+    isRunning,
   } = useContext(AgentContext);
 
   const description =
     selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
-
-  const isRunning = useMemo(() => {
-    return runningAgents.includes(selectedAgent?.id as number);
-  }, [runningAgents, selectedAgent]);
 
   const handleInstall = (e: any) => {
     stopAgent(selectedAgent);
