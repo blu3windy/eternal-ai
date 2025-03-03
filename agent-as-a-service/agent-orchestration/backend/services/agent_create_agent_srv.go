@@ -558,7 +558,7 @@ func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 				twitterPosts, err := s.dao.FindAgentTwitterPost(
 					daos.GetDBMainCtx(ctx),
 					map[string][]interface{}{
-						"agent_info_id in (?)": {[]uint{s.conf.EternalAiAgentInfoId}},
+						"agent_info_id in (?)": {[]uint{s.conf.VideoAiAgentInfoId}},
 						"status = ?":           {models.AgentTwitterPostStatusNew},
 						"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
 					},
@@ -674,7 +674,7 @@ func (s *Service) JobAgentTwitterPostSubmitVideoInfer(ctx context.Context) error
 				twitterPosts, err := s.dao.FindAgentTwitterPost(
 					daos.GetDBMainCtx(ctx),
 					map[string][]interface{}{
-						"agent_info_id in (?)": {[]uint{s.conf.EternalAiAgentInfoId}},
+						"agent_info_id in (?)": {[]uint{s.conf.VideoAiAgentInfoId}},
 						"status = ?":           {models.AgentTwitterPostWaitSubmitVideoInfer},
 						"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
 					},
@@ -734,9 +734,9 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 								map[string]string{
 									"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
 								}, map[string]interface{}{
-									"chain_id":          strconv.FormatUint(twitterPost.AgentInfo.NetworkID, 10),
-									"model":             twitterPost.AgentInfo.AgentBaseModel,
-									"prompt":            twitterPost.Prompt,
+									"chain_id":          "8453",
+									"model":             "wan",
+									"prompt":            twitterPost.ExtractContent,
 									"only_create_infer": true,
 								})
 							if err != nil {
