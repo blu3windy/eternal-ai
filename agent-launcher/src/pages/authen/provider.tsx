@@ -13,7 +13,7 @@ interface AuthContextType {
    signer: Wallet | undefined;
    hasUser: boolean;
    onLogin: (pass: string) => Promise<void>;
-   genAgentSecretKey: (_: { agentId: string, agentName: string }) => Promise<void>;
+   genAgentSecretKey: (_: { chainId: string, agentName: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,8 +51,8 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
    }
 
 
-   const genAgentSecretKey = async (params: { agentId: string, agentName: string }) => {
-      const signature = await signer?.signMessage(`This message generate secret key for agent ${params.agentName} networkId ${params.agentId}`);
+   const genAgentSecretKey = async (params: { chainId: string, agentName: string }) => {
+      const signature = await signer?.signMessage(`This message generate secret key for agent ${params.agentName} networkId ${params.chainId}`);
       // derive signature to private key
       return eaiCrypto.derivePrivateKeyFromSignature(signature || "");
    }
