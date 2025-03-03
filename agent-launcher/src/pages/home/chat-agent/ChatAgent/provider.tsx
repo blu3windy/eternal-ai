@@ -76,11 +76,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const threadId = selectedAgent?.agent_name || 'Agent';
 
    const isAllowChat = useMemo(() => {
-      if(selectedAgent) {
-         return Number(selectedAgent?.wallet_balance) > 0;
-      }
-
-      return false;
+      return true;
+      // if(selectedAgent) {
+      //    return Number(selectedAgent?.wallet_balance) > 0;
+      // }
+      //
+      // return false;
    }, [selectedAgent]);
 
    useEffect(() => {
