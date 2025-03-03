@@ -361,6 +361,7 @@ type AgentTwitterPost struct {
 	ImageUrl              string
 	InferTxHash           string
 	InferId               string
+	SubmitSolutionTxHash  string
 	InferAt               *time.Time
 	InferNum              uint                   `gorm:"default:0"`
 	Status                AgentTwitterPostStatus `gorm:"index"`
