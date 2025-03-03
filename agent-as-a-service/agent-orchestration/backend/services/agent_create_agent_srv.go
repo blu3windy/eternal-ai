@@ -497,8 +497,45 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 					return errs.NewError(err)
 				}
 				for _, twitterPost := range twitterPosts {
-					//
-					_ = twitterPost
+					url := fmt.Sprintf("%v?infer_id=%v&tx_hash=%v", s.conf.GetResultInferUrl, twitterPost.InferId, twitterPost.InferTxHash)
+					body, _, code, err := helpers.HttpRequest(url, "GET", nil, nil)
+					if err != nil {
+						return err
+					}
+					if code != http.StatusOK {
+						return fmt.Errorf("response with code:%v , body :%v", err, body)
+					}
+					type WorkerProcessHistory struct {
+						CID        string `bson:"cid" json:"cid" json:"cid,omitempty"`
+						ResultLink string `bson:"result_link" json:"result_link" json:"result_link,omitempty"` // link to download result for all model: TEXT AND IMAGE
+						ChainID    string `bson:"chain_id" json:"chain_id" json:"chain_id,omitempty"`
+						TxHash     string `bson:"tx_hash" json:"tx_hash" json:"tx_hash,omitempty"`
+					}
+					type Response struct {
+						Data WorkerProcessHistory `json:"data"`
+					}
+					response := &Response{}
+					err = json.Unmarshal(body, &response)
+					if err != nil {
+						return err
+					}
+					if len(response.Data.TxHash) == 0 {
+						return nil
+					}
+					err = daos.WithTransaction(
+						daos.GetDBMainCtx(ctx),
+						func(tx *gorm.DB) error {
+							twitterPost.Status = models.AgentTwitterPostStatusInferSubmitted
+							twitterPost.ImageUrl = strings.ReplaceAll(response.Data.ResultLink, "ipfs://", "https://gateway.lighthouse.storage/ipfs/")
+							err = s.dao.Save(tx, twitterPost)
+							if err != nil {
+								return errs.NewError(err)
+							}
+							return nil
+						})
+					if err != nil {
+						return err
+					}
 				}
 			}
 			return retErr
