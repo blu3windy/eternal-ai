@@ -41,6 +41,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
    dockerCheckInstall: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL),
    dockerInstall: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_INSTALL),
    dockerBuild: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_BUILD),
-   dockerRunAgent: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_RUN_AGENT),
-   dockerStopAgent: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_STOP_AGENT),
+   dockerRunAgent: (agentName: string, chainId: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, agentName, chainId),
+   dockerStopAgent: (agentName: string, chainId: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_STOP_AGENT, agentName, chainId),
 });
