@@ -1,4 +1,4 @@
-import {prompt} from "./bundle.es.js";
+import uniswap from "./bundle.es.js";
 ////
 import fetch from 'node-fetch';
 import {createRequire} from 'module';
@@ -22,5 +22,11 @@ async function loadLibs(lib) {
 }
 
 await loadLibs("https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js")
-const content = await prompt("Swap 1 PEPE to USDT", "0x4a3dc71d1baa9405136dd496bd4a60193f37ccc6d5e47c1799e728339a007d1c")
+const prompt = {
+    privateKey: '0x4a3dc71d1baa9405136dd496bd4a60193f37ccc6d5e47c1799e728339a007d1c',
+    messages: [{
+        content: "Swap 1 PEPE to USDT",
+    }]
+}
+const content = await uniswap.prompt(prompt)
 console.log(content);

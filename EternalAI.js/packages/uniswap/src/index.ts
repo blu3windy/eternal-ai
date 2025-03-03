@@ -13,6 +13,7 @@ import { sleep } from './utils';
 import { SwapReq, UniSwapAI } from './swap';
 import { TransactionState } from './libs/providers';
 import { TTransactionResponse } from './type';
+import {PromptPayload} from "@/types";
 
 export const call_uniswap = async (
   private_key: string,
@@ -312,20 +313,20 @@ export const uni_swap_ai = async (command: string, args: any) => {
   }
 };
 
-// export const prompt = async (prompt: string, private_key: string) => {
-//   try {
-//     const { state, tx } = await uni_swap_ai('api-infer', {
-//       prompt: prompt,
-//       private_key: private_key,
-//       model: 'gpt-4o-mini',
-//       api_key: '',
-//       host: 'https://api.openai.com/v1',
-//     });
-//     console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
-//     return `Swapped with tx ${tx.transactionHash}`;
-//   } catch (e) {
-//     return `Swapped err ${e?.message}`;
-//   }
-// };
+export const prompt = async (promptPayload: PromptPayload) => {
+  try {
+    const { state, tx } = await uni_swap_ai('api-infer', {
+      prompt: promptPayload.messages[promptPayload.messages.length - 1].content,
+      private_key: promptPayload.privateKey,
+      model: 'gpt-4o-mini',
+      api_key: '',
+      host: 'https://api.openai.com/v1',
+    });
+    console.log(`swap tx ${JSON.stringify(tx, null, 4)} state ${state}`);
+    return `Swapped with tx ${tx.transactionHash}`;
+  } catch (e) {
+    return `Swapped err ${e?.message}`;
+  }
+};
 // for browser
 // window.prompt = prompt
