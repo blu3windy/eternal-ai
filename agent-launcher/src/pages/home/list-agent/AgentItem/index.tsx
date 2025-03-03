@@ -6,6 +6,7 @@ import { AgentContext } from "../../provider";
 import { DefaultAvatar } from "../../../../components/DefaultAvatar";
 import { formatCurrency, labelAmountOrNumberAdds } from "../../../../utils/format.ts";
 import cs from "clsx";
+import {AgentType} from "@pages/home/list-agent";
 
 interface IProps {
   token: IAgentToken;
@@ -25,9 +26,9 @@ const AgentItem = ({ token }: IProps) => {
       return runningAgents.includes(token?.id as number);
    }, [runningAgents, token]);
 
-   const isUtilityAgent = useMemo(() => {
-      return token?.id % 2 === 0;
-   }, [token]);
+  const isUtilityAgent = useMemo(() => {
+    return token?.agent_type === AgentType.Utility;
+  }, [token]);
 
    const handleGoToChat = (e: any, token_address?: any) => {
       if (token_address) {
@@ -49,68 +50,72 @@ const AgentItem = ({ token }: IProps) => {
       }
    }
 
-   return (
-      <Flex
-         key={token.id}
-         className={cs(s.container, token?.id === selectedAgent?.id ? s.isSelected : '')}
-         flexDirection="column"
-         position={'relative'}
-         onClick={(e) =>
-            handleGoToChat(e, token?.id || token?.token_address || token?.agent_id)
-         }
+  return (
+    <Flex
+      key={token.id}
+      className={cs(s.container, token?.id === selectedAgent?.id ? s.isSelected : '')}
+      flexDirection="column"
+      position={'relative'}
+      onClick={(e) =>
+        handleGoToChat(e, token?.id || token?.token_address || token?.agent_id)
+      }
+    >
+      <Grid
+        className={s.content}
+        templateColumns={'40px 1fr'}
+        gap="12px"
+        w={'100%'}
       >
-         <Grid
-            className={s.content}
-            templateColumns={'40px 1fr'}
-            gap="12px"
-            w={'100%'}
-         >
-            <Flex position={"relative"}>
-               {avatarUrl ? (
-                  <Image
-                     w={'40px'}
-                     objectFit={'cover'}
-                     src={avatarUrl}
-                     maxHeight={'40px'}
-                     maxWidth={'40px'}
-                     borderRadius={'50%'}
-                  />
-               ) : (
-                  <DefaultAvatar
-                     width={'40px'}
-                     height={'40px'}
-                     name={token?.agent_name}
-                     fontSize={14}
-                  />
-               )}
-               {
-                  isUtilityAgent && (
-                     <Image src={'/icons/ic-utility-agent.svg'} w={"16px"} h={"16px"} position={"absolute"} top={"24px"} right={"0px"}/>
-                  )
-               }
+        <Flex position={"relative"}>
+          {avatarUrl ? (
+            <Image
+              w={'40px'}
+              objectFit={'cover'}
+              src={avatarUrl}
+              maxHeight={'40px'}
+              maxWidth={'40px'}
+              borderRadius={'50%'}
+            />
+          ) : (
+            <DefaultAvatar
+              width={'40px'}
+              height={'40px'}
+              name={token?.agent_name}
+              fontSize={14}
+            />
+          )}
+          {
+            isUtilityAgent && (
+              <Image src={'/icons/ic-utility-agent.svg'} w={"16px"} h={"16px"} position={"absolute"} top={"24px"} right={"0px"}/>
+            )
+          }
+        </Flex>
+        <Flex flexDirection="column" w={'100%'} gap={"8px"}>
+          <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
+            <Flex gap={"6px"}>
+              <Text className={s.nameText}>
+                {token?.agent_name}{' '}
+              </Text>
+              <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
             </Flex>
-            <Flex flexDirection="column" w={'100%'} gap={"8px"}>
-               <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
-                  <Flex gap={"6px"}>
-                     <Text className={s.nameText}>
-                        {token?.agent_name}{' '}
-                     </Text>
-                     <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
-                  </Flex>
-                  {/*<Text className={s.agentTypeTag}>{AgentTypeName[token?.agent_type]}</Text>*/}
-                  <Button
-                     className={s.btnInstall}
-                     onClick={handleInstall}
-                     isLoading={isStarting || isStopping}
-                     isDisabled={isStarting || isStopping}
-                     loadingText={isStarting ? 'Starting...' : 'Stopping...'}
-                  >{isRunning ? 'Stop' : 'Start'}</Button>
-               </Flex>
-               {
-                  description && (
-                     <Text className={s.descriptionText}>{description}</Text>
-                  )
-               }
+            {/*<Text className={s.agentTypeTag}>{AgentTypeName[token?.agent_type]}</Text>*/}
+            {
+              isUtilityAgent && (
+                <Button
+                  className={s.btnInstall}
+                  onClick={handleInstall}
+                  isLoading={isStarting || isStopping}
+                  isDisabled={isStarting || isStopping}
+                  loadingText={isStarting ? 'Starting...' : 'Stopping...'}
+                >{isRunning ? 'Stop' : 'Start'}</Button>
+              )
+            }
+          </Flex>
+          {
+            description && (
+              <Text className={s.descriptionText}>{description}</Text>
+            )
+          }
 
                <SimpleGrid columns={3}>
                   <Text className={s.infoText}>
