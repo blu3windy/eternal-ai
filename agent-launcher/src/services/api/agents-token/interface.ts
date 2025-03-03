@@ -73,9 +73,10 @@ export interface IAgentToken {
   token_desc: string;
   agent_type: AgentType;
   kb_id?: number;
-  source_url?: string[];
-  depend_agents?: string[];
+  source_url?: string;
+  depend_agents?: string;
   required_wallet?: boolean;
+  is_onchain?: boolean;
 }
 
 export interface Meme {

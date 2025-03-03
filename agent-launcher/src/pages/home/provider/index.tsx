@@ -178,30 +178,22 @@ const AgentProvider: React.FC<
     setRunningAgents((prev) => [...prev, agent.id]);
   };
 
-  const stopAgent = (agent: IAgentToken) => {
+  const stopAgent = async (agent: IAgentToken) => {
     setRunningAgents((prev) => prev.filter((id) => id !== agent.id));
+    await handleStopDockerAgent(agent);
   };
 
   const installUtilityAgent = async (agent: IAgentToken) => {
     try {
-      if (
-        agent &&
-        agent.agent_type === AgentType.Utility &&
-        agent.source_url &&
-        agent.source_url.length > 0
-      ) {
-        const sourceFile = agent?.source_url?.find((url) =>
-          url.startsWith("ethfs_")
-        );
-        if (sourceFile) {
-          setIsStarting(true);
-          const filePath = await readSourceFile(
-            sourceFile,
-            `prompt.js`,
-            `${agent.id}.js`,
-            agent?.network_id || BASE_CHAIN_ID
-          );
-          await handleRunDockerAgent(filePath);
+      if (agent && agent.agent_type === AgentType.Utility && agent.source_url) {
+        const source_urls: string[] = JSON.parse(agent.source_url);
+        if (source_urls?.length > 0) {
+          const sourceFile = source_urls?.find((url) => url.startsWith('ethfs_'));
+          if (sourceFile) {
+            setIsStarting(true);
+            const filePath = await readSourceFile(sourceFile, `prompt.js`, `${agent.id}.js`, agent?.network_id || BASE_CHAIN_ID);
+            await handleRunDockerAgent(filePath, agent);
+          }
         }
       }
     } catch (error: any) {
@@ -236,16 +228,16 @@ const AgentProvider: React.FC<
   };
 
   // handle run docker here
-  const handleRunDockerAgent = async (filePath?: string) => {
-    if (!filePath) return;
+  const handleRunDockerAgent = async (filePath?: string, agent?: IAgentToken) => {
     console.log("====: filePath", filePath);
+    if (!filePath) return;
+    await window.electronAPI.dockerRunAgent(agent?.agent_name, agent?.network_id);
   };
 
-  const handleStopDockerAgent = async (filePath?: string) => {
-    if (!filePath) return;
-    console.log("====: filePath", filePath);
+  const handleStopDockerAgent = async (agent?: IAgentToken) => {
     try {
       setIsStopping(true);
+      await window.electronAPI.dockerStopAgent(agent?.agent_name, agent?.network_id);
     } catch (err) {
     } finally {
       setIsStopping(false);

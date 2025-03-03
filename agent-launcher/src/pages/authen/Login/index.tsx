@@ -1,4 +1,4 @@
-import { Box, Flex, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Text } from "@chakra-ui/react";
 import BaseButton from "@components/BaseButton";
 import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -76,6 +76,14 @@ const Login = () => {
             <Text fontSize="24px" fontWeight="400" color="#2E2E2E" textAlign="center">
                 The decentralized AI awaits.
             </Text>
+            <Button
+               onClick={() => {
+                  console.log('Test Run Docker 1-leon');
+                  window.electronAPI.dockerRunAgent('leon', '1');
+               }}
+            >
+               Test Run Docker
+            </Button>
          </Flex>
          <Formik
             initialValues={{ password: '' }}
