@@ -1477,7 +1477,9 @@ func (s *Service) TestVideo(ctx context.Context) {
 	var err error
 	if videoUrl != "" {
 		mediaID, err = s.twitterAPI.UploadVideo(models.GetImageUrl(videoUrl), []string{s.conf.TokenTwiterID})
-		fmt.Println(err.Error())
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 	}
 
 	if mediaID != "" {
