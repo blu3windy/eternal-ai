@@ -735,3 +735,45 @@ func (s *Server) getUserAddressFromTK1Token(c *gin.Context) (string, error) {
 	}
 	return authData.Address, nil
 }
+
+func (s *Server) authCheckSignatureMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userAddress := c.GetHeader("XXX-Address")
+		userMessage := c.GetHeader("XXX-Message")
+		signature := c.GetHeader("XXX-Signature")
+
+		if signature == "" || userAddress == "" || userMessage == "" {
+			ctxAbortWithStatusJSON(c, http.StatusUnauthorized, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+			return
+		}
+
+		i, err := strconv.ParseInt(userMessage, 10, 64)
+		if err != nil {
+			ctxAbortWithStatusJSON(c, http.StatusUnauthorized, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+			return
+		}
+
+		timeSignature := helpers.TimeFromUnix(i)
+		timeValid := helpers.TimeNow().Add(-15 * time.Minute)
+		if timeSignature.Before(timeValid) {
+			ctxAbortWithStatusJSON(c, http.StatusUnauthorized, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+			return
+		}
+
+		err = s.nls.VerifyAddressSignature(context.Background(), models.ETHEREUM_CHAIN_ID, userAddress, userMessage, signature)
+		if err != nil {
+			ctxAbortWithStatusJSON(c, http.StatusUnauthorized, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+			return
+		}
+
+		c.Set("userData", &models.User{
+			Address: strings.ToLower(userAddress),
+		})
+
+		c.Next()
+	}
+}
+
+func (s *Server) getUserAddress(c *gin.Context) string {
+	return c.GetHeader("XXX-Address")
+}
