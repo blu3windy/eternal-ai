@@ -98,6 +98,7 @@ User query:
         kn_base: KnowledgeBase,
         top_k: int = 10,
         retry: int = RETRY,
+        task_name: str = "N/A",
     ) -> str:
         context_tweets, err = await sync2async(get_random_from_collections)(
             kn_base.get_kn_ids(), n=10
@@ -118,7 +119,9 @@ User query:
                         kn_base, query, top_k=5, threshold=0.85
                     )
 
-                    news = await sync2async(search_from_bing)(query, top_k=10)
+                    news = await sync2async(search_from_bing)(
+                        query, top_k=10, task_name=task_name
+                    )
 
                     random_news = random.sample(news, min(1, len(news)))
                     structured_information["knowledge"] = knowledge
