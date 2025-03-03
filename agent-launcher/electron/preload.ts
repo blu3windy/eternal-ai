@@ -42,5 +42,4 @@ contextBridge.exposeInMainWorld("electronAPI", {
    checkDocker: () => ipcRenderer.invoke(EMIT_EVENT_NAME.CHECK_DOCKER),
    installDocker: () => ipcRenderer.invoke(EMIT_EVENT_NAME.INSTALL_DOCKER),
    dockerBuild: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_BUILD),
-
 });
