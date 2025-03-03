@@ -132,6 +132,7 @@ type AgentInfoResp struct {
 	AgentKBId                 uint                      `json:"kb_id"`
 	DependAgents              string                    `json:"depend_agents"`
 	RequiredWallet            bool                      `json:"required_wallet"`
+	IsOnchain                 bool                      `json:"is_onchain"`
 }
 
 type AgentTwitterPostResp struct {
@@ -293,6 +294,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		AuthenURL:            m.AuthenUrl,
 		DependAgents:         m.DependAgents,
 		RequiredWallet:       m.RequiredWallet,
+		IsOnchain:            m.IsOnchain,
 	}
 
 	if m.NftTokenImage != "" {

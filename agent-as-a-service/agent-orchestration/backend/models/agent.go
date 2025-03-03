@@ -208,6 +208,7 @@ type AgentInfo struct {
 	AuthenUrl      string `gorm:"type:text"`
 	DependAgents   string `gorm:"type:longtext"`
 	RequiredWallet bool
+	IsOnchain      bool
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string
