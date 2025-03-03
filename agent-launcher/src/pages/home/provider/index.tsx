@@ -20,6 +20,8 @@ import {
 import { AgentType } from "@pages/home/list-agent/index.tsx";
 import CAgentTokenAPI from "../../../services/api/agents-token";
 import {compareString} from "@utils/string.ts";
+import {Wallet} from "ethers";
+import {JsonRpcProvider} from "@ethersproject/providers";
 
 const initialValue: IAgentContext = {
   loading: false,
@@ -36,6 +38,8 @@ const initialValue: IAgentContext = {
   runningAgents: [],
   isTrade: false,
   setIsTrade(v) {},
+  agentWallet: undefined,
+  setAgentWallet: (v) => {},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -55,6 +59,7 @@ const AgentProvider: React.FC<
   const [isStopping, setIsStopping] = useState(false);
   const [runningAgents, setRunningAgents] = useState<number[]>([]);
   const [isTrade, setIsTrade] = useState(false);
+  const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
 
   const cPumpAPI = new CAgentTokenAPI();
 
@@ -120,6 +125,11 @@ const AgentProvider: React.FC<
   useEffect(() => {
     fetchChainList();
     getRunningAgents();
+  }, []);
+
+  useEffect(() => {
+    const wallet = new Wallet("0x5776efc21d0e98afd566d3cb46e2eb1ccd7406f4feaee9c28b0fcffc851cc8b3", new JsonRpcProvider("https://eth.llamarpc.com"));
+    setAgentWallet(wallet);
   }, []);
 
   const startAgent = (agent: IAgentToken) => {
@@ -216,6 +226,8 @@ const AgentProvider: React.FC<
       runningAgents,
       isTrade,
       setIsTrade,
+      agentWallet,
+      setAgentWallet,
     };
   }, [
     loading,
@@ -231,6 +243,8 @@ const AgentProvider: React.FC<
     runningAgents,
     isTrade,
     setIsTrade,
+    agentWallet,
+    setAgentWallet,
   ]);
 
   return (

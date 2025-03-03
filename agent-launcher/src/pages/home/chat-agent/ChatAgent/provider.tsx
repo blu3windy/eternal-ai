@@ -11,14 +11,12 @@ import React, {
    useState,
 } from 'react';
 import ScrollableFeed from 'react-scrollable-feed';
-import { v4 } from 'uuid';
-import { INIT_WELCOME_MESSAGE } from './constants';
-import { ChatCompletionPayload, IChatMessage } from "../../../../services/api/agent/types.ts";
+import {v4} from 'uuid';
+import {INIT_WELCOME_MESSAGE} from './constants';
+import {ChatCompletionPayload, IChatMessage} from "../../../../services/api/agent/types.ts";
 import AgentAPI from "../../../../services/api/agent";
-import { AgentContext } from "@pages/home/provider";
-import chatAgentDatabase, { PersistedMessageType } from "../../../../database/chatAgentDatabase.ts";
-import { Wallet } from "ethers";
-import { JsonRpcProvider } from "@ethersproject/providers";
+import {AgentContext} from "@pages/home/provider";
+import chatAgentDatabase, {PersistedMessageType} from "../../../../database/chatAgentDatabase.ts";
 
 type IChatAgentProviderContext = {
   isStopReceiving?: boolean;
@@ -66,24 +64,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
     { name: string; personality: string } | undefined
   >(undefined);
 
-   const { selectedAgent } = useContext(AgentContext);
-
-   // const { wallet } = useAppAuthenticated();
-   // const { latestAddress } = useWagmiContext();
-
-   const id = selectedAgent?.id;
-
-   const wallet = new Wallet("0x5776efc21d0e98afd566d3cb46e2eb1ccd7406f4feaee9c28b0fcffc851cc8b3", new JsonRpcProvider("https://eth.llamarpc.com"));
-   const latestAddress = '0x12345678';
-
-   console.log('stephen: wallet', wallet);
-
    const [isLoadingMessages, setIsLoadingMessages] = useState(false);
    const [messages, setMessages] = useState<IChatMessage[]>([]);
 
    const chatInputRef = React.useRef<any>();
    const [isFocusChatInput, setIsFocusChatInput] = React.useState(false);
 
+   const { selectedAgent, currentModel, agentWallet } = useContext(AgentContext);
+
+   const id = selectedAgent?.id;
    const threadId = selectedAgent?.agent_name || 'Agent';
 
    const isAllowChat = useMemo(() => {
@@ -143,7 +132,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
          const newMessage: IChatMessage = {
             id: userMessageId,
-            senderId: wallet?.address || latestAddress || '',
+            senderId: agentWallet?.address || '',
             msg: message,
             status: 'sent',
             type: 'human',
@@ -219,8 +208,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          ];
 
          const params: ChatCompletionPayload = {
-            messages: historyMessages,
-            agentId: agentId,
+           messages: historyMessages,
+           agentId: agentId,
+           model_name: currentModel.name,
          };
          if (selectedAgent?.kb_id) {
             const kbId = `${selectedAgent?.kb_id}`.replace('kb-', '');

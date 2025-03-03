@@ -1,4 +1,5 @@
 import { IAgentToken, IChainConnected } from "../../../services/api/agents-token/interface.ts";
+import {Wallet} from "ethers";
 
 export interface IAgentContext {
   loading: boolean;
@@ -15,4 +16,6 @@ export interface IAgentContext {
   runningAgents: number[];
   isTrade: boolean;
   setIsTrade: (v: any) => void;
+  agentWallet?: Wallet;
+  setAgentWallet: (v: any) => void;
 }
