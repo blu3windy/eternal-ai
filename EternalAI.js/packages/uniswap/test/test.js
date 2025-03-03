@@ -23,7 +23,7 @@ async function loadLibs(lib) {
 
 await loadLibs("https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js")
 const prompt = {
-    privateKey: '0x4a3dc71d1baa9405136dd496bd4a60193f37ccc6d5e47c1799e728339a007d1c',
+    privateKey: '',
     messages: [{
         content: "Swap 1 PEPE to USDT",
     }]
