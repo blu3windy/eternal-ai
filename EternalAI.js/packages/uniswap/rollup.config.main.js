@@ -29,9 +29,9 @@ module.exports = {
     input: 'src/index.ts',
     output: [
         {
-            file: 'dist-main/bundle.es.js',
+            file: 'dist-main/bundle.umd.js',
             format: 'umd',
-            name: 'UnisSwap', // please specify the name of the module
+            name: 'UniSwap', // please specify the name of the module
             sourcemap: false,
             globals: {
                 ethers: 'ethers',

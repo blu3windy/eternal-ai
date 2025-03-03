@@ -1,4 +1,4 @@
-import uniswap from "./bundle.es.js";
+import uniswap from "./bundle.umd.js";
 ////
 import fetch from 'node-fetch';
 import {createRequire} from 'module';
