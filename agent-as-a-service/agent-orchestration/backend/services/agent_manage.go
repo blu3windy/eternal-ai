@@ -64,7 +64,7 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 				models.ARBITRUM_CHAIN_ID,
 				models.BSC_CHAIN_ID,
 				models.APE_CHAIN_ID,
-				models.SEPOLIA_CHAIN_ID,
+				models.BASE_SEPOLIA_CHAIN_ID,
 				models.AVALANCHE_C_CHAIN_ID:
 				{
 				}
