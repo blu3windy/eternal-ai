@@ -75,27 +75,34 @@ function ChatAgent() {
             </Flex>
             <Text className={s.nameText}>{selectedAgent?.agent_name}</Text>
           </Flex>
-          {description && (
-            <Text className={s.descriptionText}>{description}</Text>
-          )}
           {
             isRunning && selectedAgent?.required_wallet && !agentWallet ? (
-              <Button
-                className={s.btnInstall}
-                onClick={handleCreateWallet}
-              >
-                Create wallet
-              </Button>
+              <>
+                <Text className={s.descriptionText}>
+                  A separate wallet is needed to use this agent. You'll have full control by exporting the private key to MetaMask, ensuring your assets remain secure and fully under your management.
+                </Text>
+                <Button
+                  className={s.btnInstall}
+                  onClick={handleCreateWallet}
+                >
+                  Create wallet
+                </Button>
+              </>
             ) : (
-              <Button
-                className={s.btnInstall}
-                onClick={handleInstall}
-                isLoading={isStarting || isStopping}
-                isDisabled={isStarting || isStopping}
-                loadingText={isStarting ? "Starting..." : "Stopping..."}
-              >
-                {isRunning ? "Stop" : "Start"}
-              </Button>
+              <>
+                {description && (
+                  <Text className={s.descriptionText}>{description}</Text>
+                )}
+                <Button
+                  className={s.btnInstall}
+                  onClick={handleInstall}
+                  isLoading={isStarting || isStopping}
+                  isDisabled={isStarting || isStopping}
+                  loadingText={isStarting ? "Starting..." : "Stopping..."}
+                >
+                  {isRunning ? "Stop" : "Start"}
+                </Button>
+              </>
             )
           }
         </Flex>
