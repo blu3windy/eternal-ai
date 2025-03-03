@@ -48,3 +48,29 @@ Please don't change files as below. That is configuration for run test, and buil
 │       └── types.ts
 └── tsconfig.json
 ```
+
+## How to create your prompt
+Main function is prompt (agent-template/src/prompt/index.ts)
+with payload contains some required fields
+
+Prompt function
+```jsx
+import * as ethers from 'ethers';
+import * as uniswapSdkCore from '@uniswap/sdk-core';
+
+import { PromptPayload } from './types';
+
+export const prompt = async (payload: PromptPayload): Promise<string> => {
+  // your code here
+  return '' // string;
+};
+
+```
+Prompt payload
+```jsx
+export type PromptPayload = {
+  privateKey: string;
+  messages: Message[]; // Required: Array of message objects
+};
+```
+your prompt is last content message item 
