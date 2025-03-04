@@ -1,10 +1,12 @@
 import s from './styles.module.scss';
-import { Flex, Text, Image } from "@chakra-ui/react";
+import {Flex, Image, Text} from "@chakra-ui/react";
 import cs from 'clsx';
-import { ReactElement, useMemo, useRef, useState } from 'react';
+import {ReactElement, useMemo, useRef, useState} from 'react';
 import useOnClickOutside from "../../../hooks/useOnClickOutSide.ts";
 import {useAuth} from "@pages/authen/provider.tsx";
 import {formatLongAddress} from "@utils/format.ts";
+import {useNavigate} from "react-router-dom";
+import ROUTERS from "@constants/route-path.ts";
 
 type DropdownMenuType = {
   items: React.ReactNode[];
@@ -60,11 +62,14 @@ const HeaderWallet: React.FC<IProps> = ({
    const [isShowMenu, setIsShowMenu] = useState(false);
   const { signer } = useAuth();
 
+  const navigate = useNavigate();
+
    const handleMenuMouseEnter = () => {
       setIsShowMenu(true);
    }
 
    const onClickWalletBalance = () => {
+     navigate(ROUTERS.MINE);
    };
 
    const menuItems = useMemo(() => {
