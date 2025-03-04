@@ -24,7 +24,7 @@ const FormTradeAgent = () => {
          if (!value) {
             return `Required`;
          }
-         if (new BigNumber(value).gt(values?.balance)) {
+         if (new BigNumber(value).gt(values?.balance || '0')) {
             return `Unsufficient balance.`;
          }
 
@@ -37,7 +37,7 @@ const FormTradeAgent = () => {
       let title = "Enter an amount";
 
       if (
-         parseFloat(amount) > 0
+         parseFloat(amount || '0') > 0
       && validateAmount(amount) === undefined
       && parseFloat(estimate_swap) > 0
       ) {
