@@ -101,7 +101,26 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.SourceUrl != "" {
 			if agentInfo.MintHash == "" {
 				switch agentInfo.NetworkID {
-				case models.BASE_SEPOLIA_CHAIN_ID:
+				case models.ETHEREUM_CHAIN_ID,
+					models.BITTENSOR_CHAIN_ID,
+					models.BASE_CHAIN_ID,
+					models.HERMES_CHAIN_ID,
+					models.ARBITRUM_CHAIN_ID,
+					models.ZKSYNC_CHAIN_ID,
+					models.POLYGON_CHAIN_ID,
+					models.BSC_CHAIN_ID,
+					models.APE_CHAIN_ID,
+					models.AVALANCHE_C_CHAIN_ID,
+					models.ABSTRACT_TESTNET_CHAIN_ID,
+					models.DUCK_CHAIN_ID,
+					models.MODE_CHAIN_ID,
+					models.ZETA_CHAIN_ID,
+					models.STORY_CHAIN_ID,
+					models.HYPE_CHAIN_ID,
+					models.MONAD_TESTNET_CHAIN_ID,
+					models.MEGAETH_TESTNET_CHAIN_ID,
+					models.CELO_CHAIN_ID,
+					models.BASE_SEPOLIA_CHAIN_ID:
 					{
 						var fileNames []string
 						err = json.Unmarshal([]byte(agentInfo.SourceUrl), &fileNames)
