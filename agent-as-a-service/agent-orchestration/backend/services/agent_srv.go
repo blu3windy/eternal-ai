@@ -709,7 +709,7 @@ func (s *Service) JobUpdateTwitterAccessToken(ctx context.Context) error {
 				map[string][]interface{}{},
 				[]string{
 					"updated_at asc",
-				}, 0, 20,
+				}, 0, 50,
 			)
 			if err != nil {
 				return errs.NewError(err)
