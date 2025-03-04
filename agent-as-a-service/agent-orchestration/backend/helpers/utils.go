@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"bytes"
-	"crypto/elliptic"
 	"crypto/md5"
 	"encoding/csv"
 	"encoding/hex"
@@ -24,8 +23,6 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/gocolly/colly"
@@ -431,24 +428,6 @@ func SliceToStrings(from, len int, getValueAtIndex func(index int) (string, erro
 		}
 	}
 	return res, nil
-}
-
-func WalletAddressFromCompressedPublicKey(publicKeyStr string) (string, error) {
-	pubBytes, err := hex.DecodeString(publicKeyStr)
-	if err != nil {
-		return "", err
-	}
-
-	x, y := secp256k1.DecompressPubkey(pubBytes)
-
-	pubkey := elliptic.Marshal(secp256k1.S256(), x, y)
-
-	ecdsaPub, err := crypto.UnmarshalPubkey(pubkey)
-	if err != nil {
-		return "", err
-	}
-	ethAddress := crypto.PubkeyToAddress(*ecdsaPub).String()
-	return ethAddress, nil
 }
 
 func IsValidEthereumAddress(address string) bool {

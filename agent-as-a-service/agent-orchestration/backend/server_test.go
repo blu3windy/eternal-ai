@@ -44,7 +44,13 @@ func init() {
 }
 
 func Test_JOB(t *testing.T) {
-	ts.MemeEventsByTransaction(context.Background(), 56, "")
+	//
+	fmt.Println(
+		"OK",
+		// ts.DeployProxyAdminAddress(context.Background(), models.BASE_SEPOLIA_CHAIN_ID),
+		// ts.DeployAgentUpgradeable(context.Background(), 14424),
+	)
+	// ts.MemeEventsByTransaction(context.Background(), 56, "")
 	// ts.AgentSnapshotPostCreate(context.Background(), 59166, "", "")
 	// ts.JobScanAgentTwitterPostForTA(context.Background())
 	// ts.RetryAgentDeployToken(context.Background(), 51265)
