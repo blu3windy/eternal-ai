@@ -14,15 +14,14 @@ import { BASE_CHAIN_ID } from "@constants/chains";
 import {
   checkFileExistsOnLocal,
   getFilePathOnLocal,
-  readFileOnChain,
   writeFileToLocal,
 } from "@contract/file";
-import { AgentType } from "@pages/home/list-agent/index.tsx";
 import CAgentTokenAPI from "../../../services/api/agents-token";
 import { Wallet } from "ethers";
 import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
 import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
-import {compareString, getFileExtension} from "@utils/string.ts";
+import {compareString} from "@utils/string.ts";
+import CAgentContract from "@contract/agent/index.ts";
 
 const initialValue: IAgentContext = {
   loading: false,
@@ -185,46 +184,33 @@ const AgentProvider: React.FC<
 
   const installUtilityAgent = async (agent: IAgentToken) => {
     try {
-      if (agent && agent.agent_type === AgentType.Utility && agent.source_url) {
-        const source_urls: string[] = JSON.parse(agent.source_url);
-        if (source_urls?.length > 0) {
-          const sourceFile = source_urls?.find((url) => url.startsWith('ethfs_'));
-          if (sourceFile) {
-            setIsStarting(true);
-            let fileType = getFileExtension(sourceFile);
-            const filePath = await readSourceFile(sourceFile, `prompt.${fileType}`, `${agent.id}`, agent?.network_id || BASE_CHAIN_ID);
-            await handleRunDockerAgent(filePath, agent);
-          }
+      if (agent && !!agent.agent_contract_address) {
+        setIsStarting(true);
+        const cAgent = new CAgentContract({contractAddress: agent.agent_contract_address, chainId: agent?.network_id || BASE_CHAIN_ID});
+
+        const codeLanguage = await cAgent.getCodeLanguage();
+        const codeVersion = await cAgent.getCodeVersion();
+        const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
+        const fileNameOnLocal = `prompt.${codeLanguage}`;
+        const folderNameOnLocal = `${agent.id}`;
+
+        let filePath: string | undefined = "";
+        const isExisted = await checkFileExistsOnLocal(
+          fileNameOnLocal,
+          folderNameOnLocal
+        );
+        if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
+          filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+        } else {
+          const code = await cAgent.getCode(codeVersion);
+          filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, code);
         }
+        await handleRunDockerAgent(filePath, agent);
       }
     } catch (error: any) {
       alert(error?.message || "Something went wrong");
     } finally {
       setIsStarting(false);
-    }
-  };
-
-  const readSourceFile = async (
-    filename: string,
-    fileNameOnLocal: string,
-    folderName: string,
-    chainId: number
-  ) => {
-    try {
-      let filePath: string | undefined = "";
-      const isExisted = await checkFileExistsOnLocal(
-        fileNameOnLocal,
-        folderName
-      );
-      if (isExisted) {
-        filePath = await getFilePathOnLocal(fileNameOnLocal, folderName);
-      } else {
-        const data = await readFileOnChain(chainId, filename);
-        filePath = await writeFileToLocal(fileNameOnLocal, folderName, data);
-      }
-      return filePath;
-    } catch (error: any) {
-      throw error;
     }
   };
 
