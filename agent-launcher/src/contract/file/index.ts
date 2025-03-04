@@ -1,4 +1,5 @@
 import { CHAIN_CONFIG, CHAIN_CONFIG_TYPE } from "@constants/chains";
+// @ts-ignore
 import deploys from "./abi/deploy/deploys.json";
 import FileStoreAbi from "./abi/FileStore.sol/FileStore.abi.json";
 import { ethers } from "ethers";
