@@ -1,6 +1,6 @@
 import { Flex, Text } from '@chakra-ui/react';
 import copy from 'copy-to-clipboard';
-import { memo, useState } from 'react';
+import { DetailedHTMLProps, HTMLAttributes, memo, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { dracula } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -8,8 +8,8 @@ import s from './styles.module.scss';
 import { CustomComponentProps } from '../types';
 import SvgInset from "@components/SvgInset";
 
-type Props = React.DetailedHTMLProps<
-  React.HTMLAttributes<HTMLElement>,
+type Props = DetailedHTMLProps<
+  HTMLAttributes<HTMLElement>,
   HTMLElement
 > &
   CustomComponentProps;

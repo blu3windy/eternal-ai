@@ -3,7 +3,7 @@ import ROUTERS from "./constants/route-path";
 import Home from "./pages/home";
 import Mine from "./pages/mine";
 import { AuthProvider } from "./pages/authen/provider.tsx";
-import { persistor, store } from "@stores";
+import { persistor, store } from "@stores/index.ts";
 
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";

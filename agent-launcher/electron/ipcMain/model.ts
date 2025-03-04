@@ -9,7 +9,6 @@ const getModelPath = () => {
    return path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.MODEL);
 }
 
-console.log("MODEL_INSTALL 222");
 const ACTIVE_PATH = 'local_llms/bin/activate'
 
 const ipcMainModel = () => {

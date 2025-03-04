@@ -18,162 +18,162 @@ import s from "./styles.module.scss";
 export const TRADE_TIME_INTERVAL = 5000;
 
 const PumpTradeChart = () => {
-  const { selectedAgent, tradePlatform, coinPrices } = useContext(AgentContext);
-  const pumpApi = useRef(new CAgentTokenAPI()).current;
+   const { selectedAgent, tradePlatform, coinPrices } = useContext(AgentContext);
+   const pumpApi = useRef(new CAgentTokenAPI()).current;
 
-  const pumpToken = selectedAgent;
+   const pumpToken = selectedAgent;
 
-  const [chartData, setChartData] = useState<IPriceChartData[]>([]);
-  const [newChartData, setNewChartData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+   const [chartData, setChartData] = useState<IPriceChartData[]>([]);
+   const [newChartData, setNewChartData] = useState<any[]>([]);
+   const [loading, setLoading] = useState(true);
 
-  const timeChart = useSelector(agentsTradeSelector).timeChart;
-  const typeChart = useSelector(agentsTradeSelector).typeChart;
+   const timeChart = useSelector(agentsTradeSelector).timeChart;
+   const typeChart = useSelector(agentsTradeSelector).typeChart;
 
-  const timeInterval = useRef<any>();
-  const refIsLoaded = useRef(true);
-  const refCurrentChartData = useRef<any[]>([]);
+   const timeInterval = useRef<any>();
+   const refIsLoaded = useRef(true);
+   const refCurrentChartData = useRef<any[]>([]);
 
-  const convertBTCToSats = (value: string) => {
-    if (compareString(pumpToken?.meme?.base_token_symbol, "BTC")) {
-      const satAmount = new BigNumber(value).multipliedBy(1e8);
-      if (new BigNumber(satAmount).isLessThan(1e4)) {
-        return parseFloat(new BigNumber(satAmount).toFixed(2));
+   const convertBTCToSats = (value: string) => {
+      if (compareString(pumpToken?.meme?.base_token_symbol, "BTC")) {
+         const satAmount = new BigNumber(value).multipliedBy(1e8);
+         if (new BigNumber(satAmount).isLessThan(1e4)) {
+            return parseFloat(new BigNumber(satAmount).toFixed(2));
+         }
       }
-    }
-    return parseFloat(
-      new BigNumber(value)
-        .multipliedBy(coinPrices?.[pumpToken?.meme?.base_token_symbol as any])
-        .toFixed(CHART_DECIMAL)
-    );
-  };
+      return parseFloat(
+         new BigNumber(value)
+            .multipliedBy(coinPrices?.[pumpToken?.meme?.base_token_symbol as any])
+            .toFixed(CHART_DECIMAL)
+      );
+   };
 
-  const parseData = (resChart: any[]) => {
-    const chartData = (resChart as unknown as any[]).map((v: any) => {
-      return {
-        ...v,
-        timestamp: dayjs(v.chart_time).unix(),
-      };
-    });
-    const sortedData = uniqBy(
-      sortBy(chartData || [], "timestamp"),
-      (item: any) => item.timestamp
-    );
+   const parseData = (resChart: any[]) => {
+      const chartData = (resChart as unknown as any[]).map((v: any) => {
+         return {
+            ...v,
+            timestamp: dayjs(v.chart_time).unix(),
+         };
+      });
+      const sortedData = uniqBy(
+         sortBy(chartData || [], "timestamp"),
+         (item: any) => item.timestamp
+      );
 
-    const _data = sortedData?.map((v: any) => {
-      return {
-        id: v.timestamp,
-        value: convertBTCToSats(v.close_price),
-        time: Number(dayjs(v.chart_time).unix()),
-        open: convertBTCToSats(v.open_price),
-        high: convertBTCToSats(v.max_price),
-        close: convertBTCToSats(v.close_price),
-        low: convertBTCToSats(v.min_price),
-      };
-    });
+      const _data = sortedData?.map((v: any) => {
+         return {
+            id: v.timestamp,
+            value: convertBTCToSats(v.close_price),
+            time: Number(dayjs(v.chart_time).unix()),
+            open: convertBTCToSats(v.open_price),
+            high: convertBTCToSats(v.max_price),
+            close: convertBTCToSats(v.close_price),
+            low: convertBTCToSats(v.min_price),
+         };
+      });
 
-    return _data;
-  };
+      return _data;
+   };
 
-  const getData = async () => {
-    try {
-      setLoading(true);
-      if (!pumpToken?.token_address) {
-        throw "Token not found";
+   const getData = async () => {
+      try {
+         setLoading(true);
+         if (!pumpToken?.token_address) {
+            throw "Token not found";
+         }
+         const [resChart] = await Promise.all([
+            pumpApi.getAgentTradeChart({
+               token_address: pumpToken?.token_address,
+               params: {
+                  type: timeChart,
+               },
+            }),
+         ]);
+
+         const _data: IPriceChartData[] = parseData(
+          resChart as unknown as any[]
+         ) as unknown as IPriceChartData[];
+
+         refCurrentChartData.current = _data;
+
+         setChartData(_data);
+      } catch (error) {
+         console.log("error >>>>>>>", error);
+      } finally {
+         setLoading(false);
       }
-      const [resChart] = await Promise.all([
-        pumpApi.getAgentTradeChart({
-          token_address: pumpToken?.token_address,
-          params: {
-            type: timeChart,
-          },
-        }),
-      ]);
+   };
 
-      const _data: IPriceChartData[] = parseData(
-        resChart as unknown as any[]
-      ) as unknown as IPriceChartData[];
+   const onNewData = async () => {
+      try {
+         if (!pumpToken?.token_address || !refIsLoaded.current) {
+            throw "Token not found";
+         }
+         refIsLoaded.current = false;
 
-      refCurrentChartData.current = _data;
+         const [resChart] = await Promise.all([
+            pumpApi.getAgentTradeChart({
+               token_address: pumpToken?.token_address,
+               params: {
+                  type: timeChart,
+               },
+            }),
+         ]);
 
-      setChartData(_data);
-    } catch (error) {
-      console.log("error >>>>>>>", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+         const _newData = parseData(resChart as unknown as any[]);
 
-  const onNewData = async () => {
-    try {
-      if (!pumpToken?.token_address || !refIsLoaded.current) {
-        throw "Token not found";
-      }
-      refIsLoaded.current = false;
-
-      const [resChart] = await Promise.all([
-        pumpApi.getAgentTradeChart({
-          token_address: pumpToken?.token_address,
-          params: {
-            type: timeChart,
-          },
-        }),
-      ]);
-
-      const _newData = parseData(resChart as unknown as any[]);
-
-      setNewChartData(_newData);
-    } catch (error) {
+         setNewChartData(_newData);
+      } catch (error) {
       //
-    } finally {
-      refIsLoaded.current = true;
-    }
-  };
+      } finally {
+         refIsLoaded.current = true;
+      }
+   };
 
-  useEffect(() => {
-    clearInterval(timeInterval.current);
-    getData();
-    setLoading(true);
-    setChartData([]);
-    setNewChartData([]);
-    timeInterval.current = setInterval(() => {
-      onNewData();
-    }, TRADE_TIME_INTERVAL);
-    return () => {
+   useEffect(() => {
       clearInterval(timeInterval.current);
-    };
-  }, [pumpToken?.token_address, tradePlatform, timeChart]);
+      getData();
+      setLoading(true);
+      setChartData([]);
+      setNewChartData([]);
+      timeInterval.current = setInterval(() => {
+         onNewData();
+      }, TRADE_TIME_INTERVAL);
+      return () => {
+         clearInterval(timeInterval.current);
+      };
+   }, [pumpToken?.token_address, tradePlatform, timeChart]);
 
-  return (
-    <Box className={s.chartWrapper}>
-      <ChartHeader />
-      {loading ? (
-        <AppLoading />
-      ) : (
-        <>
-          {chartData.length > 0 ? (
+   return (
+      <Box className={s.chartWrapper}>
+         <ChartHeader />
+         {loading ? (
+            <AppLoading />
+         ) : (
             <>
-              <ChartV2Module
-                chartData={chartData}
-                newData={newChartData}
-                dataSymbol={pumpToken?.base_token_symbol as string}
-                chartType={typeChart}
-                priceDecimal={
-                  compareString(pumpToken?.base_token_symbol, "BTC")
-                    ? 2
-                    : CHART_DECIMAL
-                }
-              />
+               {chartData.length > 0 ? (
+                  <>
+                     <ChartV2Module
+                        chartData={chartData}
+                        newData={newChartData}
+                        dataSymbol={pumpToken?.base_token_symbol as string}
+                        chartType={typeChart}
+                        priceDecimal={
+                           compareString(pumpToken?.base_token_symbol, "BTC")
+                              ? 2
+                              : CHART_DECIMAL
+                        }
+                     />
+                  </>
+               ) : (
+                  <Center height={"100%"}>
+                     <Text>Bow-wow</Text>
+                  </Center>
+               )}
             </>
-          ) : (
-            <Center height={"100%"}>
-              <Text>Bow-wow</Text>
-            </Center>
-          )}
-        </>
-      )}
-    </Box>
-  );
+         )}
+      </Box>
+   );
 };
 
 export default PumpTradeChart;
