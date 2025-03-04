@@ -552,7 +552,7 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 	err := s.JobRunCheck(
 		ctx,
-		"JobAgentTwitterPostCreateAgent",
+		"JobAgentTwitterPostGenerateVideo",
 		func() error {
 			var retErr error
 			{
