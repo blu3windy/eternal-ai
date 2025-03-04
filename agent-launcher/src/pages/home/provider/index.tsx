@@ -19,10 +19,10 @@ import {
 } from "@contract/file";
 import { AgentType } from "@pages/home/list-agent/index.tsx";
 import CAgentTokenAPI from "../../../services/api/agents-token";
-import { compareString } from "@utils/string.ts";
 import { Wallet } from "ethers";
 import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
 import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
+import {compareString, getFileExtension} from "@utils/string.ts";
 
 const initialValue: IAgentContext = {
   loading: false,
@@ -191,7 +191,8 @@ const AgentProvider: React.FC<
           const sourceFile = source_urls?.find((url) => url.startsWith('ethfs_'));
           if (sourceFile) {
             setIsStarting(true);
-            const filePath = await readSourceFile(sourceFile, `prompt.js`, `${agent.id}.js`, agent?.network_id || BASE_CHAIN_ID);
+            let fileType = getFileExtension(sourceFile);
+            const filePath = await readSourceFile(sourceFile, `prompt.${fileType}`, `${agent.id}`, agent?.network_id || BASE_CHAIN_ID);
             await handleRunDockerAgent(filePath, agent);
           }
         }
