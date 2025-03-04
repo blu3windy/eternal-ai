@@ -119,9 +119,9 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 						"agent_infos.agent_nft_minted = ?":  {false},
 						"agent_infos.eai_balance > 0":       {},
 						`(1 != 1
-							or (agent_infos.agent_type = ? and agent_infos.eai_balance >= agent_chain_fees.agent_deploy_fee)
+							or (agent_infos.agent_type in (?) and agent_infos.eai_balance >= agent_chain_fees.agent_deploy_fee)
 						)`: {
-							models.AgentInfoAgentTypeUtility,
+							models.AgentInfoAgentTypeModel, models.AgentInfoAgentTypeJs, models.AgentInfoAgentTypePython,
 						},
 						"agent_infos.network_id in (?)": {
 							[]uint64{
@@ -217,7 +217,9 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 							mintFee = &agentChainFee.MintFee.Float
 							checkFee = &agentChainFee.MintFee.Float
 						}
-					case models.AgentInfoAgentTypeUtility:
+					case models.AgentInfoAgentTypeModel,
+						models.AgentInfoAgentTypeJs,
+						models.AgentInfoAgentTypePython:
 						{
 							mintFee = &agentChainFee.AgentDeployFee.Float
 							checkFee = &agentChainFee.AgentDeployFee.Float
@@ -261,7 +263,9 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 								}
 							}
 						}
-					case models.AgentInfoAgentTypeUtility:
+					case models.AgentInfoAgentTypeModel,
+						models.AgentInfoAgentTypeJs,
+						models.AgentInfoAgentTypePython:
 						{
 							for range 2 {
 								err = s.DeployAgentUpgradeable(ctx, agent.ID)

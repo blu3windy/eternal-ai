@@ -95,7 +95,9 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 		return errs.NewError(err)
 	}
 	if agentInfo != nil {
-		if agentInfo.AgentType != models.AgentInfoAgentTypeUtility {
+		if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
+			agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
+			agentInfo.AgentType != models.AgentInfoAgentTypePython {
 			return errs.NewError(errs.ErrBadRequest)
 		}
 		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.SourceUrl != "" {
