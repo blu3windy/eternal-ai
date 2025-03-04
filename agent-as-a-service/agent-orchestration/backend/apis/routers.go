@@ -146,6 +146,7 @@ func (s *Server) Routers() {
 			agentAPI.GET("/dojo/:id/knowledge-base", s.listKnowledgeByAgent)
 			agentAPI.POST("/create_agent_assistant", s.authCheckTK1TokenMiddleware(), s.AgentCreateAgentAssistant)
 			agentAPI.POST("/update_agent_assistant", s.authCheckTK1TokenMiddleware(), s.AgentUpdateAgentAssistant)
+			agentAPI.POST("/install", s.authCheckTK1TokenMiddleware(), s.MarkInstalledUtilityAgent)
 
 			agentAPI.POST("/create-local-agent", s.AgentCreateAgentAssistantForLocal)
 			agentAPI.GET("/list-local-agent", s.GetListAgentForDojo)
@@ -409,6 +410,7 @@ func (s *Server) Routers() {
 		// }
 
 		utilityApi := rootAPI.Group("/utility", s.authCheckSignatureMiddleware())
+		// utilityApi := rootAPI.Group("/utility")
 		{
 			utilityApi.POST("/twitter/post", s.UtilityPostTwitter)
 			utilityApi.POST("/twitter/verify-deposit", s.UtilityTwitterVerifyDeposit)

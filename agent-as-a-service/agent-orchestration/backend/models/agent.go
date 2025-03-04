@@ -673,3 +673,9 @@ type AgentInfoInstall struct {
 	CallbackParams string `gorm:"type:longtext"` //{"user_id" : "123", "authen_token" : "xxx",...}
 	Status         AgenInfoInstallStatus
 }
+
+type AgentUtilityInstall struct {
+	gorm.Model
+	Address     string `gorm:"unique_index:agent_utility_install_main_idx"`
+	AgentInfoID uint   `gorm:"unique_index:agent_utility_install_main_idx"`
+}

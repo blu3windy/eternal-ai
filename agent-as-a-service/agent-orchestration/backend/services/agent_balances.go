@@ -700,7 +700,9 @@ func (s *Service) PostTwitterAferCreateToken(ctx context.Context, agentInfoID ui
 	return nil
 }
 
-func (s *Service) GetDashboardAgentInfos(ctx context.Context, networkID uint64, agentType int, agentTypes []int, tokenAddress, search, agentModel string, sortListStr []string, page, limit int) ([]*models.AgentInfo, uint, error) {
+func (s *Service) GetDashboardAgentInfos(ctx context.Context, userAddress string, networkID uint64, agentType int, agentTypes []int,
+	tokenAddress, search, agentModel string, installed *bool, sortListStr []string, page, limit int,
+) ([]*models.AgentInfo, uint, error) {
 	sortDefault := "ifnull(agent_infos.priority, 0) desc, meme_market_cap desc"
 	if len(sortListStr) > 0 {
 		sortDefault = strings.Join(sortListStr, ", ")
@@ -731,6 +733,7 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, networkID uint64, 
 		`: {},
 		`agent_infos.token_address != "" and ifnull(memes.status, "") not in ("created", "pending")`: {},
 	}
+
 	if search != "" {
 		search = fmt.Sprintf("%%%s%%", strings.ToLower(search))
 		filters[`
@@ -744,6 +747,7 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, networkID uint64, 
 		`] = []any{search, search, search, search, search, search, search}
 	}
 
+	//filter agent type
 	if agentType > 0 {
 		filters["agent_infos.agent_type = ?"] = []any{agentType}
 	} else if len(agentTypes) > 0 {
@@ -752,6 +756,7 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, networkID uint64, 
 		filters["agent_infos.agent_type not in (?)"] = []any{[]models.AgentInfoAgentType{models.AgentInfoAgentTypeModel, models.AgentInfoAgentTypeJs, models.AgentInfoAgentTypePython}}
 	}
 
+	//filter agent model
 	if agentModel != "" {
 		filters["agent_infos.agent_base_model = ?"] = []any{agentModel}
 	}
@@ -779,6 +784,15 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, networkID uint64, 
 			} else {
 				filters["agent_infos.network_id = ? or agent_infos.token_network_id = ?"] = []any{networkID, networkID}
 			}
+		}
+	}
+
+	//filter instlled app
+	if installed != nil && userAddress != "" {
+		if *installed {
+			filters["agent_infos.id in (select agent_info_id from agent_utility_installs where address = ?)"] = []any{strings.ToLower(userAddress)}
+		} else {
+			filters["agent_infos.id not in (select agent_info_id from agent_utility_installs where address = ?)"] = []any{strings.ToLower(userAddress)}
 		}
 	}
 

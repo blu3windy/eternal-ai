@@ -1385,3 +1385,25 @@ func (s *Service) GetAgentChainFees(ctx context.Context) (map[string]interface{}
 	}
 	return chainFeeMap, nil
 }
+
+func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string, req *serializers.AgentActionReq) (bool, error) {
+	err := daos.WithTransaction(
+		daos.GetDBMainCtx(ctx),
+		func(tx *gorm.DB) error {
+			for _, agentID := range req.Ids {
+				inst := &models.AgentUtilityInstall{
+					Address:     strings.ToLower(address),
+					AgentInfoID: agentID,
+				}
+				_ = s.dao.Create(tx, inst)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return false, errs.NewError(err)
+	}
+
+	return true, nil
+}
