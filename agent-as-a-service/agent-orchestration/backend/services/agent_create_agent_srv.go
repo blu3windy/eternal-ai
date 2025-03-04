@@ -682,7 +682,7 @@ func (s *Service) JobAgentTwitterPostSubmitVideoInfer(ctx context.Context) error
 					},
 					map[string][]interface{}{},
 					[]string{
-						"post_at desc",
+						"post_at asc",
 					},
 					0,
 					5,
