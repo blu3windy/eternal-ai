@@ -47,5 +47,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
    modelStarter: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_STARTER),
    modelInstall: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_INSTALL),
-   modelRun: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_RUN),
+   modelRun: (hash: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_RUN, hash),
 });

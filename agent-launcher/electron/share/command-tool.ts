@@ -10,7 +10,7 @@ const execAsyncStream = (cmd: string) => {
       process.stdout?.on("data", (data) => console.log(data.toString()));
       process.stderr?.on("data", (data) => console.error(data.toString()));
 
-      process.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`Exited with code ${code}`))));
+      process.on("close", (code, data) => (code === 0 ? resolve() : reject(new Error(`Exited with code ${code}`))));
    });
 };
 
