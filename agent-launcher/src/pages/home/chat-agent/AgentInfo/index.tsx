@@ -68,7 +68,7 @@ const AgentInfo = () => {
           </Button>
         </Flex>
       </Flex>
-      <Flex w={"350px"} justifyContent={"flex-end"}>
+      <Flex minW={"350px"} justifyContent={"flex-end"}>
         <HeaderWallet color={"black"}/>
       </Flex>
     </Flex>
