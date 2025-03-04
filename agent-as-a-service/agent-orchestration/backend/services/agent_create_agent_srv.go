@@ -627,7 +627,8 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 
 							if mediaID != "" {
 								// post truc tiep reply, luu lai reply_id
-								refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, "DONE", twitterPost.TwitterPostID, mediaID)
+								contentReply := fmt.Sprintf("Prompt onchain tx:%v\nVideo onchain tx:%v\nPrompt:%v", twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash, twitterPost.ExtractContent)
+								refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
 								if err != nil {
 									return errs.NewError(err)
 								}
@@ -1152,11 +1153,16 @@ func (s *Service) GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc 
 func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
 	isGenerateVideo := false
 	fullText = strings.TrimSpace(fullText)
-	if strings.Contains(fullText, fmt.Sprintf("%v", "generate video")) {
+	if strings.Contains(fullText, fmt.Sprintf("%v", "generate_video(")) {
 		isGenerateVideo = true
 	}
 
-	inferContent := strings.ReplaceAll(fullText, fmt.Sprintf("%v", "generate video"), "")
+	inferContent := strings.ReplaceAll(fullText, fmt.Sprintf("%v", "generate_video("), "")
+	if strings.HasSuffix(inferContent, ")") {
+		isGenerateVideo = false
+	} else {
+		inferContent = strings.TrimSuffix(inferContent, ")")
+	}
 	return &models.TweetParseInfo{
 		IsGenerateVideo:      isGenerateVideo,
 		GenerateVideoContent: strings.TrimSpace(inferContent),
