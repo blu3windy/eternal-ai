@@ -627,7 +627,7 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 
 							if mediaID != "" {
 								// post truc tiep reply, luu lai reply_id
-								contentReply := fmt.Sprintf("Prompt onchain tx:%v\nVideo onchain tx:%v\nPrompt:%v", twitterPost.InferTxHash, twitterPost.InferTxHash, twitterPost.ExtractContent)
+								contentReply := fmt.Sprintf("Prompt onchain tx:%v\nVideo onchain tx:%v\nPrompt:%v", twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash, twitterPost.ExtractContent)
 								refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
 								if err != nil {
 									return errs.NewError(err)
