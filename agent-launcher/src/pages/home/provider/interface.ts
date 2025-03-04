@@ -1,8 +1,5 @@
-import {
-  IAgentToken,
-  IChainConnected,
-} from "../../../services/api/agents-token/interface.ts";
-import { Wallet } from "ethers";
+import {IAgentToken, IChainConnected,} from "../../../services/api/agents-token/interface.ts";
+import {Wallet} from "ethers";
 
 export enum ETradePlatform {
   eternal = "eternal",
@@ -30,4 +27,5 @@ export interface IAgentContext {
   isRunning: boolean;
   tradePlatform: ETradePlatform;
   coinPrices: any[];
+  createAgentWallet: any;
 }

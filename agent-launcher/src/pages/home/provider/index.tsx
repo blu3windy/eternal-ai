@@ -23,6 +23,9 @@ import { Wallet } from "ethers";
 import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
 import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
 import {compareString, getFileExtension} from "@utils/string.ts";
+import {useAuth} from "@pages/authen/provider.tsx";
+import LocalStorage from "../../../libs/localStorage";
+import STORAGE_KEYS from "@constants/storage-key.ts";
 
 const initialValue: IAgentContext = {
   loading: false,
@@ -44,6 +47,7 @@ const initialValue: IAgentContext = {
   isRunning: false,
   tradePlatform: ETradePlatform.eternal,
   coinPrices: [],
+  createAgentWallet: () => {},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -73,9 +77,27 @@ const AgentProvider: React.FC<
     id: string;
   } | null>(null);
 
+  const {genAgentSecretKey } = useAuth();
+
   console.log("stephen: selectedAgent", selectedAgent);
   console.log("stephen: currentModel", currentModel);
+  console.log("stephen: agentWallet", agentWallet);
   console.log("================================");
+
+  const createAgentWallet = async () => {
+    try {
+      const prvKey = await genAgentSecretKey({chainId: selectedAgent?.network_id, agentName: selectedAgent?.agent_name});
+      setAgentWallet(new Wallet(prvKey));
+
+      // const agentIds = LocalStorage.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
+      // console.log('stephen: agentIds', agentIds);
+      // LocalStorage.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify([...agentIds, selectedAgent?.id]));
+    } catch (err) {
+
+    } finally {
+
+    }
+  }
 
   const getTradePlatform = (_pumpToken: IAgentToken | undefined) => {
     if (SUPPORT_TRADE_CHAIN.includes(_pumpToken?.meme?.network_id as any)) {
@@ -265,6 +287,7 @@ const AgentProvider: React.FC<
       isRunning,
       tradePlatform,
       coinPrices,
+      createAgentWallet,
     };
   }, [
     loading,
@@ -285,6 +308,7 @@ const AgentProvider: React.FC<
     isRunning,
     tradePlatform,
     coinPrices,
+    createAgentWallet
   ]);
 
   return (
