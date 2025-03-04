@@ -70,17 +70,18 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const chatInputRef = React.useRef<any>();
    const [isFocusChatInput, setIsFocusChatInput] = React.useState(false);
 
-   const { selectedAgent, currentModel, agentWallet } = useContext(AgentContext);
+   const { selectedAgent, agentWallet } = useContext(AgentContext);
 
    const id = selectedAgent?.id;
    const threadId = selectedAgent?.agent_name || 'Agent';
 
    const isAllowChat = useMemo(() => {
-      if(selectedAgent) {
-         return Number(selectedAgent?.wallet_balance) > 0;
-      }
-
-      return false;
+      return true;
+      // if(selectedAgent) {
+      //    return Number(selectedAgent?.wallet_balance) > 0;
+      // }
+      //
+      // return false;
    }, [selectedAgent]);
 
    useEffect(() => {
@@ -210,7 +211,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          const params: ChatCompletionPayload = {
            messages: historyMessages,
            agentId: agentId,
-           model_name: currentModel.name,
+           model_name: selectedAgent?.agent_base_model,
          };
          if (selectedAgent?.kb_id) {
             const kbId = `${selectedAgent?.kb_id}`.replace('kb-', '');

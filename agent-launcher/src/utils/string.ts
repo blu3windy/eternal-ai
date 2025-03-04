@@ -41,9 +41,14 @@ const tryToParseJsonString = (str: string): Record<string, unknown> & any => {
    }
 };
 
+const getFileExtension = (filename: string) => {
+    return filename.slice(filename.lastIndexOf('.') + 1);
+}
+
 export {
    compareString,
    getAvatarName,
    addressFormater,
-   tryToParseJsonString
+   tryToParseJsonString,
+   getFileExtension
 };

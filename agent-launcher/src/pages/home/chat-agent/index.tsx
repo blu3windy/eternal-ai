@@ -17,7 +17,7 @@ function ChatAgent() {
     isStopping,
     agentWallet,
     isRunning,
-    setAgentWallet,
+    createAgentWallet
   } = useContext(AgentContext);
 
   const avatarUrl =
@@ -41,8 +41,7 @@ function ChatAgent() {
   };
 
   const handleCreateWallet = () => {
-    const wallet = new Wallet("0x5776efc21d0e98afd566d3cb46e2eb1ccd7406f4feaee9c28b0fcffc851cc8b3", new JsonRpcProvider("https://eth.llamarpc.com"));
-    setAgentWallet(wallet);
+    createAgentWallet();
   }
 
   return (

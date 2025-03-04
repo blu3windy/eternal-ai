@@ -1,28 +1,18 @@
-import React, {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { ETradePlatform, IAgentContext } from "./interface";
-import {
-  IAgentToken,
-  IChainConnected,
-} from "../../../services/api/agents-token/interface.ts";
-import { BASE_CHAIN_ID } from "@constants/chains";
-import {
-  checkFileExistsOnLocal,
-  getFilePathOnLocal,
-  readFileOnChain,
-  writeFileToLocal,
-} from "@contract/file";
-import { AgentType } from "@pages/home/list-agent/index.tsx";
+import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState,} from "react";
+import {ETradePlatform, IAgentContext} from "./interface";
+import {IAgentToken, IChainConnected,} from "../../../services/api/agents-token/interface.ts";
+import {BASE_CHAIN_ID} from "@constants/chains";
+import {checkFileExistsOnLocal, getFilePathOnLocal, writeFileToLocal,} from "@contract/file";
 import CAgentTokenAPI from "../../../services/api/agents-token";
-import { compareString } from "@utils/string.ts";
-import { Wallet } from "ethers";
-import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
-import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
+import {Wallet} from "ethers";
+import {EAgentTokenStatus} from "../../../services/api/agent/types.ts";
+import {SUPPORT_TRADE_CHAIN} from "../trade-agent/form-trade/index.tsx";
+import {compareString} from "@utils/string.ts";
+import {useAuth} from "@pages/authen/provider.tsx";
+import localStorageService from "../../../storage/LocalStorageService.ts";
+import STORAGE_KEYS from "@constants/storage-key.ts";
+import uniq from "lodash.uniq";
+import CAgentContract from "@contract/agent/index.ts";
 
 const initialValue: IAgentContext = {
   loading: false,
@@ -44,6 +34,7 @@ const initialValue: IAgentContext = {
   isRunning: false,
   tradePlatform: ETradePlatform.eternal,
   coinPrices: [],
+  createAgentWallet: () => {},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -73,9 +64,38 @@ const AgentProvider: React.FC<
     id: string;
   } | null>(null);
 
+  const { genAgentSecretKey } = useAuth();
+
   console.log("stephen: selectedAgent", selectedAgent);
   console.log("stephen: currentModel", currentModel);
+  console.log("stephen: agentWallet", agentWallet);
   console.log("================================");
+
+  useEffect(() => {
+    if (selectedAgent) {
+      const agentIds = localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
+      if (agentIds && agentIds.includes(selectedAgent?.id?.toString())) {
+        createAgentWallet();
+      } else {
+        setAgentWallet(undefined)
+      }
+    }
+  }, [selectedAgent]);
+
+  const createAgentWallet = async () => {
+    try {
+      const prvKey = await genAgentSecretKey({chainId: selectedAgent?.network_id, agentName: selectedAgent?.agent_name});
+      setAgentWallet(new Wallet(prvKey));
+
+      const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET));
+
+      localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
+    } catch (err) {
+      console.error("Create agent wallet error:", err);
+    } finally {
+
+    }
+  }
 
   const getTradePlatform = (_pumpToken: IAgentToken | undefined) => {
     if (SUPPORT_TRADE_CHAIN.includes(_pumpToken?.meme?.network_id as any)) {
@@ -168,11 +188,6 @@ const AgentProvider: React.FC<
     fetchCoinPrices();
   }, []);
 
-  // useEffect(() => {
-  //   const wallet = new Wallet("0x5776efc21d0e98afd566d3cb46e2eb1ccd7406f4feaee9c28b0fcffc851cc8b3", new JsonRpcProvider("https://eth.llamarpc.com"));
-  //   setAgentWallet(wallet);
-  // }, []);
-
   const startAgent = (agent: IAgentToken) => {
     installUtilityAgent(agent);
     setRunningAgents((prev) => [...prev, agent.id]);
@@ -185,45 +200,33 @@ const AgentProvider: React.FC<
 
   const installUtilityAgent = async (agent: IAgentToken) => {
     try {
-      if (agent && agent.agent_type === AgentType.Utility && agent.source_url) {
-        const source_urls: string[] = JSON.parse(agent.source_url);
-        if (source_urls?.length > 0) {
-          const sourceFile = source_urls?.find((url) => url.startsWith('ethfs_'));
-          if (sourceFile) {
-            setIsStarting(true);
-            const filePath = await readSourceFile(sourceFile, `prompt.js`, `${agent.id}.js`, agent?.network_id || BASE_CHAIN_ID);
-            await handleRunDockerAgent(filePath, agent);
-          }
+      if (agent && !!agent.agent_contract_address) {
+        setIsStarting(true);
+        const cAgent = new CAgentContract({contractAddress: agent.agent_contract_address, chainId: agent?.network_id || BASE_CHAIN_ID});
+
+        const codeLanguage = await cAgent.getCodeLanguage();
+        const codeVersion = await cAgent.getCodeVersion();
+        const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
+        const fileNameOnLocal = `prompt.${codeLanguage}`;
+        const folderNameOnLocal = `${agent.id}`;
+
+        let filePath: string | undefined = "";
+        const isExisted = await checkFileExistsOnLocal(
+          fileNameOnLocal,
+          folderNameOnLocal
+        );
+        if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
+          filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+        } else {
+          const code = await cAgent.getCode(codeVersion);
+          filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, code);
         }
+        await handleRunDockerAgent(filePath, agent);
       }
     } catch (error: any) {
       alert(error?.message || "Something went wrong");
     } finally {
       setIsStarting(false);
-    }
-  };
-
-  const readSourceFile = async (
-    filename: string,
-    fileNameOnLocal: string,
-    folderName: string,
-    chainId: number
-  ) => {
-    try {
-      let filePath: string | undefined = "";
-      const isExisted = await checkFileExistsOnLocal(
-        fileNameOnLocal,
-        folderName
-      );
-      if (isExisted) {
-        filePath = await getFilePathOnLocal(fileNameOnLocal, folderName);
-      } else {
-        const data = await readFileOnChain(chainId, filename);
-        filePath = await writeFileToLocal(fileNameOnLocal, folderName, data);
-      }
-      return filePath;
-    } catch (error: any) {
-      throw error;
     }
   };
 
@@ -264,6 +267,7 @@ const AgentProvider: React.FC<
       isRunning,
       tradePlatform,
       coinPrices,
+      createAgentWallet,
     };
   }, [
     loading,
@@ -284,6 +288,7 @@ const AgentProvider: React.FC<
     isRunning,
     tradePlatform,
     coinPrices,
+    createAgentWallet
   ]);
 
   return (
