@@ -3,6 +3,8 @@ import { Flex, Text, Image } from "@chakra-ui/react";
 import cs from 'clsx';
 import { ReactElement, useMemo, useRef, useState } from 'react';
 import useOnClickOutside from "../../../hooks/useOnClickOutSide.ts";
+import {useAuth} from "@pages/authen/provider.tsx";
+import {formatLongAddress} from "@utils/format.ts";
 
 type DropdownMenuType = {
   items: React.ReactNode[];
@@ -56,6 +58,7 @@ const HeaderWallet: React.FC<IProps> = ({
    color = 'white',
 }) => {
    const [isShowMenu, setIsShowMenu] = useState(false);
+  const { signer } = useAuth();
 
    const handleMenuMouseEnter = () => {
       setIsShowMenu(true);
@@ -98,10 +101,11 @@ const HeaderWallet: React.FC<IProps> = ({
                   style={{
                      border:
                 color === 'black'
-                   ? '1px solid #e5e7eb'
+                   ? '1px solid #B6B6B6'
                    : '1px solid #ffffff12',
-                     background:
-                color === 'black' ? '#f8f9fa' : 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: '1000px'
+                //      background:
+                // color === 'black' ? '#f8f9fa' : 'rgba(255, 255, 255, 0.1)',
                   }}
                >
                   <Image
@@ -114,13 +118,12 @@ const HeaderWallet: React.FC<IProps> = ({
 
                   <Text
                      textAlign={'center'}
-                     fontSize={'14px'}
-                     lineHeight={'20px'}
+                     fontSize={'13px'}
                      fontWeight={400}
                      color={color}
                      whiteSpace={'nowrap'}
                   >
-                     {`0.00 EAI`}
+                    {formatLongAddress(signer?.address || '')}
                   </Text>
                </Flex>
             </div>
