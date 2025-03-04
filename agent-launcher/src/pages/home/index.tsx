@@ -23,7 +23,7 @@ const HandleHome = () => {
       </Panel>
       <PanelResizeHandle />
       <Panel minSize={50} maxSize={60} style={{ paddingTop: "16px" }}>
-        <Box px={"60px"}>
+        <Box pl={"60px"} pr={"16px"}>
           <AgentInfo />
         </Box>
         {isTrade ? <TradeAgent /> : <ChatAgent />}

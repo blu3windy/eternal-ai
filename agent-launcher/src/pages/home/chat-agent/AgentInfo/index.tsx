@@ -7,6 +7,7 @@ import {formatCurrency} from "@utils/format.ts";
 import Percent24h from "@components/Percent";
 import InfoTooltip from "@components/InfoTooltip";
 import {AgentType} from "@pages/home/list-agent";
+import HeaderWallet from "@components/header/wallet";
 
 const AgentInfo = () => {
   const {
@@ -28,42 +29,47 @@ const AgentInfo = () => {
   };
 
   return (
-    <Flex className={s.container} justifyContent={"space-between"}>
-      {
-        selectedAgent?.agent_type === AgentType.Utility ? (
-          <SelectModel
-            currentModel={currentModel}
-            setCurrentModel={setCurrentModel}
-            chainId={selectedAgent?.network_id}
-            showDescription={false}
+    <Flex className={s.container}>
+      <Flex justifyContent={"space-between"} w={"100%"}>
+        {
+          selectedAgent?.agent_type === AgentType.Utility ? (
+            <SelectModel
+              currentModel={currentModel}
+              setCurrentModel={setCurrentModel}
+              chainId={selectedAgent?.network_id}
+              showDescription={false}
+            />
+          ) : (
+            <Box/>
+          )
+        }
+        <Flex gap={"6px"} alignItems={"center"}>
+          {isRunning && (
+            <Button
+              className={s.btnInstall}
+              onClick={handleInstall}
+              isLoading={isStopping}
+              isDisabled={isStopping}
+              loadingText={"Stopping..."}
+            >
+              Stop
+            </Button>
+          )}
+          <InfoTooltip iconSize="sm" label={description} placement="top" />
+          <Text>{selectedAgent?.agent_name}</Text>
+          <Text opacity={0.6}>${selectedAgent?.token_symbol}</Text>•
+          <Text>${formatCurrency(selectedAgent?.meme?.price_usd, 0, 6)}</Text>
+          <Percent24h
+            clsName={s.percent}
+            percent={selectedAgent?.meme?.percent || 0}
           />
-        ) : (
-          <Box/>
-        )
-      }
-      <Flex gap={"6px"} alignItems={"center"}>
-        {isRunning && (
-          <Button
-            className={s.btnInstall}
-            onClick={handleInstall}
-            isLoading={isStopping}
-            isDisabled={isStopping}
-            loadingText={"Stopping..."}
-          >
-            Stop
+          <Button className={s.btnBuy} onClick={() => setIsTrade((v) => !v)}>
+            {isTrade ? "Chat" : "Buy"}
           </Button>
-        )}
-        <InfoTooltip iconSize="sm" label={description} placement="top" />
-        <Text>{selectedAgent?.agent_name}</Text>
-        <Text opacity={0.6}>${selectedAgent?.token_symbol}</Text>•
-        <Text>${formatCurrency(selectedAgent?.meme?.price_usd, 0, 6)}</Text>
-        <Percent24h
-          clsName={s.percent}
-          percent={selectedAgent?.meme?.percent || 0}
-        />
-        <Button className={s.btnBuy} onClick={() => setIsTrade((v) => !v)}>
-          {isTrade ? "Chat" : "Buy"}
-        </Button>
+        </Flex>
+      </Flex>
+      <Flex w={"350px"} justifyContent={"flex-end"}>
+        <HeaderWallet color={"black"}/>
       </Flex>
     </Flex>
   );

@@ -1,12 +1,17 @@
 import { motion } from "framer-motion";
-import React, { useEffect, useMemo } from "react";
+import React, {useContext, useEffect, useMemo} from "react";
 import s from "./styles.module.scss";
 import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import ChatList from "@pages/home/chat-agent/ChatAgent/components/ChatList";
 import InputText from "@pages/home/chat-agent/ChatAgent/components/InputText";
+import AgentWalletInfo from "@pages/home/chat-agent/AgentWalletInfo";
+import {AgentContext} from "@pages/home/provider";
 
 const ChatBox = () => {
   const { loading, onRetryErrorMessage } = useChatAgentProvider();
+  const {
+    agentWallet,
+  } = useContext(AgentContext);
 
   const containerMaxHeight = useMemo(() => {
     if (window.innerHeight) {
@@ -51,6 +56,11 @@ const ChatBox = () => {
           />
         </div>
         <InputText isSending={loading} />
+        {
+          agentWallet && (
+            <AgentWalletInfo />
+          )
+        }
       </div>
     </motion.div>
   );
