@@ -3,26 +3,13 @@ import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 import fs from "fs";
 import path from "path";
 import net from "net";
-import sudo from "sudo-prompt";
 
 import { exec } from "child_process";
 import { promisify } from "util";
 import { getScriptPath, PUBLIC_SCRIPT, SCRIPTS_NAME, USER_DATA_FOLDER_NAME } from "../share/utils.ts";
+import command from "../share/command-tool.ts";
 
 const execAsync = promisify(exec);
-const options = { name: "Electron App" };
-
-const runCommandAsAdmin = async (command: string) => {
-   return new Promise((resolve, reject) => {
-      sudo.exec(command, options, (error, stdout, stderr) => {
-         if (error) {
-            reject(error);
-            return;
-         }
-         resolve(stdout);
-      });
-   });
-};
 
 
 const option = {
@@ -89,35 +76,46 @@ const dockerCopyBuild = async () => {
 
    const REQUIRE_COPY_AGENT_ROUTER_FILES = [...REQUIRE_COPY_AGENT_JS_FILES];
 
+   const REQUIRE_COPY_MODEL_FILES = [SCRIPTS_NAME.MODEL_STARTER];
+
+
    const folderPathAgentJS = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.AGENT_JS);
    const folderPathAgentRouter = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.AGENT_ROUTER);
+   const folderPathModel = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.MODEL);
 
-   console.log("dockerCopyBuild", {
+   const paths = [
       folderPathAgentJS,
-      folderPathAgentRouter
-   })
+      folderPathAgentRouter,
+      folderPathModel
+   ];
 
-   // Ensure the folder exists
-   if (!fs.existsSync(folderPathAgentJS)) {
-      fs.mkdirSync(folderPathAgentJS, { recursive: true });
+
+   console.log("dockerCopyBuild", paths);
+
+   for (const folderPath of paths) {
+      if (!fs.existsSync(folderPath)) {
+         fs.mkdirSync(folderPath, { recursive: true });
+      }
    }
 
-   if (!fs.existsSync(folderPathAgentRouter)) {
-      fs.mkdirSync(folderPathAgentRouter, { recursive: true });
-   }
 
    for (const file of REQUIRE_COPY_AGENT_JS_FILES) {
       const source = getScriptPath(file, `${PUBLIC_SCRIPT}/${USER_DATA_FOLDER_NAME.AGENT_JS}`);
       const destination = path.join(folderPathAgentJS, file);
       fs.copyFileSync(source, destination);
-      console.log("File copied:", source, destination);
    }
 
    for (const file of REQUIRE_COPY_AGENT_ROUTER_FILES) {
       const source = getScriptPath(file, `${PUBLIC_SCRIPT}/${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`);
       const destination = path.join(folderPathAgentRouter, file);
       fs.copyFileSync(source, destination);
-      console.log("File copied:", source, destination);
+   }
+
+   for (const file of REQUIRE_COPY_MODEL_FILES) {
+      const source = getScriptPath(file, `${PUBLIC_SCRIPT}/${USER_DATA_FOLDER_NAME.MODEL}`);
+      const destination = path.join(folderPathModel, file);
+      console.log("File copied:", { source, destination });
+      fs.copyFileSync(source, destination);
    }
 }
 
@@ -221,10 +219,9 @@ const ipcMainDocker = () => {
          //    'cd "/Users/macbookpro/Library/Application Support/agent-launcher/agent-data" && docker run -d -p 3001:3000 -v ./agents/agent_1/prompt.js:/app/src/prompt.js --name agent1 agent'
          // )
          // console.log(stdout);
-         // const { stderr } = await execAsync("docker -v");
-         // return !stderr;
+         const { stderr } = await execAsync("docker -v");
+         return !stderr;
 
-         return false
       } catch (error) {
          console.log(error);
          return false;
@@ -232,24 +229,28 @@ const ipcMainDocker = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INSTALL, async (_event) => {
-      const nixPath = getScriptPath(SCRIPTS_NAME.NIX_INSTALL_SCRIPT);
-      const cmdNix = `/usr/bin/osascript -e 'do shell script "sh ${nixPath}" with administrator privileges'`;
+      let { stdout: userName } = await execAsync("whoami");
+      userName = userName.trim();
+      const nixPath = getScriptPath(SCRIPTS_NAME.BOOTSTRAP);
       const dockerScriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT);
       const cmdDocker = `sh ${dockerScriptPath}`;
-      // const cmd = '/usr/bin/osascript -e \'do shell script "echo some_command" with administrator privileges\''
-      await execAsync(cmdNix, { ...option })
-      await execAsync(cmdDocker, { ...option })
+      // await execAsync(cmdNix, { ...option })
+      // await execAsync(cmdDocker, { ...option })
+      const cmd = `/usr/bin/osascript -e 'do shell script "sh ${nixPath} ${userName} ${dockerScriptPath}" with administrator privileges'`;
 
-      const { stdout, stderr } = await execAsync("docker -v");
+      console.log(cmd)
+      const data = await command.execAsyncStream(cmd)
+
+      // const { stdout, stderr } = await execAsync("docker -v");
 
       // const { stdout, stderr } = await execAsync(`sh ${scriptPath}`);
 
-      if (stderr) {
-         console.error(`stderr: ${stderr}`);
-         return;
-      }
-
-      console.log(`stdout: ${stdout}`);
+      // if (stderr) {
+      //    console.error(`stderr: ${stderr}`);
+      //    return;
+      // }
+      //
+      // console.log(`stdout: ${stdout}`);
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, async (_event, agentName: string, chainId: string) => {

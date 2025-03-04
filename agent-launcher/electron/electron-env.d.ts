@@ -40,6 +40,10 @@ interface IElectronAPI {
   dockerInstall: () => Promise<void>
   dockerRunAgent: (agentName: string, chainId: string) => Promise<void>
   dockerStopAgent: (agentName: string, chainId: string) => Promise<void>
+
+  modelStarter: () => Promise<void>
+  modelInstall: () => Promise<void>
+  modelRun: () => Promise<void>
 }
 
 // Used in Renderer process, expose in `preload.ts`

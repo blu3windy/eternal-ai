@@ -84,6 +84,15 @@ const Login = () => {
             >
                Test Run Docker
             </Button>
+
+            <Button
+               onClick={() => {
+                  console.log('Test Run Docker 1-leon');
+                  window.electronAPI.modelStarter();
+               }}
+            >
+               Test Model Starter
+            </Button>
          </Flex>
          <Formik
             initialValues={{ password: '' }}

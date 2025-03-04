@@ -32,7 +32,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
    keytarRemove: (key: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.KEYTAR_REMOVE, key),
 
    safeCopy: (text: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.SAFE_COPY, text),
-   
+
    readFile: (fileName: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.READ_FILE, fileName),
    accessFile: (fileName: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.ACCESS_FILE, fileName),
    writeFile: (fileName: string, data: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.WRITE_FILE, fileName, data),
@@ -43,4 +43,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
    dockerBuild: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_BUILD),
    dockerRunAgent: (agentName: string, chainId: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, agentName, chainId),
    dockerStopAgent: (agentName: string, chainId: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_STOP_AGENT, agentName, chainId),
+
+
+   modelStarter: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_STARTER),
+   modelInstall: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_INSTALL),
+   modelRun: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_RUN),
 });

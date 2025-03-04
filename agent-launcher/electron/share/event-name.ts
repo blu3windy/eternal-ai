@@ -15,6 +15,11 @@ const EMIT_EVENT_NAME = {
    DOCKER_BUILD: "safe-docker-build",
    DOCKER_RUN_AGENT: "safe-docker-run-agent",
    DOCKER_STOP_AGENT: "safe-docker-stop-agent",
+
+
+   MODEL_STARTER: "safe-model-starter",
+   MODEL_INSTALL: "safe-model-install",
+   MODEL_RUN: "safe-model-run",
 }
 
 export {
