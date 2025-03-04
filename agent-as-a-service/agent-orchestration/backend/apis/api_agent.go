@@ -587,11 +587,42 @@ func (s *Server) GetAgentInfoInstallCode(c *gin.Context) {
 
 func (s *Server) GetAgentLibrary(c *gin.Context) {
 	ctx := s.requestContext(c)
-	networkID, err := s.uint64FromContextQuery(c, "network_id")
+	networkID, _ := s.uint64FromContextQuery(c, "network_id")
 	obj, err := s.nls.GetListAgentLibrary(ctx, networkID)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentLibraryRespArray(obj)})
+}
+
+func (s *Server) AddAgentLibrary(c *gin.Context) {
+	networkID, _ := s.uint64FromContextQuery(c, "network_id")
+
+	ctx := s.requestContext(c)
+	var req serializers.AgentLibraryReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	_, err := s.nls.SaveAgentLibrary(ctx, networkID, &req)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: true})
+
+}
+
+func (s *Server) CheckNameExist(c *gin.Context) {
+	ctx := s.requestContext(c)
+	name := s.stringFromContextQuery(c, "name")
+	networkID, _ := s.uint64FromContextQuery(c, "network_id")
+	isExist, err := s.nls.CheckNameExist(ctx, networkID, name)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: isExist})
+
 }

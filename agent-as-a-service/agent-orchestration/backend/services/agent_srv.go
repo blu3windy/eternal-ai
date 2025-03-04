@@ -2247,3 +2247,22 @@ func (s *Service) GetAgentInfoInstall(ctx context.Context, code string) (*models
 	}
 	return res, nil
 }
+
+func (s *Service) CheckNameExist(ctx context.Context, networkID uint64, name string) (bool, error) {
+	obj, err := s.dao.FirstAgentInfo(
+		daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"network_id = ?": {networkID},
+			"agent_name = ?": {name},
+		},
+		map[string][]interface{}{},
+		[]string{},
+	)
+	if err != nil {
+		return false, errs.NewError(err)
+	}
+	if obj != nil {
+		return true, nil
+	}
+	return false, nil
+}

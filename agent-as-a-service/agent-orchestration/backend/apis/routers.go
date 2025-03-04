@@ -168,6 +168,8 @@ func (s *Server) Routers() {
 			agentAPI.GET("/install/info", s.GetAgentInfoInstallInfo)
 			//
 			agentAPI.GET("/library", s.GetAgentLibrary)
+			agentAPI.POST("/add-library", s.AddAgentLibrary)
+			agentAPI.GET("/check-exist", s.CheckNameExist)
 
 		}
 
