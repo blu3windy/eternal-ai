@@ -84,7 +84,6 @@ const Login = () => {
             >
                Test Run Docker
             </Button>
-
             <Button
                onClick={() => {
                   console.log('Test Run Docker 1-leon');
@@ -92,6 +91,22 @@ const Login = () => {
                }}
             >
                Test Model Starter
+            </Button>
+            <Button
+               onClick={() => {
+                  console.log('Test Run Docker 1-leon');
+                  window.electronAPI.modelInstall();
+               }}
+            >
+               Test Model Install
+            </Button>
+            <Button
+               onClick={() => {
+                  console.log('Test Run Docker 1-leon');
+                  window.electronAPI.modelRun();
+               }}
+            >
+               Test Model Run
             </Button>
          </Flex>
          <Formik
