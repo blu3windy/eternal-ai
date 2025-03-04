@@ -98,6 +98,12 @@
         "owner": "your-github-username",
         "repo": "your-repo-name"
       }
+    ],
+    "files": [
+      "dist-electron/**/*",
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json"
     ]
   }
 }
