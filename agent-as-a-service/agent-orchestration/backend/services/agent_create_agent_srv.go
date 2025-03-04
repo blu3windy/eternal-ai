@@ -1156,10 +1156,12 @@ func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userNam
 
 	if strings.Contains(inferContent, fmt.Sprintf("%v", "eternal_video(")) {
 		isGenerateVideo = true
-		inferContent = strings.ReplaceAll(inferContent, fmt.Sprintf("%v", "eternal_video("), "")
+		index := strings.Index(inferContent, "eternal_video(")
+		inferContent = inferContent[index+len("eternal_video("):]
 	} else if strings.Contains(inferContent, fmt.Sprintf("%v", "eternal_video (")) {
 		isGenerateVideo = true
-		inferContent = strings.ReplaceAll(inferContent, fmt.Sprintf("%v", "eternal_video ("), "")
+		index := strings.Index(inferContent, "eternal_video (")
+		inferContent = inferContent[index+len("eternal_video ("):]
 	}
 	if !strings.HasSuffix(inferContent, ")") {
 		isGenerateVideo = false
