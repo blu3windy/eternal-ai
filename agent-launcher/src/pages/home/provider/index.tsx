@@ -1,30 +1,16 @@
-import React, {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { ETradePlatform, IAgentContext } from "./interface";
-import {
-  IAgentToken,
-  IChainConnected,
-} from "../../../services/api/agents-token/interface.ts";
-import { BASE_CHAIN_ID } from "@constants/chains";
-import {
-  checkFileExistsOnLocal,
-  getFilePathOnLocal,
-  readFileOnChain,
-  writeFileToLocal,
-} from "@contract/file";
-import { AgentType } from "@pages/home/list-agent/index.tsx";
+import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState,} from "react";
+import {ETradePlatform, IAgentContext} from "./interface";
+import {IAgentToken, IChainConnected,} from "../../../services/api/agents-token/interface.ts";
+import {BASE_CHAIN_ID} from "@constants/chains";
+import {checkFileExistsOnLocal, getFilePathOnLocal, readFileOnChain, writeFileToLocal,} from "@contract/file";
+import {AgentType} from "@pages/home/list-agent/index.tsx";
 import CAgentTokenAPI from "../../../services/api/agents-token";
-import { Wallet } from "ethers";
-import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
-import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
+import {Wallet} from "ethers";
+import {EAgentTokenStatus} from "../../../services/api/agent/types.ts";
+import {SUPPORT_TRADE_CHAIN} from "../trade-agent/form-trade/index.tsx";
 import {compareString, getFileExtension} from "@utils/string.ts";
 import {useAuth} from "@pages/authen/provider.tsx";
-import LocalStorage from "../../../libs/localStorage";
+import localStorageService from "../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 
 const initialValue: IAgentContext = {
@@ -89,9 +75,9 @@ const AgentProvider: React.FC<
       const prvKey = await genAgentSecretKey({chainId: selectedAgent?.network_id, agentName: selectedAgent?.agent_name});
       setAgentWallet(new Wallet(prvKey));
 
-      // const agentIds = LocalStorage.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
-      // console.log('stephen: agentIds', agentIds);
-      // LocalStorage.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify([...agentIds, selectedAgent?.id]));
+      const agentIds = localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
+      console.log('stephen: agentIds', agentIds);
+      localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentIds ? [...agentIds, selectedAgent?.id] : [selectedAgent?.id]));
     } catch (err) {
 
     } finally {
@@ -189,11 +175,6 @@ const AgentProvider: React.FC<
     getRunningAgents();
     fetchCoinPrices();
   }, []);
-
-  // useEffect(() => {
-  //   const wallet = new Wallet("0x5776efc21d0e98afd566d3cb46e2eb1ccd7406f4feaee9c28b0fcffc851cc8b3", new JsonRpcProvider("https://eth.llamarpc.com"));
-  //   setAgentWallet(wallet);
-  // }, []);
 
   const startAgent = (agent: IAgentToken) => {
     installUtilityAgent(agent);
