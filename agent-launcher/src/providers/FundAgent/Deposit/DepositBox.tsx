@@ -104,7 +104,7 @@ const DepositBox: React.FC<IFundAgent> = ({ agentID }) => {
                   <QRCodeGenerator
                      bgColor="#FFFFFF"
                      size={'100%' as unknown as number}
-                     value={agentWallet?.address}
+                     value={agentWallet?.address as string}
                   />
                </Flex>
             </Flex>

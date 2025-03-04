@@ -30,8 +30,6 @@ type IChatAgentProviderContext = {
     name: string;
     personality: string;
   };
-  animatedId: string[];
-  addAnimatedId: (_: string) => void;
 
   chatInputRef: any;
   isFocusChatInput: boolean;
@@ -47,8 +45,6 @@ const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
    scrollableRef: { current: null },
    loading: false,
    info: undefined,
-   animatedId: [],
-   addAnimatedId: () => {},
 
    chatInputRef: undefined,
    isFocusChatInput: false,
@@ -152,7 +148,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          const messageId = v4();
          const responseMsg: IChatMessage = {
             id: messageId,
-            senderId: id,
+            senderId: id?.toString() || '',
             msg: '',
             status: 'waiting',
             type: 'ai',

@@ -27,7 +27,7 @@ const GeneralCode = memo(function ({ children, className, ...rest }: Props) {
       }, 1000);
    };
 
-   return match ? (
+  return match ? (
       <>
          <Flex className={s.codeHeader}>
             <Text className={s.text}>{match?.[1]}</Text>
