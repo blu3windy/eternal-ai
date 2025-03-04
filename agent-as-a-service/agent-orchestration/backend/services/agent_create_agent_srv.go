@@ -1152,11 +1152,11 @@ func (s *Service) GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc 
 func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
 	isGenerateVideo := false
 	fullText = strings.TrimSpace(fullText)
-	if strings.Contains(fullText, fmt.Sprintf("%v", "generate_video(")) {
+	if strings.Contains(fullText, fmt.Sprintf("%v", "eternal_video(")) {
 		isGenerateVideo = true
 	}
 
-	inferContent := strings.ReplaceAll(fullText, fmt.Sprintf("%v", "generate_video("), "")
+	inferContent := strings.ReplaceAll(fullText, fmt.Sprintf("%v", "eternal_video("), "")
 	if strings.HasSuffix(inferContent, ")") {
 		isGenerateVideo = false
 	} else {
