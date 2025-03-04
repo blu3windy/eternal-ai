@@ -4,9 +4,8 @@ import {ChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import s from "./styles.module.scss";
 import React, {useContext, useMemo} from "react";
 import {AgentContext} from "@pages/home/provider";
-import {Wallet} from "ethers";
-import {JsonRpcProvider} from "@ethersproject/providers";
 import {AgentType} from "@pages/home/list-agent";
+import AgentWalletInfo from "@pages/home/chat-agent/AgentWalletInfo";
 
 function ChatAgent() {
   const {
