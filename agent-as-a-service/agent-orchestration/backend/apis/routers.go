@@ -407,5 +407,11 @@ func (s *Server) Routers() {
 		// 	storeTradingApp.GET("/install", s.StoreDefiAppAuthenInstall)
 		// 	storeTradingApp.GET("/wallet", s.StoreDefiAppGetWallet)
 		// }
+
+		utilityApi := rootAPI.Group("/utility", s.authCheckSignatureMiddleware())
+		{
+			utilityApi.POST("/twitter/post", s.UtilityPostTwitter)
+			utilityApi.POST("/twitter/verify-deposit", s.UtilityTwitterVerifyDeposit)
+		}
 	}
 }

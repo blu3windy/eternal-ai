@@ -2,7 +2,10 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -57,7 +60,7 @@ func (s *Service) JobScanAgentTwitterPostForGenerateVideo(ctx context.Context) e
 			agents, err := s.dao.FindAgentInfo(
 				daos.GetDBMainCtx(ctx),
 				map[string][]interface{}{
-					`id in (?)`: {[]uint{s.conf.EternalAiAgentInfoId}}, // TODO hard code, UPDATE LATER
+					`id in (?)`: {[]uint{s.conf.VideoAiAgentInfoId}},
 				},
 				map[string][]interface{}{},
 				[]string{
@@ -390,7 +393,9 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 
 	for _, item := range tweetMentions.Tweets {
 		var checkTwitterID string
-		err := s.GetRedisCachedWithKey(fmt.Sprintf("CheckedForTweetGenerateVideo_%s", item.ID), &checkTwitterID)
+		_ = checkTwitterID
+		err := s.GetRedisCachedWithKey(fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", item.ID), &checkTwitterID)
+		//err := errors.New("redis:nil")
 		if err != nil {
 			if !strings.EqualFold(item.AuthorID, agentInfo.TwitterID) {
 				author, err := s.CreateUpdateUserTwitter(tx, item.AuthorID)
@@ -408,7 +413,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 							if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
 								if strings.EqualFold(k, item.ID) {
 									fullText := v.Tweet.GetFullText()
-									tokenInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), author.TwitterUsername, fullText)
+									tokenInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), agentInfo.TwitterUsername, fullText)
 									if tokenInfo != nil && (tokenInfo.IsGenerateVideo) {
 										existPosts, err := s.dao.FirstAgentTwitterPost(
 											tx,
@@ -433,11 +438,12 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 												TwitterPostID:         v.Tweet.ID, // bai reply
 												Content:               fullText,
 												ExtractContent:        tokenInfo.GenerateVideoContent,
-												Status:                models.AgentTwitterPostStatusNew,
+												Status:                models.AgentTwitterPostWaitSubmitVideoInfer,
 												PostAt:                postedAt,
 												TwitterConversationId: v.Tweet.ConversationID, // bai goc cua conversation
 												PostType:              models.AgentSnapshotPostActionTypeGenerateVideo,
 												IsMigrated:            true,
+												InferId:               "20250",
 											}
 
 											err = s.dao.Create(tx, m)
@@ -452,21 +458,94 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 							}
 						}
 					}
-					// }
 				}
 			}
 		}
 
 		err = s.SetRedisCachedWithKey(
-			fmt.Sprintf("CheckedForTweetGenerateVideo_%s", item.ID),
+			fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", item.ID),
 			item.ID,
-			12*time.Hour,
+			1*time.Hour,
 		)
 		if err != nil {
 			return errs.NewError(err)
 		}
 	}
 
+	return nil
+}
+
+func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) error {
+	err := s.JobRunCheck(
+		ctx,
+		"JobAgentTwitterPostCreateAgent",
+		func() error {
+			var retErr error
+			{
+				twitterPosts, err := s.dao.FindAgentTwitterPost(
+					daos.GetDBMainCtx(ctx),
+					map[string][]interface{}{
+						"status = ?": {models.AgentTwitterPostStatusInferSubmitted},
+						"infer_id IS NOT NULL  AND infer_id <> ? ":           {""},
+						"infer_tx_hash IS NOT NULL  AND infer_tx_hash <> ? ": {""},
+					},
+					map[string][]interface{}{},
+					[]string{},
+					0,
+					5,
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				for _, twitterPost := range twitterPosts {
+					url := fmt.Sprintf("%v?infer_id=%v&tx_hash=%v", s.conf.GetResultInferUrl, twitterPost.InferId, twitterPost.InferTxHash)
+					body, _, code, err := helpers.HttpRequest(url, "GET", nil, nil)
+					if err != nil {
+						return err
+					}
+					if code != http.StatusOK {
+						return fmt.Errorf("response with code:%v , body :%v", err, body)
+					}
+					type WorkerProcessHistory struct {
+						CID        string `bson:"cid" json:"cid" json:"cid,omitempty"`
+						ResultLink string `bson:"result_link" json:"result_link" json:"result_link,omitempty"` // link to download result for all model: TEXT AND IMAGE
+						ChainID    string `bson:"chain_id" json:"chain_id" json:"chain_id,omitempty"`
+						TxHash     string `bson:"tx_hash" json:"tx_hash" json:"tx_hash,omitempty"`
+					}
+					type Response struct {
+						Data WorkerProcessHistory `json:"data"`
+					}
+					response := &Response{}
+					err = json.Unmarshal(body, &response)
+					if err != nil {
+						return err
+					}
+					if len(response.Data.TxHash) == 0 {
+						return nil
+					}
+					err = daos.WithTransaction(
+						daos.GetDBMainCtx(ctx),
+						func(tx *gorm.DB) error {
+							twitterPost.Status = models.AgentTwitterPostStatusNew
+							twitterPost.SubmitSolutionTxHash = response.Data.TxHash
+							twitterPost.ImageUrl = strings.ReplaceAll(response.Data.ResultLink, "ipfs://", "https://gateway.lighthouse.storage/ipfs/")
+							err = s.dao.Save(tx, twitterPost)
+							if err != nil {
+								return errs.NewError(err)
+							}
+							return nil
+						})
+					if err != nil {
+						return err
+					}
+				}
+			}
+			return retErr
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
 	return nil
 }
 
@@ -480,7 +559,7 @@ func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 				twitterPosts, err := s.dao.FindAgentTwitterPost(
 					daos.GetDBMainCtx(ctx),
 					map[string][]interface{}{
-						"agent_info_id in (?)": {[]uint{s.conf.EternalAiAgentInfoId}},
+						"agent_info_id in (?)": {[]uint{s.conf.VideoAiAgentInfoId}},
 						"status = ?":           {models.AgentTwitterPostStatusNew},
 						"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
 					},
@@ -532,25 +611,6 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 					}
 
 					isValid := true
-					existPosts, err := s.dao.FindAgentTwitterPost(
-						tx,
-						map[string][]interface{}{
-							"not EXISTS (select 1 from agent_twitter_posts atp2 where twitter_conversation_id=? and owner_twitter_id =? and post_type='generate_video' and twitter_post_id != agent_twitter_posts.twitter_post_id )": {twitterPost.TwitterConversationId, twitterPost.OwnerTwitterID},
-							"owner_twitter_id = ?": {twitterPost.OwnerTwitterID},
-							"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
-							"status = ?":           {models.AgentTwitterPostStatusReplied},
-							"created_at >= adddate(now(), interval -24 hour)": {},
-						},
-						map[string][]interface{}{},
-						[]string{}, 0, 5,
-					) // trong converstion_id chi reply 1 nguoi tag
-					if err != nil {
-						return errs.NewError(err)
-					}
-
-					if existPosts != nil && len(existPosts) >= 3 {
-						isValid = false
-					}
 
 					if isValid {
 						if twitterPost.Status == models.AgentTwitterPostStatusNew &&
@@ -558,7 +618,8 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 							twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil {
 							//TODO: twitterPost.ExtractContent -> gen ra video
 							//imageUrl, _ = s.GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc)
-							videoUrl := "https://gateway.lighthouse.storage/ipfs/bafybeia7y5xp74komdtmiisunemiod56tqhotglzkke4ym66tvx4ywz7u4"
+
+							videoUrl := twitterPost.ImageUrl
 							mediaID := ""
 							if videoUrl != "" {
 								mediaID, _ = s.twitterAPI.UploadVideo(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
@@ -579,6 +640,181 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 									return errs.NewError(err)
 								}
 							}
+						}
+					} else {
+						twitterPost.Status = models.AgentTwitterConversationInvalid
+						err = s.dao.Save(tx, twitterPost)
+						if err != nil {
+							return errs.NewError(err)
+						}
+					}
+
+					return nil
+				},
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
+
+func (s *Service) JobAgentTwitterPostSubmitVideoInfer(ctx context.Context) error {
+	err := s.JobRunCheck(
+		ctx,
+		"JobAgentTwitterPostSubmitVideoInfer",
+		func() error {
+			var retErr error
+			{
+				twitterPosts, err := s.dao.FindAgentTwitterPost(
+					daos.GetDBMainCtx(ctx),
+					map[string][]interface{}{
+						"agent_info_id in (?)": {[]uint{s.conf.VideoAiAgentInfoId}},
+						"status = ?":           {models.AgentTwitterPostWaitSubmitVideoInfer},
+						"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
+					},
+					map[string][]interface{}{},
+					[]string{
+						"post_at desc",
+					},
+					0,
+					5,
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				for _, twitterPost := range twitterPosts {
+					err = s.AgentTwitterPostSubmitVideoInferByID(ctx, twitterPost.ID)
+					if err != nil {
+						retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
+					}
+				}
+			}
+			return retErr
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
+
+func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agentTwitterPostID uint) error {
+	err := s.JobRunCheck(
+		ctx,
+		fmt.Sprintf("AgentTwitterPostSubmitVideoInferByID_%d", agentTwitterPostID),
+		func() error {
+			err := daos.WithTransaction(
+				daos.GetDBMainCtx(ctx),
+				func(tx *gorm.DB) error {
+					twitterPost, err := s.dao.FirstAgentTwitterPostByID(
+						tx,
+						agentTwitterPostID,
+						map[string][]interface{}{
+							"AgentInfo":             {},
+							"AgentInfo.TwitterInfo": {},
+						},
+						false,
+					)
+					if err != nil {
+						return errs.NewError(err)
+					}
+
+					isValid := twitterPost.IsValidSubmitVideoInfer()
+
+					if isValid {
+						if twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil {
+
+							response, _, code, err := helpers.HttpRequest(s.conf.KnowledgeBaseConfig.OnChainUrl, "POST",
+								map[string]string{
+									"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
+								}, map[string]interface{}{
+									"chain_id":          "8453",
+									"model":             "wan",
+									"prompt":            twitterPost.ExtractContent,
+									"only_create_infer": true,
+								})
+							if err != nil {
+								return err
+							}
+							if code != http.StatusOK {
+								return fmt.Errorf("agent submit video infer response code %d", code)
+							}
+							type SubmitTaskResponse struct {
+								InferID uint64
+								TxHash  string
+							}
+							type DataResponse struct {
+								Data  SubmitTaskResponse `json:"data"`
+								Error string             `json:"error"`
+							}
+
+							dataResponse := DataResponse{}
+							err = json.Unmarshal(response, &dataResponse)
+							if err != nil {
+								return err
+							}
+							if dataResponse.Error != "" {
+								return fmt.Errorf("agent submit video infer response error: %s", dataResponse.Error)
+							}
+							if len(dataResponse.Data.TxHash) == 0 {
+								return fmt.Errorf("agent submit video infer response empty tx hash")
+							}
+							twitterPost.InferTxHash = dataResponse.Data.TxHash
+							twitterPost.InferId = strconv.FormatUint(dataResponse.Data.InferID, 10)
+							twitterPost.Status = models.AgentTwitterPostStatusInferSubmitted
+							err = s.dao.Save(tx, twitterPost)
+							if err != nil {
+								return errs.NewError(err)
+							}
+							//	twitterPost.ImageUrl = videoUrl
+							//	twitterPost.ReplyPostId = refId
+							//	twitterPost.Status = models.AgentTwitterPostStatusReplied
+							//	err = s.dao.Save(tx, twitterPost)
+
+							// call qua api.eternalai.org
+							// curl --location 'https://api.eternalai.org/v1/chat/completions' \
+							//--header 'Authorization: Bearer ' \
+							//--header 'Accept: */*' \
+							//--header 'Content-Type: application/json' \
+							//--data '{
+							//    "chain_id": "8453",
+							//    "model":"wan",
+							//    "prompt": "a cat with a dog",
+							//    "only_create_infer": true
+							//}'
+
+							// infer_id, tx_hash  - CHI LUU
+
+							////TODO: twitterPost.ExtractContent -> gen ra video
+							////imageUrl, _ = s.GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc)
+							//videoUrl := "https://gateway.lighthouse.storage/ipfs/bafybeia7y5xp74komdtmiisunemiod56tqhotglzkke4ym66tvx4ywz7u4"
+							//mediaID := ""
+							//if videoUrl != "" {
+							//	mediaID, _ = s.twitterAPI.UploadVideo(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
+							//}
+							//
+							//if mediaID != "" {
+							//	// post truc tiep reply, luu lai reply_id
+							//	refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, "DONE", twitterPost.TwitterPostID, mediaID)
+							//	if err != nil {
+							//		return errs.NewError(err)
+							//	}
+							//	twitterPost.InferTxHash = mediaID
+							//	twitterPost.ImageUrl = videoUrl
+							//	twitterPost.ReplyPostId = refId
+							//	twitterPost.Status = models.AgentTwitterPostStatusReplied
+							//	err = s.dao.Save(tx, twitterPost)
+							//	if err != nil {
+							//		return errs.NewError(err)
+							//	}
+							//}
 						}
 					} else {
 						twitterPost.Status = models.AgentTwitterConversationInvalid
@@ -915,12 +1151,15 @@ func (s *Service) GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc 
 
 func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
 	isGenerateVideo := false
-	if strings.Contains(fullText, "generate video") {
+	fullText = strings.TrimSpace(fullText)
+	if strings.Contains(fullText, fmt.Sprintf("%v", "generate video")) {
 		isGenerateVideo = true
 	}
+
+	inferContent := strings.ReplaceAll(fullText, fmt.Sprintf("%v", "generate video"), "")
 	return &models.TweetParseInfo{
 		IsGenerateVideo:      isGenerateVideo,
-		GenerateVideoContent: fullText,
+		GenerateVideoContent: strings.TrimSpace(inferContent),
 	}, nil
 }
 
@@ -1387,88 +1626,6 @@ func (s *Service) GetPostTimeByTweetID(tx *gorm.DB, tweetID string) *time.Time {
 		postTime = helpers.TimeNow()
 	}
 	return postTime
-}
-
-func (s *Service) CreateGenerateVideoByTweetID(tx *gorm.DB, tweetID string) error {
-	agentInfo, err := s.dao.FirstAgentInfoByID(
-		tx,
-		s.conf.EternalAiAgentInfoId,
-		map[string][]interface{}{},
-		false,
-	)
-	if err != nil {
-		return errs.NewError(err)
-	}
-	if agentInfo == nil {
-		return errs.NewError(errs.ErrBadRequest)
-	}
-
-	twitterInfo, err := s.dao.FirstTwitterInfo(tx,
-		map[string][]interface{}{
-			"twitter_id = ?": {s.conf.TokenTwiterID},
-		},
-		map[string][]interface{}{},
-		false,
-	)
-	if err != nil {
-		return errs.NewError(errs.ErrBadRequest)
-	}
-
-	twIDs := []string{tweetID}
-	twitterDetail, err := s.twitterWrapAPI.LookupUserTweets(twitterInfo.AccessToken, twIDs)
-	if err != nil {
-		return errs.NewError(err)
-	}
-	if twitterDetail != nil {
-		for k, v := range *twitterDetail {
-			if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
-				if strings.EqualFold(k, tweetID) {
-					fullText := v.Tweet.GetFullText()
-					tokenInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), v.User.UserName, fullText)
-					if tokenInfo != nil && (tokenInfo.IsGenerateVideo) {
-						existPosts, err := s.dao.FirstAgentTwitterPost(
-							tx,
-							map[string][]interface{}{
-								"twitter_post_id = ?": {v.Tweet.ID},
-							},
-							map[string][]interface{}{},
-							[]string{},
-						)
-						if err != nil {
-							return errs.NewError(err)
-						}
-
-						if existPosts == nil {
-							postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
-							m := &models.AgentTwitterPost{
-								NetworkID:             agentInfo.NetworkID,
-								AgentInfoID:           agentInfo.ID,
-								TwitterID:             v.User.ID,
-								TwitterUsername:       v.User.UserName,
-								TwitterName:           v.User.Name,
-								TwitterPostID:         v.Tweet.ID, // bai reply
-								Content:               fullText,
-								ExtractContent:        tokenInfo.GenerateVideoContent,
-								Status:                models.AgentTwitterPostStatusNew,
-								PostAt:                postedAt,
-								TwitterConversationId: v.Tweet.ConversationID, // bai goc cua conversation
-								PostType:              models.AgentSnapshotPostActionTypeGenerateVideo,
-								IsMigrated:            true,
-							}
-
-							err = s.dao.Create(tx, m)
-							if err != nil {
-								return errs.NewError(err)
-							}
-
-							_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
-						}
-					}
-				}
-			}
-		}
-	}
-	return nil
 }
 
 func (s *Service) TestVideo(ctx context.Context) {

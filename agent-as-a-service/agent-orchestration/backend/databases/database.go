@@ -117,13 +117,13 @@ func MigrateDBMain(db *gorm.DB) error {
 		(*models.SampleTwitterApp)(nil),
 
 		(*models.InfraTwitterApp)(nil),
+		(*models.InfraTwitterTopupTx)(nil),
 
 		(*models.StoreDefiApp)(nil),
 		(*models.AgentStoreTry)(nil),
 		(*models.AgentStoreTryDetail)(nil),
 
 		(*models.AgentInfoInstall)(nil),
-		(*models.InfraRequest)(nil),
 
 		(*models.AgentLibrary)(nil),
 	}

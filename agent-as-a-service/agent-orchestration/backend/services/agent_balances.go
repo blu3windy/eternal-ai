@@ -746,6 +746,8 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, networkID uint64, 
 
 	if agentType > 0 {
 		filters["agent_infos.agent_type = ?"] = []any{agentType}
+	} else {
+		filters["agent_infos.agent_type != ?"] = []any{models.AgentInfoAgentTypeUtility}
 	}
 
 	if agentModel != "" {

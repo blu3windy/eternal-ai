@@ -118,11 +118,6 @@ class ASyncBasedEternalAI(OpenAILLMBase):
             # step 0: check if the task is timed out
             current_time = time.time()
 
-            if current_time - started_at > self.timeout_seconds:
-                raise Exception(
-                    f"Inference request timed out; Model: {self.model_name}; Receipt: {receipt}"
-                )
-
             check_result: ServerInferenceResult = (
                 await check_and_get_infer_result(url, headers)
             )
@@ -165,7 +160,7 @@ class ASyncBasedEternalAI(OpenAILLMBase):
                         )
 
                     logger.info(
-                        f"Inference request succeeded; Model: {self.model_name}; Receipt: {receipt}"
+                        f"[ASyncBasedEternalAI.wait] Inference request succeeded; Model: {self.model_name}; Receipt: {receipt}"
                     )
 
                     content = choices[0].get("message", {}).get("content", "")
@@ -176,6 +171,14 @@ class ASyncBasedEternalAI(OpenAILLMBase):
                         "token_usage": token_usage,
                         "tx_hash": tx_hash,
                     }
+
+            if current_time - started_at > self.timeout_seconds:
+                logger.error(
+                    f"[ASyncBasedEternalAI.wait] Inference request timed out; Model: {self.model_name}; Receipt: {receipt}"
+                )
+                raise Exception(
+                    f"Inference request timed out; Model: {self.model_name}; Receipt: {receipt}"
+                )
 
     @log_function_call
     async def agenerate(
