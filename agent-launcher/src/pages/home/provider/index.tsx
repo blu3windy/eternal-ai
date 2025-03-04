@@ -12,6 +12,7 @@ import {compareString, getFileExtension} from "@utils/string.ts";
 import {useAuth} from "@pages/authen/provider.tsx";
 import localStorageService from "../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
+import uniq from "lodash.uniq";
 
 const initialValue: IAgentContext = {
   loading: false,
@@ -63,23 +64,34 @@ const AgentProvider: React.FC<
     id: string;
   } | null>(null);
 
-  const {genAgentSecretKey } = useAuth();
+  const { genAgentSecretKey } = useAuth();
 
   console.log("stephen: selectedAgent", selectedAgent);
   console.log("stephen: currentModel", currentModel);
   console.log("stephen: agentWallet", agentWallet);
   console.log("================================");
 
+  useEffect(() => {
+    if (selectedAgent) {
+      const agentIds = localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
+      if (agentIds && agentIds.includes(selectedAgent?.id?.toString())) {
+        createAgentWallet();
+      } else {
+        setAgentWallet(undefined)
+      }
+    }
+  }, [selectedAgent]);
+
   const createAgentWallet = async () => {
     try {
       const prvKey = await genAgentSecretKey({chainId: selectedAgent?.network_id, agentName: selectedAgent?.agent_name});
       setAgentWallet(new Wallet(prvKey));
 
-      const agentIds = localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
-      console.log('stephen: agentIds', agentIds);
-      localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentIds ? [...agentIds, selectedAgent?.id] : [selectedAgent?.id]));
-    } catch (err) {
+      const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET));
 
+      localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
+    } catch (err) {
+      console.error("Create agent wallet error:", err);
     } finally {
 
     }
