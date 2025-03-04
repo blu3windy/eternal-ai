@@ -9,6 +9,12 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
+  "resolutions": {
+    "react": "^18",
+    "react-dom": "^18",
+    "@types/react": "^18",
+    "@types/react-dom": "^18"
+  },
   "dependencies": {
     "@chakra-ui/react": "2",
     "@emotion/react": "^11.14.0",
@@ -34,9 +40,9 @@
     "lottie-react": "^2.4.1",
     "net": "^1.0.2",
     "rc-input-number": "^9.4.0",
-    "react": "^18.2.0",
+    "react": "^18",
     "react-autosize-textarea": "^7.1.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^18",
     "react-hot-toast": "^2.5.2",
     "react-infinite-scroll-component": "^6.1.0",
     "react-jazzicon": "^1.0.4",
@@ -65,8 +71,8 @@
     "@types/lodash.throttle": "^4.1.9",
     "@types/lodash.uniq": "^4.5.9",
     "@types/lodash.uniqby": "^4.7.9",
-    "@types/react": "^18.2.64",
-    "@types/react-dom": "^18.2.21",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@typescript-eslint/eslint-plugin": "^7.1.1",
     "@typescript-eslint/parser": "^7.1.1",

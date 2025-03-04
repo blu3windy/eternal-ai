@@ -1,4 +1,6 @@
-export type Child = Element | string | null | undefined;
+import { ReactNode } from "react";
+
+export type Child = ReactNode | string | null | undefined;
 
 export interface CustomComponentProps {
   children?: Array<Child> | Child;
