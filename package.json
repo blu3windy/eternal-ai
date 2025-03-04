@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "sudo-prompt": "^9.2.1"
+  }
+}
