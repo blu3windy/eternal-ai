@@ -2,6 +2,8 @@ package apis
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
@@ -391,9 +393,22 @@ func (s *Server) GetDashBoardAgent(c *gin.Context) {
 	sortStr := s.agentSortListFromContext(c)
 	search := s.stringFromContextQuery(c, "search")
 	agentType := s.intFromContextQuery(c, "agent_type")
-	// agentTypes := s.stringFromContextQuery(c, "agent_types")
+	agentTypes := s.stringFromContextQuery(c, "agent_types")
+
+	agentTypesStr := strings.Split(agentTypes, ",")
+
+	var agentTypesInt []int
+
+	for _, str := range agentTypesStr {
+		num, err := strconv.Atoi(strings.TrimSpace(str))
+		if err != nil {
+			continue
+		}
+		agentTypesInt = append(agentTypesInt, num)
+	}
+
 	model := s.stringFromContextQuery(c, "model")
-	ms, count, err := s.nls.GetDashboardAgentInfos(ctx, chain, agentType, []int{}, "", search, model, sortStr, page, limit)
+	ms, count, err := s.nls.GetDashboardAgentInfos(ctx, chain, agentType, agentTypesInt, "", search, model, sortStr, page, limit)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return

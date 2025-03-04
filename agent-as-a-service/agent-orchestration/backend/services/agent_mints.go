@@ -121,7 +121,7 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 						`(1 != 1
 							or (agent_infos.agent_type in (?) and agent_infos.eai_balance >= agent_chain_fees.agent_deploy_fee)
 						)`: {
-							models.AgentInfoAgentTypeModel, models.AgentInfoAgentTypeJs, models.AgentInfoAgentTypePython,
+							[]models.AgentInfoAgentType{models.AgentInfoAgentTypeModel, models.AgentInfoAgentTypeJs, models.AgentInfoAgentTypePython},
 						},
 						"agent_infos.network_id in (?)": {
 							[]uint64{
