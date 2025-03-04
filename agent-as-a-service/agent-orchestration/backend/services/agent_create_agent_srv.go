@@ -632,7 +632,6 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 								if err != nil {
 									return errs.NewError(err)
 								}
-								twitterPost.InferTxHash = mediaID
 								twitterPost.ImageUrl = videoUrl
 								twitterPost.ReplyPostId = refId
 								twitterPost.Status = models.AgentTwitterPostStatusReplied

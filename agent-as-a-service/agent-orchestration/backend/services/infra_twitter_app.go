@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math"
-	"math/big"
 	"strings"
 	"time"
 
@@ -378,13 +377,13 @@ func (s *Service) UtilityPostTwitter(ctx context.Context, userAddress string, re
 			}
 
 			if infraTwitterApp != nil && infraTwitterApp.TwitterInfo != nil && infraTwitterApp.TwitterInfo.RefreshError == "OK" {
-				tweetId, err := helpers.ReplyTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, req.Content, "", "")
+				tweetId, err := helpers.PostTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, req.Content, "")
 				if err != nil {
 					return errs.NewError(errs.ErrBadRequest)
 				}
 				resp.Message = fmt.Sprintf(`https://x.com/%s/status/%s`, infraTwitterApp.TwitterInfo.TwitterUsername, tweetId)
 				err = tx.Model(infraTwitterApp).
-					UpdateColumn("eai_balance", gorm.Expr("eai_balance - ?", big.NewFloat(1))).
+					UpdateColumn("eai_balance", gorm.Expr("eai_balance - ?", numeric.NewBigFloatFromString("1"))).
 					UpdateColumn("remain_request", gorm.Expr("remain_request - ?", 1)).Error
 				if err != nil {
 					return errs.NewError(errs.ErrBadRequest)
@@ -481,4 +480,16 @@ func (s *Service) UtilityTwitterVerifyDeposit(ctx context.Context, userAddress, 
 		return false, errs.NewError(err)
 	}
 	return true, nil
+}
+
+func (s *Service) TestSignature(ctx context.Context) {
+	// address := "0x7c9d59cD31F27c7cBEEde2567c9fa377537bdDE0"
+	timestamp := time.Now().UTC().Unix()
+	fmt.Println(timestamp)
+	prk := "068a7653ddda56556baadbc81ece67c6ad7d3caf7929d3908d2deb52f7a31f51"
+	signature, _ := s.GetEthereumClient(ctx, models.ETHEREUM_CHAIN_ID).GetSignatureTimestamp(prk, timestamp)
+	fmt.Println(signature)
+	//	1741061954
+	//
+	// eab561ca350c4ae7c3a020b2444840ca402e29a006da937ba9817fd90d42a6b755caf4f341b322ff8c299cb93ff37d83127ce20490bbcfdeac46c7a4ed8be5251c
 }
