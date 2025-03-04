@@ -627,12 +627,7 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 
 							if mediaID != "" {
 								// post truc tiep reply, luu lai reply_id
-								onChainContentReply := fmt.Sprintf("Prompt onchain tx:https://basescan.org/tx/%v\nVideo onchain tx:https://basescan.org/tx/%v", twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash)
-								_, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, onChainContentReply, twitterPost.TwitterPostID, mediaID)
-								if err != nil {
-									return errs.NewError(err)
-								}
-								contentReply := fmt.Sprintf("Prompt:%v", twitterPost.ExtractContent)
+								contentReply := fmt.Sprintf("Prompt onchain tx : https://basescan.org/tx/%v\nVideo onchain tx : https://basescan.org/tx/%v\nPrompt : %v", twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash, twitterPost.ExtractContent)
 								refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
 								if err != nil {
 									return errs.NewError(err)
