@@ -227,7 +227,7 @@ const AgentsList = () => {
             >
           Filter by
             </Text>
-            <Popover width={"100%"} placement="bottom-end" isOpen={isOpenFilter} onClose={onCloseFilter}>
+            <Popover styleConfig={{ width: "100%" }} placement="bottom-end" isOpen={isOpenFilter} onClose={onCloseFilter}>
                <PopoverTrigger>
                   <Box
                      className={s.btnTokenSetup}
@@ -303,7 +303,7 @@ const AgentsList = () => {
             >
           Sort by
             </Text>
-            <Popover w={"100%"} placement="bottom-end" isOpen={isOpenSort} onClose={onCloseSort}>
+            <Popover styleConfig={{ width: "100%" }} placement="bottom-end" isOpen={isOpenSort} onClose={onCloseSort}>
                <PopoverTrigger>
                   <Box
                      className={s.btnTokenSetup}

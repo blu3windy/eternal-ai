@@ -9,7 +9,7 @@ const NORMAL_STYLE = {};
 
 const Skeleton = ({ amount }: props) => {
    const renderSkeletonItems = () => {
-      const skeletonItems = [];
+      const skeletonItems: any[] = [];
       for (let i = 0; i < amount; i++) {
          skeletonItems.push(
             <div className={s.item} key={i} style={NORMAL_STYLE}>
