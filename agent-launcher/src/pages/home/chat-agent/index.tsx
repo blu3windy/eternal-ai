@@ -27,7 +27,7 @@ function ChatAgent() {
   const description =
     selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
-  const isUtilityAgent = useMemo(() => {
+  const requireInstall = useMemo(() => {
     return selectedAgent?.agent_type === AgentType.UtilityJS || selectedAgent?.agent_type === AgentType.UtilityPython || selectedAgent?.agent_type === AgentType.Model;
   }, [selectedAgent]);
 
@@ -46,7 +46,7 @@ function ChatAgent() {
   return (
     <Box className={s.container}>
       {/* <AgentInfo /> */}
-      {!isUtilityAgent || (isUtilityAgent && isRunning && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet))) ? (
+      {!requireInstall || (requireInstall && isRunning && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet))) ? (
         <ChatAgentProvider>
           <ChatBox />
         </ChatAgentProvider>
