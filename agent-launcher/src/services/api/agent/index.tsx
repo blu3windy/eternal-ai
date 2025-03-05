@@ -23,7 +23,8 @@ const AgentAPI = {
       const res: AgentInfo = await (new CApiClient()).api.post(
         `http://localhost:33033/${agent?.network_id}-${agent?.agent_name}/prompt`, {
           "messages": [],
-          "privateKey": prvKey
+          "privateKey": prvKey,
+          "chainId": agent?.network_id
         }
       );
       return res;
