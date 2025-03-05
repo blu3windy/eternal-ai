@@ -38,6 +38,7 @@ const initialValue: IAgentContext = {
    coinPrices: [],
    createAgentWallet: () => {},
    isInstalled: false,
+   installedAgents: [],
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -61,6 +62,7 @@ const AgentProvider: React.FC<
    const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
    const [coinPrices, setCoinPrices] = useState([]);
    const [isInstalled, setIsInstalled] = useState(false);
+   const [installedAgents, setInstalledAgents] = useState<string[]>([]);
 
    const cPumpAPI = new CAgentTokenAPI();
 
@@ -77,7 +79,6 @@ const AgentProvider: React.FC<
    console.log("================================");
 
    useEffect(() => {
-    handleGetExistAgentFolders()
       if (selectedAgent) {
          const agentsHasWallet = localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
          if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id?.toString())) {
@@ -205,6 +206,7 @@ const AgentProvider: React.FC<
       fetchChainList();
       getRunningAgents();
       fetchCoinPrices();
+      handleGetExistAgentFolders();
    }, []);
 
 
@@ -223,6 +225,7 @@ const AgentProvider: React.FC<
          console.log('installAgent', e);
       } finally {
          setIsInstalling(false);
+         handleGetExistAgentFolders();
       }
    }
 
@@ -311,7 +314,7 @@ const AgentProvider: React.FC<
     const handleGetExistAgentFolders = async () => {
       try {
         const folders = await window.electronAPI.getExistAgentFolders();
-        console.log("stephen: getExistAgentFolders", folders);
+        setInstalledAgents(folders || [])
       } catch (error) {
         
       }
@@ -342,6 +345,7 @@ const AgentProvider: React.FC<
          coinPrices,
          createAgentWallet,
          isInstalled,
+         installedAgents
       };
    }, [
       loading,
@@ -366,6 +370,7 @@ const AgentProvider: React.FC<
       coinPrices,
       createAgentWallet,
       isInstalled,
+      installedAgents,
    ]);
 
    return (

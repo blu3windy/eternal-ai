@@ -12,7 +12,7 @@ interface IProps {
 }
 
 const AgentItem = ({ token }: IProps) => {
-   const { selectedAgent, setSelectedAgent, startAgent, stopAgent, runningAgents, isStarting, isStopping } = useContext(AgentContext);
+   const { selectedAgent, setSelectedAgent, runningAgents, installedAgents } = useContext(AgentContext);
 
    const description = token?.token_desc || token?.twitter_info?.description;
 
@@ -30,8 +30,12 @@ const AgentItem = ({ token }: IProps) => {
   // }, [token]);
 
   const isInstalled = useMemo(() => {
+    if (token && installedAgents) {
+      return installedAgents.some(a => a === token.agent_name);
+    }
 
-  }, [])
+    return false;
+  }, [token, installedAgents]);
 
    const handleGoToChat = (e: any, token_address?: any) => {
       if (token_address) {
@@ -91,7 +95,7 @@ const AgentItem = ({ token }: IProps) => {
               <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
             </Flex>
             {
-              <Text className={s.agentTypeTag}>Installed</Text>
+              isInstalled && <Text className={s.agentTypeTag}>Installed</Text>
             }
 
             {/*{
