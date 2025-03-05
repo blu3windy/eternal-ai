@@ -50,7 +50,7 @@ def shorten_data(data: Union[dict, list, str], max_size_list: int = 10, max_size
         }
 
     elif isinstance(data, list):
-        data = sorted(data, reverse=True)[:max_size_list]
+        data = data[:max_size_list]
         data = [
             shorten_data(item, max_size_list, max_size_str)
             for item in data
