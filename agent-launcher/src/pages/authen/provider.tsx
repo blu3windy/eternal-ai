@@ -72,12 +72,13 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 
    const getAuthenToken = async (prvKey: string) => {
       const _signer = new ethers.Wallet(prvKey);
-      const _message = await AgentAPI.getChallenge(_signer?.address);
+      const _message = `Generate authen token for ${_signer?.address} in `;
       let _signature = await _signer.signMessage(_message);
       _signature = _signature.startsWith("0x")
          ? _signature.replace("0x", "")
          : _signature;
-      const authenCode: string = await AgentAPI.getAuthenToken(_signature, _signer.address);
+
+      const authenCode: string = await AgentAPI.getAuthenToken({signature: _signature, message: _message, address: _signer.address});
 
       return authenCode;
    }

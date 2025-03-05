@@ -1,24 +1,23 @@
-import { AgentInfo, ChatCompletionPayload, ChatCompletionStreamHandler } from "./types.ts";
-import { IMAGINE_URL } from "../../../config.ts";
-import { THINK_TAG_REGEX } from "@components/CustomMarkdown/constants.ts";
-import { parseStreamAIResponse } from "@utils/api.ts";
-import { getClientHeaders } from "../http-client.ts";
+import {AgentInfo, ChatCompletionPayload, ChatCompletionStreamHandler} from "./types.ts";
+import {IMAGINE_URL} from "../../../config.ts";
+import {THINK_TAG_REGEX} from "@components/CustomMarkdown/constants.ts";
+import {parseStreamAIResponse} from "@utils/api.ts";
+import {getClientHeaders} from "../http-client.ts";
 import CApiClient from "../agents-token/apiClient.ts";
-import { IAgentToken } from "../agents-token/interface.ts";
+import {IAgentToken} from "../agents-token/interface.ts";
 
 import qs from 'query-string';
 
 const AgentAPI = {
-  getChallenge: async (address: string): Promise<string> => {
-    const query = qs.stringify({
-      address,
-    });
-    const res = await (new CApiClient()).api.get(`${'https://api-dojo2.eternalai.org'}/api/auth/challenge?${query}`);
-    return res as any;
-  },
-  getAuthenToken: async (
+  getAuthenToken: async ({
+                           signature,
+                           message,
+                           address,
+                         } : {
     signature: string,
-    address: string,
+    message: string,
+    address: string
+                         }
   ) : Promise<string> => {
     try {
       const query = qs.stringify({
@@ -28,9 +27,17 @@ const AgentAPI = {
         address,
       });
 
-      const res: string = await (new CApiClient()).api.get(
-         `${'https://api-dojo2.eternalai.org'}/api/auth/verify?${query}`,
+      const res: string = await (new CApiClient()).api.post(
+         `${'https://agent.api.eternalai.org'}/api/auth/verify`,
+        {
+           signature: signature, message: message, address: address
+        }
       );
+
+      // const authenCode: string = await this.api.post('auth/verify', {
+      //    signature: _signature, message: _message, address: _signer.address
+      // });
+      // return authenCode;
 
       return res;
     } catch (e) {
