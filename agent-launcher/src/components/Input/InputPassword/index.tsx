@@ -38,7 +38,7 @@ const InputPassword = (props: IProps) => {
                {...rest}
             />
             <Image
-               src={showPassword ? "/icons/ic_eye_hide.svg" : "/icons/ic_eye_open.svg"}
+               src={showPassword ? "icons/ic_eye_hide.svg" : "icons/ic_eye_open.svg"}
                width="20px"
                height="20px"
                position="absolute"
