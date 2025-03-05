@@ -11,14 +11,16 @@ import command from "../share/command-tool.ts";
 
 const execAsync = promisify(exec);
 
-let dockerPath = '';
+const dockerPath = '';
 const getDockerPath = async () => {
-   if (dockerPath) {
-      return dockerPath;
-   }
-   const { stdout } = await command.execAsync('which docker')
-   dockerPath = stdout.trim().toString();
-   return dockerPath;
+   // if (dockerPath) {
+   //    return dockerPath;
+   // }
+   // const { stdout } = await command.execAsync('which docker')
+   // dockerPath = stdout.trim().toString();
+   // return dockerPath;
+
+   return 'docker'
 }
 
 
