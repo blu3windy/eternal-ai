@@ -1,32 +1,32 @@
 .container {
   padding: 0px 60px;
+  height: calc(100% - 40px);
 
   .installContainer {
+    height: 100%;
+
     .nameText {
+      color: #FFF;
       font-size: 24px;
       font-weight: 500;
-      margin-top: -100px;
-      margin-bottom: 40px;
-      position: absolute;
-      bottom: 0;
     }
 
     .descriptionText {
       font-size: 16px;
       font-weight: 400;
-      color: #000;
+      color: #FFF;
       max-width: 80%;
       text-align: center;
     }
 
     .btnInstall {
-      background-color: #000;
-      color: #fff;
+      background-color: #FFF;
+      color: #000;
       border-radius: 100px;
-      width: 160px;
-      height: 48px;
+      width: 142px;
+      height: 60px;
       font-size: 16px;
-      font-weight: 400;
+      font-weight: 500;
     }
 
     .glow-on-hover {

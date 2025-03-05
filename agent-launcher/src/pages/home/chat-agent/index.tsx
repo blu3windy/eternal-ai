@@ -25,7 +25,11 @@ function ChatAgent() {
     selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
   const requireInstall = useMemo(() => {
-    return selectedAgent?.agent_type === AgentType.UtilityJS || selectedAgent?.agent_type === AgentType.UtilityPython || selectedAgent?.agent_type === AgentType.Model;
+    if (selectedAgent) {
+      return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model].includes(selectedAgent?.agent_type as AgentType);
+    }
+
+    return false
   }, [selectedAgent]);
 
   const handleInstall = () => {
@@ -47,30 +51,13 @@ function ChatAgent() {
         <Flex
           className={s.installContainer}
           direction={"column"}
-          w={"100%"}
           alignItems={"center"}
-          gap={"20px"}
+          justifyContent={"center"}
+          w={"100%"}
+          gap={"32px"}
         >
-          <Flex
-            direction={"column"}
-            alignItems={"center"}
-            position={"relative"}
-          >
-            <Image src="/images/bg-agent-chat.png" w={"80%"} />
-            <Flex
-              position="absolute"
-              height="70px"
-              w="70px"
-              top={"50%"}
-              left={"50%"}
-              transform={"translate(-50%, -50%)"}
-            >
-              <Flex className={s?.["glow-on-hover"]}>
-                <Image w="70px" h="70px" src={avatarUrl} borderRadius={"50%"} />
-              </Flex>
-            </Flex>
-            <Text className={s.nameText}>{selectedAgent?.agent_name}</Text>
-          </Flex>
+          <Image w="280px" h="280px" src={avatarUrl} borderRadius={"50%"} />
+          <Text className={s.nameText}>{selectedAgent?.agent_name}</Text>
           {
             isInstalled && selectedAgent?.required_wallet && !agentWallet ? (
               <>

@@ -2,27 +2,40 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import MainLayout from "../../components/layout";
 import FundAgentProvider from "../../providers/FundAgent";
 import ChatAgent from "./chat-agent";
-import AgentsList from "./list-agent";
+import AgentsList, {AgentType} from "./list-agent";
 import AgentProvider, { AgentContext } from "./provider";
 import s from "./styles.module.scss";
-import { useContext } from "react";
+import {useContext, useMemo} from "react";
 import TradeAgent from "./trade-agent";
 import AgentInfo from "./chat-agent/AgentInfo";
 import { Box } from "@chakra-ui/react";
+import cx from "clsx";
 
 type Props = {
    // some props
 };
 
 const HandleHome = () => {
-  const { isTrade } = useContext(AgentContext);
+  const { isTrade, isInstalled, selectedAgent, agentWallet } = useContext(AgentContext);
+  const requireInstall = useMemo(() => {
+    if (selectedAgent) {
+      return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model].includes(selectedAgent?.agent_type as AgentType);
+    }
+
+    return false
+  }, [selectedAgent]);
+
+  const isCanChat = useMemo(() => {
+    return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet)));
+  }, [requireInstall, selectedAgent, agentWallet]);
+
   return (
     <PanelGroup direction="horizontal">
       <Panel minSize={20} maxSize={25}>
         <AgentsList />
       </Panel>
       <PanelResizeHandle />
-      <Panel minSize={50} maxSize={60} style={{ paddingTop: "16px" }}>
+      <Panel minSize={50} maxSize={60} className={cx(s.detailContainer, !isCanChat ? s.isSetup : '')}>
         <Box pl={"60px"} pr={"16px"}>
           <AgentInfo />
         </Box>
