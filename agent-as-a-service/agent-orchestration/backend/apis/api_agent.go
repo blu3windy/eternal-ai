@@ -2,6 +2,8 @@ package apis
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
@@ -391,8 +393,26 @@ func (s *Server) GetDashBoardAgent(c *gin.Context) {
 	sortStr := s.agentSortListFromContext(c)
 	search := s.stringFromContextQuery(c, "search")
 	agentType := s.intFromContextQuery(c, "agent_type")
+	agentTypes := s.stringFromContextQuery(c, "agent_types")
+
+	agentTypesStr := strings.Split(agentTypes, ",")
+
+	var agentTypesInt []int
+
+	for _, str := range agentTypesStr {
+		num, err := strconv.Atoi(strings.TrimSpace(str))
+		if err != nil {
+			continue
+		}
+		agentTypesInt = append(agentTypesInt, num)
+	}
+
 	model := s.stringFromContextQuery(c, "model")
-	ms, count, err := s.nls.GetDashboardAgentInfos(ctx, chain, agentType, "", search, model, sortStr, page, limit)
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	installed, _ := s.boolFromContextQuery(c, "installed")
+	ms, count, err := s.nls.GetDashboardAgentInfos(ctx, userAddress, chain, agentType, agentTypesInt, "", search, model,
+		installed, sortStr, page, limit)
+
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
@@ -411,7 +431,10 @@ func (s *Server) GetDashBoardAgentDetail(c *gin.Context) {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrBadRequest)})
 		return
 	}
-	ms, _, err := s.nls.GetDashboardAgentInfos(ctx, chain, 0, tokenAddress, search, "", sortStr, page, limit)
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	ms, _, err := s.nls.GetDashboardAgentInfos(ctx, userAddress, chain, 0, []int{}, tokenAddress, search, "",
+		nil, sortStr, page, limit)
+
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
@@ -564,11 +587,42 @@ func (s *Server) GetAgentInfoInstallCode(c *gin.Context) {
 
 func (s *Server) GetAgentLibrary(c *gin.Context) {
 	ctx := s.requestContext(c)
-	networkID, err := s.uint64FromContextQuery(c, "network_id")
+	networkID, _ := s.uint64FromContextQuery(c, "network_id")
 	obj, err := s.nls.GetListAgentLibrary(ctx, networkID)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentLibraryRespArray(obj)})
+}
+
+func (s *Server) AddAgentLibrary(c *gin.Context) {
+	networkID, _ := s.uint64FromContextQuery(c, "network_id")
+
+	ctx := s.requestContext(c)
+	var req serializers.AgentLibraryReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	_, err := s.nls.SaveAgentLibrary(ctx, networkID, &req)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: true})
+
+}
+
+func (s *Server) CheckNameExist(c *gin.Context) {
+	ctx := s.requestContext(c)
+	name := s.stringFromContextQuery(c, "name")
+	networkID, _ := s.uint64FromContextQuery(c, "network_id")
+	isExist, err := s.nls.CheckNameExist(ctx, networkID, name)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: isExist})
+
 }

@@ -51,6 +51,9 @@ var (
 	ErrApiUrlNotHealth         = &Error{Code: -2016, Message: "Api Url not Health"}
 
 	ErrApiKeyRateLimited = &Error{Code: -2016, Message: "API Key rate limit"}
+
+	ErrAgentUtilityNotAuthen      = &Error{Code: -3000, Message: "Please authentican with this link and try again"}
+	ErrAgentUtilityInvalidBalance = &Error{Code: -3001, Message: "Your balance isn't enough. Please topup and try again"}
 )
 
 type Error struct {

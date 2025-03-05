@@ -59,7 +59,9 @@ const (
 	AgentInfoAgentTypeKnowledgeBase AgentInfoAgentType = 2
 	AgentInfoAgentTypeEliza         AgentInfoAgentType = 3
 	AgentInfoAgentTypeZerepy        AgentInfoAgentType = 4
-	AgentInfoAgentTypeUtility       AgentInfoAgentType = 5
+	AgentInfoAgentTypeModel         AgentInfoAgentType = 5
+	AgentInfoAgentTypeJs            AgentInfoAgentType = 6
+	AgentInfoAgentTypePython        AgentInfoAgentType = 7
 )
 
 type (
@@ -361,6 +363,7 @@ type AgentTwitterPost struct {
 	ImageUrl              string
 	InferTxHash           string
 	InferId               string
+	SubmitSolutionTxHash  string
 	InferAt               *time.Time
 	InferNum              uint                   `gorm:"default:0"`
 	Status                AgentTwitterPostStatus `gorm:"index"`
@@ -669,4 +672,10 @@ type AgentInfoInstall struct {
 	User           *User
 	CallbackParams string `gorm:"type:longtext"` //{"user_id" : "123", "authen_token" : "xxx",...}
 	Status         AgenInfoInstallStatus
+}
+
+type AgentUtilityInstall struct {
+	gorm.Model
+	Address     string `gorm:"unique_index:agent_utility_install_main_idx"`
+	AgentInfoID uint   `gorm:"unique_index:agent_utility_install_main_idx"`
 }

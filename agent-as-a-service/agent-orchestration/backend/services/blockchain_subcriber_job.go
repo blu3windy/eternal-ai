@@ -380,14 +380,6 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 		}
 	}
 
-	{
-		for _, event := range eventResp.RealWorldAgentExecutionRequested {
-			err := s.CreateInfraTwitterAppRequest(ctx, event)
-			if err != nil {
-				retErr = errs.MergeError(retErr, err)
-			}
-		}
-	}
 	return retErr
 }
 
@@ -1280,10 +1272,6 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 						addrs, err := s.GetFilterAddrs(ctx, chain.NetworkID)
 						if err != nil {
 							return errs.NewError(err)
-						}
-						if s.conf.InfraTwitterApp.NetworkID == networkID &&
-							s.conf.InfraTwitterApp.AgentAddress != "" {
-							addrs = append(addrs, s.conf.InfraTwitterApp.AgentAddress)
 						}
 						startBlocks := chain.LastBlockNumber + 1
 						endBlocks := (chain.LastBlockNumber + chain.NumBlocks - 1)

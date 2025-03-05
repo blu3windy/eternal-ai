@@ -709,7 +709,7 @@ func (s *Service) JobUpdateTwitterAccessToken(ctx context.Context) error {
 				map[string][]interface{}{},
 				[]string{
 					"updated_at asc",
-				}, 0, 20,
+				}, 0, 50,
 			)
 			if err != nil {
 				return errs.NewError(err)
@@ -2246,4 +2246,23 @@ func (s *Service) GetAgentInfoInstall(ctx context.Context, code string) (*models
 		return nil, errs.NewError(err)
 	}
 	return res, nil
+}
+
+func (s *Service) CheckNameExist(ctx context.Context, networkID uint64, name string) (bool, error) {
+	obj, err := s.dao.FirstAgentInfo(
+		daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"network_id = ?": {networkID},
+			"agent_name = ?": {name},
+		},
+		map[string][]interface{}{},
+		[]string{},
+	)
+	if err != nil {
+		return false, errs.NewError(err)
+	}
+	if obj != nil {
+		return true, nil
+	}
+	return false, nil
 }

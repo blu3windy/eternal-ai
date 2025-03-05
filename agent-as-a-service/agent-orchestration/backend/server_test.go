@@ -44,7 +44,13 @@ func init() {
 }
 
 func Test_JOB(t *testing.T) {
-	ts.MemeEventsByTransaction(context.Background(), 56, "")
+	//
+	fmt.Println(
+		"OK",
+		// ts.DeployProxyAdminAddress(context.Background(), models.BASE_SEPOLIA_CHAIN_ID),
+		// ts.DeployAgentUpgradeable(context.Background(), 14424),
+	)
+	// ts.MemeEventsByTransaction(context.Background(), 56, "")
 	// ts.AgentSnapshotPostCreate(context.Background(), 59166, "", "")
 	// ts.JobScanAgentTwitterPostForTA(context.Background())
 	// ts.RetryAgentDeployToken(context.Background(), 51265)
@@ -102,10 +108,10 @@ func Test_OpenAI(t *testing.T) {
 
 func Test_SRV(t *testing.T) {
 	// ts.JobExecuteInfraTwitterAppRequest(context.Background())
-	ts.TestVideo(context.Background())
+	ts.TestSignature(context.Background())
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
 	// ts.CreateGenerateVideoByTweetID(daos.GetDBMainCtx(context.Background()), "1895369759690219863")
-	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 34578)
+	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 34584)
 }

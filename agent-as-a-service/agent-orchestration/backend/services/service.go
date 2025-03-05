@@ -190,8 +190,6 @@ func NewService(conf *configs.Config) *Service {
 	s.AppConfigUseCase = appconfig.NewAppConfigUseCase(appConfigRepo)
 	s.AgentInfoUseCase = agent_info.NewAgentInfoUseCase(agentInfoRepo)
 
-	//s.JobScanAgentTwitterPostForGenerateVideo(context.Background()) // TODO rrrrrrr
-
 	return s
 }
 

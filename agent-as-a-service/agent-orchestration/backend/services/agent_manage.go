@@ -56,25 +56,6 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	if req.SystemContent == "" {
 		req.SystemContent = "default"
 	}
-	switch req.AgentType {
-	case models.AgentInfoAgentTypeUtility:
-		{
-			switch req.ChainID {
-			case models.BASE_CHAIN_ID,
-				models.ARBITRUM_CHAIN_ID,
-				models.BSC_CHAIN_ID,
-				models.APE_CHAIN_ID,
-				models.SEPOLIA_CHAIN_ID,
-				models.AVALANCHE_C_CHAIN_ID:
-				{
-				}
-			default:
-				{
-					return nil, errs.ErrBadRequest
-				}
-			}
-		}
-	}
 	agent := &models.AgentInfo{
 		Version:          "2",
 		AgentType:        models.AgentInfoAgentTypeReasoning,
@@ -1403,4 +1384,26 @@ func (s *Service) GetAgentChainFees(ctx context.Context) (map[string]interface{}
 		}
 	}
 	return chainFeeMap, nil
+}
+
+func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string, req *serializers.AgentActionReq) (bool, error) {
+	err := daos.WithTransaction(
+		daos.GetDBMainCtx(ctx),
+		func(tx *gorm.DB) error {
+			for _, agentID := range req.Ids {
+				inst := &models.AgentUtilityInstall{
+					Address:     strings.ToLower(address),
+					AgentInfoID: agentID,
+				}
+				_ = s.dao.Create(tx, inst)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return false, errs.NewError(err)
+	}
+
+	return true, nil
 }

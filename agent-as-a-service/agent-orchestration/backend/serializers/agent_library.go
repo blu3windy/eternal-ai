@@ -6,11 +6,16 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 )
 
+type AgentLibraryReq struct {
+	Name      string `json:"name"`
+	SourceUrl string `json:"source_url"`
+}
+
 type AgentLibraryResp struct {
 	ID        uint      `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	Name      string    `json:"name"`
-	SourceID  string    `json:"source_url"`
+	SourceUrl string    `json:"source_url"`
 }
 
 func NewAgentLibraryResp(m *models.AgentLibrary) *AgentLibraryResp {
@@ -21,7 +26,7 @@ func NewAgentLibraryResp(m *models.AgentLibrary) *AgentLibraryResp {
 		ID:        m.ID,
 		CreatedAt: m.CreatedAt,
 		Name:      m.Name,
-		SourceID:  m.SourceURL,
+		SourceUrl: m.SourceURL,
 	}
 }
 

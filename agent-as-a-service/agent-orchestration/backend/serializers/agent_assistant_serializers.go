@@ -256,3 +256,8 @@ type DataUploadToLightHouse struct {
 type StudioReq struct {
 	GraphData string `json:"graph_data"`
 }
+
+type AgentActionReq struct {
+	Action string `json:"Action"`
+	Ids    []uint `json:"ids"`
+}
