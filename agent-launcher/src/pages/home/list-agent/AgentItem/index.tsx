@@ -31,7 +31,7 @@ const AgentItem = ({ token }: IProps) => {
 
   const isInstalled = useMemo(() => {
     if (token && installedAgents) {
-      return installedAgents.some(a => a === token.agent_name);
+      return installedAgents.some(a => a === `${token.network_id}-${token.agent_name}`);
     }
 
     return false;
