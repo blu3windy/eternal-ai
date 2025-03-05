@@ -635,6 +635,13 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 								refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
 								if err != nil {
 									s.SendTeleVideoActivitiesAlert(fmt.Sprintf("fail when reply video db_id:%v \n err:%v ", twitterPost.ID, err.Error()))
+									if strings.Contains(err.Error(), "You attempted to reply to a Tweet that is deleted or not visible to you") {
+										twitterPost.Status = models.AgentTwitterPostStatusInvalid
+										err = s.dao.Save(tx, twitterPost)
+										if err != nil {
+											return errs.NewError(err)
+										}
+									}
 									return errs.NewError(err)
 								}
 								twitterPost.InferTxHash = mediaID
