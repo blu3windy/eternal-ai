@@ -39,6 +39,7 @@ const initialValue: IAgentContext = {
    createAgentWallet: () => {},
    isInstalled: false,
    installedAgents: [],
+   isCanChat: false,
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -77,6 +78,18 @@ const AgentProvider: React.FC<
    console.log("stephen: currentModel", currentModel);
    console.log("stephen: agentWallet", agentWallet);
    console.log("================================");
+
+   const requireInstall = useMemo(() => {
+      if (selectedAgent) {
+         return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model].includes(selectedAgent?.agent_type as AgentType);
+      }
+
+      return false;
+   }, [selectedAgent]);
+
+   const isCanChat = useMemo(() => {
+      return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet)));
+   }, [requireInstall, selectedAgent, agentWallet]);
 
    useEffect(() => {
       if (selectedAgent) {
@@ -345,7 +358,8 @@ const AgentProvider: React.FC<
          coinPrices,
          createAgentWallet,
          isInstalled,
-         installedAgents
+         installedAgents,
+         isCanChat,
       };
    }, [
       loading,
@@ -371,6 +385,7 @@ const AgentProvider: React.FC<
       createAgentWallet,
       isInstalled,
       installedAgents,
+      isCanChat,
    ]);
 
    return (

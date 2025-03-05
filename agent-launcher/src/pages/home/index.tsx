@@ -16,18 +16,7 @@ type Props = {
 };
 
 const HandleHome = () => {
-  const { isTrade, isInstalled, selectedAgent, agentWallet } = useContext(AgentContext);
-  const requireInstall = useMemo(() => {
-    if (selectedAgent) {
-      return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model].includes(selectedAgent?.agent_type as AgentType);
-    }
-
-    return false
-  }, [selectedAgent]);
-
-  const isCanChat = useMemo(() => {
-    return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet)));
-  }, [requireInstall, selectedAgent, agentWallet]);
+  const { isTrade, isCanChat } = useContext(AgentContext);
 
   return (
     <PanelGroup direction="horizontal">

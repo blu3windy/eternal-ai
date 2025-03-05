@@ -1,16 +1,35 @@
 .container {
 
+  .contentContainer {
+    &.isSetup {
+      .content {
+        background-color: #FFFFFF1A;
+        border: 1px solid #FFFFFF1A;
+      }
+
+      .text {
+        color: #FFF;
+      }
+
+      .btnBuy {
+        background-color: #FFFFFF;
+        color: #000;
+      }
+    }
+  }
+
   .content {
-    padding: 8px 16px;
+    height: 36px;
+    padding: 0px 16px;
     border-radius: 1000px;
-    background-color: #FFFFFF1A;
-    border: 1px solid #FFFFFF1A;
+    background-color: #FFFFFF;
+    border: 1px solid #0000001F;
   }
 
   .text {
     font-size: 16px;
     font-weight: 400;
-    color: #FFF;
+    color: #000;
   }
 
   .percent {
@@ -20,10 +39,10 @@
   }
 
   .btnBuy {
-    background-color: #FFFFFF;
+    background-color: #000;
     font-size: 16px;
     font-weight: 400;
-    color: #000;
+    color: #FFF;
     border-radius: 100px;
     min-width: 60px;
     height: 36px;

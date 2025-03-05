@@ -8,6 +8,7 @@ import Percent24h from "@components/Percent";
 import InfoTooltip from "@components/InfoTooltip";
 import {AgentType} from "@pages/home/list-agent";
 import HeaderWallet from "@components/header/wallet";
+import cx from 'clsx';
 
 const AgentInfo = () => {
   const {
@@ -21,7 +22,8 @@ const AgentInfo = () => {
     isRunning,
     isInstalled,
     isStarting,
-    startAgent
+    startAgent,
+    isCanChat
   } = useContext(AgentContext);
 
   const description =
@@ -50,7 +52,7 @@ const AgentInfo = () => {
             <Box/>
           )
         }
-        <Flex gap={"6px"} alignItems={"center"}>
+        <Flex gap={"6px"} alignItems={"center"} className={cx(s.contentContainer, !isCanChat ? s.isSetup : '')}>
           <Flex gap={"6px"} alignItems={"center"} className={s.content}>
             {isInstalled && (
               <Button
@@ -63,7 +65,7 @@ const AgentInfo = () => {
                 {isRunning ? "Stop" : "Start"}
               </Button>
             )}
-            <InfoTooltip iconSize="sm" label={description} placement="top" iconColor={'white'} />
+            <InfoTooltip iconSize="sm" label={description} placement="top" iconColor={isCanChat ? 'black' : 'white'} />
             <Text className={s.text}>{selectedAgent?.agent_name}</Text>
             <Text className={s.text} opacity={0.7}>${selectedAgent?.token_symbol}</Text>
             <Divider orientation={'vertical'} borderColor={'#FFFFFF1A'} h={"32px"} m={'auto 0'}/>
@@ -79,7 +81,7 @@ const AgentInfo = () => {
         </Flex>
       </Flex>
       <Flex minW={"350px"} justifyContent={"flex-end"}>
-        <HeaderWallet color={"white"}/>
+        <HeaderWallet color={isCanChat ? 'black' : "white"}/>
       </Flex>
     </Flex>
   );
