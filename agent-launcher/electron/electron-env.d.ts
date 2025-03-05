@@ -33,6 +33,7 @@ interface IElectronAPI {
   getFilePath: (fileName: string, folderName: string) => Promise<string>
   accessFile: (fileName: string, folderName: string) => Promise<boolean>
   writeFile: (fileName: string, folderName: string, data: string) => Promise<string>
+  getExistAgentFolders: () => Promise<string[]>
 
   dockerCopyBuild: () => Promise<void>
   dockerBuild: () => Promise<void>

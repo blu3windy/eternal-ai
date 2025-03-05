@@ -77,6 +77,7 @@ const AgentProvider: React.FC<
    console.log("================================");
 
    useEffect(() => {
+    handleGetExistAgentFolders()
       if (selectedAgent) {
          const agentsHasWallet = localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
          if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id?.toString())) {
@@ -304,6 +305,16 @@ const AgentProvider: React.FC<
 
       await window.electronAPI.dockerStopAgent(agent?.agent_name, agent?.network_id.toString());
    };
+
+    const handleGetExistAgentFolders = async () => {
+      try {
+        const folders = await window.electronAPI.getExistAgentFolders();
+        console.log("stephen: getExistAgentFolders", folders);
+      } catch (error) {
+        
+      }
+    }
+
 
    const contextValues: any = useMemo(() => {
       return {

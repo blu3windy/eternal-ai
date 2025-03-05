@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
    readFile: (fileName: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.READ_FILE, fileName),
    accessFile: (fileName: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.ACCESS_FILE, fileName),
    writeFile: (fileName: string, folderName: string, data: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.WRITE_FILE, fileName, folderName, data),
+   getExistAgentFolders: () => ipcRenderer.invoke(EMIT_EVENT_NAME.GET_EXIST_FOLDERS),
 
    dockerCopyBuild: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_COPY_BUILD),
    dockerCheckInstall: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL),
