@@ -368,6 +368,7 @@ const AgentsList = () => {
          <Flex
             direction={"column"}
             w="100%"
+            p={"24px"}
          >
             <Flex
                flexDirection="column"
@@ -382,7 +383,7 @@ const AgentsList = () => {
                {renderSortMenu()}
             </Flex>
          </Flex>
-         <Box h={'24px'} />
+         <Box h={'8px'} />
 
          <InfiniteScroll
             className={s.listContainer}
