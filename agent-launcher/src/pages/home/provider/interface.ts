@@ -30,4 +30,5 @@ export interface IAgentContext {
   coinPrices: any[];
   createAgentWallet: any;
   isInstalled: boolean;
+  installedAgents: string[];
 }
