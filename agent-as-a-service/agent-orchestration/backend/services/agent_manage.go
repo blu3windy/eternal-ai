@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
@@ -90,8 +91,8 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		SourceUrl:        req.SourceUrl,
 		AuthenUrl:        req.AuthenUrl,
 		DependAgents:     req.DependAgents,
-		RequiredWallet:   req.RequiredWallet,
-		IsOnchain:        req.IsOnchain,
+		RequiredWallet:   *req.RequiredWallet,
+		IsOnchain:        *req.IsOnchain,
 	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
@@ -451,13 +452,27 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				agent.Style = req.GetAssistantCharacter(req.Style)
 				agent.Adjectives = req.GetAssistantCharacter(req.Adjectives)
 				agent.SocialInfo = req.GetAssistantCharacter(req.SocialInfo)
-				agent.SourceUrl = req.SourceUrl
-				agent.AuthenUrl = req.AuthenUrl
-				agent.DependAgents = req.DependAgents
-				agent.RequiredWallet = req.RequiredWallet
-				agent.IsOnchain = req.IsOnchain
-				agent.MinFeeToUse = req.MinFeeToUse
-				agent.Worker = req.Worker
+				if req.SourceUrl != "" {
+					agent.SourceUrl = req.SourceUrl
+				}
+				if req.AuthenUrl != "" {
+					agent.AuthenUrl = req.AuthenUrl
+				}
+				if req.DependAgents != "" {
+					agent.DependAgents = req.DependAgents
+				}
+				if req.RequiredWallet != nil {
+					agent.RequiredWallet = *req.RequiredWallet
+				}
+				if req.IsOnchain != nil {
+					agent.IsOnchain = *req.IsOnchain
+				}
+				if req.MinFeeToUse.Cmp(big.NewFloat(0)) > 0 {
+					agent.MinFeeToUse = req.MinFeeToUse
+				}
+				if req.Worker != "" {
+					agent.Worker = req.Worker
+				}
 				if req.TokenImageUrl != "" {
 					agent.TokenImageUrl = req.TokenImageUrl
 				}

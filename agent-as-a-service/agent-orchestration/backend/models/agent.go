@@ -205,7 +205,7 @@ type AgentInfo struct {
 	TwinTrainingProgress    float64 `json:"twin_training_progress"`
 	TwinTrainingMessage     string  `gorm:"type:longtext"`
 
-	SourceUrl      string `gorm:"type:text"` //ipfs_ || ethfs_ json
+	SourceUrl      string `gorm:"type:text"` //ipfs_ || ethfs_
 	AuthenUrl      string `gorm:"type:text"`
 	DependAgents   string `gorm:"type:longtext"`
 	RequiredWallet bool
