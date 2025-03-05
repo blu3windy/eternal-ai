@@ -10,7 +10,6 @@ import {
    USER_DATA_FOLDER_NAME
 } from "../share/utils.ts";
 import command from "../share/command-tool.ts";
-import { aw } from "framer-motion/dist/types.d-6pKw1mTI";
 
 const getDocker = async () => {
    return 'docker'

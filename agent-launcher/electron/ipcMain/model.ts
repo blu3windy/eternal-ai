@@ -19,6 +19,7 @@ const ipcMainModel = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL, async (_event, hash: string) => {
       const path = getModelPath();
+      const cmd = `cd '${path}' && source '${path}/local_llms/bin/activate' && local-llms install --hash ${hash}`;
       await command.execAsyncStream( `cd '${path}' && source '${path}/${ACTIVE_PATH}' && local-llms download --max-workers 2 --hash ${hash}`)
    });
 

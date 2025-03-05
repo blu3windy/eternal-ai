@@ -1,5 +1,5 @@
 import { Center, Flex, Image, Text } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
 import BaseButton from "@components/BaseButton";
 import sleep from "@utils/sleep.ts";
@@ -25,6 +25,8 @@ const Starter = (props: IProps) => {
    const { onCheckHasUser } = props;
    const { setChecking } = useStarter();
 
+   const initRef = useRef(false);
+
    const [step, setStep] = useState<Step>("INITIALIZING");
    const [installing, setInstalling] = useState<boolean>(false);
    const [installError, setInstallError] = useState<string | undefined>();
@@ -39,6 +41,7 @@ const Starter = (props: IProps) => {
          const hasDocker = await window.electronAPI.dockerCheckInstall();
          if (hasDocker) {
             await window.electronAPI.dockerBuild();
+            await window.electronAPI.modelStarter();
             setChecking(false);
          } else {
             setStep("REQUEST_INSTALL_DOCKER");
@@ -98,7 +101,10 @@ const Starter = (props: IProps) => {
    }
 
    useEffect(() => {
-      onInit().then().catch();
+      if (!initRef?.current) {
+         initRef.current = true;
+         onInit().then().catch();
+      }
    }, [])
 
    return (
