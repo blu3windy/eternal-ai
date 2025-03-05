@@ -3,6 +3,10 @@ const script = require("./prompt.js");
 const app = express();
 const PORT = 80;
 
+// Middleware to parse JSON and URL-encoded data
+app.use(express.json()); // For JSON data
+app.use(express.urlencoded({ extended: true })); // For form data
+
 app.post('/prompt', async (req, res) => {
    try {
       const messages = req.body?.messages;
