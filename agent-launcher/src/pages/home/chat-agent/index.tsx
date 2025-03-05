@@ -28,7 +28,7 @@ function ChatAgent() {
     selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
   const isUtilityAgent = useMemo(() => {
-    return selectedAgent?.agent_type === AgentType.UtilityJS;
+    return selectedAgent?.agent_type === AgentType.UtilityJS || selectedAgent?.agent_type === AgentType.UtilityPython || selectedAgent?.agent_type === AgentType.Model;
   }, [selectedAgent]);
 
   const handleInstall = () => {
