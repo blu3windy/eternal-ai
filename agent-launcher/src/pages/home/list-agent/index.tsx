@@ -63,8 +63,9 @@ export enum AgentType {
   KnowledgeBase = 2,
   Eliza = 3,
   Zerepy = 4,
-  Utility = 5,
-  RealWorld = 6,
+  UtilityJS = 5,
+  UtilityPython = 6,
+  Model = 7,
 }
 
 export const AgentTypeName = {
@@ -73,8 +74,8 @@ export const AgentTypeName = {
    [AgentType.KnowledgeBase]: 'Knowledge',
    [AgentType.Eliza]: 'Eliza',
    [AgentType.Zerepy]: 'Zerepy',
-   [AgentType.Utility]: 'Utility',
-   [AgentType.RealWorld]: 'Real-World',
+   [AgentType.UtilityJS]: 'Utility JS',
+   [AgentType.UtilityPython]: 'Utility Python',
 }
 
 const AgentsList = () => {
@@ -123,7 +124,8 @@ const AgentsList = () => {
             sort_col: refParams.current.sort,
             search: refParams.current.search,
             filter_col: refParams.current.filter,
-            chain: ''
+            chain: '',
+            agent_types: '5,6,7'
          });
 
          if (isNew) {
