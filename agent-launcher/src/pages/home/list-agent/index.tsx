@@ -373,7 +373,6 @@ const AgentsList = () => {
                flexDirection="column"
                justifyContent="flex-start"
                gap="16px"
-               w={{ base: '50vw', lg: 'calc(100% - 16px)' }}
             >
                {renderSearch()}
             </Flex>
