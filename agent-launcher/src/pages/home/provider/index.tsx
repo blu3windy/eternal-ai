@@ -13,6 +13,7 @@ import localStorageService from "../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 import uniq from "lodash.uniq";
 import CAgentContract from "@contract/agent/index.ts";
+import {AgentType} from "@pages/home/list-agent";
 
 const initialValue: IAgentContext = {
    loading: false,
@@ -21,11 +22,12 @@ const initialValue: IAgentContext = {
    currentModel: undefined,
    setCurrentModel: () => {},
    chainList: [],
+   installAgent: () => {},
    startAgent: () => {},
    stopAgent: () => {},
+   isInstalling: false,
    isStarting: false,
    isStopping: false,
-   handleStopDockerAgent: () => {},
    runningAgents: [],
    isTrade: false,
    setIsTrade(v) {},
@@ -50,12 +52,14 @@ const AgentProvider: React.FC<
       undefined
    );
    const [chainList, setChainList] = useState<IChainConnected[]>([]);
+   const [isInstalling, setIsInstalling] = useState(false);
    const [isStarting, setIsStarting] = useState(false);
    const [isStopping, setIsStopping] = useState(false);
    const [runningAgents, setRunningAgents] = useState<number[]>([]);
    const [isTrade, setIsTrade] = useState(false);
    const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
    const [coinPrices, setCoinPrices] = useState([]);
+   const [isInstalled, setIsInstalled] = useState(false);
 
    const cPumpAPI = new CAgentTokenAPI();
 
@@ -73,11 +77,19 @@ const AgentProvider: React.FC<
 
    useEffect(() => {
       if (selectedAgent) {
-         const agentIds = localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
-         if (agentIds && agentIds.includes(selectedAgent?.id?.toString())) {
+         const agentsHasWallet = localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
+         if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id?.toString())) {
             createAgentWallet();
          } else {
             setAgentWallet(undefined)
+         }
+
+         const installedAgents = localStorageService.getItem(STORAGE_KEYS.INSTALLED_AGENTS);
+
+         if (installedAgents && installedAgents.includes(selectedAgent?.id?.toString())) {
+            setIsInstalled(true);
+         } else {
+            setIsInstalled(false);
          }
       }
    }, [selectedAgent]);
@@ -179,7 +191,7 @@ const AgentProvider: React.FC<
 
    const getRunningAgents = () => {
       try {
-         setRunningAgents([14483]);
+         setRunningAgents([]);
       } catch (err) {
       } finally {
       }
@@ -190,6 +202,17 @@ const AgentProvider: React.FC<
       getRunningAgents();
       fetchCoinPrices();
    }, []);
+
+
+   const installAgent = (agent: IAgentToken) => {
+      if (agent.agent_type === AgentType.UtilityJS || agent.agent_id === AgentType.UtilityJS) {
+         installUtilityAgent(agent);
+      } else if (agent.agent_type === AgentType.Model) {
+
+      } else {
+
+      }
+   }
 
    const startAgent = (agent: IAgentToken) => {
       installUtilityAgent(agent);
@@ -224,6 +247,10 @@ const AgentProvider: React.FC<
                const code = await cAgent.getCode(codeVersion);
                filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, code);
             }
+
+            const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.INSTALLED_AGENTS)!);
+            localStorageService.setItem(STORAGE_KEYS.INSTALLED_AGENTS, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
+
             await handleRunDockerAgent(filePath, agent);
          }
       } catch (error: any) {
@@ -233,11 +260,17 @@ const AgentProvider: React.FC<
       }
    };
 
-   // handle run docker here
    const handleRunDockerAgent = async (filePath?: string, agent?: IAgentToken) => {
-      console.log("====: filePath", filePath);
-      if (!filePath || !agent) return;
-      await window.electronAPI.dockerRunAgent(agent?.agent_name, agent?.network_id.toString());
+      if (!agent) return;
+
+      try {
+         setIsStarting(true);
+         await window.electronAPI.dockerRunAgent(agent?.agent_name, agent?.network_id.toString());
+      } catch (e) {
+         console.log('handleRunDockerAgent', e);
+      } finally {
+         setIsStarting(false);
+      }
    };
 
    const handleStopDockerAgent = async (agent?: IAgentToken) => {
@@ -245,7 +278,8 @@ const AgentProvider: React.FC<
       try {
          setIsStopping(true);
          await window.electronAPI.dockerStopAgent(agent?.agent_name, agent?.network_id.toString());
-      } catch (err) {
+      } catch (e) {
+         console.log('handleStopDockerAgent', e);
       } finally {
          setIsStopping(false);
       }
@@ -259,8 +293,10 @@ const AgentProvider: React.FC<
          currentModel,
          setCurrentModel,
          chainList,
+         installAgent,
          startAgent,
          stopAgent,
+         isInstalling,
          isStarting,
          isStopping,
          runningAgents,
@@ -272,6 +308,7 @@ const AgentProvider: React.FC<
          tradePlatform,
          coinPrices,
          createAgentWallet,
+         isInstalled,
       };
    }, [
       loading,
@@ -280,8 +317,10 @@ const AgentProvider: React.FC<
       currentModel,
       setCurrentModel,
       chainList,
+      installAgent,
       startAgent,
       stopAgent,
+      isInstalling,
       isStarting,
       isStopping,
       runningAgents,
@@ -292,7 +331,8 @@ const AgentProvider: React.FC<
       isRunning,
       tradePlatform,
       coinPrices,
-      createAgentWallet
+      createAgentWallet,
+      isInstalled,
    ]);
 
    return (

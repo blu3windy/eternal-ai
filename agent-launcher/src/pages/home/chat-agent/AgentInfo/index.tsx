@@ -32,7 +32,7 @@ const AgentInfo = () => {
     <Flex className={s.container}>
       <Flex justifyContent={"space-between"} w={"100%"}>
         {
-          selectedAgent?.agent_type === AgentType.Utility ? (
+          selectedAgent?.agent_type === AgentType.UtilityJS ? (
             <SelectModel
               currentModel={currentModel}
               setCurrentModel={setCurrentModel}

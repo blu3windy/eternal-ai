@@ -14,11 +14,12 @@ export interface IAgentContext {
   currentModel: any;
   setCurrentModel: any;
   chainList: IChainConnected[];
+  installAgent: any;
   startAgent: any;
   stopAgent: any;
+  isInstalling: boolean;
   isStarting: boolean;
   isStopping: boolean;
-  handleStopDockerAgent: any;
   runningAgents: number[];
   isTrade: boolean;
   setIsTrade: (v: any) => void;
