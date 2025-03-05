@@ -24,19 +24,24 @@ const ipcMainSafeFile = () => {
    ipcMain.handle(EMIT_EVENT_NAME.READ_FILE, async (_, fileName, folderName) => {
       const _appDir = path.join(appDir, folderName);
       await checkAndCreateFolder(_appDir);
-      const filePath = `${_appDir}/${fileName}`;
+      const filePath = path.join(_appDir, fileName);
       return await fs.readFile(filePath, 'utf-8');
    });
    ipcMain.handle(EMIT_EVENT_NAME.GET_FILE_PATH, async (_, fileName, folderName) => {
       const _appDir = path.join(appDir, folderName);
       await checkAndCreateFolder(_appDir);
-      const filePath = `${_appDir}/${fileName}`;
+      const filePath = path.join(_appDir, fileName);
       return filePath;
    });
    ipcMain.handle(EMIT_EVENT_NAME.WRITE_FILE, async (_, fileName, folderName, content) => {
       const _appDir = path.join(appDir, folderName);
       await checkAndCreateFolder(_appDir);
-      const filePath = `${_appDir}/${fileName}`;
+      const filePath = path.join(_appDir, fileName);
+      const stat = await fs.stat(filePath);
+      if (stat.isDirectory()) {
+         console.error('Error: prompt.js is a directory. Removing...');
+         await fs.rmdir(filePath, { recursive: true });
+      }
       await fs.writeFile(filePath, content, "utf8");
       return filePath;
    });
@@ -44,7 +49,7 @@ const ipcMainSafeFile = () => {
       try {
          const _appDir = path.join(appDir, folderName);
          await checkAndCreateFolder(_appDir);
-         const filePath = `${_appDir}/${fileName}`;
+         const filePath = path.join(_appDir, fileName);
          await fs.access(filePath);
          return true;
       } catch (error) {
