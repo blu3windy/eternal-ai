@@ -205,7 +205,7 @@ const AgentProvider: React.FC<
 
 
    const installAgent = (agent: IAgentToken) => {
-      if (agent.agent_type === AgentType.UtilityJS || agent.agent_id === AgentType.UtilityJS) {
+      if (agent.agent_type === AgentType.UtilityJS || agent.agent_type === AgentType.UtilityPython) {
          installUtilityAgent(agent);
       } else if (agent.agent_type === AgentType.Model) {
 
