@@ -161,12 +161,27 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 								dependAgentAddrs = append(dependAgentAddrs, helpers.HexToAddress(v))
 							}
 						}
+						var codeLanguage string
+						switch agentInfo.AgentType {
+						case models.AgentInfoAgentTypeJs:
+							{
+								codeLanguage = "js"
+							}
+						case models.AgentInfoAgentTypePython:
+							{
+								codeLanguage = "python"
+							}
+						case models.AgentInfoAgentTypeModel:
+							{
+								codeLanguage = "model"
+							}
+						}
 						contractAddress, logicAddress, txHash, err := s.DeployAgentUpgradeableAddress(
 							ctx,
 							agentInfo.NetworkID,
 							agentInfo.AgentName,
 							"1",
-							"js",
+							codeLanguage,
 							storageInfos,
 							dependAgentAddrs,
 							helpers.HexToAddress(agentInfo.Creator),
