@@ -16,6 +16,7 @@ const getDocker = async () => {
 }
 
 const DOCKER_NAME = 'launcher-agent';
+const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
 const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
 
 const dockerCopyBuild = async () => {
@@ -85,20 +86,12 @@ const ipcMainDocker = () => {
          });
 
          await command.execAsyncDockerDir(
-            `cd "${folderPath}" && ${docker} build -t ${DOCKER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
+            `cd "${folderPath}" && ${docker} build -t ${DOCKER_SERVER_JS} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
          );
 
          await command.execAsyncDockerDir(
             `cd "${folderPath}" && ${docker} build -t ${DOCKER_ROUTER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
          );
-
-         try {
-            await command.execAsyncDockerDir(
-               `cd "${folderPath}" && ${docker} network create --internal network-agent-internal`
-            );
-         } catch (error) {
-            console.log('error', error);
-         }
 
          try {
             await command.execAsyncDockerDir(
@@ -126,7 +119,7 @@ const ipcMainDocker = () => {
 
          try {
             await command.execAsync(
-               `${docker} run -d -p 33030:80 --network=network-agent-internal --network=network-agent-external --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
+               `${docker} run -d -p 33030:80 --network=network-agent-external --add-host=localmodel:host-gateway --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
             console.log('error', error);
@@ -195,8 +188,6 @@ const ipcMainDocker = () => {
       try {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
-         // docker run -d -v /Users/nqhieu84/Work/testjs/abc/agents/app/1/prompt.js:/app/src/prompt.js --network network-agent-internal --name 1-agent1 agent
-         // docker run -d -v /Users/nqhieu84/Work/testjs/abc/agents/app/2/prompt.js:/app/src/prompt.js --network network-agent-external --network network-agent-internal --name 1-agent2 agent
          const dnsHost = `${chainId}-${agentName}`;
          const docker = await getDocker();
 
@@ -214,7 +205,7 @@ const ipcMainDocker = () => {
             )
          }
          const { stdout } = await command.execAsyncDockerDir(
-            `cd "${folderPath}" && ${docker} run -d -v ./agents/${dnsHost}/prompt.js:/app/src/prompt.js --network network-agent-internal --name ${dnsHost} ${DOCKER_NAME}`
+            `cd "${folderPath}" && ${docker} run -d -v ./agents/${dnsHost}/prompt.js:/app/src/prompt.js --network network-agent-internal --name ${dnsHost} ${DOCKER_SERVER_JS}`
          );
          console.log(stdout);
       } catch (error) {
