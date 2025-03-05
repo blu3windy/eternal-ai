@@ -79,7 +79,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       // }
       //
       // return false;
-   }, [selectedAgent]);
+   }, []);
 
    useEffect(() => {
       chatAgentDatabase.loadChatItems(threadId).then((items) => {
