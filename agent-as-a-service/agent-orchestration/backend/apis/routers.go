@@ -399,11 +399,11 @@ func (s *Server) Routers() {
 		// 	sampleTwitterApp.POST("/tweet-message", s.SampleTwitterAppTweetMessage)
 		// }
 
-		// infraTwitterApp := rootAPI.Group("/infra-twitter-app")
-		// {
-		// 	infraTwitterApp.GET("/install", s.InfraTwitterAppAuthenInstall)
-		// 	infraTwitterApp.GET("/callback", s.InfraTwitterAppAuthenCallback)
-		// }
+		infraTwitterApp := rootAPI.Group("/infra-twitter-app")
+		{
+			// infraTwitterApp.GET("/install", s.InfraTwitterAppAuthenInstall)
+			infraTwitterApp.GET("/callback", s.InfraTwitterAppAuthenCallback)
+		}
 
 		// storeTradingApp := rootAPI.Group("/store-defi-app")
 		// {
