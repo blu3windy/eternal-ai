@@ -6,7 +6,6 @@ import { AgentContext } from "../../provider";
 import { DefaultAvatar } from "../../../../components/DefaultAvatar";
 import { formatCurrency, labelAmountOrNumberAdds } from "../../../../utils/format.ts";
 import cs from "clsx";
-import {AgentType} from "@pages/home/list-agent";
 
 interface IProps {
   token: IAgentToken;
@@ -42,17 +41,6 @@ const AgentItem = ({ token }: IProps) => {
          setSelectedAgent(token);
       }
    };
-
-   const handleInstall = (e: any) => {
-      e?.preventDefault();
-      e?.stopPropagation();
-
-      if (isRunning) {
-         stopAgent(token);
-      } else {
-         startAgent(token);
-      }
-   }
 
   return (
     <Flex

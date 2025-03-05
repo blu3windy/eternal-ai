@@ -19,13 +19,20 @@ const AgentInfo = () => {
     setIsTrade,
     isTrade,
     isRunning,
+    isInstalled,
+    isStarting,
+    startAgent
   } = useContext(AgentContext);
 
   const description =
     selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
-  const handleInstall = (e: any) => {
-    stopAgent(selectedAgent);
+  const handleStartStop = () => {
+    if (isRunning) {
+      stopAgent(selectedAgent);
+    } else {
+      startAgent(selectedAgent);
+    }
   };
 
   return (
@@ -44,15 +51,15 @@ const AgentInfo = () => {
           )
         }
         <Flex gap={"6px"} alignItems={"center"}>
-          {isRunning && (
+          {isInstalled && (
             <Button
               className={s.btnInstall}
-              onClick={handleInstall}
-              isLoading={isStopping}
-              isDisabled={isStopping}
-              loadingText={"Stopping..."}
+              onClick={handleStartStop}
+              isLoading={isStarting || isStopping}
+              isDisabled={isStarting || isStopping}
+              loadingText={isStarting ? "Starting..." : "Stopping..."}
             >
-              Stop
+              {isRunning ? "Stop" : "Start"}
             </Button>
           )}
           <InfoTooltip iconSize="sm" label={description} placement="top" />

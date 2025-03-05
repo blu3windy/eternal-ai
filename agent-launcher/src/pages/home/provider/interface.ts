@@ -29,4 +29,5 @@ export interface IAgentContext {
   tradePlatform: ETradePlatform;
   coinPrices: any[];
   createAgentWallet: any;
+  isInstalled: boolean;
 }
