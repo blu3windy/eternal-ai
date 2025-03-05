@@ -8,6 +8,7 @@ const EMIT_EVENT_NAME = {
    GET_FILE_PATH: "safe-get-file-path",
    ACCESS_FILE: "safe-access-file",
    WRITE_FILE: "safe-write-file",
+   GET_EXIST_FOLDERS: "safe-get-exist-folders",
 
    DOCKER_COPY_BUILD: "safe-docker-copy-build",
    DOCKER_CHECK_INSTALL: "safe-docker-check-install",

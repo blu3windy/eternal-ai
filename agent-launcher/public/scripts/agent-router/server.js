@@ -14,6 +14,7 @@ app.post('/:agentName/prompt', (req, res) => {
         path: parsedUrl.path, // Forward the original URL path
         method: req.method,
         headers: req.headers,
+        body: req.body,
     };
     const proxyRequest = http.request(options, (proxyResponse) => {
         res.writeHead(proxyResponse.statusCode, proxyResponse.headers);
@@ -26,6 +27,6 @@ app.post('/:agentName/prompt', (req, res) => {
     });
 });
 
-app.listen(80, () => {
+app.listen(80, '0.0.0.0', () => {
     console.log('Proxy server running on http://localhost:80');
 });
