@@ -33,9 +33,9 @@ class CApiClient {
             if (!params?.network) {
                params.network = BASE_CHAIN_ID;
             }
-            if (!params?.address) {
-               params.address = this.address;
-            }
+            // if (!params?.address) {
+            //    params.address = this.address;
+            // }
 
             if (params?.ignoreAddress) {
                params.address = '';
