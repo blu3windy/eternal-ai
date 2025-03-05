@@ -35,6 +35,7 @@ const InfoTooltip = (props: InfoTooltipProps) => {
       setIsOpen,
       isStyleConfig = true,
       placement,
+      iconColor
    } = props;
    const { isOpen, onToggle, onClose, onOpen } = useDisclosure();
 
@@ -49,14 +50,14 @@ const InfoTooltip = (props: InfoTooltipProps) => {
          return (
             <Flex gap={1} alignItems={"center"}>
                {children}
-               <IcHelp />
+               <IcHelp color={iconColor}/>
             </Flex>
          );
       }
       if (children) {
          return children;
       }
-      return <IcHelp />;
+      return <IcHelp color={iconColor}/>;
    };
 
    return (

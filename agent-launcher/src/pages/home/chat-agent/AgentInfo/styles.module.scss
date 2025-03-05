@@ -1,4 +1,18 @@
 .container {
+
+  .content {
+    padding: 8px 16px;
+    border-radius: 1000px;
+    background-color: #FFFFFF1A;
+    border: 1px solid #FFFFFF1A;
+  }
+
+  .text {
+    font-size: 16px;
+    font-weight: 400;
+    color: #FFF;
+  }
+
   .percent {
     font-size: 14px;
     font-weight: 400;
@@ -6,13 +20,13 @@
   }
 
   .btnBuy {
-    background-color: #0FC30C;
-    font-size: 14px;
+    background-color: #FFFFFF;
+    font-size: 16px;
     font-weight: 400;
-    color: #FFF;
+    color: #000;
     border-radius: 100px;
-    min-width: 50px;
-    height: 25px;
+    min-width: 60px;
+    height: 36px;
   }
 
   .btnInstall {

@@ -1,5 +1,5 @@
 import s from "./styles.module.scss";
-import {Box, Button, Flex, Text} from "@chakra-ui/react";
+import {Box, Button, Divider, Flex, Text} from "@chakra-ui/react";
 import SelectModel from "@pages/home/chat-agent/AgentInfo/SelectModel";
 import React, {useContext} from "react";
 import {AgentContext} from "@pages/home/provider";
@@ -51,32 +51,35 @@ const AgentInfo = () => {
           )
         }
         <Flex gap={"6px"} alignItems={"center"}>
-          {isInstalled && (
-            <Button
-              className={s.btnInstall}
-              onClick={handleStartStop}
-              isLoading={isStarting || isStopping}
-              isDisabled={isStarting || isStopping}
-              loadingText={isStarting ? "Starting..." : "Stopping..."}
-            >
-              {isRunning ? "Stop" : "Start"}
-            </Button>
-          )}
-          <InfoTooltip iconSize="sm" label={description} placement="top" />
-          <Text>{selectedAgent?.agent_name}</Text>
-          <Text opacity={0.6}>${selectedAgent?.token_symbol}</Text>•
-          <Text>${formatCurrency(selectedAgent?.meme?.price_usd, 0, 6)}</Text>
-          <Percent24h
-            clsName={s.percent}
-            percent={selectedAgent?.meme?.percent || 0}
-          />
+          <Flex gap={"6px"} alignItems={"center"} className={s.content}>
+            {isInstalled && (
+              <Button
+                className={s.btnInstall}
+                onClick={handleStartStop}
+                isLoading={isStarting || isStopping}
+                isDisabled={isStarting || isStopping}
+                loadingText={isStarting ? "Starting..." : "Stopping..."}
+              >
+                {isRunning ? "Stop" : "Start"}
+              </Button>
+            )}
+            <InfoTooltip iconSize="sm" label={description} placement="top" iconColor={'white'} />
+            <Text className={s.text}>{selectedAgent?.agent_name}</Text>
+            <Text className={s.text} opacity={0.7}>${selectedAgent?.token_symbol}</Text>
+            <Divider orientation={'vertical'} borderColor={'#FFFFFF1A'} h={"32px"} m={'auto 0'}/>
+            <Text className={s.text}>${formatCurrency(selectedAgent?.meme?.price_usd, 0, 6)}</Text>
+            <Percent24h
+              clsName={s.percent}
+              percent={selectedAgent?.meme?.percent || 0}
+            />
+          </Flex>
           <Button className={s.btnBuy} onClick={() => setIsTrade((v) => !v)}>
             {isTrade ? "Chat" : "Buy"}
           </Button>
         </Flex>
       </Flex>
       <Flex minW={"350px"} justifyContent={"flex-end"}>
-        <HeaderWallet color={"black"}/>
+        <HeaderWallet color={"white"}/>
       </Flex>
     </Flex>
   );
