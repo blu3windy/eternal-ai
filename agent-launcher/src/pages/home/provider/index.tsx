@@ -244,8 +244,8 @@ const AgentProvider: React.FC<
             if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
                filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
             } else {
-               const code = await cAgent.getCode(codeVersion);
-               filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, code);
+               const code = await cAgent.getAgentCode(codeVersion);
+               filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
             }
 
             const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.INSTALLED_AGENTS)!);
