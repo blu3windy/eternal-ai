@@ -6,7 +6,6 @@
 
 # Exit on any command failure (to prevent cascading errors)
 set -e
-set -x
 
 echo "🚀 Starting Docker + Colima installation script..."
 
@@ -23,7 +22,6 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" 2>/dev/null || exit; done &
 
 # Ensure the background sudo refresher is stopped when script exits
 trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
-
 
 # 2. Check for Homebrew, install if not found.
 if ! command -v brew >/dev/null 2>&1; then
@@ -78,7 +76,8 @@ echo "▶️ Making colima start with system"
 if brew services start colima; then
   echo "✅ Colima setup successfully."
 else
-  echo "❌ Warning: Colima failed to start with system."
+  echo "❌ ERROR: Colima failed to start. Please check the log for details."
+  exit 1
 fi
 
 
@@ -105,3 +104,5 @@ fi
 # 9. All done.
 echo "🎉 Installation complete! Docker is ready to use with Colima."
 echo "You can now run 'docker' commands on your Mac. Enjoy!"
+
+exit 0

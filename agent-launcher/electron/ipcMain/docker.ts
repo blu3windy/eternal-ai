@@ -84,20 +84,16 @@ const ipcMainDocker = () => {
             folderPath
          });
 
-         const cmds: string[] = [
-
-         ]
-
-         await command.execAsync(
+         await command.execAsyncDockerDir(
             `cd "${folderPath}" && ${docker} build -t ${DOCKER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
          );
 
-         await command.execAsync(
+         await command.execAsyncDockerDir(
             `cd "${folderPath}" && ${docker} build -t ${DOCKER_ROUTER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
          );
 
          try {
-            await command.execAsync(
+            await command.execAsyncDockerDir(
                `cd "${folderPath}" && ${docker} network create --internal network-agent-internal`
             );
          } catch (error) {
@@ -105,7 +101,7 @@ const ipcMainDocker = () => {
          }
 
          try {
-            await command.execAsync(
+            await command.execAsyncDockerDir(
                `cd "${folderPath}" && ${docker} network create network-agent-external`
             );
          } catch (error) {
@@ -113,7 +109,7 @@ const ipcMainDocker = () => {
          }
 
          try {
-            await command.execAsync(
+            await command.execAsyncDockerDir(
                `${docker} stop ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
@@ -121,7 +117,7 @@ const ipcMainDocker = () => {
          }
 
          try {
-            await command.execAsync(
+            await command.execAsyncDockerDir(
                `${docker} rm ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
@@ -161,7 +157,7 @@ const ipcMainDocker = () => {
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL, async (_event) => {
       try {
          const docker = await getDocker();
-         const { stderr } = await command.execAsync(`${docker} -v`);
+         const { stderr } = await command.execAsyncDockerDir(`${docker} -v`);
          return !stderr;
       } catch (error) {
          console.log(error);
@@ -170,17 +166,29 @@ const ipcMainDocker = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INSTALL, async (_event) => {
-      let { stdout: userName } = await command.execAsync("whoami");
-      userName = userName.trim();
-      const nixPath = getScriptPath(SCRIPTS_NAME.BOOTSTRAP);
-      const dockerScriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT);
-      const cmdDocker = `sh ${dockerScriptPath}`;
-      // await execAsync(cmdNix, { ...option })
-      // await execAsync(cmdDocker, { ...option })
-      const cmd = `/usr/bin/osascript -e 'do shell script "sh ${nixPath} ${userName} ${dockerScriptPath}" with administrator privileges'`;
+      try {
+         const scriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT);
+         const appleScriptCommand = `
+            tell application "Terminal"
+               activate
+               do script "sh '${scriptPath}'"
+            end tell
+         `;
 
-      console.log(cmd)
-      const data = await command.execAsyncStream(cmd)
+         const cmd = `osascript -e '${appleScriptCommand}'`
+         await command.execAsyncStream(cmd);
+
+         // eslint-disable-next-line no-constant-condition
+         while (true) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            const { stdout } = await command.execAsyncDockerDir("docker -v");
+            if (stdout) {
+               break;
+            }
+         }
+      } catch (error) {
+         console.log("LEON error", error)
+      }
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, async (_event, agentName: string, chainId: string) => {
@@ -205,7 +213,7 @@ const ipcMainDocker = () => {
                }
             )
          }
-         const { stdout } = await command.execAsync(
+         const { stdout } = await command.execAsyncDockerDir(
             `cd "${folderPath}" && ${docker} run -d -v ./agents/${dnsHost}/prompt.js:/app/src/prompt.js --network network-agent-internal --name ${dnsHost} ${DOCKER_NAME}`
          );
          console.log(stdout);
