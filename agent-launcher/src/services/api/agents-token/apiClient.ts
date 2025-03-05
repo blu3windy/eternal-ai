@@ -6,7 +6,6 @@ import { BASE_CHAIN_ID, IMAGINE_URL } from "../../../config.ts";
 export const IGNORE_ADDRESS_TEXT = '';
 
 class CApiClient {
-   private address = '0x123456789ABCDEF';
    protected requestConfig: AxiosRequestConfig = {
       baseURL: `${IMAGINE_URL}/api`,
       // baseURL: `https://api.cat.fun/api`,

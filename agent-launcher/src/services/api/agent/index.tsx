@@ -6,7 +6,37 @@ import { getClientHeaders } from "../http-client.ts";
 import CApiClient from "../agents-token/apiClient.ts";
 import { IAgentToken } from "../agents-token/interface.ts";
 
+import qs from 'query-string';
+
 const AgentAPI = {
+  getChallenge: async (address: string): Promise<string> => {
+    const query = qs.stringify({
+      address,
+    });
+    const res = await (new CApiClient()).api.get(`${'https://api-dojo2.eternalai.org'}/api/auth/challenge?${query}`);
+    return res as any;
+  },
+  getAuthenToken: async (
+    signature: string,
+    address: string,
+  ) : Promise<string> => {
+    try {
+      const query = qs.stringify({
+        signature: signature.startsWith('0x')
+          ? signature.replace('0x', '')
+          : signature,
+        address,
+      });
+
+      const res: string = await (new CApiClient()).api.get(
+         `${'https://api-dojo2.eternalai.org'}/api/auth/verify?${query}`,
+      );
+
+      return res;
+    } catch (e) {
+      return '';
+    }
+  },
    getAgent: async (agentID: string): Promise<AgentInfo | undefined> => {
       // https://imagine-backend.dev.bvm.network/api/agent/671b39e41a57fd90616013e2
       try {

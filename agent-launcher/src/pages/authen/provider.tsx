@@ -8,6 +8,7 @@ import ForgotPass from "@pages/authen/ForgotPass";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
 import Starter from "@pages/authen/Starter";
 import eaiCrypto from "@utils/crypto";
+import AgentAPI from "@services/api/agent";
 
 interface IReqAgentSecretKey {
    chainId: string;
@@ -29,6 +30,12 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
    const [hasUser, setHasUser] = useState<boolean>(false);
    const [loading, setLoading] = useState<boolean>(true);
    const { checking } = useStarter();
+
+   useEffect(() => {
+      if(signer) {
+         getAuthenToken(signer.privateKey);
+      }
+   }, [signer]);
 
    const onLogin = async (pass: string) => {
       try {
@@ -65,17 +72,14 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 
    const getAuthenToken = async (prvKey: string) => {
       const _signer = new ethers.Wallet(prvKey);
-      const _message = `Generate authen token for ${_signer?.address} in `;
+      const _message = await AgentAPI.getChallenge(_signer?.address);
       let _signature = await _signer.signMessage(_message);
       _signature = _signature.startsWith("0x")
          ? _signature.replace("0x", "")
          : _signature;
-      // const authenCode: string = await this.api.post('auth/verify', {
-      //    signature: _signature, message: _message, address: _signer.address
-      // });
-      // return authenCode;
+      const authenCode: string = await AgentAPI.getAuthenToken(_signature, _signer.address);
 
-      return ""
+      return authenCode;
    }
 
    const values = useMemo(() => {
