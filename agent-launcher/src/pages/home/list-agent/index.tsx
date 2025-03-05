@@ -214,7 +214,7 @@ const AgentsList = () => {
    const renderFilterMenu = () => {
       return (
          <Flex
-            mt={"24px"}
+            flex={1}
             flexDirection={'row'}
             className={s.select}
             alignItems={'center'}
@@ -290,7 +290,7 @@ const AgentsList = () => {
    const renderSortMenu = () => {
       return (
          <Flex
-            mt={"24px"}
+            flex={1}
             flexDirection={'row'}
             className={s.select}
             alignItems={'center'}
@@ -376,10 +376,11 @@ const AgentsList = () => {
             >
                {renderSearch()}
             </Flex>
-            <SimpleGrid columns={2} gap={"12px"}>
+            <Flex gap={"24px"} mt={"20px"}>
                {renderFilterMenu()}
+               <Divider orientation={'vertical'} borderColor={'#000'} opacity={0.2} h={"20px"} m={'auto 0'}/>
                {renderSortMenu()}
-            </SimpleGrid>
+            </Flex>
          </Flex>
          <Box h={'24px'} />
 
