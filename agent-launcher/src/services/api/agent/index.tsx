@@ -4,6 +4,7 @@ import { THINK_TAG_REGEX } from "@components/CustomMarkdown/constants.ts";
 import { parseStreamAIResponse } from "@utils/api.ts";
 import { getClientHeaders } from "../http-client.ts";
 import CApiClient from "../agents-token/apiClient.ts";
+import { IAgentToken } from "../agents-token/interface.ts";
 
 const AgentAPI = {
    getAgent: async (agentID: string): Promise<AgentInfo | undefined> => {
@@ -17,7 +18,19 @@ const AgentAPI = {
          return undefined;
       }
    },
-
+  chatAgentUtility: async ({agent, prvKey}: { agent: IAgentToken, prvKey?: string}): Promise<any> => {
+    try {
+      const res: AgentInfo = await (new CApiClient()).api.post(
+        `http://localhost:33033/${agent?.network_id}-${agent?.agent_name}/prompt`, {
+          "messages": [],
+          "privateKey": prvKey
+        }
+      );
+      return res;
+    } catch (e) {
+      return undefined;
+    }
+  },
    chatStreamCompletions: async ({
       payload,
       streamHandlers,

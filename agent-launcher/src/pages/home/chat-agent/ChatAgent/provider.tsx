@@ -17,6 +17,7 @@ import {ChatCompletionPayload, IChatMessage} from "../../../../services/api/agen
 import AgentAPI from "../../../../services/api/agent";
 import {AgentContext} from "@pages/home/provider";
 import chatAgentDatabase, {PersistedMessageType} from "../../../../database/chatAgentDatabase.ts";
+import {AgentType} from "@pages/home/list-agent";
 
 type IChatAgentProviderContext = {
   isStopReceiving?: boolean;
@@ -214,48 +215,59 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             params['kb_id'] = `kb-${kbId}`;
          }
 
-         let isGeneratedDone = false;
-         await AgentAPI.chatStreamCompletions({
-            payload: {
-               ...params,
-            },
-            streamHandlers: {
-               onStream: (content: string, chunk: string, options) => {
-                  const text = content;
+         if (selectedAgent?.agent_type === AgentType.UtilityJS || selectedAgent?.agent_type === AgentType.UtilityPython) {
+            const res: string = await AgentAPI.chatAgentUtility({ agent: selectedAgent, prvKey: agentWallet?.privateKey });
 
-                  if (isGeneratedDone) {
-                     setIsLoading(false);
+            updateMessage(messageId, {
+               msg: res,
+               status: 'received',
+            });
+         } else if (selectedAgent?.agent_type === AgentType.Model) {
+
+         } else {
+            let isGeneratedDone = false;
+            await AgentAPI.chatStreamCompletions({
+               payload: {
+                  ...params,
+               },
+               streamHandlers: {
+                  onStream: (content: string, chunk: string, options) => {
+                     const text = content;
+
+                     if (isGeneratedDone) {
+                        setIsLoading(false);
+                        updateMessage(messageId, {
+                           msg: text,
+                           status: 'pre-done',
+                           queryMessageState: options?.message,
+                           onchain_data: options.onchain_data,
+                        });
+                     } else {
+                        isGeneratedDone = !!options?.isGeneratedDone;
+                        updateMessage(messageId, {
+                           msg: text,
+                           status: text.trim().length ? 'receiving' : 'waiting',
+                           queryMessageState: options?.message,
+                           onchain_data: options.onchain_data,
+                        });
+                     }
+                  },
+                  onFinish: (content: string, options) => {
                      updateMessage(messageId, {
-                        msg: text,
-                        status: 'pre-done',
+                        status: 'received',
                         queryMessageState: options?.message,
                         onchain_data: options.onchain_data,
                      });
-                  } else {
-                     isGeneratedDone = !!options?.isGeneratedDone;
-                     updateMessage(messageId, {
-                        msg: text,
-                        status: text.trim().length ? 'receiving' : 'waiting',
-                        queryMessageState: options?.message,
-                        onchain_data: options.onchain_data,
-                     });
-                  }
+                  },
+                  onFail: (err: any) => {
+                     // updateMessage(messageId, {
+                     //   status: 'failed',
+                     //   msg: (err as any)?.message || 'Something went wrong!',
+                     // });
+                  },
                },
-               onFinish: (content: string, options) => {
-                  updateMessage(messageId, {
-                     status: 'received',
-                     queryMessageState: options?.message,
-                     onchain_data: options.onchain_data,
-                  });
-               },
-               onFail: (err: any) => {
-                  // updateMessage(messageId, {
-                  //   status: 'failed',
-                  //   msg: (err as any)?.message || 'Something went wrong!',
-                  // });
-               },
-            },
-         });
+            });
+         }
       } catch (e) {
          updateMessage(messageId, {
             status: 'failed',
