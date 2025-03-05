@@ -47,7 +47,7 @@ interface IElectronAPI {
   modelRun: () => Promise<void>
 
   sendCommand: (cmd: string) => void
-  onCommandEvent: (callback: (data: string) => void) => void
+  onCommandEvent: (callback: (data: any) => void) => void
 }
 
 // Used in Renderer process, expose in `preload.ts`
