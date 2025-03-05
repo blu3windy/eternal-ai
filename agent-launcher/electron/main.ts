@@ -36,7 +36,7 @@ function createWindow() {
       webPreferences: {
          preload: path.join(app.getAppPath(), 'dist-electron', 'preload.mjs'),
          webSecurity: false,
-         nodeIntegration: true,
+         nodeIntegration: false,
          contextIsolation: true,
       },
       width: 1440,

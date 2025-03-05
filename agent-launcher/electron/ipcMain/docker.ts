@@ -205,7 +205,7 @@ const ipcMainDocker = () => {
             )
          }
          const { stdout } = await command.execAsyncDockerDir(
-            `cd "${folderPath}" && ${docker} run -d -v ./agents/${dnsHost}/prompt.js:/app/src/prompt.js --network network-agent-internal --name ${dnsHost} ${DOCKER_SERVER_JS}`
+            `cd "${folderPath}" && ${docker} run -d -v ./agents/${dnsHost}/prompt.js:/app/src/prompt.js --network network-agent-external --name ${dnsHost} ${DOCKER_SERVER_JS}`
          );
          console.log(stdout);
       } catch (error) {

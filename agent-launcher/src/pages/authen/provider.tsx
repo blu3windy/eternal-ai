@@ -3,12 +3,13 @@ import HomeAuthen from "./Home";
 import { ethers, Wallet } from "ethers";
 import EaiSigner from "../../helpers/signer";
 import sleep from "@utils/sleep.ts";
-import TestingButton from "@pages/authen/TesingButton";
 import ForgotPass from "@pages/authen/ForgotPass";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
 import Starter from "@pages/authen/Starter";
 import eaiCrypto from "@utils/crypto";
 import AgentAPI from "@services/api/agent";
+import Loggers from "@components/Loggers";
+import LoggersButton from "@components/Loggers/Loggers.button.tsx";
 
 interface IReqAgentSecretKey {
    chainId: string;
@@ -118,8 +119,9 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
    return (
       <AuthContext.Provider value={values}>
          {renderContent()}
-         <TestingButton />
          <ForgotPass />
+         <LoggersButton />
+         <Loggers />
       </AuthContext.Provider>
    );
 };
