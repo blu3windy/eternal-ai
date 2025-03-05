@@ -103,7 +103,7 @@ const Login = () => {
             <Button
                onClick={() => {
                   console.log('Test Run Docker 1-leon');
-                  window.electronAPI.modelRun();
+                  console.log(process.env.PATH)
                }}
             >
                Test Model Run

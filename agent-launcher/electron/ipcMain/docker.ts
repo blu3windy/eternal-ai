@@ -11,6 +11,16 @@ import command from "../share/command-tool.ts";
 
 const execAsync = promisify(exec);
 
+let dockerPath = '';
+const getDockerPath = async () => {
+   if (dockerPath) {
+      return dockerPath;
+   }
+   const { stdout } = await command.execAsync('which docker')
+   dockerPath = stdout.trim().toString();
+   return dockerPath;
+}
+
 
 const option = {
    timeout: 0, // Set to 0 for no timeout, or increase it (e.g., 10 * 1000 for 10s)
@@ -125,22 +135,23 @@ const ipcMainDocker = () => {
       try {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
+
+         const dockerPath = await getDockerPath();
          console.log(EMIT_EVENT_NAME.DOCKER_BUILD, {
             folderPath
          });
 
          await execAsync(
-            `cd "${folderPath}" && docker build -t ${DOCKER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
+            `cd "${folderPath}" && ${dockerPath} build -t ${DOCKER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
          );
 
          await execAsync(
-            `cd "${folderPath}" && docker build -t ${DOCKER_ROUTER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
+            `cd "${folderPath}" && ${dockerPath} build -t ${DOCKER_ROUTER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
          );
 
          try {
-            // `cd "${folderPath}" && docker network create --internal network-agent-internal && docker network create network-agent-external && docker run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${USER_DATA_FOLDER_NAME.AGENT_ROUTER} ${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
             await execAsync(
-               `cd "${folderPath}" && docker network create --internal network-agent-internal`
+               `cd "${folderPath}" && ${dockerPath} network create --internal network-agent-internal`
             );
          } catch (error) {
             console.log('error', error);
@@ -148,7 +159,7 @@ const ipcMainDocker = () => {
 
          try {
             await execAsync(
-               `cd "${folderPath}" && docker network create network-agent-external`
+               `cd "${folderPath}" && ${dockerPath} network create network-agent-external`
             );
          } catch (error) {
             console.log('error', error);
@@ -156,7 +167,7 @@ const ipcMainDocker = () => {
 
          try {
             await execAsync(
-               `docker stop ${DOCKER_ROUTER_NAME}`
+               `${dockerPath} stop ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
             console.log('error', error);
@@ -164,7 +175,7 @@ const ipcMainDocker = () => {
 
          try {
             await execAsync(
-               `docker rm ${DOCKER_ROUTER_NAME}`
+               `${dockerPath} rm ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
             console.log('error', error);
@@ -172,7 +183,7 @@ const ipcMainDocker = () => {
 
          try {
             await execAsync(
-               `docker run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
+               `${dockerPath} run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
             console.log('error', error);
@@ -219,7 +230,8 @@ const ipcMainDocker = () => {
          //    'cd "/Users/macbookpro/Library/Application Support/agent-launcher/agent-data" && docker run -d -p 3001:3000 -v ./agents/agent_1/prompt.js:/app/src/prompt.js --name agent1 agent'
          // )
          // console.log(stdout);
-         const { stderr } = await execAsync("docker -v");
+         const dockerPath = await getDockerPath();
+         const { stderr } = await execAsync(`${dockerPath} -v`);
          return !stderr;
 
       } catch (error) {
@@ -261,16 +273,12 @@ const ipcMainDocker = () => {
 
          // docker run -d -v /Users/nqhieu84/Work/testjs/abc/agents/app/1/prompt.js:/app/src/prompt.js --network network-agent-internal --name 1-agent1 agent
          // docker run -d -v /Users/nqhieu84/Work/testjs/abc/agents/app/2/prompt.js:/app/src/prompt.js --network network-agent-external --network network-agent-internal --name 1-agent2 agent
-
-         // Start checking from port 3000
-         const startPort = 3000;
-         const port = await findAvailablePort(startPort);
-
          const dnsHost = `${chainId}-${agentName}`;
+         const dockerPath = await getDockerPath();
 
          try {
             await execAsync(
-               `cd "${folderPath}" && docker stop ${dnsHost}`
+               `cd "${folderPath}" && ${dockerPath} stop ${dnsHost}`
             );
          } catch (error) {
             console.log(error);
@@ -278,14 +286,14 @@ const ipcMainDocker = () => {
 
          try {
             await execAsync(
-               `cd "${folderPath}" && docker rm ${dnsHost}`
+               `cd "${folderPath}" && ${dockerPath} rm ${dnsHost}`
             );
          } catch (error) {
             console.log(error);
          }
 
          const { stdout } = await execAsync(
-            `cd "${folderPath}" && docker run -d -v ./agents/${dnsHost}/prompt.js:/app/src/prompt.js --network network-agent-internal --name ${dnsHost} ${DOCKER_NAME}`
+            `cd "${folderPath}" && ${dockerPath} run -d -v ./agents/${dnsHost}/prompt.js:/app/src/prompt.js --network network-agent-internal --name ${dnsHost} ${DOCKER_NAME}`
          );
          console.log(stdout);
       } catch (error) {
@@ -298,10 +306,11 @@ const ipcMainDocker = () => {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
          const dnsHost = `${chainId}-${agentName}`;
+         const dockerPath = await getDockerPath();
 
          try {
             await execAsync(
-               `docker stop ${dnsHost}`
+               `${dockerPath} stop ${dnsHost}`
             );
          } catch (error) {
             console.log(error);
@@ -309,7 +318,7 @@ const ipcMainDocker = () => {
 
          try {
             await execAsync(
-               `docker rm ${dnsHost}`
+               `${dockerPath} rm ${dnsHost}`
             );
          } catch (error) {
             console.log(error);
