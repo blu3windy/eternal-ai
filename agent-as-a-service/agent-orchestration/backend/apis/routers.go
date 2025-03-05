@@ -109,6 +109,7 @@ func (s *Server) Routers() {
 			agentAPI.POST("/chats", s.AgentChatSupport)
 
 			agentAPI.GET("/network-fees", s.GetAgentChainFees)
+			agentAPI.GET("/liquidity-networks", s.GetEaiLiquidityNetowrks)
 
 			twitterAPI := agentAPI.Group("/twitter")
 			{

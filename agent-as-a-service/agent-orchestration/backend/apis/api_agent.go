@@ -557,6 +557,10 @@ func (s *Server) GetAgentChainFees(c *gin.Context) {
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: ms})
 }
 
+func (s *Server) GetEaiLiquidityNetowrks(c *gin.Context) {
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: models.ETERNALAI_LIQUIDITY_SUPPORTED_NETWORKS})
+}
+
 func (s *Server) GetAgentInfoInstallInfo(c *gin.Context) {
 	ctx := s.requestContext(c)
 
