@@ -33,7 +33,7 @@ const Starter = (props: IProps) => {
 
    const onInit = async (ignoreCopy?: boolean) => {
       try {
-         console.log("onInit");
+         console.time("onInit");
          await onCheckHasUser();
          if (!ignoreCopy) {
             await window.electronAPI.dockerCopyBuild();
@@ -49,6 +49,8 @@ const Starter = (props: IProps) => {
       } catch (error) {
          // alert("Error while checking Docker" + window.electronAPI);
          console.error(error);
+      } finally {
+         console.timeEnd("onInit");
       }
    }
    const onInstallDocker = async () => {
