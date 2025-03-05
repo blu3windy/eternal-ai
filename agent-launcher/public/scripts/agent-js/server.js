@@ -9,26 +9,23 @@ app.use(express.urlencoded({ extended: true })); // For form data
 
 app.post('/prompt', async (req, res) => {
    try {
-      const messages = req.body?.messages;
-      const privateKey = req.body?.privateKey;
-      const chainId = req.body?.chainId;
+      const messages = req?.body?.messages || undefined;
+      const privateKey = req?.body?.privateKey || undefined;
+      const chainId = req?.body?.chainId || undefined;
       const params = {
          messages,
          privateKey,
          chainId,
       }
-      const responseMessage = await script.prompt();
+      const responseMessage = await script.prompt(params);
       res.send(responseMessage);
    } catch (error) {
-      // res.send(error?.message);
-      // console.error('Error:', error);
-      // return error message code 500
       res.status(500).send(error?.message);
    }
 });
 
-app.get('/', async (req, res) => {
-   res.send('Hello World');
+app.get('/ping', async (req, res) => {
+   res.status(200).send('online');
 });
 
 app.listen(PORT, () => {
