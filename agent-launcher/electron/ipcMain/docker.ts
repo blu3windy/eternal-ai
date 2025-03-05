@@ -2,24 +2,10 @@ import { app, ipcMain } from "electron";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 import fs from "fs";
 import path from "path";
-import net from "net";
-
-import { exec } from "child_process";
-import { promisify } from "util";
 import { getScriptPath, PUBLIC_SCRIPT, SCRIPTS_NAME, USER_DATA_FOLDER_NAME } from "../share/utils.ts";
 import command from "../share/command-tool.ts";
 
-const execAsync = promisify(exec);
-
-const dockerPath = '';
 const getDockerPath = async () => {
-   // if (dockerPath) {
-   //    return dockerPath;
-   // }
-   // const { stdout } = await command.execAsync('which docker')
-   // dockerPath = stdout.trim().toString();
-   // return dockerPath;
-
    return 'docker'
 }
 
@@ -31,51 +17,6 @@ const option = {
 
 const DOCKER_NAME = 'launcher-agent';
 const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
-
-const checkPort = (port: number): Promise<boolean> => {
-   return new Promise((resolve) => {
-      const server = net.createServer();
-
-      server.once('error', (err: any) => {
-         if (err.code === 'EADDRINUSE' || err.code === 'EACCES') {
-            resolve(false);
-         } else {
-            resolve(false);
-         }
-      });
-
-      server.once('listening', () => {
-         server.close();
-         resolve(true);
-      });
-
-      console.log('Checking port:', port);
-      server.listen(port);
-   });
-};
-
-const isPortInUse = (port: number): Promise<boolean> => {
-   return new Promise((resolve) => {
-      exec(process.platform === 'win32'
-         ? `netstat -ano | findstr :${port}`
-         : `lsof -i :${port}`,
-      (error, stdout) => {
-         resolve(!!stdout);
-      }
-      );
-   });
-};
-
-const findAvailablePort = async (startPort: number, maxPort = 65535): Promise<number> => {
-   let port = startPort;
-   while (await isPortInUse(port) || !(await checkPort(port))) {
-      port++;
-      if (port > maxPort) {
-         throw new Error('No available ports found');
-      }
-   }
-   return port;
-};
 
 const dockerCopyBuild = async () => {
    const userDataPath = app.getPath("userData");
@@ -143,16 +84,16 @@ const ipcMainDocker = () => {
             folderPath
          });
 
-         await execAsync(
+         await command.execAsync(
             `cd "${folderPath}" && ${dockerPath} build -t ${DOCKER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
          );
 
-         await execAsync(
+         await command.execAsync(
             `cd "${folderPath}" && ${dockerPath} build -t ${DOCKER_ROUTER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
          );
 
          try {
-            await execAsync(
+            await command.execAsync(
                `cd "${folderPath}" && ${dockerPath} network create --internal network-agent-internal`
             );
          } catch (error) {
@@ -160,7 +101,7 @@ const ipcMainDocker = () => {
          }
 
          try {
-            await execAsync(
+            await command.execAsync(
                `cd "${folderPath}" && ${dockerPath} network create network-agent-external`
             );
          } catch (error) {
@@ -168,7 +109,7 @@ const ipcMainDocker = () => {
          }
 
          try {
-            await execAsync(
+            await command.execAsync(
                `${dockerPath} stop ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
@@ -176,7 +117,7 @@ const ipcMainDocker = () => {
          }
 
          try {
-            await execAsync(
+            await command.execAsync(
                `${dockerPath} rm ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
@@ -184,7 +125,7 @@ const ipcMainDocker = () => {
          }
 
          try {
-            await execAsync(
+            await command.execAsync(
                `${dockerPath} run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
@@ -233,7 +174,7 @@ const ipcMainDocker = () => {
          // )
          // console.log(stdout);
          const dockerPath = await getDockerPath();
-         const { stderr } = await execAsync(`${dockerPath} -v`);
+         const { stderr } = await command.execAsync(`${dockerPath} -v`);
          return !stderr;
 
       } catch (error) {
@@ -243,7 +184,7 @@ const ipcMainDocker = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INSTALL, async (_event) => {
-      let { stdout: userName } = await execAsync("whoami");
+      let { stdout: userName } = await command.execAsync("whoami");
       userName = userName.trim();
       const nixPath = getScriptPath(SCRIPTS_NAME.BOOTSTRAP);
       const dockerScriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT);
@@ -279,7 +220,7 @@ const ipcMainDocker = () => {
          const dockerPath = await getDockerPath();
 
          try {
-            await execAsync(
+            await command.execAsync(
                `cd "${folderPath}" && ${dockerPath} stop ${dnsHost}`
             );
          } catch (error) {
@@ -287,14 +228,14 @@ const ipcMainDocker = () => {
          }
 
          try {
-            await execAsync(
+            await command.execAsync(
                `cd "${folderPath}" && ${dockerPath} rm ${dnsHost}`
             );
          } catch (error) {
             console.log(error);
          }
 
-         const { stdout } = await execAsync(
+         const { stdout } = await command.execAsync(
             `cd "${folderPath}" && ${dockerPath} run -d -v ./agents/${dnsHost}/prompt.js:/app/src/prompt.js --network network-agent-internal --name ${dnsHost} ${DOCKER_NAME}`
          );
          console.log(stdout);
@@ -311,7 +252,7 @@ const ipcMainDocker = () => {
          const dockerPath = await getDockerPath();
 
          try {
-            await execAsync(
+            await command.execAsync(
                `${dockerPath} stop ${dnsHost}`
             );
          } catch (error) {
@@ -319,7 +260,7 @@ const ipcMainDocker = () => {
          }
 
          try {
-            await execAsync(
+            await command.execAsync(
                `${dockerPath} rm ${dnsHost}`
             );
          } catch (error) {

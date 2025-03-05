@@ -1,6 +1,7 @@
 import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import fs from "fs";
+import { dialog } from  "electron"
 
 const execAsync = async (cmd: string) => {
    const possiblePaths = [
@@ -16,6 +17,8 @@ const execAsync = async (cmd: string) => {
          break;
       }
    }
+
+   console.log(`dockerDir: ${dockerDir}`);
 
    const env = dockerDir ? { ...process.env, PATH: `${dockerDir}:${process.env.PATH}` } : process.env;
 
