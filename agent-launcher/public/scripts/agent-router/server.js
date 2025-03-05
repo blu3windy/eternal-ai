@@ -5,7 +5,8 @@ const url = require('url');
 const app = express();
 
 app.post('/:agentName/prompt', (req, res) => {
-    const { agentName } = req.params
+    const { agentName } = req.params;
+    console.log(agentName);
     const targetUrl = 'http://' + agentName + '/prompt';
     const parsedUrl = url.parse(targetUrl);
     const options = {
@@ -14,7 +15,6 @@ app.post('/:agentName/prompt', (req, res) => {
         path: parsedUrl.path, // Forward the original URL path
         method: req.method,
         headers: req.headers,
-        body: req.body,
     };
     const proxyRequest = http.request(options, (proxyResponse) => {
         res.writeHead(proxyResponse.statusCode, proxyResponse.headers);
