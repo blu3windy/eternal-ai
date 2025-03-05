@@ -94,14 +94,6 @@ const ipcMainDocker = () => {
 
          try {
             await command.execAsyncDockerDir(
-               `cd "${folderPath}" && ${docker} network create --internal network-agent-internal`
-            );
-         } catch (error) {
-            console.log('error', error);
-         }
-
-         try {
-            await command.execAsyncDockerDir(
                `cd "${folderPath}" && ${docker} network create network-agent-external`
             );
          } catch (error) {
@@ -126,7 +118,7 @@ const ipcMainDocker = () => {
 
          try {
             await command.execAsync(
-               `${docker} run -d -p 33030:80 --network=network-agent-internal --network=network-agent-external --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
+               `${docker} run -d -p 33030:80 --network=network-agent-external --add-host=localmodel:host-gateway --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
             console.log('error', error);
