@@ -49,4 +49,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
    modelStarter: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_STARTER),
    modelInstall: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_INSTALL),
    modelRun: (hash: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_RUN, hash),
+
+
+   sendCommand: (cmd) => ipcRenderer.send("run-command", cmd),
+   onCommandEvent: (callback) => ipcRenderer.on("command-event", (_, data) => callback(data)),
 });

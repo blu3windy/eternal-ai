@@ -45,6 +45,9 @@ interface IElectronAPI {
   modelStarter: () => Promise<void>
   modelInstall: () => Promise<void>
   modelRun: () => Promise<void>
+
+  sendCommand: (cmd: string) => void
+  onCommandEvent: (callback: (data: string) => void) => void
 }
 
 // Used in Renderer process, expose in `preload.ts`
