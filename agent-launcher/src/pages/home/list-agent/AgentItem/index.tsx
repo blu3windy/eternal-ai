@@ -39,6 +39,7 @@ const AgentItem = ({ token }: IProps) => {
          e?.preventDefault();
          e?.stopPropagation();
 
+         setSelectedAgent(token);
       }
    };
 
