@@ -73,8 +73,8 @@ type AssistantsReq struct {
 	Worker      string           `json:"worker"`
 
 	DependAgents   string `json:"depend_agents"`
-	RequiredWallet bool   `json:"required_wallet"`
-	IsOnchain      bool   `json:"is_onchain"`
+	RequiredWallet *bool  `json:"required_wallet"`
+	IsOnchain      *bool  `json:"is_onchain"`
 }
 
 func (m *AssistantsReq) GetAssistantCharacter(character interface{}) string {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -159,6 +160,11 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 			if err != nil {
 				return errs.NewError(err)
 			}
+
+			sort.Slice(tweetMentions.Tweets, func(i, j int) bool {
+				return tweetMentions.Tweets[i].CreatedAt < tweetMentions.Tweets[j].CreatedAt
+			})
+
 			err = s.CreateAgentTwitterPostForGenerateVideo(daos.GetDBMainCtx(ctx), agent.ID, agent.TwitterUsername, tweetMentions)
 			if err != nil {
 				return errs.NewError(err)
@@ -394,7 +400,9 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 	for _, item := range tweetMentions.Tweets {
 		var checkTwitterID string
 		_ = checkTwitterID
-		err := s.GetRedisCachedWithKey(fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", item.ID), &checkTwitterID)
+		redisKeyToCheckHandled := fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", item.ID)
+
+		err := s.GetRedisCachedWithKey(fmt.Sprintf(redisKeyToCheckHandled, item.ID), &checkTwitterID)
 		//err := errors.New("redis:nil")
 		if err != nil {
 			if !strings.EqualFold(item.AuthorID, agentInfo.TwitterID) {
@@ -453,6 +461,9 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 
 											_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
 										}
+										s.SendTeleVideoActivitiesAlert(fmt.Sprintf("found a requirement gen video with post :%v ", fullText))
+									} else {
+										s.SendTeleVideoActivitiesAlert(fmt.Sprintf("found a requirement gen video with fail syntax :%v ", fullText))
 									}
 								}
 							}
@@ -463,7 +474,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 		}
 
 		err = s.SetRedisCachedWithKey(
-			fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", item.ID),
+			fmt.Sprintf(redisKeyToCheckHandled, item.ID),
 			item.ID,
 			1*time.Hour,
 		)
@@ -533,6 +544,7 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 							if err != nil {
 								return errs.NewError(err)
 							}
+							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success scan result gen video db_id:%v \n infer_id :%v \n result :%v ", twitterPost.ID, twitterPost.InferId, twitterPost.ImageUrl))
 							return nil
 						})
 					if err != nil {
@@ -552,7 +564,7 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 	err := s.JobRunCheck(
 		ctx,
-		"JobAgentTwitterPostCreateAgent",
+		"JobAgentTwitterPostGenerateVideo",
 		func() error {
 			var retErr error
 			{
@@ -630,6 +642,14 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 								contentReply := fmt.Sprintf("Prompt onchain tx : https://basescan.org/tx/%v\nVideo onchain tx : https://basescan.org/tx/%v\nPrompt : %v", twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash, twitterPost.ExtractContent)
 								refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
 								if err != nil {
+									s.SendTeleVideoActivitiesAlert(fmt.Sprintf("fail when reply video db_id:%v \n err:%v ", twitterPost.ID, err.Error()))
+									if strings.Contains(err.Error(), "You attempted to reply to a Tweet that is deleted or not visible to you") {
+										twitterPost.Status = models.AgentTwitterPostStatusInvalid
+										err = s.dao.Save(tx, twitterPost)
+										if err != nil {
+											return errs.NewError(err)
+										}
+									}
 									return errs.NewError(err)
 								}
 								twitterPost.ImageUrl = videoUrl
@@ -639,6 +659,7 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 								if err != nil {
 									return errs.NewError(err)
 								}
+								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success gen video reply twitter https://x.com/%v/status/%v ", twitterPost.TwitterUsername, twitterPost.TwitterPostID))
 							}
 						}
 					} else {
@@ -744,6 +765,7 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 								return err
 							}
 							if code != http.StatusOK {
+								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("fail when submit infer db_id:%v \n response :%v \n code :%v ", twitterPost.ID, string(response), code))
 								return fmt.Errorf("agent submit video infer response code %d", code)
 							}
 							type SubmitTaskResponse struct {
@@ -773,6 +795,7 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 							if err != nil {
 								return errs.NewError(err)
 							}
+							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success submit infer gen video db_id:%v \n infer id :%v \n tx :%v ", twitterPost.ID, twitterPost.InferId, twitterPost.InferTxHash))
 							//	twitterPost.ImageUrl = videoUrl
 							//	twitterPost.ReplyPostId = refId
 							//	twitterPost.Status = models.AgentTwitterPostStatusReplied

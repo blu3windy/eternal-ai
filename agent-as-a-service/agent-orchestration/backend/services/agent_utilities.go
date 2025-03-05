@@ -100,7 +100,7 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 			agentInfo.AgentType != models.AgentInfoAgentTypePython {
 			return errs.NewError(errs.ErrBadRequest)
 		}
-		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" && agentInfo.SourceUrl != "" {
+		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" {
 			if agentInfo.MintHash == "" {
 				switch agentInfo.NetworkID {
 				case models.ETHEREUM_CHAIN_ID,
@@ -124,6 +124,9 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 					models.CELO_CHAIN_ID,
 					models.BASE_SEPOLIA_CHAIN_ID:
 					{
+						if agentInfo.SourceUrl == "" {
+							return errs.NewError(errs.ErrBadRequest)
+						}
 						var fileNames []string
 						err = json.Unmarshal([]byte(agentInfo.SourceUrl), &fileNames)
 						if err != nil {
@@ -161,12 +164,27 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 								dependAgentAddrs = append(dependAgentAddrs, helpers.HexToAddress(v))
 							}
 						}
+						var codeLanguage string
+						switch agentInfo.AgentType {
+						case models.AgentInfoAgentTypeJs:
+							{
+								codeLanguage = "js"
+							}
+						case models.AgentInfoAgentTypePython:
+							{
+								codeLanguage = "python"
+							}
+						case models.AgentInfoAgentTypeModel:
+							{
+								codeLanguage = "model"
+							}
+						}
 						contractAddress, logicAddress, txHash, err := s.DeployAgentUpgradeableAddress(
 							ctx,
 							agentInfo.NetworkID,
 							agentInfo.AgentName,
 							"1",
-							"js",
+							codeLanguage,
 							storageInfos,
 							dependAgentAddrs,
 							helpers.HexToAddress(agentInfo.Creator),
