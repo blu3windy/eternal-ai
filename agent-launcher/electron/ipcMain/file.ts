@@ -37,11 +37,16 @@ const ipcMainSafeFile = () => {
       const _appDir = path.join(appDir, folderName);
       await checkAndCreateFolder(_appDir);
       const filePath = path.join(_appDir, fileName);
-      const stat = await fs.stat(filePath);
-      if (stat.isDirectory()) {
-         console.error('Error: prompt.js is a directory. Removing...');
-         await fs.rmdir(filePath, { recursive: true });
+
+      try {
+         const stat = await fs.stat(filePath);
+         if (stat.isDirectory()) {
+            console.error('Error: prompt.js is a directory. Removing...');
+            await fs.rmdir(filePath, { recursive: true });
+         }
+      } catch (error) {
       }
+      
       await fs.writeFile(filePath, content, "utf8");
       return filePath;
    });
