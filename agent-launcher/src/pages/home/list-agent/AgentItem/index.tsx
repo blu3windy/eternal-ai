@@ -6,7 +6,6 @@ import { AgentContext } from "../../provider";
 import { DefaultAvatar } from "../../../../components/DefaultAvatar";
 import { formatCurrency, labelAmountOrNumberAdds } from "../../../../utils/format.ts";
 import cs from "clsx";
-import {AgentType} from "@pages/home/list-agent";
 
 interface IProps {
   token: IAgentToken;
@@ -26,9 +25,13 @@ const AgentItem = ({ token }: IProps) => {
       return runningAgents.includes(token?.id as number);
    }, [runningAgents, token]);
 
-  const isUtilityAgent = useMemo(() => {
-    return token?.agent_type === AgentType.Utility;
-  }, [token]);
+  // const isUtilityAgent = useMemo(() => {
+  //   return token?.agent_type === AgentType.UtilityJS;
+  // }, [token]);
+
+  const isInstalled = useMemo(() => {
+
+  }, [])
 
    const handleGoToChat = (e: any, token_address?: any) => {
       if (token_address) {
@@ -38,17 +41,6 @@ const AgentItem = ({ token }: IProps) => {
          setSelectedAgent(token);
       }
    };
-
-   const handleInstall = (e: any) => {
-      e?.preventDefault();
-      e?.stopPropagation();
-
-      if (isRunning) {
-         stopAgent(token);
-      } else {
-         startAgent(token);
-      }
-   }
 
   return (
     <Flex
@@ -84,13 +76,13 @@ const AgentItem = ({ token }: IProps) => {
               fontSize={14}
             />
           )}
-          {
+{/*          {
             isUtilityAgent && (
               <Image src={'/icons/ic-utility-agent.svg'} w={"16px"} h={"16px"} position={"absolute"} top={"24px"} right={"0px"}/>
             )
-          }
+          }*/}
         </Flex>
-        <Flex flexDirection="column" w={'100%'} gap={"8px"}>
+        <Flex flexDirection="column" w={'100%'} gap={"12px"}>
           <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
             <Flex gap={"6px"}>
               <Text className={s.nameText}>
@@ -98,8 +90,11 @@ const AgentItem = ({ token }: IProps) => {
               </Text>
               <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
             </Flex>
-            {/*<Text className={s.agentTypeTag}>{AgentTypeName[token?.agent_type]}</Text>*/}
             {
+              <Text className={s.agentTypeTag}>Installed</Text>
+            }
+
+            {/*{
               isUtilityAgent && (
                 <Button
                   className={s.btnInstall}
@@ -109,15 +104,14 @@ const AgentItem = ({ token }: IProps) => {
                   loadingText={isStarting ? 'Starting...' : 'Stopping...'}
                 >{isRunning ? 'Stop' : 'Start'}</Button>
               )
-            }
+            }*/}
           </Flex>
           {
             description && (
               <Text className={s.descriptionText}>{description}</Text>
             )
           }
-
-               <SimpleGrid columns={3}>
+               <Flex gap={"8px"}>
                   <Text className={s.infoText}>
                      {token?.meme?.market_cap && (
                         <>
@@ -138,7 +132,7 @@ const AgentItem = ({ token }: IProps) => {
                      )}
                   </Text>
                   <Text className={s.infoText}>{formatCurrency(12345)}{' '}<Text as={'span'} color={"#657786"}>prompt{labelAmountOrNumberAdds(12345)}</Text></Text>
-               </SimpleGrid>
+               </Flex>
             </Flex>
          </Grid>
       </Flex>

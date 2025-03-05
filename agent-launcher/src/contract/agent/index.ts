@@ -26,7 +26,7 @@ class CAgentContract {
       return codeVersion;
    };
 
-   public getCode = async (codeVersion: number) => {
+   public getAgentCode = async (codeVersion: number) => {
       const code = await this.contract.getAgentCode(codeVersion);
       return code;
    };

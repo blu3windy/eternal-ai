@@ -5,18 +5,15 @@ import s from "./styles.module.scss";
 import React, {useContext, useMemo} from "react";
 import {AgentContext} from "@pages/home/provider";
 import {AgentType} from "@pages/home/list-agent";
-import AgentWalletInfo from "@pages/home/chat-agent/AgentWalletInfo";
 
 function ChatAgent() {
   const {
     selectedAgent,
-    startAgent,
-    stopAgent,
-    isStarting,
-    isStopping,
+    installAgent,
+    isInstalling,
     agentWallet,
-    isRunning,
-    createAgentWallet
+    createAgentWallet,
+    isInstalled
   } = useContext(AgentContext);
 
   const avatarUrl =
@@ -27,16 +24,12 @@ function ChatAgent() {
   const description =
     selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
-  const isUtilityAgent = useMemo(() => {
-    return selectedAgent?.agent_type === AgentType.Utility;
+  const requireInstall = useMemo(() => {
+    return selectedAgent?.agent_type === AgentType.UtilityJS || selectedAgent?.agent_type === AgentType.UtilityPython || selectedAgent?.agent_type === AgentType.Model;
   }, [selectedAgent]);
 
   const handleInstall = () => {
-    if (isRunning) {
-      stopAgent(selectedAgent);
-    } else {
-      startAgent(selectedAgent);
-    }
+    installAgent(selectedAgent);
   };
 
   const handleCreateWallet = () => {
@@ -46,7 +39,7 @@ function ChatAgent() {
   return (
     <Box className={s.container}>
       {/* <AgentInfo /> */}
-      {!isUtilityAgent || (isUtilityAgent && isRunning && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet))) ? (
+      {!requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet))) ? (
         <ChatAgentProvider>
           <ChatBox />
         </ChatAgentProvider>
@@ -79,7 +72,7 @@ function ChatAgent() {
             <Text className={s.nameText}>{selectedAgent?.agent_name}</Text>
           </Flex>
           {
-            isRunning && selectedAgent?.required_wallet && !agentWallet ? (
+            isInstalled && selectedAgent?.required_wallet && !agentWallet ? (
               <>
                 <Text className={s.descriptionText}>
                   A separate wallet is needed to use this agent. You'll have full control by exporting the private key to MetaMask, ensuring your assets remain secure and fully under your management.
@@ -99,11 +92,11 @@ function ChatAgent() {
                 <Button
                   className={s.btnInstall}
                   onClick={handleInstall}
-                  isLoading={isStarting || isStopping}
-                  isDisabled={isStarting || isStopping}
-                  loadingText={isStarting ? "Starting..." : "Stopping..."}
+                  isLoading={isInstalling}
+                  isDisabled={isInstalling}
+                  loadingText={"Installing..."}
                 >
-                  {isRunning ? "Stop" : "Start"}
+                  Install
                 </Button>
               </>
             )

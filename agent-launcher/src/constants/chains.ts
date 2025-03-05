@@ -3,7 +3,7 @@ export const BASE_CHAIN_ID = 8453;
 export const BASE_RPC = 'https://mainnet.base.org';
 
 export const BASE_SEPOLIA_CHAIN_ID = 84532;
-export const BASE_SEPOLIA_RPC = 'https://rpc.ankr.com/base_sepolia';
+export const BASE_SEPOLIA_RPC = 'https://sepolia.base.org';
 
 export const SYMBIOSIS_CHAIN_ID = 45762;
 export const SYMBIOSIS_RPC = 'https://rpc.hermeschain.eternalai.org';
