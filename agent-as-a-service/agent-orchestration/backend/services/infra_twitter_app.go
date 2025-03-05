@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"math"
 	"strings"
@@ -188,7 +187,6 @@ import (
 // }
 
 func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, userAddress string) (string, error) {
-	installUri := fmt.Sprintf(`https://eternalai.org/%d`, s.conf.InfraTwitterApp.AgentID)
 	err := func() error {
 		infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 			daos.GetDBMainCtx(ctx),
@@ -214,41 +212,36 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, userAddress 
 	}()
 
 	if err != nil {
-		return helpers.BuildUri(
-			installUri,
-			map[string]string{
-				"error": err.Error(),
-			},
-		), nil
+		return "", errs.NewError(err)
 	}
+
 	redirectUri := helpers.BuildUri(
 		s.conf.InfraTwitterApp.RedirectUri,
 		map[string]string{
-			"address":     userAddress,
-			"install_uri": installUri,
+			"address": userAddress,
 		},
 	)
+
 	return helpers.BuildUri(
 		"https://twitter.com/i/oauth2/authorize",
 		map[string]string{
+			"redirect_uri":          redirectUri,
 			"client_id":             s.conf.InfraTwitterApp.OauthClientId,
 			"state":                 "state",
 			"response_type":         "code",
 			"code_challenge":        "challenge",
 			"code_challenge_method": "plain",
 			"scope":                 "offline.access+tweet.read+tweet.write+users.read+follows.write+like.write+like.read+users.read",
-			"redirect_uri":          redirectUri,
 		},
 	), nil
 }
 
-func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, address, installUri string, code string) (string, error) {
-	infraTwitterApp, err := func() (*models.InfraTwitterApp, error) {
+func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, address string, code string) (string, error) {
+	_, err := func() (*models.InfraTwitterApp, error) {
 		redirectUri := helpers.BuildUri(
 			s.conf.InfraTwitterApp.RedirectUri,
 			map[string]string{
-				"address":     address,
-				"install_uri": installUri,
+				"address": address,
 			},
 		)
 		respOauth, err := s.twitterAPI.TwitterOauthCallbackForSampleApp(
@@ -318,29 +311,28 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, address, in
 		}
 		return nil, errs.NewError(errs.ErrBadRequest)
 	}()
+
 	if err != nil {
-		return helpers.BuildUri(
-			installUri,
-			map[string]string{
-				"address": address,
-				"error":   err.Error(),
-			},
-		), nil
+		return "", errs.NewError(err)
 	}
-	params := map[string]string{
-		"address":          infraTwitterApp.Address,
-		"twitter_id":       infraTwitterApp.TwitterInfo.TwitterID,
-		"twitter_username": infraTwitterApp.TwitterInfo.TwitterUsername,
-		"twitter_name":     infraTwitterApp.TwitterInfo.TwitterName,
-	}
-	returnData := base64.StdEncoding.EncodeToString([]byte(helpers.ConvertJsonString(params)))
-	return helpers.BuildUri(
-		installUri,
-		map[string]string{
-			"address":     address,
-			"return_data": returnData,
-		},
-	), nil
+
+	// if err != nil {
+	// 	return helpers.BuildUri(
+	// 		installUri,
+	// 		map[string]string{
+	// 			"address": address,
+	// 			"error":   err.Error(),
+	// 		},
+	// 	), nil
+	// }
+	// params := map[string]string{
+	// 	"address":          infraTwitterApp.Address,
+	// 	"twitter_id":       infraTwitterApp.TwitterInfo.TwitterID,
+	// 	"twitter_username": infraTwitterApp.TwitterInfo.TwitterUsername,
+	// 	"twitter_name":     infraTwitterApp.TwitterInfo.TwitterName,
+	// }
+	// returnData := base64.StdEncoding.EncodeToString([]byte(helpers.ConvertJsonString(params)))
+	return "", nil
 }
 
 func (s *Service) UtilityPostTwitter(ctx context.Context, userAddress string, req *serializers.AgentUtilityTwitterReq) (*serializers.AgentUtilityTwitterResp, error) {

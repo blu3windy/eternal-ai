@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
@@ -24,16 +25,15 @@ import (
 
 func (s *Server) InfraTwitterAppAuthenCallback(c *gin.Context) {
 	ctx := s.requestContext(c)
-	returnUri, err := s.nls.InfraTwitterAppAuthenCallback(
+	_, err := s.nls.InfraTwitterAppAuthenCallback(
 		ctx, s.stringFromContextQuery(c, "address"),
-		s.stringFromContextQuery(c, "install_uri"),
 		s.stringFromContextQuery(c, "code"),
 	)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
 	}
-	c.Redirect(http.StatusFound, returnUri)
+	c.Redirect(http.StatusFound, fmt.Sprintf("https://eternalai.org/%d", s.conf.InfraTwitterApp.AgentID))
 }
 
 func (s *Server) UtilityPostTwitter(c *gin.Context) {
