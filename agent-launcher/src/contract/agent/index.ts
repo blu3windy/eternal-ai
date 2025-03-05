@@ -21,8 +21,8 @@ class CAgentContract {
       return codeLanguage;
    };
 
-   public getCodeVersion = async () => {
-      const codeVersion = await this.contract.getCodeVersion();
+   public getCurrentVersion = async () => {
+      const codeVersion = await this.contract.getCurrentVersion();
       return codeVersion;
    };
 

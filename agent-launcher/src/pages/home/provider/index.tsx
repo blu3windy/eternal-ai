@@ -208,7 +208,7 @@ const AgentProvider: React.FC<
             const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: agent?.network_id || BASE_CHAIN_ID });
 
             const codeLanguage = await cAgent.getCodeLanguage();
-            const codeVersion = await cAgent.getCodeVersion();
+            const codeVersion = await cAgent.getCurrentVersion();
             const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
             const fileNameOnLocal = `prompt.${codeLanguage}`;
             const folderNameOnLocal = `${agent.id}`;
