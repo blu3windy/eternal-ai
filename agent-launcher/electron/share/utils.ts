@@ -31,9 +31,34 @@ const getDNSHost = (params: { chainId: string, agentName: string }) => {
    return `${params.chainId}-${params.agentName}`;
 }
 
+const executeWithIgnoreError = async (fn: () => Promise<void>) => {
+   try {
+      await fn();
+   } catch (error: any) {
+      console.error("executeWithIgnoreError", {
+         error: error.message,
+         functionName: fn.name
+      });
+   }
+}
+
+const executeCatchError = async (fn: () => Promise<void>) => {
+   try {
+      await fn();
+   } catch (error: any) {
+      console.error("executeCatchError", {
+         error: error.message,
+         functionName: fn.name
+      });
+      throw error;
+   }
+}
+
 export {
    getScriptPath,
    SCRIPTS_NAME,
    USER_DATA_FOLDER_NAME,
-   getDNSHost
+   getDNSHost,
+   executeWithIgnoreError,
+   executeCatchError
 }

@@ -2,17 +2,17 @@ import { app, ipcMain } from "electron";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 import fs from "fs";
 import path from "path";
-import { getScriptPath, PUBLIC_SCRIPT, SCRIPTS_NAME, USER_DATA_FOLDER_NAME } from "../share/utils.ts";
+import {
+   executeWithIgnoreError,
+   getScriptPath,
+   PUBLIC_SCRIPT,
+   SCRIPTS_NAME,
+   USER_DATA_FOLDER_NAME
+} from "../share/utils.ts";
 import command from "../share/command-tool.ts";
 
-const getDockerPath = async () => {
+const getDocker = async () => {
    return 'docker'
-}
-
-
-const option = {
-   timeout: 0, // Set to 0 for no timeout, or increase it (e.g., 10 * 1000 for 10s)
-   maxBuffer: 1024 * 1024 * 10, // Increase buffer to 10MB (default is 1MB)
 }
 
 const DOCKER_NAME = 'launcher-agent';
@@ -79,22 +79,26 @@ const ipcMainDocker = () => {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
 
-         const dockerPath = await getDockerPath();
+         const docker = await getDocker();
          console.log(EMIT_EVENT_NAME.DOCKER_BUILD, {
             folderPath
          });
 
+         const cmds: string[] = [
+
+         ]
+
          await command.execAsync(
-            `cd "${folderPath}" && ${dockerPath} build -t ${DOCKER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
+            `cd "${folderPath}" && ${docker} build -t ${DOCKER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
          );
 
          await command.execAsync(
-            `cd "${folderPath}" && ${dockerPath} build -t ${DOCKER_ROUTER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
+            `cd "${folderPath}" && ${docker} build -t ${DOCKER_ROUTER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
          );
 
          try {
             await command.execAsync(
-               `cd "${folderPath}" && ${dockerPath} network create --internal network-agent-internal`
+               `cd "${folderPath}" && ${docker} network create --internal network-agent-internal`
             );
          } catch (error) {
             console.log('error', error);
@@ -102,7 +106,7 @@ const ipcMainDocker = () => {
 
          try {
             await command.execAsync(
-               `cd "${folderPath}" && ${dockerPath} network create network-agent-external`
+               `cd "${folderPath}" && ${docker} network create network-agent-external`
             );
          } catch (error) {
             console.log('error', error);
@@ -110,7 +114,7 @@ const ipcMainDocker = () => {
 
          try {
             await command.execAsync(
-               `${dockerPath} stop ${DOCKER_ROUTER_NAME}`
+               `${docker} stop ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
             console.log('error', error);
@@ -118,7 +122,7 @@ const ipcMainDocker = () => {
 
          try {
             await command.execAsync(
-               `${dockerPath} rm ${DOCKER_ROUTER_NAME}`
+               `${docker} rm ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
             console.log('error', error);
@@ -126,7 +130,7 @@ const ipcMainDocker = () => {
 
          try {
             await command.execAsync(
-               `${dockerPath} run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
+               `${docker} run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
             console.log('error', error);
@@ -156,27 +160,9 @@ const ipcMainDocker = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL, async (_event) => {
       try {
-         // await copySource();
-         // check docker version
-         // docker build
-         // const { stdout } = await execAsync(
-         //    'cd "/Users/macbookpro/Library/Application Support/agent-launcher/agent-data" && docker build -t agent .'
-         // );
-
-         // docker run
-
-
-         // random port
-
-
-         // const { stdout } = await execAsync(
-         //    'cd "/Users/macbookpro/Library/Application Support/agent-launcher/agent-data" && docker run -d -p 3001:3000 -v ./agents/agent_1/prompt.js:/app/src/prompt.js --name agent1 agent'
-         // )
-         // console.log(stdout);
-         const dockerPath = await getDockerPath();
-         const { stderr } = await command.execAsync(`${dockerPath} -v`);
+         const docker = await getDocker();
+         const { stderr } = await command.execAsync(`${docker} -v`);
          return !stderr;
-
       } catch (error) {
          console.log(error);
          return false;
@@ -195,48 +181,32 @@ const ipcMainDocker = () => {
 
       console.log(cmd)
       const data = await command.execAsyncStream(cmd)
-
-      // const { stdout, stderr } = await execAsync("docker -v");
-
-      // const { stdout, stderr } = await execAsync(`sh ${scriptPath}`);
-
-      // if (stderr) {
-      //    console.error(`stderr: ${stderr}`);
-      //    return;
-      // }
-      //
-      // console.log(`stdout: ${stdout}`);
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, async (_event, agentName: string, chainId: string) => {
       try {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
-
-
          // docker run -d -v /Users/nqhieu84/Work/testjs/abc/agents/app/1/prompt.js:/app/src/prompt.js --network network-agent-internal --name 1-agent1 agent
          // docker run -d -v /Users/nqhieu84/Work/testjs/abc/agents/app/2/prompt.js:/app/src/prompt.js --network network-agent-external --network network-agent-internal --name 1-agent2 agent
          const dnsHost = `${chainId}-${agentName}`;
-         const dockerPath = await getDockerPath();
+         const docker = await getDocker();
 
-         try {
-            await command.execAsync(
-               `cd "${folderPath}" && ${dockerPath} stop ${dnsHost}`
-            );
-         } catch (error) {
-            console.log(error);
+
+         const cmds: string[] = [
+            `cd "${folderPath}" && ${docker} stop ${dnsHost}`,
+            `cd "${folderPath}" && ${docker} rm ${dnsHost}`,
+         ];
+
+         for (const cmd of cmds) {
+            await executeWithIgnoreError(
+               async () => {
+                  await command.execAsyncDockerDir(cmd);
+               }
+            )
          }
-
-         try {
-            await command.execAsync(
-               `cd "${folderPath}" && ${dockerPath} rm ${dnsHost}`
-            );
-         } catch (error) {
-            console.log(error);
-         }
-
          const { stdout } = await command.execAsync(
-            `cd "${folderPath}" && ${dockerPath} run -d -v ./agents/${dnsHost}/prompt.js:/app/src/prompt.js --network network-agent-internal --name ${dnsHost} ${DOCKER_NAME}`
+            `cd "${folderPath}" && ${docker} run -d -v ./agents/${dnsHost}/prompt.js:/app/src/prompt.js --network network-agent-internal --name ${dnsHost} ${DOCKER_NAME}`
          );
          console.log(stdout);
       } catch (error) {
@@ -246,25 +216,19 @@ const ipcMainDocker = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_STOP_AGENT, async (_event, agentName: string, chainId: string) => {
       try {
-         const userDataPath = app.getPath("userData");
-         const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
          const dnsHost = `${chainId}-${agentName}`;
-         const dockerPath = await getDockerPath();
+         const docker = await getDocker();
+         const cmds: string[] = [
+            `${docker} stop ${dnsHost}`,
+            `${docker} rm ${dnsHost}`,
+         ];
 
-         try {
-            await command.execAsync(
-               `${dockerPath} stop ${dnsHost}`
-            );
-         } catch (error) {
-            console.log(error);
-         }
-
-         try {
-            await command.execAsync(
-               `${dockerPath} rm ${dnsHost}`
-            );
-         } catch (error) {
-            console.log(error);
+         for (const cmd of cmds) {
+            await executeWithIgnoreError(
+               async () => {
+                  await command.execAsyncDockerDir(cmd);
+               }
+            )
          }
       } catch (error) {
          console.log(error);

@@ -1,9 +1,12 @@
 import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import fs from "fs";
-import { dialog } from  "electron"
 
 const execAsync = async (cmd: string) => {
+   return promisify(exec)(cmd); // Execute with updated PATH
+};
+
+const execAsyncDockerDir = async (cmd: string) => {
    const possiblePaths = [
       "/opt/homebrew/bin/docker", // Apple Silicon macOS (Homebrew)
       "/usr/bin/docker",        // Standard system install
@@ -38,7 +41,8 @@ const execAsyncStream = (cmd: string) => {
 
 const command = {
    execAsync,
-   execAsyncStream
+   execAsyncStream,
+   execAsyncDockerDir,
 }
 
 export default command;
