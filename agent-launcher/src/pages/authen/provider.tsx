@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, FC, PropsWithChildren, useMemo, useEffect } from 'react';
 import HomeAuthen from "./Home";
-import { Wallet } from "ethers";
+import { ethers, Wallet } from "ethers";
 import EaiSigner from "../../helpers/signer";
 import sleep from "@utils/sleep.ts";
 import TestingButton from "@pages/authen/TesingButton";
@@ -9,11 +9,17 @@ import useStarter from "@pages/authen/hooks/useStarter.ts";
 import Starter from "@pages/authen/Starter";
 import eaiCrypto from "@utils/crypto";
 
+interface IReqAgentSecretKey {
+   chainId: string;
+   agentName: string;
+}
+
 interface AuthContextType {
    signer: Wallet | undefined;
    hasUser: boolean;
    onLogin: (pass: string) => Promise<void>;
-   genAgentSecretKey: (_: { chainId: string, agentName: string }) => Promise<string>;
+   genAgentSecretKey: (_: IReqAgentSecretKey) => Promise<string>;
+   getAuthenToken: (_: string) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,12 +63,28 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       return eaiCrypto.derivePrivateKeyFromSignature(signature || "");
    }
 
+   const getAuthenToken = async (prvKey: string) => {
+      const _signer = new ethers.Wallet(prvKey);
+      const _message = `Generate authen token for ${_signer?.address} in `;
+      let _signature = await _signer.signMessage(_message);
+      _signature = _signature.startsWith("0x")
+         ? _signature.replace("0x", "")
+         : _signature;
+      // const authenCode: string = await this.api.post('auth/verify', {
+      //    signature: _signature, message: _message, address: _signer.address
+      // });
+      // return authenCode;
+
+      return ""
+   }
+
    const values = useMemo(() => {
       return {
          signer,
          hasUser,
          onLogin,
          genAgentSecretKey,
+         getAuthenToken
       }
    }, [signer, hasUser]);
 
