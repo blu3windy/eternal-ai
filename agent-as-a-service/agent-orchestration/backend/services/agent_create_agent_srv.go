@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -159,6 +160,11 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 			if err != nil {
 				return errs.NewError(err)
 			}
+
+			sort.Slice(tweetMentions.Tweets, func(i, j int) bool {
+				return tweetMentions.Tweets[i].CreatedAt < tweetMentions.Tweets[j].CreatedAt
+			})
+
 			err = s.CreateAgentTwitterPostForGenerateVideo(daos.GetDBMainCtx(ctx), agent.ID, agent.TwitterUsername, tweetMentions)
 			if err != nil {
 				return errs.NewError(err)
@@ -394,7 +400,9 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 	for _, item := range tweetMentions.Tweets {
 		var checkTwitterID string
 		_ = checkTwitterID
-		err := s.GetRedisCachedWithKey(fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", item.ID), &checkTwitterID)
+		redisKeyToCheckHandled := fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", item.ID)
+
+		err := s.GetRedisCachedWithKey(fmt.Sprintf(redisKeyToCheckHandled, item.ID), &checkTwitterID)
 		//err := errors.New("redis:nil")
 		if err != nil {
 			if !strings.EqualFold(item.AuthorID, agentInfo.TwitterID) {
@@ -463,7 +471,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 		}
 
 		err = s.SetRedisCachedWithKey(
-			fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", item.ID),
+			fmt.Sprintf(redisKeyToCheckHandled, item.ID),
 			item.ID,
 			1*time.Hour,
 		)
