@@ -216,12 +216,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          }
 
          if (selectedAgent?.agent_type === AgentType.UtilityJS || selectedAgent?.agent_type === AgentType.UtilityPython) {
-            const res: string = await AgentAPI.chatAgentUtility({ agent: selectedAgent, prvKey: agentWallet?.privateKey });
-
-            updateMessage(messageId, {
-               msg: res,
-               status: 'received',
-            });
+            // const res: string = await AgentAPI.chatAgentUtility({ agent: selectedAgent, prvKey: agentWallet?.privateKey });
+            //
+            // updateMessage(messageId, {
+            //    msg: res,
+            //    status: 'received',
+            // });
          } else if (selectedAgent?.agent_type === AgentType.Model) {
 
          } else {
