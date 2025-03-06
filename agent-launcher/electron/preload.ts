@@ -47,10 +47,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
    dockerCheckRunning: (agentName: string, chainId: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_CHECK_RUNNING, agentName, chainId),
 
    modelStarter: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_STARTER),
-   modelInstall: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_INSTALL),
+   modelInstall: (hash: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_INSTALL, hash),
    modelRun: (hash: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_RUN, hash),
-   openExternal: (url: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.OPEN_EXTRA_LINK, url),
+   modelCheckInstall: (hash: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_CHECK_INSTALL, hash),
 
+   openExternal: (url: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.OPEN_EXTRA_LINK, url),
 
    sendCommand: (cmd: string) => ipcRenderer.send("run-command", cmd),
    onCommandEvent: (callback: any) => ipcRenderer.on("command-event", (_, data) => callback(data)),

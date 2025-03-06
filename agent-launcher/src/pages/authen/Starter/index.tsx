@@ -24,13 +24,11 @@ const LoadingIcon = () => (
 const Starter = (props: IProps) => {
    const { onCheckHasUser } = props;
    const { setChecking } = useStarter();
-   const [logs, setLogs] = useState<{ type: string; message: string }[]>([]);
    const initRef = useRef(false);
 
    const [step, setStep] = useState<Step>("INITIALIZING");
    const [installing, setInstalling] = useState<boolean>(false);
    const [installError, setInstallError] = useState<string | undefined>();
-   const logRef = useRef<HTMLDivElement>(null);
 
    const onInit = async (ignoreCopy?: boolean) => {
       try {
@@ -116,18 +114,9 @@ const Starter = (props: IProps) => {
       if (!initRef?.current) {
          initRef.current = true;
          onInit().then().catch();
-         window.electronAPI.onCommandEvent((data) => {
-            setLogs((prev) => [...prev, data]); // Append logs
-         });
       }
    }, [])
 
-   useEffect(() => {
-      // Auto-scroll to the bottom when new logs appear
-      if (logRef.current) {
-         logRef.current.scrollTop = logRef.current.scrollHeight;
-      }
-   }, [logs]);
 
    return (
       <Center
@@ -138,40 +127,6 @@ const Starter = (props: IProps) => {
          gap="24px"
       >
          {renderContent()}
-         <Box
-            ref={logRef}
-            w="full"
-            maxW="3xl"
-            h="400px"
-            overflowY="auto"
-            bg={useColorModeValue("white", "gray.800")}
-            p={4}
-            borderRadius="lg"
-            borderWidth="1px"
-            shadow="lg"
-         >
-            {logs.length === 0 ? (
-               <Text textAlign="center" color="gray.500">
-                   No logs yet. Click the button to run a command.
-               </Text>
-            ) : (
-               logs.map((log, index) => (
-                  <Box
-                     key={index}
-                     p={2}
-                     borderRadius="md"
-                     mb={1}
-                     bg={log.type === "error" ? "red.500" : "gray.700"}
-                     color="white"
-                  >
-                     <Text fontWeight="bold">{log.type.toUpperCase()}:</Text>
-                     <Code whiteSpace="pre-wrap" fontSize="sm">
-                        {log.message.trim()}
-                     </Code>
-                  </Box>
-               ))
-            )}
-         </Box>
       </Center>
    )
 };

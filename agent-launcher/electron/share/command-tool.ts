@@ -79,7 +79,7 @@ const execAsyncDockerDir = async (cmd: string) => {
    }
 };
 
-const execAsyncStream = (cmd: string) => {
+const execAsyncStream = (cmd: string, isZSH = true) => {
    return new Promise<void>((resolve, reject) => {
       const win = BrowserWindow.getAllWindows()[0]; // Get main window
       if (!win) {
@@ -89,13 +89,15 @@ const execAsyncStream = (cmd: string) => {
 
       // const process = exec(cmd);
       console.log(`Running command: zsh -l -c '${cmd}'`);
-      const process = exec(`zsh -l -c '${cmd}'`);
+      const process = exec(isZSH ? `zsh -l -c '${cmd}'` : `${cmd}`);
 
       process.stdout?.on("data", (data) => {
+         console.log(data.toString());
          sendEvent({ type: "output", message: data.toString(), cmd, win });
       });
 
       process.stderr?.on("data", (data) => {
+         console.error(data.toString());
          sendEvent({ type: "error", message: data.toString(), cmd, win });
       });
 
