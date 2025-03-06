@@ -2,14 +2,19 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "YourAppID",
-  "asar": true,
+  "asar": true, // Ensures no files are packed into a single archive
   "productName": "YourAppName",
   "directories": {
     "output": "release/${version}"
   },
   "files": [
     "dist",
-    "dist-electron"
+    "dist-electron",
+    {
+      "from": "public",
+      "to": "public",
+      "filter": ["**/*"] // Includes all files inside public/
+    }
   ],
   "mac": {
     "target": [
@@ -39,5 +44,11 @@
       "AppImage"
     ],
     "artifactName": "${productName}-Linux-${version}.${ext}"
-  }
+  },
+  "extraResources": [
+    {
+      "from": "public",
+      "to": "public"
+    }
+  ]
 }

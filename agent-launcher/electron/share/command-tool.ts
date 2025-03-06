@@ -1,7 +1,8 @@
 import { exec, spawn } from "child_process";
 import { promisify } from "util";
 import fs from "fs";
-import { BrowserWindow } from "electron";
+import { app, BrowserWindow } from "electron";
+import path from "path";
 
 const execAsync = async (cmd: string) => {
    return promisify(exec)(cmd); // Execute with updated PATH
@@ -9,7 +10,7 @@ const execAsync = async (cmd: string) => {
 
 let dockerDir = '';
 
-const sendEvent = (params: { type: string, data: string, cmd: string, win: BrowserWindow }) => {
+const sendEvent = (params: { type: string, message: string, cmd: string, win: BrowserWindow }) => {
    const {
       type,
       message,
@@ -23,7 +24,7 @@ const execAsyncDockerDir = async (cmd: string) => {
    const win = BrowserWindow.getAllWindows()[0]; // Get main window
    if (!win) {
       console.error("No active Electron window found.");
-      return;
+      throw new Error("No active Electron window found.");
    }
 
    try {
@@ -41,6 +42,21 @@ const execAsyncDockerDir = async (cmd: string) => {
                break;
             }
          }
+
+         const scriptsPath = app.isPackaged
+            ? path.join(process.resourcesPath, 'public', 'scripts')
+            : path.join(__dirname, '../public/scripts');
+
+         console.log('Scripts Path:', scriptsPath);
+
+         // Check which files exist
+         fs.readdir(scriptsPath, (err, files) => {
+            if (err) {
+               sendEvent({ type: "error", message: err.message, cmd, win });
+            } else {
+               sendEvent({ type: "output", message: `files: ${JSON.stringify(files)}`, cmd, win });
+            }
+         });
 
          sendEvent({ type: "output", message: `Docker Dir: ${dockerDir || "Not Found"}`, cmd, win });
       }

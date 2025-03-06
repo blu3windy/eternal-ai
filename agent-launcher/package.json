@@ -91,8 +91,12 @@
   "main": "dist-electron/main.js",
   "build": {
     "appId": "com.eternalai.agent-launcher",
-    "asar": true,
     "productName": "Agent Launcher",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/keytar/**",
+      "public/**"
+    ],
     "publish": [
       {
         "provider": "github",
@@ -105,6 +109,45 @@
       "dist/**/*",
       "node_modules/**/*",
       "package.json"
+    ],
+    "directories": {
+      "output": "release/${version}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "artifactName": "${productName}-Linux-${version}.${ext}"
+    },
+    "extraResources": [
+      {
+        "from": "public",
+        "to": "public"
+      }
     ]
   }
+
 }
