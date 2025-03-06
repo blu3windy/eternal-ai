@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -133,9 +134,23 @@ func (s *Service) DisableJobs() {
 
 func (s *Service) RunJobs(ctx context.Context) error {
 	gocron.Every(180).Second().Do(func() {
+		defer func() {
+			if rval := recover(); rval != nil {
+				err := errs.NewError(errors.New(fmt.Sprint(rval)))
+				stacktrace := err.(*errs.Error).Stacktrace()
+				fmt.Println(time.Now(), err.Error(), stacktrace)
+			}
+		}()
 		s.KnowledgeUsecase.WatchWalletChange(context.Background())
 	})
 	gocron.Every(30).Second().Do(func() {
+		defer func() {
+			if rval := recover(); rval != nil {
+				err := errs.NewError(errors.New(fmt.Sprint(rval)))
+				stacktrace := err.(*errs.Error).Stacktrace()
+				fmt.Println(time.Now(), err.Error(), stacktrace)
+			}
+		}()
 		s.KnowledgeUsecase.ScanKnowledgeBaseStatusPaymentReceipt(context.Background())
 	})
 
