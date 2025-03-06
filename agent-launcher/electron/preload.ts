@@ -1,4 +1,4 @@
-import { ipcRenderer, contextBridge } from "electron";
+import { ipcRenderer, contextBridge, shell } from "electron";
 import { EMIT_EVENT_NAME } from "./share/event-name.ts";
 
 // --------- Expose some API to the Renderer process ---------
@@ -53,4 +53,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
    sendCommand: (cmd) => ipcRenderer.send("run-command", cmd),
    onCommandEvent: (callback) => ipcRenderer.on("command-event", (_, data) => callback(data)),
+});
+
+contextBridge.exposeInMainWorld('electron', {
+   openExternal: (url) => shell.openExternal(url)
 });
