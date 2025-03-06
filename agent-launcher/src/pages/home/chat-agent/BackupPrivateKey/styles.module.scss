@@ -1,0 +1,31 @@
+.container {
+
+  .copyBox {
+    background-color: #F3F0F0;
+    border-radius: 100px;
+    width: fit-content;
+    padding: 4px 12px;
+    margin: 0 auto;
+    cursor: pointer;
+  }
+
+  .iconCopy {
+    cursor: pointer;
+    transition: all 0.2s ease-in;
+
+    &:hover {
+      opacity: 0.8;
+      transform: scale(1.1);
+    }
+  }
+
+  .btnInstall {
+    background-color: #000;
+    color: #fff;
+    border-radius: 100px;
+    width: 166px;
+    height: 60px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+}
