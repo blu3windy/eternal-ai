@@ -67,12 +67,12 @@ const AgentProvider: React.FC<
    const [isRunning, setIsRunning] = useState(false);
    const refInterval = useRef<any>();
 
-  const [currentModel, setCurrentModel] = useState<{
+   const [currentModel, setCurrentModel] = useState<{
     name: string;
     id: string;
   } | null>(null);
 
-  const { genAgentSecretKey } = useAuth();
+   const { genAgentSecretKey } = useAuth();
 
    const cPumpAPI = new CAgentTokenAPI();
 
@@ -86,12 +86,7 @@ const AgentProvider: React.FC<
       return false;
    }, [selectedAgent, agentWallet, agentIdsHasBackup]);
 
-   const [currentModel, setCurrentModel] = useState<{
-    name: string;
-    id: string;
-  } | null>(null);
 
-   const { genAgentSecretKey } = useAuth();
 
    const requireInstall = useMemo(() => {
       if (selectedAgent) {
@@ -145,15 +140,15 @@ const AgentProvider: React.FC<
    }
 
    useEffect(() => {
-     if (selectedAgent) {
-       if (installedAgents && installedAgents.some(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
-         setIsInstalled(true);
-         cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id] });
-       } else {
-         setIsInstalled(false);
-         cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id], action: "uninstall" });
-       }
-     }
+      if (selectedAgent) {
+         if (installedAgents && installedAgents.some(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
+            setIsInstalled(true);
+            cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id] });
+         } else {
+            setIsInstalled(false);
+            cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id], action: "uninstall" });
+         }
+      }
    }, [selectedAgent?.id, installedAgents]);
 
    const checkAgentRunning = async () => {
@@ -187,8 +182,6 @@ const AgentProvider: React.FC<
    }
 
    const getTradePlatform = (_pumpToken: IAgentToken | undefined) => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       if (SUPPORT_TRADE_CHAIN.includes((_pumpToken?.meme?.network_id || "") as any)) {
          if (
             compareString(_pumpToken?.meme?.status, EAgentTokenStatus.add_pool_2)
