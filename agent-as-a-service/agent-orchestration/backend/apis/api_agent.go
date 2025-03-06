@@ -407,10 +407,16 @@ func (s *Server) GetDashBoardAgent(c *gin.Context) {
 		agentTypesInt = append(agentTypesInt, num)
 	}
 
+	contractAddressesStr := s.stringFromContextParam(c, "contract_addresses")
+	contractAddresses := []string{}
+	if contractAddressesStr != "" {
+		contractAddresses = strings.Split(contractAddressesStr, ",")
+	}
+
 	model := s.stringFromContextQuery(c, "model")
 	userAddress, err := s.getUserAddressFromTK1Token(c)
 	installed, _ := s.boolFromContextQuery(c, "installed")
-	ms, count, err := s.nls.GetDashboardAgentInfos(ctx, userAddress, chain, agentType, agentTypesInt, "", search, model,
+	ms, count, err := s.nls.GetDashboardAgentInfos(ctx, contractAddresses, userAddress, chain, agentType, agentTypesInt, "", search, model,
 		installed, sortStr, page, limit)
 
 	if err != nil {
@@ -592,7 +598,8 @@ func (s *Server) GetAgentInfoInstallCode(c *gin.Context) {
 func (s *Server) GetAgentLibrary(c *gin.Context) {
 	ctx := s.requestContext(c)
 	networkID, _ := s.uint64FromContextQuery(c, "network_id")
-	obj, err := s.nls.GetListAgentLibrary(ctx, networkID)
+	agentType := s.intFromContextQuery(c, "agent_type")
+	obj, err := s.nls.GetListAgentLibrary(ctx, agentType, networkID)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return

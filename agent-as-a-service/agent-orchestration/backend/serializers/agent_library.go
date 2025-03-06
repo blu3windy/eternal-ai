@@ -9,6 +9,7 @@ import (
 type AgentLibraryReq struct {
 	Name      string `json:"name"`
 	SourceUrl string `json:"source_url"`
+	AgentType int    `json:"agent_type"`
 }
 
 type AgentLibraryResp struct {
@@ -16,6 +17,7 @@ type AgentLibraryResp struct {
 	CreatedAt time.Time `json:"created_at"`
 	Name      string    `json:"name"`
 	SourceUrl string    `json:"source_url"`
+	AgentType int       `json:"agent_type"`
 }
 
 func NewAgentLibraryResp(m *models.AgentLibrary) *AgentLibraryResp {
@@ -27,6 +29,7 @@ func NewAgentLibraryResp(m *models.AgentLibrary) *AgentLibraryResp {
 		CreatedAt: m.CreatedAt,
 		Name:      m.Name,
 		SourceUrl: m.SourceURL,
+		AgentType: int(m.AgentType),
 	}
 }
 

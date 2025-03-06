@@ -62,6 +62,7 @@ const (
 	AgentInfoAgentTypeModel         AgentInfoAgentType = 5
 	AgentInfoAgentTypeJs            AgentInfoAgentType = 6
 	AgentInfoAgentTypePython        AgentInfoAgentType = 7
+	AgentInfoAgentTypeInfa          AgentInfoAgentType = 8
 )
 
 type (

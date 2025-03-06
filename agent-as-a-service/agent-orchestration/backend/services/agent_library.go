@@ -10,12 +10,16 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-func (s *Service) GetListAgentLibrary(ctx context.Context, networkID uint64) ([]*models.AgentLibrary, error) {
+func (s *Service) GetListAgentLibrary(ctx context.Context, agentType int, networkID uint64) ([]*models.AgentLibrary, error) {
+	filter := map[string][]interface{}{
+		"network_id = ? ": {networkID},
+	}
+	if agentType > 0 {
+		filter["agent_type = ? "] = []interface{}{agentType}
+	}
 	res, err := s.dao.FindAgentLibrary(
 		daos.GetDBMainCtx(ctx),
-		map[string][]interface{}{
-			"network_id = ? ": {networkID},
-		},
+		filter,
 		map[string][]interface{}{},
 		[]string{"id desc"},
 		0,
@@ -37,6 +41,7 @@ func (s *Service) SaveAgentLibrary(ctx context.Context, networkID uint64, req *s
 				NetworkID: networkID,
 				Name:      req.Name,
 				SourceURL: req.SourceUrl,
+				AgentType: models.AgentInfoAgentType(req.AgentType),
 			}
 			return s.dao.Create(tx, agentLibrary)
 		},

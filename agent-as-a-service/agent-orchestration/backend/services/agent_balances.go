@@ -700,7 +700,7 @@ func (s *Service) PostTwitterAferCreateToken(ctx context.Context, agentInfoID ui
 	return nil
 }
 
-func (s *Service) GetDashboardAgentInfos(ctx context.Context, userAddress string, networkID uint64, agentType int, agentTypes []int,
+func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses []string, userAddress string, networkID uint64, agentType int, agentTypes []int,
 	tokenAddress, search, agentModel string, installed *bool, sortListStr []string, page, limit int,
 ) ([]*models.AgentInfo, uint, error) {
 	sortDefault := "ifnull(agent_infos.priority, 0) desc, meme_market_cap desc"
@@ -754,6 +754,10 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, userAddress string
 		filters["agent_infos.agent_type in (?)"] = []any{agentTypes}
 	} else {
 		filters["agent_infos.agent_type not in (?)"] = []any{[]models.AgentInfoAgentType{models.AgentInfoAgentTypeModel, models.AgentInfoAgentTypeJs, models.AgentInfoAgentTypePython}}
+	}
+	//filter contract address
+	if len(contractAddresses) > 0 {
+		filters["agent_infos.agent_contract_address in (?)"] = []any{contractAddresses}
 	}
 
 	//filter agent model
