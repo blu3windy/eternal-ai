@@ -30,6 +30,16 @@ class CAgentContract {
       const code = await this.contract.getAgentCode(codeVersion);
       return code;
    };
+
+   public getDepsAgents = async (codeVersion: number) => {
+      const depsAgents: string[] = await this.contract.getDepsAgents(codeVersion);
+      return depsAgents;
+   };
+
+   public getAgentName = async () => {
+      const name = await this.contract.getAgentName();
+      return name;
+   };
 };
 
 export default CAgentContract;
