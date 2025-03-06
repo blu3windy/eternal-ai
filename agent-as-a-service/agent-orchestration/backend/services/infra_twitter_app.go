@@ -352,8 +352,8 @@ func (s *Service) UtilityPostTwitter(ctx context.Context, userAddress string, re
 			)
 
 			if err != nil {
-				// resp.Message = errs.ErrBadRequest.Message
-				return errs.NewError(errs.ErrBadRequest)
+				resp.AuthUrl, _ = s.InfraTwitterAppAuthenInstall(ctx, userAddress)
+				return errs.NewError(errs.ErrAgentUtilityNotFound)
 			}
 
 			if infraTwitterApp == nil || (infraTwitterApp != nil && infraTwitterApp.TwitterInfo == nil) ||
@@ -371,14 +371,14 @@ func (s *Service) UtilityPostTwitter(ctx context.Context, userAddress string, re
 			if infraTwitterApp != nil && infraTwitterApp.TwitterInfo != nil && infraTwitterApp.TwitterInfo.RefreshError == "OK" {
 				tweetId, err := helpers.PostTweetByToken(infraTwitterApp.TwitterInfo.AccessToken, req.Content, "")
 				if err != nil {
-					return errs.NewError(errs.ErrBadRequest)
+					return errs.NewError(errs.ErrAgentUtilityPostTweetFailed)
 				}
 				resp.Message = fmt.Sprintf(`https://x.com/%s/status/%s`, infraTwitterApp.TwitterInfo.TwitterUsername, tweetId)
 				err = tx.Model(infraTwitterApp).
 					UpdateColumn("eai_balance", gorm.Expr("eai_balance - ?", numeric.NewBigFloatFromString("1"))).
 					UpdateColumn("remain_request", gorm.Expr("remain_request - ?", 1)).Error
 				if err != nil {
-					return errs.NewError(errs.ErrBadRequest)
+					return errs.NewError(errs.ErrAgentUtilitySystemError)
 				}
 				return nil
 			}
