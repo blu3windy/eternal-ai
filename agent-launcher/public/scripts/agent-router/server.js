@@ -4,10 +4,10 @@ const url = require('url');
 
 const app = express();
 
-app.post('/:agentName/prompt', (req, res) => {
-    const { agentName } = req.params;
+app.use('/:agentName/:action', (req, res) => {
+    const { agentName, action } = req.params;
     console.log(agentName);
-    const targetUrl = 'http://' + agentName + '/prompt';
+    const targetUrl = 'http://' + agentName + `/${action}'`;
     const parsedUrl = url.parse(targetUrl);
     const options = {
         hostname: parsedUrl.hostname,
