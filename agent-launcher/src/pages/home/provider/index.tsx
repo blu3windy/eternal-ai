@@ -58,12 +58,12 @@ const AgentProvider: React.FC<
    const [isInstalling, setIsInstalling] = useState(false);
    const [isStarting, setIsStarting] = useState(false);
    const [isStopping, setIsStopping] = useState(false);
-   const [runningAgents, setRunningAgents] = useState<number[]>([]);
    const [isTrade, setIsTrade] = useState(false);
    const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
    const [coinPrices, setCoinPrices] = useState([]);
    const [isInstalled, setIsInstalled] = useState(false);
    const [installedAgents, setInstalledAgents] = useState<string[]>([]);
+   const [isRunning, setIsRunning] = useState(false);
 
    const cPumpAPI = new CAgentTokenAPI();
 
@@ -86,10 +86,6 @@ const AgentProvider: React.FC<
       return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet)));
    }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled]);
 
-   const isRunning = useMemo(() => {
-      return runningAgents.includes(selectedAgent?.id as number);
-   }, [runningAgents, selectedAgent?.id]);
-
    console.log("stephen: selectedAgent", selectedAgent);
    console.log("stephen: currentModel", currentModel);
    console.log("stephen: agentWallet", agentWallet);
@@ -100,6 +96,12 @@ const AgentProvider: React.FC<
    console.log("stephen: isInstalled", isInstalled);
    console.log("================================");
 
+  useEffect(() => {
+    fetchChainList();
+    fetchCoinPrices();
+    handleGetExistAgentFolders();
+  }, []);
+
    useEffect(() => {
       if (selectedAgent) {
          const agentsHasWallet = localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
@@ -108,6 +110,8 @@ const AgentProvider: React.FC<
          } else {
             setAgentWallet(undefined)
          }
+
+        checkAgentRunning();
       }
    }, [selectedAgent?.id]);
 
@@ -119,6 +123,20 @@ const AgentProvider: React.FC<
          setIsInstalled(false);
       }
    }, [selectedAgent?.id, installedAgents]);
+
+   const checkAgentRunning = async () => {
+      try {
+         const res = await window.electronAPI.dockerCheckRunning(selectedAgent?.agent_name, selectedAgent?.network_id.toString());
+
+         if (res === 'running') {
+            setIsRunning(true);
+         } else {
+            setIsRunning(false);
+         }
+      } catch (err) {
+         console.error("Check agent running error:", err);
+      }
+   }
 
    const createAgentWallet = async () => {
       try {
@@ -212,21 +230,6 @@ const AgentProvider: React.FC<
       } catch (error) {}
    };
 
-   const getRunningAgents = () => {
-      try {
-         setRunningAgents([]);
-      } catch (err) {
-      } finally {
-      }
-   };
-
-   useEffect(() => {
-      fetchChainList();
-      getRunningAgents();
-      fetchCoinPrices();
-      handleGetExistAgentFolders();
-   }, []);
-
 
    const installAgent = async (agent: IAgentToken) => {
       try {
@@ -252,8 +255,6 @@ const AgentProvider: React.FC<
          setIsStarting(true);
 
          await handleRunDockerAgent(agent);
-
-         setRunningAgents((prev) => [...prev, agent.id]);
       } catch (e) {
          console.log('startAgent', e);
       } finally {
@@ -267,8 +268,6 @@ const AgentProvider: React.FC<
 
          if (agent.agent_type === AgentType.UtilityJS || agent.agent_type === AgentType.UtilityPython) {
             await handleStopDockerAgent(agent);
-
-            setRunningAgents((prev) => prev.filter((id) => id !== agent.id));
          } else if (agent.agent_type === AgentType.Model) {
 
          } else {
@@ -350,7 +349,6 @@ const AgentProvider: React.FC<
          isInstalling,
          isStarting,
          isStopping,
-         runningAgents,
          isTrade,
          setIsTrade,
          agentWallet,
@@ -376,7 +374,6 @@ const AgentProvider: React.FC<
       isInstalling,
       isStarting,
       isStopping,
-      runningAgents,
       isTrade,
       setIsTrade,
       agentWallet,

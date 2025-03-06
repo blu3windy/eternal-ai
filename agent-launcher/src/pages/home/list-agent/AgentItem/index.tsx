@@ -1,10 +1,10 @@
-import { Button, Flex, Grid, Image, SimpleGrid, Text } from '@chakra-ui/react';
-import React, { useContext, useMemo } from 'react';
+import {Flex, Grid, Image, Text} from '@chakra-ui/react';
+import React, {useContext, useMemo} from 'react';
 import s from './styles.module.scss';
-import { IAgentToken } from "../../../../services/api/agents-token/interface.ts";
-import { AgentContext } from "../../provider";
-import { DefaultAvatar } from "../../../../components/DefaultAvatar";
-import { formatCurrency, labelAmountOrNumberAdds } from "../../../../utils/format.ts";
+import {IAgentToken} from "../../../../services/api/agents-token/interface.ts";
+import {AgentContext} from "../../provider";
+import {DefaultAvatar} from "../../../../components/DefaultAvatar";
+import {formatCurrency, labelAmountOrNumberAdds} from "../../../../utils/format.ts";
 import cs from "clsx";
 
 interface IProps {
@@ -12,7 +12,7 @@ interface IProps {
 }
 
 const AgentItem = ({ token }: IProps) => {
-   const { selectedAgent, setSelectedAgent, runningAgents, installedAgents } = useContext(AgentContext);
+   const { selectedAgent, setSelectedAgent, installedAgents } = useContext(AgentContext);
 
    const description = token?.token_desc || token?.twitter_info?.description;
 
@@ -20,10 +20,6 @@ const AgentItem = ({ token }: IProps) => {
     = token?.thumbnail
     || token?.token_image_url
     || token?.twitter_info?.twitter_avatar;
-
-   const isRunning = useMemo(() => {
-      return runningAgents.includes(token?.id as number);
-   }, [runningAgents, token]);
 
   // const isUtilityAgent = useMemo(() => {
   //   return token?.agent_type === AgentType.UtilityJS;
