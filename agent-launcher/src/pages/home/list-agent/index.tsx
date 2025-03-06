@@ -381,6 +381,8 @@ const AgentsList = () => {
       )
    };
 
+   console.log('stephen: agents', agents);
+
    return (
       <Box className={s.container}>
          <Flex
@@ -420,7 +422,7 @@ const AgentsList = () => {
                gridRowGap={"8px"}
                overflow={'hidden !important'}
             >
-               {agents.map((item: IAgentToken, i) => (
+               {agents?.map((item: IAgentToken, i) => (
                   <GridItem key={item.id}>
                      <AgentItem token={item} />
                   </GridItem>

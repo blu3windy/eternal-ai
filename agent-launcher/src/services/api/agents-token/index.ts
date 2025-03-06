@@ -38,6 +38,7 @@ class CAgentTokenAPI extends CApiClient {
     const response = (await this.api.get(
       `/agent/dashboard/${token_address}`
     )) as any;
+
     return response;
   };
 

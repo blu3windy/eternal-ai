@@ -10,6 +10,8 @@ import eaiCrypto from "@utils/crypto";
 import AgentAPI from "@services/api/agent";
 import Loggers from "@components/Loggers";
 import LoggersButton from "@components/Loggers/Loggers.button.tsx";
+import localStorageService from "../../storage/LocalStorageService.ts";
+import STORAGE_KEYS from "@constants/storage-key.ts";
 
 interface IReqAgentSecretKey {
    chainId: string;
@@ -34,7 +36,16 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 
    useEffect(() => {
       if(signer) {
-         getAuthenToken(signer.privateKey);
+         const getAndSaveAuthen = async () => {
+            const authenToken = await getAuthenToken(signer.privateKey);
+
+            if (authenToken) {
+               localStorageService.setItem(STORAGE_KEYS.AUTHEN_TOKEN, authenToken);
+               localStorageService.setItem(STORAGE_KEYS.WALLET_ADDRESS, signer.address);
+            }
+         }
+
+         getAndSaveAuthen();
       }
    }, [signer]);
 
@@ -79,7 +90,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
          ? _signature.replace("0x", "")
          : _signature;
 
-      const authenCode: string = await AgentAPI.getAuthenToken({signature: _signature, message: _message, address: _signer.address});
+      const authenCode: string = await AgentAPI.getAuthenToken({ signature: _signature, message: _message, address: _signer.address });
 
       return authenCode;
    }
