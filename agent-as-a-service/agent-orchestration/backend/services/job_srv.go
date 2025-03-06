@@ -133,7 +133,7 @@ func (s *Service) DisableJobs() {
 }
 
 func (s *Service) RunJobs(ctx context.Context) error {
-	gocron.Every(180).Second().Do(func() {
+	gocron.Every(360).Second().Do(func() {
 		defer func() {
 			if rval := recover(); rval != nil {
 				err := errs.NewError(errors.New(fmt.Sprint(rval)))
