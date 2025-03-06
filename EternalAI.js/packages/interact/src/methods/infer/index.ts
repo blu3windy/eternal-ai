@@ -1,520 +1,200 @@
 import * as ethers from 'ethers';
 
 import { InteractWallet } from '../types';
+import { Message, SendInferResponse } from './types';
 import {
-  CreateInferPayload,
-  ListenInferPayload,
-  SendInferResponse,
-} from './types';
+  AGENT_ABI,
+  IPFS,
+  LIGHTHOUSE_IPFS,
+  PROMPT_SCHEDULER_ABI,
+  WORKER_HUB_ABI,
+} from './constants';
+import { ChainId } from '../../constants';
+import { InferPayloadWithMessages, InferPayloadWithPrompt } from '../../types';
+import { sleep } from '../../utils/time';
+import { Fragment, LogDescription } from 'ethers/lib/utils';
+import LightHouse from '@/services/light_house';
 
-const abis: ethers.ContractInterface = [
-  {
-    inputs: [],
-    name: 'ModelIdAlreadySet',
-    type: 'error',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: 'uint256',
-        name: 'newValue',
-        type: 'uint256',
-      },
-    ],
-    name: 'IdentifierUpdate',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: 'uint8',
-        name: 'version',
-        type: 'uint8',
-      },
-    ],
-    name: 'Initialized',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: 'string',
-        name: 'newValue',
-        type: 'string',
-      },
-    ],
-    name: 'MetadataUpdate',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: 'string',
-        name: 'newValue',
-        type: 'string',
-      },
-    ],
-    name: 'NameUpdate',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'previousOwner',
-        type: 'address',
-      },
-      {
-        indexed: true,
-        internalType: 'address',
-        name: 'newOwner',
-        type: 'address',
-      },
-    ],
-    name: 'OwnershipTransferred',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: 'address',
-        name: 'account',
-        type: 'address',
-      },
-    ],
-    name: 'Paused',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: 'address',
-        name: 'account',
-        type: 'address',
-      },
-    ],
-    name: 'Unpaused',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: 'address',
-        name: 'newAddress',
-        type: 'address',
-      },
-    ],
-    name: 'WorkerHubUpdate',
-    type: 'event',
-  },
-  {
-    inputs: [],
-    name: 'identifier',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes',
-        name: '_input',
-        type: 'bytes',
-      },
-      {
-        internalType: 'bool',
-        name: '_rawFlag',
-        type: 'bool',
-      },
-    ],
-    name: 'infer',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes',
-        name: '_input',
-        type: 'bytes',
-      },
-    ],
-    name: 'infer',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes',
-        name: '_input',
-        type: 'bytes',
-      },
-      {
-        internalType: 'address',
-        name: '_creator',
-        type: 'address',
-      },
-      {
-        internalType: 'bool',
-        name: '_flag',
-        type: 'bool',
-      },
-    ],
-    name: 'infer',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'bytes',
-        name: '_input',
-        type: 'bytes',
-      },
-      {
-        internalType: 'address',
-        name: '_creator',
-        type: 'address',
-      },
-    ],
-    name: 'infer',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'payable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '_workerHub',
-        type: 'address',
-      },
-      {
-        internalType: 'address',
-        name: '_modelCollection',
-        type: 'address',
-      },
-      {
-        internalType: 'uint256',
-        name: '_identifier',
-        type: 'uint256',
-      },
-      {
-        internalType: 'string',
-        name: '_name',
-        type: 'string',
-      },
-      {
-        internalType: 'string',
-        name: '_metadata',
-        type: 'string',
-      },
-    ],
-    name: 'initialize',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'metadata',
-    outputs: [
-      {
-        internalType: 'string',
-        name: '',
-        type: 'string',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'modelCollection',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'name',
-    outputs: [
-      {
-        internalType: 'string',
-        name: '',
-        type: 'string',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'owner',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'pause',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'paused',
-    outputs: [
-      {
-        internalType: 'bool',
-        name: '',
-        type: 'bool',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'renounceOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: '_modelId',
-        type: 'uint256',
-      },
-    ],
-    name: 'setModelId',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'newOwner',
-        type: 'address',
-      },
-    ],
-    name: 'transferOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'unpause',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'uint256',
-        name: '_identifier',
-        type: 'uint256',
-      },
-    ],
-    name: 'updateIdentifier',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'string',
-        name: '_metadata',
-        type: 'string',
-      },
-    ],
-    name: 'updateMetadata',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'string',
-        name: '_name',
-        type: 'string',
-      },
-    ],
-    name: 'updateName',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: '_workerHub',
-        type: 'address',
-      },
-    ],
-    name: 'updateWorkerHub',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'version',
-    outputs: [
-      {
-        internalType: 'string',
-        name: '',
-        type: 'string',
-      },
-    ],
-    stateMutability: 'pure',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'workerHub',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    stateMutability: 'payable',
-    type: 'receive',
-  },
-];
-const HYBRID_MODEL_ADDRESS = '0x643c45e89769a16bcb870092bd1efe4696cb2ce7'; // smart contract address
+import injectDependency from '@/inject';
+// this is inject supported packages
+const packages = {
+  ethers: injectDependency<InjectedTypes.ethers>('ethers'),
+};
+
+const contracts: Record<string, ethers.Contract> = {};
+
+const getAgentContract = (contractAddress: string, wallet: InteractWallet) => {
+  if (!contracts[contractAddress]) {
+    contracts[contractAddress] = new packages.ethers.Contract(
+      contractAddress,
+      AGENT_ABI,
+      wallet.provider
+    );
+  }
+  return contracts[contractAddress];
+};
+
+const getWorkerHubContract = (
+  contractAddress: string,
+  wallet: InteractWallet
+) => {
+  if (!contracts[contractAddress]) {
+    contracts[contractAddress] = new packages.ethers.Contract(
+      contractAddress,
+      PROMPT_SCHEDULER_ABI,
+      wallet.provider
+    );
+  }
+  return contracts[contractAddress];
+};
+
+export class InferenceResponse {
+  result_uri: string;
+  storage: string;
+  data: string;
+
+  constructor(result_uri: string, storage: string, data: string) {
+    this.result_uri = result_uri;
+    this.storage = storage;
+    this.data = data;
+  }
+
+  static fromJSON(json: string): InferenceResponse {
+    const parsed = JSON.parse(json);
+    return Object.assign(new InferenceResponse('', '', ''), parsed);
+  }
+}
 
 const Infer = {
-  createPayload: async (
-    wallet: InteractWallet,
-    payload: CreateInferPayload
+  convertMessagesToBytes: async (
+    messages: Message[],
+    isLightHouse: boolean
   ) => {
+    if (isLightHouse) {
+      const uploadedUrl = await LightHouse.upload(JSON.stringify(messages));
+      return packages.ethers.utils.toUtf8Bytes(uploadedUrl);
+    }
+
+    return packages.ethers.utils.toUtf8Bytes(
+      JSON.stringify({
+        messages,
+      })
+    );
+  },
+  getSystemPrompt: async (contractAddress: string, wallet: InteractWallet) => {
     try {
-      console.log('infer createPayload - start');
-      const contract = new ethers.Contract(
-        HYBRID_MODEL_ADDRESS,
-        abis,
-        wallet.provider
-      );
-
-      const { messages, model, chainId } = payload;
-
-      const callData = contract.interface.encodeFunctionData(
-        'infer(bytes,bool)',
-        [
-          // ethers.utils.hexlify(
-          //   ethers.utils.toUtf8Bytes(
-          //     JSON.stringify({
-          //       messages,
-          //       model,
-          //     })
-          //   )
-          // ),
-          ethers.utils.toUtf8Bytes(
-            JSON.stringify({
-              messages,
-              model,
-            })
-          ),
-          true,
-        ]
-      );
-
-      const from = await wallet.getAddress();
-      const params = {
-        to: HYBRID_MODEL_ADDRESS, // smart contract address
-        from: from, // sender address
-        data: callData, // data
-        chainId: ethers.BigNumber.from(chainId).toNumber(),
-      } satisfies ethers.ethers.providers.TransactionRequest;
-      console.log('infer createPayload - succeed', params);
-      return params;
+      console.log('infer getSystemPrompt - start');
+      const contract = getAgentContract(contractAddress, wallet);
+      const systemPrompt = await contract.getSystemPrompt();
+      console.log('infer getSystemPrompt - succeed', systemPrompt);
+      return systemPrompt;
     } catch (e) {
-      console.log('infer createPayload - failed', e);
+      console.log('infer getSystemPrompt - failed');
       throw e;
     } finally {
-      console.log('infer createPayload - end');
+      console.log('infer getSystemPrompt - end');
     }
   },
-  sendInfer: async (
+  createPayloadWithPrompt: async (
+    wallet: InteractWallet,
+    payload: InferPayloadWithPrompt
+  ) => {
+    try {
+      console.log('infer createPayloadWithPrompt - start', payload);
+      const contractAddress = payload.agentAddress;
+      const contract = getAgentContract(contractAddress, wallet);
+
+      const systemPrompt = await Infer.getSystemPrompt(contractAddress, wallet);
+
+      const { chainId, prompt, isLightHouse } = payload;
+
+      const promptPayload = await Infer.convertMessagesToBytes(
+        [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        !!isLightHouse
+      );
+      const callData = contract.interface.encodeFunctionData('prompt(bytes)', [
+        promptPayload,
+      ]);
+
+      const from = wallet.address || (await wallet.getAddress());
+      const [gasLimit, gasPrice, nonce] = await Promise.all([
+        contract.estimateGas.prompt(promptPayload),
+        wallet.provider.getGasPrice(),
+        wallet.provider.getTransactionCount(from),
+      ]);
+
+      const params = {
+        to: contractAddress, // smart contract address
+        from: from, // sender address
+        data: callData, // data
+        chainId: packages.ethers.BigNumber.from(chainId).toNumber(),
+        gasLimit: gasLimit,
+        gasPrice: gasPrice,
+        nonce: nonce,
+      } satisfies ethers.ethers.providers.TransactionRequest;
+      console.log('infer createPayloadWithPrompt - succeed', params);
+      return params;
+    } catch (e) {
+      console.log('infer createPayloadWithPrompt - failed');
+      throw e;
+    } finally {
+      console.log('infer createPayloadWithPrompt - end');
+    }
+  },
+  createPayloadWithMessages: async (
+    wallet: InteractWallet,
+    payload: InferPayloadWithMessages
+  ) => {
+    try {
+      console.log('infer createPayloadWithMessages - start', payload);
+      const contractAddress = payload.agentAddress;
+      const contract = getAgentContract(contractAddress, wallet);
+
+      const { chainId, messages, isLightHouse } = payload;
+
+      const promptPayload = await Infer.convertMessagesToBytes(
+        messages,
+        !!isLightHouse
+      );
+      const callData = contract.interface.encodeFunctionData('prompt(bytes)', [
+        promptPayload,
+      ]);
+
+      const from = wallet.address || (await wallet.getAddress());
+      const [gasLimit, gasPrice, nonce] = await Promise.all([
+        contract.estimateGas.prompt(promptPayload),
+        wallet.provider.getGasPrice(),
+        wallet.provider.getTransactionCount(from),
+      ]);
+
+      const params = {
+        to: contractAddress,
+        from: from,
+        data: callData,
+        chainId: packages.ethers.BigNumber.from(chainId).toNumber(),
+        gasLimit: gasLimit,
+        gasPrice: gasPrice,
+        nonce: nonce,
+      } satisfies ethers.ethers.providers.TransactionRequest;
+      console.log('infer createPayloadWithMessages - succeed', params);
+      return params;
+    } catch (e) {
+      console.log('infer createPayloadWithMessages - failed');
+      throw e;
+    } finally {
+      console.log('infer createPayloadWithMessages - end');
+    }
+  },
+  sendPrompt: async (
     wallet: InteractWallet,
     signedTx: string
   ): Promise<SendInferResponse> => {
@@ -527,51 +207,189 @@ const Infer = {
       console.log('infer execute - waiting', txResponse);
       const receipt = await txResponse.wait();
 
-      console.log('infer execute - receipt', receipt);
-      const iface = new ethers.utils.Interface(abis);
-      const events = receipt.logs
-        .map((log) => {
-          try {
-            return iface.parseLog(log);
-          } catch (error) {
-            return null;
-          }
-        })
-        .filter((event) => event !== null);
-
-      const newInference = events?.find(
-        ((event: ethers.utils.LogDescription) =>
-          event.name === 'NewInference') as any
-      );
-      console.log('infer execute - event', { newInference });
-      if (newInference?.args) {
-        const result = {
-          inferenceId: newInference.args.inferenceId,
-          creator: newInference.args.creator,
-          tx: txResponse.hash,
-          receipt,
-        };
-        console.log('infer execute - succeed', result);
-        return result;
-      } else {
-        console.log('infer execute - failed', {
-          message: 'NewInference event not found',
-        });
-        throw new Error('NewInference event not found');
-      }
+      return receipt.transactionHash;
     } catch (e) {
-      console.log('infer execute - failed', e);
+      console.log('infer execute - failed');
       throw e;
     } finally {
       console.log('infer execute - end');
     }
   },
-  listenInferResponse: async (
+  getWorkerHubAddress: async (agentAddress: string, wallet: InteractWallet) => {
+    try {
+      console.log('infer getWorkerHubAddress - start', {
+        agentAddress,
+      });
+      const contractAddress = agentAddress;
+      const contract = getAgentContract(contractAddress, wallet);
+      const schedule = await contract.getPromptSchedulerAddress();
+      console.log('infer getWorkerHubAddress - succeed', schedule);
+      return schedule;
+    } catch (e) {
+      console.log('infer getWorkerHubAddress - failed');
+      throw e;
+    } finally {
+      console.log('infer getWorkerHubAddress - end');
+    }
+  },
+  getInferId: async (wallet: InteractWallet, promptedTxHash: string) => {
+    const txReceipt = await wallet.provider.getTransactionReceipt(
+      promptedTxHash
+    );
+
+    if (!txReceipt || txReceipt.status != 1) {
+      throw new Error('Transaction receipt not found.');
+    } else {
+      try {
+        const iface = new packages.ethers.utils.Interface(
+          WORKER_HUB_ABI as ReadonlyArray<Fragment>
+        );
+
+        const events = txReceipt.logs
+          .map((log) => {
+            try {
+              return iface.parseLog(log);
+            } catch (error) {
+              return null;
+            }
+          })
+          .filter((event) => event !== null);
+
+        const newInference = events?.find(
+          ((event: LogDescription) => event.name === 'NewInference') as any
+        );
+        return newInference?.args?.inferenceId;
+      } catch (e) {
+        throw new Error('No Infer Id');
+      }
+    }
+  },
+
+  processOutput: (out: any) => {
+    const str: string = packages.ethers.utils.toUtf8String(out);
+    try {
+      const result = InferenceResponse.fromJSON(str);
+      return result;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  processOutputToInferResponse: async (output: ethers.Bytes) => {
+    const inferResponse = Infer.processOutput(output);
+    if (!inferResponse) {
+      return null;
+    } else {
+      if (
+        inferResponse.storage == 'lighthouse-filecoint' ||
+        inferResponse.result_uri.includes('ipfs://')
+      ) {
+        const light_house = inferResponse.result_uri.replace(
+          IPFS,
+          LIGHTHOUSE_IPFS
+        );
+        const light_house_reponse = await fetch(light_house);
+        if (light_house_reponse.ok) {
+          const result = await light_house_reponse.text();
+          return result;
+        }
+        return null;
+      } else {
+        if (inferResponse.data != '') {
+          const decodedString = atob(inferResponse.data);
+          return decodedString;
+        }
+        return null;
+      }
+    }
+  },
+  getInferenceById: async (
     wallet: InteractWallet,
-    payload: ListenInferPayload
+    workerHubAddress: string,
+    inferId: string,
+    chainId: ChainId
   ) => {
-    console.log('infer listenInferResponse - start');
-    wallet.provider.on(payload.inferenceId, (log) => {});
+    if (chainId === ChainId.BSC) {
+      const contract = getWorkerHubContract(workerHubAddress, wallet);
+      const inferenceInfo = await contract.getInferenceInfo(inferId);
+      const output = inferenceInfo[10];
+      const bytesData = packages.ethers.utils.arrayify(output);
+      if (bytesData.length != 0) {
+        const result = await Infer.processOutputToInferResponse(bytesData);
+        if (result) {
+          return result;
+        } else {
+          return null;
+        }
+      } else {
+        throw new Error(`waiting process inference ${inferId}`);
+      }
+    } else if (chainId === ChainId.BASE) {
+      const contract = getWorkerHubContract(workerHubAddress, wallet);
+      const assignIds = await contract.getInferenceInfo(inferId);
+      if (assignIds.length == 0) {
+        throw new Error('No assignment found');
+      }
+      const assignId = assignIds[0];
+      const assignInfo = await contract.getAssignmentInfo(assignId);
+      if (assignInfo.length == 0) {
+        throw new Error('Inference result not ready');
+      }
+      const output = assignInfo[7];
+      const bytesData = packages.ethers.utils.arrayify(output);
+      if (bytesData.length != 0) {
+        const result = await Infer.processOutputToInferResponse(bytesData);
+        if (result) {
+          return result;
+        } else {
+          return null;
+        }
+      } else {
+        throw new Error(`waiting process inference ${inferId}`);
+      }
+    } else {
+      throw Error('Unsupported chainId');
+    }
+  },
+  listenPromptResponse: async (
+    chainId: ChainId,
+    wallet: InteractWallet,
+    workerHubAddress: string,
+    promptedTxHash: string
+  ) => {
+    try {
+      console.log('infer listenPromptResponse - start', {
+        chainId,
+        workerHubAddress,
+        promptedTxHash,
+      });
+
+      let result: string | null = null;
+      const inferId = await Infer.getInferId(wallet, promptedTxHash);
+
+      while (true) {
+        try {
+          result = await Infer.getInferenceById(
+            wallet,
+            workerHubAddress,
+            inferId,
+            chainId
+          );
+          break;
+        } catch (e) {
+          console.log('Retry to get inference by reference id');
+          await sleep(30);
+        }
+      }
+
+      console.log('infer listenPromptResponse - succeed', result);
+      return result;
+    } catch (e) {
+      console.log('infer listenPromptResponse - failed');
+      throw e;
+    } finally {
+      console.log('infer listenPromptResponse - end');
+    }
   },
 };
 

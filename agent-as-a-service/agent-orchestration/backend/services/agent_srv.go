@@ -709,7 +709,7 @@ func (s *Service) JobUpdateTwitterAccessToken(ctx context.Context) error {
 				map[string][]interface{}{},
 				[]string{
 					"updated_at asc",
-				}, 0, 20,
+				}, 0, 50,
 			)
 			if err != nil {
 				return errs.NewError(err)
@@ -985,16 +985,11 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 
 	searchResult := ""
 	for _, item := range response.Result {
-		searchResult = searchResult + "\t - " + item.Content + "\n"
+		searchResult = searchResult + item.Content + "\n\n"
 	}
-
+	options := map[string]interface{}{}
 	userPrompt := fmt.Sprintf("Use the following pieces of retrieved context to answer the question. If there is not enough information in the retrieved context to answer the question, just say something you know about the topic."+
-		"\n\n"+
-		"Question: %v"+
-		"\n"+
-		"Context: \n\n"+
-		"%v"+
-		"\n", userPromptInput, searchResult)
+		"\n\nQuestion: %v\nContext: \n\n%vAnswer:", userPromptInput, searchResult)
 	//answer prompt
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
@@ -1006,14 +1001,25 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 			Content: userPrompt,
 		},
 	}
+	if agentModel == "DeepSeek-R1-Distill-Llama-70B" {
+		options = map[string]interface{}{
+			"temperature": 0.7,
+			"max_tokens":  4096,
+		}
+	} else {
+		options = map[string]interface{}{
+			"temperature": 0,
+			"top_p":       0.01,
+			"max_tokens":  1024,
+		}
+	}
 
 	messageCallLLM, _ := json.Marshal(&payloadAgentChat)
 	url := s.conf.AgentOffchainChatUrl
 	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
-
-	stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), agentModel, url)
+	stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), agentModel, url, options)
 	if err != nil {
 		return "", errs.NewError(err)
 	}
@@ -1022,7 +1028,7 @@ func (s *Service) RetrieveKnowledge(agentModel string, messages []openai2.ChatCo
 
 func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string, messages []openai2.ChatCompletionMessage,
 	knowledgeBases []*models.KnowledgeBase, topK *int, threshold *float64,
-	outputChan chan *openai2.ChatCompletionStreamResponse,
+	outputChan chan *models.ChatCompletionStreamResponse,
 	errChan chan error, doneChan chan bool) {
 	if len(knowledgeBases) == 0 {
 		errChan <- errs.NewError(errors.New("knowledge bases is empty"))
@@ -1038,100 +1044,176 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		systemPrompt = "You are a helpful assistant."
 	}
 	_ = isKbAgent
-
-	userPromptInput := openai.LastUserPrompt(messages)
-	retrieveQuery := userPromptInput
-	topKQuery := 5
-	if topK != nil {
-		topKQuery = *topK
-	}
-	th := 0.4
-	if threshold != nil {
-		th = *threshold
-	}
-
-	request := serializers.RetrieveKnowledgeBaseRequest{
-		Query: retrieveQuery,
-		TopK:  topKQuery,
-		Kb: []string{
-			knowledgeBases[0].KbId,
-		},
-		Threshold: th,
-	}
-
-	// retry
-	var (
-		body string
-		err  error
-	)
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		body, err = helpers.CurlURLString(
-			s.conf.KnowledgeBaseConfig.QueryServiceUrl,
-			"POST",
-			map[string]string{},
-			&request,
-		)
-		if err == nil {
-			break
+	go func() {
+		outputChan <- &models.ChatCompletionStreamResponse{
+			Message: "Start generating the query.",
+			Code:    http.StatusProcessing,
 		}
-		time.Sleep(time.Second)
+	}()
+	idRequest := time.Now().UnixMicro()
+	retrieveQuery, errGenerateQuery, conversation := s.GenerateKnowledgeQuery(agentModel, messages)
+	_ = conversation
+	if errGenerateQuery != nil {
+		errChan <- errs.NewError(errors.New("ERROR_GENERATE_QUERY"))
+		return
+	}
+	logger.Info("stream_retrieve_knowledge", "generate query", zap.Any("id_request", idRequest), zap.Any("retrieveQuery", retrieveQuery), zap.Any("input", messages))
+	if retrieveQuery == nil {
+		str := ""
+		retrieveQuery = &str
 	}
 
-	response := &serializers.RetrieveKnowledgeBaseResponse{}
-	err = json.Unmarshal([]byte(body), response)
+	analysedResultChanel := make(chan string)
+	go func() {
+		topKQuery := 20
+		if topK != nil {
+			topKQuery = *topK
+		}
+		th := 0.2
+		if threshold != nil {
+			th = *threshold
+		}
+
+		request := serializers.RetrieveKnowledgeBaseRequest{
+			Query: *retrieveQuery,
+			TopK:  topKQuery,
+			Kb: []string{
+				knowledgeBases[0].KbId,
+			},
+			Threshold: th,
+		}
+		go func() {
+			outputChan <- &models.ChatCompletionStreamResponse{
+				Message: "Start searching query in the RAG system.",
+				Code:    http.StatusProcessing,
+			}
+		}()
+		searchResponse, err := s.GetResultFromRagSearch(&request)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		searchedResult := []string{}
+		for _, item := range searchResponse.Result {
+			searchedResult = append(searchedResult, item.Content)
+		}
+
+		go func() {
+			outputChan <- &models.ChatCompletionStreamResponse{
+				Message: "Start analyzing the search result.",
+				Code:    http.StatusProcessing,
+			}
+		}()
+		logger.Info("stream_retrieve_knowledge", "searched result", zap.Any("id_request", idRequest), zap.Any("searchedResult", searchedResult), zap.Any("input", request))
+		analysedResult, err := s.AnalyseSearchResults(agentModel, systemPrompt, *retrieveQuery, searchedResult)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("analyzed Result", analysedResult))
+		analysedResultChanel <- analysedResult
+	}()
+
+	toolCallData, err := s.GetResultFromToolCall(*retrieveQuery)
 	if err != nil {
 		errChan <- err
 		return
 	}
-
-	searchResult := ""
-	for _, item := range response.Result {
-		searchResult = searchResult + "\t - " + item.Content + "\n"
-	}
-
-	userPrompt := fmt.Sprintf("Use the following pieces of retrieved context to answer the question. If there is not enough information in the retrieved context to answer the question, just say something you know about the topic."+
-		"\n\n"+
-		"Question: %v"+
-		"\n"+
-		"Context: \n\n"+
-		"%v"+
-		"\n", userPromptInput, searchResult)
+	logger.Info("stream_retrieve_knowledge", "tool call data", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("tool call data", toolCallData))
+	// wait finish get analysedResult
+	analysedResult := <-analysedResultChanel
+	options := map[string]interface{}{}
 	//answer prompt
+	question := openai.GetQuestionFromLLMMessage(messages)
 	payloadAgentChat := []openai2.ChatCompletionMessage{
 		{
 			Role:    openai2.ChatMessageRoleSystem,
 			Content: systemPrompt,
-		},
-		{
-			Role:    openai2.ChatMessageRoleUser,
-			Content: userPrompt,
-		},
+		}}
+
+	if len(messages) > 0 {
+		payloadAgentChat = messages[:len(messages)-1]
+	}
+	questionPrompt := fmt.Sprintf("Generate a response to the user's query based strictly on the user question and the provided information.\n\n### Guidelines:\n- Prioritize database data over website data when answering.\n- The response must be concise and directly relevant.\n- No external knowledge should be introduced beyond the provided sources.\n- Ensure clarity and alignment with ETHDenver-related context.\n- Prefer structured lists over paragraphs whenever possible to enhance readability.\n- If the response involves listing events, ensure they are formatted as follows:\n\nRequired Format for Events:\n```\n<Event name> (<Speaker 1>; <Speaker 2>; ...; <Speaker n>) - <Local start time> - <Stage/Location name>\n```\n\n- Speakers should be listed in the order provided. If they have an affiliation, include it exactly as given.\n- The local start time must be preserved in its original format.\n- The stage or location name should appear at the end.\n- If only one speaker is listed, follow the same format without modification.\n- If no speaker is listed, ignore the speaker listing part of the format.\n- If multiple events are listed, each should follow the format on a new line.\n\nExample of correct event with speakers output:\n- Easy-to-Miss Solidity Bugs (Jonathan Mevs - Quantstamp; Michael Boyle - Quantstamp) - February 24, 2025 at 10:50 AM - Captain Ethereum Stage\n\nExample of correct event without speakers output:\n- Messari - Feb 27, 2025 at 1:30 PM - BUIDL Event Hall\n\n### User Question:\n%v\n\n### Relevant Information from Database (Primary Source):\n%v\n\n### Relevant Information from the Website:\n%v\n\n### Final Answer:\n(Provide a precise, ETHDenver-relevant response following these guidelines.)\n",
+		question, toolCallData, analysedResult)
+	if knowledgeBases[0].ID != 211 { // not is eth denver agent
+		questionPrompt = fmt.Sprintf("Use the following context from the conversation to answer the question. If the context is insufficient, you may draw from external knowledge to provide a relevant answer.\n\nContext: \n%v\n\nQuestion: \n%v\n\nAnswer:",
+			analysedResult, question)
 	}
 
-	messageCallLLM, _ := json.Marshal(&payloadAgentChat)
+	payloadAgentChat = append(payloadAgentChat, openai2.ChatCompletionMessage{
+		Role:    openai2.ChatMessageRoleUser,
+		Content: questionPrompt,
+	})
+
 	url := s.conf.AgentOffchainChatUrl
-	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
-		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
-	}
+	apiKey := s.conf.KnowledgeBaseConfig.OnchainAPIKey
 
-	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), agentModel, url, outputChan, errChan, doneChan)
+	if s.conf.KnowledgeBaseConfig.OnChainUrl != "" {
+		url = s.conf.KnowledgeBaseConfig.OnChainUrl
+	}
+	seedAnswer := 1234
+	chainID := fmt.Sprintf("%v", knowledgeBases[0].NetworkID)
+	llmRequest := openai2.ChatCompletionRequest{
+		Stream:      true,
+		Messages:    payloadAgentChat,
+		Model:       agentModel,
+		Temperature: 0.01,
+		MaxTokens:   4096,
+		Seed:        &seedAnswer,
+		Metadata: map[string]string{
+			"chain_id":         chainID,
+			"onchain_internal": "1",
+		},
+	}
+	go func() {
+		outputChan <- &models.ChatCompletionStreamResponse{
+			Message: "Start generating the result.",
+			Code:    http.StatusProcessing,
+		}
+	}()
+	logger.Info("stream_retrieve_knowledge", "start call finish result", zap.Any("id_request", idRequest), zap.Any("payloadAgentChat", payloadAgentChat), zap.Any("options", options))
+	s.openais["Agent"].CallStreamOnchainEternalLLM(ctx, url, apiKey, llmRequest, outputChan, errChan, doneChan)
 }
 
-func (s *Service) GenerateKnowledgeQuery(systemPrompt, textUserInput string) (*string, error) {
-	baseModel := "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
+func (s *Service) GenerateKnowledgeQuery(baseModel string, histories []openai2.ChatCompletionMessage) (*string, error, string) {
 	url := s.conf.AgentOffchainChatUrl
 	if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
 		url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
 	}
 
-	generateQueryPrefix := `Generate a concise and effective search query to retrieve relevant information from the database. Ensure the query is clear, simple, and optimized for accurate results based on the input question:
-%v
-Respond in stringified JSON format with the following structure:
-{
-  "query": "<generated_query>"
-}`
-	userPrompt := fmt.Sprintf(generateQueryPrefix, textUserInput)
+	today := time.Now().Format("Jan 02, 2006")
+	conversation := fmt.Sprintf("Remember that today is: %v\n\n", today)
+	for _, item := range histories {
+		if item.Role == openai2.ChatMessageRoleSystem {
+			continue
+		}
+
+		conversation += fmt.Sprintf("%v: %v\n", strings.ToTitle(item.Role), item.Content)
+	}
+	systemPrompt := openai.GetSystemPromptFromLLMMessage(histories)
+	if systemPrompt == "" {
+		systemPrompt = "You are a helpfully assistant"
+	}
+	question := openai.GetQuestionFromLLMMessage(histories)
+	if question == "" {
+		question = "Hi"
+	}
+	type historyMsg struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+	historiesPrompt := []historyMsg{}
+	for i := 1; i < len(histories)-1; i++ {
+		historiesPrompt = append(historiesPrompt, historyMsg{
+			Role:    strings.ToLower(histories[i].Role),
+			Content: histories[i].Content,
+		})
+	}
+	generateQueryPrefix := "Based on the conversation history and the user question below, generate a concise query that can be used to retrieve relevant information.\n\n### Instruction:\n- Generate a concise query based on the conversation history and the user question.\n- Output the query in **stringified JSON format** with a key `\"query\"`.\n- Do not include additional explanations or comments—just the JSON.\n\n### Example\n\n**Conversation History:**\n[{{\"role\":\"user\",\"content\":\"What is French cuisine?\"}},{{\"role\":\"assistant\",\"content\":\"French cuisine refers to the traditional cooking styles of France, famous for its rich flavors and varied dishes.\"}}]\n\n**User Question:**\nWhat is the most popular?\n\n**Output:**  \n```json\n{{\n    \"query\": \"popular French cuisine\"\n}}\n```\n\n### Input\n\nRemember that today is: %v\n\n**Conversation History:**\n%v\n\n**User Question:**\n%v\n\n### Answer\n"
+	userPrompt := fmt.Sprintf(generateQueryPrefix, today, historiesPrompt, question)
 	messages := []openai2.ChatCompletionMessage{
 		{
 			Role:    openai2.ChatMessageRoleSystem,
@@ -1152,7 +1234,10 @@ Respond in stringified JSON format with the following structure:
 			time.Sleep(time.Second)
 		}
 
-		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url)
+		stringResp, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{
+			"temperature": 0.7,
+			"max_tokens":  4096,
+		})
 		if err != nil || stringResp == "" {
 			continue
 		}
@@ -1177,7 +1262,133 @@ Respond in stringified JSON format with the following structure:
 		break
 	}
 
-	return queryStringResp, nil
+	return queryStringResp, nil, conversation
+}
+func (s *Service) AnalyseSearchResults(baseModel string, systemPrompt string, query string, searchedResult []string) (string, error) {
+	batchSize := 5
+	start := 0
+	analyzeResult := ""
+	countRequest := len(searchedResult) / batchSize
+	if len(searchedResult)%batchSize != 0 {
+		countRequest++
+	}
+	listAnalyzeResult := make([]string, countRequest)
+	wg := sync.WaitGroup{}
+	wg.Add(countRequest)
+	for i := 0; i < countRequest; i++ {
+		go func(index int) {
+			defer wg.Done()
+			start = index * batchSize
+			end := start + batchSize
+			if end > len(searchedResult) {
+				end = len(searchedResult)
+			}
+			searchResult := ""
+			for _, item := range searchedResult[start:end] {
+				searchResult = searchResult + item + "\n\n"
+			}
+			url := s.conf.AgentOffchainChatUrl
+			if s.conf.KnowledgeBaseConfig.DirectServiceUrl != "" {
+				url = s.conf.KnowledgeBaseConfig.DirectServiceUrl
+			}
+
+			generateQueryPrefix := "Act as a critical information analyst, skilled in extracting only the most essential insights from search results.\n\n## Task:\nAnalyze the provided search results and extract only the most critical insights directly relevant to the given question.\n\n## Instructions:\n- Strictly extract only essential information. No introductions, summaries, or extra context—only the key insights.\n- Ensure accuracy. Verify time, location, and context before including any insight.\n- Be concise and precise. Remove redundant details, filler content, and tangential information.\n- No assumptions or external knowledge. Only use information explicitly stated in the search results.\n- Maintain neutrality and clarity. Present insights objectively without speculation.\n\n## Input:\nQuestion: %v\nSearch Results: %v\n\n## Response Format (Strictly Follow This):\n- Directly list the critical insights only—no introductions or explanations.\n- If multiple key insights exist, format them as bullet points.\n- Each point should be as concise as possible while preserving meaning.\n\n## Example Output:\n- [Critical insight 1]\n- [Critical insight 2]\n- [Critical insight 3]\n"
+			userPrompt := fmt.Sprintf(generateQueryPrefix, query, searchResult)
+			messages := []openai2.ChatCompletionMessage{
+				{
+					Role:    openai2.ChatMessageRoleSystem,
+					Content: systemPrompt,
+				},
+				{
+					Role:    openai2.ChatMessageRoleUser,
+					Content: userPrompt,
+				},
+			}
+
+			maxRetry := 10
+			messageCallLLM, _ := json.Marshal(&messages)
+			stringResp := ""
+			var err error
+			for i := 1; i <= maxRetry; i++ {
+				if i > 1 {
+					time.Sleep(time.Second)
+				}
+
+				stringResp, err = s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url, map[string]interface{}{
+					"temperature": 0.7,
+					"max_tokens":  4096,
+				})
+				if err != nil || stringResp == "" {
+					continue
+				}
+				break
+			}
+			listAnalyzeResult[index] = stringResp
+		}(i)
+	}
+	wg.Wait()
+	for _, result := range listAnalyzeResult {
+		analyzeResult = analyzeResult + result + "\n"
+	}
+	return analyzeResult, nil
+}
+
+func (s *Service) GetResultFromToolCall(query string) (string, error) {
+	if len(query) == 0 {
+		return "", fmt.Errorf("empty query")
+	}
+	url := fmt.Sprintf("%v?question=%v", s.conf.KnowledgeBaseConfig.ToolCallServiceUrl, query)
+	for i := 0; i < 10; i++ {
+		body, err := helpers.CurlURLString(
+			url,
+			"GET",
+			map[string]string{},
+			nil,
+		)
+		if err != nil {
+			continue
+		}
+		res := make(map[string]interface{})
+		err = json.Unmarshal([]byte(body), &res)
+		if err != nil {
+			return "[]", nil
+		}
+		if res["result"] == nil {
+			return "[]", nil
+		}
+		result, ok := res["result"].(map[string]interface{})
+		if !ok {
+			return "[]", nil
+		}
+		data, _ := json.Marshal(result["data"])
+		return string(data), nil
+	}
+	return "", fmt.Errorf("can not get tool call result with query %v", query)
+}
+
+func (s *Service) GetResultFromRagSearch(request *serializers.RetrieveKnowledgeBaseRequest) (*serializers.RetrieveKnowledgeBaseResponse, error) {
+	if request == nil {
+		return nil, fmt.Errorf("empty query")
+	}
+
+	for i := 1; i <= 10; i++ {
+		body, err := helpers.CurlURLString(
+			s.conf.KnowledgeBaseConfig.QueryServiceUrl,
+			"POST",
+			map[string]string{},
+			&request,
+		)
+		if err != nil {
+			continue
+		}
+		var response serializers.RetrieveKnowledgeBaseResponse
+		err = json.Unmarshal([]byte(body), &response)
+		if err != nil {
+			break
+		}
+		return &response, nil
+	}
+	return nil, fmt.Errorf("can not get search result with request %v", request)
 }
 
 func (s *Service) PreviewAgentSystemPrompV1(ctx context.Context,
@@ -1245,7 +1456,11 @@ func (s *Service) PreviewAgentSystemPrompV1(ctx context.Context,
 
 	llmMessage = openai.UpdateSystemPromptInLLMRequest(llmMessage, systemContent)
 	messageCallLLM, _ := json.Marshal(&llmMessage)
-	aiStr, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url)
+	aiStr, err := s.openais["Agent"].CallDirectlyEternalLLM(string(messageCallLLM), baseModel, url,
+		map[string]interface{}{
+			"top_p":      0.01,
+			"max_tokens": 4096,
+		})
 	if err != nil {
 		return "", errs.NewError(err)
 	}
@@ -1253,7 +1468,7 @@ func (s *Service) PreviewAgentSystemPrompV1(ctx context.Context,
 }
 
 func (s *Service) PreviewStreamAgentSystemPromptV1(ctx context.Context, writerResponse gin.ResponseWriter,
-	outputChan chan *openai2.ChatCompletionStreamResponse,
+	outputChan chan *models.ChatCompletionStreamResponse,
 	errChan chan error, doneChan chan bool) {
 	needFakeResponse := true
 	for {
@@ -1273,23 +1488,24 @@ func (s *Service) PreviewStreamAgentSystemPromptV1(ctx context.Context, writerRe
 			writerResponse.Flush()
 			return
 		case err := <-errChan:
-			data, _ := json.Marshal(serializers.ChatCompletionStreamResponse{
+			data, _ := json.Marshal(models.ChatCompletionStreamResponse{
 				Message: err.Error(),
 				Code:    http.StatusBadRequest})
 			if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: data}.ToOutPut()); err != nil {
 				return
 			}
 			writerResponse.Flush()
+			logger.Error("stream_retrieve_knowledge", "return with err", zap.Any("err", err))
 			return
 		case output := <-outputChan:
-			data, _ := json.Marshal(serializers.ChatCompletionStreamResponse{
-				ChatCompletionStreamResponse: *output,
-				Code:                         http.StatusContinue})
+			if output.Code != http.StatusProcessing {
+				needFakeResponse = false
+			}
+			data, _ := json.Marshal(output)
 			if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: data}.ToOutPut()); err != nil {
 				return
 			}
 			writerResponse.Flush()
-			needFakeResponse = false
 		default:
 			if needFakeResponse {
 				if _, err := writerResponse.Write(serializers.HttpEventStreamResponse{Data: serializers.FakeResponseStreamData}.ToOutPut()); err != nil {
@@ -1303,7 +1519,7 @@ func (s *Service) PreviewStreamAgentSystemPromptV1(ctx context.Context, writerRe
 }
 
 func (s *Service) ProcessStreamAgentSystemPromptV1(ctx context.Context,
-	req *serializers.PreviewRequest, outputChan chan *openai2.ChatCompletionStreamResponse,
+	req *serializers.PreviewRequest, outputChan chan *models.ChatCompletionStreamResponse,
 	errChan chan error, doneChan chan bool) {
 	var agentInfo *models.AgentInfo
 	baseModel := "NousResearch/Hermes-3-Llama-3.1-70B-FP8"
@@ -1362,7 +1578,10 @@ func (s *Service) ProcessStreamAgentSystemPromptV1(ctx context.Context,
 
 	llmMessage = openai.UpdateSystemPromptInLLMRequest(llmMessage, systemContent)
 	messageCallLLM, _ := json.Marshal(&llmMessage)
-	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), baseModel, url, outputChan, errChan, doneChan)
+	s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(messageCallLLM), baseModel, url, map[string]interface{}{
+		"top_p":      0.01,
+		"max_tokens": 4096,
+	}, outputChan, errChan, doneChan)
 }
 
 func (s *Service) AgentChatSupport(ctx context.Context, msg string) (string, error) {
@@ -2027,4 +2246,23 @@ func (s *Service) GetAgentInfoInstall(ctx context.Context, code string) (*models
 		return nil, errs.NewError(err)
 	}
 	return res, nil
+}
+
+func (s *Service) CheckNameExist(ctx context.Context, networkID uint64, name string) (bool, error) {
+	obj, err := s.dao.FirstAgentInfo(
+		daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"network_id = ?": {networkID},
+			"agent_name = ?": {name},
+		},
+		map[string][]interface{}{},
+		[]string{},
+	)
+	if err != nil {
+		return false, errs.NewError(err)
+	}
+	if obj != nil {
+		return true, nil
+	}
+	return false, nil
 }

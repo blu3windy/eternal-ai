@@ -16,6 +16,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/avaxnonfungiblepositionmanager"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/basenonfungiblepositionmanager"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/bscnonfungiblepositionmanager"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/celononfungiblepositionmanager"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/memenonfungiblepositionmanager"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/polygonnonfungiblepositionmanager"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/zksyncnonfungiblepositionmanager"
@@ -110,7 +111,8 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 					models.BSC_CHAIN_ID,
 					models.APE_CHAIN_ID,
 					models.AVALANCHE_C_CHAIN_ID,
-					models.SOLANA_CHAIN_ID:
+					models.SOLANA_CHAIN_ID,
+					models.CELO_CHAIN_ID:
 					{
 						if m.AgentInfoID > 0 && m.Fee.Float.Cmp(big.NewFloat(0)) > 0 {
 							agent, err := s.dao.FirstAgentInfoByID(
@@ -150,7 +152,8 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 					models.BSC_CHAIN_ID,
 					models.APE_CHAIN_ID,
 					models.AVALANCHE_C_CHAIN_ID,
-					models.SOLANA_CHAIN_ID:
+					models.SOLANA_CHAIN_ID,
+					models.CELO_CHAIN_ID:
 					{
 						tokenSupply := &m.TotalSuply.Float
 						if tokenSupply.Cmp(big.NewFloat(1)) <= 0 {
@@ -163,7 +166,8 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 							models.ARBITRUM_CHAIN_ID,
 							models.BSC_CHAIN_ID,
 							models.APE_CHAIN_ID,
-							models.AVALANCHE_C_CHAIN_ID:
+							models.AVALANCHE_C_CHAIN_ID,
+							models.CELO_CHAIN_ID:
 							{
 								memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(m.NetworkID, "meme_pool_address"))
 								tokenAddress, _, err = s.GetEthereumClient(ctx, m.NetworkID).
@@ -245,7 +249,7 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 									},
 								)
 							}
-							_ = s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), m.AgentInfo.RefTweetID, m.AgentInfo.ID)
+							// _ = s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), m.AgentInfo.RefTweetID, m.AgentInfo.ID)
 						}
 					}
 				}
@@ -277,6 +281,7 @@ func (s *Service) JobRetryAgentDeployToken(ctx context.Context) error {
 							models.BSC_CHAIN_ID,
 							models.APE_CHAIN_ID,
 							models.AVALANCHE_C_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 				},
@@ -350,7 +355,8 @@ func (s *Service) RetryAgentDeployToken(ctx context.Context, memeID uint) error 
 					models.ARBITRUM_CHAIN_ID,
 					models.BSC_CHAIN_ID,
 					models.APE_CHAIN_ID,
-					models.AVALANCHE_C_CHAIN_ID:
+					models.AVALANCHE_C_CHAIN_ID,
+					models.CELO_CHAIN_ID:
 					{
 						isContact, err := s.GetEthereumClient(ctx, m.NetworkID).IsContract(m.TokenAddress)
 						if err != nil {
@@ -384,7 +390,7 @@ func (s *Service) RetryAgentDeployToken(ctx context.Context, memeID uint) error 
 							if err != nil {
 								return errs.NewError(err)
 							}
-							_ = s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), m.AgentInfo.RefTweetID, m.AgentInfo.ID)
+							// _ = s.ReplyAferAutoCreateAgent(daos.GetDBMainCtx(ctx), m.AgentInfo.RefTweetID, m.AgentInfo.ID)
 						}
 					}
 				}
@@ -413,6 +419,7 @@ func (s *Service) JobMemeAddPositionInternal(ctx context.Context) error {
 							models.BSC_CHAIN_ID,
 							models.APE_CHAIN_ID,
 							models.AVALANCHE_C_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 					"status = ?":             {models.MemeStatusCreated},
@@ -737,6 +744,7 @@ func (s *Service) JobMemeAddPositionUniswap(ctx context.Context) error {
 							models.BSC_CHAIN_ID,
 							models.APE_CHAIN_ID,
 							models.AVALANCHE_C_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 					"status = ?":             {models.MemeStatusRemovePoolLelve1},
@@ -1026,6 +1034,30 @@ func (s *Service) MemeAddPositionUniswap(ctx context.Context, memeID uint) error
 									helpers.HexToAddress(s.conf.GetConfigKeyString(meme.NetworkID, "weth9_contract_address")),
 									sqrtPriceX96,
 									&zksyncnonfungiblepositionmanager.INonfungiblePositionManagerMintParams{
+										Token0:         helpers.HexToAddress(token0),
+										Token1:         helpers.HexToAddress(token1),
+										Fee:            big.NewInt(poolFee),
+										TickLower:      tickLower,
+										TickUpper:      tickUpper,
+										Amount0Desired: models.QuoBigInts(models.MulBigInts(amount0, big.NewInt(9999)), big.NewInt(10000)),
+										Amount1Desired: models.QuoBigInts(models.MulBigInts(amount1, big.NewInt(9999)), big.NewInt(10000)),
+										Amount0Min:     models.QuoBigInts(models.MulBigInts(amount0, big.NewInt(99)), big.NewInt(100)),
+										Amount1Min:     models.QuoBigInts(models.MulBigInts(amount1, big.NewInt(99)), big.NewInt(100)),
+										Deadline:       big.NewInt(time.Now().Add(120 * time.Second).Unix()),
+										Recipient:      helpers.HexToAddress(memePoolAddress),
+									},
+								)
+							}
+						case models.CELO_CHAIN_ID:
+							{
+								addPoolTxHash, err = s.GetEthereumClient(ctx, meme.NetworkID).CeloNonfungiblePositionManagerMint(
+									s.conf.GetConfigKeyString(meme.NetworkID, "uniswap_position_mamanger_address"),
+									s.GetAddressPrk(
+										memePoolAddress,
+									),
+									helpers.HexToAddress(s.conf.GetConfigKeyString(meme.NetworkID, "weth9_contract_address")),
+									sqrtPriceX96,
+									&celononfungiblepositionmanager.INonfungiblePositionManagerMintParams{
 										Token0:         helpers.HexToAddress(token0),
 										Token1:         helpers.HexToAddress(token1),
 										Fee:            big.NewInt(poolFee),
@@ -1403,6 +1435,7 @@ func (s *Service) JobRetryAddPool1(ctx context.Context) error {
 							models.BSC_CHAIN_ID,
 							models.APE_CHAIN_ID,
 							models.AVALANCHE_C_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 				},
@@ -1465,6 +1498,7 @@ func (s *Service) JobRetryAddPool2(ctx context.Context) error {
 							models.BSC_CHAIN_ID,
 							models.APE_CHAIN_ID,
 							models.AVALANCHE_C_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 				},
@@ -1527,6 +1561,7 @@ func (s *Service) JobMemeBurnPositionUniswap(ctx context.Context) error {
 							models.BSC_CHAIN_ID,
 							models.APE_CHAIN_ID,
 							models.AVALANCHE_C_CHAIN_ID,
+							models.CELO_CHAIN_ID,
 						},
 					},
 					"num_retries < 3": {},

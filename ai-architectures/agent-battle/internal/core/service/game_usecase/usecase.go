@@ -3,7 +3,8 @@ package game_usecase
 import (
 
 "agent-battle/internal/contract/erc20/usecase"
-"agent-battle/pkg/cryptoamount"
+	"agent-battle/pkg/constants"
+	"agent-battle/pkg/cryptoamount"
 "context"
 "encoding/base64"
 "errors"
@@ -89,6 +90,7 @@ func (uc *GameUsecase) GameResult(ctx context.Context, req *model.GameResultRequ
 
 	game.Winner = req.Username
 	game.Status = model.GameStatusResultUpdated
+	game.ResultUpdatedTime = time.Now()
 
 	if err := uc.updateGame(ctx, game); err != nil {
 		return nil, err
@@ -150,7 +152,9 @@ func (uc *GameUsecase) WatchGameState(ctx context.Context) error {
 
 	for _, game := range games {
 		// If game result has been determined, then prize to winners
-		if game.Status == model.GameStatusResultUpdated {
+		// mark complete game after specific time of updating result
+		if game.Status == model.GameStatusResultUpdated &&
+			game.ResultUpdatedTime.Add(constants.MarkCompletedGameBufferTime).Before(time.Now()) {
 			if err := uc.markCompletedGame(ctx, game); err != nil {
 				logger.GetLoggerInstanceFromContext(ctx).Error("update_game", zap.Error(err))
 			}
@@ -441,6 +445,12 @@ func (uc *GameUsecase) markCompletedGame(ctx context.Context, game *model.Game) 
 
 	// there is no participants, then skip
 	if game.HasNoParticipants() {
+		// also refund to expired players when there is no participants
+		if err := uc.refundToExpiredPlayers(ctx, game); err != nil {
+			canCompleteGame = false
+			return err
+		}
+
 		return nil
 	}
 

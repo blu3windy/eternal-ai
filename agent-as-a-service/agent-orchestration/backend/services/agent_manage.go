@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
@@ -56,25 +57,6 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	if req.SystemContent == "" {
 		req.SystemContent = "default"
 	}
-	switch req.AgentType {
-	case models.AgentInfoAgentTypeRealWorld,
-		models.AgentInfoAgentTypeUtility:
-		{
-			switch req.ChainID {
-			case models.BASE_CHAIN_ID,
-				models.ARBITRUM_CHAIN_ID,
-				models.BSC_CHAIN_ID,
-				models.APE_CHAIN_ID,
-				models.AVALANCHE_C_CHAIN_ID:
-				{
-				}
-			default:
-				{
-					return nil, errs.ErrBadRequest
-				}
-			}
-		}
-	}
 	agent := &models.AgentInfo{
 		Version:          "2",
 		AgentType:        models.AgentInfoAgentTypeReasoning,
@@ -106,6 +88,11 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		TokenImageUrl:    req.TokenImageUrl,
 		MissionTopics:    req.MissionTopics,
 		ConfigData:       req.ConfigData,
+		SourceUrl:        req.SourceUrl,
+		AuthenUrl:        req.AuthenUrl,
+		DependAgents:     req.DependAgents,
+		RequiredWallet:   *req.RequiredWallet,
+		IsOnchain:        *req.IsOnchain,
 	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
@@ -465,9 +452,27 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				agent.Style = req.GetAssistantCharacter(req.Style)
 				agent.Adjectives = req.GetAssistantCharacter(req.Adjectives)
 				agent.SocialInfo = req.GetAssistantCharacter(req.SocialInfo)
-				agent.SourceUrl = req.SourceUrl
-				agent.MinFeeToUse = req.MinFeeToUse
-				agent.Worker = req.Worker
+				if req.SourceUrl != "" {
+					agent.SourceUrl = req.SourceUrl
+				}
+				if req.AuthenUrl != "" {
+					agent.AuthenUrl = req.AuthenUrl
+				}
+				if req.DependAgents != "" {
+					agent.DependAgents = req.DependAgents
+				}
+				if req.RequiredWallet != nil {
+					agent.RequiredWallet = *req.RequiredWallet
+				}
+				if req.IsOnchain != nil {
+					agent.IsOnchain = *req.IsOnchain
+				}
+				if req.MinFeeToUse.Cmp(big.NewFloat(0)) > 0 {
+					agent.MinFeeToUse = req.MinFeeToUse
+				}
+				if req.Worker != "" {
+					agent.Worker = req.Worker
+				}
 				if req.TokenImageUrl != "" {
 					agent.TokenImageUrl = req.TokenImageUrl
 				}
@@ -1386,11 +1391,45 @@ func (s *Service) GetAgentChainFees(ctx context.Context) (map[string]interface{}
 	chainFeeMap := map[string]interface{}{}
 	for _, v := range res {
 		chainFeeMap[strconv.Itoa(int(v.NetworkID))] = map[string]interface{}{
-			"network_id": v.NetworkID,
-			"mint_fee":   numeric.BigFloat2Text(&v.MintFee.Float),
-			"post_fee":   numeric.BigFloat2Text(&v.InferFee.Float),
-			"token_fee":  numeric.BigFloat2Text(&v.TokenFee.Float),
+			"network_id":       v.NetworkID,
+			"mint_fee":         numeric.BigFloat2Text(&v.MintFee.Float),
+			"post_fee":         numeric.BigFloat2Text(&v.InferFee.Float),
+			"token_fee":        numeric.BigFloat2Text(&v.TokenFee.Float),
+			"agent_deploy_fee": numeric.BigFloat2Text(&v.AgentDeployFee.Float),
 		}
 	}
 	return chainFeeMap, nil
+}
+
+func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string, req *serializers.AgentActionReq) (bool, error) {
+	err := daos.WithTransaction(
+		daos.GetDBMainCtx(ctx),
+		func(tx *gorm.DB) error {
+			if req.Action == "uninstall" {
+				for _, agentID := range req.Ids {
+					err := tx.Where("agent_info_id = ? and address = ?", agentID, strings.ToLower(address)).
+						Unscoped().
+						Delete(&models.AgentUtilityInstall{}).Error
+					if err != nil {
+						return errs.NewError(err)
+					}
+				}
+			} else {
+				for _, agentID := range req.Ids {
+					inst := &models.AgentUtilityInstall{
+						Address:     strings.ToLower(address),
+						AgentInfoID: agentID,
+					}
+					_ = s.dao.Create(tx, inst)
+				}
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return false, errs.NewError(err)
+	}
+
+	return true, nil
 }

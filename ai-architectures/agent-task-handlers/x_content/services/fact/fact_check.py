@@ -1,9 +1,13 @@
+import json
 from typing import Optional, Protocol, List, Dict
 from abc import ABC, abstractmethod
 from tavily import TavilyClient
 from dataclasses import dataclass
 from x_content.llm.base import OnchainInferResult
 import os
+
+from x_content.wrappers.llm_tasks import extract_content_relevant_to_query
+from x_content.wrappers.magic import sync2async
 
 
 @dataclass
@@ -77,6 +81,43 @@ class TavilyVerificationSource(FactVerificationSource):
         return SearchResponse(
             query=query,
             results=search_results.get("answer", "N/A"),
+            metadata=metadata,
+        )
+
+    async def search_with_threshold(
+        self,
+        query: str,
+        time_range="d",
+        score_threshold=0.5,
+        **kwargs,
+    ) -> SearchResponse:
+        search_results = self.client.search(
+            query=query,
+            time_range=time_range,
+            **kwargs,
+        )
+
+        metadata = {
+            "source": "tavily",
+            "time_range": time_range,
+        }
+        metadata.update(kwargs)
+
+        results = search_results.get("results", [])
+
+        results = [x for x in results if x["score"] >= score_threshold]
+        contents = [x.get("content", "") for x in results]
+
+        if len(contents) > 0:
+            summarized_content = await sync2async(
+                extract_content_relevant_to_query
+            )(query, contents)
+        else:
+            summarized_content = ""
+
+        return SearchResponse(
+            query=query,
+            results=summarized_content,
             metadata=metadata,
         )
 

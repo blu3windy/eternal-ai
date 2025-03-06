@@ -3,6 +3,7 @@ package evmapi
 import (
 	"math/big"
 
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/agentupgradeable"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -18,5 +19,21 @@ type BaseClient interface {
 	ConvertAddressForOut(addr string) string
 	Erc721Transfer(contractAddr string, prkHex string, toAddr string, tokenId *big.Int) (string, error)
 	DeployERC20RealWorldAgent(prkHex string, name string, symbol string, amount *big.Int, recipient common.Address, minFeeToUse *big.Int, timeout uint32, tokenFee common.Address, worker common.Address) (string, string, error)
-	DeployERC20UtilityAgent(prkHex string, name string, symbol string, amount *big.Int, recipient common.Address, promptScheduler common.Address, modelAddress common.Address, systemPrompt string, storageInfo []byte) (string, string, error)
+	DeployERC20UtilityAgent(prkHex string, name string, symbol string, amount *big.Int, recipient common.Address, systemPrompt string, storageInfo []byte) (string, string, error)
+	DeployTransparentUpgradeableProxy(prkHex string, logic common.Address, admin common.Address, data []byte) (string, string, error)
+}
+
+func AgentUpgradeableInitializeData(agentName string, agentVersion string, codeLanguage string, pointers []agentupgradeable.IAgentCodePointer, depsAgents []common.Address, agentOwner common.Address, isOnchain bool) ([]byte, error) {
+	instanceABI, err := agentupgradeable.AgentUpgradeableMetaData.GetAbi()
+	if err != nil {
+		return nil, err
+	}
+	dataBytes, err := instanceABI.Pack(
+		"initialize",
+		agentName, agentVersion, codeLanguage, pointers, depsAgents, agentOwner, isOnchain,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return dataBytes, nil
 }

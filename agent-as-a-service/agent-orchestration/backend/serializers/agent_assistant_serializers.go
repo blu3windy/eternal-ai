@@ -67,9 +67,14 @@ type AssistantsReq struct {
 	KbIds                  []uint                  `json:"kb_ids"`
 
 	SourceUrl string `json:"source_url"`
+	AuthenUrl string `json:"authen_url"`
 
 	MinFeeToUse numeric.BigFloat `json:"min_fee_to_use"`
 	Worker      string           `json:"worker"`
+
+	DependAgents   string `json:"depend_agents"`
+	RequiredWallet *bool  `json:"required_wallet"`
+	IsOnchain      *bool  `json:"is_onchain"`
 }
 
 func (m *AssistantsReq) GetAssistantCharacter(character interface{}) string {
@@ -250,4 +255,9 @@ type DataUploadToLightHouse struct {
 
 type StudioReq struct {
 	GraphData string `json:"graph_data"`
+}
+
+type AgentActionReq struct {
+	Action string `json:"action"`
+	Ids    []uint `json:"ids"`
 }

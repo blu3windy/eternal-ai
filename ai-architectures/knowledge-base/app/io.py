@@ -1,7 +1,7 @@
 from app.models import FilecoinData, InsertInputSchema, InsertProgressCallback, InsertResponse, QueryInputSchema, ResponseMessage, UpdateInputSchema
-from app.utils import limit_asyncio_concurrency, sync2async, sync2async_in_subprocess
+from app.utils import limit_asyncio_concurrency, sync2async
 from app.wrappers import milvus_kit, telegram_kit
-from typing import List, Union, Optional, AsyncGenerator
+from typing import List, Union, Optional
 import httpx
 from pymilvus import MilvusClient
 import json
@@ -9,28 +9,16 @@ import logging
 import os
 import zipfile
 from . import constants as const
-from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
-from docling.document_converter import DocumentConverter, FormatOption
-from docling.pipeline.standard_pdf_pipeline import StandardPdfPipeline
 import numpy as np
 import logging
-from docling.document_converter import ConversionResult
-from pydantic import BaseModel
-from docling.datamodel.base_models import InputFormat
 import re
 import aiofiles
 import subprocess
 import asyncio
 from pathlib import Path
 import html
-import traceback
-
-class LiteInputDocument(BaseModel):
-    format: InputFormat
-
-class LiteConverstionResult(ConversionResult):
-    input: LiteInputDocument
+import time
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +29,7 @@ async def export_collection_data(
     include_embedding=True,
     include_identity=False
 ) -> str:
-    fields_output = ['content', 'reference', 'hash']
+    fields_output = ['content', 'reference', 'hash', 'head', 'tail']
 
     if include_embedding:
         fields_output.append('embedding')
@@ -51,7 +39,7 @@ async def export_collection_data(
 
     cli: MilvusClient = milvus_kit.get_reusable_milvus_client(const.MILVUS_HOST)
 
-    if not cli.has_collection(collection):
+    if not await sync2async(cli.has_collection)(collection):
         raise Exception(f"Collection {collection } not found")
 
     logger.info(f"Exporting {filter_expr} from {collection} to {workspace_directory}...")
@@ -60,7 +48,7 @@ async def export_collection_data(
         collection,
         filter=filter_expr,
         output_fields=fields_output,
-        batch_size=100
+        batch_size=1000 * 10
     )
 
     meta, vec = [], []
@@ -75,7 +63,11 @@ async def export_collection_data(
         
         scanned += len(batch)
 
-        h = [e['hash'] for e in batch]
+        h = [
+            '{}{}{}{}'.format(e['hash'], e['head'], e['tail'], e.get('kb', '')) 
+            for e in batch
+        ]
+
         mask = [True] * len(batch)
         removed = 0
 
@@ -131,49 +123,6 @@ async def export_collection_data(
 
     logging.info(f"Export {filter_expr} from {collection}: Done (filesize: {os.path.getsize(destination_file) / 1024 / 1024:.2f} MB)")
     return destination_file
-
-from docling.datamodel.base_models import InputFormat
-
-SUPORTED_DOCUMENT_FORMATS = [
-    InputFormat.XLSX,
-    InputFormat.DOCX,
-    InputFormat.PPTX,
-    InputFormat.MD,
-    InputFormat.ASCIIDOC,
-    InputFormat.HTML,
-    InputFormat.XML_USPTO,
-    InputFormat.XML_PUBMED,
-    InputFormat.PDF
-]
-
-DOCUMENT_FORMAT_OPTIONS = {
-    InputFormat.PDF: FormatOption(
-        pipeline_cls=StandardPdfPipeline,
-        backend=PyPdfiumDocumentBackend,
-        pipeline_options=PdfPipelineOptions(
-            do_table_structure=False,
-            do_ocr=False
-        )
-    )
-}
-
-
-def docling_document_conversion_wrapper(source):
-    res = DocumentConverter(
-        allowed_formats=SUPORTED_DOCUMENT_FORMATS,
-        format_options=DOCUMENT_FORMAT_OPTIONS
-    ).convert(source=source)
-    
-    if res is None:
-        raise Exception("Failed to convert document to docling format")
-
-    return res.model_dump()
-
-@limit_asyncio_concurrency(2)
-async def get_doc_from_url(url) -> LiteConverstionResult:
-    res = await sync2async_in_subprocess(docling_document_conversion_wrapper)(source=url)
-    return LiteConverstionResult.model_validate(res)
-
 
 async def hook(
     resp: ResponseMessage[Union[InsertResponse, InsertProgressCallback]],
@@ -278,6 +227,31 @@ async def notify_action(req: Union[InsertInputSchema, UpdateInputSchema, QueryIn
     )
 
 
+async def download_file_v2(url, save_dir="."):
+
+    async with httpx.AsyncClient() as cli:
+        async with cli.stream("GET", url) as stream:
+            stream.raise_for_status()  # Raise an error for bad responses
+            headers = stream.headers
+            
+            # Extract filename from Content-Disposition header if available
+            content_disposition = headers.get("Content-Disposition")
+
+            if content_disposition and "filename=" in content_disposition:
+                filename = content_disposition.split("filename=")[-1].strip('"')
+            else:
+                # Otherwise, extract from URL path
+                parsed_url = urlparse(url)
+                filename = os.path.basename(parsed_url.path) or "downloaded_file"
+            
+            save_path = os.path.join(save_dir, filename)
+            
+            # Write the file in binary mode
+            async with aiofiles.open(save_path, "wb") as file:
+                async for chunk in stream.aiter_bytes(chunk_size=8192):
+                    await file.write(chunk)
+            
+            return save_path
 
 @limit_asyncio_concurrency(4)
 async def download_file(
@@ -352,7 +326,12 @@ async def download_filecoin_item(
         url = f"{const.GATEWAY_IPFS_PREFIX}/{metadata['files'][0]['hash']}"
         path = Path(tmp_dir) / metadata['files'][0]['name']
 
-        await download_file(session, url, path)
+        try:
+            await download_file(session, url, path)
+        except Exception as err:
+            logger.error(f"Failed to pull file from lighthouse: {err}")
+            return None
+
         await unescape_html_file(str(path))
 
         return FilecoinData(
@@ -411,12 +390,15 @@ async def call_docling_server(
 ) -> List[str]:  
     assert os.path.exists(file_path), f"File not found: {file_path}"
 
+    logger.info(f"sending {file_path} to {const.DOCLING_SERVER_URL}...")
+
     for i in range(1 + retry):
-        try:
-            async with httpx.AsyncClient() as cli:
-                fp = open(file_path, 'rb')
+        timeout = time.time() + 600
+        
+        async with httpx.AsyncClient() as cli:
+            with open(file_path, 'rb') as fp:
                 resp = await cli.post(
-                    const.DOCLING_SERVER_URL + "/chunks",
+                    const.DOCLING_SERVER_URL + "/async-submit",
                     files={
                         'file': fp
                     },
@@ -425,21 +407,39 @@ async def call_docling_server(
                         "max_chunk_size": max_chunk_size,
                         "tokenizer": embedding_model_name
                     },
-                    timeout=httpx.Timeout(120)
+                    timeout=httpx.Timeout(120.0)
                 )
-                fp.close()
 
             if resp.status_code == 200:
-                resp_json = resp.json()
-                return resp_json['chunks']      
+                _id = resp.json()['result']
 
-            else:
-                logger.error(f"Failed to chunk file: {resp.text}")
-                
-        except Exception as err:
-            traceback.print_exc()
-            logger.error("Failed while communicating to docling server: {}".format(err))
+                logger.info(f"File {file_path} is successfully sent. Awaiting for the result...")
 
-        await asyncio.sleep(2 ** i)
+                while time.time() < timeout:
+                    resp = await cli.get(
+                        const.DOCLING_SERVER_URL + "/async-get",
+                        params={
+                            "request_id": _id,
+                        },
+                        timeout=httpx.Timeout(30.0)
+                    )
+
+                    if resp.status_code == 200:
+                        resp_json = resp.json()
+                        result: dict = resp_json['result']
+
+                        if result["status"] in ["error", "not_found"]:
+                            msg = result.get("message")
+                            logger.info(f"Error while generating chunks for the file {file_path}: {msg} (status: {result['status']})")
+                            break
+
+                        if result["status"] == "ok":
+                            res = result["chunks"]
+                            logger.info(f"Successfully split {file_path} into chunks! Total {len(res)} (chunks)")
+                            return res
+
+                    await asyncio.sleep(5)
+
+            await asyncio.sleep(2 ** i)
 
     raise Exception(f"Chunking failed after all {retry} attempts")

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -132,10 +133,24 @@ func (s *Service) DisableJobs() {
 }
 
 func (s *Service) RunJobs(ctx context.Context) error {
-	gocron.Every(180).Second().Do(func() {
+	gocron.Every(360).Second().Do(func() {
+		defer func() {
+			if rval := recover(); rval != nil {
+				err := errs.NewError(errors.New(fmt.Sprint(rval)))
+				stacktrace := err.(*errs.Error).Stacktrace()
+				fmt.Println(time.Now(), err.Error(), stacktrace)
+			}
+		}()
 		s.KnowledgeUsecase.WatchWalletChange(context.Background())
 	})
 	gocron.Every(30).Second().Do(func() {
+		defer func() {
+			if rval := recover(); rval != nil {
+				err := errs.NewError(errors.New(fmt.Sprint(rval)))
+				stacktrace := err.(*errs.Error).Stacktrace()
+				fmt.Println(time.Now(), err.Error(), stacktrace)
+			}
+		}()
 		s.KnowledgeUsecase.ScanKnowledgeBaseStatusPaymentReceipt(context.Background())
 	})
 
@@ -167,6 +182,12 @@ func (s *Service) RunJobs(ctx context.Context) error {
 	// create agent
 	// gocron.Every(5).Minute().Do(s.JobScanAgentTwitterPostForCreateAgent, context.Background())
 	// gocron.Every(1).Minute().Do(s.JobAgentTwitterPostCreateAgent, context.Background())
+
+	// generate video
+	gocron.Every(5).Minutes().Do(s.JobScanAgentTwitterPostForGenerateVideo, context.Background())
+	gocron.Every(1).Minutes().Do(s.JobAgentTwitterPostSubmitVideoInfer, context.Background())
+	gocron.Every(1).Minutes().Do(s.JobAgentTwitterScanResultGenerateVideo, context.Background())
+	gocron.Every(2).Minutes().Do(s.JobAgentTwitterPostGenerateVideo, context.Background())
 
 	// trading analyze
 	gocron.Every(5).Minute().Do(s.JobScanAgentTwitterPostForTA, context.Background())

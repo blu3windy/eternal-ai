@@ -134,7 +134,9 @@ def detect_tweet_specialties(
 ) -> List[TweetSpecialty]:
     if is_create_game_tweet(tweet_info) or is_find_fact_tweet(tweet_info):
         return [TweetSpecialty.CREATE_GAME]
-    if is_create_game_tweet_id(tweet_info.conversation_id):
+    if is_create_game_tweet_id(
+        tweet_info.conversation_id
+    ) or is_find_fact_game_tweet_id(tweet_info.conversation_id):
         return [TweetSpecialty.CREATE_GAME_SUBTREE]
     if is_analyzing_token_tweet(tweet_info):
         return [TweetSpecialty.TOKEN_ANALYSIS]

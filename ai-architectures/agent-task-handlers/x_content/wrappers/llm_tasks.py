@@ -4,7 +4,7 @@ import random
 from openai import BaseModel
 import requests
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from . import redis_wrapper
 
@@ -277,14 +277,14 @@ def choose_suitable_language(chat_history: list) -> str:
         {"role": "user", "content": chat_history},
     ]
 
-    url = const.SELF_HOSTED_HERMES_70B_URL + "/v1/chat/completions"
+    url = const.SELF_HOSTED_LLAMA_405B_URL + "/v1/chat/completions"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {const.SELF_HOSTED_LLAMA_API_KEY}",
     }
 
     data = {
-        "model": const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY,
+        "model": const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
         "messages": conversation,
         "max_tokens": 100,
         "temperature": 0,
@@ -323,9 +323,9 @@ Your response **must** be in stringified JSON format, with the following structu
         {"role": "user", "content": formatted_chat_history},
     ]
 
-    llama_url = const.SELF_HOSTED_HERMES_70B_URL
+    llama_url = const.SELF_HOSTED_LLAMA_405B_URL
     llama_api_key = const.SELF_HOSTED_LLAMA_API_KEY
-    llama_model_identity = const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY
+    llama_model_identity = const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY
 
     if not all([llama_url, llama_api_key, llama_model_identity]):
         logger.error(
@@ -414,9 +414,9 @@ Here is the input tweet: {}
         model = SyncBasedEternalAI(
             max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
             temperature=0.7,
-            base_url=const.SELF_HOSTED_HERMES_70B_URL + "/v1",
+            base_url=const.SELF_HOSTED_LLAMA_405B_URL + "/v1",
             api_key=const.SELF_HOSTED_LLAMA_API_KEY,
-            model=const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY,
+            model=const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
             seed=random.randint(1, int(1e9)),
         )
 
@@ -532,9 +532,9 @@ Task prompt: {task_prompt}
         model = SyncBasedEternalAI(
             max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
             temperature=0.7,
-            base_url=const.SELF_HOSTED_HERMES_70B_URL + "/v1",
+            base_url=const.SELF_HOSTED_LLAMA_405B_URL + "/v1",
             api_key=const.SELF_HOSTED_LLAMA_API_KEY,
-            model=const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY,
+            model=const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
             seed=random.randint(1, int(1e9)),
         )
         result = model.generate(messages).generations[0].text
@@ -560,7 +560,7 @@ def clean_text(crawled_text: str):
         "cleaned_text": "Your cleaned and summarized text here"
     }
     """
-    url = os.path.join(const.SELF_HOSTED_HERMES_70B_URL, "v1/chat/completions")
+    url = os.path.join(const.SELF_HOSTED_LLAMA_405B_URL, "v1/chat/completions")
 
     headers = {
         "Content-Type": "application/json",
@@ -568,7 +568,7 @@ def clean_text(crawled_text: str):
     }
 
     data = {
-        "model": const.SELF_HOSTED_HERMES_70B_MODEL_IDENTITY,
+        "model": const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": crawled_text[: const.MAX_TEXT_LENGTH]},
@@ -592,14 +592,164 @@ def clean_text(crawled_text: str):
         return crawled_text
 
 
-if __name__ == "__main__":
-    print(
-        is_analyzing_token_conversation(
-            "@nobullshit_exe Hey buddy, what will the the price of $BTCH tomorrow?"
+EXTRACT_CONTENT_PROMPT = """Act as an expert in natural language processing (NLP) and information retrieval. You specialize in extracting the most relevant content from search results based on a given query. Your expertise ensures that only the most meaningful, contextually relevant information is included in the final output.
+
+## Task:
+
+Given a search query and a corresponding search result, extract a single, well-structured paragraph that is highly relevant to the search query. The extracted content should be:
+- Concise: Remove unnecessary information that does not directly relate to the query.
+- Contextually relevant: Preserve key details needed to understand the extracted content in relation to the query.
+- Well-structured: Ensure the extracted content is readable as a single, coherent paragraph.
+
+## Context:
+- The search result may contain extraneous information such as ads, navigation links, or general introductions. Ignore these and focus only on content that directly addresses the query.
+- If multiple relevant sections exist, merge them into a single, fluid paragraph without losing meaning.
+- If no relevant information is found, return an empty string.
+- If there is uncertainty about what to extract, list key reasoning steps before making a decision.
+
+## Response Format (JSON):
+
+Your output must be a valid JSON object with the following structure:
+
+{{
+  "content": "<single extracted paragraph>"
+}}
+
+where "content" is a single paragraph containing the extracted relevant content. If no relevant content is found, return an empty string ("").
+
+## Instructions for Thought Process:
+
+1. Analyze the search query to determine the core information being requested.
+2. Review the search result and identify portions that directly answer the query.
+3. Filter out irrelevant information such as ads, unrelated sections, or promotional content.
+4. Merge relevant sections into a single, well-structured paragraph while maintaining clarity.
+5. Format the output strictly as JSON, ensuring proper nesting and valid syntax.
+
+If any ambiguity arises, list your reasoning steps before finalizing the extracted content.
+
+## Provided Input:
+
+Search Query: {query}
+
+Search Results:
+{result}
+"""
+
+
+def extract_content_relevant_to_query(query: str, contents: List[str]):
+    system_prompt = "You are a helpful assistant."
+
+    contents_str = "\n\n".join([f"- {x}" for x in contents])
+
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt,
+        },
+        {
+            "role": "user",
+            "content": EXTRACT_CONTENT_PROMPT.format(
+                query=query, result=contents_str
+            ),
+        },
+    ]
+
+    def run_llm():
+        model = SyncBasedEternalAI(
+            max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
+            temperature=0.7,
+            base_url=const.SELF_HOSTED_LLAMA_405B_URL + "/v1",
+            api_key=const.SELF_HOSTED_LLAMA_API_KEY,
+            model=const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
+            seed=random.randint(1, int(1e9)),
         )
-    )
-    print(
-        is_analyzing_token_conversation(
-            "@nobullshit_exe $BTCH is going to the moon!"
+        result = model.generate(messages).generations[0].text
+        result = repair_json(result, return_objects=True)
+
+        return result["content"]
+
+    obj = retry(
+        run_llm,
+        max_retry=3,
+        first_interval=get_llm_tasks_first_interval(),
+        interval_multiply=2,
+    )()
+    return obj
+
+
+SUMMARIZE_JUDGE_COMMENTARY_PROMPT = """Act as an expert in extracting key insights and delivering sharp, impactful summaries. Your role is to distill a judge’s detailed commentary from a QA game into a concise yet compelling evaluation summary while preserving clarity and essential details.
+
+## Task
+Analyze the judge’s commentary, summarize their evaluation process, and explain the decision-making. Your summary must:
+- Always include the winning user's name.
+- Clearly state why they won.
+- Support multiple reasons, each within 255 characters.
+- Avoid mentioning specific judging criteria.
+
+## Context
+- Focus only on how the judge assessed the responses and reached a decision.
+- Do not reference specific scoring metrics or criteria.
+- Ensure each reason is independent and concise (≤255 characters per reason).
+- Keep the language clear, neutral, and engaging.
+
+## Response Format
+Return a JSON object with multiple reasons in separate fields:
+
+{{
+  "summary": {{
+    "1 ": "<First reason within 255 characters>",
+    "2 ": "<Second reason within 255 characters>",
+    "3 ": "<Third reason within 255 characters>",
+    ...
+  }}
+}}
+
+## Summarization Guidelines
+1. **Emphasize the Process**: Explain how the judge reviewed, compared, and deliberated.
+2. **Include the Winner**: Clearly mention who won.
+3. **State Multiple Reasons**: Provide distinct, compelling reasons (≤255 characters each).
+4. **Maximize Impact**: Use strong, direct language while staying neutral and precise.
+5. **Ensure Readability**: Keep sentences structured, fluid, and engaging.
+
+## Provided Input
+Commentary: {commentary}
+"""
+
+
+def summarize_judge_commentary(commentary: str) -> str:
+    system_prompt = "You are a helpful assistant."
+
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt,
+        },
+        {
+            "role": "user",
+            "content": SUMMARIZE_JUDGE_COMMENTARY_PROMPT.format(
+                commentary=commentary
+            ),
+        },
+    ]
+
+    def run_llm():
+        model = SyncBasedEternalAI(
+            max_tokens=const.DEFAULT_MAX_OUTPUT_TOKENS,
+            temperature=0.7,
+            base_url=const.SELF_HOSTED_LLAMA_405B_URL + "/v1",
+            api_key=const.SELF_HOSTED_LLAMA_API_KEY,
+            model=const.SELF_HOSTED_LLAMA_405B_MODEL_IDENTITY,
+            seed=random.randint(1, int(1e9)),
         )
-    )
+        result = model.generate(messages).generations[0].text
+        result = repair_json(result, return_objects=True)
+
+        return result["summary"]
+
+    obj = retry(
+        run_llm,
+        max_retry=3,
+        first_interval=get_llm_tasks_first_interval(),
+        interval_multiply=2,
+    )()
+    return obj

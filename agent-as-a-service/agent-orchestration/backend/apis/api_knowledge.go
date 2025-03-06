@@ -315,6 +315,12 @@ func (s *Server) retrieveKnowledge(c *gin.Context) {
 		return
 	}
 
+	knowledgeBase, err := s.nls.KnowledgeUsecase.GetKnowledgeBaseByKBId(ctx, req.KbId)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errors.New("Knowledge agent not found"))})
+		return
+	}
+
 	chatTopK := 5
 	if s.conf.KnowledgeBaseConfig.KbChatTopK > 0 {
 		chatTopK = s.conf.KnowledgeBaseConfig.KbChatTopK
@@ -336,6 +342,17 @@ func (s *Server) retrieveKnowledge(c *gin.Context) {
 		}}
 	}
 
+	systemPrompt := knowledgeBase.AgentInfo.SystemPrompt
+	if chatCompletionMessages[0].Role != openai2.ChatMessageRoleSystem {
+		newChatCompletionMessages := []openai2.ChatCompletionMessage{{
+			Content: systemPrompt,
+			Role:    openai2.ChatMessageRoleSystem,
+		}}
+		newChatCompletionMessages = append(newChatCompletionMessages, chatCompletionMessages...)
+
+		chatCompletionMessages = newChatCompletionMessages
+	}
+
 	if req.Stream != nil && *req.Stream {
 		c.Writer.Header().Set("Content-Type", "text/event-stream")
 		c.Writer.Header().Set("Connection", "keep-alive")
@@ -343,12 +360,11 @@ func (s *Server) retrieveKnowledge(c *gin.Context) {
 		c.Writer.WriteHeader(http.StatusOK)
 		c.Writer.WriteHeaderNow()
 
-		outputChan := make(chan *openai2.ChatCompletionStreamResponse)
+		outputChan := make(chan *models.ChatCompletionStreamResponse)
 		errChan := make(chan error)
 		doneChan := make(chan bool)
-		go s.nls.StreamRetrieveKnowledge(ctx, "", chatCompletionMessages, []*models.KnowledgeBase{{
-			KbId: req.KbId,
-		}}, &chatTopK, threshold, outputChan, errChan, doneChan)
+		go s.nls.StreamRetrieveKnowledge(ctx, "", chatCompletionMessages, []*models.KnowledgeBase{knowledgeBase},
+			&chatTopK, threshold, outputChan, errChan, doneChan)
 		s.nls.PreviewStreamAgentSystemPromptV1(c, c.Writer, outputChan, errChan, doneChan)
 	} else {
 		resp, err := s.nls.RetrieveKnowledge("", chatCompletionMessages, []*models.KnowledgeBase{{

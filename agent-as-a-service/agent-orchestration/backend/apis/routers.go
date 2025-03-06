@@ -109,6 +109,7 @@ func (s *Server) Routers() {
 			agentAPI.POST("/chats", s.AgentChatSupport)
 
 			agentAPI.GET("/network-fees", s.GetAgentChainFees)
+			agentAPI.GET("/liquidity-networks", s.GetEaiLiquidityNetowrks)
 
 			twitterAPI := agentAPI.Group("/twitter")
 			{
@@ -146,6 +147,7 @@ func (s *Server) Routers() {
 			agentAPI.GET("/dojo/:id/knowledge-base", s.listKnowledgeByAgent)
 			agentAPI.POST("/create_agent_assistant", s.authCheckTK1TokenMiddleware(), s.AgentCreateAgentAssistant)
 			agentAPI.POST("/update_agent_assistant", s.authCheckTK1TokenMiddleware(), s.AgentUpdateAgentAssistant)
+			agentAPI.POST("/install", s.authCheckTK1TokenMiddleware(), s.MarkInstalledUtilityAgent)
 
 			agentAPI.POST("/create-local-agent", s.AgentCreateAgentAssistantForLocal)
 			agentAPI.GET("/list-local-agent", s.GetListAgentForDojo)
@@ -166,6 +168,9 @@ func (s *Server) Routers() {
 			agentAPI.GET("/:id/install-code", s.authCheckTK1TokenMiddleware(), s.GetAgentStoreInstallCode)
 			agentAPI.GET("/install/info", s.GetAgentInfoInstallInfo)
 			//
+			agentAPI.GET("/library", s.GetAgentLibrary)
+			agentAPI.POST("/add-library", s.AddAgentLibrary)
+			agentAPI.GET("/check-exist", s.CheckNameExist)
 
 		}
 
@@ -395,16 +400,23 @@ func (s *Server) Routers() {
 		// 	sampleTwitterApp.POST("/tweet-message", s.SampleTwitterAppTweetMessage)
 		// }
 
-		// infraTwitterApp := rootAPI.Group("/infra-twitter-app")
-		// {
-		// 	infraTwitterApp.GET("/install", s.InfraTwitterAppAuthenInstall)
-		// 	infraTwitterApp.GET("/callback", s.InfraTwitterAppAuthenCallback)
-		// }
+		infraTwitterApp := rootAPI.Group("/infra-twitter-app")
+		{
+			// infraTwitterApp.GET("/install", s.InfraTwitterAppAuthenInstall)
+			infraTwitterApp.GET("/callback", s.InfraTwitterAppAuthenCallback)
+		}
 
 		// storeTradingApp := rootAPI.Group("/store-defi-app")
 		// {
 		// 	storeTradingApp.GET("/install", s.StoreDefiAppAuthenInstall)
 		// 	storeTradingApp.GET("/wallet", s.StoreDefiAppGetWallet)
 		// }
+
+		utilityApi := rootAPI.Group("/utility", s.authCheckSignatureMiddleware())
+		// utilityApi := rootAPI.Group("/utility")
+		{
+			utilityApi.POST("/twitter/post", s.UtilityPostTwitter)
+			utilityApi.POST("/twitter/verify-deposit", s.UtilityTwitterVerifyDeposit)
+		}
 	}
 }

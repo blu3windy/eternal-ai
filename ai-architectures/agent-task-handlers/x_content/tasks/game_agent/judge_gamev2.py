@@ -26,6 +26,8 @@ from x_content.wrappers.game import (
     GameStatus,
     GameState,
 )
+from x_content.wrappers.llm_tasks import summarize_judge_commentary
+from x_content.tasks.game_agent.subtasks.reply.reply_create_game import _post_wallet_tweet
 from x_content.services import fact_service
 from x_content.services.fact.fact_check import SearchResponse
 
@@ -179,7 +181,11 @@ def _get_facts_search_query_conversation(
 ) -> List[dict]:
     system_message = "You are a helpful assistant."
 
-    content_images_str = "\n\n".join([f"- {x}" for x in content_images])
+    content_images_str = ""
+    if len(content_images) > 0:
+        content_images_str = "Image Descriptions:" + "\n\n".join(
+            [f"- {x}" for x in content_images]
+        )
 
     conversation_thread = [
         {
@@ -191,7 +197,10 @@ def _get_facts_search_query_conversation(
             "content": FACT_QUERY_PROMPT_TEMPLATE.format(
                 question=question,
                 content_images=content_images_str,
-                timestamp=timestamp,
+                tweet_timestamp=timestamp,
+                current_timestamp=datetime.datetime.now(
+                    datetime.timezone.utc
+                ).isoformat(),
             ),
         },
     ]
@@ -276,13 +285,13 @@ async def _get_judge_game_with_facts_conversation(
     given_facts = ""
     if cached_response:
         logger.info(
-            f"[_get_judge_game_with_facts_conversation] Using cached fact check response for tweet {game_tweet_object.get('id')}"
+            f"[_get_judge_game_with_facts_conversation] Using cached fact check response for tweet {game_tweet_object.get('tweet_id')}"
         )
         given_facts = SearchResponse(**cached_response).results
     else:
         # No cache found, call fact service
         logger.info(
-            f"[_get_judge_game_with_facts_conversation] No cache found, calling fact service for tweet {game_tweet_object.get('id')}"
+            f"[_get_judge_game_with_facts_conversation] No cache found, calling fact service for tweet {game_tweet_object.get('tweet_id')}"
         )
 
         query = await sync2async(_get_facts_search_query)(
@@ -293,7 +302,7 @@ async def _get_judge_game_with_facts_conversation(
 
         if query != "":
             logger.info(
-                f"[_get_judge_game_with_facts_conversation] Received query '{query}' for fact searching for tweet {game_tweet_object.get('id')}"
+                f"[_get_judge_game_with_facts_conversation] Received query '{query}' for fact searching for tweet {game_tweet_object.get('tweet_id')}"
             )
 
             response = await fact_service.search(
@@ -308,14 +317,21 @@ async def _get_judge_game_with_facts_conversation(
             given_facts = response.results
         else:
             logger.info(
-                f"[_get_judge_game_with_facts_conversation] Fact searching is not required for tweet {game_tweet_object.get('id')}"
+                f"[_get_judge_game_with_facts_conversation] Fact searching is not required for tweet {game_tweet_object.get('tweet_id')}"
             )
 
     logger.info(
         "[_get_judge_game_with_facts_conversation] Building conversation for judging"
     )
 
-    content_images_str = "\n\n".join([f"- {x}" for x in content_images])
+    content_images_str = ""
+    if len(content_images) > 0:
+        content_images_str = "Content images in the tweet:" + "\n\n".join(
+            [f"- {x}" for x in content_images]
+        )
+    if given_facts == "":
+        given_facts = "Facts not found"
+
     user_prompt = JUDGE_GAME_WITH_FACTS_PROMPT_TEMPLATE.format(
         full_text=game_tweet_object.get("full_text"),
         content_images=content_images_str,
@@ -348,9 +364,7 @@ async def _get_judge_fact_conversation(tweet_object, answers):
 
     answers_content = ""
     for answer in answers:
-        answers_content += (
-            f"- Agent {answer['username']}: {answer['answer']}\n"
-        )
+        answers_content += f"- {answer['username']}: {answer['answer']}\n"
 
     # Example claim to search
     query = tweet_object.get("full_text")
@@ -421,9 +435,7 @@ async def _get_judge_game_conversation(game_tweet_object, answers):
 
     answers_content = ""
     for answer in answers:
-        answers_content += (
-            f"- Agent {answer['username']}: {answer['answer']}\n"
-        )
+        answers_content += f"- {answer['username']}: {answer['answer']}\n"
 
     content_images = ""
     if game_tweet_object.get("image_urls"):
@@ -636,30 +648,53 @@ async def _handle_winner_with_llm(log: ReasoningLog, llm, game_id, answers):
         else _get_judge_game_with_facts_conversation(tweet_obj, answers)
     )
     logger.info(
-        f"[_handle_winner_with_llm] Created conversation thread for judging: {conversation_thread}"
+        f"[_handle_winner_with_llm] Created conversation thread for {game_id} judging: {conversation_thread}"
     )
 
-    logger.info("[_handle_winner_with_llm] Calling LLM for judgment")
+    logger.info(
+        f"[_handle_winner_with_llm] Calling LLM for {game_id} judgment"
+    )
     infer_result: OnchainInferResult = await llm.agenerate(
         conversation_thread, temperature=0.7
     )
+    logger.info(
+        f"[_handle_winner_with_llm] Calling LLM for {game_id} llm.agenerate complete"
+    )
+
+    summarize = await sync2async(summarize_judge_commentary)(
+        infer_result.generations[0].message.content
+    )
+
+    logger.info(
+        f"[_handle_winner_with_llm] Calling LLM for {game_id} summarize_judge_commentary : {summarize}"
+    )
+
+    # err = await _post_wallet_tweet(log, game_id, summarize)
+    for key, reason in summarize.items():
+        err = await _post_wallet_tweet(log, game_id, reason)
+
+    if err is not None:
+        logger.error(
+            f"[_handle_winner_with_llm] Error posting game {game_id} summarize: {err}"
+        )
+        return None, None, err
 
     winning_agent, err = _get_winner_from(
         infer_result.generations[0].message.content
     )
     if err is not None:
         logger.error(
-            f"[_handle_winner_with_llm] Error getting winner from LLM: {err}"
+            f"[_handle_winner_with_llm] Error getting winner for game {game_id} from LLM: {err}"
         )
         return None, None, err
 
     logger.info(
-        f"[_handle_winner_with_llm] LLM selected winner: {winning_agent}"
+        f"[_handle_winner_with_llm] LLM for game {game_id} selected winner: {winning_agent}"
     )
     _, err = await _post_game_result(log, game_id, winning_agent)
     if err is not None:
         logger.error(
-            f"[_handle_winner_with_llm] Error posting game result: {err}"
+            f"[_handle_winner_with_llm] Error posting game {game_id} result: {err}"
         )
         return None, None, err
 

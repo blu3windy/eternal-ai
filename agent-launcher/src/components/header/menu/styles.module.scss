@@ -1,0 +1,105 @@
+.deskMenu {
+  flex-direction: column;
+  gap: 12px;
+  a {
+    /* Rectangle 34624740 */
+
+    text-align: center;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 110%;
+    font-family: var(--font-inter);
+    text-transform: capitalize;
+    transition: opacity 0.4s var(--easeOutQuart);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    &.isActive {
+      .borderLeft {
+        &.green {
+          background: #1fc337;
+        }
+        &.blue {
+          background: #0079FE;
+        }
+      }
+    }
+
+    .borderLeft {
+      // position: absolute;
+      width: 6px;
+      height: 45px;
+      // left: 0px;
+      // top: 0;
+
+      background: transparent;
+      border-radius: 0px 4px 4px 0px;
+    }
+
+    &.onBtc,
+    &:hover {
+      opacity: 0.5;
+    }
+  }
+}
+
+.isEai {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+
+  background: linear-gradient(90deg, #da22ff 0%, #9733ee 33.29%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+
+  &.white {
+    background: linear-gradient(90deg, #ec008c 0%, #fc6767 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.dropdownItem {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  &_heading {
+    font-family: var(--font-inter);
+    color: #6b7280;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 110%; /* 15.4px */
+    text-transform: uppercase;
+  }
+  &_wrap {
+    display: grid;
+    grid-template-columns: repeat(2, 220px);
+    gap: 20px;
+    &_item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      img {
+        width: 60px;
+        height: 60px;
+        // border-radius: 2px;
+      }
+      p {
+        color: #000;
+        font-family: var(--font-inter);
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 110%; /* 15.4px */
+      }
+    }
+  }
+}

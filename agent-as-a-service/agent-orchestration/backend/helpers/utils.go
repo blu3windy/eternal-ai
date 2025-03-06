@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"bytes"
-	"crypto/elliptic"
 	"crypto/md5"
 	"encoding/csv"
 	"encoding/hex"
@@ -24,8 +23,6 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/gocolly/colly"
@@ -433,24 +430,6 @@ func SliceToStrings(from, len int, getValueAtIndex func(index int) (string, erro
 	return res, nil
 }
 
-func WalletAddressFromCompressedPublicKey(publicKeyStr string) (string, error) {
-	pubBytes, err := hex.DecodeString(publicKeyStr)
-	if err != nil {
-		return "", err
-	}
-
-	x, y := secp256k1.DecompressPubkey(pubBytes)
-
-	pubkey := elliptic.Marshal(secp256k1.S256(), x, y)
-
-	ecdsaPub, err := crypto.UnmarshalPubkey(pubkey)
-	if err != nil {
-		return "", err
-	}
-	ethAddress := crypto.PubkeyToAddress(*ecdsaPub).String()
-	return ethAddress, nil
-}
-
 func IsValidEthereumAddress(address string) bool {
 	// Regular expression to match Ethereum addresses
 	re := regexp.MustCompile(`^0x[0-9a-fA-F]{40}$`)
@@ -786,4 +765,16 @@ func GetTokenIDFromMap(mapInfo map[string]interface{}) uint64 {
 		tokenId, _ = strconv.Atoi(v)
 	}
 	return uint64(tokenId)
+}
+
+func splitStringArray(arr []string, size int) [][]string {
+	var result [][]string
+	for i := 0; i < len(arr); i += size {
+		end := i + size
+		if end > len(arr) {
+			end = len(arr)
+		}
+		result = append(result, arr[i:end])
+	}
+	return result
 }

@@ -526,7 +526,9 @@ func (c *Client) ValidateMessageSignature(msg string, signatureHex string, signe
 		return err
 	}
 	pbkHex := crypto.PubkeyToAddress(*sigPublicKey)
-	if !strings.EqualFold(pbkHex.Hex(), signer) {
+	pbStr := pbkHex.Hex()
+	fmt.Println(pbStr)
+	if !strings.EqualFold(pbStr, signer) {
 		return errors.New("not valid signer")
 	}
 	return nil
@@ -572,6 +574,21 @@ func (c *Client) SignWithEthereum(privateKey string, dataBytes []byte) (string, 
 	sigHex := hexutil.Encode(signature)
 	sigHex = sigHex[2:]
 	return sigHex, nil
+}
+
+func (c *Client) Sign(privateKey string, hash [32]byte) ([]byte, error) {
+	prk, err := crypto.HexToECDSA(privateKey)
+	if err != nil {
+		return nil, err
+	}
+	signature, err := crypto.Sign(hash[:], prk)
+	if err != nil {
+		return nil, err
+	}
+	signature[crypto.RecoveryIDOffset] += 27
+	sigHex := hexutil.Encode(signature)
+	sigHex = sigHex[2:]
+	return signature, nil
 }
 
 func (c *Client) Erc20Transfer(erc20Addr string, prkHex string, toAddr string, amount string) (string, error) {
@@ -1064,4 +1081,20 @@ func (c *Client) ConvertAddressForOut(addr string) string {
 		return trxapi.AddrEvmToTron(addr)
 	}
 	return addr
+}
+
+func (c *Client) GetSignatureTimestamp(prk string, timestamp int64) (string, error) {
+	datas := []byte{}
+	datas = append(datas, common.BytesToHash(big.NewInt(int64(timestamp)).Bytes()).Bytes()...)
+
+	dataByteHash := crypto.Keccak256Hash(
+		datas,
+	)
+
+	signature, err := c.SignWithEthereum(prk, dataByteHash.Bytes())
+	if err != nil {
+		return "", err
+	}
+
+	return signature, nil
 }

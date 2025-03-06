@@ -59,8 +59,10 @@ const (
 	AgentInfoAgentTypeKnowledgeBase AgentInfoAgentType = 2
 	AgentInfoAgentTypeEliza         AgentInfoAgentType = 3
 	AgentInfoAgentTypeZerepy        AgentInfoAgentType = 4
-	AgentInfoAgentTypeUtility       AgentInfoAgentType = 5
-	AgentInfoAgentTypeRealWorld     AgentInfoAgentType = 6
+	AgentInfoAgentTypeModel         AgentInfoAgentType = 5
+	AgentInfoAgentTypeJs            AgentInfoAgentType = 6
+	AgentInfoAgentTypePython        AgentInfoAgentType = 7
+	AgentInfoAgentTypeInfa          AgentInfoAgentType = 8
 )
 
 type (
@@ -114,6 +116,7 @@ type AgentInfo struct {
 	Creator              string
 	AgentContractID      string
 	AgentContractAddress string
+	AgentLogicAddress    string
 	AgentNftMinted       bool `gorm:"default:0"`
 	ScanEnabled          bool `gorm:"default:1"`
 	ScanLatestTime       *time.Time
@@ -203,7 +206,11 @@ type AgentInfo struct {
 	TwinTrainingProgress    float64 `json:"twin_training_progress"`
 	TwinTrainingMessage     string  `gorm:"type:longtext"`
 
-	SourceUrl string `gorm:"type:text"` //ipfs_ || ethfs_
+	SourceUrl      string `gorm:"type:text"` //ipfs_ || ethfs_
+	AuthenUrl      string `gorm:"type:text"`
+	DependAgents   string `gorm:"type:longtext"`
+	RequiredWallet bool
+	IsOnchain      bool
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string
@@ -315,6 +322,7 @@ const (
 	AgentTwitterPostTypeUnReview AgentTwitterPostType = "unreview"
 
 	AgentTwitterPostStatusNew              AgentTwitterPostStatus = "new"
+	AgentTwitterPostWaitSubmitVideoInfer   AgentTwitterPostStatus = "wait_submit_video_infer"
 	AgentTwitterPostStatusInvalid          AgentTwitterPostStatus = "invalid"
 	AgentTwitterConversationInvalid        AgentTwitterPostStatus = "conversation_invalid"
 	AgentTwitterPostStatusValid            AgentTwitterPostStatus = "valid"
@@ -355,6 +363,8 @@ type AgentTwitterPost struct {
 	RePostId              string
 	ImageUrl              string
 	InferTxHash           string
+	InferId               string
+	SubmitSolutionTxHash  string
 	InferAt               *time.Time
 	InferNum              uint                   `gorm:"default:0"`
 	Status                AgentTwitterPostStatus `gorm:"index"`
@@ -387,6 +397,10 @@ type AgentTwitterPost struct {
 	OwnerTwitterID        string
 }
 
+func (m AgentTwitterPost) IsValidSubmitVideoInfer() bool {
+	return m.PostType == AgentSnapshotPostActionTypeGenerateVideo && m.Status == AgentTwitterPostWaitSubmitVideoInfer
+}
+
 func (m *AgentTwitterPost) GetAgentOnwerName() string {
 	if m.OwnerUsername != "" {
 		return m.OwnerUsername
@@ -414,6 +428,9 @@ type TweetParseInfo struct {
 	IsIntellect   bool
 	IsCreateAgent bool
 	Description   string
+
+	IsGenerateVideo      bool
+	GenerateVideoContent string
 }
 
 type UserTwitterPost struct {
@@ -509,6 +526,7 @@ const (
 	AgentEaiTopupTypeSpent           AgentEaiTopupType = "spent"
 	AgentEaiTopupTypeRefund          AgentEaiTopupType = "refund"
 	AgentEaiTopupTypeRefundTrainFail AgentEaiTopupType = "refund_train_fail"
+	AgentEaiTopupTypeTransfer        AgentEaiTopupType = "transfer"
 
 	AgentEaiTopupStatusNew        AgentEaiTopupStatus = "new"
 	AgentEaiTopupStatusProcessing AgentEaiTopupStatus = "processing"
@@ -605,10 +623,11 @@ type AgentExternalInfo struct {
 
 type AgentChainFee struct {
 	gorm.Model
-	NetworkID uint64           `gorm:"unique_index"`
-	InferFee  numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	MintFee   numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	TokenFee  numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	NetworkID      uint64           `gorm:"unique_index"`
+	InferFee       numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	MintFee        numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	TokenFee       numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	AgentDeployFee numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 }
 
 type AgentStudioChildren struct {
@@ -654,4 +673,10 @@ type AgentInfoInstall struct {
 	User           *User
 	CallbackParams string `gorm:"type:longtext"` //{"user_id" : "123", "authen_token" : "xxx",...}
 	Status         AgenInfoInstallStatus
+}
+
+type AgentUtilityInstall struct {
+	gorm.Model
+	Address     string `gorm:"unique_index:agent_utility_install_main_idx"`
+	AgentInfoID uint   `gorm:"unique_index:agent_utility_install_main_idx"`
 }

@@ -1,38 +1,16 @@
 # Eternal AI: A Peer-to-Peer Autonomous Agent System
 
-Eternal AI is an open source AI protocol for fully onchain agents. These AI agents are deployed on multiple blockchains and run exactly as programmed. They are permissionless, uncensored, trustless, and unstoppable.
+Eternal AI is an open source AI protocol for fully onchain agents. Deployed onchain, these AI agents run exactly as programmed — all without a middleman or counterparty risk. They are permissionless, uncensored, trustless, and unstoppable.
+
+# Protocol Architecture
 
 Eternal AI agents operate on a powerful peer-to-peer global infrastructure with many unique properties:
 
 * End-to-end decentralization: Inference, Compute, Storage, etc.
 * State-of-the-art models: DeepSeek, Llama, FLUX, etc.
-* Omnichain interoperability: Bitcoin, Ethereum, Solana, etc.
+* Multichain support: Bitcoin, Ethereum, Solana, etc.
 
-This enables developers to create SocialFi agents that interact on Twitter, DeFi agents that trade crypto, GameFi agents that play onchain games, and many other fully onchain AI agents yet to be invented — all without a middleman or counterparty risk.
-
-# Protocol Architecture
-
-<img width="2704" alt="eternal-kernel-new-7" src="https://github.com/user-attachments/assets/d0fd6429-510c-4114-83a1-c3b5aebd753f" />
-
-Here are the major components of the Eternal AI software stack.
-
-| Component | Description |
-|:--------------------------|--------------------------|
-| [ai-kernel](/ai-kernel)| A set of Solidity smart contracts that trustlessly coordinate user space, onchain space, and offchain space. |
-| [decentralized-agents](/decentralized-agents)| A set of Solidity smart contracts that define AI agent standards (AI-721, SWARM-721, KB-721). |
-| [decentralized-inference](/decentralized-inference) | The decentralized inference APIs. |
-| [decentralized-compute](/decentralized-compute) | The peer-to-peer GPU clustering and orchestration protocol. |
-| [agent-as-a-service](/agent-as-a-service)| The production-grade agent launchpad and management. |
-| [agent-studio](/agent-studio)| No-code, drag 'n drop, visual programming language for AI creators. |
-| [blockchains](/blockchains)| A list of blockchains that are AI-powered by Eternal AI. |
-
-Here are the key ongoing research projects.
-
-| Component | Description |
-|:--------------------------|--------------------------|
-| [cuda-evm](/research/cuda-evm)| The GPU-accelerated EVM and its Solidity tensor linear algebra library. |
-| [nft-ai](/research/nft-ai)| AI-powered fully-onchain NFTs. |
-| [physical-ai](/research/physical-ai)| AI-powered hardware devices. |
+<img width="1928" alt="eai-new-architecture-6" src="https://github.com/user-attachments/assets/77f99b90-9faa-4c95-be1d-8517501027b7" />
 
 # Get started
 
@@ -45,42 +23,77 @@ Here are the key ongoing research projects.
 
 ## Installation
 
-Run the following command to start the whole system.
+Run the following command to start the whole system with your local network.
 ```
 sudo bash quickstart.sh
 ```
 
-Install the `eai` CLI tool to interact with your local system.
+## `eai` CLI
 
-```bash
-sudo ./install.sh
+Navigate to `./agent-cli` to install and use <b>eai CLI</b>.
+
+Run the command to install:
+
+```
+sh install.sh
 ```
 
-## `eai` CLI
+Copy `.env.example` to `.env` and update the `.env` file:
+
+```
+cp .env.example .env
+```
+
+```
+PRIVATE_KEY=
+ETERNALAI_API_KEY=
+```
+For the PRIVATE_KEY, make sure your account has enough gas tokens on the blockchains where you intend to create agents.
+
+For the ETERNALAI_API_KEY, you can get it [here](https://eternalai.org/api).
+
 
 ### Create an agent 
 
 ```bash
-eai agent create $(pwd)/decentralized-agents/characters/donald_trump.txt
+eai agent create 
+    -p <system_prompt_file_path> 
+    -n <agent_name> -c <chain_name> -f <framework> -m <model_name> 
 ```
-We are creating an agent who is a Donald Trump twin. The `.txt` file is the system prompt for your agent. It will be used to set the initial behavior for your agent. You can modify the content of the prompt file to adjust your agent's personality.
+Only the param `-p` is required, and others are optional. 
+
+Example: 
+```
+eai agent create 
+    -p ../decentralized-agents/characters/donald_trump.txt 
+    -n trump-agent -c base -f eternalai -m DeepSeek-R1-Distill-Llama-70B
+```
 
 
-### Fetch agent info by agent id
-```
-eai agent info <agent_id>
-```
+We are creating an agent who is a Donald Trump twin called `trump-agent` on the Base Chain. It uses the EternalAI framework and the DeepSeek-R1-Distill-Llama-70B model. The `.txt` file is the system prompt for your agent, which defines its initial behavior. You can edit this file to customize the agent’s personality.
 
 
 ### List out all agents on your machine
 ```bash
-eai agent list
+eai agent ls
 ```
 
+Example output: 
+<img width="2704" alt="list_all_agents" src="./media-kit/images/ls.png" />
+
+### Start an agent
+```bash
+eai agent start -n <agent_name>
+```
 
 ### Chat with an agent
 ```bash
-eai agent chat <agent_id>
+eai agent chat -n <agent_name>
+```
+
+### Stop an agent
+```bash
+eai agent stop -n <agent_name>
 ```
 
 

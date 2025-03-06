@@ -293,3 +293,26 @@ func (s *Server) AgentCreateAgentAssistantForLocal(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAssistantResp(resp)})
 }
+
+func (s *Server) MarkInstalledUtilityAgent(c *gin.Context) {
+	ctx := s.requestContext(c)
+	req := &serializers.AgentActionReq{}
+
+	if err := c.ShouldBindJSON(req); err != nil {
+		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+
+	resp, err := s.nls.MarkInstalledUtilityAgent(ctx, userAddress, req)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+}

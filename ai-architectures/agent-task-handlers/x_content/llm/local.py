@@ -139,7 +139,7 @@ class SyncBasedEternalAI(OpenAILLMBase):
             "presence_penalty": 0.1,
             "n": self.n,
             "logit_bias": None,
-            "frequency_penalty": self.frequency_penalty,
+            "frequency_penalty": self.frequency_penalty or 0.0,
             "seed": self.seed,
             "stream": True,
         }
