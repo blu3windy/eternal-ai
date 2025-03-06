@@ -233,6 +233,19 @@ const ipcMainDocker = () => {
          console.log(error);
       }
    });
+
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_CHECK_RUNNING, async (_event, agentName: string, chainId: string) => {
+      try {
+         const dnsHost = `${chainId}-${agentName}`;
+         const docker = await getDocker();
+
+         const { stdout } = await command.execAsyncDockerDir(`${docker} inspect -f '{{.State.Status}}' ${dnsHost}`);
+         return stdout;
+      } catch (error) {
+         console.log(error);
+         return false;
+      }
+   });
 }
 
 export default ipcMainDocker;

@@ -1,5 +1,8 @@
 /// <reference types="vite-plugin-electron/electron-env" />
 
+import {ipcRenderer} from "electron";
+import {EMIT_EVENT_NAME} from "./share/event-name.ts";
+
 declare namespace NodeJS {
   interface ProcessEnv {
     /**
@@ -41,6 +44,7 @@ interface IElectronAPI {
   dockerInstall: () => Promise<void>
   dockerRunAgent: (agentName: string, chainId: string) => Promise<void>
   dockerStopAgent: (agentName: string, chainId: string) => Promise<void>
+  dockerCheckRunning: (agentName: string, chainId: string) => Promise<void>
 
   modelStarter: () => Promise<void>
   modelInstall: () => Promise<void>
