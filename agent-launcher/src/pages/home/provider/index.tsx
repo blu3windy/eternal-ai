@@ -67,24 +67,24 @@ const AgentProvider: React.FC<
    const [isRunning, setIsRunning] = useState(false);
    const refInterval = useRef<any>();
 
+  const [currentModel, setCurrentModel] = useState<{
+    name: string;
+    id: string;
+  } | null>(null);
+
+  const { genAgentSecretKey } = useAuth();
+
    const cPumpAPI = new CAgentTokenAPI();
 
   const agentIdsHasBackup = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
 
   const isBackupedPrvKey = useMemo(() => {
-    if (agentWallet && selectedAgent && agentIdsHasBackup) {
+    if (selectedAgent && agentIdsHasBackup) {
       return agentIdsHasBackup.some(id => id === selectedAgent?.id);
     }
 
     return false;
-  }, [selectedAgent, agentWallet, agentIdsHasBackup]);
-
-   const [currentModel, setCurrentModel] = useState<{
-    name: string;
-    id: string;
-  } | null>(null);
-
-   const { genAgentSecretKey } = useAuth();
+  }, [selectedAgent, agentIdsHasBackup]);
 
    const requireInstall = useMemo(() => {
       if (selectedAgent) {
@@ -95,8 +95,8 @@ const AgentProvider: React.FC<
    }, [selectedAgent?.id]);
 
    const isCanChat = useMemo(() => {
-      return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet)));
-   }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled]);
+      return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
+   }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
 
    console.log("stephen: selectedAgent", selectedAgent);
    console.log("stephen: currentModel", currentModel);

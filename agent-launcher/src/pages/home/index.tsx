@@ -16,7 +16,9 @@ type Props = {
 };
 
 const HandleHome = () => {
-  const { isTrade, isCanChat } = useContext(AgentContext);
+  const { isTrade, isCanChat, isBackupedPrvKey, selectedAgent, agentWallet } = useContext(AgentContext);
+
+  const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
   return (
     <PanelGroup direction="horizontal">
@@ -24,7 +26,7 @@ const HandleHome = () => {
         <AgentsList />
       </Panel>
       <PanelResizeHandle />
-      <Panel minSize={50} maxSize={60} className={cx(s.detailContainer, !isCanChat ? s.isSetup : '')}>
+      <Panel minSize={50} maxSize={60} className={cx(s.detailContainer, isCanChat || showBackupPrvKey ? '' : s.isSetup)}>
         <Box pl={"60px"} pr={"16px"}>
           <AgentInfo />
         </Box>
