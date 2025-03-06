@@ -26,7 +26,7 @@ const HandleHome = () => {
         <AgentsList />
       </Panel>
       <PanelResizeHandle />
-      <Panel minSize={50} maxSize={60} className={cx(s.detailContainer, isCanChat || showBackupPrvKey ? '' : s.isSetup)}>
+      <Panel minSize={50} maxSize={60} className={cx(s.detailContainer, isCanChat || showBackupPrvKey ? '' : s.isSetup)} id={'detailContainer'}>
         <Box pl={"60px"} pr={"16px"}>
           <AgentInfo />
         </Box>

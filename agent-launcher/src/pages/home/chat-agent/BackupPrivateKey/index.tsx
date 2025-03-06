@@ -9,7 +9,7 @@ import STORAGE_KEYS from "@constants/storage-key.ts";
 import uniq from "lodash.uniq";
 
 const BackupPrivateKey = () => {
-  const { selectedAgent, agentWallet } = useContext(AgentContext);
+  const { selectedAgent, agentWallet, setIsBackupedPrvKey } = useContext(AgentContext);
 
   const onClickCopy = (address: string) => {
     copy(address);
@@ -20,6 +20,8 @@ const BackupPrivateKey = () => {
     const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
 
     localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
+
+    setIsBackupedPrvKey(true);
   }
 
   return (

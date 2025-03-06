@@ -28,7 +28,7 @@ const AgentAPI = {
          });
 
          const res: string = await (new CApiClient()).api.post(
-            `${'https://agent.api.eternalai.org'}/api/auth/verify`,
+            `${IMAGINE_URL}/api/auth/verify`,
             {
                signature: signature, message: message, address: address
             }
