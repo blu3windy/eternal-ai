@@ -15,7 +15,7 @@ const ChatBox = () => {
 
   const containerMaxHeight = useMemo(() => {
     if (window.innerHeight) {
-      const base = Math.floor(window.innerHeight * 0.93);
+      const base = Math.floor(window.innerHeight * 0.9);
       return `calc(${base}px - env(safe-area-inset-bottom) - env(safe-area-inset-top))`;
     }
     return `calc(70vh - env(safe-area-inset-bottom) - env(safe-area-inset-top))`;
@@ -23,7 +23,7 @@ const ChatBox = () => {
 
   const innerMaxHeight = useMemo(() => {
     if (window.innerHeight) {
-      const base = Math.floor(window.innerHeight * 0.93);
+      const base = Math.floor(window.innerHeight * 0.9);
       return `calc(${base}px - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 60px - 32px)`;
     }
     return `calc(70vh - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 60px - 32px)`;
@@ -56,11 +56,6 @@ const ChatBox = () => {
           />
         </div>
         <InputText isSending={loading} />
-        {
-          agentWallet && (
-            <AgentWalletInfo />
-          )
-        }
       </div>
     </motion.div>
   );
