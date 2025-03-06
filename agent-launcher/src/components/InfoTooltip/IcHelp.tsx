@@ -1,6 +1,9 @@
 import { Image } from "@chakra-ui/react";
 
-const IcHelp = ({color = 'black'} : {color: 'white' | 'black'}) => {
+type Color = 'white' | 'black' | string;
+
+
+const IcHelp = ({ color = 'black' } : { color?: Color }) => {
    return <Image src={color === 'black' ? `/icons/ic-tooltip.svg` : `/icons/ic-tooltip-white.svg`} />;
 };
 

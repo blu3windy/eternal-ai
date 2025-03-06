@@ -288,29 +288,67 @@ const AgentProvider: React.FC<
 
    const installUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
-         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: agent?.network_id || BASE_CHAIN_ID });
+        const chainId = agent?.network_id || BASE_CHAIN_ID;
+        const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
 
-         const codeLanguage = await cAgent.getCodeLanguage();
-         const codeVersion = await cAgent.getCurrentVersion();
-         const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
-         const fileNameOnLocal = `prompt.${codeLanguage}`;
-         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
+        const codeLanguage = await cAgent.getCodeLanguage();
+        const codeVersion = await cAgent.getCurrentVersion();
 
-            let filePath: string | undefined = "";
-            const isExisted = await checkFileExistsOnLocal(
-               fileNameOnLocal,
-               folderNameOnLocal
-            );
-            if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
-               filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
-               console.log('filePath isExisted', filePath)
-            } else {
-               const code = await cAgent.getAgentCode(codeVersion);
-               filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
-               console.log('filePath New', filePath)
-            }
+        const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+        if (depsAgentStrs.length > 0) {
+          const dependAgents = await installDependAgents(depsAgentStrs, chainId);
+          console.log('dependAgents', dependAgents)
+        }
+
+        const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
+        const fileNameOnLocal = `prompt.${codeLanguage}`;
+        const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
+
+        let filePath: string | undefined = "";
+        const isExisted = await checkFileExistsOnLocal(
+            fileNameOnLocal,
+            folderNameOnLocal
+        );
+        if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
+            filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+            console.log('filePath isExisted', filePath)
+        } else {
+            const code = await cAgent.getAgentCode(codeVersion);
+            filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
+            console.log('filePath New', filePath)
+        }
       }
    };
+
+  const installDependAgents = async (agents: string[], chainId: number) => {
+    return await Promise.all(agents.map(async (agentContractAddr) => {
+      const cAgent = new CAgentContract({ contractAddress: agentContractAddr, chainId: chainId });
+      const codeLanguage = await cAgent.getCodeLanguage();
+      const codeVersion = await cAgent.getCurrentVersion();
+      const agentName = await cAgent.getAgentName();
+
+      const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
+      const fileNameOnLocal = `prompt.${codeLanguage}`;
+      const folderNameOnLocal = `${chainId}-${agentName}`;
+
+      const isExisted = await checkFileExistsOnLocal(
+        fileNameOnLocal,
+        folderNameOnLocal
+      );
+      if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
+        await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+      } else {
+        const code = await cAgent.getAgentCode(codeVersion);
+        await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
+      }
+
+      return {
+        agent_name: agentName,
+        network_id: chainId,
+        agent_contract_address: agentContractAddr
+      }
+    }));
+  }
 
    const handleRunDockerAgent = async (agent?: IAgentToken) => {
       if (!agent) return;
