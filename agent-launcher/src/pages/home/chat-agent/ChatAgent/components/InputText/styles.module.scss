@@ -3,6 +3,21 @@
     flex-direction: column;
     border: 1px solid #00000026;
     box-shadow: 0px 0px 24px -6px #0000001A;
+
+    .btnStop {
+      min-height: 45px;
+      height: 100%;
+      min-width: 250px;
+      background: transparent !important;
+
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #000;
+    }
   }
 
   .stopWrapper {
@@ -23,21 +38,6 @@
       font-size: 14px;
       font-weight: 500;
       color: #FFF;
-    }
-
-    .btnStop {
-      min-height: 45px;
-      height: 100%;
-      min-width: 250px;
-      background: transparent !important;
-
-      display: flex;
-      justify-content: flex-start;
-      align-items: center;
-      gap: 4px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #000;
     }
   }
 

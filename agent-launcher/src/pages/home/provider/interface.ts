@@ -33,4 +33,5 @@ export interface IAgentContext {
   installedAgents: string[];
   isCanChat: boolean;
   isBackupedPrvKey: boolean;
+  requireInstall: boolean;
 }

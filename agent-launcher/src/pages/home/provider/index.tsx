@@ -41,6 +41,7 @@ const initialValue: IAgentContext = {
    installedAgents: [],
    isCanChat: false,
    isBackupedPrvKey: false,
+   requireInstall: false,
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -432,6 +433,7 @@ const AgentProvider: React.FC<
          installedAgents,
          isCanChat,
          isBackupedPrvKey,
+         requireInstall,
       };
    }, [
       loading,
@@ -458,6 +460,7 @@ const AgentProvider: React.FC<
       installedAgents,
       isCanChat,
       isBackupedPrvKey,
+      requireInstall,
    ]);
 
    return (
