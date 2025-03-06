@@ -74,22 +74,31 @@ const AgentProvider: React.FC<
 
    const { genAgentSecretKey } = useAuth();
 
-   console.log("stephen: selectedAgent", selectedAgent);
-   console.log("stephen: currentModel", currentModel);
-   console.log("stephen: agentWallet", agentWallet);
-   console.log("================================");
-
    const requireInstall = useMemo(() => {
       if (selectedAgent) {
          return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model].includes(selectedAgent?.agent_type as AgentType);
       }
 
       return false;
-   }, [selectedAgent]);
+   }, [selectedAgent?.id]);
 
    const isCanChat = useMemo(() => {
-      return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet)));
-   }, [requireInstall, selectedAgent, agentWallet]);
+      return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet)));
+   }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled]);
+
+   const isRunning = useMemo(() => {
+      return runningAgents.includes(selectedAgent?.id as number);
+   }, [runningAgents, selectedAgent?.id]);
+
+   console.log("stephen: selectedAgent", selectedAgent);
+   console.log("stephen: currentModel", currentModel);
+   console.log("stephen: agentWallet", agentWallet);
+   console.log("stephen: installedAgents", installedAgents);
+   console.log("stephen: isCanChat", isCanChat);
+   console.log("stephen: isRunning", isRunning);
+   console.log("stephen: requireInstall", requireInstall);
+   console.log("stephen: isInstalled", isInstalled);
+   console.log("================================");
 
    useEffect(() => {
       if (selectedAgent) {
@@ -100,7 +109,7 @@ const AgentProvider: React.FC<
             setAgentWallet(undefined)
          }
       }
-   }, [selectedAgent]);
+   }, [selectedAgent?.id]);
 
    useEffect(() => {
       if (selectedAgent && installedAgents && installedAgents.some(a => a === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
@@ -148,11 +157,8 @@ const AgentProvider: React.FC<
 
    const tradePlatform = useMemo(() => {
       return getTradePlatform(selectedAgent as any);
-   }, [selectedAgent]);
+   }, [selectedAgent?.id]);
 
-   const isRunning = useMemo(() => {
-      return runningAgents.includes(selectedAgent?.id as number);
-   }, [runningAgents, selectedAgent]);
 
    useEffect(() => {
       if (selectedAgent && chainList) {
