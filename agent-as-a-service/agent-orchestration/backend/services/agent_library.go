@@ -19,9 +19,7 @@ func (s *Service) GetListAgentLibrary(ctx context.Context, agentType int, networ
 	}
 	res, err := s.dao.FindAgentLibrary(
 		daos.GetDBMainCtx(ctx),
-		map[string][]interface{}{
-			"network_id = ? ": {networkID},
-		},
+		filter,
 		map[string][]interface{}{},
 		[]string{"id desc"},
 		0,

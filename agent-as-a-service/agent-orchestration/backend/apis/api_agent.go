@@ -407,10 +407,16 @@ func (s *Server) GetDashBoardAgent(c *gin.Context) {
 		agentTypesInt = append(agentTypesInt, num)
 	}
 
+	contractAddressesStr := s.stringFromContextParam(c, "contract_addresses")
+	contractAddresses := []string{}
+	if contractAddressesStr != "" {
+		contractAddresses = strings.Split(contractAddressesStr, ",")
+	}
+
 	model := s.stringFromContextQuery(c, "model")
 	userAddress, err := s.getUserAddressFromTK1Token(c)
 	installed, _ := s.boolFromContextQuery(c, "installed")
-	ms, count, err := s.nls.GetDashboardAgentInfos(ctx, userAddress, chain, agentType, agentTypesInt, "", search, model,
+	ms, count, err := s.nls.GetDashboardAgentInfos(ctx, contractAddresses, userAddress, chain, agentType, agentTypesInt, "", search, model,
 		installed, sortStr, page, limit)
 
 	if err != nil {
