@@ -15,9 +15,9 @@ app.post('/prompt', async (req, res) => {
       const chainId = req?.body?.chainId || undefined;
       const ping = req?.body?.ping || undefined;
 
-      if (ping) {
+      if (!!ping) {
          res.send('online');
-      } else if (!messages || !privateKey || !chainId) {
+      } else {
          const params = {
             messages,
             privateKey,
@@ -29,10 +29,6 @@ app.post('/prompt', async (req, res) => {
    } catch (error) {
       res.status(500).send(error?.message);
    }
-});
-
-app.get('/ping', async (req, res) => {
-   res.status(200).send('online');
 });
 
 app.listen(PORT, () => {
