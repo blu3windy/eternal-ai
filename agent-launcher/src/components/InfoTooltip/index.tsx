@@ -89,7 +89,7 @@ const InfoTooltip = (props: InfoTooltipProps) => {
             </Box>
          </PopoverTrigger>
          <Box zIndex="popover">
-            <PopoverContent maxW="300px">
+            <PopoverContent minW="350px" maxW="350px">
                <PopoverArrow bg="#F8F9FA" />
                <PopoverBody
                   style={{

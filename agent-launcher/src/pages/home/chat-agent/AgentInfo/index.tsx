@@ -9,6 +9,7 @@ import InfoTooltip from "@components/InfoTooltip";
 import {AgentType} from "@pages/home/list-agent";
 import HeaderWallet from "@components/header/wallet";
 import cx from 'clsx';
+import AgentOnChainInfo from "@pages/home/trade-agent/onchain-info";
 
 const AgentInfo = () => {
   const {
@@ -73,7 +74,7 @@ const AgentInfo = () => {
                 {isRunning ? "Stop" : "Start"}
               </Button>
             )}
-            <InfoTooltip iconSize="sm" label={description} placement="top" iconColor={color} />
+            <InfoTooltip iconSize="sm" label={<AgentOnChainInfo />} placement="top" iconColor={color} />
             <Text className={s.text}>{selectedAgent?.agent_name}</Text>
             <Text className={s.text} opacity={0.7}>${selectedAgent?.token_symbol}</Text>
             <Divider orientation={'vertical'} borderColor={'#FFFFFF1A'} h={"32px"} m={'auto 0'}/>
