@@ -1,4 +1,4 @@
-import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState,} from "react";
+import React, {PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState,} from "react";
 import {ETradePlatform, IAgentContext} from "./interface";
 import {IAgentToken, IChainConnected,} from "../../../services/api/agents-token/interface.ts";
 import {BASE_CHAIN_ID} from "@constants/chains";
@@ -64,6 +64,7 @@ const AgentProvider: React.FC<
    const [isInstalled, setIsInstalled] = useState(false);
    const [installedAgents, setInstalledAgents] = useState<string[]>([]);
    const [isRunning, setIsRunning] = useState(false);
+   const refInterval = useRef<any>();
 
    const cPumpAPI = new CAgentTokenAPI();
 
@@ -111,9 +112,19 @@ const AgentProvider: React.FC<
             setAgentWallet(undefined)
          }
 
-        checkAgentRunning();
+        intervalCheckAgentRunning();
       }
    }, [selectedAgent?.id]);
+
+   const intervalCheckAgentRunning = () => {
+     if (refInterval.current) {
+       clearInterval(refInterval.current);
+     }
+
+     checkAgentRunning();
+
+     refInterval.current = setInterval(checkAgentRunning, 3000);
+   }
 
    useEffect(() => {
       if (selectedAgent && installedAgents && installedAgents.some(a => a === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
@@ -265,6 +276,8 @@ const AgentProvider: React.FC<
          console.log('startAgent', e);
       } finally {
          setIsStopping(false);
+
+        intervalCheckAgentRunning();
       }
    };
 
