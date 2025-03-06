@@ -31,7 +31,7 @@ const AgentInfo = () => {
 
   return (
     <Flex className={s.container}>
-      <Flex justifyContent={"space-between"} w={"100%"}>
+      <Flex justifyContent={"space-between"} w={"100%"} gap={"6px"}>
         {
           isCanChat && [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type as AgentType) ? (
             <SelectModel
