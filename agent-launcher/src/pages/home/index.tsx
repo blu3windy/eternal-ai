@@ -2,38 +2,51 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import MainLayout from "../../components/layout";
 import FundAgentProvider from "../../providers/FundAgent";
 import ChatAgent from "./chat-agent";
-import AgentsList, {AgentType} from "./list-agent";
+import AgentsList, { AgentType } from "./list-agent";
 import AgentProvider, { AgentContext } from "./provider";
 import s from "./styles.module.scss";
-import {useContext, useMemo} from "react";
+import { useContext, useMemo } from "react";
 import TradeAgent from "./trade-agent";
 import AgentInfo from "./chat-agent/AgentInfo";
 import { Box } from "@chakra-ui/react";
 import cx from "clsx";
+import AgentTradeProvider from "./trade-agent/provider";
 
 type Props = {
-   // some props
+  // some props
 };
 
 const HandleHome = () => {
-  const { isTrade, isCanChat, isBackupedPrvKey, selectedAgent, agentWallet } = useContext(AgentContext);
+  const { isTrade, isCanChat, isBackupedPrvKey, selectedAgent, agentWallet } =
+    useContext(AgentContext);
 
-  const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
+  const showBackupPrvKey =
+    selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
   return (
     <PanelGroup direction="horizontal">
       <Panel minSize={20} maxSize={25}>
         <AgentsList />
       </Panel>
-      <PanelResizeHandle />
-      <Panel minSize={50} maxSize={60} className={cx(s.detailContainer, isCanChat || showBackupPrvKey ? '' : s.isSetup)} id={'detailContainer'}>
-        <Box pl={"60px"} pr={"16px"}>
+      {/* <PanelResizeHandle /> */}
+      <Panel
+        minSize={50}
+        maxSize={60}
+        className={cx(
+          s.detailContainer,
+          isCanChat || showBackupPrvKey ? "" : s.isSetup
+        )}
+        id={"detailContainer"}
+      >
+        <Box px={"16px"}>
           <AgentInfo />
         </Box>
-        {/* <TradeAgent /> */}
+        {/* <AgentTradeProvider>
+          <TradeAgent />
+        </AgentTradeProvider> */}
         {isTrade ? <TradeAgent /> : <ChatAgent />}
       </Panel>
-      <PanelResizeHandle />
+      {/* <PanelResizeHandle /> */}
     </PanelGroup>
   );
 };

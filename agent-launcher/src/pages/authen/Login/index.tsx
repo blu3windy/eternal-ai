@@ -77,22 +77,37 @@ const Login = () => {
                 The decentralized AI awaits.
             </Text>
          </Flex>
-         <Button
-            onClick={() => {
-               console.log('Test Run Docker 1-leon');
-               window.electronAPI.dockerRunAgent('leon', '1');
-            }}
-         >
-            Test Run Docker
-         </Button>
-         <Button
-            onClick={() => {
-               console.log('Test Run Docker 1-leon');
-               window.electronAPI.openExternal('https://www.google.com');
-            }}
-         >
-            Test Shell
-         </Button>
+         <Flex gap="12px" flexWrap="wrap" maxWidth="600px">
+            <Button
+               onClick={() => {
+                  console.log('Test Run Docker 1-leon');
+                  window.electronAPI.dockerRunAgent('leon', '1');
+               }}
+            >
+               Run Docker
+            </Button>
+            <Button
+               onClick={() => {
+                  window.electronAPI.modelInstall("bafkreiecx5ojce2tceibd74e2koniii3iweavknfnjdfqs6ows2ikoow6m");
+               }}
+            >
+               INSTALL MODEL
+            </Button>
+            <Button
+               onClick={() => {
+                  window.electronAPI.modelRun("bafkreiecx5ojce2tceibd74e2koniii3iweavknfnjdfqs6ows2ikoow6m");
+               }}
+            >
+               RUN MODEL
+            </Button>
+            <Button
+               onClick={() => {
+                  window.electronAPI.dockerCheckRunning("leon", "1");
+               }}
+            >
+               PING DOCKER
+            </Button>
+         </Flex>
          <Formik
             initialValues={{ password: '' }}
             validationSchema={validationSchema}

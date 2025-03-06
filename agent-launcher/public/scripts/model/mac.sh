@@ -84,7 +84,14 @@ else
 fi
 
 log "Installing/Updating llama.cpp..."
-brew install llama.cpp || handle_error $? "Failed to install llama.cpp"
+echo "LEON CHECK uname $(uname -m)"
+if [[ $(uname -m) == 'arm64' ]]; then
+  echo "LEON CHECK arm64"
+  arch -arm64 brew install llama.cpp || handle_error $? "Failed to install llama.cpp"
+else
+  echo "LEON CHECK x86_64"
+  brew install llama.cpp || handle_error $? "Failed to install llama.cpp"
+fi
 log "llama.cpp installation/update completed."
 
 log "Verifying the installed llama.cpp version..."

@@ -9,26 +9,28 @@ app.use(express.urlencoded({ extended: true })); // For form data
 
 app.post('/prompt', async (req, res) => {
    try {
-      console.log(req.body)
+      console.log("req.body")
       const messages = req?.body?.messages || undefined;
       const privateKey = req?.body?.privateKey || undefined;
       const chainId = req?.body?.chainId || undefined;
-      const params = {
-         messages,
-         privateKey,
-         chainId,
+      const ping = req?.body?.ping || undefined;
+
+      if (!!ping) {
+         res.send('online');
+      } else {
+         const params = {
+            messages,
+            privateKey,
+            chainId,
+         }
+         const message = await script.prompt(params);
+         res.send(message);
       }
-      const message = await script.prompt(params);
-      res.send(message);
    } catch (error) {
       res.status(500).send(error?.message);
    }
 });
 
-app.get('/ping', async (req, res) => {
-   res.status(200).send('online');
-});
-
 app.listen(PORT, () => {
-   console.log(`Server is running on http://localhost:${PORT}`);
+   console.log(`Server is running XXXXXX on http://localhost:${PORT}`);
 });

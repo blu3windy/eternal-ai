@@ -44,8 +44,8 @@ interface IElectronAPI {
   dockerCheckRunning: (agentName: string, chainId: string) => Promise<string>
 
   modelStarter: () => Promise<void>
-  modelInstall: () => Promise<void>
-  modelRun: () => Promise<void>
+  modelInstall: (hash: string) => Promise<void>
+  modelRun: (hash: string) => Promise<void>
 
   sendCommand: (cmd: string) => void
   onCommandEvent: (callback: (data: any) => void) => void

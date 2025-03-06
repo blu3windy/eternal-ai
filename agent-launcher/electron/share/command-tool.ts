@@ -79,7 +79,7 @@ const execAsyncDockerDir = async (cmd: string) => {
    }
 };
 
-const execAsyncStream = (cmd: string) => {
+const execAsyncStream = (_cmd: string, isZSH = true) => {
    return new Promise<void>((resolve, reject) => {
       const win = BrowserWindow.getAllWindows()[0]; // Get main window
       if (!win) {
@@ -87,15 +87,16 @@ const execAsyncStream = (cmd: string) => {
          return reject(new Error("No active Electron window found."));
       }
 
-      // const process = exec(cmd);
-      console.log(`Running command: zsh -l -c '${cmd}'`);
-      const process = exec(`zsh -l -c '${cmd}'`);
+      const cmd = isZSH ? `zsh -l -c '${_cmd}'` : _cmd;
+      const process = exec(cmd);
 
       process.stdout?.on("data", (data) => {
+         console.log(data.toString());
          sendEvent({ type: "output", message: data.toString(), cmd, win });
       });
 
       process.stderr?.on("data", (data) => {
+         console.error(data.toString());
          sendEvent({ type: "error", message: data.toString(), cmd, win });
       });
 
