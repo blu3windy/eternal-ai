@@ -42,7 +42,7 @@ const Starter = (props: IProps) => {
          const hasDocker = await window.electronAPI.dockerCheckInstall();
          if (hasDocker) {
             await window.electronAPI.dockerBuild();
-            await window.electronAPI.modelStarter();
+            // await window.electronAPI.modelStarter();
             setChecking(false);
          } else {
             setStep("REQUEST_INSTALL_DOCKER");

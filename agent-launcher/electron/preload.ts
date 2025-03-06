@@ -49,10 +49,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
    modelStarter: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_STARTER),
    modelInstall: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_INSTALL),
    modelRun: (hash: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_RUN, hash),
+   openExternal: (url: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.OPEN_EXTRA_LINK, url),
 
 
-   sendCommand: (cmd) => ipcRenderer.send("run-command", cmd),
-   onCommandEvent: (callback) => ipcRenderer.on("command-event", (_, data) => callback(data)),
+   sendCommand: (cmd: string) => ipcRenderer.send("run-command", cmd),
+   onCommandEvent: (callback: any) => ipcRenderer.on("command-event", (_, data) => callback(data)),
    
-   openExternal: (url) => ipcRenderer.send(EMIT_EVENT_NAME.OPEN_EXTRA_LINK, url),
 });

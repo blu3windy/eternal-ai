@@ -85,6 +85,14 @@ const Login = () => {
          >
             Test Run Docker
          </Button>
+         <Button
+            onClick={() => {
+               console.log('Test Run Docker 1-leon');
+               window.electronAPI.openExternal('https://www.google.com');
+            }}
+         >
+            Test Shell
+         </Button>
          <Formik
             initialValues={{ password: '' }}
             validationSchema={validationSchema}
