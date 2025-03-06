@@ -71,21 +71,21 @@ const ipcMainSafeFile = () => {
 };
 
 async function getFolders(folderPath: string) {
-    try {
-        const items = await fs.readdir(folderPath);
-        const folderPromises = items.map(async item => {
-            try {
-                const stats = await fs.stat(path.join(folderPath, item));
-                return stats.isDirectory() ? item : null;
-            } catch (error) {
-                return null;
-            }
-        });
-        const folders = (await Promise.all(folderPromises)).filter(Boolean);
-        return folders;
-    } catch (error) {
-        throw error;
-    }
+   try {
+      const items = await fs.readdir(folderPath);
+      const folderPromises = items.map(async item => {
+         try {
+            const stats = await fs.stat(path.join(folderPath, item));
+            return stats.isDirectory() ? item : null;
+         } catch (error) {
+            return null;
+         }
+      });
+      const folders = (await Promise.all(folderPromises)).filter(Boolean);
+      return folders;
+   } catch (error) {
+      throw error;
+   }
 }
 
 export default ipcMainSafeFile;

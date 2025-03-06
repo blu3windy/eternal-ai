@@ -34,10 +34,10 @@ const ipcMainModel = () => {
       }
    });
 
-   ipcMain.handle(EMIT_EVENT_NAME.MODEL_CHECK_INSTALL, async (_event, name: string) => {
+   ipcMain.handle(EMIT_EVENT_NAME.MODEL_CHECK_INSTALL, async (_event, hash: string) => {
       const path = getModelPath();
       try {
-         const { stdout, stderr } = await command.execAsync( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms check --model ${name}`);
+         const { stdout, stderr } = await command.execAsync( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms check --model ${hash}`);
          console.log("MODEL_CHECK_INSTALL", stdout, stderr);
       } catch (error) {
          console.log("MODEL_CHECK_INSTALL", error);
