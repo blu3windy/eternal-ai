@@ -117,6 +117,8 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 					map[string][]any{
 						"agent_infos.agent_contract_id = ?": {""},
 						"agent_infos.agent_nft_minted = ?":  {false},
+						"agent_infos.token_name != ?":       {""},
+						"agent_infos.token_symbol != ?":     {""},
 						"agent_infos.eai_balance > 0":       {},
 						`(1 != 1
 							or (agent_infos.agent_type in (?) and agent_infos.eai_balance >= agent_chain_fees.agent_deploy_fee)

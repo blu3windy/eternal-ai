@@ -491,6 +491,7 @@ func (uc *knowledgeUsecase) WatchWalletChange(ctx context.Context) error {
 		}
 
 		for _, k := range resp {
+			time.Sleep(500 * time.Microsecond)
 			if err := uc.CheckBalance(ctx, k); err != nil {
 				continue
 			}

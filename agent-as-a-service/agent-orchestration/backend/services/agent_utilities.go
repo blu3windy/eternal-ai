@@ -84,6 +84,48 @@ func (s *Service) DeployAgentUpgradeableAddress(
 	return contractAddress, logicAddress, txHash, nil
 }
 
+func (s *Service) UpgradeAgentUpgradeable(ctx context.Context, agentInfoID uint) (string, error) {
+	agentInfo, err := s.dao.FirstAgentInfoByID(
+		daos.GetDBMainCtx(ctx),
+		agentInfoID,
+		map[string][]any{},
+		false,
+	)
+	if err != nil {
+		return "", errs.NewError(err)
+	}
+	if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
+		agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
+		agentInfo.AgentType != models.AgentInfoAgentTypePython {
+		return "", errs.NewError(errs.ErrBadRequest)
+	}
+	logicAddress := strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "agentupgradeable_address"))
+	if !strings.EqualFold(agentInfo.AgentLogicAddress, logicAddress) {
+		txHash, err := s.GetEthereumClient(context.Background(), agentInfo.NetworkID).
+			ProxyAdminUpgrade(
+				s.conf.GetConfigKeyString(agentInfo.NetworkID, "proxy_admin_address"),
+				s.GetAddressPrk(s.conf.GetConfigKeyString(agentInfo.NetworkID, "meme_pool_address")),
+				helpers.HexToAddress(agentInfo.AgentContractAddress),
+				helpers.HexToAddress(logicAddress),
+			)
+		if err != nil {
+			return "", errs.NewError(err)
+		}
+		err = daos.GetDBMainCtx(ctx).
+			Model(agentInfo).
+			Updates(
+				map[string]any{
+					"agent_logic_address": strings.ToLower(logicAddress),
+				},
+			).Error
+		if err != nil {
+			return "", errs.NewError(err)
+		}
+		return txHash, nil
+	}
+	return "", nil
+}
+
 func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) error {
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
@@ -100,122 +142,117 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 			agentInfo.AgentType != models.AgentInfoAgentTypePython {
 			return errs.NewError(errs.ErrBadRequest)
 		}
-		if agentInfo.TokenName != "" && agentInfo.TokenSymbol != "" {
-			if agentInfo.MintHash == "" {
-				switch agentInfo.NetworkID {
-				case models.ETHEREUM_CHAIN_ID,
-					models.BITTENSOR_CHAIN_ID,
-					models.BASE_CHAIN_ID,
-					models.HERMES_CHAIN_ID,
-					models.ARBITRUM_CHAIN_ID,
-					models.ZKSYNC_CHAIN_ID,
-					models.POLYGON_CHAIN_ID,
-					models.BSC_CHAIN_ID,
-					models.APE_CHAIN_ID,
-					models.AVALANCHE_C_CHAIN_ID,
-					models.ABSTRACT_TESTNET_CHAIN_ID,
-					models.DUCK_CHAIN_ID,
-					models.MODE_CHAIN_ID,
-					models.ZETA_CHAIN_ID,
-					models.STORY_CHAIN_ID,
-					models.HYPE_CHAIN_ID,
-					models.MONAD_TESTNET_CHAIN_ID,
-					models.MEGAETH_TESTNET_CHAIN_ID,
-					models.CELO_CHAIN_ID,
-					models.BASE_SEPOLIA_CHAIN_ID:
-					{
-						if agentInfo.SourceUrl == "" {
-							return errs.NewError(errs.ErrBadRequest)
-						}
-						var fileNames []string
-						err = json.Unmarshal([]byte(agentInfo.SourceUrl), &fileNames)
-						if err != nil {
-							return errs.NewError(err)
-						}
-						if len(fileNames) == 0 {
-							return errs.NewError(errs.ErrBadRequest)
-						}
-						storageInfos := []agentupgradeable.IAgentCodePointer{}
-						for _, fileName := range fileNames {
-							if strings.HasPrefix(fileName, "ethfs_") {
-								storageInfos = append(storageInfos, agentupgradeable.IAgentCodePointer{
-									RetrieveAddress: helpers.HexToAddress(strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "ethfs_address"))),
-									FileType:        0,
-									FileName:        strings.TrimPrefix(fileName, "ethfs_"),
-								})
-							} else if strings.HasPrefix(fileName, "ipfs_") {
-								storageInfos = append(storageInfos, agentupgradeable.IAgentCodePointer{
-									RetrieveAddress: helpers.HexToAddress(models.ETH_ZERO_ADDRESS),
-									FileType:        0,
-									FileName:        strings.TrimPrefix(fileName, "ipfs_"),
-								})
-							} else {
-								return errs.NewError(errs.ErrBadRequest)
-							}
-						}
-						dependAgentAddrs := []common.Address{}
-						if agentInfo.DependAgents != "" {
-							var dependAgents []string
-							err = json.Unmarshal([]byte(agentInfo.DependAgents), &dependAgents)
-							if err != nil {
-								return errs.NewError(err)
-							}
-							for _, v := range dependAgents {
-								dependAgentAddrs = append(dependAgentAddrs, helpers.HexToAddress(v))
-							}
-						}
-						var codeLanguage string
-						switch agentInfo.AgentType {
-						case models.AgentInfoAgentTypeJs:
-							{
-								codeLanguage = "js"
-							}
-						case models.AgentInfoAgentTypePython:
-							{
-								codeLanguage = "python"
-							}
-						case models.AgentInfoAgentTypeModel:
-							{
-								codeLanguage = "model"
-							}
-						}
-						contractAddress, logicAddress, txHash, err := s.DeployAgentUpgradeableAddress(
-							ctx,
-							agentInfo.NetworkID,
-							agentInfo.AgentName,
-							"1",
-							codeLanguage,
-							storageInfos,
-							dependAgentAddrs,
-							helpers.HexToAddress(agentInfo.Creator),
-							agentInfo.IsOnchain,
-						)
-						if err != nil {
-							return errs.NewError(err)
-						}
-						err = daos.GetDBMainCtx(ctx).
-							Model(agentInfo).
-							Updates(
-								map[string]any{
-									"agent_contract_address": strings.ToLower(contractAddress),
-									"agent_logic_address":    strings.ToLower(logicAddress),
-									"agent_contract_id":      "0",
-									"mint_hash":              txHash,
-									"status":                 models.AssistantStatusReady,
-									"reply_enabled":          true,
-								},
-							).Error
-						if err != nil {
-							return errs.NewError(err)
-						}
-						if err != nil {
-							return errs.NewError(err)
-						}
-					}
-				default:
-					{
+		if agentInfo.MintHash == "" {
+			switch agentInfo.NetworkID {
+			case models.ETHEREUM_CHAIN_ID,
+				models.BITTENSOR_CHAIN_ID,
+				models.BASE_CHAIN_ID,
+				models.HERMES_CHAIN_ID,
+				models.ARBITRUM_CHAIN_ID,
+				models.ZKSYNC_CHAIN_ID,
+				models.POLYGON_CHAIN_ID,
+				models.BSC_CHAIN_ID,
+				models.APE_CHAIN_ID,
+				models.AVALANCHE_C_CHAIN_ID,
+				models.ABSTRACT_TESTNET_CHAIN_ID,
+				models.DUCK_CHAIN_ID,
+				models.MODE_CHAIN_ID,
+				models.ZETA_CHAIN_ID,
+				models.STORY_CHAIN_ID,
+				models.HYPE_CHAIN_ID,
+				models.MONAD_TESTNET_CHAIN_ID,
+				models.MEGAETH_TESTNET_CHAIN_ID,
+				models.CELO_CHAIN_ID,
+				models.BASE_SEPOLIA_CHAIN_ID:
+				{
+					if agentInfo.SourceUrl == "" {
 						return errs.NewError(errs.ErrBadRequest)
 					}
+					var fileNames []string
+					err = json.Unmarshal([]byte(agentInfo.SourceUrl), &fileNames)
+					if err != nil {
+						return errs.NewError(err)
+					}
+					if len(fileNames) == 0 {
+						return errs.NewError(errs.ErrBadRequest)
+					}
+					storageInfos := []agentupgradeable.IAgentCodePointer{}
+					for _, fileName := range fileNames {
+						if strings.HasPrefix(fileName, "ethfs_") {
+							storageInfos = append(storageInfos, agentupgradeable.IAgentCodePointer{
+								RetrieveAddress: helpers.HexToAddress(strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "ethfs_address"))),
+								FileType:        0,
+								FileName:        strings.TrimPrefix(fileName, "ethfs_"),
+							})
+						} else if strings.HasPrefix(fileName, "ipfs_") {
+							storageInfos = append(storageInfos, agentupgradeable.IAgentCodePointer{
+								RetrieveAddress: helpers.HexToAddress(models.ETH_ZERO_ADDRESS),
+								FileType:        0,
+								FileName:        strings.TrimPrefix(fileName, "ipfs_"),
+							})
+						} else {
+							return errs.NewError(errs.ErrBadRequest)
+						}
+					}
+					dependAgentAddrs := []common.Address{}
+					if agentInfo.DependAgents != "" {
+						var dependAgents []string
+						err = json.Unmarshal([]byte(agentInfo.DependAgents), &dependAgents)
+						if err != nil {
+							return errs.NewError(err)
+						}
+						for _, v := range dependAgents {
+							dependAgentAddrs = append(dependAgentAddrs, helpers.HexToAddress(v))
+						}
+					}
+					var codeLanguage string
+					switch agentInfo.AgentType {
+					case models.AgentInfoAgentTypeJs:
+						{
+							codeLanguage = "js"
+						}
+					case models.AgentInfoAgentTypePython:
+						{
+							codeLanguage = "python"
+						}
+					case models.AgentInfoAgentTypeModel:
+						{
+							codeLanguage = "model"
+						}
+					}
+					contractAddress, logicAddress, txHash, err := s.DeployAgentUpgradeableAddress(
+						ctx,
+						agentInfo.NetworkID,
+						agentInfo.AgentName,
+						"1",
+						codeLanguage,
+						storageInfos,
+						dependAgentAddrs,
+						helpers.HexToAddress(agentInfo.Creator),
+						agentInfo.IsOnchain,
+					)
+					if err != nil {
+						return errs.NewError(err)
+					}
+					err = daos.GetDBMainCtx(ctx).
+						Model(agentInfo).
+						Updates(
+							map[string]any{
+								"agent_contract_address": strings.ToLower(contractAddress),
+								"agent_logic_address":    strings.ToLower(logicAddress),
+								"agent_contract_id":      "0",
+								"mint_hash":              txHash,
+								"status":                 models.AssistantStatusReady,
+								"reply_enabled":          true,
+							},
+						).Error
+					if err != nil {
+						return errs.NewError(err)
+					}
+				}
+			default:
+				{
+					return errs.NewError(errs.ErrBadRequest)
 				}
 			}
 		}
