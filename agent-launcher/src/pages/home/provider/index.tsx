@@ -72,9 +72,11 @@ const AgentProvider: React.FC<
   const agentIdsHasBackup = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
 
   const isBackupedPrvKey = useMemo(() => {
-    if (agentWallet && agentIdsHasBackup) {
-      return agentIdsHasBackup.some(a => a.id === selectedAgent?.id);
+    if (agentWallet && selectedAgent && agentIdsHasBackup) {
+      return agentIdsHasBackup.some(id => id === selectedAgent?.id);
     }
+
+    return false;
   }, [selectedAgent, agentWallet, agentIdsHasBackup]);
 
    const [currentModel, setCurrentModel] = useState<{
@@ -136,7 +138,7 @@ const AgentProvider: React.FC<
    }
 
    useEffect(() => {
-      if (selectedAgent && installedAgents && installedAgents.some(a => a === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
+      if (selectedAgent && installedAgents && installedAgents.some(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
          setIsInstalled(true);
          cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id] });
       } else {
