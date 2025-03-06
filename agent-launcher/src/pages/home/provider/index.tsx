@@ -138,12 +138,15 @@ const AgentProvider: React.FC<
    }
 
    useEffect(() => {
-      if (selectedAgent && installedAgents && installedAgents.some(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
+     if (selectedAgent) {
+       if (installedAgents && installedAgents.some(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
          setIsInstalled(true);
          cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id] });
-      } else {
+       } else {
          setIsInstalled(false);
-      }
+         cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id], action: "uninstall" });
+       }
+     }
    }, [selectedAgent?.id, installedAgents]);
 
    const checkAgentRunning = async () => {
