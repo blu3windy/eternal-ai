@@ -592,7 +592,8 @@ func (s *Server) GetAgentInfoInstallCode(c *gin.Context) {
 func (s *Server) GetAgentLibrary(c *gin.Context) {
 	ctx := s.requestContext(c)
 	networkID, _ := s.uint64FromContextQuery(c, "network_id")
-	obj, err := s.nls.GetListAgentLibrary(ctx, networkID)
+	agentType := s.intFromContextQuery(c, "agent_type")
+	obj, err := s.nls.GetListAgentLibrary(ctx, agentType, networkID)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
