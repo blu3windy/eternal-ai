@@ -41,6 +41,7 @@ const initialValue: IAgentContext = {
    installedAgents: [],
    isCanChat: false,
    isBackupedPrvKey: false,
+   setIsBackupedPrvKey: () => {},
    requireInstall: false,
 };
 
@@ -67,6 +68,7 @@ const AgentProvider: React.FC<
    const [installedAgents, setInstalledAgents] = useState<string[]>([]);
    const [isRunning, setIsRunning] = useState(false);
    const refInterval = useRef<any>();
+   const [isBackupedPrvKey, setIsBackupedPrvKey] = useState(false);
 
    const [currentModel, setCurrentModel] = useState<{
     name: string;
@@ -77,16 +79,11 @@ const AgentProvider: React.FC<
 
    const cPumpAPI = new CAgentTokenAPI();
 
-   const agentIdsHasBackup = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
-
-   const isBackupedPrvKey = useMemo(() => {
-      if (agentWallet && selectedAgent && agentIdsHasBackup) {
-         return agentIdsHasBackup.some(id => id === selectedAgent?.id);
-      }
-
-      return false;
-   }, [selectedAgent, agentWallet, agentIdsHasBackup]);
-
+   useEffect(() => {
+      const agentIdsHasBackup = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
+      
+      setIsBackupedPrvKey(agentWallet && selectedAgent && agentIdsHasBackup && agentIdsHasBackup.some(id => id === selectedAgent?.id));
+   }, [selectedAgent, agentWallet]);
 
 
    const requireInstall = useMemo(() => {
@@ -102,13 +99,13 @@ const AgentProvider: React.FC<
    }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
 
    console.log("stephen: selectedAgent", selectedAgent);
-   console.log("stephen: currentModel", currentModel);
-   console.log("stephen: agentWallet", agentWallet);
-   console.log("stephen: installedAgents", installedAgents);
-   console.log("stephen: isCanChat", isCanChat);
-   console.log("stephen: isRunning", isRunning);
-   console.log("stephen: requireInstall", requireInstall);
-   console.log("stephen: isInstalled", isInstalled);
+   // console.log("stephen: currentModel", currentModel);
+   // console.log("stephen: agentWallet", agentWallet);
+   // console.log("stephen: installedAgents", installedAgents);
+   // console.log("stephen: isCanChat", isCanChat);
+   // console.log("stephen: isRunning", isRunning);
+   // console.log("stephen: requireInstall", requireInstall);
+   // console.log("stephen: isInstalled", isInstalled);
    console.log("================================");
 
    useEffect(() => {
@@ -433,6 +430,7 @@ const AgentProvider: React.FC<
          installedAgents,
          isCanChat,
          isBackupedPrvKey,
+         setIsBackupedPrvKey,
          requireInstall,
       };
    }, [
@@ -460,6 +458,7 @@ const AgentProvider: React.FC<
       installedAgents,
       isCanChat,
       isBackupedPrvKey,
+      setIsBackupedPrvKey,
       requireInstall,
    ]);
 

@@ -387,8 +387,6 @@ const AgentsList = () => {
       )
    };
 
-   console.log('stephen: agents', agents);
-
    return (
       <Box className={s.container}>
          <Flex
