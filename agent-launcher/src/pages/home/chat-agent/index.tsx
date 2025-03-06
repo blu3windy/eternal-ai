@@ -4,6 +4,7 @@ import {ChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import s from "./styles.module.scss";
 import React, {useContext} from "react";
 import {AgentContext} from "@pages/home/provider";
+import BackupPrivateKey from "@pages/home/chat-agent/BackupPrivateKey";
 
 function ChatAgent() {
   const {
@@ -14,6 +15,7 @@ function ChatAgent() {
     createAgentWallet,
     isInstalled,
     isCanChat,
+    isBackupedPrvKey
   } = useContext(AgentContext);
 
   const avatarUrl =
@@ -35,7 +37,9 @@ function ChatAgent() {
   return (
     <Box className={s.container}>
       {/* <AgentInfo /> */}
-      {isCanChat ? (
+      {selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey ? (
+        <BackupPrivateKey />
+      ) : isCanChat ? (
         <ChatAgentProvider>
           <ChatBox />
         </ChatAgentProvider>

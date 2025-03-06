@@ -40,6 +40,7 @@ const initialValue: IAgentContext = {
    isInstalled: false,
    installedAgents: [],
    isCanChat: false,
+   isBackupedPrvKey: false,
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -67,6 +68,14 @@ const AgentProvider: React.FC<
    const refInterval = useRef<any>();
 
    const cPumpAPI = new CAgentTokenAPI();
+
+  const agentIdsHasBackup = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
+
+  const isBackupedPrvKey = useMemo(() => {
+    if (agentWallet && agentIdsHasBackup) {
+      return agentIdsHasBackup.some(a => a.id === selectedAgent?.id);
+    }
+  }, [selectedAgent, agentWallet, agentIdsHasBackup]);
 
    const [currentModel, setCurrentModel] = useState<{
     name: string;
@@ -417,6 +426,7 @@ const AgentProvider: React.FC<
          isInstalled,
          installedAgents,
          isCanChat,
+         isBackupedPrvKey,
       };
    }, [
       loading,
@@ -442,6 +452,7 @@ const AgentProvider: React.FC<
       isInstalled,
       installedAgents,
       isCanChat,
+      isBackupedPrvKey,
    ]);
 
    return (
