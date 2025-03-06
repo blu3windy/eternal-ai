@@ -1405,12 +1405,23 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 	err := daos.WithTransaction(
 		daos.GetDBMainCtx(ctx),
 		func(tx *gorm.DB) error {
-			for _, agentID := range req.Ids {
-				inst := &models.AgentUtilityInstall{
-					Address:     strings.ToLower(address),
-					AgentInfoID: agentID,
+			if req.Action == "uninstall" {
+				for _, agentID := range req.Ids {
+					err := tx.Where("agent_info_id = ? and address = ?", agentID, strings.ToLower(address)).
+						Unscoped().
+						Delete(&models.AgentUtilityInstall{}).Error
+					if err != nil {
+						return errs.NewError(err)
+					}
 				}
-				_ = s.dao.Create(tx, inst)
+			} else {
+				for _, agentID := range req.Ids {
+					inst := &models.AgentUtilityInstall{
+						Address:     strings.ToLower(address),
+						AgentInfoID: agentID,
+					}
+					_ = s.dao.Create(tx, inst)
+				}
 			}
 			return nil
 		},
