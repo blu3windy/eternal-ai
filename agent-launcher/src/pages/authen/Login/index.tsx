@@ -100,7 +100,13 @@ const Login = () => {
             >
                RUN MODEL
             </Button>
-
+            <Button
+               onClick={() => {
+                  window.electronAPI.dockerCheckRunning("leon", "1");
+               }}
+            >
+               PING DOCKER
+            </Button>
          </Flex>
          <Formik
             initialValues={{ password: '' }}

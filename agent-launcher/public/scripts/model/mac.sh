@@ -84,7 +84,11 @@ else
 fi
 
 log "Installing/Updating llama.cpp..."
-brew install llama.cpp || handle_error $? "Failed to install llama.cpp"
+if [[ $(uname -m) == 'arm64' ]]; then
+  arch -arm64 brew install llama.cpp || handle_error $? "Failed to install llama.cpp"
+else
+  brew install llama.cpp || handle_error $? "Failed to install llama.cpp"
+fi
 log "llama.cpp installation/update completed."
 
 log "Verifying the installed llama.cpp version..."

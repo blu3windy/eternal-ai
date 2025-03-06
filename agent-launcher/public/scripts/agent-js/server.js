@@ -13,13 +13,19 @@ app.post('/prompt', async (req, res) => {
       const messages = req?.body?.messages || undefined;
       const privateKey = req?.body?.privateKey || undefined;
       const chainId = req?.body?.chainId || undefined;
-      const params = {
-         messages,
-         privateKey,
-         chainId,
+      const ping = req?.body?.ping || undefined;
+
+      if (ping) {
+         res.send('online');
+      } else if (!messages || !privateKey || !chainId) {
+         const params = {
+            messages,
+            privateKey,
+            chainId,
+         }
+         const message = await script.prompt(params);
+         res.send(message);
       }
-      const message = await script.prompt(params);
-      res.send(message);
    } catch (error) {
       res.status(500).send(error?.message);
    }
