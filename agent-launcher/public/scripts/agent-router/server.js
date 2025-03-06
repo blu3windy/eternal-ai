@@ -5,6 +5,7 @@ const url = require('url');
 const app = express();
 
 app.post('/:agentName/prompt', (req, res) => {
+    console.log('aaaaaaa');
     const { agentName } = req.params;
     console.log(agentName);
     const targetUrl = 'http://' + agentName + '/prompt';

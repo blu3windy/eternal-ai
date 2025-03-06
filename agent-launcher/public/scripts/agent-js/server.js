@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true })); // For form data
 
 app.post('/prompt', async (req, res) => {
    try {
-      console.log(req.body)
+      console.log("req.body")
       const messages = req?.body?.messages || undefined;
       const privateKey = req?.body?.privateKey || undefined;
       const chainId = req?.body?.chainId || undefined;
@@ -36,5 +36,5 @@ app.get('/ping', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-   console.log(`Server is running on http://localhost:${PORT}`);
+   console.log(`Server is running XXXXXX on http://localhost:${PORT}`);
 });
