@@ -1,19 +1,19 @@
-import React, {PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState,} from "react";
-import {ETradePlatform, IAgentContext} from "./interface";
-import {IAgentToken, IChainConnected,} from "../../../services/api/agents-token/interface.ts";
-import {BASE_CHAIN_ID} from "@constants/chains";
-import {checkFileExistsOnLocal, getFilePathOnLocal, writeFileToLocal,} from "@contract/file";
+import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState, } from "react";
+import { ETradePlatform, IAgentContext } from "./interface";
+import { IAgentToken, IChainConnected, } from "../../../services/api/agents-token/interface.ts";
+import { BASE_CHAIN_ID } from "@constants/chains";
+import { checkFileExistsOnLocal, getFilePathOnLocal, writeFileToLocal, } from "@contract/file";
 import CAgentTokenAPI from "../../../services/api/agents-token";
-import {Wallet} from "ethers";
-import {EAgentTokenStatus} from "../../../services/api/agent/types.ts";
-import {SUPPORT_TRADE_CHAIN} from "../trade-agent/form-trade/index.tsx";
-import {compareString} from "@utils/string.ts";
-import {useAuth} from "@pages/authen/provider.tsx";
+import { Wallet } from "ethers";
+import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
+import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
+import { compareString } from "@utils/string.ts";
+import { useAuth } from "@pages/authen/provider.tsx";
 import localStorageService from "../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 import uniq from "lodash.uniq";
 import CAgentContract from "@contract/agent/index.ts";
-import {AgentType} from "@pages/home/list-agent";
+import { AgentType } from "@pages/home/list-agent";
 
 const initialValue: IAgentContext = {
    loading: false,
@@ -69,15 +69,15 @@ const AgentProvider: React.FC<
 
    const cPumpAPI = new CAgentTokenAPI();
 
-  const agentIdsHasBackup = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
+   const agentIdsHasBackup = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
 
-  const isBackupedPrvKey = useMemo(() => {
-    if (agentWallet && selectedAgent && agentIdsHasBackup) {
-      return agentIdsHasBackup.some(id => id === selectedAgent?.id);
-    }
+   const isBackupedPrvKey = useMemo(() => {
+      if (agentWallet && selectedAgent && agentIdsHasBackup) {
+         return agentIdsHasBackup.some(id => id === selectedAgent?.id);
+      }
 
-    return false;
-  }, [selectedAgent, agentWallet, agentIdsHasBackup]);
+      return false;
+   }, [selectedAgent, agentWallet, agentIdsHasBackup]);
 
    const [currentModel, setCurrentModel] = useState<{
     name: string;
@@ -108,11 +108,11 @@ const AgentProvider: React.FC<
    console.log("stephen: isInstalled", isInstalled);
    console.log("================================");
 
-  useEffect(() => {
-    fetchChainList();
-    fetchCoinPrices();
-    handleGetExistAgentFolders();
-  }, []);
+   useEffect(() => {
+      fetchChainList();
+      fetchCoinPrices();
+      handleGetExistAgentFolders();
+   }, []);
 
    useEffect(() => {
       if (selectedAgent) {
@@ -123,18 +123,18 @@ const AgentProvider: React.FC<
             setAgentWallet(undefined)
          }
 
-        intervalCheckAgentRunning();
+         intervalCheckAgentRunning();
       }
    }, [selectedAgent?.id]);
 
    const intervalCheckAgentRunning = () => {
-     if (refInterval.current) {
-       clearInterval(refInterval.current);
-     }
+      if (refInterval.current) {
+         clearInterval(refInterval.current);
+      }
 
-     checkAgentRunning();
+      checkAgentRunning();
 
-     refInterval.current = setInterval(checkAgentRunning, 3000);
+      refInterval.current = setInterval(checkAgentRunning, 3000);
    }
 
    useEffect(() => {
@@ -148,7 +148,7 @@ const AgentProvider: React.FC<
 
    const checkAgentRunning = async () => {
       try {
-         const res = await window.electronAPI.dockerCheckRunning(selectedAgent?.agent_name, selectedAgent?.network_id.toString());
+         const res = await window.electronAPI.dockerCheckRunning(selectedAgent?.agent_name as any, selectedAgent?.network_id.toString() as any);
 
          if (res === 'running') {
             setIsRunning(true);
@@ -276,19 +276,19 @@ const AgentProvider: React.FC<
       try {
          setIsStarting(true);
 
-        if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
-          await handleRunDockerAgent(agent);
-        } else if (agent.agent_type === AgentType.Model) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+            await handleRunDockerAgent(agent);
+         } else if (agent.agent_type === AgentType.Model) {
 
-        } else {
+         } else {
 
-        }
+         }
       } catch (e) {
          console.log('startAgent', e);
       } finally {
          setIsStopping(false);
 
-        intervalCheckAgentRunning();
+         intervalCheckAgentRunning();
       }
    };
 
@@ -296,7 +296,7 @@ const AgentProvider: React.FC<
       try {
          setIsInstalling(true);
 
-        if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await handleStopDockerAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
 
@@ -312,67 +312,67 @@ const AgentProvider: React.FC<
 
    const installUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
-        const chainId = agent?.network_id || BASE_CHAIN_ID;
-        const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
+         const chainId = agent?.network_id || BASE_CHAIN_ID;
+         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
 
-        const codeLanguage = await cAgent.getCodeLanguage();
-        const codeVersion = await cAgent.getCurrentVersion();
+         const codeLanguage = await cAgent.getCodeLanguage();
+         const codeVersion = await cAgent.getCurrentVersion();
 
-        const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
-        if (depsAgentStrs.length > 0) {
-          const dependAgents = await installDependAgents(depsAgentStrs, chainId);
-          console.log('dependAgents', dependAgents)
-        }
+         const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+         if (depsAgentStrs.length > 0) {
+            const dependAgents = await installDependAgents(depsAgentStrs, chainId);
+            console.log('dependAgents', dependAgents)
+         }
 
-        const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
-        const fileNameOnLocal = `prompt.${codeLanguage}`;
-        const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
+         const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
+         const fileNameOnLocal = `prompt.${codeLanguage}`;
+         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
 
-        let filePath: string | undefined = "";
-        const isExisted = await checkFileExistsOnLocal(
+         let filePath: string | undefined = "";
+         const isExisted = await checkFileExistsOnLocal(
             fileNameOnLocal,
             folderNameOnLocal
-        );
-        if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
+         );
+         if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
             filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
             console.log('filePath isExisted', filePath)
-        } else {
+         } else {
             const code = await cAgent.getAgentCode(codeVersion);
             filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
             console.log('filePath New', filePath)
-        }
+         }
       }
    };
 
-  const installDependAgents = async (agents: string[], chainId: number) => {
-    return await Promise.all(agents.map(async (agentContractAddr) => {
-      const cAgent = new CAgentContract({ contractAddress: agentContractAddr, chainId: chainId });
-      const codeLanguage = await cAgent.getCodeLanguage();
-      const codeVersion = await cAgent.getCurrentVersion();
-      const agentName = await cAgent.getAgentName();
+   const installDependAgents = async (agents: string[], chainId: number) => {
+      return await Promise.all(agents.map(async (agentContractAddr) => {
+         const cAgent = new CAgentContract({ contractAddress: agentContractAddr, chainId: chainId });
+         const codeLanguage = await cAgent.getCodeLanguage();
+         const codeVersion = await cAgent.getCurrentVersion();
+         const agentName = await cAgent.getAgentName();
 
-      const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
-      const fileNameOnLocal = `prompt.${codeLanguage}`;
-      const folderNameOnLocal = `${chainId}-${agentName}`;
+         const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
+         const fileNameOnLocal = `prompt.${codeLanguage}`;
+         const folderNameOnLocal = `${chainId}-${agentName}`;
 
-      const isExisted = await checkFileExistsOnLocal(
-        fileNameOnLocal,
-        folderNameOnLocal
-      );
-      if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
-        await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
-      } else {
-        const code = await cAgent.getAgentCode(codeVersion);
-        await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
-      }
+         const isExisted = await checkFileExistsOnLocal(
+            fileNameOnLocal,
+            folderNameOnLocal
+         );
+         if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
+            await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+         } else {
+            const code = await cAgent.getAgentCode(codeVersion);
+            await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
+         }
 
-      return {
-        agent_name: agentName,
-        network_id: chainId,
-        agent_contract_address: agentContractAddr
-      }
-    }));
-  }
+         return {
+            agent_name: agentName,
+            network_id: chainId,
+            agent_contract_address: agentContractAddr
+         }
+      }));
+   }
 
    const handleRunDockerAgent = async (agent?: IAgentToken) => {
       if (!agent) return;
@@ -393,14 +393,14 @@ const AgentProvider: React.FC<
       await window.electronAPI.dockerStopAgent(agent?.agent_name, agent?.network_id.toString());
    };
 
-    const handleGetExistAgentFolders = async () => {
+   const handleGetExistAgentFolders = async () => {
       try {
-        const folders = await window.electronAPI.getExistAgentFolders();
-        setInstalledAgents(folders || [])
+         const folders = await window.electronAPI.getExistAgentFolders();
+         setInstalledAgents(folders || [])
       } catch (error) {
         
       }
-    }
+   }
 
 
    const contextValues: any = useMemo(() => {

@@ -11,13 +11,13 @@ import React, {
    useState,
 } from 'react';
 import ScrollableFeed from 'react-scrollable-feed';
-import {v4} from 'uuid';
-import {INIT_WELCOME_MESSAGE} from './constants';
-import {ChatCompletionPayload, IChatMessage} from "../../../../services/api/agent/types.ts";
+import { v4 } from 'uuid';
+import { INIT_WELCOME_MESSAGE } from './constants';
+import { ChatCompletionPayload, IChatMessage } from "../../../../services/api/agent/types.ts";
 import AgentAPI from "../../../../services/api/agent";
-import {AgentContext} from "@pages/home/provider";
-import chatAgentDatabase, {PersistedMessageType} from "../../../../database/chatAgentDatabase.ts";
-import {AgentType} from "@pages/home/list-agent";
+import { AgentContext } from "@pages/home/provider";
+import chatAgentDatabase, { PersistedMessageType } from "../../../../database/chatAgentDatabase.ts";
+import { AgentType } from "@pages/home/list-agent";
 
 type IChatAgentProviderContext = {
   isStopReceiving?: boolean;
@@ -206,17 +206,17 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          ];
 
          const params: ChatCompletionPayload = {
-           messages: historyMessages,
-           agentId: agentId,
-           model_name: selectedAgent?.agent_base_model,
+            messages: historyMessages,
+            agentId: agentId,
+            model_name: selectedAgent?.agent_base_model,
          };
          if (selectedAgent?.kb_id) {
             const kbId = `${selectedAgent?.kb_id}`.replace('kb-', '');
             params['kb_id'] = `kb-${kbId}`;
          }
 
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type)) {
-            const res: string = await AgentAPI.chatAgentUtility({ agent: selectedAgent, prvKey: agentWallet?.privateKey, messages: [ { role: 'user', content: sendTxt }] });
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type as any)) {
+            const res: string = await AgentAPI.chatAgentUtility({ agent: selectedAgent!, prvKey: agentWallet?.privateKey, messages: [ { role: 'user', content: sendTxt }] });
 
             updateMessage(messageId, {
                msg: res,
