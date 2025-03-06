@@ -87,7 +87,9 @@ const execAsyncStream = (cmd: string) => {
          return reject(new Error("No active Electron window found."));
       }
 
-      const process = exec(cmd);
+      // const process = exec(cmd);
+      console.log(`Running command: zsh -l -c '${cmd}'`);
+      const process = exec(`zsh -l -c '${cmd}'`);
 
       process.stdout?.on("data", (data) => {
          sendEvent({ type: "output", message: data.toString(), cmd, win });
