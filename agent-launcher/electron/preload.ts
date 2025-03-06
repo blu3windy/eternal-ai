@@ -54,5 +54,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
    sendCommand: (cmd) => ipcRenderer.send("run-command", cmd),
    onCommandEvent: (callback) => ipcRenderer.on("command-event", (_, data) => callback(data)),
    
-   openExternal: (url) => shell.openExternal(url)
+   openExternal: (url) => ipcRenderer.send(EMIT_EVENT_NAME.OPEN_EXTRA_LINK, url),
 });
