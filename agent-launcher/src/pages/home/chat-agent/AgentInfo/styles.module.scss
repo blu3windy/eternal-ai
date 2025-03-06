@@ -11,6 +11,11 @@
         color: #FFF;
       }
 
+      .btnExport {
+        background-color: #FFFFFF;
+        color: #000;
+      }
+
       .btnBuy {
         background-color: #FFFFFF;
         color: #000;
@@ -36,6 +41,22 @@
     font-size: 14px;
     font-weight: 400;
     align-self: unset;
+  }
+
+  .btnExport {
+    background-color: #000;
+    font-size: 12px;
+    font-weight: 400;
+    color: #FFF;
+    border-radius: 100px;
+    height: 36px;
+
+    svg {
+      width: 18px;
+      path {
+        fill: #FFF;
+      }
+    }
   }
 
   .btnBuy {
