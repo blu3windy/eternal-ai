@@ -123,18 +123,18 @@ const AgentProvider: React.FC<
             setAgentWallet(undefined)
          }
 
-         intervalCheckAgentRunning();
+         intervalCheckAgentRunning(selectedAgent);
       }
    }, [selectedAgent?.id]);
 
-   const intervalCheckAgentRunning = () => {
+   const intervalCheckAgentRunning = (agent) => {
       if (refInterval.current) {
          clearInterval(refInterval.current);
       }
 
-      checkAgentRunning();
+      checkAgentRunning(agent);
 
-      refInterval.current = setInterval(checkAgentRunning, 3000);
+      refInterval.current = setInterval(checkAgentRunning, 3000, agent);
    }
 
    useEffect(() => {
@@ -149,17 +149,23 @@ const AgentProvider: React.FC<
       }
    }, [selectedAgent?.id, installedAgents]);
 
-   const checkAgentRunning = async () => {
+   const checkAgentRunning = async (agent) => {
       try {
-         const res = await window.electronAPI.dockerCheckRunning(selectedAgent?.agent_name as any, selectedAgent?.network_id.toString() as any);
+         if(agent) {
+            // const res = await window.electronAPI.dockerCheckRunning(selectedAgent?.agent_name as any, selectedAgent?.network_id.toString() as any);
+            const res = await cPumpAPI.checkAgentServiceRunning({ agent });
 
-         if (res === 'running') {
             setIsRunning(true);
-         } else {
-            setIsRunning(false);
+
+            // if (res === 'running') {
+            //    setIsRunning(true);
+            // } else {
+            //    setIsRunning(false);
+            // }
          }
       } catch (err) {
          console.error("Check agent running error:", err);
+         setIsRunning(false);
       }
    }
 
@@ -289,7 +295,7 @@ const AgentProvider: React.FC<
       } finally {
          setIsStopping(false);
 
-         intervalCheckAgentRunning();
+         intervalCheckAgentRunning(agent);
       }
    };
 

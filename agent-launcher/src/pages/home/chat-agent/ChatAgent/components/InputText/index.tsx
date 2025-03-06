@@ -1,4 +1,4 @@
-import {Button, Divider, Flex, Text} from '@chakra-ui/react';
+import {Button, Divider, Flex, Box} from '@chakra-ui/react';
 import React, { useContext } from 'react';
 import AutosizeTextarea from 'react-autosize-textarea';
 import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
@@ -154,9 +154,9 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
                               Stop running {selectedAgent?.agent_name}
                             </Button>
                             {
-                              agentWallet && (
+                              agentWallet ? (
                                 <AgentWalletInfo />
-                              )
+                              ) : <Box />
                             }
                           </Flex>
                         </>
