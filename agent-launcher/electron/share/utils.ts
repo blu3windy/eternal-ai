@@ -4,7 +4,7 @@ import { app } from "electron";
 export const PUBLIC_SCRIPT = 'public/scripts';
 
 const SCRIPTS_NAME = {
-   DOCKER_INSTALL_SCRIPT: "install-colima-osascript.sh",
+   DOCKER_INSTALL_SCRIPT: "docker-install.sh",
    BOOTSTRAP: "sudo-bootstrap.sh",
    DOCKER_FILE : "Dockerfile",
    PACKAGE_JSON: "package.json",
