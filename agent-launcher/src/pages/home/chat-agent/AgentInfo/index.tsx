@@ -41,7 +41,7 @@ const AgentInfo = () => {
     <Flex className={s.container}>
       <Flex justifyContent={"space-between"} w={"100%"}>
         {
-          selectedAgent?.agent_type === AgentType.UtilityJS ? (
+          [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type as AgentType) ? (
             <SelectModel
               currentModel={currentModel}
               setCurrentModel={setCurrentModel}

@@ -76,7 +76,7 @@ const AgentProvider: React.FC<
 
    const requireInstall = useMemo(() => {
       if (selectedAgent) {
-         return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model].includes(selectedAgent?.agent_type as AgentType);
+         return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model, AgentType.Infra].includes(selectedAgent?.agent_type as AgentType);
       }
 
       return false;
@@ -235,7 +235,7 @@ const AgentProvider: React.FC<
       try {
          setIsInstalling(true);
 
-         if (agent.agent_type === AgentType.UtilityJS || agent.agent_type === AgentType.UtilityPython) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
 
@@ -254,7 +254,13 @@ const AgentProvider: React.FC<
       try {
          setIsStarting(true);
 
-         await handleRunDockerAgent(agent);
+        if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+          await handleRunDockerAgent(agent);
+        } else if (agent.agent_type === AgentType.Model) {
+
+        } else {
+
+        }
       } catch (e) {
          console.log('startAgent', e);
       } finally {
@@ -266,7 +272,7 @@ const AgentProvider: React.FC<
       try {
          setIsInstalling(true);
 
-         if (agent.agent_type === AgentType.UtilityJS || agent.agent_type === AgentType.UtilityPython) {
+        if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await handleStopDockerAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
 

@@ -45,8 +45,9 @@ export enum FilterOption {
   Poppular = 'poppular',
   Model = 'model',
   NonModel = 'non-model',
-  Installed = 'Installed',
+  Installed = 'installed',
   NonInstalled = 'non-installed',
+  Infra = 'infra',
 }
 
 export const FilterBy = [
@@ -55,6 +56,7 @@ export const FilterBy = [
    { value: FilterOption.NonModel, label: 'Non-model' },
    { value: FilterOption.Installed, label: 'Installed' },
    { value: FilterOption.NonInstalled, label: 'Non-installed' },
+   { value: FilterOption.Infra, label: 'Infra' },
 ];
 
 export enum AgentType {
@@ -66,6 +68,7 @@ export enum AgentType {
   UtilityJS = 5,
   UtilityPython = 6,
   Model = 7,
+  Infra = 8,
 }
 
 export const AgentTypeName = {
@@ -76,6 +79,7 @@ export const AgentTypeName = {
    [AgentType.Zerepy]: 'Zerepy',
    [AgentType.UtilityJS]: 'Utility JS',
    [AgentType.UtilityPython]: 'Utility Python',
+   [AgentType.Infra]: 'Infra',
 }
 
 const AgentsList = () => {
@@ -140,6 +144,8 @@ const AgentsList = () => {
             params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython].join(',');
          } else if ([FilterOption.Model].includes(refParams.current.filter)) {
             params.agent_types = [AgentType.Model].join(',');
+         } else if ([FilterOption.Infra].includes(refParams.current.filter)) {
+            params.agent_types = [AgentType.Infra].join(',');
          }
 
          const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
