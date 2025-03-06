@@ -71,6 +71,17 @@ class CAgentTokenAPI extends CApiClient {
     const response = (await this.api.post("/agent/install", params)) as any;
     return response;
   };
+
+  public checkAgentServiceRunning = async ({agent}: {agent: IAgentToken}): Promise<any> => {
+    try {
+      const res: any = await this.api.get(
+        `http://localhost:33030/${agent?.network_id}-${agent?.agent_name}/ping`
+      );
+      return res;
+    } catch (e) {
+      throw e;
+    }
+  }
 }
 
 export default CAgentTokenAPI;
