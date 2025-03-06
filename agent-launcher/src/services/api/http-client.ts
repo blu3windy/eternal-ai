@@ -1,22 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosHeaders } from 'axios';
+import localStorageService from "../../storage/LocalStorageService.ts";
+import STORAGE_KEYS from "@constants/storage-key.ts";
 
 export const TIMEOUT = 5 * 60000;
 export const HEADERS = { 'Content-Type': 'application/json' };
 
 export const getAuthenToken = () => {
-   // const authToken = LocalStorage.getItem(
-   //   STORAGE_KEYS.NAKA_WALLET_API_ACCESS_TOKEN,
-   // );
-   // if (authToken) {
-   //   return authToken;
-   // }
-   // const anonymousAuthToken = LocalStorage.getItem(
-   //   STORAGE_KEYS.ANONYMOUS_AUTH_TOKEN,
-   // );
-   // if (anonymousAuthToken) {
-   //   return anonymousAuthToken;
-   // }
+   const authToken = localStorageService.getItem(STORAGE_KEYS.AUTHEN_TOKEN);
+   if (authToken) {
+     return authToken;
+   }
    return '';
 };
 
@@ -24,12 +18,11 @@ export const getClientHeaders = () => {
    const headers = {
       ...HEADERS,
    } as Partial<AxiosHeaders>;
-   // const authToken =
-   //   LocalStorage.getItem(STORAGE_KEYS.NAKA_WALLET_API_ACCESS_TOKEN) ||
-   //   LocalStorage.getItem(STORAGE_KEYS.NAKA_WALLET_AUTHEN);
-   // if (authToken) {
-   //   headers.Authorization = `${authToken}`;
-   // }
+   const authToken = getAuthenToken();
+
+   if (authToken) {
+     headers.Authorization = `${authToken}`;
+   }
    return headers;
 };
 
@@ -44,12 +37,11 @@ const createAxiosInstance = ({ baseURL = '' }: { baseURL: string }) => {
 
    instance.interceptors.request.use(
       (config) => {
-      // const authToken =
-      //   LocalStorage.getItem(STORAGE_KEYS.NAKA_WALLET_API_ACCESS_TOKEN) ||
-      //   LocalStorage.getItem(STORAGE_KEYS.NAKA_WALLET_AUTHEN);
-      // if (authToken) {
-      //   config.headers.Authorization = `${authToken}`;
-      // }
+      const authToken = getAuthenToken();
+
+      if (authToken) {
+        config.headers.Authorization = `${authToken}`;
+      }
          return config;
       },
       (error) => {
@@ -106,10 +98,10 @@ export const createCustomAxiosInstance = ({
 
    instance.interceptors.request.use(
       (config) => {
-      // const authToken = LocalStorage.getItem(STORAGE_KEYS.NAKA_WALLET_AUTHEN);
-      // if (authToken) {
-      //   config.headers.Authorization = `Bearer ${authToken}`;
-      // }
+      const authToken = getAuthenToken();
+      if (authToken) {
+        config.headers.Authorization = `Bearer ${authToken}`;
+      }
          return config;
       },
       (error) => {

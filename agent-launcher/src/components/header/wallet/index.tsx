@@ -107,10 +107,9 @@ const HeaderWallet: React.FC<IProps> = ({
                      border:
                 color === 'black'
                    ? '1px solid #B6B6B6'
-                   : '1px solid #ffffff12',
-                    borderRadius: '1000px'
-                //      background:
-                // color === 'black' ? '#f8f9fa' : 'rgba(255, 255, 255, 0.1)',
+                   : '1px solid #FFFFFF1A',
+                    borderRadius: '1000px',
+                     background: color === 'black' ? '#f8f9fa' : '#FFFFFF1A',
                   }}
                >
                   <Image
@@ -123,7 +122,7 @@ const HeaderWallet: React.FC<IProps> = ({
 
                   <Text
                      textAlign={'center'}
-                     fontSize={'13px'}
+                     fontSize={'16px'}
                      fontWeight={400}
                      color={color}
                      whiteSpace={'nowrap'}

@@ -7,8 +7,11 @@ import ForgotPass from "@pages/authen/ForgotPass";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
 import Starter from "@pages/authen/Starter";
 import eaiCrypto from "@utils/crypto";
+import AgentAPI from "@services/api/agent";
 import Loggers from "@components/Loggers";
 import LoggersButton from "@components/Loggers/Loggers.button.tsx";
+import localStorageService from "../../storage/LocalStorageService.ts";
+import STORAGE_KEYS from "@constants/storage-key.ts";
 
 interface IReqAgentSecretKey {
    chainId: string;
@@ -30,6 +33,21 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
    const [hasUser, setHasUser] = useState<boolean>(false);
    const [loading, setLoading] = useState<boolean>(true);
    const { checking } = useStarter();
+
+   useEffect(() => {
+      if(signer) {
+         const getAndSaveAuthen = async () => {
+            const authenToken = await getAuthenToken(signer.privateKey);
+
+            if (authenToken) {
+               localStorageService.setItem(STORAGE_KEYS.AUTHEN_TOKEN, authenToken);
+               localStorageService.setItem(STORAGE_KEYS.WALLET_ADDRESS, signer.address);
+            }
+         }
+
+         getAndSaveAuthen();
+      }
+   }, [signer]);
 
    const onLogin = async (pass: string) => {
       try {
@@ -71,12 +89,10 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       _signature = _signature.startsWith("0x")
          ? _signature.replace("0x", "")
          : _signature;
-      // const authenCode: string = await this.api.post('auth/verify', {
-      //    signature: _signature, message: _message, address: _signer.address
-      // });
-      // return authenCode;
 
-      return ""
+      const authenCode: string = await AgentAPI.getAuthenToken({ signature: _signature, message: _message, address: _signer.address });
+
+      return authenCode;
    }
 
    const values = useMemo(() => {

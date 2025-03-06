@@ -118,15 +118,31 @@ const AgentsList = () => {
             page: isNew ? 1 : refParams.current.page + 1,
          };
 
-         const { agents: newTokens } = await cPumpAPI.getAgentTokenList({
+         const params: any = {
             page: refParams.current.page,
             limit: refParams.current.limit,
             sort_col: refParams.current.sort,
             search: refParams.current.search,
             filter_col: refParams.current.filter,
             chain: '',
-            agent_types: '5,6,7'
-         });
+         };
+
+
+         if ([FilterOption.Installed, FilterOption.NonInstalled].includes(refParams.current.filter)) {
+            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model].join(',');
+
+            if (FilterOption.Installed === refParams.current.filter) {
+               params.installed = true;
+            } else if (FilterOption.NonInstalled === refParams.current.filter) {
+               params.installed = false;
+            }
+         } else if ([FilterOption.NonModel].includes(refParams.current.filter)) {
+            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython].join(',');
+         } else if ([FilterOption.Model].includes(refParams.current.filter)) {
+            params.agent_types = [AgentType.Model].join(',');
+         }
+
+         const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
 
          if (isNew) {
             setAgents(newTokens);
@@ -365,6 +381,8 @@ const AgentsList = () => {
       )
    };
 
+   console.log('stephen: agents', agents);
+
    return (
       <Box className={s.container}>
          <Flex
@@ -404,7 +422,7 @@ const AgentsList = () => {
                gridRowGap={"8px"}
                overflow={'hidden !important'}
             >
-               {agents.map((item: IAgentToken, i) => (
+               {agents?.map((item: IAgentToken, i) => (
                   <GridItem key={item.id}>
                      <AgentItem token={item} />
                   </GridItem>

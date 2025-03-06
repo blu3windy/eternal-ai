@@ -1,15 +1,17 @@
 'use client';
 
-import axios, { Axios, AxiosError, AxiosRequestConfig, AxiosResponse, } from 'axios';
-import { BASE_CHAIN_ID, IMAGINE_URL } from "../../../config.ts";
+import axios, {Axios, AxiosError, AxiosRequestConfig, AxiosResponse,} from 'axios';
+import {BASE_CHAIN_ID, IMAGINE_URL} from "../../../config.ts";
+import localStorageService from "../../../storage/LocalStorageService.ts";
+import STORAGE_KEYS from "@constants/storage-key.ts";
+import {getAuthenToken} from "@services/api/http-client.ts";
 
 export const IGNORE_ADDRESS_TEXT = '';
 
 class CApiClient {
-   private address = '0x123456789ABCDEF';
+  private address = localStorageService.getItem(STORAGE_KEYS.WALLET_ADDRESS);
    protected requestConfig: AxiosRequestConfig = {
       baseURL: `${IMAGINE_URL}/api`,
-      // baseURL: `https://api.cat.fun/api`,
       timeout: 5 * 60000,
       headers: {
          'Content-Type': 'application/json',
@@ -20,13 +22,16 @@ class CApiClient {
 
    constructor() {
       // const wallet = store.getState().wallet.wallet;
-      this.api = axios.create(this.requestConfig);
+     this.api = axios.create(this.requestConfig);
 
       this.api.interceptors.request.use(
          (config: any) => {
             const _config = config;
 
-            // _config.headers.Authorization = `Bearer ${AuthenStorage.getWalletToken()}`;
+           const authToken = getAuthenToken();
+           if (authToken) {
+             _config.headers.Authorization = `${authToken}`;
+           }
             let params = _config?.params;
             if (!params) {
                params = {};

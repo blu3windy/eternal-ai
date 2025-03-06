@@ -2,9 +2,8 @@ import {Box, Button, Flex, Image, Text} from "@chakra-ui/react";
 import ChatBox from "@pages/home/chat-agent/ChatAgent/components/ChatBox";
 import {ChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import s from "./styles.module.scss";
-import React, {useContext, useMemo} from "react";
+import React, {useContext} from "react";
 import {AgentContext} from "@pages/home/provider";
-import {AgentType} from "@pages/home/list-agent";
 
 function ChatAgent() {
   const {
@@ -13,7 +12,8 @@ function ChatAgent() {
     isInstalling,
     agentWallet,
     createAgentWallet,
-    isInstalled
+    isInstalled,
+    isCanChat,
   } = useContext(AgentContext);
 
   const avatarUrl =
@@ -23,10 +23,6 @@ function ChatAgent() {
 
   const description =
     selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
-
-  const requireInstall = useMemo(() => {
-    return selectedAgent?.agent_type === AgentType.UtilityJS || selectedAgent?.agent_type === AgentType.UtilityPython || selectedAgent?.agent_type === AgentType.Model;
-  }, [selectedAgent]);
 
   const handleInstall = () => {
     installAgent(selectedAgent);
@@ -39,7 +35,7 @@ function ChatAgent() {
   return (
     <Box className={s.container}>
       {/* <AgentInfo /> */}
-      {!requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && agentWallet))) ? (
+      {isCanChat ? (
         <ChatAgentProvider>
           <ChatBox />
         </ChatAgentProvider>
@@ -47,30 +43,13 @@ function ChatAgent() {
         <Flex
           className={s.installContainer}
           direction={"column"}
-          w={"100%"}
           alignItems={"center"}
-          gap={"20px"}
+          justifyContent={"center"}
+          w={"100%"}
+          gap={"32px"}
         >
-          <Flex
-            direction={"column"}
-            alignItems={"center"}
-            position={"relative"}
-          >
-            <Image src="/images/bg-agent-chat.png" w={"80%"} />
-            <Flex
-              position="absolute"
-              height="70px"
-              w="70px"
-              top={"50%"}
-              left={"50%"}
-              transform={"translate(-50%, -50%)"}
-            >
-              <Flex className={s?.["glow-on-hover"]}>
-                <Image w="70px" h="70px" src={avatarUrl} borderRadius={"50%"} />
-              </Flex>
-            </Flex>
-            <Text className={s.nameText}>{selectedAgent?.agent_name}</Text>
-          </Flex>
+          <Image w="280px" h="280px" src={avatarUrl} borderRadius={"50%"} />
+          <Text className={s.nameText}>{selectedAgent?.agent_name}</Text>
           {
             isInstalled && selectedAgent?.required_wallet && !agentWallet ? (
               <>

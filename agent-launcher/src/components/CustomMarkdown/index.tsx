@@ -8,7 +8,7 @@ import { CustomComponentProps } from './types';
 import { THINK_TAG_REGEX } from './constants';
 
 const preprocessMarkdown = (content: string) => {
-   const result = content.replace(
+   const result = content?.replace(
       THINK_TAG_REGEX,
       (_, innerText) =>
          `<think>${innerText.trim().replace(/\n/g, '<br />')}</think>`,

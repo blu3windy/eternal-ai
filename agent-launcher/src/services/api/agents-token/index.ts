@@ -38,6 +38,7 @@ class CAgentTokenAPI extends CApiClient {
     const response = (await this.api.get(
       `/agent/dashboard/${token_address}`
     )) as any;
+
     return response;
   };
 
@@ -61,6 +62,13 @@ class CAgentTokenAPI extends CApiClient {
     const response = (await this.api.get(
       `https://api.nakachain.xyz/api/coin-prices`
     )) as any;
+    return response;
+  };
+
+  public saveAgentInstalled = async (
+    params: any
+  ): Promise<{ agents: IAgentToken[] }> => {
+    const response = (await this.api.post("/agent/install", params)) as any;
     return response;
   };
 }

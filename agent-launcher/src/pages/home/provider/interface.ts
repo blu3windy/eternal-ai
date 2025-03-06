@@ -31,4 +31,5 @@ export interface IAgentContext {
   createAgentWallet: any;
   isInstalled: boolean;
   installedAgents: string[];
+  isCanChat: boolean;
 }

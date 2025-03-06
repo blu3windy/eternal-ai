@@ -39,6 +39,7 @@ const initialValue: IAgentContext = {
    createAgentWallet: () => {},
    isInstalled: false,
    installedAgents: [],
+   isCanChat: false,
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -73,9 +74,30 @@ const AgentProvider: React.FC<
 
    const { genAgentSecretKey } = useAuth();
 
+   const requireInstall = useMemo(() => {
+      if (selectedAgent) {
+         return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model].includes(selectedAgent?.agent_type as AgentType);
+      }
+
+      return false;
+   }, [selectedAgent?.id]);
+
+   const isCanChat = useMemo(() => {
+      return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet)));
+   }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled]);
+
+   const isRunning = useMemo(() => {
+      return runningAgents.includes(selectedAgent?.id as number);
+   }, [runningAgents, selectedAgent?.id]);
+
    console.log("stephen: selectedAgent", selectedAgent);
    console.log("stephen: currentModel", currentModel);
    console.log("stephen: agentWallet", agentWallet);
+   console.log("stephen: installedAgents", installedAgents);
+   console.log("stephen: isCanChat", isCanChat);
+   console.log("stephen: isRunning", isRunning);
+   console.log("stephen: requireInstall", requireInstall);
+   console.log("stephen: isInstalled", isInstalled);
    console.log("================================");
 
    useEffect(() => {
@@ -86,24 +108,23 @@ const AgentProvider: React.FC<
          } else {
             setAgentWallet(undefined)
          }
-
-         const installedAgents = localStorageService.getItem(STORAGE_KEYS.INSTALLED_AGENTS);
-
-         if (installedAgents && installedAgents.includes(selectedAgent?.id?.toString())) {
-            setIsInstalled(true);
-         } else {
-            setIsInstalled(false);
-         }
       }
-   }, [selectedAgent]);
+   }, [selectedAgent?.id]);
+
+   useEffect(() => {
+      if (selectedAgent && installedAgents && installedAgents.some(a => a === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
+         setIsInstalled(true);
+         cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id] });
+      } else {
+         setIsInstalled(false);
+      }
+   }, [selectedAgent?.id, installedAgents]);
 
    const createAgentWallet = async () => {
       try {
          if (!selectedAgent) return;
          const prvKey = await genAgentSecretKey({ chainId: selectedAgent?.network_id.toString(), agentName: selectedAgent?.agent_name });
          setAgentWallet(new Wallet(prvKey));
-
-         console.log('agentWallet?.privateKey', agentWallet?.privateKey);
 
          const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
 
@@ -136,11 +157,8 @@ const AgentProvider: React.FC<
 
    const tradePlatform = useMemo(() => {
       return getTradePlatform(selectedAgent as any);
-   }, [selectedAgent]);
+   }, [selectedAgent?.id]);
 
-   const isRunning = useMemo(() => {
-      return runningAgents.includes(selectedAgent?.id as number);
-   }, [runningAgents, selectedAgent]);
 
    useEffect(() => {
       if (selectedAgent && chainList) {
@@ -286,9 +304,6 @@ const AgentProvider: React.FC<
                filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
                console.log('filePath New', filePath)
             }
-
-         const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.INSTALLED_AGENTS)!);
-         localStorageService.setItem(STORAGE_KEYS.INSTALLED_AGENTS, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
       }
    };
 
@@ -345,7 +360,8 @@ const AgentProvider: React.FC<
          coinPrices,
          createAgentWallet,
          isInstalled,
-         installedAgents
+         installedAgents,
+         isCanChat,
       };
    }, [
       loading,
@@ -371,6 +387,7 @@ const AgentProvider: React.FC<
       createAgentWallet,
       isInstalled,
       installedAgents,
+      isCanChat,
    ]);
 
    return (
