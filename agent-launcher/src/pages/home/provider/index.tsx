@@ -99,16 +99,16 @@ const AgentProvider: React.FC<
          } else {
             setAgentWallet(undefined)
          }
-
-         const installedAgents = localStorageService.getItem(STORAGE_KEYS.INSTALLED_AGENTS);
-
-         if (installedAgents && installedAgents.includes(selectedAgent?.id?.toString())) {
-            setIsInstalled(true);
-         } else {
-            setIsInstalled(false);
-         }
       }
    }, [selectedAgent]);
+
+   useEffect(() => {
+      if (selectedAgent && installedAgents && installedAgents.includes(selectedAgent?.id?.toString())) {
+         setIsInstalled(true);
+      } else {
+         setIsInstalled(false);
+      }
+   }, [selectedAgent, installedAgents]);
 
    const createAgentWallet = async () => {
       try {
@@ -299,9 +299,6 @@ const AgentProvider: React.FC<
                filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
                console.log('filePath New', filePath)
             }
-
-         const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.INSTALLED_AGENTS)!);
-         localStorageService.setItem(STORAGE_KEYS.INSTALLED_AGENTS, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
       }
    };
 
