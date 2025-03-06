@@ -387,7 +387,9 @@ func (s *Service) UtilityPostTwitter(ctx context.Context, userAddress string, re
 		},
 	)
 	if err != nil {
-		resp.Message = err.Error()
+		if resp.Message == "" {
+			resp.Message = err.Error()
+		}
 		return resp, errs.NewError(err)
 	}
 	return resp, nil

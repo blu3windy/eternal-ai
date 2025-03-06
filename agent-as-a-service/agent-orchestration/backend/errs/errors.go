@@ -53,7 +53,7 @@ var (
 	ErrApiKeyRateLimited = &Error{Code: -2016, Message: "API Key rate limit"}
 
 	ErrAgentUtilityNotAuthen       = &Error{Code: -3000, Message: "Please authentican with this link and try again"}
-	ErrAgentUtilityInvalidBalance  = &Error{Code: -3001, Message: "Your balance isn't enough. Please topup and try again"}
+	ErrAgentUtilityInvalidBalance  = &Error{Code: -3001, Message: "Your balance isn't enough. Please topup and try again. Min 1 $EAI per requests."}
 	ErrAgentUtilityPostTweetFailed = &Error{Code: -3002, Message: "Post tweet failed. Please try again."}
 	ErrAgentUtilitySystemError     = &Error{Code: -3003, Message: "Something went wrong. Please try again."}
 	ErrAgentUtilityNotFound        = &Error{Code: -3004, Message: "Please authentican with this link and try again"}
