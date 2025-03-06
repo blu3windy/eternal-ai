@@ -27,7 +27,7 @@ export const getExplorerByChain = ({
     // [ChainId.MegaETHTestnet]: 'megaeth-testnet',
   };
 
-  switch (chainId.toString()) {
+  switch (chainId?.toString?.()) {
     // case ChainId.ShardAI: {
     //   return `https://explorer.shard-ai.l2aas.com/${type}/${address}`;
     // }
@@ -53,9 +53,9 @@ export const getExplorerByChain = ({
     //   return ``;
     // }
     default: {
-      if (chainIdToChainName[chainId.toString()]) {
+      if (chainIdToChainName?.[chainId?.toString?.()]) {
         return `https://www.okx.com/web3/explorer/${
-          chainIdToChainName[chainId.toString()]
+          chainIdToChainName?.[chainId?.toString?.()]
         }/${type}/${address}`;
       }
 
