@@ -1,7 +1,7 @@
 import s from "./styles.module.scss";
 import {Box, Button, Divider, Flex, Text} from "@chakra-ui/react";
 import SelectModel from "@pages/home/chat-agent/AgentInfo/SelectModel";
-import React, {useContext} from "react";
+import React, {useContext, useMemo} from "react";
 import {AgentContext} from "@pages/home/provider";
 import {formatCurrency} from "@utils/format.ts";
 import Percent24h from "@components/Percent";
@@ -23,7 +23,9 @@ const AgentInfo = () => {
     isInstalled,
     isStarting,
     startAgent,
-    isCanChat
+    isCanChat,
+    agentWallet,
+    isBackupedPrvKey,
   } = useContext(AgentContext);
 
   const description =
@@ -37,11 +39,17 @@ const AgentInfo = () => {
     }
   };
 
+  const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
+
+  const color = useMemo(() => {
+    return isCanChat || showBackupPrvKey ? 'black' : 'white';
+  }, [isCanChat, showBackupPrvKey]);
+
   return (
     <Flex className={s.container}>
       <Flex justifyContent={"space-between"} w={"100%"}>
         {
-          [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type as AgentType) ? (
+          isCanChat && [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type as AgentType) ? (
             <SelectModel
               currentModel={currentModel}
               setCurrentModel={setCurrentModel}
@@ -52,7 +60,7 @@ const AgentInfo = () => {
             <Box/>
           )
         }
-        <Flex gap={"6px"} alignItems={"center"} className={cx(s.contentContainer, !isCanChat ? s.isSetup : '')}>
+        <Flex gap={"6px"} alignItems={"center"} className={cx(s.contentContainer, isCanChat || showBackupPrvKey ? '' : s.isSetup)}>
           <Flex gap={"6px"} alignItems={"center"} className={s.content}>
             {isInstalled && (
               <Button
@@ -65,7 +73,7 @@ const AgentInfo = () => {
                 {isRunning ? "Stop" : "Start"}
               </Button>
             )}
-            <InfoTooltip iconSize="sm" label={description} placement="top" iconColor={isCanChat ? 'black' : 'white'} />
+            <InfoTooltip iconSize="sm" label={description} placement="top" iconColor={color} />
             <Text className={s.text}>{selectedAgent?.agent_name}</Text>
             <Text className={s.text} opacity={0.7}>${selectedAgent?.token_symbol}</Text>
             <Divider orientation={'vertical'} borderColor={'#FFFFFF1A'} h={"32px"} m={'auto 0'}/>
@@ -81,7 +89,7 @@ const AgentInfo = () => {
         </Flex>
       </Flex>
       <Flex minW={"350px"} justifyContent={"flex-end"}>
-        <HeaderWallet color={isCanChat ? 'black' : "white"}/>
+        <HeaderWallet color={color}/>
       </Flex>
     </Flex>
   );
