@@ -231,7 +231,7 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, userAddress 
 			"response_type":         "code",
 			"code_challenge":        "challenge",
 			"code_challenge_method": "plain",
-			"scope":                 "offline.access+tweet.read+tweet.write+users.read+follows.write+like.write+like.read+users.read",
+			"scope":                 "offline.access+tweet.read+tweet.write+users.read+follows.write+like.write+like.read",
 		},
 	), nil
 }
