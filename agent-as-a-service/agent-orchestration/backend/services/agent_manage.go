@@ -91,8 +91,12 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		SourceUrl:        req.SourceUrl,
 		AuthenUrl:        req.AuthenUrl,
 		DependAgents:     req.DependAgents,
-		RequiredWallet:   *req.RequiredWallet,
-		IsOnchain:        *req.IsOnchain,
+	}
+	if req.RequiredWallet != nil {
+		agent.RequiredWallet = *req.RequiredWallet
+	}
+	if req.IsOnchain != nil {
+		agent.IsOnchain = *req.IsOnchain
 	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
