@@ -1,0 +1,15 @@
+.container {
+  flex-direction: column;
+  // padding: 16px;
+  .processing {
+    & > div {
+      background: linear-gradient(90deg, #5400FB 0%, #5400FB 100%);
+    }
+  }
+  .textPercent {
+    background: linear-gradient(90deg, #5400FB 0%, #5400FB 100%);
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}

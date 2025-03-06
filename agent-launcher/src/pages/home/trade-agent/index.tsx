@@ -4,6 +4,7 @@ import FormTradeAgentContainer from "./form-trade";
 import { useContext } from "react";
 import { AgentContext } from "../provider";
 import TokenChart from "./chart-token";
+import AgentOnChainInfo from "./onchain-info";
 
 const TradeAgent = () => {
   const { selectedAgent } = useContext(AgentContext);
@@ -20,22 +21,22 @@ const TradeAgent = () => {
               </Text>
             </Text>
 
-            <Box
+            {/* <Box
               cursor={"pointer"}
               background={"#fff"}
               padding={"10px"}
               borderRadius={"100px"}
             >
               <Image src="/icons/ic-chart.svg" />
-            </Box>
+            </Box> */}
           </Flex>
-          <Text fontSize={"14px"}>
-            Cryptoknight Drakon, born from fusion of medieval fantasy and
-            blockchain...
-          </Text>
+          <Text fontSize={"14px"}>{selectedAgent?.token_desc}</Text>
         </Flex>
         <Divider borderColor={"rgba(0, 0, 0, 0.1)"} />
         <FormTradeAgentContainer />
+        <Box p={"0px 24px"}>
+          <AgentOnChainInfo />
+        </Box>
       </Flex>
     </Flex>
   );
