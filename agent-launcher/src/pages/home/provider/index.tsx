@@ -103,12 +103,13 @@ const AgentProvider: React.FC<
    }, [selectedAgent]);
 
    useEffect(() => {
-      if (selectedAgent && installedAgents && installedAgents.includes(selectedAgent?.id?.toString())) {
+      if (selectedAgent && installedAgents && installedAgents.some(a => a === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
          setIsInstalled(true);
+         cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id] });
       } else {
          setIsInstalled(false);
       }
-   }, [selectedAgent, installedAgents]);
+   }, [selectedAgent?.id, installedAgents]);
 
    const createAgentWallet = async () => {
       try {

@@ -64,6 +64,13 @@ class CAgentTokenAPI extends CApiClient {
     )) as any;
     return response;
   };
+
+  public saveAgentInstalled = async (
+    params: any
+  ): Promise<{ agents: IAgentToken[] }> => {
+    const response = (await this.api.post("/agent/install", params)) as any;
+    return response;
+  };
 }
 
 export default CAgentTokenAPI;
