@@ -1,0 +1,35 @@
+.rowData {
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0px;
+  .left {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 17px;
+    /* identical to box height */
+
+    color: #000000;
+
+    opacity: 0.7;
+  }
+  a {
+    cursor: pointer;
+  }
+  .right {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 17px;
+    /* identical to box height */
+
+    color: #000000;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    img {
+      width: 14px;
+      height: 14px;
+    }
+  }
+}

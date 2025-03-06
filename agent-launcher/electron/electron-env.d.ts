@@ -49,6 +49,9 @@ interface IElectronAPI {
 
   sendCommand: (cmd: string) => void
   onCommandEvent: (callback: (data: any) => void) => void
+
+  // Open extra link
+  openExternal: (url: string) => Promise<void>
 }
 
 // Used in Renderer process, expose in `preload.ts`

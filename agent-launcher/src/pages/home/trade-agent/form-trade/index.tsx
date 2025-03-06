@@ -5,10 +5,24 @@ import { Form, Formik } from "formik";
 import FormTradeAgent from "./form";
 import { EAgentTrade, IFormValues } from "./interface";
 import s from "./styles.module.scss";
+import { useContext } from "react";
+import { AgentContext } from "@pages/home/provider";
+import Curving from "../curving";
+import {
+  BASE_CHAIN_ID,
+  SYMBIOSIS_CHAIN_ID,
+  BASE_SEPOLIA_CHAIN_ID,
+} from "../../../../constants/chains";
 
-export const SUPPORT_TRADE_CHAIN = [];
+export const SUPPORT_TRADE_CHAIN = [
+  BASE_CHAIN_ID,
+  SYMBIOSIS_CHAIN_ID,
+  BASE_SEPOLIA_CHAIN_ID,
+];
 
 const FormTradeAgentContainer = () => {
+  const { selectedAgent } = useContext(AgentContext);
+
   const onSubmit = async (values: IFormValues, actions: any) => {
     try {
       actions.setSubmitting(true);
@@ -30,7 +44,14 @@ const FormTradeAgentContainer = () => {
         >
           <Text className={s.title}>Market cap</Text>
           <Text className={s.value}>
-            {`$${formatCurrency(2653521, 0, 3, "BTC", false, true)}`}
+            {`$${formatCurrency(
+              selectedAgent?.meme?.market_cap,
+              0,
+              3,
+              "BTC",
+              false,
+              true
+            )}`}
           </Text>
         </Flex>
         <Flex
@@ -40,7 +61,10 @@ const FormTradeAgentContainer = () => {
           className={s.col}
         >
           <Text className={s.title}>24H %</Text>
-          <Percent24h percent={32} clsName={s.value} />
+          <Percent24h
+            percent={selectedAgent?.meme?.percent}
+            clsName={s.value}
+          />
         </Flex>
         <Flex
           flexDirection={"column"}
@@ -50,7 +74,14 @@ const FormTradeAgentContainer = () => {
         >
           <Text className={s.title}>Holder</Text>
           <Text className={s.value}>
-            {`${formatCurrency(200, 0, 3, "BTC", false, true)}`}
+            {`${formatCurrency(
+              selectedAgent?.meme?.holders,
+              0,
+              3,
+              "BTC",
+              false,
+              true
+            )}`}
           </Text>
         </Flex>
       </Flex>
@@ -71,6 +102,7 @@ const FormTradeAgentContainer = () => {
           </Form>
         )}
       </Formik>
+      <Curving />
     </Flex>
   );
 };

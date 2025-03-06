@@ -67,6 +67,13 @@ const AgentProvider: React.FC<
    const [isRunning, setIsRunning] = useState(false);
    const refInterval = useRef<any>();
 
+  const [currentModel, setCurrentModel] = useState<{
+    name: string;
+    id: string;
+  } | null>(null);
+
+  const { genAgentSecretKey } = useAuth();
+
    const cPumpAPI = new CAgentTokenAPI();
 
    const agentIdsHasBackup = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
@@ -95,8 +102,8 @@ const AgentProvider: React.FC<
    }, [selectedAgent?.id]);
 
    const isCanChat = useMemo(() => {
-      return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet)));
-   }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled]);
+      return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
+   }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
 
    console.log("stephen: selectedAgent", selectedAgent);
    console.log("stephen: currentModel", currentModel);
@@ -138,12 +145,15 @@ const AgentProvider: React.FC<
    }
 
    useEffect(() => {
-      if (selectedAgent && installedAgents && installedAgents.some(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
+     if (selectedAgent) {
+       if (installedAgents && installedAgents.some(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
          setIsInstalled(true);
          cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id] });
-      } else {
+       } else {
          setIsInstalled(false);
-      }
+         cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id], action: "uninstall" });
+       }
+     }
    }, [selectedAgent?.id, installedAgents]);
 
    const checkAgentRunning = async () => {
