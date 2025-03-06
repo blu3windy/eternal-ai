@@ -170,6 +170,7 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 
 			err = s.CreateAgentTwitterPostForGenerateVideo(daos.GetDBMainCtx(ctx), agent.ID, agent.TwitterUsername, tweetMentions)
 			if err != nil {
+				logger.Info("CreateAgentTwitterPostForGenerateVideo", "err", zap.Any("err", err), zap.Any("agent.id", agent.ID))
 				return errs.NewError(err)
 			}
 			return nil
