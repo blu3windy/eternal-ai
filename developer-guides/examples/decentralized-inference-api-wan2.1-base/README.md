@@ -3,7 +3,7 @@
 
 We have just deployed Wan2.1 on Base as a smart contract.
 
-Contract Address: 0x19aeEfFbc0244Be6187314A74a443A18AA2cCeEe
+Contract Address: [0x19aeEfFbc0244Be6187314A74a443A18AA2cCeEe](https://basescan.org/address/0x19aeEfFbc0244Be6187314A74a443A18AA2cCeEe)
 
 Wan2.1 is now unstoppable—running exactly as trained, with no possibility of downtime, censorship, fraud, or third-party interference.
 
