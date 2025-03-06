@@ -1,4 +1,4 @@
-import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState,} from "react";
+import React, {PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState,} from "react";
 import {ETradePlatform, IAgentContext} from "./interface";
 import {IAgentToken, IChainConnected,} from "../../../services/api/agents-token/interface.ts";
 import {BASE_CHAIN_ID} from "@constants/chains";
@@ -64,6 +64,7 @@ const AgentProvider: React.FC<
    const [isInstalled, setIsInstalled] = useState(false);
    const [installedAgents, setInstalledAgents] = useState<string[]>([]);
    const [isRunning, setIsRunning] = useState(false);
+   const refInterval = useRef<any>();
 
    const cPumpAPI = new CAgentTokenAPI();
 
@@ -76,7 +77,7 @@ const AgentProvider: React.FC<
 
    const requireInstall = useMemo(() => {
       if (selectedAgent) {
-         return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model].includes(selectedAgent?.agent_type as AgentType);
+         return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model, AgentType.Infra].includes(selectedAgent?.agent_type as AgentType);
       }
 
       return false;
@@ -111,9 +112,19 @@ const AgentProvider: React.FC<
             setAgentWallet(undefined)
          }
 
-        checkAgentRunning();
+        intervalCheckAgentRunning();
       }
    }, [selectedAgent?.id]);
+
+   const intervalCheckAgentRunning = () => {
+     if (refInterval.current) {
+       clearInterval(refInterval.current);
+     }
+
+     checkAgentRunning();
+
+     refInterval.current = setInterval(checkAgentRunning, 3000);
+   }
 
    useEffect(() => {
       if (selectedAgent && installedAgents && installedAgents.some(a => a === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
@@ -235,7 +246,7 @@ const AgentProvider: React.FC<
       try {
          setIsInstalling(true);
 
-         if (agent.agent_type === AgentType.UtilityJS || agent.agent_type === AgentType.UtilityPython) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
 
@@ -254,11 +265,19 @@ const AgentProvider: React.FC<
       try {
          setIsStarting(true);
 
-         await handleRunDockerAgent(agent);
+        if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+          await handleRunDockerAgent(agent);
+        } else if (agent.agent_type === AgentType.Model) {
+
+        } else {
+
+        }
       } catch (e) {
          console.log('startAgent', e);
       } finally {
          setIsStopping(false);
+
+        intervalCheckAgentRunning();
       }
    };
 
@@ -266,7 +285,7 @@ const AgentProvider: React.FC<
       try {
          setIsInstalling(true);
 
-         if (agent.agent_type === AgentType.UtilityJS || agent.agent_type === AgentType.UtilityPython) {
+        if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await handleStopDockerAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
 

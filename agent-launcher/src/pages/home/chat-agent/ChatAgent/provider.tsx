@@ -108,7 +108,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    }, [threadId]);
 
    useEffect(() => {
-      if (!!selectedAgent && messages.length === 0 && ![AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model].includes(selectedAgent.agent_type)) {
+      if (!!selectedAgent && messages.length === 0 && ![AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model, AgentType.Infra].includes(selectedAgent.agent_type)) {
          publishEvent(INIT_WELCOME_MESSAGE);
       }
    }, [selectedAgent, messages.length]);
@@ -215,7 +215,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             params['kb_id'] = `kb-${kbId}`;
          }
 
-         if (selectedAgent?.agent_type === AgentType.UtilityJS || selectedAgent?.agent_type === AgentType.UtilityPython) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type)) {
             const res: string = await AgentAPI.chatAgentUtility({ agent: selectedAgent, prvKey: agentWallet?.privateKey, messages: [ { role: 'user', content: sendTxt }] });
 
             updateMessage(messageId, {
