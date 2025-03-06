@@ -216,7 +216,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          }
 
          if (selectedAgent?.agent_type === AgentType.UtilityJS || selectedAgent?.agent_type === AgentType.UtilityPython) {
-            const res: string = await AgentAPI.chatAgentUtility({ agent: selectedAgent, prvKey: agentWallet?.privateKey });
+            const res: string = await AgentAPI.chatAgentUtility({ agent: selectedAgent, prvKey: agentWallet?.privateKey, messages: messages });
 
             updateMessage(messageId, {
                msg: res,
