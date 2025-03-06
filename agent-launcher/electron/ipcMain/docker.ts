@@ -150,7 +150,7 @@ const ipcMainDocker = () => {
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL, async (_event) => {
       try {
          const docker = await getDocker();
-         const { stderr } = await command.execAsyncDockerDir(`${docker} -v`);
+         const { stderr } = await command.execAsyncDockerDir(`${docker} info`);
          return !stderr;
       } catch (error) {
          console.log(error);
@@ -161,20 +161,13 @@ const ipcMainDocker = () => {
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INSTALL, async (_event) => {
       try {
          const scriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT);
-         const appleScriptCommand = `
-            tell application "Terminal"
-               activate
-               do script "sh '${scriptPath}'"
-            end tell
-         `;
-
-         const cmd = `osascript -e '${appleScriptCommand}'`
+         const cmd = `bash ${scriptPath}`;
          await command.execAsyncStream(cmd);
 
          // eslint-disable-next-line no-constant-condition
          while (true) {
             await new Promise((resolve) => setTimeout(resolve, 2000));
-            const { stdout } = await command.execAsyncDockerDir("docker -v");
+            const { stdout } = await command.execAsyncDockerDir("docker info");
             if (stdout) {
                break;
             }

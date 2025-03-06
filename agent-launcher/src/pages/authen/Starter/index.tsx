@@ -39,14 +39,23 @@ const Starter = (props: IProps) => {
          if (!ignoreCopy) {
             await window.electronAPI.dockerCopyBuild();
          }
-         const hasDocker = await window.electronAPI.dockerCheckInstall();
-         if (hasDocker) {
-            await window.electronAPI.dockerBuild();
-            // await window.electronAPI.modelStarter();
-            setChecking(false);
-         } else {
-            setStep("REQUEST_INSTALL_DOCKER");
-         }
+
+         await window.electronAPI.dockerInstall();
+         await window.electronAPI.dockerBuild();
+         await window.electronAPI.modelStarter();
+
+         setChecking(false);
+
+         // await window.electronAPI.modelStarter();
+
+         // const hasDocker = await window.electronAPI.dockerCheckInstall();
+         // if (hasDocker) {
+         //    await window.electronAPI.dockerBuild();
+         //    // await window.electronAPI.modelStarter();
+         //    setChecking(false);
+         // } else {
+         //    setStep("REQUEST_INSTALL_DOCKER");
+         // }
       } catch (error) {
          // alert("Error while checking Docker" + window.electronAPI);
          console.error(error);
