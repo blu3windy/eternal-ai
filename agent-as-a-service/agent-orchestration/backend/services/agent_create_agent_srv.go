@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
+	"go.uber.org/zap"
 	"net/http"
 	"sort"
 	"strconv"
@@ -77,6 +79,7 @@ func (s *Service) JobScanAgentTwitterPostForGenerateVideo(ctx context.Context) e
 			for _, agent := range agents {
 				err = s.ScanAgentTwitterPostForGenerateVideo(ctx, agent.ID)
 				if err != nil {
+					logger.Info("ScanAgentTwitterPostForGenerateVideo", "err", zap.Any("err", err), zap.Any("agent.id", agent.ID))
 					retErr = errs.MergeError(retErr, errs.NewError(err))
 				}
 			}
