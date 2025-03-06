@@ -153,11 +153,12 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
                               </svg>
                               Stop running {selectedAgent?.agent_name}
                             </Button>
-                            {
+                            <Box />
+                            {/*{
                               agentWallet ? (
                                 <AgentWalletInfo />
                               ) : <Box />
-                            }
+                            }*/}
                           </Flex>
                         </>
                       ) : (
