@@ -16,29 +16,12 @@ const AgentInfo = () => {
     currentModel,
     setCurrentModel,
     selectedAgent,
-    stopAgent,
-    isStopping,
     setIsTrade,
     isTrade,
-    isRunning,
-    isInstalled,
-    isStarting,
-    startAgent,
     isCanChat,
     agentWallet,
     isBackupedPrvKey,
   } = useContext(AgentContext);
-
-  const description =
-    selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
-
-  const handleStartStop = () => {
-    if (isRunning) {
-      stopAgent(selectedAgent);
-    } else {
-      startAgent(selectedAgent);
-    }
-  };
 
   const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
@@ -63,17 +46,6 @@ const AgentInfo = () => {
         }
         <Flex gap={"6px"} alignItems={"center"} className={cx(s.contentContainer, isCanChat || showBackupPrvKey ? '' : s.isSetup)}>
           <Flex gap={"6px"} alignItems={"center"} className={s.content}>
-            {isInstalled && (
-              <Button
-                className={s.btnInstall}
-                onClick={handleStartStop}
-                isLoading={isStarting || isStopping}
-                isDisabled={isStarting || isStopping}
-                loadingText={isStarting ? "Starting..." : "Stopping..."}
-              >
-                {isRunning ? "Stop" : "Start"}
-              </Button>
-            )}
             <InfoTooltip iconSize="sm" label={<AgentOnChainInfo />} placement="top" iconColor={color} />
             <Text className={s.text}>{selectedAgent?.agent_name}</Text>
             <Text className={s.text} opacity={0.7}>${selectedAgent?.token_symbol}</Text>
