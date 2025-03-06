@@ -133,7 +133,7 @@ const AgentsList = () => {
 
 
          if ([FilterOption.Installed, FilterOption.NonInstalled].includes(refParams.current.filter)) {
-            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model].join(',');
+            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model, AgentType.Infra].join(',');
 
             if (FilterOption.Installed === refParams.current.filter) {
                params.installed = true;
@@ -141,7 +141,7 @@ const AgentsList = () => {
                params.installed = false;
             }
          } else if ([FilterOption.NonModel].includes(refParams.current.filter)) {
-            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython].join(',');
+            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].join(',');
          } else if ([FilterOption.Model].includes(refParams.current.filter)) {
             params.agent_types = [AgentType.Model].join(',');
          } else if ([FilterOption.Infra].includes(refParams.current.filter)) {
