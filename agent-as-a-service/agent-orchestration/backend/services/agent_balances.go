@@ -753,7 +753,7 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 	} else if len(agentTypes) > 0 {
 		filters["agent_infos.agent_type in (?)"] = []any{agentTypes}
 	} else {
-		filters["agent_infos.agent_type not in (?)"] = []any{[]models.AgentInfoAgentType{models.AgentInfoAgentTypeModel, models.AgentInfoAgentTypeJs, models.AgentInfoAgentTypePython}}
+		filters["agent_infos.agent_type not in (?)"] = []any{[]models.AgentInfoAgentType{models.AgentInfoAgentTypeModel, models.AgentInfoAgentTypeJs, models.AgentInfoAgentTypePython, models.AgentInfoAgentTypeInfa}}
 	}
 	//filter contract address
 	if len(contractAddresses) > 0 {

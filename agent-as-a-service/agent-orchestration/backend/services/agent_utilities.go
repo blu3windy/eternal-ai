@@ -96,6 +96,7 @@ func (s *Service) UpgradeAgentUpgradeable(ctx context.Context, agentInfoID uint)
 	}
 	if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
 		agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
+		agentInfo.AgentType != models.AgentInfoAgentTypeInfa &&
 		agentInfo.AgentType != models.AgentInfoAgentTypePython {
 		return "", errs.NewError(errs.ErrBadRequest)
 	}
@@ -138,6 +139,7 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 	}
 	if agentInfo != nil {
 		if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
+			agentInfo.AgentType != models.AgentInfoAgentTypeInfa &&
 			agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
 			agentInfo.AgentType != models.AgentInfoAgentTypePython {
 			return errs.NewError(errs.ErrBadRequest)
@@ -207,7 +209,8 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 					}
 					var codeLanguage string
 					switch agentInfo.AgentType {
-					case models.AgentInfoAgentTypeJs:
+					case models.AgentInfoAgentTypeJs,
+						models.AgentInfoAgentTypeInfa:
 						{
 							codeLanguage = "js"
 						}
