@@ -1,4 +1,4 @@
-import { Flex, Text } from "@chakra-ui/react";
+import { Flex, Image, Text } from "@chakra-ui/react";
 import BaseButton from "@components/BaseButton";
 import { RegisterType } from "@pages/authen/Register/types.ts";
 
@@ -12,7 +12,7 @@ const Introduce = ({ setRegisterType }: IProps) => {
          display="flex"
          flexDirection="column"
          alignItems="center"
-         gap="60px"
+         gap="32px"
       >
          <Flex
             display="flex"
@@ -21,43 +21,55 @@ const Introduce = ({ setRegisterType }: IProps) => {
             gap="16px"
          >
             <Text
-               fontSize="48px"
-               fontWeight="600"
-               lineHeight="58px"
+               fontSize="28px"
+               fontWeight="500"
+               lineHeight="160%"
+               color="rgba(0, 0, 0, 1)"
             >
-            Create a new account
+               Create a new account
             </Text>
             <Text
-               fontSize="24px"
+               fontSize="18px"
                fontWeight="400"
-               lineHeight="34px"
+               lineHeight="160%"
+               color="rgba(0, 0, 0, 0.7)"
             >
-            Experience AI in a decentralized, trustless, unstoppable way.
+               Experience AI in a decentralized, trustless, unstoppable way.
             </Text>
          </Flex>
          <Flex
             width="100%"
-            maxW="400px"
+            maxW="228px"
             flexDirection="column"
             alignItems="center"
-            gap="24px"
+            gap="16px"
          >
             <BaseButton
                onClick={() => setRegisterType(RegisterType.create)}
             >
                Create
             </BaseButton>
-            <Text
-               as="a"
-               textDecoration="underline"
-               fontSize="16px"
-               fontStyle="italic"
-               fontWeight="400"
+            <Flex
+               alignItems="center"
+               gap="6px"
                cursor="pointer"
-               onClick={() => setRegisterType(RegisterType.import)}
             >
-               Import an existing account
-            </Text>
+               <Image
+                  src="icons/ic-import.svg"
+                  alt="ic-import"
+                  width="20px"
+                  height="20px"
+               />
+               <Text
+                  as="a"
+                  fontSize="14px"
+                  fontWeight="400"
+                  color="rgba(0, 0, 0, 0.6)"
+                  onClick={() => setRegisterType(RegisterType.import)}
+               >
+                  Import an existing account
+               </Text>
+            </Flex>
          </Flex>
       </Flex>
    );

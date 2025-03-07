@@ -62,14 +62,21 @@ const ImportKey = (props: IProps) => {
          alignItems="center"
          justifyContent="center"
       >
-         <Text
-            fontSize="48px"
-            fontWeight="500"
-            color="black"
+         <Flex
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap="16px"
          >
-            Import an existing account
-         </Text>
-
+            <Text
+               fontSize="28px"
+               fontWeight="500"
+               lineHeight="160%"
+               color="rgba(0, 0, 0, 1)"
+            >
+               Import an existing account
+            </Text>
+         </Flex>
          <Formik
             initialValues={{ privateKey: '', password: '' }}
             validationSchema={validationSchema}
@@ -77,7 +84,7 @@ const ImportKey = (props: IProps) => {
          >
             {({ dirty, setFieldValue, isSubmitting }) => (
                <Form>
-                  <Flex flexDirection="column" width="500px" marginTop="60px">
+                  <Flex flexDirection="column" width="400px" marginTop="32px">
                      <InputText
                         name="privateKey"
                         header={{
@@ -126,7 +133,7 @@ const ImportKey = (props: IProps) => {
                      <BaseButton
                         type="submit"
                         width="100% !important"
-                        marginTop="60px"
+                        marginTop="32px"
                         disabled={!dirty || isSubmitting}
                         isLoading={isSubmitting}
                      >
@@ -134,13 +141,11 @@ const ImportKey = (props: IProps) => {
                      </BaseButton>
                      <Text
                         textAlign="center"
-                        fontSize="16px"
+                        fontSize="14px"
                         fontWeight="400"
-                        color="black"
-                        marginTop="24px"
-                        fontStyle="italic"
+                        marginTop="16px"
                         cursor="pointer"
-                        textDecoration="underline"
+                        color="rgba(0, 0, 0, 0.6)"
                         onClick={onBack}
                      >
                          Cancel
