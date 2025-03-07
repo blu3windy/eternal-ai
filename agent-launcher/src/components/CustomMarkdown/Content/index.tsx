@@ -3,14 +3,18 @@ import ContentDeposit, { depositRegex } from "./Content.Deposit";
 
 const ContentReplay = ({ children }) => {
   const formatMessage = useMemo(() => {
-    const message = children as any;
+    try {
+      const message = children as any;
 
-    const matchDeposit = message.match(depositRegex);
-    if (matchDeposit) {
-      return <ContentDeposit matchDeposit={matchDeposit} />;
+      const matchDeposit = message.match(depositRegex);
+      if (matchDeposit) {
+        return <ContentDeposit matchDeposit={matchDeposit} />;
+      }
+
+      return <p>{children}</p>;
+    } catch (error) {
+      return <p>{children}</p>;
     }
-
-    return <p>{children}</p>;
   }, [children]);
 
   return formatMessage;

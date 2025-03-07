@@ -12,18 +12,22 @@ const CustomLink = ({
   href: string;
 }) => {
   const formatMessage = useMemo(() => {
-    const urlRegex = /(https?:\/\/twitter\.com\/i\/oauth2\/authorize\?[^ ]+)/;
-    if ((children as any).match(urlRegex)) {
-      return "Please authenticate with this link and try again.";
+    try {
+      const urlRegex = /(https?:\/\/twitter\.com\/i\/oauth2\/authorize\?[^ ]+)/;
+      if ((children as any).match(urlRegex)) {
+        return "Please authenticate with this link and try again.";
+      }
+
+      const urlPostRegex = /(https?:\/\/x\.com\/[\w_]+\/status\/\d+)/g;
+
+      if ((children as any).match(urlPostRegex)) {
+        return `Take a look at this tweet for more details. [${children}]`;
+      }
+
+      return children;
+    } catch (error) {
+      return children;
     }
-
-    const urlPostRegex = /(https?:\/\/x\.com\/[\w_]+\/status\/\d+)/g;
-
-    if ((children as any).match(urlPostRegex)) {
-      return `Take a look at this tweet for more details. [${children}]`;
-    }
-
-    return children;
   }, [children]);
 
   return (
