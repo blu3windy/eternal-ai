@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
-	"go.uber.org/zap"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
+	"go.uber.org/zap"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
@@ -795,54 +796,15 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 							}
 							twitterPost.InferTxHash = dataResponse.Data.TxHash
 							twitterPost.InferId = strconv.FormatUint(dataResponse.Data.InferID, 10)
+							now := time.Now().UTC()
+							twitterPost.InferAt = &now
 							twitterPost.Status = models.AgentTwitterPostStatusInferSubmitted
 							err = s.dao.Save(tx, twitterPost)
 							if err != nil {
 								return errs.NewError(err)
 							}
+
 							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success submit infer gen video db_id:%v \n infer id :%v \n tx :%v ", twitterPost.ID, twitterPost.InferId, twitterPost.InferTxHash))
-							//	twitterPost.ImageUrl = videoUrl
-							//	twitterPost.ReplyPostId = refId
-							//	twitterPost.Status = models.AgentTwitterPostStatusReplied
-							//	err = s.dao.Save(tx, twitterPost)
-
-							// call qua api.eternalai.org
-							// curl --location 'https://api.eternalai.org/v1/chat/completions' \
-							//--header 'Authorization: Bearer ' \
-							//--header 'Accept: */*' \
-							//--header 'Content-Type: application/json' \
-							//--data '{
-							//    "chain_id": "8453",
-							//    "model":"wan",
-							//    "prompt": "a cat with a dog",
-							//    "only_create_infer": true
-							//}'
-
-							// infer_id, tx_hash  - CHI LUU
-
-							////TODO: twitterPost.ExtractContent -> gen ra video
-							////imageUrl, _ = s.GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc)
-							//videoUrl := "https://gateway.lighthouse.storage/ipfs/bafybeia7y5xp74komdtmiisunemiod56tqhotglzkke4ym66tvx4ywz7u4"
-							//mediaID := ""
-							//if videoUrl != "" {
-							//	mediaID, _ = s.twitterAPI.UploadVideo(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
-							//}
-							//
-							//if mediaID != "" {
-							//	// post truc tiep reply, luu lai reply_id
-							//	refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, "DONE", twitterPost.TwitterPostID, mediaID)
-							//	if err != nil {
-							//		return errs.NewError(err)
-							//	}
-							//	twitterPost.InferTxHash = mediaID
-							//	twitterPost.ImageUrl = videoUrl
-							//	twitterPost.ReplyPostId = refId
-							//	twitterPost.Status = models.AgentTwitterPostStatusReplied
-							//	err = s.dao.Save(tx, twitterPost)
-							//	if err != nil {
-							//		return errs.NewError(err)
-							//	}
-							//}
 						}
 					} else {
 						twitterPost.Status = models.AgentTwitterConversationInvalid

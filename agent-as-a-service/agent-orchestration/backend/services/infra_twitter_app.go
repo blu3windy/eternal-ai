@@ -364,7 +364,7 @@ func (s *Service) UtilityPostTwitter(ctx context.Context, userAddress string, re
 			}
 
 			if infraTwitterApp != nil && infraTwitterApp.RemainRequest <= 0 {
-				// resp.Message = errs.ErrAgentUtilityInvalidBalance.Message
+				resp.Message = strings.ReplaceAll(errs.ErrAgentUtilityInvalidBalance.Message, "{address}", s.conf.InfraTwitterApp.AgentAddress)
 				return errs.NewError(errs.ErrAgentUtilityInvalidBalance)
 			}
 
