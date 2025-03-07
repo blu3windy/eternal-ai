@@ -1,18 +1,17 @@
 import { Flex, Text } from "@chakra-ui/react";
 import Percent24h from "@components/Percent";
+import { AgentContext } from "@pages/home/provider";
 import { formatCurrency } from "@utils/format";
 import { Form, Formik } from "formik";
+import { useContext } from "react";
+import {
+  BASE_CHAIN_ID,
+  BASE_SEPOLIA_CHAIN_ID,
+  SYMBIOSIS_CHAIN_ID,
+} from "../../../../constants/chains";
 import FormTradeAgent from "./form";
 import { EAgentTrade, IFormValues } from "./interface";
 import s from "./styles.module.scss";
-import { useContext } from "react";
-import { AgentContext } from "@pages/home/provider";
-import Curving from "../curving";
-import {
-  BASE_CHAIN_ID,
-  SYMBIOSIS_CHAIN_ID,
-  BASE_SEPOLIA_CHAIN_ID,
-} from "../../../../constants/chains";
 
 export const SUPPORT_TRADE_CHAIN = [
   BASE_CHAIN_ID,
@@ -102,7 +101,6 @@ const FormTradeAgentContainer = () => {
           </Form>
         )}
       </Formik>
-      <Curving />
     </Flex>
   );
 };

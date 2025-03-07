@@ -1,5 +1,6 @@
-import React, { PropsWithChildren } from "react";
+import React, { PropsWithChildren, useState } from "react";
 import { IAgentTradeContext } from "./interface";
+import { IAgentToken } from "@services/api/agents-token/interface";
 
 const initialValue = {};
 
@@ -12,6 +13,8 @@ const AgentTradeProvider: React.FC<
   children,
   tokenAddress: _tokenAddress,
 }: PropsWithChildren & { tokenAddress?: string }): React.ReactElement => {
+  const [pairs, setPairs] = useState<IAgentToken[]>([]);
+
   const contextValues: IAgentTradeContext = {};
   return (
     <AgentTradeContext.Provider value={contextValues}>
