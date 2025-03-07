@@ -13,18 +13,34 @@ const ContentDeposit = (props) => {
   const { matchDeposit } = props;
   const amount = matchDeposit[1];
   const address = matchDeposit[2];
-  const network = matchDeposit[3];
+  const network = matchDeposit[4];
 
   const walletAddress = agentWallet?.address;
 
-  console.log("agentWallet", agentWallet);
+  console.log("agentWallet", matchDeposit);
 
   return (
     <Flex className={s.contentDeposit}>
       <Text>
-        Insufficient balance! You need at least {formatCurrency(amount)} $EAI to
-        proceed with address {walletAddress} in {network}.
+        Send {formatCurrency(amount)} $EAI to the provided wallet to cover
+        network fees, so your agent can execute your orders seamlessly.
       </Text>
+      <Flex mt={"5px"} alignItems={"flex-end"} gap={"6px"}>
+        <Text fontSize={"12px"} opacity={"0.8"}>
+          Network
+        </Text>
+        <Text fontSize={"14px"} fontWeight={"500"}>
+          {network}
+        </Text>
+      </Flex>
+      <Flex alignItems={"flex-end"} gap={"6px"}>
+        <Text fontSize={"12px"} opacity={"0.8"}>
+          Address
+        </Text>
+        <Text fontSize={"14px"} fontWeight={"500"}>
+          {walletAddress}
+        </Text>
+      </Flex>
     </Flex>
   );
 };
