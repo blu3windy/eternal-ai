@@ -8851,7 +8851,7 @@ function init() {
          let gs = GROUPS.filter(g => group_has_cp(g, cp));
          let rec = recs.find(({
             G
-         }) => gs.some(g => G.has(g)));
+         }) => gs?.some?.(g => G.has(g)));
          if (!rec) {
             rec = {
                G: new Set(),
@@ -9129,7 +9129,7 @@ function determine_group(unique) {
       // but that code isn't currently necessary
       let gs = groups.filter(g => group_has_cp(g, cp));
       if (!gs.length) {
-         if (!GROUPS.some(g => group_has_cp(g, cp))) {
+         if (!GROUPS?.some?.(g => group_has_cp(g, cp))) {
             // the character was composed of valid parts
             // but it's NFC form is invalid
             // 20230716: change to more exact statement, see: ENSNormalize.{cs,java}
