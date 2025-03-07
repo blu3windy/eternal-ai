@@ -1,10 +1,10 @@
-import {Flex, Grid, Image, Text} from '@chakra-ui/react';
-import React, {useContext, useMemo} from 'react';
+import { Flex, Grid, Image, Text } from '@chakra-ui/react';
+import React, { useContext, useMemo } from 'react';
 import s from './styles.module.scss';
-import {IAgentToken} from "../../../../services/api/agents-token/interface.ts";
-import {AgentContext} from "../../provider";
-import {DefaultAvatar} from "../../../../components/DefaultAvatar";
-import {formatCurrency, labelAmountOrNumberAdds} from "../../../../utils/format.ts";
+import { IAgentToken } from "../../../../services/api/agents-token/interface.ts";
+import { AgentContext } from "../../provider";
+import { DefaultAvatar } from "../../../../components/DefaultAvatar";
+import { formatCurrency, labelAmountOrNumberAdds } from "../../../../utils/format.ts";
 import cs from "clsx";
 
 interface IProps {
@@ -21,17 +21,17 @@ const AgentItem = ({ token }: IProps) => {
     || token?.token_image_url
     || token?.twitter_info?.twitter_avatar;
 
-  // const isUtilityAgent = useMemo(() => {
-  //   return token?.agent_type === AgentType.UtilityJS;
-  // }, [token]);
+   // const isUtilityAgent = useMemo(() => {
+   //   return token?.agent_type === AgentType.UtilityJS;
+   // }, [token]);
 
-  const isInstalled = useMemo(() => {
-    if (token && installedAgents) {
-      return installedAgents.some(key => key === `${token.network_id}-${token.agent_name}`);
-    }
+   const isInstalled = useMemo(() => {
+      if (token && installedAgents?.length) {
+         return installedAgents?.some(key => key === `${token.network_id}-${token.agent_name}`);
+      }
 
-    return false;
-  }, [token, installedAgents]);
+      return false;
+   }, [token, installedAgents]);
 
    const handleGoToChat = (e: any, token_address?: any) => {
       if (token_address) {
@@ -42,59 +42,59 @@ const AgentItem = ({ token }: IProps) => {
       }
    };
 
-  return (
-    <Flex
-      key={token.id}
-      className={cs(s.container, token?.id === selectedAgent?.id ? s.isSelected : '')}
-      flexDirection="column"
-      position={'relative'}
-      onClick={(e) =>
-        handleGoToChat(e, token?.id || token?.token_address || token?.agent_id)
-      }
-    >
-      <Grid
-        className={s.content}
-        templateColumns={'40px 1fr'}
-        gap="12px"
-        w={'100%'}
+   return (
+      <Flex
+         key={token.id}
+         className={cs(s.container, token?.id === selectedAgent?.id ? s.isSelected : '')}
+         flexDirection="column"
+         position={'relative'}
+         onClick={(e) =>
+            handleGoToChat(e, token?.id || token?.token_address || token?.agent_id)
+         }
       >
-        <Flex position={"relative"}>
-          {avatarUrl ? (
-            <Image
-              w={'40px'}
-              objectFit={'cover'}
-              src={avatarUrl}
-              maxHeight={'40px'}
-              maxWidth={'40px'}
-              borderRadius={'50%'}
-            />
-          ) : (
-            <DefaultAvatar
-              width={'40px'}
-              height={'40px'}
-              name={token?.agent_name}
-              fontSize={14}
-            />
-          )}
-{/*          {
+         <Grid
+            className={s.content}
+            templateColumns={'40px 1fr'}
+            gap="12px"
+            w={'100%'}
+         >
+            <Flex position={"relative"}>
+               {avatarUrl ? (
+                  <Image
+                     w={'40px'}
+                     objectFit={'cover'}
+                     src={avatarUrl}
+                     maxHeight={'40px'}
+                     maxWidth={'40px'}
+                     borderRadius={'50%'}
+                  />
+               ) : (
+                  <DefaultAvatar
+                     width={'40px'}
+                     height={'40px'}
+                     name={token?.agent_name}
+                     fontSize={14}
+                  />
+               )}
+               {/*          {
             isUtilityAgent && (
               <Image src={'/icons/ic-utility-agent.svg'} w={"16px"} h={"16px"} position={"absolute"} top={"24px"} right={"0px"}/>
             )
           }*/}
-        </Flex>
-        <Flex flexDirection="column" w={'100%'} gap={"12px"}>
-          <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
-            <Flex gap={"6px"}>
-              <Text className={s.nameText}>
-                {token?.agent_name}{' '}
-              </Text>
-              <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
             </Flex>
-            {
-              isInstalled && <Text className={s.agentTypeTag}>Installed</Text>
-            }
+            <Flex flexDirection="column" w={'100%'} gap={"12px"}>
+               <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
+                  <Flex gap={"6px"}>
+                     <Text className={s.nameText}>
+                        {token?.agent_name}{' '}
+                     </Text>
+                     <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
+                  </Flex>
+                  {
+                     isInstalled && <Text className={s.agentTypeTag}>Installed</Text>
+                  }
 
-            {/*{
+                  {/*{
               isUtilityAgent && (
                 <Button
                   className={s.btnInstall}
@@ -105,12 +105,12 @@ const AgentItem = ({ token }: IProps) => {
                 >{isRunning ? 'Stop' : 'Start'}</Button>
               )
             }*/}
-          </Flex>
-          {
-            description && (
-              <Text className={s.descriptionText}>{description}</Text>
-            )
-          }
+               </Flex>
+               {
+                  description && (
+                     <Text className={s.descriptionText}>{description}</Text>
+                  )
+               }
                <Flex gap={"8px"}>
                   <Text className={s.infoText}>
                      {token?.meme?.market_cap && (
