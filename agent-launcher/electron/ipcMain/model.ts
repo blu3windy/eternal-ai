@@ -50,6 +50,17 @@ const ipcMainModel = () => {
          return false;
       }
    });
+
+   ipcMain.handle(EMIT_EVENT_NAME.MODEL_CHECK_RUNNING, async (_event) => {
+      const path = getModelPath();
+      try {
+         const { stdout } = await command.execAsync( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms status`);
+         return !!stdout
+      } catch (error) {
+         console.log("MODEL_CHECK_RUNNING", error);
+         return undefined;
+      }
+   });
 }
 
 export default ipcMainModel;

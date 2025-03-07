@@ -107,6 +107,15 @@ const Login = () => {
             >
                MODEL CHECK INSTALL
             </Button>
+            <Button
+               onClick={() => {
+                  window.electronAPI.modelCheckRunning().then((hash?: string) => {
+                     alert(hash ? `Model is running with hash: ${hash}` : "Model is not running");
+                  });
+               }}
+            >
+               MODEL CHECK RUNNING
+            </Button>
          </Flex>
          <Formik
             initialValues={{ password: '' }}
