@@ -663,7 +663,7 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 								if err != nil {
 									return errs.NewError(err)
 								}
-								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success gen video reply twitter https://x.com/%v/status/%v ", twitterPost.TwitterUsername, twitterPost.TwitterPostID))
+								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success gen video reply twitter https://x.com/%v/status/%v \n process time :%v", twitterPost.TwitterUsername, twitterPost.TwitterPostID, time.Since(twitterPost.CreatedAt)))
 							}
 						}
 					} else {
