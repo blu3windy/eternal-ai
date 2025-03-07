@@ -35,14 +35,20 @@ const Starter = (props: IProps) => {
 
    const onInit = async (ignoreCopy?: boolean) => {
       try {
-         console.time("init-time: ");
+         console.time("FULL_LOAD_TIME");
          await onCheckHasUser();
          if (!ignoreCopy) {
             await window.electronAPI.dockerCopyBuild();
          }
 
+         console.time("DOCKER_INSTALL");
          await window.electronAPI.dockerInstall();
+         console.timeEnd("DOCKER_INSTALL");
+
+         console.time("DOCKER_BUILD");
          await window.electronAPI.dockerBuild();
+         console.timeEnd("DOCKER_BUILD");
+
          // await window.electronAPI.modelStarter();
 
          setChecking(false);
@@ -61,7 +67,7 @@ const Starter = (props: IProps) => {
          // alert("Error while checking Docker" + window.electronAPI);
          console.error(error);
       } finally {
-         console.timeEnd("init-time:");
+         console.timeEnd("FULL_LOAD_TIME");
       }
    }
 
