@@ -229,7 +229,7 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 						storageInfos,
 						dependAgentAddrs,
 						helpers.HexToAddress(agentInfo.Creator),
-						agentInfo.IsOnchain,
+						true,
 					)
 					if err != nil {
 						return errs.NewError(err)
