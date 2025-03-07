@@ -425,7 +425,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 						for k, v := range *twitterDetail {
 							if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
 								if strings.EqualFold(k, item.ID) {
-									fullText := v.Tweet.GetFullText()
+									fullText := v.Tweet.NoteTweet.Text
 									tokenInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), agentInfo.TwitterUsername, fullText)
 									if tokenInfo != nil && (tokenInfo.IsGenerateVideo) {
 										existPosts, err := s.dao.FirstAgentTwitterPost(
@@ -1147,16 +1147,17 @@ func (s *Service) GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc 
 
 func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
 	isGenerateVideo := false
-	inferContent := strings.TrimSpace(fullText)
+	fullText = strings.TrimSpace(fullText)
+	inferContent := strings.ToLower(fullText)
 
 	if strings.Contains(inferContent, fmt.Sprintf("%v", "create video:")) {
 		isGenerateVideo = true
 		index := strings.Index(inferContent, "create video:")
-		inferContent = inferContent[index+len("create video:"):]
+		inferContent = fullText[index+len("create video:"):]
 	} else if strings.Contains(inferContent, fmt.Sprintf("%v", "create video :")) {
 		isGenerateVideo = true
 		index := strings.Index(inferContent, "create video :")
-		inferContent = inferContent[index+len("create video :"):]
+		inferContent = fullText[index+len("create video :"):]
 	}
 	inferContent = strings.TrimSpace(inferContent)
 	return &models.TweetParseInfo{
