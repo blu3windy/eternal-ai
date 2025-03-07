@@ -158,7 +158,6 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 	if err != nil {
 		return errs.NewError(err)
 	}
-
 	if twitterInfo != nil {
 		err = func() error {
 			tweetMentions, err := s.twitterWrapAPI.GetListUserMentions(agent.TwitterID, "", twitterInfo.AccessToken, 50)
@@ -642,8 +641,8 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 							refId, err := func() (string, error) {
 								for i := 0; i < 5; i++ {
 									time.Sleep(time.Duration(i*5) * time.Second)
-									contentReply := fmt.Sprintf("Prompt onchain tx: https://basescan.org/tx/%v\nVideo onchain tx : https://basescan.org/tx/%v\nPrompt : %v",
-										twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash, twitterPost.ExtractContent)
+									contentReply := fmt.Sprintf("Here's the eternal ai video of %v \n Prompt onchain tx: https://basescan.org/tx/%v\nVideo onchain tx : https://basescan.org/tx/%v",
+										twitterPost.ExtractContent, twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash)
 									refId, _err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
 									if _err == nil {
 										return refId, nil
@@ -1146,20 +1145,16 @@ func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userNam
 	isGenerateVideo := false
 	inferContent := strings.TrimSpace(fullText)
 
-	if strings.Contains(inferContent, fmt.Sprintf("%v", "eternal_video(")) {
+	if strings.Contains(inferContent, fmt.Sprintf("%v", "create video:")) {
 		isGenerateVideo = true
-		index := strings.Index(inferContent, "eternal_video(")
-		inferContent = inferContent[index+len("eternal_video("):]
-	} else if strings.Contains(inferContent, fmt.Sprintf("%v", "eternal_video (")) {
+		index := strings.Index(inferContent, "create video:")
+		inferContent = inferContent[index+len("create video:"):]
+	} else if strings.Contains(inferContent, fmt.Sprintf("%v", "create video :")) {
 		isGenerateVideo = true
-		index := strings.Index(inferContent, "eternal_video (")
-		inferContent = inferContent[index+len("eternal_video ("):]
+		index := strings.Index(inferContent, "create video :")
+		inferContent = inferContent[index+len("create video :"):]
 	}
-	if !strings.HasSuffix(inferContent, ")") {
-		isGenerateVideo = false
-	} else {
-		inferContent = strings.TrimSuffix(inferContent, ")")
-	}
+	inferContent = strings.TrimSpace(fullText)
 	return &models.TweetParseInfo{
 		IsGenerateVideo:      isGenerateVideo,
 		GenerateVideoContent: strings.TrimSpace(inferContent),
