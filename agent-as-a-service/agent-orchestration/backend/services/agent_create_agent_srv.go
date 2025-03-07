@@ -1154,7 +1154,7 @@ func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userNam
 		index := strings.Index(inferContent, "create video :")
 		inferContent = inferContent[index+len("create video :"):]
 	}
-	inferContent = strings.TrimSpace(fullText)
+	inferContent = strings.TrimSpace(inferContent)
 	return &models.TweetParseInfo{
 		IsGenerateVideo:      isGenerateVideo,
 		GenerateVideoContent: strings.TrimSpace(inferContent),
