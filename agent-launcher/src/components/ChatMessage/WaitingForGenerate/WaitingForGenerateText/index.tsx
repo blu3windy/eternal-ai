@@ -1,7 +1,8 @@
 import Lottie from 'lottie-react';
 import animation from './voice-animation.json';
+import animationBlack from './voice-animation-black.json';
 
-export function WaitingAnimation({ size = 24 }: { size?: number }) {
+export function WaitingAnimation({ size = 24, color = 'white' }: { size?: number, color?: string }) {
    return (
       <div
          style={{
@@ -12,7 +13,7 @@ export function WaitingAnimation({ size = 24 }: { size?: number }) {
             opacity: 0.6,
          }}
       >
-         <Lottie animationData={animation} loop={true} />
+         <Lottie animationData={color === 'white' ? animation : animationBlack} loop={true} />
       </div>
    );
 }

@@ -61,7 +61,7 @@ const ChatMessage = ({
 
    const renderMarkdown = () => {
       if (message.status === 'waiting') {
-         return <WaitingAnimation />;
+         return <WaitingAnimation color={message?.is_reply ? 'black' : 'white'}/>;
       }
 
       if (message.status === 'failed') {
@@ -141,7 +141,7 @@ const ChatMessage = ({
                s.content,
                { [s.question]: !message?.is_reply },
                { [s.reply]: message?.is_reply },
-               { [s.failed]: message?.status === 'failed' || isSending },
+               { [s.failed]: message?.status === 'failed' },
             )}
             alignSelf={message?.is_reply ? 'flex-start' : 'flex-end'}
          >

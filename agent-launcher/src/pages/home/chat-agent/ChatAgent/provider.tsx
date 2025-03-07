@@ -70,7 +70,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const { selectedAgent, agentWallet } = useContext(AgentContext);
 
    const id = selectedAgent?.id;
-   const threadId = selectedAgent?.agent_name || 'Agent';
+   const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}` || 'Agent';
 
    const isAllowChat = useMemo(() => {
       return true;
