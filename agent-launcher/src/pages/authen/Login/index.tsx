@@ -8,6 +8,7 @@ import EaiSigner from "@helpers/signer";
 import eaiCrypto from "@utils/crypto";
 import { useAuth } from "@pages/authen/provider.tsx";
 import useForgotPass from "@pages/authen/hooks/useForgotPass.ts";
+import HeaderBox from "@pages/authen/components/HeaderBox";
 
 const Login = () => {
    const { onLogin } = useAuth();
@@ -64,19 +65,7 @@ const Login = () => {
          alignItems="center"
          justifyContent="center"
       >
-         <Flex
-            flexDirection="column"
-            alignItems="center"
-            gap="16px"
-         >
-            <Text fontSize="28px" fontWeight="500" color="black">
-                Welcome back!
-            </Text>
-            <Text fontSize="16px" fontWeight="400" color="rgba(0, 0, 0, 0.7)" textAlign="center">
-                The decentralized AI awaits.
-            </Text>
-         </Flex>
-
+         <HeaderBox title="Welcome back!" description={["The decentralized AI awaits."]} />
          <Formik
             initialValues={{ password: '' }}
             validationSchema={validationSchema}
@@ -84,7 +73,7 @@ const Login = () => {
          >
             {({ dirty, setFieldValue, isSubmitting }) => (
                <Form>
-                  <Flex flexDirection="column" width="400px" marginTop="60px">
+                  <Flex flexDirection="column" width="400px" marginTop="32px">
                      <InputPassword
                         name="password"
                         placeholder="Enter password"

@@ -32,8 +32,10 @@ runIpcMain();
 
 function createWindow() {
    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+   console.log("LEON 111", path.join(`${process.env.VITE_PUBLIC}/icons`, "app-logo.png"))
    win = new BrowserWindow({
-      icon: path.join(process.env.VITE_PUBLIC, "icon.svg"),
+      icon: path.join(process.env.VITE_PUBLIC, "app-logo.png"),
+      // icon: path.join(__dirname, "../public/icon.png"), // Use icon from public
       webPreferences: {
          preload: path.join(app.getAppPath(), "dist-electron", "preload.mjs"),
          webSecurity: false,

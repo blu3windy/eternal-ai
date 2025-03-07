@@ -119,6 +119,7 @@
         "dmg",
         "zip"
       ],
+      "icon": "public/icons/app-logo.png",
       "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
     },
     "extraResources": [

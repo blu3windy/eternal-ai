@@ -1,4 +1,4 @@
-import { exec, spawn } from "child_process";
+import { exec, execSync } from "child_process";
 import { promisify } from "util";
 import fs from "fs";
 import { app, BrowserWindow } from "electron";
@@ -8,7 +8,7 @@ const execAsync = async (cmd: string) => {
    return promisify(exec)(cmd); // Execute with updated PATH
 };
 
-let dockerDir = '';
+const dockerDir = '';
 
 const sendEvent = (params: { type: string, message: string, cmd: string, win: BrowserWindow }) => {
    const {
@@ -31,16 +31,22 @@ const execAsyncDockerDir = async (cmd: string) => {
       // Check and set Docker directory only once
       if (!dockerDir) {
          const possiblePaths = [
-            "/opt/homebrew/bin/docker", // Apple Silicon macOS (Homebrew)
-            "/usr/bin/docker",          // Standard system install
+            "/opt/homebrew/bin/docker", // Apple Silicon (Homebrew)
             "/usr/local/bin/docker",    // Intel macOS (Homebrew)
+            "/usr/bin/docker",          // Standard system install
+            "/opt/local/bin/docker",    // MacPorts installation
+            "/Applications/Docker.app/Contents/Resources/bin/docker",
+            "/Library/Application Support/Docker Desktop/bin/docker"
          ];
 
-         for (const dockerPath of possiblePaths) {
-            if (fs.existsSync(dockerPath)) {
-               dockerDir = dockerPath.substring(0, dockerPath.lastIndexOf("/"));
-               break;
+         // Check for dynamically set Homebrew path
+         try {
+            const brewPath = execSync("brew --prefix", { encoding: "utf-8" }).trim();
+            if (brewPath) {
+               possiblePaths.unshift(`${brewPath}/bin/docker`);
             }
+         } catch (err) {
+            // Homebrew not installed or not found
          }
 
          const scriptsPath = app.isPackaged
