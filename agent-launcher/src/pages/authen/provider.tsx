@@ -9,7 +9,6 @@ import Starter from "@pages/authen/Starter";
 import eaiCrypto from "@utils/crypto";
 import AgentAPI from "@services/api/agent";
 import Loggers from "@components/Loggers";
-import LoggersButton from "@components/Loggers/Loggers.button.tsx";
 import localStorageService from "../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 
@@ -131,7 +130,6 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       <AuthContext.Provider value={values}>
          {renderContent()}
          <ForgotPass />
-         <LoggersButton />
          <Loggers />
       </AuthContext.Provider>
    );
