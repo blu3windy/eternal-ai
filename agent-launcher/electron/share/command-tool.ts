@@ -67,11 +67,12 @@ const execAsyncDockerDir = async (cmd: string) => {
       const { stdout, stderr } = await promisify(exec)(cmd, { env });
 
       if (stderr) {
+         console.log(stderr);
          sendEvent({ type: "error", message: stderr, cmd, win });
       } else {
+         console.log(stdout)
          sendEvent({ type: "output", message: stdout, cmd, win });
       }
-
       return { stdout, stderr };
    } catch (error: any) {
       sendEvent({ type: "error", message: error.message || "Unknown error", cmd, win });

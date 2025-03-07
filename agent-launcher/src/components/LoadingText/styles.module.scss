@@ -1,0 +1,21 @@
+.animText {
+  position: relative;
+  display: inline-block;
+  font-size: 20px;
+  color: #d4d4d4;
+
+  @keyframes fill-1 {
+    50%   { width: 100%; }
+    100%  { width: 0;   }
+  }
+
+  &:before {
+    content: attr(data-text);
+    position: absolute;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 0;
+    color: black;
+    animation: fill-1 3s infinite;
+  }
+}

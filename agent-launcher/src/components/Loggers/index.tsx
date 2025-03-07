@@ -1,46 +1,71 @@
-import { useEffect, useRef, useState } from "react";
-import { Box, Text, useColorModeValue, Code, Input } from "@chakra-ui/react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { Box, Text, useColorModeValue, Code, Input, Button, useToast } from "@chakra-ui/react";
 import { useLoggersStore } from "@components/Loggers/useLogs.ts";
 import LoggersButton from "@components/Loggers/Loggers.button.tsx"; // Zustand store
 
 interface LogEntry {
-   type: "output" | "error";
-   cmd?: string;
-   message: string;
+    type: "output" | "error";
+    cmd?: string;
+    message: string;
 }
 
 const Loggers = () => {
    const [logs, setLogs] = useState<Record<string, LogEntry[]>>({});
-   const [searchQuery, setSearchQuery] = useState(""); // State for input
+   const [searchQuery, setSearchQuery] = useState("");
    const logRef = useRef<HTMLDivElement>(null);
    const { showLogs } = useLoggersStore();
-   const initRef = useRef(false);
+   const initialized = useRef(false);
+   const toast = useToast();
 
-   useEffect(() => {
-      if (!initRef.current) {
-         initRef.current = true;
-         window.electronAPI.onCommandEvent((data: LogEntry) => {
-            setLogs((prev) => {
-               const cmdKey = data.cmd || "No Command";
-               return {
-                  ...prev,
-                  [cmdKey]: [...(prev[cmdKey] || []), data],
-               };
-            });
-         });
-      }
+   // Optimized event listener setup
+   const handleNewLog = useCallback((data: LogEntry) => {
+      setLogs((prev) => {
+         const cmdKey = data.cmd || "No Command";
+         return {
+            ...prev,
+            [cmdKey]: [...(prev[cmdKey] || []), data],
+         };
+      });
    }, []);
 
    useEffect(() => {
+      if (!initialized.current) {
+         initialized.current = true;
+         window.electronAPI.onCommandEvent(handleNewLog);
+      }
+   }, [handleNewLog]);
+
+   // Optimized scrolling using requestAnimationFrame
+   useEffect(() => {
       if (logRef.current) {
-         logRef.current.scrollTop = logRef.current.scrollHeight;
+         requestAnimationFrame(() => {
+                logRef.current!.scrollTop = logRef.current!.scrollHeight;
+         });
       }
    }, [logs]);
 
-   // Filter logs based on search query
-   const filteredLogs = Object.entries(logs).filter(([cmd]) =>
-      cmd.toLowerCase().includes(searchQuery.toLowerCase())
+   // Optimized filtering with useMemo
+   const filteredLogs = useMemo(
+      () =>
+         Object.entries(logs).filter(([cmd]) =>
+            cmd.toLowerCase().includes(searchQuery.toLowerCase())
+         ),
+      [logs, searchQuery]
    );
+
+   // Copy logs as JSON
+   const copyLogsToClipboard = () => {
+      const jsonLogs = JSON.stringify(logs, null, 2);
+      navigator.clipboard.writeText(jsonLogs).then(() => {
+         toast({
+            title: "Logs Copied",
+            description: "All logs have been copied to the clipboard!",
+            status: "success",
+            duration: 2000,
+            isClosable: true,
+         });
+      });
+   };
 
    return (
       <>
@@ -59,8 +84,8 @@ const Loggers = () => {
             right="0"
             zIndex="2"
          >
-            {/* Input Field (Fixed at Top) */}
-            <Box position="sticky" top="0" bg="gray.900" p={2} zIndex="10">
+            {/* Sticky Search Input & Copy Button */}
+            <Box position="sticky" top="0" bg="gray.900" p={2} zIndex="10" display="flex" gap="2">
                <Input
                   placeholder="Filter logs by command..."
                   value={searchQuery}
@@ -68,23 +93,28 @@ const Loggers = () => {
                   bg="gray.800"
                   color="white"
                   borderRadius="md"
+                  flex="1"
                />
+               <Button colorScheme="blue" onClick={copyLogsToClipboard}>
+                        Copy Logs
+               </Button>
             </Box>
 
+            {/* Log Display */}
             <Box ref={logRef} overflowY="auto" width="100%" height="calc(100% - 40px)">
                {filteredLogs.length === 0 ? (
                   <Text textAlign="center" color="gray.500">
-                       No matching logs found.
+                            No matching logs found.
                   </Text>
                ) : (
-                  filteredLogs.map(([cmd, entries], index) => (
-                     <Box key={index} p={3} borderRadius="md" mb={4} bg="gray.700" color="white">
+                  filteredLogs.map(([cmd, entries]) => (
+                     <Box key={cmd} p={3} borderRadius="md" mb={4} bg="gray.700" color="white">
                         <Text fontWeight="bold" fontSize="md" mb={2}>
-                              Command: <Code>{cmd}</Code>
+                                    Command: <Code>{cmd}</Code>
                         </Text>
-                        {entries.map((log, logIndex) => (
+                        {entries.map((log, index) => (
                            <Box
-                              key={logIndex}
+                              key={index}
                               p={2}
                               borderRadius="md"
                               mb={1}

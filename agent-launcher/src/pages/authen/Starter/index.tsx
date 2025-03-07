@@ -1,8 +1,11 @@
-import { Center, Box, Image, Text, useColorModeValue, Code } from "@chakra-ui/react";
+
+import { Center, Image, Text } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
 import BaseButton from "@components/BaseButton";
 import sleep from "@utils/sleep.ts";
+import BackgroundWrapper from "@components/BackgroundWrapper";
+import LoadingText from "@components/LoadingText";
 
 
 interface IProps {
@@ -26,13 +29,13 @@ const Starter = (props: IProps) => {
    const { setChecking } = useStarter();
    const initRef = useRef(false);
 
-   const [step, setStep] = useState<Step>("INITIALIZING");
+   const [step] = useState<Step>("INITIALIZING");
    const [installing, setInstalling] = useState<boolean>(false);
    const [installError, setInstallError] = useState<string | undefined>();
 
    const onInit = async (ignoreCopy?: boolean) => {
       try {
-         console.time("onInit");
+         console.time("init-time: ");
          await onCheckHasUser();
          if (!ignoreCopy) {
             await window.electronAPI.dockerCopyBuild();
@@ -40,7 +43,7 @@ const Starter = (props: IProps) => {
 
          await window.electronAPI.dockerInstall();
          await window.electronAPI.dockerBuild();
-         await window.electronAPI.modelStarter();
+         // await window.electronAPI.modelStarter();
 
          setChecking(false);
 
@@ -58,7 +61,7 @@ const Starter = (props: IProps) => {
          // alert("Error while checking Docker" + window.electronAPI);
          console.error(error);
       } finally {
-         console.timeEnd("onInit");
+         console.timeEnd("init-time:");
       }
    }
 
@@ -82,9 +85,7 @@ const Starter = (props: IProps) => {
          return (
             <Center flexDirection="column" gap="12px">
                <LoadingIcon />
-               <Text fontSize="18px" fontWeight="500" opacity="0.75">
-                  Initializing...
-               </Text>
+               <LoadingText dataText="Initializing..." />
             </Center>
          )
       }
@@ -119,15 +120,9 @@ const Starter = (props: IProps) => {
 
 
    return (
-      <Center
-         background="linear-gradient(180deg, #E4E5D8 0%, #CBD6E8 100%)"
-         width="100dvw"
-         height="100dvh"
-         flexDirection="column"
-         gap="24px"
-      >
+      <BackgroundWrapper>
          {renderContent()}
-      </Center>
+      </BackgroundWrapper>
    )
 };
 
