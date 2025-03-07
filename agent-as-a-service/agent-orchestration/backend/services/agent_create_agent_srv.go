@@ -647,7 +647,7 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 									refId, _err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
 									if _err == nil {
 										return refId, nil
-									} else if strings.Contains(err.Error(), "You attempted to reply to a Tweet that is deleted or not visible to you") {
+									} else if strings.Contains(_err.Error(), "You attempted to reply to a Tweet that is deleted or not visible to you") {
 										return "", _err
 									}
 									err = _err
