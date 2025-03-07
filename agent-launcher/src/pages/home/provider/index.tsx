@@ -345,7 +345,6 @@ const AgentProvider: React.FC<
          const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
          if (depsAgentStrs.length > 0) {
             const dependAgents = await installDependAgents(depsAgentStrs, chainId);
-            console.log('dependAgents', dependAgents)
          }
 
          const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
@@ -369,34 +368,50 @@ const AgentProvider: React.FC<
    };
 
    const installDependAgents = async (agents: string[], chainId: number) => {
-      return await Promise.all(agents.map(async (agentContractAddr) => {
-         const cAgent = new CAgentContract({ contractAddress: agentContractAddr, chainId: chainId });
-         const codeLanguage = await cAgent.getCodeLanguage();
-         const codeVersion = await cAgent.getCurrentVersion();
-         const agentName = await cAgent.getAgentName();
+      const installedAgents = new Set<string>();
 
-         const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
-         const fileNameOnLocal = `prompt.${codeLanguage}`;
-         const folderNameOnLocal = `${chainId}-${agentName}`;
+      const agentsData = await Promise.all(agents.map(async (agentContractAddr) => {
+        if (installedAgents.has(agentContractAddr)) {
+            return null; 
+        }
 
-         const isExisted = await checkFileExistsOnLocal(
-            fileNameOnLocal,
-            folderNameOnLocal
-         );
-         if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
+        installedAgents.add(agentContractAddr);
+
+        const cAgent = new CAgentContract({ contractAddress: agentContractAddr, chainId });
+        const codeLanguage = await cAgent.getCodeLanguage();
+        const codeVersion = await cAgent.getCurrentVersion();
+        const agentName = await cAgent.getAgentName();
+        const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+
+        let dependAgents: any[] = [];
+        if (depsAgentStrs.length > 0) {
+            dependAgents = await installDependAgents(depsAgentStrs, chainId);
+        }
+
+        const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
+        const fileNameOnLocal = `prompt.${codeLanguage}`;
+        const folderNameOnLocal = `${chainId}-${agentName}`;
+
+        const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderNameOnLocal);
+        if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
             await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
-         } else {
+        } else {
             const code = await cAgent.getAgentCode(codeVersion);
             await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
-         }
-
-         return {
-            agent_name: agentName,
-            network_id: chainId,
-            agent_contract_address: agentContractAddr
-         }
+        }
+        return [
+            ...dependAgents,
+            {
+                agent_name: agentName,
+                network_id: chainId,
+                agent_contract_address: agentContractAddr
+            }
+        ];
       }));
-   }
+      
+      return agentsData.flat().filter(Boolean);
+    };
+   
 
    const handleRunDockerAgent = async (agent?: IAgentToken) => {
       if (!agent) return;
