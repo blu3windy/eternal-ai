@@ -5,7 +5,7 @@ import { useLoggersStore } from "@components/Loggers/useLogs.ts";
 const NUMBER = 10;
 
 interface IProps {
-   clearLogs: () => void;
+   clearLogs?: () => void;
 }
 
 const LoggersButton = (props: IProps) => {
@@ -34,7 +34,7 @@ const LoggersButton = (props: IProps) => {
          {showLogs && (
             <Flex
                backgroundColor={"red.500" }
-               onClick={props.clearLogs}
+               onClick={props?.clearLogs}
                cursor="pointer"
                padding={"12px"}
                fontSize="12px"
