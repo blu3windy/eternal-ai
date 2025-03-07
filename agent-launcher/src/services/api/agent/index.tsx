@@ -64,6 +64,8 @@ const AgentAPI = {
                "chainId": agent?.network_id
             }
          );
+         console.log('res>>>AgentInfo', res);
+         
          return res;
       } catch (e) {
          return undefined;

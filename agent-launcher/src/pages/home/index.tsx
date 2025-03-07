@@ -28,7 +28,7 @@ const HandleHome = () => {
       <Panel minSize={20} maxSize={25}>
         <AgentsList />
       </Panel>
-      {/* <PanelResizeHandle /> */}
+      <PanelResizeHandle />
       <Panel
         minSize={50}
         maxSize={60}
@@ -38,7 +38,7 @@ const HandleHome = () => {
         )}
         id={"detailContainer"}
       >
-        <Box px={"16px"}>
+        <Box p={"16px"}>
           <AgentInfo />
         </Box>
         {/* <AgentTradeProvider>
@@ -46,7 +46,7 @@ const HandleHome = () => {
         </AgentTradeProvider> */}
         {isTrade ? <TradeAgent /> : <ChatAgent />}
       </Panel>
-      {/* <PanelResizeHandle /> */}
+      <PanelResizeHandle />
     </PanelGroup>
   );
 };

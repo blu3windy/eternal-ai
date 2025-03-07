@@ -134,7 +134,7 @@ const AgentProvider: React.FC<
 
       checkAgentRunning(agent);
 
-      refInterval.current = setInterval(checkAgentRunning, 3000, agent);
+      refInterval.current = setInterval(checkAgentRunning, 30000, agent);
    }
 
    useEffect(() => {

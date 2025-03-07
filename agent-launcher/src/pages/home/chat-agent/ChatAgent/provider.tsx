@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import React, {
@@ -217,7 +218,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type as any)) {
             const res: string = await AgentAPI.chatAgentUtility({ agent: selectedAgent!, prvKey: agentWallet?.privateKey, messages: [ { role: 'user', content: sendTxt }] });
-
+            console.log('res>>>>>', res);
+            
             updateMessage(messageId, {
                msg: res,
                status: 'received',

@@ -59,7 +59,9 @@ class CApiClient {
 
       this.api.interceptors.response.use(
          (res: AxiosResponse) => {
-            let result = res?.data?.data || res?.data?.result;
+            console.log('result', res);
+            
+            let result = res?.data?.data || res?.data?.result || res?.data;
             const error = res?.data?.error;
             if (error) {
                return Promise.reject(error);
