@@ -7,6 +7,7 @@ import DeepThinking from "./DeepThinking";
 import { CustomComponentProps } from "./types";
 import { THINK_TAG_REGEX } from "./constants";
 import CustomLink from "./Link";
+import ContentReplay from "./Content";
 
 const preprocessMarkdown = (content: string) => {
   try {
@@ -54,6 +55,9 @@ function CustomMarkdown({
       },
       a: (props) => {
         return <CustomLink {...props} />;
+      },
+      p: (props) => {
+        return <ContentReplay {...props} />;
       },
       ...components,
     } satisfies any;
