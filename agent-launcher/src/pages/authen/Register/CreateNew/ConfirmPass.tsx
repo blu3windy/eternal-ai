@@ -3,6 +3,7 @@ import BaseButton from "@components/BaseButton";
 import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import InputPassword from "@components/Input/InputPassword";
+import HeaderBox from "@pages/authen/components/HeaderBox";
 
 interface IProps {
    onNext: (_: string) => void;
@@ -24,23 +25,11 @@ const ConfirmPass = (props: IProps) => {
          alignItems="center"
          justifyContent="center"
       >
-         <Flex
-            flexDirection="column"
-            alignItems="center"
-            gap="24px"
-         >
-            <Text fontSize="48px" fontWeight="500" color="black">
-                Create a password
-            </Text>
-            <Text fontSize="24px" fontWeight="400" color="#2E2E2E" textAlign="center">
-               <Text>
-                   This password encrypts your wallet on this device. If you forget it,
-               </Text>
-               <Text>
-                   you’ll need your private key to regain access.
-               </Text>
-            </Text>
-         </Flex>
+         <HeaderBox
+            title="Create a new account"
+            description={["Your password encrypts your wallet on this device. If you forget it, you’ll need your private key to regain access."]}
+            maxWidth="500px"
+         />
          <Formik
             initialValues={{ password: '' }}
             validationSchema={validationSchema}
@@ -50,7 +39,7 @@ const ConfirmPass = (props: IProps) => {
          >
             {({ dirty, setFieldValue }) => (
                <Form>
-                  <Flex flexDirection="column" width="500px" marginTop="60px">
+                  <Flex flexDirection="column" width="500px" marginTop="32px">
                      <InputPassword
                         name="password"
                         placeholder="Enter password"
@@ -75,7 +64,7 @@ const ConfirmPass = (props: IProps) => {
                      <BaseButton
                         type="submit"
                         width="100% !important"
-                        marginTop="60px"
+                        marginTop="48px"
                         disabled={!dirty}
                         isLoading={!!loading}
                      >

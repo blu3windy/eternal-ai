@@ -37,7 +37,7 @@ const InputPassword = (props: IProps) => {
                border="1px solid #B6B6B6"
                type={showPassword ? "text" : "password"}
                padding="12px 14px"
-               fontSize="16px"
+               fontSize="15px"
                lineHeight="160%"
                {...rest}
             />

@@ -8,7 +8,7 @@ const ipcMainSafeCopy = () => {
       // Auto-clear clipboard after 5 seconds
       setTimeout(() => {
          clipboard.clear();
-      }, 10000);
+      }, 15000);
    });
 };
 
