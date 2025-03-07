@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import OTPInput from 'react-otp-input';
 import styles from "./styles.module.scss";
 import BaseButton from "@components/BaseButton";
+import HeaderBox from "@pages/authen/components/HeaderBox";
 
 interface IProps {
     onNext: () => void;
@@ -39,18 +40,12 @@ const ConfirmKey = (props: IProps) => {
          alignItems="center"
          justifyContent="center"
       >
-         <Flex
-            flexDirection="column"
-            alignItems="center"
-            gap="24px"
-         >
-            <Text fontSize="48px" fontWeight="500" color="black">
-              Confirm your private key
-            </Text>
-            <Text fontSize="24px" fontWeight="400" color="#2E2E2E">
-              Enter the last 4 characters of your private key.
-            </Text>
-         </Flex>
+         <HeaderBox
+            title="Confirm your private key"
+            description={[
+               "Enter the last 4 characters of your private key"
+            ]}
+         />
          <Flex
             className={styles.passCode}
          >
@@ -79,7 +74,7 @@ const ConfirmKey = (props: IProps) => {
             )}
          </Flex>
          <BaseButton
-            width="400px !important"
+            width="200px !important"
             marginTop="60px"
             onClick={onNext}
             disabled={!!errorMessage || !edited || confirmKey.length < 4}

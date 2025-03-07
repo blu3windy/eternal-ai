@@ -8,6 +8,7 @@ import { Wallet } from "ethers";
 import EaiSigner from "@helpers/signer";
 import { compareString } from "@utils/string.ts";
 import { useAuth } from "@pages/authen/provider.tsx";
+import HeaderBox from "@pages/authen/components/HeaderBox";
 
 interface IProps {
    onBack: () => void;
@@ -62,21 +63,7 @@ const ImportKey = (props: IProps) => {
          alignItems="center"
          justifyContent="center"
       >
-         <Flex
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            gap="16px"
-         >
-            <Text
-               fontSize="28px"
-               fontWeight="500"
-               lineHeight="160%"
-               color="rgba(0, 0, 0, 1)"
-            >
-               Import an existing account
-            </Text>
-         </Flex>
+         <HeaderBox title="Import an existing account" />
          <Formik
             initialValues={{ privateKey: '', password: '' }}
             validationSchema={validationSchema}
@@ -87,6 +74,7 @@ const ImportKey = (props: IProps) => {
                   <Flex flexDirection="column" width="400px" marginTop="32px">
                      <InputText
                         name="privateKey"
+                        autoFocus={true}
                         header={{
                            label: "Enter your Private key String here:"?.toUpperCase()
                         }}
@@ -111,7 +99,6 @@ const ImportKey = (props: IProps) => {
                      <InputPassword
                         name="password"
                         placeholder="Enter password"
-                        autoFocus={true}
                         header={{ label: "Password"?.toUpperCase() }}
                         onChange={(e) =>
                            setFieldValue('password', e.target.value)
