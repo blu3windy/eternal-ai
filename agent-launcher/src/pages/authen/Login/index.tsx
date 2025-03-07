@@ -102,10 +102,10 @@ const Login = () => {
             </Button>
             <Button
                onClick={() => {
-                  window.electronAPI.dockerCheckRunning("leon", "1");
+                  window.electronAPI.modelCheckInstall(["bafkreiecx5ojce2tceibd74e2koniii3iweavknfnjdfqs6ows2ikoow6m"]);
                }}
             >
-               PING DOCKER
+               MODEL CHECK INSTALL
             </Button>
          </Flex>
          <Formik

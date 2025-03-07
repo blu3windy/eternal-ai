@@ -118,7 +118,7 @@ const ipcMainDocker = () => {
          }
 
          try {
-            await command.execAsync(
+            await command.execAsyncDockerDir(
                `${docker} run -d -p 33030:80 --network=network-agent-external --add-host=localmodel:host-gateway --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
             );
          } catch (error) {
@@ -198,7 +198,7 @@ const ipcMainDocker = () => {
             )
          }
          const { stdout } = await command.execAsyncDockerDir(
-            `cd "${folderPath}" && ${docker} run -d -v "${folderPath}/agents/${dnsHost}/prompt.js":/app/src/prompt.js --network network-agent-external --name ${dnsHost} ${DOCKER_SERVER_JS}`
+            `cd "${folderPath}" && ${docker} run -d -v "${folderPath}/agents/${dnsHost}/prompt.js":/app/src/prompt.js --network network-agent-external --add-host=localmodel:host-gateway --name ${dnsHost} ${DOCKER_SERVER_JS}`
          );
          console.log(stdout);
       } catch (error) {
