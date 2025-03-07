@@ -189,6 +189,7 @@ func (s *Server) Routers() {
 		internalAPI := rootAPI.Group("/internal", s.internalApiMiddleware())
 		{
 			internalAPI.GET("/webtext", s.GetWebpageText)
+			internalAPI.POST("/trigger_job", s.AdminTriggerJob)
 
 			twitterAPI := internalAPI.Group("/twitter")
 			{

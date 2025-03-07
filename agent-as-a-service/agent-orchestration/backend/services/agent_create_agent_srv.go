@@ -157,6 +157,7 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 	if err != nil {
 		return errs.NewError(err)
 	}
+
 	if twitterInfo != nil {
 		err = func() error {
 			tweetMentions, err := s.twitterWrapAPI.GetListUserMentions(agent.TwitterID, "", twitterInfo.AccessToken, 50)
