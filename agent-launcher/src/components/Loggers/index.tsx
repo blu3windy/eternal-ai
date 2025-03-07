@@ -116,7 +116,7 @@ const Loggers = () => {
                            mb={1}
                            bg={log.type === "error" ? "red.400" : "gray.600"}
                         >
-                           <Text fontWeight="bold">{log.type.toUpperCase()}:</Text>
+                           {/*<Text fontWeight="bold">{log.type.toUpperCase()}:</Text>*/}
                            <Code whiteSpace="pre-wrap" fontSize="12px">
                               {log.message.trim()}
                            </Code>
