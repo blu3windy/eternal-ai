@@ -8,6 +8,7 @@ import EaiSigner from "@helpers/signer";
 import eaiCrypto from "@utils/crypto";
 import { useAuth } from "@pages/authen/provider.tsx";
 import useForgotPass from "@pages/authen/hooks/useForgotPass.ts";
+import { useLoggersStore } from "@components/Loggers/useLogs.ts";
 
 const Login = () => {
 
@@ -15,6 +16,7 @@ const Login = () => {
    const [cipherText, setCipherText] = useState<string | undefined>(undefined);
    const [loading, setLoading] = useState<boolean>(true);
    const { onOpen } = useForgotPass();
+   const { showLogs } = useLoggersStore();
 
    const onSubmit = async (values: { password: string }) => {
       try {
@@ -77,46 +79,50 @@ const Login = () => {
                 The decentralized AI awaits.
             </Text>
          </Flex>
-         <Flex gap="12px" flexWrap="wrap" maxWidth="600px">
-            <Button
-               onClick={() => {
-                  console.log('Test Run Docker 1-leon');
-                  window.electronAPI.dockerRunAgent('leon', '1');
-               }}
-            >
-               Run Docker
-            </Button>
-            <Button
-               onClick={() => {
-                  window.electronAPI.modelInstall("bafkreiecx5ojce2tceibd74e2koniii3iweavknfnjdfqs6ows2ikoow6m");
-               }}
-            >
-               INSTALL MODEL
-            </Button>
-            <Button
-               onClick={() => {
-                  window.electronAPI.modelRun("bafkreiecx5ojce2tceibd74e2koniii3iweavknfnjdfqs6ows2ikoow6m");
-               }}
-            >
-               RUN MODEL
-            </Button>
-            <Button
-               onClick={() => {
-                  window.electronAPI.modelCheckInstall(["bafkreiecx5ojce2tceibd74e2koniii3iweavknfnjdfqs6ows2ikoow6m"]);
-               }}
-            >
-               MODEL CHECK INSTALL
-            </Button>
-            <Button
-               onClick={() => {
-                  window.electronAPI.modelCheckRunning().then((hash?: string) => {
-                     alert(hash ? `Model is running with hash: ${hash}` : "Model is not running");
-                  });
-               }}
-            >
-               MODEL CHECK RUNNING
-            </Button>
-         </Flex>
+         {showLogs && (
+            <Flex gap="12px" flexWrap="wrap" maxWidth="600px" justifyContent="center" alignItems="center">
+               <Button
+                  onClick={() => {
+                     console.log('Test Run Docker 1-leon');
+                     window.electronAPI.dockerRunAgent('leon', '1');
+                  }}
+               >
+                   Run Docker
+               </Button>
+               <Button
+                  onClick={() => {
+                     window.electronAPI.modelInstall("bafkreiecx5ojce2tceibd74e2koniii3iweavknfnjdfqs6ows2ikoow6m");
+                  }}
+               >
+                   INSTALL MODEL
+               </Button>
+               <Button
+                  onClick={() => {
+                     window.electronAPI.modelRun("bafkreiecx5ojce2tceibd74e2koniii3iweavknfnjdfqs6ows2ikoow6m");
+                  }}
+               >
+                   RUN MODEL
+               </Button>
+               <Button
+                  onClick={() => {
+                     window.electronAPI.modelCheckInstall(["bafkreiecx5ojce2tceibd74e2koniii3iweavknfnjdfqs6ows2ikoow6m"]);
+                  }}
+               >
+                   MODEL CHECK INSTALL
+               </Button>
+               <Button
+                  onClick={() => {
+                     window.electronAPI.modelCheckRunning().then((hash?: string) => {
+                        alert(hash ? `Model is running with hash: ${hash}` : "Model is not running");
+                     });
+                  }}
+               >
+                   MODEL CHECK RUNNING
+               </Button>
+            </Flex>
+         )}
+
+
          <Formik
             initialValues={{ password: '' }}
             validationSchema={validationSchema}
