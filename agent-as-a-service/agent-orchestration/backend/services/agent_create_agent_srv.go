@@ -628,51 +628,54 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 						return errs.NewError(err)
 					}
 
-					isValid := true
+					if twitterPost.Status == models.AgentTwitterPostStatusNew &&
+						twitterPost.PostType == models.AgentSnapshotPostActionTypeGenerateVideo &&
+						twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil {
 
-					if isValid {
-						if twitterPost.Status == models.AgentTwitterPostStatusNew &&
-							twitterPost.PostType == models.AgentSnapshotPostActionTypeGenerateVideo &&
-							twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil {
-							//TODO: twitterPost.ExtractContent -> gen ra video
-							//imageUrl, _ = s.GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc)
-
-							videoUrl := twitterPost.ImageUrl
-							mediaID := ""
-							if videoUrl != "" {
-								mediaID, _ = s.twitterAPI.UploadVideo(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
-							}
-
-							if mediaID != "" {
-								// post truc tiep reply, luu lai reply_id
-								contentReply := fmt.Sprintf("Prompt onchain tx : https://basescan.org/tx/%v\nVideo onchain tx : https://basescan.org/tx/%v\nPrompt : %v", twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash, twitterPost.ExtractContent)
-								refId, err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
-								if err != nil {
-									s.SendTeleVideoActivitiesAlert(fmt.Sprintf("fail when reply video db_id:%v \n err:%v ", twitterPost.ID, err.Error()))
-									if strings.Contains(err.Error(), "You attempted to reply to a Tweet that is deleted or not visible to you") {
-										twitterPost.Status = models.AgentTwitterPostStatusInvalid
-										err = s.dao.Save(tx, twitterPost)
-										if err != nil {
-											return errs.NewError(err)
-										}
-									}
-									return errs.NewError(err)
-								}
-								twitterPost.ImageUrl = videoUrl
-								twitterPost.ReplyPostId = refId
-								twitterPost.Status = models.AgentTwitterPostStatusReplied
-								err = s.dao.Save(tx, twitterPost)
-								if err != nil {
-									return errs.NewError(err)
-								}
-								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success gen video reply twitter https://x.com/%v/status/%v \n process time :%v", twitterPost.TwitterUsername, twitterPost.TwitterPostID, time.Since(twitterPost.CreatedAt)))
-							}
+						videoUrl := twitterPost.ImageUrl
+						mediaID := ""
+						if videoUrl != "" {
+							mediaID, _ = s.twitterAPI.UploadVideo(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
 						}
-					} else {
-						twitterPost.Status = models.AgentTwitterConversationInvalid
-						err = s.dao.Save(tx, twitterPost)
-						if err != nil {
-							return errs.NewError(err)
+
+						if mediaID != "" {
+							refId, err := func() (string, error) {
+								for i := 0; i < 5; i++ {
+									time.Sleep(time.Duration(i*5) * time.Second)
+									contentReply := fmt.Sprintf("Prompt onchain tx: https://basescan.org/tx/%v\nVideo onchain tx : https://basescan.org/tx/%v\nPrompt : %v",
+										twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash, twitterPost.ExtractContent)
+									refId, _err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
+									if _err == nil {
+										return refId, nil
+									}
+								}
+
+								return "", errs.NewError(fmt.Errorf("fail when reply video twitter after rety 3 times"))
+							}()
+
+							if err != nil {
+								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("fail when reply video:\n db_id:%v \n prompt: %v \n err:%v ",
+									twitterPost.ID, twitterPost.ExtractContent, err.Error()))
+
+								if strings.Contains(err.Error(), "You attempted to reply to a Tweet that is deleted or not visible to you") {
+									twitterPost.Status = models.AgentTwitterPostStatusInvalid
+									err = s.dao.Save(tx, twitterPost)
+									if err != nil {
+										return errs.NewError(err)
+									}
+								}
+
+								return errs.NewError(err)
+							}
+							twitterPost.ImageUrl = videoUrl
+							twitterPost.ReplyPostId = refId
+							twitterPost.Status = models.AgentTwitterPostStatusReplied
+							err = s.dao.Save(tx, twitterPost)
+							if err != nil {
+								return errs.NewError(err)
+							}
+							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success gen video reply twitter id=%v,\n, Prompt:%v \n https://x.com/%v/status/%v \n process time :%v",
+								twitterPost.ID, twitterPost.ExtractContent, twitterPost.TwitterUsername, twitterPost.TwitterPostID, time.Since(twitterPost.CreatedAt)))
 						}
 					}
 
