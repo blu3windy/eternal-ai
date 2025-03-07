@@ -34,10 +34,11 @@ fi
 log "Checking existing Python version..."
 python3 --version || log "No Python installation found."
 
-if brew list python &>/dev/null; then
-  log "Upgrading Python..."
-  brew upgrade python || handle_error $? "Failed to upgrade Python"
+log "Checking system Python..."
+if command_exists python3; then
+  log "Python is already installed on the system. Skipping Python installation."
 else
+  log "No Python found. Installing Python using Homebrew..."
   brew install python || handle_error $? "Failed to install Python"
 fi
 
@@ -84,14 +85,7 @@ else
 fi
 
 log "Installing/Updating llama.cpp..."
-echo "LEON CHECK uname $(uname -m)"
-if [[ $(uname -m) == 'arm64' ]]; then
-  echo "LEON CHECK arm64"
-  arch -arm64 brew install llama.cpp || handle_error $? "Failed to install llama.cpp"
-else
-  echo "LEON CHECK x86_64"
-  brew install llama.cpp || handle_error $? "Failed to install llama.cpp"
-fi
+brew install llama.cpp || handle_error $? "Failed to install llama.cpp"
 log "llama.cpp installation/update completed."
 
 log "Verifying the installed llama.cpp version..."
@@ -102,7 +96,7 @@ log "llama.cpp setup complete."
 # Step 7: Set up local-llms toolkit
 log "Setting up local-llms toolkit..."
 pip3 uninstall local-llms -y || log "Warning: local-llms was not previously installed"
-pip3 install -q git+https://github.com/eternalai-org/local-llms.git@v1.0.2 || handle_error $? "Failed to install local-llms toolkit"
+pip3 install -q git+https://github.com/eternalai-org/local-llms.git@v1.0.6 || handle_error $? "Failed to install local-llms toolkit"
 log "local-llms toolkit setup completed."
 
 log "All steps completed successfully."

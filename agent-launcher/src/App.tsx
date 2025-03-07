@@ -10,10 +10,6 @@ import { PersistGate } from "redux-persist/integration/react";
 import { useEffect } from "react";
 
 function App() {
-
-   useEffect(() => {
-      console.log('LEON useEffect');
-   }, []);
    return (
       <Provider store={store}>
          <PersistGate loading={null} persistor={persistor}>
