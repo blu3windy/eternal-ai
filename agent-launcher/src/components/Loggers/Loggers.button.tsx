@@ -1,4 +1,4 @@
-import { Flex } from "@chakra-ui/react";
+import { Button, Flex } from "@chakra-ui/react";
 import { useState } from "react";
 import { useLoggersStore } from "@components/Loggers/useLogs.ts";
 
@@ -19,13 +19,13 @@ const LoggersButton = () => {
    return (
       <Flex
          position="absolute"
-         zIndex="1"
+         zIndex="3"
          bottom="10px"
          right="10px"
          backgroundColor={showLogs ? "green" : "transparent"}
          onClick={onClick}
          cursor="pointer"
-         padding="4px"
+         padding={showLogs ? "12px" : "8px"}
          fontSize="12px"
          color="white"
          borderRadius="md"
