@@ -5,11 +5,9 @@ export const PUBLIC_SCRIPT = 'public/scripts';
 
 const SCRIPTS_NAME = {
    DOCKER_INSTALL_SCRIPT: "docker-install.sh",
-   BOOTSTRAP: "sudo-bootstrap.sh",
    DOCKER_FILE : "Dockerfile",
    PACKAGE_JSON: "package.json",
    SERVER_JS: "server.js",
-
    MODEL_STARTER: "mac.sh",
 }
 
@@ -18,6 +16,7 @@ const USER_DATA_FOLDER_NAME = {
    AGENT_ROUTER: "agent-router",
    AGENT_JS: "agent-js",
    MODEL: "model",
+   DOCKER: "docker"
 }
 
 const getScriptPath = (fileName: string, home_path = PUBLIC_SCRIPT) => {

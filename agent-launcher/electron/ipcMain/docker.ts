@@ -31,16 +31,18 @@ const dockerCopyBuild = async () => {
    const REQUIRE_COPY_AGENT_ROUTER_FILES = [...REQUIRE_COPY_AGENT_JS_FILES];
 
    const REQUIRE_COPY_MODEL_FILES = [SCRIPTS_NAME.MODEL_STARTER];
-
+   const REQUIRE_COPY_DOCKER_FILES = [SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT];
 
    const folderPathAgentJS = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.AGENT_JS);
    const folderPathAgentRouter = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.AGENT_ROUTER);
    const folderPathModel = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.MODEL);
+   const folderPathDocker = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.DOCKER);
 
    const paths = [
       folderPathAgentJS,
       folderPathAgentRouter,
-      folderPathModel
+      folderPathModel,
+      folderPathDocker
    ];
 
 
@@ -68,7 +70,12 @@ const dockerCopyBuild = async () => {
    for (const file of REQUIRE_COPY_MODEL_FILES) {
       const source = getScriptPath(file, `${PUBLIC_SCRIPT}/${USER_DATA_FOLDER_NAME.MODEL}`);
       const destination = path.join(folderPathModel, file);
-      console.log("File copied:", { source, destination });
+      fs.copyFileSync(source, destination);
+   }
+
+   for (const file of REQUIRE_COPY_DOCKER_FILES) {
+      const source = getScriptPath(file, `${PUBLIC_SCRIPT}/${USER_DATA_FOLDER_NAME.DOCKER}`);
+      const destination = path.join(folderPathDocker, file);
       fs.copyFileSync(source, destination);
    }
 }
@@ -160,8 +167,9 @@ const ipcMainDocker = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INSTALL, async (_event) => {
       try {
-         const scriptPath = getScriptPath(SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT);
-         const cmd = `bash ${scriptPath}`;
+         const userDataPath = app.getPath("userData");
+         const scriptPath = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.DOCKER);
+         const cmd = `cd "${scriptPath}" && bash ${SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT}`;
          await command.execAsyncStream(cmd);
 
          // eslint-disable-next-line no-constant-condition
