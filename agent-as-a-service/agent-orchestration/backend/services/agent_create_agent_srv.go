@@ -425,7 +425,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 						for k, v := range *twitterDetail {
 							if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
 								if strings.EqualFold(k, item.ID) {
-									fullText := v.Tweet.NoteTweet.Text
+									fullText := v.Tweet.GetAllFullText()
 									tokenInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), agentInfo.TwitterUsername, fullText)
 									if tokenInfo != nil && (tokenInfo.IsGenerateVideo) {
 										existPosts, err := s.dao.FirstAgentTwitterPost(

@@ -86,6 +86,14 @@ type TweetObj struct {
 	} `json:"note_tweet"`
 }
 
+func (tw *TweetObj) GetAllFullText() string {
+	fullText := tw.NoteTweet.Text
+	if fullText == "" {
+		fullText = tw.Text
+	}
+	return fullText
+}
+
 func (tw *TweetObj) GetFullText() string {
 	fullText := tw.NoteTweet.Text
 	if fullText == "" {
