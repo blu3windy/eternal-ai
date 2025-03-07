@@ -46,7 +46,7 @@ const Checkbox: FC<CheckboxProps> = ({ ticked, onToggle, label }) => {
          </Box>
          {
             label && (
-               <Text fontSize="16px" color="black">
+               <Text fontSize="14px" color="rgba(0, 0, 0, 0.7)">
                   {label}
                </Text>
             )

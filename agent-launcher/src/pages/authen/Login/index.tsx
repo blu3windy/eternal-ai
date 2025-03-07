@@ -67,12 +67,12 @@ const Login = () => {
          <Flex
             flexDirection="column"
             alignItems="center"
-            gap="24px"
+            gap="16px"
          >
-            <Text fontSize="48px" fontWeight="500" color="black">
+            <Text fontSize="28px" fontWeight="500" color="black">
                 Welcome back!
             </Text>
-            <Text fontSize="24px" fontWeight="400" color="#2E2E2E" textAlign="center">
+            <Text fontSize="16px" fontWeight="400" color="rgba(0, 0, 0, 0.7)" textAlign="center">
                 The decentralized AI awaits.
             </Text>
          </Flex>
@@ -84,12 +84,12 @@ const Login = () => {
          >
             {({ dirty, setFieldValue, isSubmitting }) => (
                <Form>
-                  <Flex flexDirection="column" width="500px" marginTop="60px">
+                  <Flex flexDirection="column" width="400px" marginTop="60px">
                      <InputPassword
                         name="password"
                         placeholder="Enter password"
                         autoFocus={true}
-                        header={{ label: "Password"?.toUpperCase() }}
+                        header={{ label: "" }}
                         onChange={(e) =>
                            setFieldValue('password', e.target.value)
                         }
@@ -110,7 +110,7 @@ const Login = () => {
                      <BaseButton
                         type="submit"
                         width="100% !important"
-                        marginTop="60px"
+                        marginTop="32px"
                         disabled={!dirty || isSubmitting || loading || !cipherText}
                         isLoading={!cipherText || loading || isSubmitting}
                      >
@@ -118,13 +118,11 @@ const Login = () => {
                      </BaseButton>
                      <Text
                         textAlign="center"
-                        fontSize="16px"
+                        fontSize="14px"
                         fontWeight="400"
-                        color="black"
-                        marginTop="24px"
-                        fontStyle="italic"
+                        marginTop="16px"
                         cursor="pointer"
-                        textDecoration="underline"
+                        color="rgba(0, 0, 0, 0.7)"
                         onClick={onOpen}
                      >
                         Forgot password?

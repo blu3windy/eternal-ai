@@ -19,14 +19,18 @@ const InputPassword = (props: IProps) => {
          gap="6px"
          width="100%"
       >
-         <Text
-            as="label"
-            fontSize="12px"
-            fontWeight="500"
-            color="#2E2E2E"
-         >
-            {header.label}
-         </Text>
+         {
+            !!header?.label && (
+               <Text
+                  as="label"
+                  fontSize="12px"
+                  fontWeight="500"
+                  color="#2E2E2E"
+               >
+                  {header.label}
+               </Text>
+            )
+         }
          <Flex flex="1" width="100%" position="relative">
             <Input
                borderRadius="8px"

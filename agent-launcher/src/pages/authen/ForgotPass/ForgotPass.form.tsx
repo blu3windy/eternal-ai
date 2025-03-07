@@ -28,22 +28,21 @@ const FormForgotPass = () => {
          flexDirection="column"
          alignItems="center"
          justifyContent="center"
-         width="50%"
-         maxWidth="800px"
-         minWidth="600px"
+         maxWidth="700px"
+         minWidth="500px"
       >
          <Flex
             flexDirection="column"
             alignItems="center"
-            gap="24px"
+            gap="16px"
          >
-            <Text fontSize="48px" fontWeight="500" color="black">
+            <Text fontSize="28px" fontWeight="500" color="black">
                 Reset your account access
             </Text>
             <Text
                fontSize="18px"
                fontWeight="400"
-               color="#000"
+               color="rgba(0, 0, 0, 0.7)"
                textAlign="center"
                gap="8px"
                display="flex"
@@ -64,9 +63,9 @@ const FormForgotPass = () => {
          </Flex>
          <Flex
             flexDirection="column"
-            width="500px"
+            width="400px"
             marginTop="60px"
-            gap="24px"
+            gap="16px"
             alignItems="center"
          >
             <Checkbox
@@ -81,18 +80,15 @@ const FormForgotPass = () => {
                onClick={onSubmit}
                isDisabled={loading || !isChecked}
                isLoading={loading}
-
             >
                Reset
             </BaseButton>
             <Text
                textAlign="center"
-               fontSize="16px"
+               fontSize="14px"
                fontWeight="400"
-               color="black"
-               fontStyle="italic"
+               color="rgba(0, 0, 0, 0.6)"
                cursor="pointer"
-               textDecoration="underline"
                onClick={onClose}
             >
                 Cancel
