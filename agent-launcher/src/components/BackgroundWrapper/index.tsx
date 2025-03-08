@@ -47,6 +47,8 @@ const BackgroundWrapper = ({ children, className, style }: IProps) => {
                height="100%"
                objectFit="cover" // Ensures it fills available space
                maxW="none" // Prevents automatic shrinking
+               userSelect="none" // Prevents image from being selected
+               pointerEvents="none" // Prevents image from being clicked
             />
          </Box>
       </Grid>

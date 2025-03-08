@@ -59,5 +59,5 @@ export {
    USER_DATA_FOLDER_NAME,
    getDNSHost,
    executeWithIgnoreError,
-   executeCatchError
+   executeCatchError,
 }

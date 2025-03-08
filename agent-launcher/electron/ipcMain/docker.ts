@@ -10,6 +10,7 @@ import {
    USER_DATA_FOLDER_NAME
 } from "../share/utils.ts";
 import command from "../share/command-tool.ts";
+import { copyFiles } from "../share/scripts.ts";
 
 const getDocker = async () => {
    return 'docker'
@@ -18,68 +19,6 @@ const getDocker = async () => {
 const DOCKER_NAME = 'launcher-agent';
 const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
 const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
-
-const dockerCopyBuild = async () => {
-   const userDataPath = app.getPath("userData");
-
-   const REQUIRE_COPY_AGENT_JS_FILES = [
-      SCRIPTS_NAME.DOCKER_FILE,
-      SCRIPTS_NAME.PACKAGE_JSON,
-      SCRIPTS_NAME.SERVER_JS
-   ];
-
-   const REQUIRE_COPY_AGENT_ROUTER_FILES = [...REQUIRE_COPY_AGENT_JS_FILES];
-
-   const REQUIRE_COPY_MODEL_FILES = [SCRIPTS_NAME.MODEL_STARTER];
-   const REQUIRE_COPY_DOCKER_FILES = [SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT];
-
-   const folderPathAgentJS = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.AGENT_JS);
-   const folderPathAgentRouter = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.AGENT_ROUTER);
-   const folderPathModel = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.MODEL);
-   const folderPathDocker = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.DOCKER);
-
-   const paths = [
-      folderPathAgentJS,
-      folderPathAgentRouter,
-      folderPathModel,
-      folderPathDocker
-   ];
-
-
-   console.log("dockerCopyBuild", paths);
-
-   for (const folderPath of paths) {
-      if (!fs.existsSync(folderPath)) {
-         fs.mkdirSync(folderPath, { recursive: true });
-      }
-   }
-
-
-   for (const file of REQUIRE_COPY_AGENT_JS_FILES) {
-      const source = getScriptPath(file, `${PUBLIC_SCRIPT}/${USER_DATA_FOLDER_NAME.AGENT_JS}`);
-      const destination = path.join(folderPathAgentJS, file);
-      fs.copyFileSync(source, destination);
-   }
-
-   for (const file of REQUIRE_COPY_AGENT_ROUTER_FILES) {
-      const source = getScriptPath(file, `${PUBLIC_SCRIPT}/${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`);
-      const destination = path.join(folderPathAgentRouter, file);
-      fs.copyFileSync(source, destination);
-   }
-
-   for (const file of REQUIRE_COPY_MODEL_FILES) {
-      const source = getScriptPath(file, `${PUBLIC_SCRIPT}/${USER_DATA_FOLDER_NAME.MODEL}`);
-      const destination = path.join(folderPathModel, file);
-      fs.copyFileSync(source, destination);
-   }
-
-   for (const file of REQUIRE_COPY_DOCKER_FILES) {
-      const source = getScriptPath(file, `${PUBLIC_SCRIPT}/${USER_DATA_FOLDER_NAME.DOCKER}`);
-      const destination = path.join(folderPathDocker, file);
-      fs.copyFileSync(source, destination);
-   }
-}
-
 
 const ipcMainDocker = () => {
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_BUILD, async (_event) => {
@@ -146,7 +85,7 @@ const ipcMainDocker = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_COPY_BUILD, async (_event) => {
       try {
-         await dockerCopyBuild();
+         await copyFiles();
          return true;
       } catch (error) {
          console.log(error);
