@@ -20,13 +20,17 @@ const sendEvent = (params: { type: string, message: string, cmd: string, win: Br
    win.webContents.send("command-event", { type, message, cmd });
 }
 
-const execAsyncDockerDir = async (cmd: string) => {
+const getBrowser = () => {
    const win = BrowserWindow.getAllWindows()[0]; // Get main window
    if (!win) {
       console.error("No active Electron window found.");
       throw new Error("No active Electron window found.");
    }
+   return win;
+}
 
+const execAsyncDockerDir = async (cmd: string) => {
+   const win = getBrowser();
    try {
       // Check and set Docker directory only once
       if (!dockerDir) {
@@ -88,12 +92,7 @@ const execAsyncDockerDir = async (cmd: string) => {
 
 const execAsyncStream = (_cmd: string, isZSH = true) => {
    return new Promise<void>((resolve, reject) => {
-      const win = BrowserWindow.getAllWindows()[0]; // Get main window
-      if (!win) {
-         console.error("No active Electron window found.");
-         return reject(new Error("No active Electron window found."));
-      }
-
+      const win = getBrowser();
       const cmd = isZSH ? `zsh -l -c '${_cmd}'` : _cmd;
       const process = exec(cmd);
 
