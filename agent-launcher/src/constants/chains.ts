@@ -53,11 +53,15 @@ export enum CHAIN_TYPE {
   APE = "ape",
 }
 
+export const CHAIN_NAME_TO_ID = {
+  [CHAIN_TYPE.BASE]: BASE_CHAIN_ID,
+};
+
 export const CHAIN_INFO = {
   [CHAIN_TYPE.EAI]: CHAIN_CONFIG["ai"],
   [CHAIN_TYPE.ETERNAL]: CHAIN_CONFIG["eternal"],
   [CHAIN_TYPE.ARBITRUM]: CHAIN_CONFIG["arbitrum"],
-  [CHAIN_TYPE.BASE]: CHAIN_CONFIG["base"],
+  [CHAIN_TYPE.BASE]: CHAIN_CONFIG[CHAIN_NAME_TO_ID["base"]],
   [CHAIN_TYPE.ETHEREUM]: CHAIN_CONFIG["ethereum"],
   [CHAIN_TYPE.SOLANA]: CHAIN_CONFIG["solana"],
   [CHAIN_TYPE.AVALANCHE]: CHAIN_CONFIG["avalanche"],
