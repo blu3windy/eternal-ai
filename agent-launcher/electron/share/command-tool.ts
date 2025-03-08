@@ -8,7 +8,7 @@ const execAsync = async (cmd: string) => {
    return promisify(exec)(cmd); // Execute with updated PATH
 };
 
-const dockerDir = '';
+let dockerDir = '';
 
 const sendEvent = (params: { type: string, message: string, cmd: string, win: BrowserWindow }) => {
    const {
@@ -46,6 +46,7 @@ const execAsyncDockerDir = async (cmd: string) => {
          // Check for dynamically set Homebrew path
          try {
             const brewPath = execSync("brew --prefix", { encoding: "utf-8" }).trim();
+            console.log("brewPath: ", brewPath)
             if (brewPath) {
                possiblePaths.unshift(`${brewPath}/bin/docker`);
             }
@@ -53,11 +54,19 @@ const execAsyncDockerDir = async (cmd: string) => {
             // Homebrew not installed or not found
          }
 
+         for (const dockerPath of possiblePaths) {
+            if (fs.existsSync(dockerPath)) {
+               dockerDir = dockerPath.substring(0, dockerPath.lastIndexOf("/"));
+               break;
+            }
+         }
+
          const scriptsPath = app.isPackaged
             ? path.join(process.resourcesPath, 'public', 'scripts')
             : path.join(__dirname, '../public/scripts');
 
          console.log('Scripts Path:', scriptsPath);
+         console.log('Possible Paths:', possiblePaths);
 
          // Check which files exist
          fs.readdir(scriptsPath, (err, files) => {
