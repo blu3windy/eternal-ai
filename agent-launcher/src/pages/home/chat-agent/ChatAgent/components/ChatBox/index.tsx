@@ -5,12 +5,12 @@ import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.
 import ChatList from "@pages/home/chat-agent/ChatAgent/components/ChatList";
 import InputText from "@pages/home/chat-agent/ChatAgent/components/InputText";
 import { AgentContext } from "@pages/home/provider";
-import {Button, Flex} from "@chakra-ui/react";
+import {Button, Flex, Text} from "@chakra-ui/react";
 
 const ChatBox = () => {
   const { loading, onRetryErrorMessage } = useChatAgentProvider();
 
-  const { isRunning, requireInstall, selectedAgent, isStarting, startAgent, } = useContext(AgentContext);
+  const { isRunning, requireInstall, selectedAgent, isStarting, startAgent, agentWallet } = useContext(AgentContext);
 
   const handleStartAgent = () => {
     startAgent(selectedAgent);
@@ -51,8 +51,10 @@ const ChatBox = () => {
         {
           requireInstall && !isRunning ? (
             <Flex
+              direction={"column"}
               justifyContent={"center"}
               alignItems={"center"}
+              gap={"16px"}
               className={s.chatList}
               style={{
                 height: innerMaxHeight,
@@ -60,12 +62,15 @@ const ChatBox = () => {
                 // minHeight: innerMaxHeight,
               }}
             >
+              <Text fontSize={"28px"} fontWeight={500}>You're all set!</Text>
+              <Text fontSize={"18px"} fontWeight={400} opacity={0.7}>Your agent is installed{agentWallet ? ', and your wallet is ready.' : '.' }</Text>
               <Button
                 className={s.btnStart}
                 onClick={handleStartAgent}
                 isLoading={isStarting}
                 isDisabled={isStarting}
                 loadingText={"Starting..."}
+                mt={"24px"}
               >
                 {/*                <svg
                   width="20"
