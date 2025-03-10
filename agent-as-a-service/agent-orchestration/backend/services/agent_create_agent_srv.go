@@ -1202,12 +1202,15 @@ func (s *Service) ValidateTweetContentGenerateVideoWithLLM(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
-	result := map[string]bool{}
-	err = json.Unmarshal([]byte(res.Choices[0].Message.Content), &result)
-	if err != nil {
-		return nil, err
+	isGenerateVideo := false
+	if len(res.Choices) > 0 {
+		result := map[string]bool{}
+		err = json.Unmarshal([]byte(res.Choices[0].Message.Content), &result)
+		if err != nil {
+			return nil, err
+		}
+		isGenerateVideo = result["is_generate_video"]
 	}
-	isGenerateVideo := result["is_generate_video"]
 	return &models.TweetParseInfo{
 		IsGenerateVideo:      isGenerateVideo,
 		GenerateVideoContent: strings.TrimSpace(fullText),
