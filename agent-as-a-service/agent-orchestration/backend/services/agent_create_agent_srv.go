@@ -558,7 +558,20 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 						for k, v := range *twitterDetail {
 							if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
 								if strings.EqualFold(k, item.ID) {
-
+									existPosts, err := s.dao.FirstAgentTwitterPost(
+										tx,
+										map[string][]interface{}{
+											"twitter_post_id = ?": {v.Tweet.ID},
+										},
+										map[string][]interface{}{},
+										[]string{},
+									)
+									if err != nil {
+										return errs.NewError(err)
+									}
+									if existPosts != nil {
+										continue
+									}
 									fullText := v.Tweet.GetAllFullText()
 									fullText = strings.Replace(fullText, fmt.Sprintf("@%s", agentInfo.TwitterUsername), "", -1)
 									fullText = strings.TrimSpace(fullText)
@@ -577,45 +590,31 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 										continue
 									}
 
-									existPosts, err := s.dao.FirstAgentTwitterPost(
-										tx,
-										map[string][]interface{}{
-											"twitter_post_id = ?": {v.Tweet.ID},
-										},
-										map[string][]interface{}{},
-										[]string{},
-									)
+									postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
+									m := &models.AgentTwitterPost{
+										NetworkID:             agentInfo.NetworkID,
+										AgentInfoID:           agentInfo.ID,
+										TwitterID:             v.User.ID,
+										TwitterUsername:       v.User.UserName,
+										TwitterName:           v.User.Name,
+										TwitterPostID:         v.Tweet.ID, // bai reply
+										Content:               fullText,
+										ExtractContent:        tokenInfo.GenerateVideoContent,
+										Status:                models.AgentTwitterPostWaitSubmitVideoInfer,
+										PostAt:                postedAt,
+										TwitterConversationId: v.Tweet.ConversationID, // bai goc cua conversation
+										PostType:              models.AgentSnapshotPostActionTypeGenerateVideo,
+										IsMigrated:            true,
+										InferId:               "20250",
+									}
+
+									err = s.dao.Create(tx, m)
 									if err != nil {
 										return errs.NewError(err)
 									}
 
-									if existPosts == nil {
-										postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
-										m := &models.AgentTwitterPost{
-											NetworkID:             agentInfo.NetworkID,
-											AgentInfoID:           agentInfo.ID,
-											TwitterID:             v.User.ID,
-											TwitterUsername:       v.User.UserName,
-											TwitterName:           v.User.Name,
-											TwitterPostID:         v.Tweet.ID, // bai reply
-											Content:               fullText,
-											ExtractContent:        tokenInfo.GenerateVideoContent,
-											Status:                models.AgentTwitterPostWaitSubmitVideoInfer,
-											PostAt:                postedAt,
-											TwitterConversationId: v.Tweet.ConversationID, // bai goc cua conversation
-											PostType:              models.AgentSnapshotPostActionTypeGenerateVideo,
-											IsMigrated:            true,
-											InferId:               "20250",
-										}
-
-										err = s.dao.Create(tx, m)
-										if err != nil {
-											return errs.NewError(err)
-										}
-
-										_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
-										s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND] a requirement gen video with post :%v ", fullText))
-									}
+									_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
+									s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND] a requirement gen video with post :%v ", fullText))
 								}
 							}
 						}
