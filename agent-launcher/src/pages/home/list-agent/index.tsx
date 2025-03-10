@@ -9,7 +9,6 @@ import {
    Popover,
    PopoverContent,
    PopoverTrigger,
-   SimpleGrid,
    Text,
    useDisclosure
 } from '@chakra-ui/react';
@@ -17,11 +16,11 @@ import s from './styles.module.scss';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import AgentItem from './AgentItem';
 import AppLoading from "../../../components/AppLoading";
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {useCallback, useContext, useEffect, useRef, useState} from 'react';
 import throttle from 'lodash.throttle';
-import { IAgentToken } from "../../../services/api/agents-token/interface.ts";
+import {IAgentToken} from "../../../services/api/agents-token/interface.ts";
 import debounce from 'lodash.debounce';
-import { AgentContext } from "../provider";
+import {AgentContext} from "../provider";
 import uniqBy from 'lodash.uniqby';
 import CAgentTokenAPI from "../../../services/api/agents-token";
 
@@ -32,6 +31,7 @@ export enum SortOption {
   Price = 'meme_price',
   Volume24h = 'meme_volume_last24h',
   CreatedAt = 'created_at',
+  Popuplar = 'prompt_calls',
 }
 
 export const SortBy = [
@@ -39,11 +39,11 @@ export const SortBy = [
    { value: SortOption.Percent, label: '24h%' },
    { value: SortOption.CreatedAt, label: 'Creation time' },
    { value: SortOption.Volume24h, label: '24h volume' },
+   { value: SortOption.Popuplar, label: 'Popular' },
 ];
 
 export enum FilterOption {
   All = 'all',
-  Popular = 'popular',
   Model = 'model',
   NonModel = 'non-model',
   Installed = 'installed',
@@ -53,7 +53,6 @@ export enum FilterOption {
 
 export const FilterBy = [
    { value: FilterOption.All, label: 'All' },
-   { value: FilterOption.Popular, label: 'Popular' },
    { value: FilterOption.Model, label: 'Model' },
    { value: FilterOption.NonModel, label: 'Non-model' },
    { value: FilterOption.Installed, label: 'Installed' },
