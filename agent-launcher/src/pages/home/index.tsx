@@ -1,15 +1,14 @@
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Box, Flex } from "@chakra-ui/react";
+import cx from "clsx";
+import { useContext } from "react";
 import MainLayout from "../../components/layout";
 import FundAgentProvider from "../../providers/FundAgent";
 import ChatAgent from "./chat-agent";
-import AgentsList, { AgentType } from "./list-agent";
+import AgentInfo from "./chat-agent/AgentInfo";
+import AgentsList from "./list-agent";
 import AgentProvider, { AgentContext } from "./provider";
 import s from "./styles.module.scss";
-import { useContext, useMemo } from "react";
 import TradeAgent from "./trade-agent";
-import AgentInfo from "./chat-agent/AgentInfo";
-import { Box, Flex } from "@chakra-ui/react";
-import cx from "clsx";
 import AgentTradeProvider from "./trade-agent/provider";
 
 type Props = {
@@ -44,42 +43,14 @@ const HandleHome = () => {
             <TradeAgent />
           </AgentTradeProvider>
         ) : (
-          <ChatAgent />
+          <Flex w={"100%"}>
+            <ChatAgent />
+            <Box minW={"350px"} />
+          </Flex>
         )}
       </Box>
     </Flex>
   );
-
-  // return (
-  //   <PanelGroup direction="horizontal">
-  //     <Panel minSize={20} maxSize={25}>
-  //       <AgentsList />
-  //     </Panel>
-  //     <PanelResizeHandle />
-  //     <Panel
-  //       minSize={50}
-  //       maxSize={60}
-  //       className={cx(
-  //         s.detailContainer,
-  //         isCanChat || showBackupPrvKey ? "" : s.isSetup
-  //       )}
-  //       id={"detailContainer"}
-  //     >
-  //       <Box p={"16px"}>
-  //         <AgentInfo />
-  //       </Box>
-
-  //       {isTrade ? (
-  //         <AgentTradeProvider>
-  //           <TradeAgent />
-  //         </AgentTradeProvider>
-  //       ) : (
-  //         <ChatAgent />
-  //       )}
-  //     </Panel>
-  //     <PanelResizeHandle />
-  //   </PanelGroup>
-  // );
 };
 
 const Home = (_props: Props) => {

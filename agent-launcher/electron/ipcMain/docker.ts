@@ -94,13 +94,18 @@ const ipcMainDocker = () => {
    })
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL, async (_event) => {
-      try {
-         const docker = await getDocker();
-         const { stderr } = await command.execAsyncDockerDir(`${docker} info`);
-         return !stderr;
-      } catch (error) {
-         console.log(error);
-         return false;
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+         try {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            const { stdout: docker } = await command.execAsyncDockerDir("docker info");
+            const { stdout: brew } = await command.execAsyncDockerDir("brew -v");
+            if (docker && brew) {
+               break;
+            }
+         } catch (error) {
+            console.log("Docker not installed");
+         }
       }
    });
 

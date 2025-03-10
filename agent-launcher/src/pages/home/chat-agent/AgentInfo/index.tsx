@@ -23,6 +23,10 @@ const AgentInfo = () => {
     isCanChat,
     agentWallet,
     isBackupedPrvKey,
+    isStopping,
+    stopAgent,
+    requireInstall,
+    isRunning,
   } = useContext(AgentContext);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -33,9 +37,15 @@ const AgentInfo = () => {
     return isCanChat || showBackupPrvKey ? 'black' : 'white';
   }, [isCanChat, showBackupPrvKey]);
 
+  const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
+
   const handleExportPrvKey = () => {
     onOpen();
   }
+
+  const handleStopAgent = () => {
+    stopAgent(selectedAgent);
+  };
 
   return (
     <Flex className={s.container}>
@@ -54,7 +64,36 @@ const AgentInfo = () => {
         }
         <Flex gap={"6px"} alignItems={"center"} className={cx(s.contentContainer, isCanChat || showBackupPrvKey ? '' : s.isSetup)}>
           <Flex gap={"6px"} alignItems={"center"} className={s.content}>
-            <InfoTooltip iconSize="sm" label={<AgentOnChainInfo />} placement="top" iconColor={color} />
+            <InfoTooltip iconSize="sm" label={
+              <Flex direction={"column"}>
+                <Flex direction={"column"} gap={"8px"}>
+                  <Text fontSize={"16px"} fontWeight={500}>{selectedAgent?.agent_name}</Text>
+                  <Text fontSize={"14px"} fontWeight={400} opacity={0.7}>{description}</Text>
+                </Flex>
+                <Divider color={"#E2E4E8"} my={"16px"}/>
+                <AgentOnChainInfo />
+                {
+                  requireInstall && isRunning && (
+                    <>
+                      <Divider color={"#E2E4E8"} my={"16px"}/>
+                      <Button
+                        className={s.btnStop}
+                        onClick={handleStopAgent}
+                        isLoading={isStopping}
+                        isDisabled={isStopping}
+                        loadingText={"Stopping..."}
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="0.5" y="0.5" width="23" height="23" rx="11.5" stroke="black"/>
+                          <path d="M6 18V6H18V18H6Z" fill="black"/>
+                        </svg>
+                        Stop running {selectedAgent?.agent_name}
+                      </Button>
+                    </>
+                  )
+                }
+              </Flex>
+            } placement="top" iconColor={color} />
             <Text className={s.text}>{selectedAgent?.agent_name}</Text>
             <Text className={s.text} opacity={0.7}>${selectedAgent?.token_symbol}</Text>
             <Divider orientation={'vertical'} borderColor={'#FFFFFF1A'} h={"32px"} m={'auto 0'}/>

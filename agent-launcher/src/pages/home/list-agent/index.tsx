@@ -52,12 +52,12 @@ export enum FilterOption {
 }
 
 export const FilterBy = [
-   { value: FilterOption.All, label: 'All' },
-   { value: FilterOption.Model, label: 'Model' },
-   { value: FilterOption.NonModel, label: 'Non-model' },
-   { value: FilterOption.Installed, label: 'Installed' },
-   { value: FilterOption.NonInstalled, label: 'Non-installed' },
-   { value: FilterOption.Infra, label: 'Infra' },
+   { value: FilterOption.All, label: 'All', description: 'All available agents.' },
+   { value: FilterOption.Model, label: 'Model agent', description: 'Agents providing direct access to specific AI models (LLaMA, DeepSeek, Hermes,…).' },
+   { value: FilterOption.NonModel, label: 'Utility agent', description: 'Task-focused agents built with Python or JavaScript.' },
+   { value: FilterOption.Installed, label: 'Installed', description: 'Agents currently installed.' },
+   { value: FilterOption.NonInstalled, label: 'Available', description: 'Agents available for installation.' },
+   { value: FilterOption.Infra, label: 'Infra', description: 'Agents providing APIs or services to customize and manage other agents.' },
 ];
 
 export enum AgentType {
@@ -281,8 +281,9 @@ const AgentsList = () => {
                   {FilterBy.map((option, index) => (
                      <>
                         <Flex
-                           gap={'12px'}
-                           alignItems={'center'}
+                          direction={"column"}
+                           gap={'4px'}
+                           // alignItems={'center'}
                            padding={'16px 16px'}
                            _hover={{
                               bg: '#5400FB0F',
@@ -302,8 +303,17 @@ const AgentsList = () => {
                            <Text fontSize={'13px'} fontWeight={500}>
                               {option.label}
                            </Text>
+                           {
+                              option.description && (
+                               <Text fontSize={'12px'} fontWeight={400} opacity={0.7}>
+                                  {
+                                     option.description
+                                  }
+                               </Text>
+                             )
+                           }
                         </Flex>
-                        {index < SortBy.length - 1 && (
+                        {index < SortBy.length && (
                            <Divider orientation={'horizontal'} my={'0px'} />
                         )}
                      </>

@@ -10,7 +10,7 @@ const AgentOnChainInfo = () => {
 
    return (
       <Box>
-         <Text>Agent onchain data</Text>
+         <Text fontSize={"16px"} fontWeight={500}>Agent onchain data</Text>
          <Flex className={s.rowData}>
             <Text className={s.left}>Owner</Text>
             <Text
