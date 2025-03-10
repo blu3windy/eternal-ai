@@ -40,12 +40,9 @@ const useParseLogs = (props: LoggersProps) => {
       // Final regex pattern
       const regexPattern = `\\[${prefix}\\]\\s*\\[${functionName}\\]${keysPattern ? `\\s+${keysPattern}` : ""}`;
 
-      console.log("Regex Pattern:", regexPattern);
-
       const regex = new RegExp(regexPattern);
       const match = message.match(regex);
 
-      console.log("Match:", match);
       if (match) {
          const parsed: IParsedLog = {
             prefix,
