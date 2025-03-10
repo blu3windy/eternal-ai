@@ -43,6 +43,7 @@ const initialValue: IAgentContext = {
    isBackupedPrvKey: false,
    setIsBackupedPrvKey: () => {},
    requireInstall: false,
+   isModelRequirementSetup: false,
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -69,6 +70,7 @@ const AgentProvider: React.FC<
    const [isRunning, setIsRunning] = useState(false);
    const refInterval = useRef<any>();
    const [isBackupedPrvKey, setIsBackupedPrvKey] = useState(false);
+   const [isModelRequirementSetup, setIsModelRequirementSetup] = useState(false);
 
    const [currentModel, setCurrentModel] = useState<{
     name: string;
@@ -267,8 +269,14 @@ const AgentProvider: React.FC<
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
-            const ipfsHash = await installModelAgent(agent);
-            console.log('====ipfsHash', ipfsHash);
+           if(!isModelRequirementSetup) {
+             await window.electronAPI.modelStarter();
+             setIsModelRequirementSetup(true);
+           }
+
+            const ipfsHash = await getModelAgentHash(agent);
+           console.log('====ipfsHash', ipfsHash);
+           await window.electronAPI.modelRun(ipfsHash);
          } else {
 
          }
@@ -287,8 +295,14 @@ const AgentProvider: React.FC<
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await handleRunDockerAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
-           // const hash = '';
-           // await handleRunModelAgent(hash);
+           if(!isModelRequirementSetup) {
+             await window.electronAPI.modelStarter();
+             setIsModelRequirementSetup(true);
+           }
+
+           const ipfsHash = await getModelAgentHash(agent);
+           console.log('====ipfsHash', ipfsHash);
+           await handleRunModelAgent(ipfsHash);
          } else {
 
          }
@@ -303,7 +317,7 @@ const AgentProvider: React.FC<
 
    const stopAgent = async (agent: IAgentToken) => {
       try {
-         setIsInstalling(true);
+         setIsStopping(true);
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await handleStopDockerAgent(agent);
@@ -315,11 +329,11 @@ const AgentProvider: React.FC<
       } catch (e) {
          console.log('stopAgent e', e);
       } finally {
-         setIsInstalling(false);
+        setIsStopping(false);
       }
    };
 
-   const installModelAgent = async (agent: IAgentToken) => {
+   const getModelAgentHash = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
@@ -472,7 +486,7 @@ const AgentProvider: React.FC<
     }
   };
 
-   const contextValues: any = useMemo(() => {
+  const contextValues: any = useMemo(() => {
       return {
          loading,
          selectedAgent,
@@ -500,6 +514,7 @@ const AgentProvider: React.FC<
          isBackupedPrvKey,
          setIsBackupedPrvKey,
          requireInstall,
+         isModelRequirementSetup,
       };
    }, [
       loading,
@@ -528,6 +543,7 @@ const AgentProvider: React.FC<
       isBackupedPrvKey,
       setIsBackupedPrvKey,
       requireInstall,
+      isModelRequirementSetup,
    ]);
 
    return (

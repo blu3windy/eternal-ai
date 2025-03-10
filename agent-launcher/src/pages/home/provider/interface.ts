@@ -35,4 +35,5 @@ export interface IAgentContext {
   isBackupedPrvKey: boolean;
   setIsBackupedPrvKey: any;
   requireInstall: boolean;
+  isModelRequirementSetup: boolean;
 }
