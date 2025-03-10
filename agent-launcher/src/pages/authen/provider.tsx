@@ -137,7 +137,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       );
 
       const _wallet = new ethers.Wallet(
-        signer?.privateKey,
+        signer?.privateKey as any,
         new ethers.providers.JsonRpcProvider(
           baseContract.getRPCByChainID(chainId)
         )

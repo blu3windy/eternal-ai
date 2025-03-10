@@ -45,7 +45,7 @@ const FormTradeAgentContainer = () => {
       actions.setSubmitting(true);
       if (values.is_need_approve) {
         await agentTradeContract.approveToken({
-          token_address: values.current_token.address,
+          token_address: values?.current_token?.address as any,
           spender_address: compareString(
             tradePlatform,
             ETradePlatform.exchange3th
@@ -59,7 +59,7 @@ const FormTradeAgentContainer = () => {
       const body: IBodyEternalSwap = {
         tokenIn: values.tokenIn.address,
         tokenOut: values.tokenOut.address,
-        amount: values.amount.toString(),
+        amount: values?.amount?.toString() as any,
         type: values.type,
         fee: fee,
         maximum: new BigNumber(values.estimate_swap)

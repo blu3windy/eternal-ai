@@ -50,7 +50,7 @@ const FormTradeAgent = () => {
   const is_need_approve = values.is_need_approve;
   const current_token = values.current_token;
 
-  const amountDebounced = useDebounce(amount);
+  const amountDebounced: any = useDebounce(amount);
 
   const tokenList: IToken[] = useMemo(() => {
     return pairs;
@@ -136,7 +136,7 @@ const FormTradeAgent = () => {
   };
 
   useEffect(() => {
-    getEstimateSwap(amountDebounced);
+    getEstimateSwap(amountDebounced as any);
   }, [amountDebounced, formik.values, fee, type, currentChain]);
 
   const validateAmount = useCallback(

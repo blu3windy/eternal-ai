@@ -25,7 +25,7 @@ import type {
   TypedListener,
   OnEvent,
   PromiseOrValue,
-} from "@/contract/interfaces/common";
+} from "@contract/interfaces/common";
 
 export declare namespace IUniswapV3PoolActions {
   export type SwapParamsStruct = {
