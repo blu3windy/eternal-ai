@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { Box, Text, useColorModeValue, Code, Input, Button, useToast } from "@chakra-ui/react";
+import { Box, Text, useColorModeValue, Code, Input, Button, useToast, Flex } from "@chakra-ui/react";
 import { useLoggersStore } from "@components/Loggers/useLogs.ts";
-import LoggersButton from "@components/Loggers/Loggers.button.tsx"; // Zustand store
+import LoggersButton from "@components/Loggers/Loggers.button.tsx";
+import ActionButtons from "@components/Loggers/action.button.tsx"; // Zustand store
 
 interface LogEntry {
     type: "output" | "error";
@@ -85,23 +86,26 @@ const Loggers = () => {
             zIndex="2"
          >
             {/* Sticky Search Input & Copy Button */}
-            <Box position="sticky" top="0" bg="gray.900" p={2} zIndex="10" display="flex" gap="2">
-               <Input
-                  placeholder="Filter logs by command..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  bg="gray.800"
-                  color="white"
-                  borderRadius="md"
-                  flex="1"
-               />
-               <Button colorScheme="blue" onClick={copyLogsToClipboard}>
-                        Copy Logs
-               </Button>
+            <Box position="sticky" top="0" bg="gray.900" p={2} zIndex="10" display="flex" flexDirection="column" gap="16px">
+               <Flex width="100%" gap="2" alignItems="center">
+                  <Input
+                     placeholder="Filter logs by command..."
+                     value={searchQuery}
+                     onChange={(e) => setSearchQuery(e.target.value)}
+                     bg="gray.800"
+                     color="white"
+                     borderRadius="md"
+                     flex="1"
+                  />
+                  <Button colorScheme="blue" onClick={copyLogsToClipboard}>
+                     Copy Logs
+                  </Button>
+               </Flex>
+               <ActionButtons/>
             </Box>
 
             {/* Log Display */}
-            <Box ref={logRef} overflowY="auto" width="100%" height="calc(100% - 40px)">
+            <Box ref={logRef} overflowY="auto" width="100%" height="calc(100% - 120px)">
                {filteredLogs.length === 0 ? (
                   <Text textAlign="center" color="gray.500">
                             No matching logs found.

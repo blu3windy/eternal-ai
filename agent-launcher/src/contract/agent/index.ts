@@ -18,14 +18,7 @@ class CAgentContract {
 
    public getCodeLanguage = async () => {
       const codeLanguage = await this.contract.getCodeLanguage();
-      switch (codeLanguage) {
-         case 'javascript':
-            return 'js';
-         case 'python':
-            return 'py';
-         default:
-            return codeLanguage;
-      }
+      return codeLanguage;
    };
 
    public getCurrentVersion = async () => {
