@@ -28,7 +28,7 @@ const ProductMenu = ({ navItem }: { navItem: NavItem }) => {
                >
                   {navItem.label}
                </Text>
-               <Image src={`/icons/ic-angle-down.svg`} />
+               <Image src={`icons/ic-angle-down.svg`} />
             </Flex>
          </PopoverTrigger>
          <PopoverContent

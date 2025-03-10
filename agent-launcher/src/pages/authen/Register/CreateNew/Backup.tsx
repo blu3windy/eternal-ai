@@ -108,7 +108,7 @@ const Backup = (props: IProps) => {
                         transform: "scale(1.1)",
                         transition: "all 0.4s ease-in-out"
                      }}
-                     src="/icons/ic_copy.svg"
+                     src="icons/ic_copy.svg"
                   />
                </Button>
                {!showKey && (

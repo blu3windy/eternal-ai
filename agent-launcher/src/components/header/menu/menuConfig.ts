@@ -43,7 +43,7 @@ export const NAV_ITEMS: Array<NavItem> = [
       href: ROUTERS.HOME,
       isNewWindow: false,
       isHide: false,
-      icon: "/icons/menu/ic-home.svg",
+      icon: "icons/menu/ic-home.svg",
       className: "blue",
    },
    {
@@ -51,7 +51,7 @@ export const NAV_ITEMS: Array<NavItem> = [
       href: ROUTERS.MINE,
       isNewWindow: false,
       isHide: false,
-      icon: "/icons/menu/ic-mine.svg",
+      icon: "icons/menu/ic-mine.svg",
       className: "green",
    },
    // {
