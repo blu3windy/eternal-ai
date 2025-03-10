@@ -73,8 +73,6 @@ const formatName = (name: string, length = 12): string => {
 const getTokenIconUrl = (token: any) => {
   let url = TOKEN_ICON_DEFAULT;
 
-  console.log("getTokenIconUrl", token);
-
   if (token?.logo) {
     url = token?.logo;
   } else if (token?.icon) {
@@ -99,6 +97,20 @@ const getTokenIconUrl = (token: any) => {
   return url;
 };
 
+const isBase64 = (str: string) => {
+  if (!str || typeof str !== "string") return false;
+  if (str.length % 4 !== 0) return false;
+  const base64Regex = /^[A-Za-z0-9+/]+={0,2}$/;
+  return base64Regex.test(str);
+};
+
+const splitBase64 = (content: string) => {
+  return content
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+};
+
 export {
   compareString,
   getAvatarName,
@@ -108,4 +120,6 @@ export {
   parseSymbolName,
   formatName,
   getTokenIconUrl,
+  isBase64,
+  splitBase64,
 };

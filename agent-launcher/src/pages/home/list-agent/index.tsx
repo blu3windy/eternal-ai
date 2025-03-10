@@ -42,7 +42,8 @@ export const SortBy = [
 ];
 
 export enum FilterOption {
-  Poppular = 'poppular',
+  All = 'all',
+  Popular = 'popular',
   Model = 'model',
   NonModel = 'non-model',
   Installed = 'installed',
@@ -51,7 +52,8 @@ export enum FilterOption {
 }
 
 export const FilterBy = [
-   { value: FilterOption.Poppular, label: 'Popular' },
+   { value: FilterOption.All, label: 'All' },
+   { value: FilterOption.Popular, label: 'Popular' },
    { value: FilterOption.Model, label: 'Model' },
    { value: FilterOption.NonModel, label: 'Non-model' },
    { value: FilterOption.Installed, label: 'Installed' },
@@ -86,7 +88,7 @@ const AgentsList = () => {
    const refInput = useRef<HTMLInputElement | null>(null);
 
    const [sort, setSort] = useState<SortOption>(SortOption.CreatedAt);
-   const [filter, setFilter] = useState<FilterOption>(FilterOption.Poppular);
+   const [filter, setFilter] = useState<FilterOption>(FilterOption.All);
    const [loaded, setLoaded] = useState(false);
    const refLoading = useRef(false);
 
@@ -146,6 +148,8 @@ const AgentsList = () => {
             params.agent_types = [AgentType.Model].join(',');
          } else if ([FilterOption.Infra].includes(refParams.current.filter)) {
             params.agent_types = [AgentType.Infra].join(',');
+         } else if ([FilterOption.Popular].includes(refParams.current.filter)) {
+
          }
 
          const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);

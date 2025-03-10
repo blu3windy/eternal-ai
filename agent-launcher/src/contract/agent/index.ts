@@ -25,10 +25,11 @@ class CAgentContract {
       const codeVersion = await this.contract.getCurrentVersion();
       return codeVersion;
    };
+  
 
    public getAgentCode = async (codeVersion: number) => {
-      const code = await this.contract.getAgentCode(codeVersion);
-      return code;
+      const codeBase64 = await this.contract.getAgentCode(codeVersion);
+      return codeBase64;
    };
 
    public getDepsAgents = async (codeVersion: number) => {
@@ -43,3 +44,4 @@ class CAgentContract {
 };
 
 export default CAgentContract;
+
