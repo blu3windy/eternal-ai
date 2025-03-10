@@ -44,6 +44,8 @@ func init() {
 }
 
 func Test_JOB(t *testing.T) {
+	info, _ := ts.ValidateTweetContentGenerateVideoWithLLM(context.Background(), "aaa", "@crypto @file_coin make video of sbf going out of jail and touching the grass with @musk")
+	fmt.Println(info.IsGenerateVideo, info.GenerateVideoContent)
 	// fmt.Println(
 	// 	// "OK",
 	// 	// ts.DeployProxyAdminAddress(context.Background(), models.BASE_SEPOLIA_CHAIN_ID),
