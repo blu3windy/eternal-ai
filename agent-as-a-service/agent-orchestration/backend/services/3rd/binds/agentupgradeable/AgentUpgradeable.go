@@ -38,7 +38,7 @@ type IAgentCodePointer struct {
 
 // AgentUpgradeableMetaData contains all meta data concerning the AgentUpgradeable contract.
 var AgentUpgradeableMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"name\":\"DigestAlreadyUsed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidData\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidVersion\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Unauthenticated\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ZeroAddress\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"version\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"pIndex\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"retrieveAddress\",\"type\":\"address\"},{\"internalType\":\"enumIAgent.FileType\",\"name\":\"fileType\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"}],\"indexed\":false,\"internalType\":\"structIAgent.CodePointer\",\"name\":\"newPointer\",\"type\":\"tuple\"}],\"name\":\"CodePointerCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"EIP712DomainChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"eip712Domain\",\"outputs\":[{\"internalType\":\"bytes1\",\"name\":\"fields\",\"type\":\"bytes1\"},{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"version\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"verifyingContract\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"salt\",\"type\":\"bytes32\"},{\"internalType\":\"uint256[]\",\"name\":\"extensions\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint16\",\"name\":\"version\",\"type\":\"uint16\"}],\"name\":\"getAgentCode\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"code\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCodeLanguage\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCurrentVersion\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint16\",\"name\":\"version\",\"type\":\"uint16\"}],\"name\":\"getDepsAgents\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"retrieveAddress\",\"type\":\"address\"},{\"internalType\":\"enumIAgent.FileType\",\"name\":\"fileType\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"}],\"internalType\":\"structIAgent.CodePointer[]\",\"name\":\"pointers\",\"type\":\"tuple[]\"},{\"internalType\":\"address[]\",\"name\":\"depsAgents\",\"type\":\"address[]\"},{\"internalType\":\"bool\",\"name\":\"isOnchain\",\"type\":\"bool\"}],\"name\":\"getHashToSign\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"agentName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"agentVersion\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"codeLanguage\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"retrieveAddress\",\"type\":\"address\"},{\"internalType\":\"enumIAgent.FileType\",\"name\":\"fileType\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"}],\"internalType\":\"structIAgent.CodePointer[]\",\"name\":\"pointers\",\"type\":\"tuple[]\"},{\"internalType\":\"address[]\",\"name\":\"depsAgents\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"agentOwner\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"isOnchain\",\"type\":\"bool\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"version\",\"type\":\"uint256\"}],\"name\":\"isOnchain\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"retrieveAddress\",\"type\":\"address\"},{\"internalType\":\"enumIAgent.FileType\",\"name\":\"fileType\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"}],\"internalType\":\"structIAgent.CodePointer[]\",\"name\":\"pointers\",\"type\":\"tuple[]\"},{\"internalType\":\"address[]\",\"name\":\"depsAgents\",\"type\":\"address[]\"},{\"internalType\":\"bool\",\"name\":\"isOnchain\",\"type\":\"bool\"}],\"name\":\"publishAgentCode\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"retrieveAddress\",\"type\":\"address\"},{\"internalType\":\"enumIAgent.FileType\",\"name\":\"fileType\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"}],\"internalType\":\"structIAgent.CodePointer[]\",\"name\":\"pointers\",\"type\":\"tuple[]\"},{\"internalType\":\"address[]\",\"name\":\"depsAgents\",\"type\":\"address[]\"},{\"internalType\":\"bool\",\"name\":\"isOnchain\",\"type\":\"bool\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"publishAgentCodeWithSignature\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[],\"name\":\"DigestAlreadyUsed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidData\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidVersion\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Unauthenticated\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ZeroAddress\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"version\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"pIndex\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"retrieveAddress\",\"type\":\"address\"},{\"internalType\":\"enumIAgent.FileType\",\"name\":\"fileType\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"}],\"indexed\":false,\"internalType\":\"structIAgent.CodePointer\",\"name\":\"newPointer\",\"type\":\"tuple\"}],\"name\":\"CodePointerCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"EIP712DomainChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"version\",\"type\":\"uint8\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"eip712Domain\",\"outputs\":[{\"internalType\":\"bytes1\",\"name\":\"fields\",\"type\":\"bytes1\"},{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"version\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"chainId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"verifyingContract\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"salt\",\"type\":\"bytes32\"},{\"internalType\":\"uint256[]\",\"name\":\"extensions\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"}],\"name\":\"getAddressByENS\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint16\",\"name\":\"version\",\"type\":\"uint16\"}],\"name\":\"getAgentCode\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"code\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAgentName\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAgentOwner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCodeLanguage\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getCurrentVersion\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint16\",\"name\":\"version\",\"type\":\"uint16\"}],\"name\":\"getDepsAgents\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"retrieveAddress\",\"type\":\"address\"},{\"internalType\":\"enumIAgent.FileType\",\"name\":\"fileType\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"}],\"internalType\":\"structIAgent.CodePointer[]\",\"name\":\"pointers\",\"type\":\"tuple[]\"},{\"internalType\":\"address[]\",\"name\":\"depsAgents\",\"type\":\"address[]\"}],\"name\":\"getHashToSign\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"agentName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"agentVersion\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"codeLanguage\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"retrieveAddress\",\"type\":\"address\"},{\"internalType\":\"enumIAgent.FileType\",\"name\":\"fileType\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"}],\"internalType\":\"structIAgent.CodePointer[]\",\"name\":\"pointers\",\"type\":\"tuple[]\"},{\"internalType\":\"address[]\",\"name\":\"depsAgents\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"agentOwner\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"nameService\",\"type\":\"bytes\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"retrieveAddress\",\"type\":\"address\"},{\"internalType\":\"enumIAgent.FileType\",\"name\":\"fileType\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"}],\"internalType\":\"structIAgent.CodePointer[]\",\"name\":\"pointers\",\"type\":\"tuple[]\"},{\"internalType\":\"address[]\",\"name\":\"depsAgents\",\"type\":\"address[]\"}],\"name\":\"publishAgentCode\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"retrieveAddress\",\"type\":\"address\"},{\"internalType\":\"enumIAgent.FileType\",\"name\":\"fileType\",\"type\":\"uint8\"},{\"internalType\":\"string\",\"name\":\"fileName\",\"type\":\"string\"}],\"internalType\":\"structIAgent.CodePointer[]\",\"name\":\"pointers\",\"type\":\"tuple[]\"},{\"internalType\":\"address[]\",\"name\":\"depsAgents\",\"type\":\"address[]\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"publishAgentCodeWithSignature\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"registrar\",\"outputs\":[{\"internalType\":\"contractIBASERegistrarController\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"renew\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"resolver\",\"outputs\":[{\"internalType\":\"contractIResolver\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // AgentUpgradeableABI is the input ABI used to generate the binding from.
@@ -257,6 +257,37 @@ func (_AgentUpgradeable *AgentUpgradeableCallerSession) Eip712Domain() (struct {
 	return _AgentUpgradeable.Contract.Eip712Domain(&_AgentUpgradeable.CallOpts)
 }
 
+// GetAddressByENS is a free data retrieval call binding the contract method 0x306d41b7.
+//
+// Solidity: function getAddressByENS(string name) view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableCaller) GetAddressByENS(opts *bind.CallOpts, name string) (common.Address, error) {
+	var out []interface{}
+	err := _AgentUpgradeable.contract.Call(opts, &out, "getAddressByENS", name)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetAddressByENS is a free data retrieval call binding the contract method 0x306d41b7.
+//
+// Solidity: function getAddressByENS(string name) view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableSession) GetAddressByENS(name string) (common.Address, error) {
+	return _AgentUpgradeable.Contract.GetAddressByENS(&_AgentUpgradeable.CallOpts, name)
+}
+
+// GetAddressByENS is a free data retrieval call binding the contract method 0x306d41b7.
+//
+// Solidity: function getAddressByENS(string name) view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableCallerSession) GetAddressByENS(name string) (common.Address, error) {
+	return _AgentUpgradeable.Contract.GetAddressByENS(&_AgentUpgradeable.CallOpts, name)
+}
+
 // GetAgentCode is a free data retrieval call binding the contract method 0xc1f3dd3c.
 //
 // Solidity: function getAgentCode(uint16 version) view returns(string code)
@@ -286,6 +317,68 @@ func (_AgentUpgradeable *AgentUpgradeableSession) GetAgentCode(version uint16) (
 // Solidity: function getAgentCode(uint16 version) view returns(string code)
 func (_AgentUpgradeable *AgentUpgradeableCallerSession) GetAgentCode(version uint16) (string, error) {
 	return _AgentUpgradeable.Contract.GetAgentCode(&_AgentUpgradeable.CallOpts, version)
+}
+
+// GetAgentName is a free data retrieval call binding the contract method 0x27c3d2bb.
+//
+// Solidity: function getAgentName() view returns(string)
+func (_AgentUpgradeable *AgentUpgradeableCaller) GetAgentName(opts *bind.CallOpts) (string, error) {
+	var out []interface{}
+	err := _AgentUpgradeable.contract.Call(opts, &out, "getAgentName")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
+}
+
+// GetAgentName is a free data retrieval call binding the contract method 0x27c3d2bb.
+//
+// Solidity: function getAgentName() view returns(string)
+func (_AgentUpgradeable *AgentUpgradeableSession) GetAgentName() (string, error) {
+	return _AgentUpgradeable.Contract.GetAgentName(&_AgentUpgradeable.CallOpts)
+}
+
+// GetAgentName is a free data retrieval call binding the contract method 0x27c3d2bb.
+//
+// Solidity: function getAgentName() view returns(string)
+func (_AgentUpgradeable *AgentUpgradeableCallerSession) GetAgentName() (string, error) {
+	return _AgentUpgradeable.Contract.GetAgentName(&_AgentUpgradeable.CallOpts)
+}
+
+// GetAgentOwner is a free data retrieval call binding the contract method 0x3cce96ec.
+//
+// Solidity: function getAgentOwner() view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableCaller) GetAgentOwner(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _AgentUpgradeable.contract.Call(opts, &out, "getAgentOwner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetAgentOwner is a free data retrieval call binding the contract method 0x3cce96ec.
+//
+// Solidity: function getAgentOwner() view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableSession) GetAgentOwner() (common.Address, error) {
+	return _AgentUpgradeable.Contract.GetAgentOwner(&_AgentUpgradeable.CallOpts)
+}
+
+// GetAgentOwner is a free data retrieval call binding the contract method 0x3cce96ec.
+//
+// Solidity: function getAgentOwner() view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableCallerSession) GetAgentOwner() (common.Address, error) {
+	return _AgentUpgradeable.Contract.GetAgentOwner(&_AgentUpgradeable.CallOpts)
 }
 
 // GetCodeLanguage is a free data retrieval call binding the contract method 0x6681792d.
@@ -381,12 +474,12 @@ func (_AgentUpgradeable *AgentUpgradeableCallerSession) GetDepsAgents(version ui
 	return _AgentUpgradeable.Contract.GetDepsAgents(&_AgentUpgradeable.CallOpts, version)
 }
 
-// GetHashToSign is a free data retrieval call binding the contract method 0xb095e56a.
+// GetHashToSign is a free data retrieval call binding the contract method 0x69d07dc2.
 //
-// Solidity: function getHashToSign((address,uint8,string)[] pointers, address[] depsAgents, bool isOnchain) view returns(bytes32)
-func (_AgentUpgradeable *AgentUpgradeableCaller) GetHashToSign(opts *bind.CallOpts, pointers []IAgentCodePointer, depsAgents []common.Address, isOnchain bool) ([32]byte, error) {
+// Solidity: function getHashToSign((address,uint8,string)[] pointers, address[] depsAgents) view returns(bytes32)
+func (_AgentUpgradeable *AgentUpgradeableCaller) GetHashToSign(opts *bind.CallOpts, pointers []IAgentCodePointer, depsAgents []common.Address) ([32]byte, error) {
 	var out []interface{}
-	err := _AgentUpgradeable.contract.Call(opts, &out, "getHashToSign", pointers, depsAgents, isOnchain)
+	err := _AgentUpgradeable.contract.Call(opts, &out, "getHashToSign", pointers, depsAgents)
 
 	if err != nil {
 		return *new([32]byte), err
@@ -398,49 +491,18 @@ func (_AgentUpgradeable *AgentUpgradeableCaller) GetHashToSign(opts *bind.CallOp
 
 }
 
-// GetHashToSign is a free data retrieval call binding the contract method 0xb095e56a.
+// GetHashToSign is a free data retrieval call binding the contract method 0x69d07dc2.
 //
-// Solidity: function getHashToSign((address,uint8,string)[] pointers, address[] depsAgents, bool isOnchain) view returns(bytes32)
-func (_AgentUpgradeable *AgentUpgradeableSession) GetHashToSign(pointers []IAgentCodePointer, depsAgents []common.Address, isOnchain bool) ([32]byte, error) {
-	return _AgentUpgradeable.Contract.GetHashToSign(&_AgentUpgradeable.CallOpts, pointers, depsAgents, isOnchain)
+// Solidity: function getHashToSign((address,uint8,string)[] pointers, address[] depsAgents) view returns(bytes32)
+func (_AgentUpgradeable *AgentUpgradeableSession) GetHashToSign(pointers []IAgentCodePointer, depsAgents []common.Address) ([32]byte, error) {
+	return _AgentUpgradeable.Contract.GetHashToSign(&_AgentUpgradeable.CallOpts, pointers, depsAgents)
 }
 
-// GetHashToSign is a free data retrieval call binding the contract method 0xb095e56a.
+// GetHashToSign is a free data retrieval call binding the contract method 0x69d07dc2.
 //
-// Solidity: function getHashToSign((address,uint8,string)[] pointers, address[] depsAgents, bool isOnchain) view returns(bytes32)
-func (_AgentUpgradeable *AgentUpgradeableCallerSession) GetHashToSign(pointers []IAgentCodePointer, depsAgents []common.Address, isOnchain bool) ([32]byte, error) {
-	return _AgentUpgradeable.Contract.GetHashToSign(&_AgentUpgradeable.CallOpts, pointers, depsAgents, isOnchain)
-}
-
-// IsOnchain is a free data retrieval call binding the contract method 0x23b01cfa.
-//
-// Solidity: function isOnchain(uint256 version) view returns(bool)
-func (_AgentUpgradeable *AgentUpgradeableCaller) IsOnchain(opts *bind.CallOpts, version *big.Int) (bool, error) {
-	var out []interface{}
-	err := _AgentUpgradeable.contract.Call(opts, &out, "isOnchain", version)
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
-}
-
-// IsOnchain is a free data retrieval call binding the contract method 0x23b01cfa.
-//
-// Solidity: function isOnchain(uint256 version) view returns(bool)
-func (_AgentUpgradeable *AgentUpgradeableSession) IsOnchain(version *big.Int) (bool, error) {
-	return _AgentUpgradeable.Contract.IsOnchain(&_AgentUpgradeable.CallOpts, version)
-}
-
-// IsOnchain is a free data retrieval call binding the contract method 0x23b01cfa.
-//
-// Solidity: function isOnchain(uint256 version) view returns(bool)
-func (_AgentUpgradeable *AgentUpgradeableCallerSession) IsOnchain(version *big.Int) (bool, error) {
-	return _AgentUpgradeable.Contract.IsOnchain(&_AgentUpgradeable.CallOpts, version)
+// Solidity: function getHashToSign((address,uint8,string)[] pointers, address[] depsAgents) view returns(bytes32)
+func (_AgentUpgradeable *AgentUpgradeableCallerSession) GetHashToSign(pointers []IAgentCodePointer, depsAgents []common.Address) ([32]byte, error) {
+	return _AgentUpgradeable.Contract.GetHashToSign(&_AgentUpgradeable.CallOpts, pointers, depsAgents)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
@@ -474,67 +536,150 @@ func (_AgentUpgradeable *AgentUpgradeableCallerSession) Owner() (common.Address,
 	return _AgentUpgradeable.Contract.Owner(&_AgentUpgradeable.CallOpts)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0x7109e143.
+// Registrar is a free data retrieval call binding the contract method 0x2b20e397.
 //
-// Solidity: function initialize(string agentName, string agentVersion, string codeLanguage, (address,uint8,string)[] pointers, address[] depsAgents, address agentOwner, bool isOnchain) returns()
-func (_AgentUpgradeable *AgentUpgradeableTransactor) Initialize(opts *bind.TransactOpts, agentName string, agentVersion string, codeLanguage string, pointers []IAgentCodePointer, depsAgents []common.Address, agentOwner common.Address, isOnchain bool) (*types.Transaction, error) {
-	return _AgentUpgradeable.contract.Transact(opts, "initialize", agentName, agentVersion, codeLanguage, pointers, depsAgents, agentOwner, isOnchain)
+// Solidity: function registrar() view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableCaller) Registrar(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _AgentUpgradeable.contract.Call(opts, &out, "registrar")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0x7109e143.
+// Registrar is a free data retrieval call binding the contract method 0x2b20e397.
 //
-// Solidity: function initialize(string agentName, string agentVersion, string codeLanguage, (address,uint8,string)[] pointers, address[] depsAgents, address agentOwner, bool isOnchain) returns()
-func (_AgentUpgradeable *AgentUpgradeableSession) Initialize(agentName string, agentVersion string, codeLanguage string, pointers []IAgentCodePointer, depsAgents []common.Address, agentOwner common.Address, isOnchain bool) (*types.Transaction, error) {
-	return _AgentUpgradeable.Contract.Initialize(&_AgentUpgradeable.TransactOpts, agentName, agentVersion, codeLanguage, pointers, depsAgents, agentOwner, isOnchain)
+// Solidity: function registrar() view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableSession) Registrar() (common.Address, error) {
+	return _AgentUpgradeable.Contract.Registrar(&_AgentUpgradeable.CallOpts)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0x7109e143.
+// Registrar is a free data retrieval call binding the contract method 0x2b20e397.
 //
-// Solidity: function initialize(string agentName, string agentVersion, string codeLanguage, (address,uint8,string)[] pointers, address[] depsAgents, address agentOwner, bool isOnchain) returns()
-func (_AgentUpgradeable *AgentUpgradeableTransactorSession) Initialize(agentName string, agentVersion string, codeLanguage string, pointers []IAgentCodePointer, depsAgents []common.Address, agentOwner common.Address, isOnchain bool) (*types.Transaction, error) {
-	return _AgentUpgradeable.Contract.Initialize(&_AgentUpgradeable.TransactOpts, agentName, agentVersion, codeLanguage, pointers, depsAgents, agentOwner, isOnchain)
+// Solidity: function registrar() view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableCallerSession) Registrar() (common.Address, error) {
+	return _AgentUpgradeable.Contract.Registrar(&_AgentUpgradeable.CallOpts)
 }
 
-// PublishAgentCode is a paid mutator transaction binding the contract method 0x9de79e65.
+// Resolver is a free data retrieval call binding the contract method 0x04f3bcec.
 //
-// Solidity: function publishAgentCode((address,uint8,string)[] pointers, address[] depsAgents, bool isOnchain) returns(uint16)
-func (_AgentUpgradeable *AgentUpgradeableTransactor) PublishAgentCode(opts *bind.TransactOpts, pointers []IAgentCodePointer, depsAgents []common.Address, isOnchain bool) (*types.Transaction, error) {
-	return _AgentUpgradeable.contract.Transact(opts, "publishAgentCode", pointers, depsAgents, isOnchain)
+// Solidity: function resolver() view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableCaller) Resolver(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _AgentUpgradeable.contract.Call(opts, &out, "resolver")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
-// PublishAgentCode is a paid mutator transaction binding the contract method 0x9de79e65.
+// Resolver is a free data retrieval call binding the contract method 0x04f3bcec.
 //
-// Solidity: function publishAgentCode((address,uint8,string)[] pointers, address[] depsAgents, bool isOnchain) returns(uint16)
-func (_AgentUpgradeable *AgentUpgradeableSession) PublishAgentCode(pointers []IAgentCodePointer, depsAgents []common.Address, isOnchain bool) (*types.Transaction, error) {
-	return _AgentUpgradeable.Contract.PublishAgentCode(&_AgentUpgradeable.TransactOpts, pointers, depsAgents, isOnchain)
+// Solidity: function resolver() view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableSession) Resolver() (common.Address, error) {
+	return _AgentUpgradeable.Contract.Resolver(&_AgentUpgradeable.CallOpts)
 }
 
-// PublishAgentCode is a paid mutator transaction binding the contract method 0x9de79e65.
+// Resolver is a free data retrieval call binding the contract method 0x04f3bcec.
 //
-// Solidity: function publishAgentCode((address,uint8,string)[] pointers, address[] depsAgents, bool isOnchain) returns(uint16)
-func (_AgentUpgradeable *AgentUpgradeableTransactorSession) PublishAgentCode(pointers []IAgentCodePointer, depsAgents []common.Address, isOnchain bool) (*types.Transaction, error) {
-	return _AgentUpgradeable.Contract.PublishAgentCode(&_AgentUpgradeable.TransactOpts, pointers, depsAgents, isOnchain)
+// Solidity: function resolver() view returns(address)
+func (_AgentUpgradeable *AgentUpgradeableCallerSession) Resolver() (common.Address, error) {
+	return _AgentUpgradeable.Contract.Resolver(&_AgentUpgradeable.CallOpts)
 }
 
-// PublishAgentCodeWithSignature is a paid mutator transaction binding the contract method 0x45a836ec.
+// Initialize is a paid mutator transaction binding the contract method 0xcd4a6cbf.
 //
-// Solidity: function publishAgentCodeWithSignature((address,uint8,string)[] pointers, address[] depsAgents, bool isOnchain, bytes signature) returns(uint16)
-func (_AgentUpgradeable *AgentUpgradeableTransactor) PublishAgentCodeWithSignature(opts *bind.TransactOpts, pointers []IAgentCodePointer, depsAgents []common.Address, isOnchain bool, signature []byte) (*types.Transaction, error) {
-	return _AgentUpgradeable.contract.Transact(opts, "publishAgentCodeWithSignature", pointers, depsAgents, isOnchain, signature)
+// Solidity: function initialize(string agentName, string agentVersion, string codeLanguage, (address,uint8,string)[] pointers, address[] depsAgents, address agentOwner, bytes nameService) payable returns()
+func (_AgentUpgradeable *AgentUpgradeableTransactor) Initialize(opts *bind.TransactOpts, agentName string, agentVersion string, codeLanguage string, pointers []IAgentCodePointer, depsAgents []common.Address, agentOwner common.Address, nameService []byte) (*types.Transaction, error) {
+	return _AgentUpgradeable.contract.Transact(opts, "initialize", agentName, agentVersion, codeLanguage, pointers, depsAgents, agentOwner, nameService)
 }
 
-// PublishAgentCodeWithSignature is a paid mutator transaction binding the contract method 0x45a836ec.
+// Initialize is a paid mutator transaction binding the contract method 0xcd4a6cbf.
 //
-// Solidity: function publishAgentCodeWithSignature((address,uint8,string)[] pointers, address[] depsAgents, bool isOnchain, bytes signature) returns(uint16)
-func (_AgentUpgradeable *AgentUpgradeableSession) PublishAgentCodeWithSignature(pointers []IAgentCodePointer, depsAgents []common.Address, isOnchain bool, signature []byte) (*types.Transaction, error) {
-	return _AgentUpgradeable.Contract.PublishAgentCodeWithSignature(&_AgentUpgradeable.TransactOpts, pointers, depsAgents, isOnchain, signature)
+// Solidity: function initialize(string agentName, string agentVersion, string codeLanguage, (address,uint8,string)[] pointers, address[] depsAgents, address agentOwner, bytes nameService) payable returns()
+func (_AgentUpgradeable *AgentUpgradeableSession) Initialize(agentName string, agentVersion string, codeLanguage string, pointers []IAgentCodePointer, depsAgents []common.Address, agentOwner common.Address, nameService []byte) (*types.Transaction, error) {
+	return _AgentUpgradeable.Contract.Initialize(&_AgentUpgradeable.TransactOpts, agentName, agentVersion, codeLanguage, pointers, depsAgents, agentOwner, nameService)
 }
 
-// PublishAgentCodeWithSignature is a paid mutator transaction binding the contract method 0x45a836ec.
+// Initialize is a paid mutator transaction binding the contract method 0xcd4a6cbf.
 //
-// Solidity: function publishAgentCodeWithSignature((address,uint8,string)[] pointers, address[] depsAgents, bool isOnchain, bytes signature) returns(uint16)
-func (_AgentUpgradeable *AgentUpgradeableTransactorSession) PublishAgentCodeWithSignature(pointers []IAgentCodePointer, depsAgents []common.Address, isOnchain bool, signature []byte) (*types.Transaction, error) {
-	return _AgentUpgradeable.Contract.PublishAgentCodeWithSignature(&_AgentUpgradeable.TransactOpts, pointers, depsAgents, isOnchain, signature)
+// Solidity: function initialize(string agentName, string agentVersion, string codeLanguage, (address,uint8,string)[] pointers, address[] depsAgents, address agentOwner, bytes nameService) payable returns()
+func (_AgentUpgradeable *AgentUpgradeableTransactorSession) Initialize(agentName string, agentVersion string, codeLanguage string, pointers []IAgentCodePointer, depsAgents []common.Address, agentOwner common.Address, nameService []byte) (*types.Transaction, error) {
+	return _AgentUpgradeable.Contract.Initialize(&_AgentUpgradeable.TransactOpts, agentName, agentVersion, codeLanguage, pointers, depsAgents, agentOwner, nameService)
+}
+
+// PublishAgentCode is a paid mutator transaction binding the contract method 0x89ffd55c.
+//
+// Solidity: function publishAgentCode((address,uint8,string)[] pointers, address[] depsAgents) returns(uint16)
+func (_AgentUpgradeable *AgentUpgradeableTransactor) PublishAgentCode(opts *bind.TransactOpts, pointers []IAgentCodePointer, depsAgents []common.Address) (*types.Transaction, error) {
+	return _AgentUpgradeable.contract.Transact(opts, "publishAgentCode", pointers, depsAgents)
+}
+
+// PublishAgentCode is a paid mutator transaction binding the contract method 0x89ffd55c.
+//
+// Solidity: function publishAgentCode((address,uint8,string)[] pointers, address[] depsAgents) returns(uint16)
+func (_AgentUpgradeable *AgentUpgradeableSession) PublishAgentCode(pointers []IAgentCodePointer, depsAgents []common.Address) (*types.Transaction, error) {
+	return _AgentUpgradeable.Contract.PublishAgentCode(&_AgentUpgradeable.TransactOpts, pointers, depsAgents)
+}
+
+// PublishAgentCode is a paid mutator transaction binding the contract method 0x89ffd55c.
+//
+// Solidity: function publishAgentCode((address,uint8,string)[] pointers, address[] depsAgents) returns(uint16)
+func (_AgentUpgradeable *AgentUpgradeableTransactorSession) PublishAgentCode(pointers []IAgentCodePointer, depsAgents []common.Address) (*types.Transaction, error) {
+	return _AgentUpgradeable.Contract.PublishAgentCode(&_AgentUpgradeable.TransactOpts, pointers, depsAgents)
+}
+
+// PublishAgentCodeWithSignature is a paid mutator transaction binding the contract method 0x6c6ca629.
+//
+// Solidity: function publishAgentCodeWithSignature((address,uint8,string)[] pointers, address[] depsAgents, bytes signature) returns(uint16)
+func (_AgentUpgradeable *AgentUpgradeableTransactor) PublishAgentCodeWithSignature(opts *bind.TransactOpts, pointers []IAgentCodePointer, depsAgents []common.Address, signature []byte) (*types.Transaction, error) {
+	return _AgentUpgradeable.contract.Transact(opts, "publishAgentCodeWithSignature", pointers, depsAgents, signature)
+}
+
+// PublishAgentCodeWithSignature is a paid mutator transaction binding the contract method 0x6c6ca629.
+//
+// Solidity: function publishAgentCodeWithSignature((address,uint8,string)[] pointers, address[] depsAgents, bytes signature) returns(uint16)
+func (_AgentUpgradeable *AgentUpgradeableSession) PublishAgentCodeWithSignature(pointers []IAgentCodePointer, depsAgents []common.Address, signature []byte) (*types.Transaction, error) {
+	return _AgentUpgradeable.Contract.PublishAgentCodeWithSignature(&_AgentUpgradeable.TransactOpts, pointers, depsAgents, signature)
+}
+
+// PublishAgentCodeWithSignature is a paid mutator transaction binding the contract method 0x6c6ca629.
+//
+// Solidity: function publishAgentCodeWithSignature((address,uint8,string)[] pointers, address[] depsAgents, bytes signature) returns(uint16)
+func (_AgentUpgradeable *AgentUpgradeableTransactorSession) PublishAgentCodeWithSignature(pointers []IAgentCodePointer, depsAgents []common.Address, signature []byte) (*types.Transaction, error) {
+	return _AgentUpgradeable.Contract.PublishAgentCodeWithSignature(&_AgentUpgradeable.TransactOpts, pointers, depsAgents, signature)
+}
+
+// Renew is a paid mutator transaction binding the contract method 0xacf1a841.
+//
+// Solidity: function renew(string name, uint256 duration) payable returns()
+func (_AgentUpgradeable *AgentUpgradeableTransactor) Renew(opts *bind.TransactOpts, name string, duration *big.Int) (*types.Transaction, error) {
+	return _AgentUpgradeable.contract.Transact(opts, "renew", name, duration)
+}
+
+// Renew is a paid mutator transaction binding the contract method 0xacf1a841.
+//
+// Solidity: function renew(string name, uint256 duration) payable returns()
+func (_AgentUpgradeable *AgentUpgradeableSession) Renew(name string, duration *big.Int) (*types.Transaction, error) {
+	return _AgentUpgradeable.Contract.Renew(&_AgentUpgradeable.TransactOpts, name, duration)
+}
+
+// Renew is a paid mutator transaction binding the contract method 0xacf1a841.
+//
+// Solidity: function renew(string name, uint256 duration) payable returns()
+func (_AgentUpgradeable *AgentUpgradeableTransactorSession) Renew(name string, duration *big.Int) (*types.Transaction, error) {
+	return _AgentUpgradeable.Contract.Renew(&_AgentUpgradeable.TransactOpts, name, duration)
 }
 
 // RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.

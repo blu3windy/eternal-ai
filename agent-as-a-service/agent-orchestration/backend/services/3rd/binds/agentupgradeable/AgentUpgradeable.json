@@ -150,6 +150,25 @@
   {
     "inputs": [
       {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      }
+    ],
+    "name": "getAddressByENS",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint16",
         "name": "version",
         "type": "uint16"
@@ -161,6 +180,32 @@
         "internalType": "string",
         "name": "code",
         "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAgentName",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAgentOwner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -239,11 +284,6 @@
         "internalType": "address[]",
         "name": "depsAgents",
         "type": "address[]"
-      },
-      {
-        "internalType": "bool",
-        "name": "isOnchain",
-        "type": "bool"
       }
     ],
     "name": "getHashToSign",
@@ -307,33 +347,14 @@
         "type": "address"
       },
       {
-        "internalType": "bool",
-        "name": "isOnchain",
-        "type": "bool"
+        "internalType": "bytes",
+        "name": "nameService",
+        "type": "bytes"
       }
     ],
     "name": "initialize",
     "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "version",
-        "type": "uint256"
-      }
-    ],
-    "name": "isOnchain",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -377,11 +398,6 @@
         "internalType": "address[]",
         "name": "depsAgents",
         "type": "address[]"
-      },
-      {
-        "internalType": "bool",
-        "name": "isOnchain",
-        "type": "bool"
       }
     ],
     "name": "publishAgentCode",
@@ -425,11 +441,6 @@
         "type": "address[]"
       },
       {
-        "internalType": "bool",
-        "name": "isOnchain",
-        "type": "bool"
-      },
-      {
         "internalType": "bytes",
         "name": "signature",
         "type": "bytes"
@@ -448,9 +459,53 @@
   },
   {
     "inputs": [],
+    "name": "registrar",
+    "outputs": [
+      {
+        "internalType": "contract IBASERegistrarController",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "duration",
+        "type": "uint256"
+      }
+    ],
+    "name": "renew",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "resolver",
+    "outputs": [
+      {
+        "internalType": "contract IResolver",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

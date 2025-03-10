@@ -54,11 +54,12 @@ func (s *Service) DeployAgentUpgradeableAddress(
 	pointers []agentupgradeable.IAgentCodePointer,
 	depsAgents []common.Address,
 	agentOwner common.Address,
-	isOnchain bool,
 ) (string, string, string, error) {
 	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
 	proxyAdminAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "proxy_admin_address"))
 	logicAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "agentupgradeable_address"))
+	registrarAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "registrar_address"))
+	resolverAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "resolver_address"))
 	initializeData, err := evmapi.AgentUpgradeableInitializeData(
 		agentName,
 		agentVersion,
@@ -66,7 +67,9 @@ func (s *Service) DeployAgentUpgradeableAddress(
 		pointers,
 		depsAgents,
 		agentOwner,
-		isOnchain,
+		common.HexToAddress(registrarAddress),
+		common.HexToAddress(resolverAddress),
+		10*365*24*60*60,
 	)
 	if err != nil {
 		return "", "", "", errs.NewError(err)
@@ -232,7 +235,6 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 						storageInfos,
 						dependAgentAddrs,
 						helpers.HexToAddress(agentInfo.Creator),
-						true,
 					)
 					if err != nil {
 						return errs.NewError(err)
