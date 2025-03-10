@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { CreateNewStep } from "@pages/authen/Register/types.ts";
+import { CreateNewStep, RegisterType } from "@pages/authen/Register/types.ts";
 import Backup from "@pages/authen/Register/CreateNew/Backup.tsx";
 import ConfirmKey from "@pages/authen/Register/CreateNew/ConfirmKey.tsx";
 import ConfirmPass from "@pages/authen/Register/CreateNew/ConfirmPass.tsx";
 import EaiSigner from "@helpers/signer";
 import { compareString } from "@utils/string.ts";
 import { useAuth } from "@pages/authen/provider.tsx";
+import Stepper from "@components/Stepper";
+import { Box } from "@chakra-ui/react";
 
 interface IProps {
    onBack: () => void;
@@ -75,6 +77,17 @@ const CreateNew = (props: IProps) => {
 
    return (
       <>
+         <Stepper
+            steps={
+               [
+                  { title: "Backup private key", key: CreateNewStep.backup },
+                  { title: "Confirm private key", key: CreateNewStep.confirmKey },
+                  { title: "Create a password", key: CreateNewStep.confirmPass }
+               ]
+            }
+            activeStep={step.toString()}
+         />
+         <Box height="90px" />
          {renderContent()}
       </>
    );
