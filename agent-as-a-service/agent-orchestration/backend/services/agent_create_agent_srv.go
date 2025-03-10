@@ -1348,7 +1348,10 @@ func (s *Service) ValidateTweetContentGenerateVideoWithLLM(ctx context.Context, 
 		res.Choices[0].Message.Content = strings.Replace(res.Choices[0].Message.Content, "```", "", 1)
 		err = json.Unmarshal([]byte(res.Choices[0].Message.Content), &result)
 		if err != nil {
-			return nil, err
+			return &models.TweetParseInfo{
+				IsGenerateVideo:      false,
+				GenerateVideoContent: fullText,
+			}, nil
 		}
 		isGenerateVideo = result["is_generate_video"]
 	}
