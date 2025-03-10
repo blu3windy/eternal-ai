@@ -3,8 +3,11 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/sashabaranov/go-openai"
 	"net/http"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -373,6 +376,60 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 // 	return nil
 // }
 
+func (s *Service) GetGenerateVideoCheckTweetHandledRedisKey(tweetId string) string {
+	return fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", tweetId)
+}
+
+func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, tweetId string, excludeAuthorIDs []string) error {
+	redisKeyToCheckHandled := s.GetGenerateVideoCheckTweetHandledRedisKey(tweetId)
+	var checkTweetID string
+	err := s.GetRedisCachedWithKey(redisKeyToCheckHandled, &checkTweetID)
+	if err == nil && checkTweetID != "" {
+		return nil // already handled
+	}
+
+	twitterInfo, err := s.dao.FirstTwitterInfo(tx,
+		map[string][]interface{}{
+			"twitter_id = ?": {s.conf.TokenTwiterID},
+		},
+		map[string][]interface{}{},
+		false,
+	)
+	if err != nil {
+		return errs.NewError(errs.ErrBadRequest)
+	}
+
+	twIDs := []string{tweetId}
+	twitterDetails, err := s.twitterWrapAPI.LookupUserTweets(twitterInfo.AccessToken, twIDs)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	if twitterDetails == nil {
+		return errors.New("twitterDetail is nil")
+	}
+
+	for k, v := range *twitterDetails {
+		if !strings.EqualFold(k, tweetId) {
+			continue
+		}
+		author, err := s.CreateUpdateUserTwitter(tx, v.User.ID)
+		if err != nil {
+			return errs.NewError(errs.ErrBadRequest)
+		}
+		if author == nil {
+			continue
+		}
+
+		if slices.Contains(excludeAuthorIDs, v.User.ID) {
+			continue
+		}
+
+		// TODO handle here
+	}
+
+	return nil
+}
+
 func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoID uint, twitterUsername string, tweetMentions *twitter.UserTimeline) error {
 	if tweetMentions == nil {
 		return nil
@@ -403,11 +460,11 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 	}
 
 	for _, item := range tweetMentions.Tweets {
-		var checkTwitterID string
-		_ = checkTwitterID
-		redisKeyToCheckHandled := fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", item.ID)
+		var checkTweetID string
+		_ = checkTweetID
+		redisKeyToCheckHandled := s.GetGenerateVideoCheckTweetHandledRedisKey(item.ID)
 
-		err := s.GetRedisCachedWithKey(fmt.Sprintf(redisKeyToCheckHandled, item.ID), &checkTwitterID)
+		err := s.GetRedisCachedWithKey(redisKeyToCheckHandled, &checkTweetID)
 		//err := errors.New("redis:nil")
 		if err != nil {
 			if !strings.EqualFold(item.AuthorID, agentInfo.TwitterID) {
@@ -426,50 +483,58 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 							if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
 								if strings.EqualFold(k, item.ID) {
 									fullText := v.Tweet.GetAllFullText()
+									strings.Replace(fullText, fmt.Sprintf("@%s", agentInfo.TwitterUsername), "", 1)
 									tokenInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), agentInfo.TwitterUsername, fullText)
-									if tokenInfo != nil && (tokenInfo.IsGenerateVideo) {
-										existPosts, err := s.dao.FirstAgentTwitterPost(
-											tx,
-											map[string][]interface{}{
-												"twitter_post_id = ?": {v.Tweet.ID},
-											},
-											map[string][]interface{}{},
-											[]string{},
-										)
+									if tokenInfo == nil || tokenInfo.IsGenerateVideo == false {
+										tokenInfo, err = s.ValidateTweetContentGenerateVideoWithLLM(context.Background(), agentInfo.TwitterUsername, fullText)
+										if err != nil {
+											return errs.NewError(err)
+										}
+									}
+									if tokenInfo == nil || tokenInfo.IsGenerateVideo == false {
+										s.SendTeleVideoActivitiesAlert(fmt.Sprintf("found a requirement gen video with fail syntax :%v ", fullText))
+										continue
+									}
+
+									existPosts, err := s.dao.FirstAgentTwitterPost(
+										tx,
+										map[string][]interface{}{
+											"twitter_post_id = ?": {v.Tweet.ID},
+										},
+										map[string][]interface{}{},
+										[]string{},
+									)
+									if err != nil {
+										return errs.NewError(err)
+									}
+
+									if existPosts == nil {
+										postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
+										m := &models.AgentTwitterPost{
+											NetworkID:             agentInfo.NetworkID,
+											AgentInfoID:           agentInfo.ID,
+											TwitterID:             v.User.ID,
+											TwitterUsername:       v.User.UserName,
+											TwitterName:           v.User.Name,
+											TwitterPostID:         v.Tweet.ID, // bai reply
+											Content:               fullText,
+											ExtractContent:        tokenInfo.GenerateVideoContent,
+											Status:                models.AgentTwitterPostWaitSubmitVideoInfer,
+											PostAt:                postedAt,
+											TwitterConversationId: v.Tweet.ConversationID, // bai goc cua conversation
+											PostType:              models.AgentSnapshotPostActionTypeGenerateVideo,
+											IsMigrated:            true,
+											InferId:               "20250",
+										}
+
+										err = s.dao.Create(tx, m)
 										if err != nil {
 											return errs.NewError(err)
 										}
 
-										if existPosts == nil {
-											postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
-											m := &models.AgentTwitterPost{
-												NetworkID:             agentInfo.NetworkID,
-												AgentInfoID:           agentInfo.ID,
-												TwitterID:             v.User.ID,
-												TwitterUsername:       v.User.UserName,
-												TwitterName:           v.User.Name,
-												TwitterPostID:         v.Tweet.ID, // bai reply
-												Content:               fullText,
-												ExtractContent:        tokenInfo.GenerateVideoContent,
-												Status:                models.AgentTwitterPostWaitSubmitVideoInfer,
-												PostAt:                postedAt,
-												TwitterConversationId: v.Tweet.ConversationID, // bai goc cua conversation
-												PostType:              models.AgentSnapshotPostActionTypeGenerateVideo,
-												IsMigrated:            true,
-												InferId:               "20250",
-											}
-
-											err = s.dao.Create(tx, m)
-											if err != nil {
-												return errs.NewError(err)
-											}
-
-											_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
-										}
-										s.SendTeleVideoActivitiesAlert(fmt.Sprintf("found a requirement gen video with post :%v ", fullText))
-									} else {
-										s.SendTeleVideoActivitiesAlert(fmt.Sprintf("found a requirement gen video with fail syntax :%v ", fullText))
+										_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
 									}
+									s.SendTeleVideoActivitiesAlert(fmt.Sprintf("found a requirement gen video with post :%v ", fullText))
 								}
 							}
 						}
@@ -1165,6 +1230,48 @@ func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userNam
 		GenerateVideoContent: strings.TrimSpace(inferContent),
 	}, nil
 }
+func (s *Service) ValidateTweetContentGenerateVideoWithLLM(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
+	request := openai.ChatCompletionRequest{
+		Model: "Llama3.3",
+		Messages: []openai.ChatCompletionMessage{
+			openai.ChatCompletionMessage{
+				Role:    "system",
+				Content: "You are an advanced AI tasked with accurately detecting if a tweet on X (formerly Twitter) mentions generating or creating a video. Pay close attention to the phrasing used by the user, including common misspellings, variations, case-insensitivity, and the use of snake_case or hyphenated notation. Look for phrases such as:\\r\\n\\r\\n- \\\"create video\\\"\\r\\n- \\\"generate video\\\"\\r\\n- \\\"make video\\\"\\r\\n- \\\"build video\\\"\\r\\n- \\\"creat video\\\"\\r\\n- \\\"generaet video\\\"\\r\\n\\r\\nAlso, account for underscore-based versions of these phrases, such as:\\r\\n\\r\\n- \\\"create_video\\\"\\r\\n- \\\"generate_video\\\"\\r\\n- \\\"make_video\\\"\\r\\n- \\\"build_video\\\"\\r\\n- \\\"creat_video\\\"\\r\\n- \\\"generaet_video\\\"\\r\\n\\r\\nAnd consider hyphenated versions, such as:\\r\\n\\r\\n- \\\"create-video\\\"\\r\\n- \\\"generate-video\\\"\\r\\n- \\\"make-video\\\"\\r\\n- \\\"build-video\\\"\\r\\n- \\\"creat-video\\\"\\r\\n- \\\"generaet-video\\\"\\r\\n\\r\\nBe mindful of different capitalizations and possible typos (e.g., \\\"Create video,\\\" \\\"Generate video,\\\" \\\"Create-Video,\\\" \\\"Generate-Video,\\\" \\\"Create_Video,\\\" \\\"Generate_Video,\\\" etc.).\\r\\n\\r\\nBefore answering, carefully evaluate the content of the tweet, ensuring that it directly references video creation or generation. Respond with the highest accuracy possible.\\r\\n\\r\\nReturn the response in the following JSON format:\\r\\n {\\\"is_generate_video\\\": true\\/false} \\r\\nYour response should reflect whether the tweet is related to video generation or not. Think critically about context and phrasing to ensure the most accurate determination.JSON",
+			}, openai.ChatCompletionMessage{
+				Role:    "user",
+				Content: fullText,
+			},
+		},
+	}
+	response, _, code, err := helpers.HttpRequest(s.conf.KnowledgeBaseConfig.DirectServiceUrl, "POST",
+		map[string]string{
+			"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
+		}, request)
+	if err != nil {
+		return nil, err
+	}
+	if code != http.StatusOK {
+		return nil, fmt.Errorf("err while get response code:%v ,body:%v", code, string(response))
+	}
+	res := openai.ChatCompletionResponse{}
+	err = json.Unmarshal(response, &res)
+	if err != nil {
+		return nil, err
+	}
+	isGenerateVideo := false
+	if len(res.Choices) > 0 {
+		result := map[string]bool{}
+		err = json.Unmarshal([]byte(res.Choices[0].Message.Content), &result)
+		if err != nil {
+			return nil, err
+		}
+		isGenerateVideo = result["is_generate_video"]
+	}
+	return &models.TweetParseInfo{
+		IsGenerateVideo:      isGenerateVideo,
+		GenerateVideoContent: strings.TrimSpace(fullText),
+	}, nil
+}
 
 // func (s *Service) GetAgentInfoInContent(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
 // 	info := &models.TweetParseInfo{
@@ -1535,7 +1642,7 @@ func (s *Service) GetImageUrlForBase64(stringBase64 string) (string, error) {
 
 func (s *Service) GenerateTokenImageBase64Gif(ctx context.Context, tokenSymbol, tokenName, tokenDesc string) string {
 	imagePrompt := fmt.Sprintf(`
-		I want to create image for a token base on this info 
+		I want to create image for a token base on this info
 		Token Symbol: %s
 		Token name: %s
 		Token Description: %s
