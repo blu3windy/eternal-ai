@@ -12,8 +12,8 @@ import { compareString, formatName, parseSymbolName } from "@utils/string";
 import BigNumber from "bignumber.js";
 import cx from "clsx";
 import { Field, useFormikContext } from "formik";
-import first from "lodash.first";
-import last from "lodash.last";
+import first from "lodash/first";
+import last from "lodash/last";
 import {
   useCallback,
   useContext,
@@ -155,14 +155,14 @@ const FormTradeAgent = () => {
 
   const isDisabled = useMemo(() => {
     return (
-      compareString(tradePlatform, ETradePlatform.none) ||
-      formik.isSubmitting ||
-      !amount ||
-      !estimate_swap ||
-      parseFloat(estimate_swap) <= 0 ||
-      estimating ||
-      validateAmount(amount) !== undefined ||
-      loading
+      compareString(tradePlatform, ETradePlatform.none)
+      || formik.isSubmitting
+      || !amount
+      || !estimate_swap
+      || parseFloat(estimate_swap) <= 0
+      || estimating
+      || validateAmount(amount) !== undefined
+      || loading
     );
   }, [
     tradePlatform,
@@ -177,9 +177,9 @@ const FormTradeAgent = () => {
     let title = "Enter an amount";
 
     if (
-      parseFloat(amount || "0") > 0 &&
-      validateAmount(amount) === undefined &&
-      parseFloat(estimate_swap) > 0
+      parseFloat(amount || "0") > 0
+      && validateAmount(amount) === undefined
+      && parseFloat(estimate_swap) > 0
     ) {
       title = compareString(type, EAgentTrade.BUY)
         ? "Buy"
