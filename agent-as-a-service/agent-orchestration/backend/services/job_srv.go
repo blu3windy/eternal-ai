@@ -184,7 +184,7 @@ func (s *Service) RunJobs(ctx context.Context) error {
 	// gocron.Every(1).Minute().Do(s.JobAgentTwitterPostCreateAgent, context.Background())
 
 	// generate video
-	gocron.Every(1).Minutes().Do(s.JobScanAgentTwitterPostForGenerateVideo, context.Background())
+	gocron.Every(5).Minutes().Do(s.JobScanAgentTwitterPostForGenerateVideo, context.Background())
 	gocron.Every(15).Seconds().Do(s.JobAgentTwitterPostSubmitVideoInfer, context.Background())
 	gocron.Every(30).Seconds().Do(s.JobAgentTwitterScanResultGenerateVideo, context.Background())
 	gocron.Every(1).Minutes().Do(s.JobAgentTwitterPostGenerateVideo, context.Background())
