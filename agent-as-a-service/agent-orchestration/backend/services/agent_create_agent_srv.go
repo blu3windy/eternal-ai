@@ -427,6 +427,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 							if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
 								if strings.EqualFold(k, item.ID) {
 									fullText := v.Tweet.GetAllFullText()
+									strings.Replace(fullText, fmt.Sprintf("@%s", agentInfo.TwitterUsername), "", 1)
 									tokenInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), agentInfo.TwitterUsername, fullText)
 									if tokenInfo == nil || tokenInfo.IsGenerateVideo == false {
 										tokenInfo, err = s.ValidateTweetContentGenerateVideoWithLLM(context.Background(), agentInfo.TwitterUsername, fullText)
