@@ -267,7 +267,7 @@ const AgentProvider: React.FC<
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
-            const ipfsHash = await installUtilityModelAgent(agent);
+            const ipfsHash = await installModelAgent(agent);
             console.log('====ipfsHash', ipfsHash);
          } else {
 
@@ -318,7 +318,7 @@ const AgentProvider: React.FC<
       }
    };
 
-   const installUtilityModelAgent = async (agent: IAgentToken) => {
+   const installModelAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
