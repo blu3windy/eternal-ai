@@ -459,6 +459,18 @@ const AgentProvider: React.FC<
       }
    }
 
+  const handleRunModelAgent = async (hash?: string) => {
+    if (!hash) return;
+
+    try {
+      setIsStarting(true);
+      await window.electronAPI.modelRun(hash);
+    } catch (e) {
+      console.log('handleRunModelAgent', e);
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
    const contextValues: any = useMemo(() => {
       return {
