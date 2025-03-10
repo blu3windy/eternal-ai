@@ -5,8 +5,10 @@ import { formatCurrency } from "@utils/format";
 import { Form, Formik } from "formik";
 import { useContext, useRef } from "react";
 import {
+  ARBITRUM_CHAIN_ID,
   BASE_CHAIN_ID,
   BASE_SEPOLIA_CHAIN_ID,
+  BSC_CHAIN_ID,
   SYMBIOSIS_CHAIN_ID,
 } from "../../../../constants/chains";
 import FormTradeAgent from "./form";
@@ -29,6 +31,8 @@ import { getExplorerByChain } from "@utils/helpers";
 
 export const SUPPORT_TRADE_CHAIN = [
   BASE_CHAIN_ID,
+  ARBITRUM_CHAIN_ID,
+  BSC_CHAIN_ID,
   SYMBIOSIS_CHAIN_ID,
   BASE_SEPOLIA_CHAIN_ID,
 ];

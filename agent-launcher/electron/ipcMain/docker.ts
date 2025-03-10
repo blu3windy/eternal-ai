@@ -41,7 +41,7 @@ const ipcMainDocker = () => {
 
          try {
             await command.execAsyncDockerDir(
-               `cd "${folderPath}" && ${docker} network create network-agent-external`
+               `${docker} network create network-agent-external`
             );
          } catch (error) {
             console.log('error', error);
