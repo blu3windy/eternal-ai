@@ -7,7 +7,7 @@ import CAgentTokenAPI from "../../../services/api/agents-token";
 import { Wallet } from "ethers";
 import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
 import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
-import { compareString } from "@utils/string.ts";
+import { compareString, isBase64, splitBase64 } from "@utils/string.ts";
 import { useAuth } from "@pages/authen/provider.tsx";
 import localStorageService from "../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
@@ -360,7 +360,10 @@ const AgentProvider: React.FC<
             filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
             console.log('filePath isExisted', filePath)
          } else {
-            const code = await cAgent.getAgentCode(codeVersion);
+            const codeBase64 = await cAgent.getAgentCode(codeVersion);
+            const base64Array = splitBase64(codeBase64);
+            const code =base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
+            console.log('===code', code)
             filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
             console.log('filePath New', filePath)
          }
@@ -396,7 +399,9 @@ const AgentProvider: React.FC<
         if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
             await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
         } else {
-            const code = await cAgent.getAgentCode(codeVersion);
+            const codeBase64 = await cAgent.getAgentCode(codeVersion);
+            const base64Array = splitBase64(codeBase64);
+            const code =base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
             await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
         }
         return [

@@ -25,25 +25,11 @@ class CAgentContract {
       const codeVersion = await this.contract.getCurrentVersion();
       return codeVersion;
    };
-
-   public splitBase64 = (content: string) => {
-      return content
-         .split(/\n+/)
-         .map(line => line.trim())
-         .filter(line => line.length > 0);
-   };
-
-   public isBase64 = (str: string) => {
-      if (!str || typeof str !== 'string') return false;
-      if (str.length % 4 !== 0) return false;
-      const base64Regex = /^[A-Za-z0-9+/]+={0,2}$/;
-      return base64Regex.test(str);
-   };
+  
 
    public getAgentCode = async (codeVersion: number) => {
       const codeBase64 = await this.contract.getAgentCode(codeVersion);
-      const base64Array = this.splitBase64(codeBase64);
-      return base64Array.map(item => this.isBase64(item) ? atob(item) : item).join('\n');
+      return codeBase64;
    };
 
    public getDepsAgents = async (codeVersion: number) => {
@@ -58,3 +44,4 @@ class CAgentContract {
 };
 
 export default CAgentContract;
+

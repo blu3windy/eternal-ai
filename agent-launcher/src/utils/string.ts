@@ -45,10 +45,28 @@ const getFileExtension = (filename: string) => {
     return filename.slice(filename.lastIndexOf('.') + 1);
 }
 
+
+const isBase64 = (str: string) => {
+   if (!str || typeof str !== 'string') return false;
+   if (str.length % 4 !== 0) return false;
+   const base64Regex = /^[A-Za-z0-9+/]+={0,2}$/;
+   return base64Regex.test(str);
+};
+
+
+const splitBase64 = (content: string) => {
+   return content
+      .split(/\n+/)
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+};
+
 export {
    compareString,
    getAvatarName,
    addressFormater,
    tryToParseJsonString,
-   getFileExtension
+   getFileExtension,
+   isBase64,
+   splitBase64
 };
