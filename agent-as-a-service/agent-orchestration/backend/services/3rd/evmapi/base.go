@@ -1,11 +1,13 @@
 package evmapi
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/agentupgradeable"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 type BaseClient interface {
@@ -29,16 +31,16 @@ func AgentUpgradeableInitializeData(agentName string, agentVersion string, codeL
 	if err != nil {
 		panic(err)
 	}
-	typeUint, err := abi.NewType("uint", "", nil)
+	typeUint256, err := abi.NewType("uint256", "", nil)
 	if err != nil {
 		panic(err)
 	}
 	arguments := abi.Arguments{
 		{Type: typeAddress},
 		{Type: typeAddress},
-		{Type: typeUint},
+		{Type: typeUint256},
 	}
-	nameService, err := arguments.Pack(registrar, resolver, duration)
+	nameService, err := arguments.Pack(registrar, resolver, big.NewInt(int64(duration)))
 	if err != nil {
 		panic(err)
 	}
@@ -53,5 +55,6 @@ func AgentUpgradeableInitializeData(agentName string, agentVersion string, codeL
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(hexutil.Encode(dataBytes))
 	return dataBytes, nil
 }

@@ -215,7 +215,7 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 					case models.AgentInfoAgentTypeJs,
 						models.AgentInfoAgentTypeInfa:
 						{
-							codeLanguage = "js"
+							codeLanguage = "javascript"
 						}
 					case models.AgentInfoAgentTypePython:
 						{

@@ -44,13 +44,13 @@ func init() {
 }
 
 func Test_JOB(t *testing.T) {
-	// fmt.Println(
-	// 	// "OK",
-	// 	// ts.DeployProxyAdminAddress(context.Background(), models.BASE_SEPOLIA_CHAIN_ID),
-	// 	// ts.DeployAgentUpgradeable(context.Background(), 14424),
-	// 	// ts.UpgradeAgentUpgradeable(context.Background(), 0),
-	// 	ts.UpgradeAgentUpgradeable(context.Background(), 14558),
-	// )
+	fmt.Println(
+		// 	// "OK",
+		// 	// ts.DeployProxyAdminAddress(context.Background(), models.BASE_SEPOLIA_CHAIN_ID),
+		// 	// ts.DeployAgentUpgradeable(context.Background(), 14424),
+		// 	// ts.UpgradeAgentUpgradeable(context.Background(), 0),
+		ts.DeployAgentUpgradeable(context.Background(), 14586),
+	)
 	// ts.MemeEventsByTransaction(context.Background(), 56, "")
 	// ts.AgentSnapshotPostCreate(context.Background(), 59166, "", "")
 	// ts.JobScanAgentTwitterPostForTA(context.Background())
