@@ -363,9 +363,11 @@ func (s *Service) UtilityPostTwitter(ctx context.Context, userAddress string, re
 				return errs.NewError(errs.ErrAgentUtilityNotAuthen)
 			}
 
-			if infraTwitterApp != nil && infraTwitterApp.RemainRequest <= 0 {
-				resp.Message = strings.ReplaceAll(errs.ErrAgentUtilityInvalidBalance.Message, "{address}", s.conf.InfraTwitterApp.AgentAddress)
-				return errs.NewError(errs.ErrAgentUtilityInvalidBalance)
+			if s.conf.InfraTwitterApp.Fee > 0 {
+				if infraTwitterApp != nil && infraTwitterApp.RemainRequest <= 0 {
+					resp.Message = strings.ReplaceAll(errs.ErrAgentUtilityInvalidBalance.Message, "{address}", s.conf.InfraTwitterApp.AgentAddress)
+					return errs.NewError(errs.ErrAgentUtilityInvalidBalance)
+				}
 			}
 
 			if infraTwitterApp != nil && infraTwitterApp.TwitterInfo != nil && infraTwitterApp.TwitterInfo.RefreshError == "OK" {
@@ -374,11 +376,14 @@ func (s *Service) UtilityPostTwitter(ctx context.Context, userAddress string, re
 					return errs.NewError(errs.ErrAgentUtilityPostTweetFailed)
 				}
 				resp.Message = fmt.Sprintf(`https://x.com/%s/status/%s`, infraTwitterApp.TwitterInfo.TwitterUsername, tweetId)
-				err = tx.Model(infraTwitterApp).
-					UpdateColumn("eai_balance", gorm.Expr("eai_balance - ?", numeric.NewBigFloatFromString("1"))).
-					UpdateColumn("remain_request", gorm.Expr("remain_request - ?", 1)).Error
-				if err != nil {
-					return errs.NewError(errs.ErrAgentUtilitySystemError)
+				if s.conf.InfraTwitterApp.Fee > 0 {
+					feePerRequest := numeric.NewBigFloatFromString(fmt.Sprintf(`%d`, s.conf.InfraTwitterApp.Fee))
+					err = tx.Model(infraTwitterApp).
+						UpdateColumn("eai_balance", gorm.Expr("eai_balance - ?", feePerRequest)).
+						UpdateColumn("remain_request", gorm.Expr("remain_request - ?", feePerRequest)).Error
+					if err != nil {
+						return errs.NewError(errs.ErrAgentUtilitySystemError)
+					}
 				}
 				return nil
 			}

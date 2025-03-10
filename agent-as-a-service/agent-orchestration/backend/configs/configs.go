@@ -268,6 +268,7 @@ type Config struct {
 		AgentAddress      string `json:"agent_address"`
 		WorkerAddress     string `json:"worker_address"`
 		AgentID           uint   `json:"agent_id"`
+		Fee               uint   `json:"fee"`
 	} `json:"infra_twitter_app"`
 }
 
