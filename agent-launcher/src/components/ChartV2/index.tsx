@@ -14,6 +14,7 @@ import {
 import s from "./styles.module.scss";
 import cx from "classnames";
 import { CHART_DECIMAL } from "./constants";
+import dayjs from "dayjs";
 
 export enum EChartType {
   line = "line",
@@ -40,12 +41,14 @@ const ChartV2Module: React.FC<TokenChartProps> = ({
   const chart = useRef<any>();
   const resizeObserver = useRef<any>();
   const candleChart = useRef<any>();
+  const refRenderChart = useRef<any>(false);
 
   useEffect(() => {
-    if (!chart.current) {
+    if (!chart.current && refRenderChart.current === false) {
+      refRenderChart.current = true;
       chart.current = createChart(chartContainerRef.current, {
-        width: chartContainerRef.current.clientWidth,
-        height: chartContainerRef.current.clientHeight,
+        width: chartContainerRef.current.offsetWidth,
+        height: chartContainerRef.current.offsetHeight,
         layout: {
           textColor: "#000",
           background: { type: ColorType.Solid, color: "#fff" },
@@ -92,24 +95,12 @@ const ChartV2Module: React.FC<TokenChartProps> = ({
       });
     }
 
-    resizeObserver.current = new ResizeObserver((entries: any) => {
-      const { width, height } = entries[0].contentRect;
-      if (chart.current) {
-        chart.current.applyOptions({ width, height });
-      }
-    });
-
-    resizeObserver.current.observe(chartContainerRef.current);
-
     return () => {
       chart.current = undefined;
-      resizeObserver.current.disconnect();
     };
   }, []);
 
   useEffect(() => {
-    console.log('chart.current', chart.current);
-    
     if (chart.current && chartContainerRef.current) {
       if (compareString(chartType, EChartType.line)) {
         candleChart.current = chart.current.addAreaSeries({

@@ -1,15 +1,14 @@
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Box, Flex } from "@chakra-ui/react";
+import cx from "clsx";
+import { useContext } from "react";
 import MainLayout from "../../components/layout";
 import FundAgentProvider from "../../providers/FundAgent";
 import ChatAgent from "./chat-agent";
-import AgentsList, { AgentType } from "./list-agent";
+import AgentInfo from "./chat-agent/AgentInfo";
+import AgentsList from "./list-agent";
 import AgentProvider, { AgentContext } from "./provider";
 import s from "./styles.module.scss";
-import { useContext, useMemo } from "react";
 import TradeAgent from "./trade-agent";
-import AgentInfo from "./chat-agent/AgentInfo";
-import {Box, Flex} from "@chakra-ui/react";
-import cx from "clsx";
 import AgentTradeProvider from "./trade-agent/provider";
 
 type Props = {
@@ -24,19 +23,16 @@ const HandleHome = () => {
     selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
   return (
-    <PanelGroup direction="horizontal">
-      <Panel minSize={20} maxSize={25}>
+    <Flex height={"100%"}>
+      <Box flex={1} maxW={"400px"}>
         <AgentsList />
-      </Panel>
-      <PanelResizeHandle />
-      <Panel
-        minSize={50}
-        maxSize={60}
+      </Box>
+      <Box
         className={cx(
           s.detailContainer,
           isCanChat || showBackupPrvKey ? "" : s.isSetup
         )}
-        id={"detailContainer"}
+        flex={2}
       >
         <Box p={"16px"}>
           <AgentInfo />
@@ -49,12 +45,11 @@ const HandleHome = () => {
         ) : (
           <Flex w={"100%"}>
             <ChatAgent />
-            <Box minW={'350px'}/>
+            <Box minW={"350px"} />
           </Flex>
         )}
-      </Panel>
-      <PanelResizeHandle />
-    </PanelGroup>
+      </Box>
+    </Flex>
   );
 };
 

@@ -118,15 +118,15 @@ const FormTradeAgent = () => {
         });
         formik.setFieldValue("estimate_swap", rs.amountOutFormatted);
       } else if (compareString(tradePlatform, ETradePlatform.exchange3th)) {
-        //   const rs = await agentContract.uniEstimateSwap({
-        //     tokenIn: values.tokenIn.address,
-        //     tokenOut: values.tokenOut.address,
-        //     amount: _amount.toString(),
-        //     type: values.type,
-        //     fee: fee,
-        //     chain: currentChain,
-        //   });
-        //   formik.setFieldValue("estimate_swap", rs.amountOutFormatted);
+          const rs = await agentContract.uniEstimateSwap({
+            tokenIn: values.tokenIn.address,
+            tokenOut: values.tokenOut.address,
+            amount: _amount.toString(),
+            type: values.type,
+            fee: fee,
+            chain: currentChain,
+          });
+          formik.setFieldValue("estimate_swap", rs.amountOutFormatted);
       }
     } catch (error) {
       console.log("err", error);
