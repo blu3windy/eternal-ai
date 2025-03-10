@@ -3,9 +3,11 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/sashabaranov/go-openai"
 	"net/http"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -374,6 +376,60 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 // 	return nil
 // }
 
+func (s *Service) GetGenerateVideoCheckTweetHandledRedisKey(tweetId string) string {
+	return fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", tweetId)
+}
+
+func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, tweetId string, excludeAuthorIDs []string) error {
+	redisKeyToCheckHandled := s.GetGenerateVideoCheckTweetHandledRedisKey(tweetId)
+	var checkTweetID string
+	err := s.GetRedisCachedWithKey(redisKeyToCheckHandled, &checkTweetID)
+	if err == nil && checkTweetID != "" {
+		return nil // already handled
+	}
+
+	twitterInfo, err := s.dao.FirstTwitterInfo(tx,
+		map[string][]interface{}{
+			"twitter_id = ?": {s.conf.TokenTwiterID},
+		},
+		map[string][]interface{}{},
+		false,
+	)
+	if err != nil {
+		return errs.NewError(errs.ErrBadRequest)
+	}
+
+	twIDs := []string{tweetId}
+	twitterDetails, err := s.twitterWrapAPI.LookupUserTweets(twitterInfo.AccessToken, twIDs)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	if twitterDetails == nil {
+		return errors.New("twitterDetail is nil")
+	}
+
+	for k, v := range *twitterDetails {
+		if !strings.EqualFold(k, tweetId) {
+			continue
+		}
+		author, err := s.CreateUpdateUserTwitter(tx, v.User.ID)
+		if err != nil {
+			return errs.NewError(errs.ErrBadRequest)
+		}
+		if author == nil {
+			continue
+		}
+
+		if slices.Contains(excludeAuthorIDs, v.User.ID) {
+			continue
+		}
+
+		// TODO handle here
+	}
+
+	return nil
+}
+
 func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoID uint, twitterUsername string, tweetMentions *twitter.UserTimeline) error {
 	if tweetMentions == nil {
 		return nil
@@ -404,11 +460,11 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 	}
 
 	for _, item := range tweetMentions.Tweets {
-		var checkTwitterID string
-		_ = checkTwitterID
-		redisKeyToCheckHandled := fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", item.ID)
+		var checkTweetID string
+		_ = checkTweetID
+		redisKeyToCheckHandled := s.GetGenerateVideoCheckTweetHandledRedisKey(item.ID)
 
-		err := s.GetRedisCachedWithKey(fmt.Sprintf(redisKeyToCheckHandled, item.ID), &checkTwitterID)
+		err := s.GetRedisCachedWithKey(redisKeyToCheckHandled, &checkTweetID)
 		//err := errors.New("redis:nil")
 		if err != nil {
 			if !strings.EqualFold(item.AuthorID, agentInfo.TwitterID) {
@@ -1586,7 +1642,7 @@ func (s *Service) GetImageUrlForBase64(stringBase64 string) (string, error) {
 
 func (s *Service) GenerateTokenImageBase64Gif(ctx context.Context, tokenSymbol, tokenName, tokenDesc string) string {
 	imagePrompt := fmt.Sprintf(`
-		I want to create image for a token base on this info 
+		I want to create image for a token base on this info
 		Token Symbol: %s
 		Token name: %s
 		Token Description: %s
