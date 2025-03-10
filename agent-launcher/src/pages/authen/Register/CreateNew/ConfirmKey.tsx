@@ -45,6 +45,7 @@ const ConfirmKey = (props: IProps) => {
             description={[
                "Enter the last 4 characters of your private key"
             ]}
+            showLogo={false}
          />
          <Flex
             className={styles.passCode}

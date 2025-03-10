@@ -273,7 +273,7 @@ const AgentProvider: React.FC<
 
          }
       } catch (e) {
-         console.log('installAgent', e);
+         console.log('installAgent e', e);
       } finally {
          setIsInstalling(false);
          handleGetExistAgentFolders();
@@ -287,12 +287,13 @@ const AgentProvider: React.FC<
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await handleRunDockerAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
-
+           // const hash = '';
+           // await handleRunModelAgent(hash);
          } else {
 
          }
       } catch (e) {
-         console.log('startAgent', e);
+         console.log('startAgent e', e);
       } finally {
          setIsStopping(false);
 
@@ -312,7 +313,7 @@ const AgentProvider: React.FC<
 
          }
       } catch (e) {
-         console.log('installAgent', e);
+         console.log('stopAgent e', e);
       } finally {
          setIsInstalling(false);
       }
@@ -458,6 +459,18 @@ const AgentProvider: React.FC<
       }
    }
 
+  const handleRunModelAgent = async (hash?: string) => {
+    if (!hash) return;
+
+    try {
+      setIsStarting(true);
+      await window.electronAPI.modelRun(hash);
+    } catch (e) {
+      console.log('handleRunModelAgent', e);
+    } finally {
+      setIsStarting(false);
+    }
+  };
 
    const contextValues: any = useMemo(() => {
       return {

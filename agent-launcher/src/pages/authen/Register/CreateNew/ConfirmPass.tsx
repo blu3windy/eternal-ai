@@ -26,9 +26,10 @@ const ConfirmPass = (props: IProps) => {
          justifyContent="center"
       >
          <HeaderBox
-            title="Create a new account"
+            title="Create a password"
             description={["Your password encrypts your wallet on this device. If you forget it, you’ll need your private key to regain access."]}
             maxWidth="500px"
+            showLogo={false}
          />
          <Formik
             initialValues={{ password: '' }}
