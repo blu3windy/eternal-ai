@@ -323,12 +323,6 @@ const AgentProvider: React.FC<
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
          const codeVersion = await cAgent.getCurrentVersion();
-         const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
-         if (depsAgentStrs.length > 0) {
-            const dependAgents = await installDependAgents(depsAgentStrs, chainId);
-            console.log('dependAgents', dependAgents)
-         }
-
         const ipfsHash = await cAgent.getAgentCode(codeVersion);
         return ipfsHash;
       }
@@ -341,11 +335,6 @@ const AgentProvider: React.FC<
 
          const codeLanguage = await cAgent.getCodeLanguage();
          const codeVersion = await cAgent.getCurrentVersion();
-
-         const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
-         if (depsAgentStrs.length > 0) {
-            const dependAgents = await installDependAgents(depsAgentStrs, chainId);
-         }
 
          const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
          const fileNameOnLocal = `prompt.${codeLanguage}`;
@@ -362,11 +351,25 @@ const AgentProvider: React.FC<
          } else {
             const codeBase64 = await cAgent.getAgentCode(codeVersion);
             const base64Array = splitBase64(codeBase64);
-            const code =base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
-            console.log('===code', code)
+            const code = base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
             filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
             console.log('filePath New', filePath)
          }
+      }
+   };
+
+    const getDependAgentsOfUtilityAgent = async (agent: IAgentToken) => {
+      if (agent && !!agent.agent_contract_address) {
+        const chainId = agent?.network_id || BASE_CHAIN_ID;
+        const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
+        const codeVersion = await cAgent.getCurrentVersion();
+
+        const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+        if (depsAgentStrs.length > 0) {
+          const dependAgents = await installDependAgents(depsAgentStrs, chainId);
+          return dependAgents;
+        }
+        return [];
       }
    };
 
