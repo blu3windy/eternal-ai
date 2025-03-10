@@ -131,7 +131,7 @@ const AgentItem = ({ token }: IProps) => {
                         </>
                      )}
                   </Text>
-                  <Text className={s.infoText}>{formatCurrency(12345)}{' '}<Text as={'span'} color={"#657786"}>prompt{labelAmountOrNumberAdds(12345)}</Text></Text>
+                  <Text className={s.infoText}>{formatCurrency(token.prompt_calls, 0, 0)}{' '}<Text as={'span'} color={"#657786"}>prompt{labelAmountOrNumberAdds(token.prompt_calls)}</Text></Text>
                </Flex>
             </Flex>
          </Grid>

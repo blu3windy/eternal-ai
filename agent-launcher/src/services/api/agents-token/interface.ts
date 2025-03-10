@@ -77,6 +77,7 @@ export interface IAgentToken {
   depend_agents?: string;
   required_wallet?: boolean;
   is_onchain?: boolean;
+  prompt_calls: number;
 }
 
 export interface Meme {
