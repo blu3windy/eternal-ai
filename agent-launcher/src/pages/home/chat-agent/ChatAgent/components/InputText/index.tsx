@@ -85,7 +85,7 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
       >
         <Flex
           // border="1px solid #5400FB33"
-          borderRadius="16px"
+          borderRadius="100px"
           flex={1}
           // backgroundColor="#000000"
           // boxShadow={'0px 0px 24px -6px #5400FB1F'}
@@ -146,6 +146,7 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
             autoFocus={true}
           />
           <Flex
+            display={"none"}
             position="absolute"
             top="0"
             bottom="0"
