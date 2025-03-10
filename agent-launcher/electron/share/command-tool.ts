@@ -40,7 +40,7 @@ const execAsyncDockerDir = async (cmd: string) => {
             "/usr/bin/docker",          // Standard system install
             "/opt/local/bin/docker",    // MacPorts installation
             "/Applications/Docker.app/Contents/Resources/bin/docker",
-            "/Library/Application Support/Docker Desktop/bin/docker"
+            "/Library/Application Support/Docker Desktop/bin/docker",
          ];
 
          // Check for dynamically set Homebrew path
@@ -54,10 +54,29 @@ const execAsyncDockerDir = async (cmd: string) => {
             // Homebrew not installed or not found
          }
 
-         for (const dockerPath of possiblePaths) {
-            if (fs.existsSync(dockerPath)) {
-               dockerDir = dockerPath.substring(0, dockerPath.lastIndexOf("/"));
-               break;
+
+         // Check if /var/lib/docker exists (indicates Docker is installed)
+         if (fs.existsSync("/var/lib/docker")) {
+            console.log("Docker data directory found at /var/lib/docker");
+         }
+
+         // Use `which docker` first
+         try {
+            const whichDocker = execSync("which docker", { encoding: "utf-8" }).trim();
+            if (whichDocker) {
+               console.log("Found Docker binary at:", whichDocker);
+               dockerDir = path.dirname(whichDocker);
+            }
+         } catch (err) {
+            console.log("`which docker` failed, falling back to predefined paths...");
+         }
+
+         if (!dockerDir) {
+            for (const dockerPath of possiblePaths) {
+               if (fs.existsSync(dockerPath)) {
+                  dockerDir = dockerPath.substring(0, dockerPath.lastIndexOf("/"));
+                  break;
+               }
             }
          }
 

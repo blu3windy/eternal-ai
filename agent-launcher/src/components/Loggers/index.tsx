@@ -114,7 +114,7 @@ const Loggers = () => {
                   filteredLogs.map(([cmd, entries]) => (
                      <Box key={cmd} p={3} borderRadius="md" mb={4} bg="gray.700" color="white">
                         <Text fontWeight="bold" fontSize="md" mb={2}>
-                                    Command: <Code>{cmd}</Code>
+                           Command: <Code>{cmd}</Code>
                         </Text>
                         {entries.map((log, index) => (
                            <Box
