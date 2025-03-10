@@ -783,7 +783,10 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 						videoUrl := twitterPost.ImageUrl
 						mediaID := ""
 						if videoUrl != "" {
-							mediaID, _ = s.twitterAPI.UploadVideo(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
+							mediaID, err = s.twitterAPI.UploadVideo(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
+							if err != nil {
+								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL] upload video to twitter err: %v ", err))
+							}
 						}
 
 						if mediaID != "" {
