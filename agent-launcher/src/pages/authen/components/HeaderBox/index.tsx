@@ -5,10 +5,11 @@ import AppLogo from "@pages/authen/components/AppLogo";
 interface IProps extends FlexProps {
     title: string;
     description?: string[];
+    showLogo?: boolean;
 }
 
 const HeaderBox = (props: IProps) => {
-   const { title, description, ...rest } = props;
+   const { title, description, showLogo = true, ...rest } = props;
    return (
       <Flex
          display="flex"
@@ -18,7 +19,9 @@ const HeaderBox = (props: IProps) => {
          alignSelf="center"
          {...rest}
       >
-         <AppLogo />
+         {showLogo && (
+            <AppLogo />
+         )}
          <Text
             fontSize="28px"
             fontWeight="500"

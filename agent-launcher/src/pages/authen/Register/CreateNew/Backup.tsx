@@ -54,6 +54,7 @@ const Backup = (props: IProps) => {
             title="Create a new account"
             description={["Your private key makes it easy to back up and restore your account."]}
             maxWidth="380px"
+            showLogo={false}
          />
          <Flex
             flexDirection="column"
