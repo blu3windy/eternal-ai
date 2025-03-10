@@ -50,10 +50,7 @@ func (s *Server) AdminHandleVideo(c *gin.Context) {
 		TweetID string `json:"tweet_id"`
 	}
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
+	request.TweetID = s.stringFromContextQuery(c, "tweet_id")
 
 	if request.TweetID == "" {
 		c.JSON(400, gin.H{"error": "tweet_id is required"})
