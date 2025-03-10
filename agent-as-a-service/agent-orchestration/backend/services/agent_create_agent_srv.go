@@ -1267,11 +1267,12 @@ func (s *Service) ValidateTweetContentGenerateVideoWithLLM(ctx context.Context, 
 		}
 		isGenerateVideo = result["is_generate_video"]
 	}
-	if isGenerateVideo {
+	/*if isGenerateVideo {
 		return s.GetPromptFromTweetContentGenerateVideoWithLLM(ctx, userName, fullText)
-	}
+	}*/
 	return &models.TweetParseInfo{
-		IsGenerateVideo: false,
+		IsGenerateVideo:      isGenerateVideo,
+		GenerateVideoContent: fullText,
 	}, err
 }
 
