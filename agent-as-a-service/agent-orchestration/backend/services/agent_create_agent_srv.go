@@ -614,7 +614,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 										}
 
 										_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
-										s.SendTeleVideoActivitiesAlert(fmt.Sprintf("found a requirement gen video with post :%v ", fullText))
+										s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND] a requirement gen video with post :%v ", fullText))
 									}
 								}
 							}
