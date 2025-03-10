@@ -41,7 +41,7 @@ const BaseModal = (props: PropsWithChildren<IBaseModalProps>) => {
       headerClassName,
       size = 'normal',
       theme = 'light',
-      icCloseUrl = '/icons/ic_close_modal.svg',
+      icCloseUrl = 'icons/ic_close_modal.svg',
    } = props;
 
    return (

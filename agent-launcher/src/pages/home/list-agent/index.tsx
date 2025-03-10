@@ -66,9 +66,9 @@ export enum AgentType {
   KnowledgeBase = 2,
   Eliza = 3,
   Zerepy = 4,
-  UtilityJS = 5,
-  UtilityPython = 6,
-  Model = 7,
+  UtilityJS = 6,
+  UtilityPython = 7,
+  Model = 5,
   Infra = 8,
 }
 
@@ -194,7 +194,7 @@ const AgentsList = () => {
             <Image
                ml={'16px'}
                width="20px"
-               src="/icons/ic-search.svg"
+               src="icons/ic-search.svg"
                onClick={() => refInput?.current?.focus()}
             />
             <input
@@ -219,7 +219,7 @@ const AgentsList = () => {
                {!!refParams.current?.search && (
                   <Image
                      width="12px"
-                     src="/icons/ic_search_close.svg"
+                     src="icons/ic_search_close.svg"
                      onClick={() => {
                         if (refInput?.current?.value) {
                            refInput.current.value = '';
@@ -265,7 +265,7 @@ const AgentsList = () => {
                         {FilterBy.find(s => s.value === filter)?.label}
                      </Text>
                      <Image
-                        src={'/icons/ic-angle-down.svg'}
+                        src={'icons/ic-angle-down.svg'}
                         alt={'add'}
                      />
                   </Box>
@@ -341,7 +341,7 @@ const AgentsList = () => {
                         {SortBy.find(s => s.value === sort)?.label}
                      </Text>
                      <Image
-                        src={'/icons/ic-angle-down.svg'}
+                        src={'icons/ic-angle-down.svg'}
                         alt={'add'}
                      />
                   </Box>

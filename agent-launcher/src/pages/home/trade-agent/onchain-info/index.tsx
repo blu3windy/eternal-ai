@@ -27,7 +27,7 @@ const AgentOnChainInfo = () => {
                }}
             >
                {formatAddressCenter(selectedAgent?.creator)}
-               <Image src="/icons/ic-arrow-top-right.svg" />
+               <Image src="icons/ic-arrow-top-right.svg" />
             </Text>
          </Flex>
 

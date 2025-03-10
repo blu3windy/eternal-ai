@@ -78,7 +78,7 @@ const AgentItem = ({ token }: IProps) => {
                )}
                {/*          {
             isUtilityAgent && (
-              <Image src={'/icons/ic-utility-agent.svg'} w={"16px"} h={"16px"} position={"absolute"} top={"24px"} right={"0px"}/>
+              <Image src={'icons/ic-utility-agent.svg'} w={"16px"} h={"16px"} position={"absolute"} top={"24px"} right={"0px"}/>
             )
           }*/}
             </Flex>

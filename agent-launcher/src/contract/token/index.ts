@@ -4,10 +4,16 @@ import GenericContract from "@contract/common";
 import { ContractParams } from "@contract/interfaces";
 import { ERC20 } from "@contract/interfaces/ERC20";
 import { IToken } from "@interfaces/token";
-import { ethers } from "ethers";
+import { useAuth } from "@pages/authen/provider";
+import { BigNumber, ethers } from "ethers";
+import { formatEther, parseEther } from "ethers/lib/utils";
+import { isNativeToken } from "./constants";
 
 class CTokenContract extends GenericContract {
   private erc20: ERC20 | undefined = undefined;
+
+  public walletAuth = useAuth();
+  public signer = this.walletAuth.signer;
 
   public getERC20Contract = (params: ContractParams) => {
     const { contractAddress } = params;
@@ -38,6 +44,99 @@ class CTokenContract extends GenericContract {
       symbol,
       address: contractAddress,
     } as any;
+  };
+
+  isNeedApprove = async ({
+    token_address,
+    spender_address,
+    chain = CHAIN_TYPE.BASE,
+  }: {
+    token_address: string;
+    spender_address: string;
+    chain?: CHAIN_TYPE;
+  }) => {
+    try {
+      if (isNativeToken(token_address)) return false;
+
+      const _wallet = this.signer?.address as any;
+      const response = await this.getERC20Contract({
+        contractAddress: token_address,
+        chain,
+      }).allowance(_wallet, spender_address);
+
+      return BigNumber.from(response).lt(parseEther("1"));
+    } catch (error) {
+      console.log("error >>> isNeedApprove", error);
+
+      return true;
+    }
+  };
+
+  public getTokenBalance = async (
+    tokenAddress: string,
+    chain: CHAIN_TYPE = CHAIN_TYPE.BASE,
+    walletAddress?: string
+  ) => {
+    try {
+      const latestAddress: string =
+        walletAddress || (this.signer?.address as string);
+
+      if (
+        chain === CHAIN_TYPE.BASE || chain === CHAIN_TYPE.ETERNAL
+          ? isNativeToken(tokenAddress)
+          : false
+      ) {
+        const balance = await this.getProviderByChain(chain)?.getBalance(
+          latestAddress
+        );
+
+        return formatEther(balance).toString();
+      }
+
+      const balance = await this.getERC20Contract({
+        contractAddress: tokenAddress,
+        chain,
+      }).balanceOf(latestAddress as string);
+
+      console.log("getTokenBalance balance", balance);
+
+      return formatEther(balance).toString();
+    } catch (e) {
+      console.log("error getTokenBalance", e);
+
+      return "0";
+    }
+  };
+
+  approveToken = async ({
+    token_address,
+    spender_address,
+    chain = CHAIN_TYPE.BASE,
+  }: {
+    token_address: string;
+    spender_address: string;
+    chain?: CHAIN_TYPE;
+  }) => {
+    const erc20Contract = this.getERC20Contract({
+      contractAddress: token_address,
+      chain,
+    });
+
+    const chainID = this.getChainId(chain);
+
+    const calldata = erc20Contract.interface.encodeFunctionData("approve", [
+      spender_address,
+      ethers.constants.MaxUint256,
+    ]);
+
+    const tx = await this.walletAuth?.sendTransaction({
+      data: calldata,
+      to: token_address,
+      chainId: Number(chainID),
+      wait: true,
+    });
+
+    return tx;
   };
 }
 

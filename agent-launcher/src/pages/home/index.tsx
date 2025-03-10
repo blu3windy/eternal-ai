@@ -41,10 +41,14 @@ const HandleHome = () => {
         <Box p={"16px"}>
           <AgentInfo />
         </Box>
-        <AgentTradeProvider>
-          <TradeAgent />
-        </AgentTradeProvider>
-        {/* {isTrade ? <TradeAgent /> : <ChatAgent />} */}
+
+        {isTrade ? (
+          <AgentTradeProvider>
+            <TradeAgent />
+          </AgentTradeProvider>
+        ) : (
+          <ChatAgent />
+        )}
       </Panel>
       <PanelResizeHandle />
     </PanelGroup>

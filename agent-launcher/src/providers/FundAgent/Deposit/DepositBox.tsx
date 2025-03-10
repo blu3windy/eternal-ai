@@ -1,14 +1,14 @@
-import React, {useContext} from 'react';
-import {Center, Divider, Flex, Image, Text} from '@chakra-ui/react';
+import React, { useContext } from 'react';
+import { Center, Divider, Flex, Image, Text } from '@chakra-ui/react';
 import QRCodeGenerator from '@components/QRCodeGenerator';
 import s from './styles.module.scss';
 import copy from 'copy-to-clipboard';
 import toast from 'react-hot-toast';
-import {IFundAgent} from "../types.ts";
+import { IFundAgent } from "../types.ts";
 import Loading from "@components/Loading";
 import useFundAgent from '../useFundAgent.ts';
 import AgentAPI from "../../../services/api/agent";
-import {AgentContext} from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider";
 
 interface IExplorer {
   name: string;
@@ -90,10 +90,10 @@ const DepositBox: React.FC<IFundAgent> = ({ agentID }) => {
                            {agentWallet?.address}
                         </Text>
                         <Image
-                          h={'16px'}
-                          src={`/icons/ic-copy.svg`}
-                          className={s.addressBox_iconCopy}
-                          onClick={() => onClickCopy(agentWallet?.address || '')}
+                           h={'16px'}
+                           src={`icons/ic-copy.svg`}
+                           className={s.addressBox_iconCopy}
+                           onClick={() => onClickCopy(agentWallet?.address || '')}
                         />
                      </Flex>
                   </Flex>

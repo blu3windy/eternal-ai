@@ -27,13 +27,13 @@ const GeneralCode = memo(function ({ children, className, ...rest }: Props) {
       }, 1000);
    };
 
-  return match ? (
+   return match ? (
       <>
          <Flex className={s.codeHeader}>
             <Text className={s.text}>{match?.[1]}</Text>
             <button className={s.copyBtn} onClick={copyCode}>
                <SvgInset
-                  svgUrl={isCopied ? '/svg/ic-check.svg' : '/icons/copy_ic.svg'}
+                  svgUrl={isCopied ? '/svg/ic-check.svg' : 'icons/copy_ic.svg'}
                />
                <Text className={s.text}>{isCopied ? 'Copied!' : 'Copy code'}</Text>
             </button>

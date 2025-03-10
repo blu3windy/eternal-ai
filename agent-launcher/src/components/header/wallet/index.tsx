@@ -1,11 +1,11 @@
 import s from './styles.module.scss';
-import {Flex, Image, Text} from "@chakra-ui/react";
+import { Flex, Image, Text } from "@chakra-ui/react";
 import cs from 'clsx';
-import {ReactElement, useMemo, useRef, useState} from 'react';
+import { ReactElement, useMemo, useRef, useState } from 'react';
 import useOnClickOutside from "../../../hooks/useOnClickOutSide.ts";
-import {useAuth} from "@pages/authen/provider.tsx";
-import {formatLongAddress} from "@utils/format.ts";
-import {useNavigate} from "react-router-dom";
+import { useAuth } from "@pages/authen/provider.tsx";
+import { formatLongAddress } from "@utils/format.ts";
+import { useNavigate } from "react-router-dom";
 import ROUTERS from "@constants/route-path.ts";
 
 type DropdownMenuType = {
@@ -60,16 +60,16 @@ const HeaderWallet: React.FC<IProps> = ({
    color = 'white',
 }) => {
    const [isShowMenu, setIsShowMenu] = useState(false);
-  const { signer } = useAuth();
+   const { signer } = useAuth();
 
-  const navigate = useNavigate();
+   const navigate = useNavigate();
 
    const handleMenuMouseEnter = () => {
       setIsShowMenu(true);
    }
 
    const onClickWalletBalance = () => {
-     // navigate(ROUTERS.MINE);
+      // navigate(ROUTERS.MINE);
    };
 
    const menuItems = useMemo(() => {
@@ -89,10 +89,10 @@ const HeaderWallet: React.FC<IProps> = ({
             _hover={{
                cursor: 'pointer',
             }}
-            onMouseEnter={handleMenuMouseEnter}
-            onClick={(e) => {
-               e.stopPropagation();
-            }}
+            // onMouseEnter={handleMenuMouseEnter}
+            // onClick={(e) => {
+            //    e.stopPropagation();
+            // }}
          >
             <div
                className={cs(s.wallets, 'wallet')}
@@ -108,15 +108,15 @@ const HeaderWallet: React.FC<IProps> = ({
                 color === 'black'
                    ? '1px solid #B6B6B6'
                    : '1px solid #FFFFFF1A',
-                    borderRadius: '1000px',
+                     borderRadius: '1000px',
                      background: color === 'black' ? '#f8f9fa' : '#FFFFFF1A',
                   }}
                >
                   <Image
                      src={
                         color === 'black'
-                           ? `/icons/ic-wallet-black.svg`
-                           : `/icons/ic-wallet.svg`
+                           ? `icons/ic-wallet-black.svg`
+                           : `icons/ic-wallet.svg`
                      }
                   />
 
@@ -127,7 +127,7 @@ const HeaderWallet: React.FC<IProps> = ({
                      color={color}
                      whiteSpace={'nowrap'}
                   >
-                    {formatLongAddress(signer?.address || '')}
+                     {formatLongAddress(signer?.address || '')}
                   </Text>
                </Flex>
             </div>
@@ -136,8 +136,8 @@ const HeaderWallet: React.FC<IProps> = ({
                {/* <Image
               src={
                 isYellow
-                  ? `/icons/chevron-down-yellow.svg`
-                  : `/icons/chevron-down.svg`
+                  ? `icons/chevron-down-yellow.svg`
+                  : `icons/chevron-down.svg`
               }
             /> */}
 

@@ -7,7 +7,7 @@ import CAgentTokenAPI from "../../../services/api/agents-token";
 import { Wallet } from "ethers";
 import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
 import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
-import { compareString } from "@utils/string.ts";
+import { compareString, isBase64, splitBase64 } from "@utils/string.ts";
 import { useAuth } from "@pages/authen/provider.tsx";
 import localStorageService from "../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
@@ -323,12 +323,6 @@ const AgentProvider: React.FC<
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
          const codeVersion = await cAgent.getCurrentVersion();
-         const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
-         if (depsAgentStrs.length > 0) {
-            const dependAgents = await installDependAgents(depsAgentStrs, chainId);
-            console.log('dependAgents', dependAgents)
-         }
-
         const ipfsHash = await cAgent.getAgentCode(codeVersion);
         return ipfsHash;
       }
@@ -340,15 +334,15 @@ const AgentProvider: React.FC<
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
 
          const codeLanguage = await cAgent.getCodeLanguage();
+         let codeLang = 'js';
+         if (codeLanguage === 'python') {
+            codeLang = 'py';
+         }
+      
          const codeVersion = await cAgent.getCurrentVersion();
 
-         const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
-         if (depsAgentStrs.length > 0) {
-            const dependAgents = await installDependAgents(depsAgentStrs, chainId);
-         }
-
          const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
-         const fileNameOnLocal = `prompt.${codeLanguage}`;
+         const fileNameOnLocal = `prompt.${codeLang}`;
          const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
 
          let filePath: string | undefined = "";
@@ -360,10 +354,27 @@ const AgentProvider: React.FC<
             filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
             console.log('filePath isExisted', filePath)
          } else {
-            const code = await cAgent.getAgentCode(codeVersion);
+            const codeBase64 = await cAgent.getAgentCode(codeVersion);
+            const base64Array = splitBase64(codeBase64);
+            const code = base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
             filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
             console.log('filePath New', filePath)
          }
+      }
+   };
+
+    const getDependAgentsOfUtilityAgent = async (agent: IAgentToken) => {
+      if (agent && !!agent.agent_contract_address) {
+        const chainId = agent?.network_id || BASE_CHAIN_ID;
+        const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
+        const codeVersion = await cAgent.getCurrentVersion();
+
+        const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+        if (depsAgentStrs.length > 0) {
+          const dependAgents = await installDependAgents(depsAgentStrs, chainId);
+          return dependAgents;
+        }
+        return [];
       }
    };
 
@@ -379,6 +390,10 @@ const AgentProvider: React.FC<
 
         const cAgent = new CAgentContract({ contractAddress: agentContractAddr, chainId });
         const codeLanguage = await cAgent.getCodeLanguage();
+        let codeLang = 'js';
+        if (codeLanguage === 'python') {
+          codeLang = 'py';
+        }
         const codeVersion = await cAgent.getCurrentVersion();
         const agentName = await cAgent.getAgentName();
         const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
@@ -389,14 +404,16 @@ const AgentProvider: React.FC<
         }
 
         const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
-        const fileNameOnLocal = `prompt.${codeLanguage}`;
+        const fileNameOnLocal = `prompt.${codeLang}`;
         const folderNameOnLocal = `${chainId}-${agentName}`;
 
         const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderNameOnLocal);
         if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
             await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
         } else {
-            const code = await cAgent.getAgentCode(codeVersion);
+            const codeBase64 = await cAgent.getAgentCode(codeVersion);
+            const base64Array = splitBase64(codeBase64);
+            const code =base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
             await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
         }
         return [

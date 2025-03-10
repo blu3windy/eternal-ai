@@ -81,6 +81,7 @@
       font-weight: 400;
       font-size: 24px;
       line-height: 32px;
+      width: 100%;
       /* identical to box height, or 133% */
 
       color: #000000;
@@ -148,4 +149,18 @@
       color: #fff;
     }
   }
+}
+
+.btnTrade {
+  height: 60px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  background-color: #5400fb !important;
+  color: white !important;
+  font-size: 20px !important;
+  font-weight: 500 !important;
+  line-height: 24px !important;
+  border-radius: 100px !important;
+
+  cursor: pointer;
 }
