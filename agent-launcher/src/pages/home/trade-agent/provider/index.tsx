@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import React, {
   PropsWithChildren,
   useCallback,
@@ -12,8 +13,16 @@ import { AgentContext } from "@pages/home/provider";
 import { ChainIdToChainType } from "./constant";
 import { ETradePlatform } from "@pages/home/provider/interface";
 import CAgentTradeContract from "@contract/agent-trade";
+import { IToken } from "@interfaces/token";
+import { compareString } from "@utils/string";
+import { useDispatch } from "react-redux";
+import { setCurrentChain } from "@stores/states/agent-trade/reducer";
 
-const initialValue = {};
+const initialValue: IAgentTradeContext = {
+  loading: false,
+  pairs: [],
+  fee: "",
+};
 
 export const AgentTradeContext =
   React.createContext<IAgentTradeContext>(initialValue);
@@ -24,9 +33,18 @@ const AgentTradeProvider: React.FC<
   children,
   tokenAddress: _tokenAddress,
 }: PropsWithChildren & { tokenAddress?: string }): React.ReactElement => {
+  const dispatch = useDispatch();
   const { selectedAgent, tradePlatform } = useContext(AgentContext);
-
-  const [pairs, setPairs] = useState<IAgentToken[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pairs, setPairs] = useState<IToken[]>([]);
+  const [chainPairs, setChainPairs] = useState<{
+    [ETradePlatform.eternal]: IToken[];
+    [ETradePlatform.exchange3th]: IToken[];
+  }>({
+    [ETradePlatform.eternal]: [],
+    [ETradePlatform.exchange3th]: [],
+  });
+  const [fee, setFee] = useState<string>("10000");
 
   const agentTradeContract = useRef(new CAgentTradeContract()).current;
 
@@ -39,8 +57,13 @@ const AgentTradeProvider: React.FC<
       if (!selectedAgent) {
         return;
       }
+      setLoading(true);
       const _currentChain = ChainIdToChainType[selectedAgent?.meme?.network_id];
       console.log("_currentChain", _currentChain);
+      dispatch(setCurrentChain(_currentChain));
+
+      let _pairs: IToken[] = [];
+      let _fee: string = "0";
 
       if (tradePlatform === ETradePlatform.eternal) {
         const [poolInfo] = await Promise.all([
@@ -50,16 +73,40 @@ const AgentTradeProvider: React.FC<
           }),
         ]);
 
-        console.log('poolInfo', poolInfo);
-        
+        console.log("poolInfo", poolInfo);
+
+        _pairs = [poolInfo.token0Info, poolInfo.token1Info];
+        if (
+          compareString(
+            selectedAgent?.meme?.token_address,
+            poolInfo.token0Info.address
+          )
+        ) {
+          _pairs = _pairs.reverse();
+        }
+        if (poolInfo.fee) {
+          _fee = poolInfo.fee;
+        }
+        setFee(_fee);
+        setChainPairs({
+          [ETradePlatform.eternal]: _pairs,
+          [ETradePlatform.exchange3th]: [],
+        });
       }
+
+      setPairs(_pairs);
     } catch (error) {
-        console.log('error', error);
-        
+      console.log("error", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const contextValues: IAgentTradeContext = {};
+  const contextValues: IAgentTradeContext = {
+    pairs,
+    loading,
+    fee,
+  };
   return (
     <AgentTradeContext.Provider value={contextValues}>
       {children}

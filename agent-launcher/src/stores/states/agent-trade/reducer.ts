@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { AgentsState } from "./type";
 import { EChartType } from "@components/ChartV2";
+import { CHAIN_TYPE } from "@constants/chains";
 
 export const TIMERS = [
   {
@@ -33,6 +34,7 @@ export const TIMERS = [
 const initialState: AgentsState = {
   timeChart: TIMERS[1],
   typeChart: EChartType.candle,
+  currentChain: CHAIN_TYPE.BASE,
 };
 
 const slice = createSlice({
@@ -45,9 +47,12 @@ const slice = createSlice({
     setTypeChart: (state, action) => {
       state.typeChart = action.payload;
     },
+    setCurrentChain: (state, action) => {
+      state.currentChain = action.payload;
+    },
   },
 });
 
-export const { setTimeChart, setTypeChart } = slice.actions;
+export const { setTimeChart, setTypeChart, setCurrentChain } = slice.actions;
 
 export default slice.reducer;

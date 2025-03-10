@@ -1,3 +1,5 @@
 export interface IToken {
-    // some props
+  address: string;
+  symbol: string;
+  // some props
 }
