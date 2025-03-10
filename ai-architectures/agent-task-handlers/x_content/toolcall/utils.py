@@ -11,6 +11,7 @@ import httpx
 import json
 from x_content import wrappers
 from x_content.wrappers.magic import sync2async
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 LIMIT_TOTAL_TOKENS_PER_OBSERVATION = 700 * 3
@@ -67,16 +68,34 @@ async def execute_http_toolcall(
     params: dict, 
     headers: dict=None
 ):
+    parted_url = urlparse(endpoint)
+    url = '{}://{}{}'.format(parted_url.scheme, parted_url.netloc, parted_url.path)
+
     payload = dict(
         method=method,
-        url=endpoint,
+        url=url,
+        params={}        
     )
+    
+    splited_query = [
+        e.split('=') 
+        for e in parted_url.query.split('&')
+    ]
+
+    splited_query = [
+        e
+        for e in splited_query 
+        if len(e) == 2
+    ]
+
+    for k, v in splited_query:
+        payload["params"][k] = v
 
     if headers is not None:
         payload["headers"] = headers
 
     if method == "GET":
-        payload["params"] = params
+        payload["params"].update(params)
     else:
         payload["json"] = params
 
