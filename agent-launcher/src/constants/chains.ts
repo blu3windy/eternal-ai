@@ -13,6 +13,12 @@ export const BSC_RPC = "https://rpc.ankr.com/bsc";
 export const APE_CHAIN_ID = 33139;
 export const APE_RPC = "https://rpc.apechain.com/http";
 
+export const AVAX_CHAIN_ID = 43114;
+export const AVAX_RPC = "https://api.avax.network/ext/bc/C/rpc";
+
+export const CELO_CHAIN_ID = 42220;
+export const CELO_RPC = "https://forno.celo.org";
+
 export const BASE_SEPOLIA_CHAIN_ID = 84532;
 export const BASE_SEPOLIA_RPC = "https://sepolia.base.org";
 
@@ -60,6 +66,26 @@ export const CHAIN_CONFIG = {
       public: { http: [APE_RPC] },
     },
   } as any,
+  [AVAX_CHAIN_ID]: {
+    id: AVAX_CHAIN_ID,
+    name: "Avalanche",
+    network: "AVAX",
+    nativeCurrency: { name: "Avalanche", symbol: "AVAX", decimals: 18 },
+    rpcUrls: {
+      default: { http: [AVAX_RPC] },
+      public: { http: [AVAX_RPC] },
+    },
+  } as any,
+  [CELO_CHAIN_ID]: {
+    id: CELO_CHAIN_ID,
+    name: "Celo",
+    network: "CELO",
+    nativeCurrency: { name: "CELO", symbol: "CELO", decimals: 18 },
+    rpcUrls: {
+      default: { http: [CELO_RPC] },
+      public: { http: [CELO_RPC] },
+    },
+  } as any,
   [BASE_SEPOLIA_CHAIN_ID]: {
     id: BASE_SEPOLIA_CHAIN_ID,
     name: "Base Sepolia",
@@ -93,6 +119,7 @@ export enum CHAIN_TYPE {
   BSC = "bsc",
   ZKSYNC = "zksync",
   APE = "ape",
+  CELO = "celo",
 }
 
 export const CHAIN_NAME_TO_ID = {
@@ -100,6 +127,8 @@ export const CHAIN_NAME_TO_ID = {
   [CHAIN_TYPE.ARBITRUM]: ARBITRUM_CHAIN_ID,
   [CHAIN_TYPE.BSC]: BSC_CHAIN_ID,
   [CHAIN_TYPE.APE]: APE_CHAIN_ID,
+  [CHAIN_TYPE.AVALANCHE]: AVAX_CHAIN_ID,
+  [CHAIN_TYPE.CELO]: CELO_CHAIN_ID,
 };
 
 export const CHAIN_INFO = {
@@ -109,10 +138,11 @@ export const CHAIN_INFO = {
   [CHAIN_TYPE.BASE]: CHAIN_CONFIG[CHAIN_NAME_TO_ID["base"]],
   [CHAIN_TYPE.ETHEREUM]: CHAIN_CONFIG["ethereum"],
   [CHAIN_TYPE.SOLANA]: CHAIN_CONFIG["solana"],
-  [CHAIN_TYPE.AVALANCHE]: CHAIN_CONFIG["avalanche"],
+  [CHAIN_TYPE.AVALANCHE]: CHAIN_CONFIG[CHAIN_NAME_TO_ID["avalanche"]],
   [CHAIN_TYPE.BSC]: CHAIN_CONFIG[CHAIN_NAME_TO_ID["bsc"]],
   [CHAIN_TYPE.ZKSYNC]: CHAIN_CONFIG["zksync"],
   [CHAIN_TYPE.APE]: CHAIN_CONFIG[CHAIN_NAME_TO_ID["ape"]],
+  [CHAIN_TYPE.CELO]: CHAIN_CONFIG[CHAIN_NAME_TO_ID["celo"]],
 };
 
 export type CHAIN_CONFIG_TYPE = keyof typeof CHAIN_CONFIG;

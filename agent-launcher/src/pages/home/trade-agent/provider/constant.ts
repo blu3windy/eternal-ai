@@ -2,8 +2,10 @@
 import {
   APE_CHAIN_ID,
   ARBITRUM_CHAIN_ID,
+  AVAX_CHAIN_ID,
   BASE_CHAIN_ID,
   BSC_CHAIN_ID,
+  CELO_CHAIN_ID,
   CHAIN_TYPE,
 } from "@constants/chains";
 import BaseQuoterABI from "@contract/agent-trade/abis/BaseQuoter.json";
@@ -12,13 +14,20 @@ import ArbQuoterABI from "@contract/agent-trade/abis/ArbQuoter.json";
 import ArbRouterABI from "@contract/agent-trade/abis/ArbRouter.json";
 import ApeQuoterABI from "@contract/agent-trade/abis/ApeQuote.json";
 import ApeRouterABI from "@contract/agent-trade/abis/ApeRoute.json";
+import AvaxQuoterABI from "@contract/agent-trade/abis/AvaxQuote.json";
+import AvaxRouterABI from "@contract/agent-trade/abis/AvaxRoute.json";
+import BSCQuoterABI from "@contract/agent-trade/abis/BSCQuoter.json";
+import BSCRouterABI from "@contract/agent-trade/abis/BSCRoute.json";
+import CeloQuoterABI from "@contract/agent-trade/abis/CeloQuote.json";
+import CeloRouterABI from "@contract/agent-trade/abis/CeloRoute.json";
 
 export const ChainIdToChainType: any = {
   [BASE_CHAIN_ID]: CHAIN_TYPE.BASE,
   [ARBITRUM_CHAIN_ID]: CHAIN_TYPE.ARBITRUM,
   [BSC_CHAIN_ID]: CHAIN_TYPE.BSC,
   [APE_CHAIN_ID]: CHAIN_TYPE.APE,
-  //   [AVAX_CHAIN_ID]: CHAIN_TYPE.AVALANCHE,
+  [AVAX_CHAIN_ID]: CHAIN_TYPE.AVALANCHE,
+  [CELO_CHAIN_ID]: CHAIN_TYPE.CELO,
 };
 export const EAI_ADDRESS = {
   ETH: {
@@ -50,6 +59,10 @@ export const EAI_ADDRESS = {
     bridge: "0xe77edeb0e1e0c8bb9f2bda2339e9dc127f99f2fb",
   },
   APE: {
+    token: "0x4B6bF1d365ea1A8d916Da37FaFd4ae8C86d061D7",
+    bridge: "",
+  },
+  CELO: {
     token: "0x4B6bF1d365ea1A8d916Da37FaFd4ae8C86d061D7",
     bridge: "",
   },
@@ -88,8 +101,8 @@ export const InfoToChainType: any = {
     platformSwapRouter: "0x39c4B16CE0428Caae01A9042C144980fA8cd6580",
     quoteRouter: "0xb048bbc1ee6b733fffcfb9e9cef7375518e25997",
     platformQuoteRouter: "0xA1b105cD3D7b0Cdcc666F20Bb2f2e0b8632DEeB6",
-    quoterABI: ArbQuoterABI,
-    swapABI: ArbRouterABI,
+    quoterABI: BSCQuoterABI,
+    swapABI: BSCRouterABI,
     okExplorer: "https://www.okx.com/web3/explorer/bsc/",
   },
   [CHAIN_TYPE.APE]: {
@@ -103,5 +116,29 @@ export const InfoToChainType: any = {
     quoterABI: ApeQuoterABI,
     swapABI: ApeRouterABI,
     okExplorer: "https://www.okx.com/web3/explorer/ape/",
+  },
+  [CHAIN_TYPE.AVALANCHE]: {
+    nativeAddress: EAI_ADDRESS.AVALANCHE.token,
+    icon: "icons/blockchains/ic_base.svg",
+    chainId: AVAX_CHAIN_ID,
+    swapRouter: "0xbb00FF08d01D300023C629E8fFfFcb65A5a578cE",
+    platformSwapRouter: "0xD62c25806FaA1d450509D6dcF0F1762612009f23",
+    quoteRouter: "0xbe0F5544EC67e9B3b2D979aaA43f18Fd87E6257F",
+    platformQuoteRouter: "0x5e9101b301294112E187D872A16B32BD350bA594",
+    quoterABI: AvaxQuoterABI,
+    swapABI: AvaxRouterABI,
+    okExplorer: "https://www.okx.com/web3/explorer/avax/",
+  },
+  [CHAIN_TYPE.CELO]: {
+    nativeAddress: EAI_ADDRESS.CELO.token,
+    icon: "icons/blockchains/ic_base.svg",
+    chainId: CELO_CHAIN_ID,
+    swapRouter: "0x5615CDAb10dc425a742d643d949a7F474C01abc4",
+    platformSwapRouter: "0xD62c25806FaA1d450509D6dcF0F1762612009f23",
+    quoteRouter: "0x82825d0554fA07f7FC52Ab63c961F330fdEFa8E8",
+    platformQuoteRouter: "0x5e9101b301294112E187D872A16B32BD350bA594",
+    quoterABI: CeloQuoterABI,
+    swapABI: CeloRouterABI,
+    okExplorer: "https://www.okx.com/web3/explorer/celo/",
   },
 };
