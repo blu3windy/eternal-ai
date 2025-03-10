@@ -67,9 +67,9 @@ export enum AgentType {
   KnowledgeBase = 2,
   Eliza = 3,
   Zerepy = 4,
-  UtilityJS = 5,
-  UtilityPython = 6,
-  Model = 7,
+  UtilityJS = 6,
+  UtilityPython = 7,
+  Model = 5,
   Infra = 8,
 }
 
