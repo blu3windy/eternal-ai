@@ -69,7 +69,7 @@ const HeaderWallet: React.FC<IProps> = ({
    }
 
    const onClickWalletBalance = () => {
-     navigate(ROUTERS.MINE);
+     // navigate(ROUTERS.MINE);
    };
 
    const menuItems = useMemo(() => {
