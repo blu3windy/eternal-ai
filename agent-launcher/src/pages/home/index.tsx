@@ -8,7 +8,7 @@ import s from "./styles.module.scss";
 import { useContext, useMemo } from "react";
 import TradeAgent from "./trade-agent";
 import AgentInfo from "./chat-agent/AgentInfo";
-import { Box } from "@chakra-ui/react";
+import {Box, Flex} from "@chakra-ui/react";
 import cx from "clsx";
 import AgentTradeProvider from "./trade-agent/provider";
 
@@ -47,7 +47,10 @@ const HandleHome = () => {
             <TradeAgent />
           </AgentTradeProvider>
         ) : (
-          <ChatAgent />
+          <Flex w={"100%"}>
+            <ChatAgent />
+            <Box minW={'350px'}/>
+          </Flex>
         )}
       </Panel>
       <PanelResizeHandle />
