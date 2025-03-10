@@ -92,6 +92,31 @@ const AgentTradeProvider: React.FC<
           [ETradePlatform.eternal]: _pairs,
           [ETradePlatform.exchange3th]: [],
         });
+      } else {
+        const [poolInfo] = await Promise.all([
+          agentTradeContract.getLiquidityPoolFrom3th({
+            poolAddress: selectedAgent?.meme?.uniswap_pool,
+            chain: _currentChain,
+          }),
+        ]);
+
+        _pairs = [poolInfo.token0Info, poolInfo.token1Info];
+        if (
+          compareString(
+            selectedAgent?.meme?.token_address,
+            poolInfo.token0Info.address
+          )
+        ) {
+          _pairs = _pairs.reverse();
+        }
+        if (poolInfo.fee) {
+          _fee = poolInfo.fee;
+        }
+        setFee(_fee);
+        setChainPairs({
+          [ETradePlatform.eternal]: _pairs,
+          [ETradePlatform.exchange3th]: [],
+        });
       }
 
       setPairs(_pairs);

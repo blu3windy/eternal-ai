@@ -147,9 +147,10 @@ const AgentsList = () => {
             params.agent_types = [AgentType.Model].join(',');
          } else if ([FilterOption.Infra].includes(refParams.current.filter)) {
             params.agent_types = [AgentType.Infra].join(',');
-         } else if ([FilterOption.Popular].includes(refParams.current.filter)) {
-
          }
+        //  } else if ([FilterOption.Popular].includes(refParams.current.filter)) {
+
+        //  }
 
          const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
 

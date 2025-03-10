@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import CTokenContract from "@contract/token";
 import {
   IBodyEternalSwap,
@@ -38,10 +39,26 @@ class CAgentTradeContract extends CTokenContract {
     ) as any;
   };
 
+  private get3thSQuote = (chain = CHAIN_TYPE.BASE) => {
+    return new ethers.Contract(
+      InfoToChainType[chain].quoteRouter,
+      InfoToChainType[chain].quoterABI,
+      this.getProviderByChain(chain)
+    ) as any;
+  };
+
   private getEternalSRouter = (chain = CHAIN_TYPE.BASE) => {
     return new ethers.Contract(
       InfoToChainType[chain].platformSwapRouter,
       SwapRouterABI.abi,
+      this.getProviderByChain(chain)
+    );
+  };
+
+  private get3thSRouter = (chain = CHAIN_TYPE.BASE) => {
+    return new ethers.Contract(
+      InfoToChainType[chain].swapRouter,
+      InfoToChainType[chain].swapABI,
       this.getProviderByChain(chain)
     );
   };
@@ -76,6 +93,59 @@ class CAgentTradeContract extends CTokenContract {
         token1Info,
         fee: fee.toString(),
       };
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  public getLiquidityCamelotInfo = async (
+    params: IGetLiquidityPoolInfoParams
+  ): Promise<IResLiquidityPoolInfo> => {
+    try {
+      const { poolAddress, chain } = params;
+
+      const poolContract = this.getUniPool(poolAddress, chain);
+
+      const [token0, token1] = await Promise.all([
+        poolContract.token0(),
+        poolContract.token1(),
+      ]);
+
+      console.log("token0, token1, fee", token0, token1);
+
+      const [token0Info, token1Info] = await Promise.all([
+        this.getTokenInfo({ contractAddress: token0, chain }),
+        this.getTokenInfo({ contractAddress: token1, chain }),
+      ]);
+
+      console.log("token0Info, token1Info", token0Info, token1Info);
+
+      return {
+        token0Info,
+        token1Info,
+      };
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  public getLiquidityPoolFrom3th = async (
+    params: IGetLiquidityPoolInfoParams
+  ): Promise<any> => {
+    try {
+      if (
+        compareString(params.chain, CHAIN_TYPE.ARBITRUM) ||
+        compareString(params.chain, CHAIN_TYPE.APE)
+      ) {
+        return await this.getLiquidityCamelotInfo(params);
+      } else if (
+        compareString(params.chain, CHAIN_TYPE.BASE) ||
+        compareString(params.chain, CHAIN_TYPE.BSC) ||
+        compareString(params.chain, CHAIN_TYPE.CELO) ||
+        compareString(params.chain, CHAIN_TYPE.AVALANCHE)
+      ) {
+        return await this.getLiquidityPoolInfo(params);
+      }
     } catch (error) {
       throw error;
     }
@@ -234,6 +304,510 @@ class CAgentTradeContract extends CTokenContract {
 
       throw error;
     }
+  };
+
+  public uniEstimateSwap = async (
+    body: IBodyEternalSwap
+  ): Promise<IResEstimateSwap> => {
+    try {
+      console.log("body", body);
+
+      const quoteContract = this.get3thSQuote(body.chain);
+
+      let tx: any = {};
+
+      if (
+        compareString(body.chain, CHAIN_TYPE.ARBITRUM) ||
+        compareString(body.chain, CHAIN_TYPE.APE)
+      ) {
+        tx = await quoteContract
+          .connect(this.getProviderByChain(body.chain))
+          .callStatic.quoteExactInputSingle(
+            body.tokenIn,
+            body.tokenOut,
+            parseEther(body.amount),
+            "0"
+          );
+      } else if (
+        compareString(body.chain, CHAIN_TYPE.BASE) ||
+        compareString(body.chain, CHAIN_TYPE.BSC) ||
+        compareString(body.chain, CHAIN_TYPE.CELO) ||
+        compareString(body.chain, CHAIN_TYPE.AVALANCHE)
+      ) {
+        tx = await quoteContract
+          .connect(this.getProviderByChain(body.chain))
+          .callStatic.quoteExactInputSingle({
+            amountIn: parseEther(body.amount),
+            tokenIn: body.tokenIn,
+            tokenOut: body.tokenOut,
+            fee: body.fee,
+            sqrtPriceLimitX96: "0",
+          });
+      }
+
+      console.log("runeEstimateSwap", tx);
+
+      return {
+        amountOut: tx.amountOut.toString(),
+        amountOutFormatted: formatEther(tx.amountOut),
+      };
+    } catch (error) {
+      console.log("errorerrorerror", error);
+
+      return {
+        amountOut: "0",
+        amountOutFormatted: "0",
+      };
+    }
+  };
+
+  public uniSwap = async (body: IBodyEternalSwap) => {
+    try {
+      const _wallet = this.signer?.address as string;
+      if (compareString(body.type, EAgentTrade.BUY)) {
+        let calldata: any;
+        if (
+          body.chain === CHAIN_TYPE.BASE ||
+          compareString(body.chain, CHAIN_TYPE.AVALANCHE) ||
+          body.chain === CHAIN_TYPE.CELO
+        ) {
+          const multicalls = [
+            this.get3thSRouter(body.chain).interface.encodeFunctionData(
+              "exactInputSingle",
+              [
+                [
+                  body.tokenIn,
+                  body.tokenOut,
+                  body.fee,
+                  _wallet,
+                  parseEther(body.amount),
+                  parseEther(body.maximum || "0"),
+                  "0",
+                ],
+              ]
+            ),
+            this.get3thSRouter(body.chain).interface.encodeFunctionData(
+              "refundETH"
+            ),
+          ];
+
+          calldata = this.get3thSRouter(
+            body.chain
+          ).interface.encodeFunctionData("multicall", [
+            getDeadline(),
+            multicalls,
+          ]);
+        } else if (body.chain === CHAIN_TYPE.BSC) {
+          const multicalls = [
+            this.get3thSRouter(body.chain).interface.encodeFunctionData(
+              "exactInputSingle",
+              [
+                [
+                  body.tokenIn,
+                  body.tokenOut,
+                  body.fee,
+                  _wallet,
+                  getDeadline(),
+                  parseEther(body.amount),
+                  parseEther(body.maximum || "0"),
+                  "0",
+                ],
+              ]
+            ),
+            this.get3thSRouter(body.chain).interface.encodeFunctionData(
+              "refundETH"
+            ),
+          ];
+
+          calldata = this.get3thSRouter(
+            body.chain
+          ).interface.encodeFunctionData("multicall", [multicalls]);
+        }
+
+        const tx = await this.walletAuth.sendTransaction({
+          data: calldata,
+          to: InfoToChainType[body.chain as any].swapRouter,
+          value: isNativeToken(body.tokenIn) ? body.amount : "0",
+          wait: true,
+          chainId: InfoToChainType[body.chain as any]?.chainId,
+        });
+
+        return tx;
+      } else {
+        if (isNativeToken(body.tokenIn)) {
+          let calldata: any;
+          if (
+            body.chain === CHAIN_TYPE.BASE ||
+            compareString(body.chain, CHAIN_TYPE.AVALANCHE) ||
+            body.chain === CHAIN_TYPE.CELO
+          ) {
+            const multicalls = [
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "exactInputSingle",
+                [
+                  [
+                    body.tokenIn,
+                    body.tokenOut,
+                    body.fee,
+                    InfoToChainType[body.chain as any].swapRouter,
+                    parseEther(body.amount),
+                    parseEther(body.maximum || "0"),
+                    "0",
+                  ],
+                ]
+              ),
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "unwrapWETH9",
+                [parseEther(body.maximum || "0"), _wallet]
+              ),
+            ];
+
+            calldata = this.get3thSRouter(
+              body.chain
+            ).interface.encodeFunctionData("multicall", [
+              getDeadline(),
+              multicalls,
+            ]);
+          } else if (body.chain === CHAIN_TYPE.BSC) {
+            const multicalls = [
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "exactInputSingle",
+                [
+                  [
+                    body.tokenIn,
+                    body.tokenOut,
+                    body.fee,
+                    InfoToChainType[body.chain as any].swapRouter,
+                    parseEther(body.amount),
+                    parseEther(body.maximum || "0"),
+                    "0",
+                  ],
+                ]
+              ),
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "unwrapWETH9",
+                [parseEther(body.maximum || "0"), _wallet]
+              ),
+            ];
+
+            calldata = this.get3thSRouter(
+              body.chain
+            ).interface.encodeFunctionData("multicall", [
+              getDeadline(),
+              multicalls,
+            ]);
+          }
+
+          const tx = await this.walletAuth.sendTransaction({
+            data: calldata,
+            to: InfoToChainType[body.chain as any].swapRouter,
+            wait: true,
+            chainId: InfoToChainType[body.chain as any]?.chainId,
+          });
+
+          return tx;
+        } else {
+          let calldata: any;
+
+          if (
+            body.chain === CHAIN_TYPE.BASE ||
+            body.chain === CHAIN_TYPE.CELO ||
+            body.chain === CHAIN_TYPE.AVALANCHE
+          ) {
+            const multicalls = [
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "exactInputSingle",
+                [
+                  [
+                    body.tokenIn,
+                    body.tokenOut,
+                    body.fee,
+                    _wallet,
+                    parseEther(body.amount),
+                    parseEther(body.maximum || "0"),
+                    "0",
+                  ],
+                ]
+              ),
+            ];
+
+            calldata = this.get3thSRouter(
+              body.chain
+            ).interface.encodeFunctionData("multicall", [
+              getDeadline(),
+              multicalls,
+            ]);
+          } else if (body.chain === CHAIN_TYPE.BSC) {
+            const multicalls = [
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "exactInputSingle",
+                [
+                  [
+                    body.tokenIn,
+                    body.tokenOut,
+                    body.fee,
+                    _wallet,
+                    getDeadline(),
+                    parseEther(body.amount),
+                    parseEther(body.maximum || "0"),
+                    "0",
+                  ],
+                ]
+              ),
+            ];
+
+            calldata = this.get3thSRouter(
+              body.chain
+            ).interface.encodeFunctionData("multicall", [multicalls]);
+          }
+
+          const tx = await this.walletAuth.sendTransaction({
+            data: calldata,
+            to: InfoToChainType[body.chain as any].swapRouter,
+            wait: true,
+            chainId: InfoToChainType[body.chain as any]?.chainId,
+          });
+
+          return tx;
+        }
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  public camelotSwap = async (body: IBodyEternalSwap) => {
+    try {
+      const _wallet = this.signer?.address as string;
+
+      if (compareString(body.type, EAgentTrade.BUY)) {
+        let calldata: any;
+        if (
+          body.chain === CHAIN_TYPE.BASE ||
+          compareString(body.chain, CHAIN_TYPE.AVALANCHE) ||
+          body.chain === CHAIN_TYPE.CELO
+        ) {
+          const multicalls = [
+            this.get3thSRouter(body.chain).interface.encodeFunctionData(
+              "exactInputSingle",
+              [
+                [
+                  body.tokenIn,
+                  body.tokenOut,
+                  body.fee,
+                  _wallet,
+                  parseEther(body.amount),
+                  parseEther(body.maximum || "0"),
+                  "0",
+                ],
+              ]
+            ),
+            this.get3thSRouter(body.chain).interface.encodeFunctionData(
+              "refundETH"
+            ),
+          ];
+
+          calldata = this.get3thSRouter(
+            body.chain
+          ).interface.encodeFunctionData("multicall", [
+            getDeadline(),
+            multicalls,
+          ]);
+        } else if (body.chain === CHAIN_TYPE.BSC) {
+          const multicalls = [
+            this.get3thSRouter(body.chain).interface.encodeFunctionData(
+              "exactInputSingle",
+              [
+                [
+                  body.tokenIn,
+                  body.tokenOut,
+                  body.fee,
+                  _wallet,
+                  getDeadline(),
+                  parseEther(body.amount),
+                  parseEther(body.maximum || "0"),
+                  "0",
+                ],
+              ]
+            ),
+            this.get3thSRouter(body.chain).interface.encodeFunctionData(
+              "refundETH"
+            ),
+          ];
+
+          calldata = this.get3thSRouter(
+            body.chain
+          ).interface.encodeFunctionData("multicall", [multicalls]);
+        }
+
+        const tx = await this.walletAuth.sendTransaction({
+          data: calldata,
+          to: InfoToChainType[body.chain as any].swapRouter,
+          value: isNativeToken(body.tokenIn) ? body.amount : "0",
+          wait: true,
+          chainId: InfoToChainType[body.chain as any]?.chainId,
+        });
+
+        return tx;
+      } else {
+        if (isNativeToken(body.tokenIn)) {
+          let calldata: any;
+          if (
+            body.chain === CHAIN_TYPE.BASE ||
+            compareString(body.chain, CHAIN_TYPE.AVALANCHE) ||
+            body.chain === CHAIN_TYPE.CELO
+          ) {
+            const multicalls = [
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "exactInputSingle",
+                [
+                  [
+                    body.tokenIn,
+                    body.tokenOut,
+                    body.fee,
+                    InfoToChainType[body.chain as any].swapRouter,
+                    parseEther(body.amount),
+                    parseEther(body.maximum || "0"),
+                    "0",
+                  ],
+                ]
+              ),
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "unwrapWETH9",
+                [parseEther(body.maximum || "0"), _wallet]
+              ),
+            ];
+
+            calldata = this.get3thSRouter(
+              body.chain
+            ).interface.encodeFunctionData("multicall", [
+              getDeadline(),
+              multicalls,
+            ]);
+          } else if (body.chain === CHAIN_TYPE.BSC) {
+            const multicalls = [
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "exactInputSingle",
+                [
+                  [
+                    body.tokenIn,
+                    body.tokenOut,
+                    body.fee,
+                    InfoToChainType[body.chain as any].swapRouter,
+                    parseEther(body.amount),
+                    parseEther(body.maximum || "0"),
+                    "0",
+                  ],
+                ]
+              ),
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "unwrapWETH9",
+                [parseEther(body.maximum || "0"), _wallet]
+              ),
+            ];
+
+            calldata = this.get3thSRouter(
+              body.chain
+            ).interface.encodeFunctionData("multicall", [
+              getDeadline(),
+              multicalls,
+            ]);
+          }
+
+          const tx = await this.walletAuth.sendTransaction({
+            data: calldata,
+            to: InfoToChainType[body.chain as any].swapRouter,
+            wait: true,
+            chainId: InfoToChainType[body.chain as any]?.chainId,
+          });
+
+          return tx;
+        } else {
+          let calldata: any;
+
+          if (
+            body.chain === CHAIN_TYPE.BASE ||
+            body.chain === CHAIN_TYPE.CELO ||
+            body.chain === CHAIN_TYPE.AVALANCHE
+          ) {
+            const multicalls = [
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "exactInputSingle",
+                [
+                  [
+                    body.tokenIn,
+                    body.tokenOut,
+                    body.fee,
+                    _wallet,
+                    parseEther(body.amount),
+                    parseEther(body.maximum || "0"),
+                    "0",
+                  ],
+                ]
+              ),
+            ];
+
+            calldata = this.get3thSRouter(
+              body.chain
+            ).interface.encodeFunctionData("multicall", [
+              getDeadline(),
+              multicalls,
+            ]);
+          } else if (body.chain === CHAIN_TYPE.BSC) {
+            const multicalls = [
+              this.get3thSRouter(body.chain).interface.encodeFunctionData(
+                "exactInputSingle",
+                [
+                  [
+                    body.tokenIn,
+                    body.tokenOut,
+                    body.fee,
+                    _wallet,
+                    getDeadline(),
+                    parseEther(body.amount),
+                    parseEther(body.maximum || "0"),
+                    "0",
+                  ],
+                ]
+              ),
+            ];
+
+            calldata = this.get3thSRouter(
+              body.chain
+            ).interface.encodeFunctionData("multicall", [multicalls]);
+          }
+
+          const tx = await this.walletAuth.sendTransaction({
+            data: calldata,
+            to: InfoToChainType[body.chain as any].swapRouter,
+            wait: true,
+            chainId: InfoToChainType[body.chain as any]?.chainId,
+          });
+
+          return tx;
+        }
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  public swapIn3th = async (body: IBodyEternalSwap) => {
+    try {
+      if (
+        compareString(body.chain, CHAIN_TYPE.ARBITRUM) ||
+        compareString(body.chain, CHAIN_TYPE.APE)
+      ) {
+        return this.camelotSwap(body);
+      } else if (
+        compareString(body.chain, CHAIN_TYPE.BASE) ||
+        compareString(body.chain, CHAIN_TYPE.BSC) ||
+        compareString(body.chain, CHAIN_TYPE.CELO) ||
+        compareString(body.chain, CHAIN_TYPE.AVALANCHE)
+      ) {
+        return this.uniSwap(body);
+      }
+    } catch (error) {}
   };
 }
 

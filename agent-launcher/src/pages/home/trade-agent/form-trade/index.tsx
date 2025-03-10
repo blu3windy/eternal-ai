@@ -31,6 +31,7 @@ import { IBodyEternalSwap } from "@contract/agent-trade/interface";
 import BigNumber from "bignumber.js";
 import { showMessage } from "@components/Toast/toast";
 import { getExplorerByChain } from "@utils/helpers";
+import { getErrorMessage } from "@utils/error";
 
 export const SUPPORT_TRADE_CHAIN = [
   BASE_CHAIN_ID,
@@ -79,9 +80,17 @@ const FormTradeAgentContainer = () => {
       };
 
       if (compareString(tradePlatform, ETradePlatform.exchange3th)) {
+        const tx: any = await agentTradeContract.swapIn3th(body);
+        showMessage({
+          message: `Place trade successfully.`,
+          url: getExplorerByChain({
+            chainId: selectedAgent?.token_network_id as any,
+            type: "tx",
+            address: tx || "",
+          }) as any,
+        });
       } else {
         const tx: any = await agentTradeContract.eternalSwap(body);
-        // await pumpAPI.scanTrxStaking({ tx_hash: tx });
         showMessage({
           message: `Place trade successfully.`,
           url: getExplorerByChain({
@@ -96,7 +105,7 @@ const FormTradeAgentContainer = () => {
     } catch (error) {
       console.error(error);
       showMessage({
-        message: JSON.stringify(error),
+        message: getErrorMessage(error).message,
         status: "error",
       });
     } finally {

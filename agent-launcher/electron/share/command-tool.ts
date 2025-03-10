@@ -150,6 +150,8 @@ const command = {
    execAsync,
    execAsyncStream,
    execAsyncDockerDir,
+   sendEvent,
+   getBrowser
 }
 
 export default command;
