@@ -53,6 +53,7 @@ const ipcMainModel = () => {
             results[hash] = false;
          }
       }
+      return results;
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_CHECK_RUNNING, async (_event) => {
