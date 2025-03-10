@@ -569,7 +569,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 									if tokenInfo == nil || tokenInfo.IsGenerateVideo == false {
 										tokenInfo, err = s.ValidateTweetContentGenerateVideoWithLLM(context.Background(), agentInfo.TwitterUsername, fullText)
 										if err != nil {
-											return errs.NewError(err)
+											continue
 										}
 									}
 									if tokenInfo == nil || tokenInfo.IsGenerateVideo == false {
