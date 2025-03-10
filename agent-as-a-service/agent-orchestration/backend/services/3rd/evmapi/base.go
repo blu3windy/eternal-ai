@@ -29,16 +29,16 @@ func AgentUpgradeableInitializeData(agentName string, agentVersion string, codeL
 	if err != nil {
 		panic(err)
 	}
-	typeUint, err := abi.NewType("uint", "", nil)
+	typeUint256, err := abi.NewType("uint256", "", nil)
 	if err != nil {
 		panic(err)
 	}
 	arguments := abi.Arguments{
 		{Type: typeAddress},
 		{Type: typeAddress},
-		{Type: typeUint},
+		{Type: typeUint256},
 	}
-	nameService, err := arguments.Pack(registrar, resolver, duration)
+	nameService, err := arguments.Pack(registrar, resolver, big.NewInt(int64(duration)))
 	if err != nil {
 		panic(err)
 	}
