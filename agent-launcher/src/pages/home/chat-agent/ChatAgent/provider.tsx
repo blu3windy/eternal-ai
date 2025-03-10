@@ -19,6 +19,7 @@ import AgentAPI from "../../../../services/api/agent";
 import { AgentContext } from "@pages/home/provider";
 import chatAgentDatabase, { PersistedMessageType } from "../../../../database/chatAgentDatabase.ts";
 import { AgentType } from "@pages/home/list-agent";
+import CAgentTokenAPI from "@services/api/agents-token";
 
 type IChatAgentProviderContext = {
   isStopReceiving?: boolean;
@@ -72,6 +73,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
    const id = selectedAgent?.id;
    const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}` || 'Agent';
+
+   const cPumpAPI = new CAgentTokenAPI();
 
    const isAllowChat = useMemo(() => {
       return true;
@@ -168,6 +171,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          });
 
          await sendMessageToServer(messageId, Number(id), message);
+
+         cPumpAPI.saveAgentPromptCount(Number(id));
       }
    };
 

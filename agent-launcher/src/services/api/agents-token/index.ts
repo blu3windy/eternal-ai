@@ -67,7 +67,7 @@ class CAgentTokenAPI extends CApiClient {
 
   public saveAgentInstalled = async (
     params: any
-  ): Promise<{ agents: IAgentToken[] }> => {
+  ): Promise<any> => {
     const response = (await this.api.post("/agent/install", params)) as any;
     return response;
   };
@@ -84,6 +84,17 @@ class CAgentTokenAPI extends CApiClient {
           ping: true,
         }
       );
+      return res;
+    } catch (e) {
+      throw e;
+    }
+  };
+
+  public saveAgentPromptCount = async (
+    id: number
+  ): Promise<any> => {
+    try {
+      const res = (await this.api.post(`/agent/prompt/${id}`)) as any;
       return res;
     } catch (e) {
       throw e;

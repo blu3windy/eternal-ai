@@ -7,9 +7,11 @@ import { useContext, useRef } from "react";
 import {
   APE_CHAIN_ID,
   ARBITRUM_CHAIN_ID,
+  AVAX_CHAIN_ID,
   BASE_CHAIN_ID,
   BASE_SEPOLIA_CHAIN_ID,
   BSC_CHAIN_ID,
+  CELO_CHAIN_ID,
   SYMBIOSIS_CHAIN_ID,
 } from "../../../../constants/chains";
 import FormTradeAgent from "./form";
@@ -35,6 +37,8 @@ export const SUPPORT_TRADE_CHAIN = [
   ARBITRUM_CHAIN_ID,
   BSC_CHAIN_ID,
   APE_CHAIN_ID,
+  AVAX_CHAIN_ID,
+  CELO_CHAIN_ID,
   SYMBIOSIS_CHAIN_ID,
   BASE_SEPOLIA_CHAIN_ID,
 ];
