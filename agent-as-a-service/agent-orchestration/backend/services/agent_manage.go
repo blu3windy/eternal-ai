@@ -1437,3 +1437,41 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 
 	return true, nil
 }
+
+func (s *Service) MarkPromptCountUtilityAgent(ctx context.Context, address string, agentID uint) (bool, error) {
+	err := daos.WithTransaction(
+		daos.GetDBMainCtx(ctx),
+		func(tx *gorm.DB) error {
+			agentInfo, err := s.dao.FirstAgentInfoByID(
+				tx, agentID,
+				map[string][]any{},
+				true,
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			if agentInfo == nil {
+				return errs.NewError(errs.ErrAgentNotFound)
+			}
+
+			if agentInfo.PromptCalls > 0 {
+				err = tx.Model(agentInfo).
+					UpdateColumn("prompt_calls", gorm.Expr("prompt_calls + 1")).Error
+			} else {
+				err = tx.Model(agentInfo).
+					UpdateColumn("prompt_calls", 1).Error
+			}
+			if err != nil {
+				return errs.NewError(errs.ErrBadRequest)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return false, errs.NewError(err)
+	}
+
+	return true, nil
+}

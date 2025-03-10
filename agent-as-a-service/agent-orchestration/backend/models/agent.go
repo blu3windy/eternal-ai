@@ -189,6 +189,7 @@ type AgentInfo struct {
 	Adjectives           string `gorm:"type:longtext"`
 	SocialInfo           string `gorm:"type:longtext"`
 	InferenceCalls       int64
+	PromptCalls          int64
 	ExternalChartUrl     string
 	MissionTopics        string `gorm:"type:longtext"`
 	GraphData            string `gorm:"type:longtext"`

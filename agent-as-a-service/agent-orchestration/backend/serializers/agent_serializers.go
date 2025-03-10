@@ -119,6 +119,7 @@ type AgentInfoResp struct {
 	NftOwnerAddress           string                    `json:"nft_owner_address"`
 	Status                    models.AssistantStatus    `json:"status"`
 	InferenceCalls            int64                     `json:"inference_calls"`
+	PromptCalls               int64                     `json:"prompt_calls"`
 	TotalMintTwinFee          float64                   `json:"total_mint_twin_fee"`
 	EstimateTwinDoneTimestamp *time.Time                `json:"estimate_twin_done_timestamp"`
 	TokenDesc                 string                    `json:"token_desc"`
@@ -283,6 +284,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		NftOwnerAddress:      m.NftOwnerAddress,
 		Status:               m.Status,
 		InferenceCalls:       m.InferenceCalls,
+		PromptCalls:          m.PromptCalls,
 		TotalMintTwinFee:     m.TotalMintTwinFee,
 		TokenDesc:            m.TokenDesc,
 		ExternalChartUrl:     m.ExternalChartUrl,
