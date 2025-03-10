@@ -165,6 +165,19 @@ const FormTradeAgentContainer = () => {
             </Form>
           )}
         </Formik>
+      ) : tradePlatform === ETradePlatform.none ? (
+        selectedAgent?.meme?.trade_url ? (
+          <Flex
+            onClick={() =>
+              window.electronAPI.openExternal(selectedAgent?.meme?.trade_url)
+            }
+            className={s.btnTrade}
+          >
+            Buy ${selectedAgent?.token_symbol}
+          </Flex>
+        ) : (
+          <></>
+        )
       ) : (
         <AppLoading />
       )}
