@@ -141,9 +141,12 @@ const AgentProvider: React.FC<
 
    useEffect(() => {
       if (selectedAgent) {
-         if (installedAgents && installedAgents?.some?.(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent.agent_type)
+            && installedAgents?.some?.(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
             setIsInstalled(true);
             cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id] });
+         } else if ([AgentType.Model].includes(selectedAgent.agent_type)) {
+            checkModelAgentInstalled(selectedAgent);
          } else {
             setIsInstalled(false);
             cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id], action: "uninstall" });
@@ -269,14 +272,14 @@ const AgentProvider: React.FC<
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
-           if(!isModelRequirementSetup) {
-             await window.electronAPI.modelStarter();
-             setIsModelRequirementSetup(true);
-           }
+           await handleInstallModelAgent();
 
             const ipfsHash = await getModelAgentHash(agent);
            console.log('====ipfsHash', ipfsHash);
            await window.electronAPI.modelInstall(ipfsHash);
+            setIsInstalled(true);
+            cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
+
            await handleRunModelAgent(ipfsHash);
          } else {
 
@@ -296,10 +299,7 @@ const AgentProvider: React.FC<
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await handleRunDockerAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
-           if(!isModelRequirementSetup) {
-             await window.electronAPI.modelStarter();
-             setIsModelRequirementSetup(true);
-           }
+            await handleInstallModelAgent();
 
            const ipfsHash = await getModelAgentHash(agent);
            console.log('====ipfsHash', ipfsHash);
@@ -474,6 +474,13 @@ const AgentProvider: React.FC<
       }
    }
 
+   const handleInstallModelAgent = async () => {
+      if(!isModelRequirementSetup) {
+         await window.electronAPI.modelStarter();
+         setIsModelRequirementSetup(true);
+      }
+   }
+
   const handleRunModelAgent = async (hash?: string) => {
     if (!hash) return;
 
@@ -486,6 +493,25 @@ const AgentProvider: React.FC<
       setIsStarting(false);
     }
   };
+
+   const checkModelAgentInstalled = async (agent: IAgentToken) => {
+      try {
+         const ipfsHash = await getModelAgentHash(agent);
+         const res = await window.electronAPI.modelCheckInstall([ipfsHash]);
+
+         if (res[ipfsHash]) {
+            setIsInstalled(true);
+            cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
+         } else {
+            setIsInstalled(false);
+            cPumpAPI.saveAgentInstalled({ ids: [agent.id], action: "uninstall" });
+         }
+      } catch (e) {
+         console.log('checkModelAgentInstalled e', e);
+      } finally {
+
+      }
+   }
 
   const contextValues: any = useMemo(() => {
       return {

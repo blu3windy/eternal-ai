@@ -2,10 +2,11 @@ import {Box, Button, Flex, Image, Text} from "@chakra-ui/react";
 import ChatBox from "@pages/home/chat-agent/ChatAgent/components/ChatBox";
 import {ChatAgentProvider} from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import s from "./styles.module.scss";
-import React, {useContext} from "react";
+import React, { useContext, useMemo } from "react";
 import {AgentContext} from "@pages/home/provider";
 import BackupPrivateKey from "@pages/home/chat-agent/BackupPrivateKey";
 import useParseLogs from "@hooks/useParseLogs.ts";
+import { formatCurrency } from "@utils/format.ts";
 
 function ChatAgent() {
   const {
@@ -25,6 +26,21 @@ function ChatAgent() {
     functionName: "MODEL_INSTALL",
     keys: ["step", "hash"]
   });
+
+  const {currentStep, totalStep} = useMemo(() => {
+    if (parsedLog?.values['step']) {
+      const steps = parsedLog?.values['step'].split('-');
+
+      return {
+        currentStep: parseInt(steps[0]),
+        totalStep: parseInt(steps[1])
+      }
+    }
+    return {
+      currentStep: 0,
+      totalStep: 0
+    }
+  }, [parsedLog?.values]);
 
   console.log('parsedLog', parsedLog);
 
@@ -87,7 +103,7 @@ function ChatAgent() {
                       {description && (
                         <Text className={s.descriptionText}>{description}</Text>
                       )}
-                      {/*<Text className={s.descriptionText}>90%</Text>*/}
+                      <Text className={s.descriptionText}>{totalStep > 0 ? `${formatCurrency(currentStep / totalStep * 100, 0, 0)}%` : '0%'}</Text>
                       <Button
                         className={s.btnInstall}
                         onClick={handleInstall}
