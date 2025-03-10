@@ -535,6 +535,8 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 		return errs.NewError(errs.ErrBadRequest)
 	}
 
+	handledTweetID := make([]string, 0, len(tweetMentions.Tweets))
+
 	for _, item := range tweetMentions.Tweets {
 		var checkTweetID string
 		_ = checkTweetID
@@ -572,13 +574,8 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 									if existPosts != nil {
 										continue
 									}
-									defer func() {
-										_ = s.SetRedisCachedWithKey(
-											fmt.Sprintf(redisKeyToCheckHandled, item.ID),
-											item.ID,
-											2*time.Hour,
-										)
-									}()
+									handledTweetID = append(handledTweetID, item.ID)
+
 									fullText := v.Tweet.GetAllFullText()
 									fullText = strings.Replace(fullText, fmt.Sprintf("@%s", agentInfo.TwitterUsername), "", -1)
 									fullText = strings.TrimSpace(fullText)
@@ -629,6 +626,15 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 				}
 			}
 		}
+	}
+
+	for _, tweetId := range handledTweetID {
+		redisKeyToCheckHandled := s.GetGenerateVideoCheckTweetHandledRedisKey(tweetId)
+		_ = s.SetRedisCachedWithKey(
+			fmt.Sprintf(redisKeyToCheckHandled, tweetId),
+			tweetId,
+			2*time.Hour,
+		)
 	}
 
 	return nil
