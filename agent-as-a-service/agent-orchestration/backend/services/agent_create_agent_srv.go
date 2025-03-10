@@ -1352,9 +1352,54 @@ func (s *Service) ValidateTweetContentGenerateVideoWithLLM(ctx context.Context, 
 		}
 		isGenerateVideo = result["is_generate_video"]
 	}
+	if isGenerateVideo {
+		return s.GetPromptFromTweetContentGenerateVideoWithLLM(ctx, userName, fullText)
+	}
 	return &models.TweetParseInfo{
-		IsGenerateVideo:      isGenerateVideo,
-		GenerateVideoContent: strings.TrimSpace(fullText),
+		IsGenerateVideo: false,
+	}, err
+}
+
+func (s *Service) GetPromptFromTweetContentGenerateVideoWithLLM(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
+	request := openai.ChatCompletionRequest{
+		Model: "Llama3.3",
+		Messages: []openai.ChatCompletionMessage{
+			openai.ChatCompletionMessage{
+				Role:    "system",
+				Content: "You are an advanced AI tasked with accurately detecting if a tweet on X (formerly Twitter) mentions generating or creating a video. Pay close attention to the phrasing used by the user, including common misspellings, variations, case-insensitivity, and the use of snake_case or hyphenated notation. Before answering, carefully evaluate the content of the tweet, ensuring that it directly references video creation or generation. Respond with the highest accuracy possible and provide a relevant video prompt.\n\nReturn the response in the following JSON format:\n{\n  \"prompt\": \"\"\n}\nYour response should reflect whether the tweet is related to video generation or not. Think critically about context and phrasing to ensure the most accurate determination.",
+			}, openai.ChatCompletionMessage{
+				Role:    "user",
+				Content: fullText,
+			},
+		},
+	}
+	response, _, code, err := helpers.HttpRequest(s.conf.KnowledgeBaseConfig.DirectServiceUrl, "POST",
+		map[string]string{
+			"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
+		}, request)
+	if err != nil {
+		return nil, err
+	}
+	if code != http.StatusOK {
+		return nil, fmt.Errorf("err while get response code:%v ,body:%v", code, string(response))
+	}
+	res := openai.ChatCompletionResponse{}
+	err = json.Unmarshal(response, &res)
+	if err != nil {
+		return nil, err
+	}
+	prompt := ""
+	if len(res.Choices) > 0 {
+		result := map[string]string{}
+		err = json.Unmarshal([]byte(res.Choices[0].Message.Content), &result)
+		if err != nil {
+			return nil, err
+		}
+		prompt = result["prompt"]
+	}
+	return &models.TweetParseInfo{
+		IsGenerateVideo:      true,
+		GenerateVideoContent: strings.TrimSpace(prompt),
 	}, nil
 }
 
