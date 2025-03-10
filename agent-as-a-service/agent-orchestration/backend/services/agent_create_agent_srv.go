@@ -572,6 +572,13 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 									if existPosts != nil {
 										continue
 									}
+									defer func() {
+										_ = s.SetRedisCachedWithKey(
+											fmt.Sprintf(redisKeyToCheckHandled, item.ID),
+											item.ID,
+											2*time.Hour,
+										)
+									}()
 									fullText := v.Tweet.GetAllFullText()
 									fullText = strings.Replace(fullText, fmt.Sprintf("@%s", agentInfo.TwitterUsername), "", -1)
 									fullText = strings.TrimSpace(fullText)
@@ -621,15 +628,6 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 					}
 				}
 			}
-		}
-
-		err = s.SetRedisCachedWithKey(
-			fmt.Sprintf(redisKeyToCheckHandled, item.ID),
-			item.ID,
-			1*time.Hour,
-		)
-		if err != nil {
-			return errs.NewError(err)
 		}
 	}
 
