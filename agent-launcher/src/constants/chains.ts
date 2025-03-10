@@ -4,6 +4,12 @@ export const MAX_DECIMAL = 6;
 export const BASE_CHAIN_ID = 8453;
 export const BASE_RPC = "https://mainnet.base.org";
 
+export const ARBITRUM_CHAIN_ID = 42161;
+export const ARBITRUM_RPC = "https://arb1.arbitrum.io/rpc";
+
+export const BSC_CHAIN_ID = 56;
+export const BSC_RPC = "https://rpc.ankr.com/bsc";
+
 export const BASE_SEPOLIA_CHAIN_ID = 84532;
 export const BASE_SEPOLIA_RPC = "https://sepolia.base.org";
 
@@ -19,6 +25,26 @@ export const CHAIN_CONFIG = {
     rpcUrls: {
       default: { http: [BASE_RPC] },
       public: { http: [BASE_RPC] },
+    },
+  } as any,
+  [ARBITRUM_CHAIN_ID]: {
+    id: ARBITRUM_CHAIN_ID,
+    name: "Arbitrum",
+    network: "Arbitrum",
+    nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+    rpcUrls: {
+      default: { http: [ARBITRUM_RPC] },
+      public: { http: [ARBITRUM_RPC] },
+    },
+  } as any,
+  [BSC_CHAIN_ID]: {
+    id: BSC_CHAIN_ID,
+    name: "BSC",
+    network: "BSC",
+    nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
+    rpcUrls: {
+      default: { http: [BSC_RPC] },
+      public: { http: [BSC_RPC] },
     },
   } as any,
   [BASE_SEPOLIA_CHAIN_ID]: {
@@ -58,6 +84,8 @@ export enum CHAIN_TYPE {
 
 export const CHAIN_NAME_TO_ID = {
   [CHAIN_TYPE.BASE]: BASE_CHAIN_ID,
+  [CHAIN_TYPE.ARBITRUM]: ARBITRUM_CHAIN_ID,
+  [CHAIN_TYPE.BSC]: BSC_CHAIN_ID,
 };
 
 export const CHAIN_INFO = {
