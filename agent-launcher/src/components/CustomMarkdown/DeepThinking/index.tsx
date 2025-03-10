@@ -21,8 +21,8 @@ function DeepThinking({
             <Image
                src={
                   isLight
-                     ? '/icons/agent/brain-dark.svg'
-                     : '/icons/agent/brain.svg'
+                     ? 'icons/agent/brain-dark.svg'
+                     : 'icons/agent/brain.svg'
                }
             />
             <Text>Think</Text>

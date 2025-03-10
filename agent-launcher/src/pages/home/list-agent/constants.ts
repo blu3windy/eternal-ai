@@ -2,7 +2,7 @@ export const FilterChains = [
    {
       name: 'All chains',
       chainId: 0,
-      icon: '/icons/blockchains/ic-btc.svg',
+      icon: 'icons/blockchains/ic-btc.svg',
       banner: '/images/banners/bg-all-chain-min.png',
       path: 'all',
       label: 'All chains',
@@ -13,7 +13,7 @@ export const FilterChains = [
    {
       name: 'Bitcoin',
       chainId: 222671,
-      icon: '/icons/blockchains/ic-btc.svg',
+      icon: 'icons/blockchains/ic-btc.svg',
       explorer: 'https://mempool.space/',
       path: 'bitcoin',
       banner: '/images/banners/bg-bitcoin.png',
@@ -25,7 +25,7 @@ export const FilterChains = [
    {
       name: 'Ethereum',
       chainId: 1,
-      icon: '/icons/blockchains/ic-ether.png',
+      icon: 'icons/blockchains/ic-ether.png',
       explorer: 'https://etherscan.io/',
       path: 'ethereum',
       banner: '/images/banners/bg-ethereum.png',
@@ -39,7 +39,7 @@ export const FilterChains = [
    {
       name: 'Base',
       chainId: 8453,
-      icon: '/icons/blockchains/ic-base.png',
+      icon: 'icons/blockchains/ic-base.png',
       explorer: 'https://basescan.org/',
       path: 'base',
       banner: '/images/banners/bg-base.png',
@@ -54,7 +54,7 @@ export const FilterChains = [
    {
       name: 'Arbitrum',
       chainId: 42161,
-      icon: '/icons/blockchains/ic_arbitrum.svg',
+      icon: 'icons/blockchains/ic_arbitrum.svg',
       explorer: 'https://arbiscan.io/',
       path: 'arbitrum',
       banner: '/images/banners/bg-arbitrum.png',
@@ -69,7 +69,7 @@ export const FilterChains = [
    {
       name: 'Solana',
       chainId: 101,
-      icon: '/icons/blockchains/ic_solana.svg',
+      icon: 'icons/blockchains/ic_solana.svg',
       explorer: 'https://solscan.io/',
       path: 'solana',
       banner: '/images/banners/bg-solana.png',
@@ -83,7 +83,7 @@ export const FilterChains = [
    {
       name: 'Bittensor',
       chainId: 964,
-      icon: '/icons/blockchains/ic-tao.svg',
+      icon: 'icons/blockchains/ic-tao.svg',
       explorer: 'https://bittensor.com/scan',
       path: 'tao',
       banner: '/images/banners/bg-bitensor.png',
@@ -95,7 +95,7 @@ export const FilterChains = [
    {
       name: 'ApeChain',
       chainId: 33139,
-      icon: '/icons/blockchains/ic-ape.png',
+      icon: 'icons/blockchains/ic-ape.png',
       explorer: 'https://apescan.io/',
       path: 'ape',
       banner: '/images/banners/bg-ape.png',
@@ -110,7 +110,7 @@ export const FilterChains = [
    {
       name: 'BNB Chain',
       chainId: 56,
-      icon: '/icons/blockchains/ic-bsc.png',
+      icon: 'icons/blockchains/ic-bsc.png',
       explorer: 'https://bscscan.com/',
       path: 'bsc',
       banner: '/images/banners/bg-bnb.png',
@@ -125,7 +125,7 @@ export const FilterChains = [
    {
       name: 'Polygon',
       chainId: 137,
-      icon: '/icons/blockchains/ic_polygon.svg',
+      icon: 'icons/blockchains/ic_polygon.svg',
       explorer: 'https://polygonscan.com/',
       path: 'polygon',
       banner: '/images/banners/bg-polygon.png',
@@ -137,7 +137,7 @@ export const FilterChains = [
    {
       name: 'ZKsync',
       chainId: 324,
-      icon: '/icons/blockchains/ic_zksync.svg',
+      icon: 'icons/blockchains/ic_zksync.svg',
       explorer: 'https://zkscan.io/',
       path: 'zksync',
       banner: '/images/banners/bg-zksync.png',
@@ -149,7 +149,7 @@ export const FilterChains = [
    {
       name: 'Avalanche',
       chainId: 43114,
-      icon: '/icons/blockchains/ic_avax.svg',
+      icon: 'icons/blockchains/ic_avax.svg',
       explorer: 'https://subnets.avax.network/c-chain',
       path: 'avax',
       banner: '/images/banners/bg-avax.png',
@@ -163,7 +163,7 @@ export const FilterChains = [
    {
       name: 'Tron',
       chainId: 728126428,
-      icon: '/icons/blockchains/ic-tron.svg',
+      icon: 'icons/blockchains/ic-tron.svg',
       explorer: 'https://tronscan.org/',
       path: 'tron',
       banner: '/images/banners/bg-tron.png',
@@ -175,7 +175,7 @@ export const FilterChains = [
    {
       name: 'Abstract',
       chainId: 11124,
-      icon: '/icons/blockchains/ic-abs.png',
+      icon: 'icons/blockchains/ic-abs.png',
       explorer: 'https://explorer.testnet.abs.xyz/',
       path: 'abs',
       banner: '/images/banners/bg-abstract.png',
@@ -187,7 +187,7 @@ export const FilterChains = [
    {
       name: 'Mode',
       chainId: 34443,
-      icon: '/icons/blockchains/ic-mode.jpeg',
+      icon: 'icons/blockchains/ic-mode.jpeg',
       explorer: 'https://modescan.io/',
       path: 'mode',
       banner: '/images/banners/bg-mode.png',
@@ -199,7 +199,7 @@ export const FilterChains = [
    {
       name: 'ZetaChain',
       chainId: 7000,
-      icon: '/icons/blockchains/ic-zeta.webp',
+      icon: 'icons/blockchains/ic-zeta.webp',
       explorer: 'https://explorer.zetachain.com/',
       path: 'zeta',
       banner: '/images/banners/bg-zeta.png',
@@ -211,7 +211,7 @@ export const FilterChains = [
    {
       name: 'StoryChain',
       chainId: 1514,
-      icon: '/icons/blockchains/ic-story.svg',
+      icon: 'icons/blockchains/ic-story.svg',
       explorer: 'https://www.storyscan.xyz/',
       path: 'story',
       banner: '/images/banners/bg-story.png',
@@ -223,7 +223,7 @@ export const FilterChains = [
    {
       name: 'DuckChain',
       chainId: 5545,
-      icon: '/icons/blockchains/ic-duck.svg',
+      icon: 'icons/blockchains/ic-duck.svg',
       explorer: 'https://scan.duckchain.io/',
       path: 'duck',
       banner: '/images/banners/bg-duck.png',
@@ -235,7 +235,7 @@ export const FilterChains = [
    {
       name: 'Symbiosis',
       chainId: 45762,
-      icon: '/icons/blockchains/ic_nbs.svg',
+      icon: 'icons/blockchains/ic_nbs.svg',
       explorer: 'https://explorer.symbiosis.eternalai.org/',
       path: 'symbiosis',
       banner: '/images/banners/bg-symbiosis.png',

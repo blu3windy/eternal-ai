@@ -48,7 +48,7 @@ export const EAI_ADDRESS = {
 export const InfoToChainType: any = {
   [CHAIN_TYPE.BASE]: {
     nativeAddress: EAI_ADDRESS.BASE.token,
-    icon: "/icons/blockchains/ic_base.svg",
+    icon: "icons/blockchains/ic_base.svg",
     chainId: BASE_CHAIN_ID,
     swapRouter: "0x2626664c2603336E57B271c5C0b26F421741e481",
     platformSwapRouter: "0xD62c25806FaA1d450509D6dcF0F1762612009f23",

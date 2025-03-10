@@ -81,7 +81,7 @@ const ItemToken = ({
             <Flex alignItems={'flex-start'} gap="24px">
                <Image
                   className={s.itemIcon}
-                  src={`/icons/ic-llama.png`}
+                  src={`icons/ic-llama.png`}
                />
                <Flex direction="column" gap="4px">
                   <Text className={s.itemTitle}>
@@ -184,7 +184,7 @@ const SelectModel = ({
                            </Text>
                         )}
                      </Box>
-                     <Image src="/icons/ic-angle-down.svg" />
+                     <Image src="icons/ic-angle-down.svg" />
                   </Flex>
                </PopoverTrigger>
                <PopoverContent
