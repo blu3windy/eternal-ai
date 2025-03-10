@@ -1,5 +1,6 @@
 /* eslint-disable indent */
 import {
+  APE_CHAIN_ID,
   ARBITRUM_CHAIN_ID,
   BASE_CHAIN_ID,
   BSC_CHAIN_ID,
@@ -9,12 +10,14 @@ import BaseQuoterABI from "@contract/agent-trade/abis/BaseQuoter.json";
 import BaseSwapABI from "@contract/agent-trade/abis/BaseSwap.json";
 import ArbQuoterABI from "@contract/agent-trade/abis/ArbQuoter.json";
 import ArbRouterABI from "@contract/agent-trade/abis/ArbRouter.json";
+import ApeQuoterABI from "@contract/agent-trade/abis/ApeQuote.json";
+import ApeRouterABI from "@contract/agent-trade/abis/ApeRoute.json";
 
 export const ChainIdToChainType: any = {
   [BASE_CHAIN_ID]: CHAIN_TYPE.BASE,
   [ARBITRUM_CHAIN_ID]: CHAIN_TYPE.ARBITRUM,
   [BSC_CHAIN_ID]: CHAIN_TYPE.BSC,
-  //   [APE_CHAIN_ID]: CHAIN_TYPE.APE,
+  [APE_CHAIN_ID]: CHAIN_TYPE.APE,
   //   [AVAX_CHAIN_ID]: CHAIN_TYPE.AVALANCHE,
 };
 export const EAI_ADDRESS = {
@@ -88,5 +91,17 @@ export const InfoToChainType: any = {
     quoterABI: ArbQuoterABI,
     swapABI: ArbRouterABI,
     okExplorer: "https://www.okx.com/web3/explorer/bsc/",
+  },
+  [CHAIN_TYPE.APE]: {
+    nativeAddress: EAI_ADDRESS.APE.token,
+    icon: "icons/blockchains/ic_base.svg",
+    chainId: APE_CHAIN_ID,
+    swapRouter: "0xC69Dc28924930583024E067b2B3d773018F4EB52",
+    platformSwapRouter: "0xD62c25806FaA1d450509D6dcF0F1762612009f23",
+    quoteRouter: "0x60A186019F81bFD04aFc16c9C01804a04E79e68B",
+    platformQuoteRouter: "0x5e9101b301294112E187D872A16B32BD350bA594",
+    quoterABI: ApeQuoterABI,
+    swapABI: ApeRouterABI,
+    okExplorer: "https://www.okx.com/web3/explorer/ape/",
   },
 };
