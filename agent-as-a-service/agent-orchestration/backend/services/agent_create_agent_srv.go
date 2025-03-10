@@ -1315,7 +1315,7 @@ func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userNam
 
 func (s *Service) ValidateTweetContentGenerateVideoWithLLM(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
 	request := openai.ChatCompletionRequest{
-		Model: "NousResearch/DeepHermes-3-Llama-3-8B-Preview",
+		Model: "Llama3.3",
 		Messages: []openai.ChatCompletionMessage{
 			openai.ChatCompletionMessage{
 				Role:    "system",
