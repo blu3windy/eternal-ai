@@ -5,6 +5,7 @@ import s from "./styles.module.scss";
 import React, {useContext} from "react";
 import {AgentContext} from "@pages/home/provider";
 import BackupPrivateKey from "@pages/home/chat-agent/BackupPrivateKey";
+import useParseLogs from "@hooks/useParseLogs.ts";
 
 function ChatAgent() {
   const {
@@ -17,6 +18,15 @@ function ChatAgent() {
     isCanChat,
     isBackupedPrvKey
   } = useContext(AgentContext);
+
+  const {
+    parsedLog,
+  } = useParseLogs({
+    functionName: "MODEL_INSTALL",
+    keys: ["step", "hash"]
+  });
+
+  console.log('parsedLog', parsedLog);
 
   const avatarUrl =
     selectedAgent?.thumbnail ||
@@ -77,6 +87,7 @@ function ChatAgent() {
                       {description && (
                         <Text className={s.descriptionText}>{description}</Text>
                       )}
+                      {/*<Text className={s.descriptionText}>90%</Text>*/}
                       <Button
                         className={s.btnInstall}
                         onClick={handleInstall}

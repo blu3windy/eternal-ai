@@ -276,7 +276,8 @@ const AgentProvider: React.FC<
 
             const ipfsHash = await getModelAgentHash(agent);
            console.log('====ipfsHash', ipfsHash);
-           await window.electronAPI.modelRun(ipfsHash);
+           await window.electronAPI.modelInstall(ipfsHash);
+           await handleRunModelAgent(ipfsHash);
          } else {
 
          }
