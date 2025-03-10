@@ -6,6 +6,8 @@ import BaseButton from "@components/BaseButton";
 import sleep from "@utils/sleep.ts";
 import BackgroundWrapper from "@components/BackgroundWrapper";
 import LoadingText from "@components/LoadingText";
+import useParseLogs from "@hooks/useParseLogs.ts";
+import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
 
 
 interface IProps {
@@ -28,6 +30,15 @@ const Starter = (props: IProps) => {
    const { onCheckHasUser } = props;
    const { setChecking } = useStarter();
    const initRef = useRef(false);
+
+   const {
+      parsedLogs
+   } = useParseLogs({
+      functionName: "INITIALIZE",
+      keys: ["name", "message", "error"]
+   })
+
+   console.log("Parsed Logs:", parsedLogs);
 
    const [step] = useState<Step>("INITIALIZING");
    const [installing, setInstalling] = useState<boolean>(false);
@@ -94,6 +105,7 @@ const Starter = (props: IProps) => {
             <Center flexDirection="column" gap="12px">
                <LoadingIcon />
                <LoadingText dataText="Initializing..." />
+               <StarterLogs />
             </Center>
          )
       }

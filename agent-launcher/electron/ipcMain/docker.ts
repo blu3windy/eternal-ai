@@ -94,18 +94,29 @@ const ipcMainDocker = () => {
    })
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL, async (_event) => {
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-         try {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            const { stdout: docker } = await command.execAsyncDockerDir("docker info");
-            const { stdout: brew } = await command.execAsyncDockerDir("brew -v");
-            if (docker && brew) {
-               break;
-            }
-         } catch (error) {
-            console.log("Docker not installed");
+      const win = command.getBrowser();
+      try {
+         const { stdout } = await command.execAsyncDockerDir("docker info");
+
+         if (stdout) {
+            // Send success message
+            command.sendEvent({
+               type: 'output',
+               message: '[LAUNCHER_LOGGER] [INITIALIZE] --name [DOCKER_CHECK] --message "Docker is installed and running"',
+               cmd: 'docker info',
+               win
+            });
+            return true;
          }
+      } catch (error) {
+         // Send error message
+         command.sendEvent({
+            type: 'error',
+            message: '[LAUNCHER_LOGGER] [INITIALIZE] --name [DOCKER_CHECK] --error "Docker is not installed or not running"',
+            cmd: 'docker info',
+            win
+         });
+         return false;
       }
    });
 
@@ -125,7 +136,8 @@ const ipcMainDocker = () => {
             }
          }
       } catch (error) {
-         console.log("LEON error", error)
+         console.log("LEON error", error);
+         throw error;
       }
    });
 
