@@ -89,10 +89,10 @@ const HeaderWallet: React.FC<IProps> = ({
             _hover={{
                cursor: 'pointer',
             }}
-            onMouseEnter={handleMenuMouseEnter}
-            onClick={(e) => {
-               e.stopPropagation();
-            }}
+            // onMouseEnter={handleMenuMouseEnter}
+            // onClick={(e) => {
+            //    e.stopPropagation();
+            // }}
          >
             <div
                className={cs(s.wallets, 'wallet')}

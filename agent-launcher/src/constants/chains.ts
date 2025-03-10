@@ -1,3 +1,6 @@
+export const MIN_DECIMAL = 2;
+export const MAX_DECIMAL = 6;
+
 export const BASE_CHAIN_ID = 8453;
 export const BASE_RPC = "https://mainnet.base.org";
 
