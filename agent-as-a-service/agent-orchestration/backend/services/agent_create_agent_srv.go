@@ -158,7 +158,6 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 	if err != nil {
 		return errs.NewError(err)
 	}
-
 	if twitterInfo != nil {
 		err = func() error {
 			tweetMentions, err := s.twitterWrapAPI.GetListUserMentions(agent.TwitterID, "", twitterInfo.AccessToken, 50)
@@ -426,7 +425,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 						for k, v := range *twitterDetail {
 							if !strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
 								if strings.EqualFold(k, item.ID) {
-									fullText := v.Tweet.GetFullText()
+									fullText := v.Tweet.GetAllFullText()
 									tokenInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), agentInfo.TwitterUsername, fullText)
 									if tokenInfo != nil && (tokenInfo.IsGenerateVideo) {
 										existPosts, err := s.dao.FirstAgentTwitterPost(
@@ -640,17 +639,21 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 
 						if mediaID != "" {
 							refId, err := func() (string, error) {
+								var err error
 								for i := 0; i < 5; i++ {
 									time.Sleep(time.Duration(i*5) * time.Second)
-									contentReply := fmt.Sprintf("Prompt onchain tx: https://basescan.org/tx/%v\nVideo onchain tx : https://basescan.org/tx/%v\nPrompt : %v",
-										twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash, twitterPost.ExtractContent)
+									contentReply := fmt.Sprintf("Here's the Eternal AI video of %v \n\nOnchain Prompt: https://basescan.org/tx/%v\nOnchain Video: https://basescan.org/tx/%v",
+										twitterPost.ExtractContent, twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash)
 									refId, _err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
 									if _err == nil {
 										return refId, nil
+									} else if strings.Contains(_err.Error(), "You attempted to reply to a Tweet that is deleted or not visible to you") {
+										return "", _err
 									}
+									err = _err
 								}
 
-								return "", errs.NewError(fmt.Errorf("fail when reply video twitter after rety 3 times"))
+								return "", err
 							}()
 
 							if err != nil {
@@ -1144,22 +1147,19 @@ func (s *Service) GetGifImageUrlFromTokenInfo(tokenSymbol, tokenName, tokenDesc 
 
 func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
 	isGenerateVideo := false
-	inferContent := strings.TrimSpace(fullText)
+	fullText = strings.TrimSpace(fullText)
+	inferContent := strings.ToLower(fullText)
 
-	if strings.Contains(inferContent, fmt.Sprintf("%v", "eternal_video(")) {
+	if strings.Contains(inferContent, fmt.Sprintf("%v", "create video:")) {
 		isGenerateVideo = true
-		index := strings.Index(inferContent, "eternal_video(")
-		inferContent = inferContent[index+len("eternal_video("):]
-	} else if strings.Contains(inferContent, fmt.Sprintf("%v", "eternal_video (")) {
+		index := strings.Index(inferContent, "create video:")
+		inferContent = fullText[index+len("create video:"):]
+	} else if strings.Contains(inferContent, fmt.Sprintf("%v", "create video :")) {
 		isGenerateVideo = true
-		index := strings.Index(inferContent, "eternal_video (")
-		inferContent = inferContent[index+len("eternal_video ("):]
+		index := strings.Index(inferContent, "create video :")
+		inferContent = fullText[index+len("create video :"):]
 	}
-	if !strings.HasSuffix(inferContent, ")") {
-		isGenerateVideo = false
-	} else {
-		inferContent = strings.TrimSuffix(inferContent, ")")
-	}
+	inferContent = strings.TrimSpace(inferContent)
 	return &models.TweetParseInfo{
 		IsGenerateVideo:      isGenerateVideo,
 		GenerateVideoContent: strings.TrimSpace(inferContent),
