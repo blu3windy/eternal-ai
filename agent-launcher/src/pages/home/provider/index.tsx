@@ -334,10 +334,15 @@ const AgentProvider: React.FC<
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
 
          const codeLanguage = await cAgent.getCodeLanguage();
+         let codeLang = 'js';
+         if (codeLanguage === 'python') {
+            codeLang = 'py';
+         }
+      
          const codeVersion = await cAgent.getCurrentVersion();
 
          const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
-         const fileNameOnLocal = `prompt.${codeLanguage}`;
+         const fileNameOnLocal = `prompt.${codeLang}`;
          const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
 
          let filePath: string | undefined = "";
@@ -385,6 +390,10 @@ const AgentProvider: React.FC<
 
         const cAgent = new CAgentContract({ contractAddress: agentContractAddr, chainId });
         const codeLanguage = await cAgent.getCodeLanguage();
+        let codeLang = 'js';
+        if (codeLanguage === 'python') {
+          codeLang = 'py';
+        }
         const codeVersion = await cAgent.getCurrentVersion();
         const agentName = await cAgent.getAgentName();
         const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
@@ -395,7 +404,7 @@ const AgentProvider: React.FC<
         }
 
         const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
-        const fileNameOnLocal = `prompt.${codeLanguage}`;
+        const fileNameOnLocal = `prompt.${codeLang}`;
         const folderNameOnLocal = `${chainId}-${agentName}`;
 
         const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderNameOnLocal);
