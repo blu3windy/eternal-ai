@@ -253,7 +253,7 @@ const AgentsList = () => {
                fontWeight={'400'}
                whiteSpace={"nowrap"}
             >
-          Filter by
+          Category
             </Text>
             <Popover styleConfig={{ width: "100%" }} placement="bottom-end" isOpen={isOpenFilter} onClose={onCloseFilter}>
                <PopoverTrigger>
