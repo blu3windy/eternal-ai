@@ -356,6 +356,41 @@ const AgentProvider: React.FC<
       }
    };
 
+   const unInstallAgent = async (agent: IAgentToken) => {
+      try {
+         setIsInstalling(true);
+
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+            await stopAgent(agent);
+
+            await removeUtilityAgent(agent);
+         } else if (agent.agent_type === AgentType.Model) {
+            const newAgent = installedModelAgents.filter(a => a.id !== agent.id)[0];
+
+            if (newAgent) {
+               await startAgent(newAgent);
+            }
+
+            // await handleInstallModelAgent();
+            //
+            // const ipfsHash = await getModelAgentHash(agent);
+            // console.log('====ipfsHash', ipfsHash);
+            // await window.electronAPI.modelInstall(ipfsHash);
+            // setIsInstalled(true);
+            // cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
+            //
+            // await handleRunModelAgent(ipfsHash);
+         } else {
+
+         }
+      } catch (e) {
+         console.log('unInstallAgent e', e);
+      } finally {
+         setIsInstalling(false);
+         handleGetExistAgentFolders();
+      }
+   }
+
    const getModelAgentHash = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
          const chainId = agent?.network_id || BASE_CHAIN_ID;
