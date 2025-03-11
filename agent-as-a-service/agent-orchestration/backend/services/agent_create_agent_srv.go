@@ -631,7 +631,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 	for _, tweetId := range handledTweetID {
 		redisKeyToCheckHandled := s.GetGenerateVideoCheckTweetHandledRedisKey(tweetId)
 		_ = s.SetRedisCachedWithKey(
-			fmt.Sprintf(redisKeyToCheckHandled, tweetId),
+			redisKeyToCheckHandled,
 			tweetId,
 			24*time.Hour,
 		)
