@@ -34,7 +34,7 @@ const Starter = (props: IProps) => {
    const {
       parsedLogs
    } = useParseLogs({
-      functionName: "INITIALIZE",
+      functionNames: ["INITIALIZE"],
       keys: ["name", "message", "error"]
    })
 

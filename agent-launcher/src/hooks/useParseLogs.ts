@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export type LOG_FUNCTION_NAME = "MODEL_INSTALL" | "INITIALIZE"
+export type LOG_FUNCTION_NAME = "MODEL_INSTALL" | "INITIALIZE" | "DOCKER_INSTALL"
 
 type LogEntry = {
     type: "output" | "error";
@@ -10,7 +10,7 @@ type LogEntry = {
 
 type LoggersProps = {
     prefix?: string;
-    functionName: LOG_FUNCTION_NAME;
+    functionNames: LOG_FUNCTION_NAME[];  // Changed to array
     keys: string[];
 }
 
@@ -22,7 +22,7 @@ interface IParsedLog {
 }
 
 const useParseLogs = (props: LoggersProps) => {
-   const { prefix = "LAUNCHER_LOGGER", functionName, keys } = props;
+   const { prefix = "LAUNCHER_LOGGER", functionNames, keys } = props;  // Changed to functionNames
 
    const init = useRef(false);
    const [parsedLogs, setParsedLogs] = useState<IParsedLog[]>([]);
@@ -32,26 +32,28 @@ const useParseLogs = (props: LoggersProps) => {
       const message = data.message;
       if (!message) return;
 
-      // First, check if the message contains the basic format [prefix] [functionName]
-      const basePattern = `\\[${prefix}\\]\\s*\\[${functionName}\\]`;
+      // Create pattern to match any of the function names
+      const functionNamesPattern = functionNames.join('|');
+      const basePattern = `\\[${prefix}\\]\\s*\\[(${functionNamesPattern})\\]`;
       const baseRegex = new RegExp(basePattern);
-        
-      if (!baseRegex.test(message)) {
-         return; // Exit if basic format doesn't match
-      }
+      
+      // Try to match and extract the function name
+      const baseMatch = message.match(baseRegex);
+      if (!baseMatch) return;
 
+      // Get the matched function name
+      const matchedFunctionName = baseMatch[1] as LOG_FUNCTION_NAME;
+        
       // If we have keys, try to extract their values
       const values: { [key: string]: string } = {};
         
       if (keys.length > 0) {
          keys.forEach(key => {
-            // Look for each key individually
             const keyPattern = `--${key}\\s+([^\\s"]+|"[^"]*")`;
             const keyRegex = new RegExp(keyPattern);
             const keyMatch = message.match(keyRegex);
                 
             if (keyMatch) {
-               // Remove quotes if present
                let value = keyMatch[1];
                if (value.startsWith('"') && value.endsWith('"')) {
                   value = value.slice(1, -1);
@@ -64,7 +66,7 @@ const useParseLogs = (props: LoggersProps) => {
       // Create parsed log entry
       const parsed: IParsedLog = {
          prefix,
-         functionName,
+         functionName: matchedFunctionName,  // Use the matched function name
          logEntry: data,
          values
       };
@@ -72,9 +74,8 @@ const useParseLogs = (props: LoggersProps) => {
       setParsedLog(parsed);
       setParsedLogs(prev => [...prev, parsed]);
         
-   }, [prefix, functionName, keys]);
+   }, [prefix, functionNames, keys]);  // Updated dependencies
 
-   // Clear logs on unmount
    const clearLogs = useCallback(() => {
       setParsedLogs([]);
       setParsedLog(undefined);
