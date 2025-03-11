@@ -128,7 +128,7 @@ const AgentsList = () => {
             limit: refParams.current.limit,
             sort_col: refParams.current.sort,
             search: refParams.current.search,
-            filter_col: refParams.current.filter,
+            // filter_col: refParams.current.filter,
             chain: '',
          };
 
@@ -253,7 +253,7 @@ const AgentsList = () => {
                fontWeight={'400'}
                whiteSpace={"nowrap"}
             >
-          Filter by
+          Category
             </Text>
             <Popover styleConfig={{ width: "100%" }} placement="bottom-end" isOpen={isOpenFilter} onClose={onCloseFilter}>
                <PopoverTrigger>

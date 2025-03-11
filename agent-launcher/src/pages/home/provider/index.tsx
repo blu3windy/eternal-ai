@@ -13,7 +13,8 @@ import localStorageService from "../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 import uniq from "lodash.uniq";
 import CAgentContract from "@contract/agent/index.ts";
-import { AgentType } from "@pages/home/list-agent";
+import { AgentType, SortOption } from "@pages/home/list-agent";
+import sleep from "@utils/sleep.ts";
 
 const initialValue: IAgentContext = {
    loading: false,
@@ -308,10 +309,12 @@ const AgentProvider: React.FC<
          } else {
 
          }
+
+         await sleep(5000);
       } catch (e) {
          console.log('startAgent e', e);
       } finally {
-         setIsStopping(false);
+         setIsStarting(false);
 
          intervalCheckAgentRunning(agent);
       }
@@ -329,10 +332,14 @@ const AgentProvider: React.FC<
          } else {
 
          }
+
+         await sleep(5000);
       } catch (e) {
          console.log('stopAgent e', e);
       } finally {
-        setIsStopping(false);
+         setIsStopping(false);
+
+         intervalCheckAgentRunning(agent);
       }
    };
 
