@@ -273,6 +273,7 @@ class LiveXDB(IToolCall):
             self.auth.kn_base,
             tweets=tweets,
             task_name=f"{self.auth.task}:{self.auth.toolset}",
+            use_bing_search=False,
         )
 
         conversational_chat = await get_reply_tweet_conversation(
