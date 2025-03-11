@@ -379,6 +379,16 @@ const AgentProvider: React.FC<
       }
    };
 
+    const removeUtilityAgent = async (agent: IAgentToken) => {
+      if (agent && !!agent.agent_name) {
+        try {
+          const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
+          await window.electronAPI.removeFolder(folderNameOnLocal);
+        } catch (error) {
+        }
+      }
+    };
+
     const getDependAgentsOfUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
         const chainId = agent?.network_id || BASE_CHAIN_ID;
