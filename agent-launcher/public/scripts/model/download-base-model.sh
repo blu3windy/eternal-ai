@@ -30,7 +30,7 @@ filter_and_log() {
                 fi
 
                 # Create fancy progress message
-#                progress_bar="▰▰▰▱▱▱▱▱▱▱"  # Example progress bar
+                # progress_bar="▰▰▰▱▱▱▱▱▱▱"  # Example progress bar
                 log_message "⚡ Downloading model... ${percentage}% | ${current}/${total} files"
             else
                 log_message "$line"
