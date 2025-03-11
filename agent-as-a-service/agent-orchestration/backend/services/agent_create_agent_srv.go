@@ -683,10 +683,10 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 					url := fmt.Sprintf("%v?infer_id=%v&tx_hash=%v", s.conf.GetResultInferUrl, twitterPost.InferId, twitterPost.InferTxHash)
 					body, _, code, err := helpers.HttpRequest(url, "GET", nil, nil)
 					if err != nil {
-						return err
+						continue
 					}
 					if code != http.StatusOK {
-						return fmt.Errorf("response with code:%v , body :%v", err, body)
+						continue
 					}
 					type WorkerProcessHistory struct {
 						CID        string `bson:"cid" json:"cid" json:"cid,omitempty"`
@@ -700,10 +700,10 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 					response := &Response{}
 					err = json.Unmarshal(body, &response)
 					if err != nil {
-						return err
+						continue
 					}
 					if len(response.Data.TxHash) == 0 {
-						return nil
+						continue
 					}
 					err = daos.WithTransaction(
 						daos.GetDBMainCtx(ctx),
@@ -719,7 +719,7 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 							return nil
 						})
 					if err != nil {
-						return err
+						continue
 					}
 				}
 			}
