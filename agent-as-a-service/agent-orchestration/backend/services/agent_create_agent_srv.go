@@ -596,9 +596,11 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 									}
 
 									imageToVideoInfo := s.DetectTweetIsImageToVideo(v)
-									entityType := "text2video"
+									entityType := models.AgentTwitterPostTypeText2Video
+									extractMediaContent := ""
 									if imageToVideoInfo.IsImageToVideo {
-										entityType = "image2video"
+										entityType = models.AgentTwitterPostTypeImage2video
+										extractMediaContent = imageToVideoInfo.LighthouseImageUrl
 									}
 
 									postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
@@ -611,6 +613,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 										TwitterPostID:         v.Tweet.ID, // bai reply
 										Content:               fullText,
 										ExtractContent:        tokenInfo.GenerateVideoContent,
+										ExtractMediaContent:   extractMediaContent,
 										Status:                models.AgentTwitterPostWaitSubmitVideoInfer,
 										PostAt:                postedAt,
 										TwitterConversationId: v.Tweet.ConversationID, // bai goc cua conversation
@@ -924,13 +927,23 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 					if isValid {
 						if twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil {
 
+							model := "wan"
+							prompt := twitterPost.ExtractContent
+							if twitterPost.Type == models.AgentTwitterPostTypeImage2video {
+								model = "Wan-I2V"
+								promptByte, _ := json.Marshal(map[string]interface{}{
+									"prompt": twitterPost.ExtractContent,
+									"url":    twitterPost.ExtractContent,
+								})
+								prompt = string(promptByte)
+							}
 							response, _, code, err := helpers.HttpRequest(s.conf.KnowledgeBaseConfig.OnChainUrl, "POST",
 								map[string]string{
 									"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
 								}, map[string]interface{}{
 									"chain_id":          "8453",
-									"model":             "wan",
-									"prompt":            twitterPost.ExtractContent,
+									"model":             model,
+									"prompt":            prompt,
 									"only_create_infer": true,
 								})
 							if err != nil {
