@@ -13,9 +13,9 @@ import {
 import cs from 'classnames';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import s from './styles.module.scss';
-import { compareString } from "@utils/string.ts";
 import { AgentContext } from "@pages/home/provider";
 import CAgentTokenAPI from "../../../../../services/api/agents-token";
+import { IAgentToken } from "@services/api/agents-token/interface.ts";
 
 export const RenameModels: any = {
    'NousResearch/Hermes-3-Llama-3.1-70B-FP8': 'Hermes 3 70B',
@@ -30,18 +30,15 @@ export const RenameModels: any = {
 export const RenameDescriptionModels: any = {
    'DeepSeek-R1-Distill-Llama-70B': 'Ideal for Math, code, and reasoning tasks',
    'NousResearch/DeepHermes-3-Llama-3-8B-Preview':
-    'Enabled toggling between intuitive and reasoning-based response modes.',
+   'Enabled toggling between intuitive and reasoning-based response modes.',
 };
 
 type Props = {
-  chainId?: any;
+  // chainId?: any;
   //   showHistory?: boolean;
   disabled?: boolean;
-  currentModel: {
-    name: string;
-    id: string;
-  } | null;
-  setCurrentModel: (v: { name: string; id: string }) => void;
+  currentModel: IAgentToken | null;
+  setCurrentModel: (v: any) => void;
   title?: string;
   className?: string;
   showDescription?: boolean;
@@ -50,15 +47,13 @@ type Props = {
 const ItemToken = ({
    setCurrentModel,
    onClose,
-   modelName,
-   modelId,
+   agent,
    models,
    isSelected,
 }: {
-  modelName: string;
   setCurrentModel: any;
   onClose: any;
-  modelId: string;
+  agent: IAgentToken,
   models: any;
   isSelected: boolean;
 }) => {
@@ -70,10 +65,7 @@ const ItemToken = ({
             // isDisabled && s.disabled,
          )}
          onClick={() => {
-            setCurrentModel({
-               name: modelName,
-               id: modelId,
-            });
+            setCurrentModel(agent);
             onClose();
          }}
       >
@@ -85,12 +77,12 @@ const ItemToken = ({
                />
                <Flex direction="column" gap="4px">
                   <Text className={s.itemTitle}>
-                     {RenameModels?.[modelName as any] || modelName}
+                     {RenameModels?.[agent.agent_base_model as any] || agent.agent_base_model}
                   </Text>
                   <Text className={s.itemAmount}>
-                     {RenameDescriptionModels?.[models?.[modelName]]
-                || RenameDescriptionModels?.[modelName]
-                || models?.[modelName]}
+                     {RenameDescriptionModels?.[models?.[agent.agent_base_model]]
+                || RenameDescriptionModels?.[agent.agent_base_model]
+                || models?.[agent.agent_base_model]}
                   </Text>
                </Flex>
             </Flex>
@@ -109,17 +101,12 @@ const ItemToken = ({
 const SelectModel = ({
    currentModel,
    setCurrentModel,
-   chainId,
    disabled,
    className,
    showDescription = true,
 }: Props) => {
-   const { chainList } = useContext(AgentContext);
+   const { installedModelAgents } = useContext(AgentContext);
    const [models, setModels] = useState<any>();
-
-   const supportModelObj = chainList?.find((v) =>
-      compareString(v.chain_id, chainId),
-   )?.support_model_names;
 
    const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -136,25 +123,11 @@ const SelectModel = ({
       fetchModelDescription();
    }, []);
 
-   useEffect(() => {
-      if (supportModelObj) {
-         if (
-            !currentModel
-        || !Object.keys(supportModelObj).includes(currentModel.name)
-         ) {
-            setCurrentModel({
-               name: Object.keys(supportModelObj)[0],
-               id: Object.values(supportModelObj)[0],
-            });
-         }
-      }
-   }, [supportModelObj, currentModel]);
-
    const isDisabled = useMemo(() => {
       return disabled; // || Object.keys(supportModelObj || {}).length <= 1;
-   }, [disabled, supportModelObj]);
+   }, [disabled, installedModelAgents]);
 
-   if (!supportModelObj) {
+   if (!installedModelAgents || installedModelAgents.length === 0) {
       return null;
    }
 
@@ -171,16 +144,16 @@ const SelectModel = ({
                   >
                      <Box flex={1}>
                         <Text className={s.title}>
-                           {RenameModels?.[currentModel?.name as any]
-                    || currentModel?.name}
+                           {RenameModels?.[currentModel?.agent_base_model as any]
+                    || currentModel?.agent_base_model}
                         </Text>
                         {showDescription && (
                            <Text className={s.amount}>
                               {RenameDescriptionModels?.[
-                                 models?.[currentModel?.name as any]
+                                 models?.[currentModel?.agent_base_model as any]
                               ]
-                      || RenameDescriptionModels?.[currentModel?.name as any]
-                      || models?.[currentModel?.name as any]}
+                      || RenameDescriptionModels?.[currentModel?.agent_base_model as any]
+                      || models?.[currentModel?.agent_base_model as any]}
                            </Text>
                         )}
                      </Box>
@@ -195,24 +168,21 @@ const SelectModel = ({
                   borderRadius={'16px'}
                   background={'#fff'}
                >
-                  {supportModelObj
-              && Object.keys(supportModelObj || {}).map((t, i) => (
-                 <>
-                    <ItemToken
-                       key={t}
-                       modelName={t}
-                       modelId={supportModelObj[t]}
-                       setCurrentModel={setCurrentModel}
-                       onClose={onClose}
-                       models={models}
-                       isSelected={currentModel?.id === supportModelObj[t]}
-                    />
-                    {i < Object.keys(supportModelObj || {}).length - 1 && (
-                       <Divider color={'#E2E4E8'} my={'0px'} />
-                    )}
-                 </>
-
-              ))}
+                  {installedModelAgents.map((t, i) => (
+                     <>
+                        <ItemToken
+                           key={t.id}
+                           agent={t}
+                           setCurrentModel={setCurrentModel}
+                           onClose={onClose}
+                           models={models}
+                           isSelected={currentModel?.id === t.id}
+                        />
+                        {i < installedModelAgents.length - 1 && (
+                           <Divider color={'#E2E4E8'} my={'0px'} />
+                        )}
+                     </>
+                  ))}
                </PopoverContent>
             </Popover>
          </Box>

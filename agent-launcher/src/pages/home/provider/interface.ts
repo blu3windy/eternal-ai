@@ -30,10 +30,11 @@ export interface IAgentContext {
   coinPrices: any[];
   createAgentWallet: any;
   isInstalled: boolean;
-  installedAgents: string[];
+  installedUtilityAgents: string[];
   isCanChat: boolean;
   isBackupedPrvKey: boolean;
   setIsBackupedPrvKey: any;
   requireInstall: boolean;
   isModelRequirementSetup: boolean;
+  installedModelAgents: IAgentToken[];
 }

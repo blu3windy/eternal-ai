@@ -39,12 +39,13 @@ const initialValue: IAgentContext = {
    coinPrices: [],
    createAgentWallet: () => {},
    isInstalled: false,
-   installedAgents: [],
+   installedUtilityAgents: [],
    isCanChat: false,
    isBackupedPrvKey: false,
    setIsBackupedPrvKey: () => {},
    requireInstall: false,
    isModelRequirementSetup: false,
+   installedModelAgents: [],
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -67,11 +68,12 @@ const AgentProvider: React.FC<
    const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
    const [coinPrices, setCoinPrices] = useState([]);
    const [isInstalled, setIsInstalled] = useState(false);
-   const [installedAgents, setInstalledAgents] = useState<string[]>([]);
+   const [installedUtilityAgents, setInstalledUtilityAgents] = useState<string[]>([]);
    const [isRunning, setIsRunning] = useState(false);
    const refInterval = useRef<any>();
    const [isBackupedPrvKey, setIsBackupedPrvKey] = useState(false);
    const [isModelRequirementSetup, setIsModelRequirementSetup] = useState(false);
+   const [installedModelAgents, setInstalledModelAgents] = useState<IAgentToken[]>([]);
 
    const [currentModel, setCurrentModel] = useState<{
     name: string;
@@ -143,7 +145,7 @@ const AgentProvider: React.FC<
    useEffect(() => {
       if (selectedAgent) {
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent.agent_type)
-            && installedAgents?.some?.(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
+            && installedUtilityAgents?.some?.(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
             setIsInstalled(true);
             cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id] });
          } else if ([AgentType.Model].includes(selectedAgent.agent_type)) {
@@ -153,7 +155,7 @@ const AgentProvider: React.FC<
             cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id], action: "uninstall" });
          }
       }
-   }, [selectedAgent?.id, installedAgents]);
+   }, [selectedAgent?.id, installedUtilityAgents]);
 
    const checkAgentRunning = async (agent) => {
       try {
@@ -232,30 +234,48 @@ const AgentProvider: React.FC<
    }, [selectedAgent, chainList]);
 
    const fetchChainList = useCallback(async () => {
+      const params: any = {
+         page: 1,
+         limit: 100,
+         sort_col: SortOption.CreatedAt,
+         agent_types: [AgentType.Model].join(','),
+         chain: '',
+      };
+      const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
       const chainList = await cPumpAPI.getChainList();
-      if (!!chainList && chainList.length > 0) {
-         const list = chainList.map((chain) => {
-            const modelDetailParams = chain?.model_details?.[0]?.params
-               ? JSON.parse(chain?.model_details?.[0]?.params)
-               : {};
 
-            const _chain = {
-               ...chain,
-               tag: `@${modelDetailParams?.model_name || ""}`,
-            };
+      console.log('stephen newTokens', newTokens);
+      console.log('stephen chainList', chainList);
 
-            if (!chain.balance) {
-               return {
-                  ..._chain,
-                  balance: "0",
-                  formatBalance: "0",
-               };
-            }
-            return _chain;
-         });
+      setInstalledModelAgents(newTokens);
 
-         setChainList(list);
-      }
+      // if (!!chainList && chainList.length > 0) {
+      //    const list = chainList.map((chain) => {
+      //       const modelDetailParams = chain?.model_details?.[0]?.params
+      //          ? JSON.parse(chain?.model_details?.[0]?.params)
+      //          : {};
+      //
+      //       console.log('stephen: modelDetailParams', modelDetailParams);
+      //
+      //       const _chain = {
+      //          ...chain,
+      //          tag: `@${modelDetailParams?.model_name || ""}`,
+      //       };
+      //
+      //       if (!chain.balance) {
+      //          return {
+      //             ..._chain,
+      //             balance: "0",
+      //             formatBalance: "0",
+      //          };
+      //       }
+      //       return _chain;
+      //    });
+      //
+      //    console.log('stephen list', chainList);
+      //
+      //    setChainList(list);
+      // }
    }, []);
 
    const fetchCoinPrices = async () => {
@@ -511,7 +531,7 @@ const AgentProvider: React.FC<
    const handleGetExistAgentFolders = async () => {
       try {
          const folders = await window.electronAPI.getExistAgentFolders();
-         setInstalledAgents(folders || [])
+         setInstalledUtilityAgents(folders || [])
       } catch (error) {
         
       }
@@ -579,12 +599,13 @@ const AgentProvider: React.FC<
          coinPrices,
          createAgentWallet,
          isInstalled,
-         installedAgents,
+         installedUtilityAgents,
          isCanChat,
          isBackupedPrvKey,
          setIsBackupedPrvKey,
          requireInstall,
          isModelRequirementSetup,
+         installedModelAgents,
       };
    }, [
       loading,
@@ -608,12 +629,13 @@ const AgentProvider: React.FC<
       coinPrices,
       createAgentWallet,
       isInstalled,
-      installedAgents,
+      installedUtilityAgents,
       isCanChat,
       isBackupedPrvKey,
       setIsBackupedPrvKey,
       requireInstall,
       isModelRequirementSetup,
+      installedModelAgents,
    ]);
 
    return (

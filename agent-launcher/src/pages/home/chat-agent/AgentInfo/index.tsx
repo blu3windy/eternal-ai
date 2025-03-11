@@ -55,7 +55,6 @@ const AgentInfo = () => {
             <SelectModel
               currentModel={currentModel}
               setCurrentModel={setCurrentModel}
-              chainId={selectedAgent?.network_id}
               showDescription={false}
             />
           ) : (
