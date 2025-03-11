@@ -15,7 +15,7 @@ import uniq from "lodash.uniq";
 import CAgentContract from "@contract/agent/index.ts";
 import { AgentType, SortOption } from "@pages/home/list-agent";
 import sleep from "@utils/sleep.ts";
-import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
+import { ModelInfo } from "../../../../electron/share/model.ts";
 
 const initialValue: IAgentContext = {
    loading: false,
@@ -232,7 +232,8 @@ const AgentProvider: React.FC<
          chain: '',
       };
       const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
-      const installedHash = [MODEL_HASH];
+      const res: ModelInfo[] = await window.electronAPI.modelDownloadedList();
+      const installedHash = res.map(r => r.hash);
 
       const agentHashes = await Promise.all(
          newTokens.map(t => getModelAgentHash(t))
