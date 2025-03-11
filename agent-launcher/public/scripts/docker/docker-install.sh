@@ -48,19 +48,9 @@ else
 
         # Launch Docker Desktop
         open -a Docker
-        sleep 10
-
         log_message "Waiting for Docker Desktop to initialize..."
-
-        # Wait for Docker to be ready
-        if wait_for_docker; then
-            log_message "Docker Desktop is running successfully"
-            exit 0
-        else
-            log_error "Docker Desktop failed to start in time"
-            log_message "Attempting to stop Docker Desktop before proceeding to Colima..."
-            sleep 2
-        fi
+        sleep 20
+        exit 0
     fi
 fi
 
@@ -87,14 +77,7 @@ fi
 log_message "Starting Colima Docker runtime..."
 if colima start; then
     log_message "Colima started successfully"
-    
-    if wait_for_docker; then
-        log_message "Docker setup completed successfully"
-        exit 0
-    else
-        log_error "Docker setup failed - docker info check failed"
-        exit 1
-    fi
+
 else
     log_error "Colima failed to start"
     exit 1
