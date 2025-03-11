@@ -297,6 +297,7 @@ const AgentProvider: React.FC<
          setIsStarting(true);
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+            await startDependAgents(agent);
             await handleRunDockerAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
             await handleInstallModelAgent();
@@ -322,6 +323,7 @@ const AgentProvider: React.FC<
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await handleStopDockerAgent(agent);
+            await stopDependAgents(agent);
          } else if (agent.agent_type === AgentType.Model) {
 
          } else {
@@ -389,7 +391,31 @@ const AgentProvider: React.FC<
       }
     };
 
-    const getDependAgentsOfUtilityAgent = async (agent: IAgentToken) => {
+    const startDependAgents = async (agent: IAgentToken) => {
+      const dependAgents = await getDependAgents(agent);
+      if (dependAgents.length > 0) {
+        await Promise.all(dependAgents.map(async (agent) => {
+          try {
+            await handleRunDockerAgent(agent);
+          } catch (error) {
+          }
+        }));
+      };
+    };
+
+    const stopDependAgents = async (agent: IAgentToken) => {
+      const dependAgents = await getDependAgents(agent);
+      if (dependAgents.length > 0) {
+        await Promise.all(dependAgents.map(async (agent) => {
+          try {
+            await handleStopDockerAgent(agent);
+          } catch (error) {
+          }
+        }));
+      };
+    };
+
+    const getDependAgents = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
         const chainId = agent?.network_id || BASE_CHAIN_ID;
         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
@@ -400,9 +426,9 @@ const AgentProvider: React.FC<
           const dependAgents = await installDependAgents(depsAgentStrs, chainId);
           return dependAgents;
         }
-        return [];
       }
-   };
+      return [];
+    };
 
    const installDependAgents = async (agents: string[], chainId: number) => {
       const installedAgents = new Set<string>();
