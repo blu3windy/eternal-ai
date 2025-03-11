@@ -2,7 +2,7 @@ import { app, ipcMain } from "electron";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 import command from "../share/command-tool.ts";
 import { SCRIPTS_NAME } from "../share/utils.ts";
-import { getFolderPath, ACTIVE_PATH, downloadedModels } from "../share/model.ts";
+import { getFolderPath, ACTIVE_PATH, downloadedModels, deleteModel } from "../share/model.ts";
 
 
 const ipcMainModel = () => {
@@ -55,6 +55,21 @@ const ipcMainModel = () => {
          await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_DOWNLOAD_BASE} --folder-path "${path}" --hash "${hash}"`);
       } catch (error) {
          throw error;
+      }
+   });
+
+   ipcMain.handle(EMIT_EVENT_NAME.MODEL_DELETE, async (_event, hash: string) => {
+      await deleteModel(hash);
+   });
+
+   ipcMain.handle(EMIT_EVENT_NAME.MODEL_STOP, async (_event, hash: string) => {
+      const path = getFolderPath();
+      try {
+         const data = await command.execAsyncStream( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms stop --hash ${hash}`, false);
+         return data;
+      } catch (error) {
+         console.log("MODEL_STOP", error);
+         return false;
       }
    });
 }

@@ -53,6 +53,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
    modelDownloadedList: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_DOWNLOADED_LIST),
    modelCheckRunning: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_CHECK_RUNNING),
    modelInstallBaseModel: (hash: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_INSTALL_BASE_MODEL, hash),
+   modelDelete: (hash: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_DELETE, hash),
+   modelStop: (hash: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_STOP, hash),
 
    openExternal: (url: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.OPEN_EXTRA_LINK, url),
 

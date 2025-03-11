@@ -53,7 +53,26 @@ const downloadedModels = async () => {
 };
 
 const deleteModel = async (hash: string) => {
+   try {
+      const folderPath = getFolderPath();
+      const storagePath = path.join(folderPath, 'llms-storage');
+      const files = fs.readdirSync(storagePath);
 
+      // Find file that starts with the hash
+      const modelFile = files.find(file => file.startsWith(hash));
+      if (!modelFile) {
+         console.error('Model file not found');
+         return false;
+      }
+
+      // Delete the file
+      const filePath = path.join(storagePath, modelFile);
+      fs.unlinkSync(filePath);
+      return true;
+   } catch (error) {
+      console.error('Error deleting model:', error);
+      return false;
+   }
 }
 
 export {
