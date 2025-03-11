@@ -94,29 +94,26 @@ const ipcMainDocker = () => {
    })
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL, async (_event) => {
+      const win = command.getBrowser();
+
       try {
-         // const win = command.getBrowser();
-
-         const { stdout } = await command.execAsyncDockerDir("docker info");
-
-         if (stdout) {
-            // Send success message
-            // command.sendEvent({
-            //    type: 'output',
-            //    message: '[LAUNCHER_LOGGER] [INITIALIZE] --name [DOCKER_CHECK] --message "Docker is installed and running"',
-            //    cmd: 'docker info',
-            //    win
-            // });
-            return true;
+         const { stdout, stderr } = await command.execAsyncDockerDir("docker info");
+         console.log(stdout, stderr);
+         if (!stdout) {
+            command.sendEvent({
+               message: '[LAUNCHER_LOGGER] [INITIALIZE] --name [DOCKER_CHECK] --error "Docker is not installed or not running"',
+               cmd: 'docker info',
+               type: 'error',
+               win
+            });
          }
       } catch (error) {
-         // Send error message
-         // command.sendEvent({
-         //    type: 'error',
-         //    message: '[LAUNCHER_LOGGER] [INITIALIZE] --name [DOCKER_CHECK] --error "Docker is not installed or not running"',
-         //    cmd: 'docker info',
-         //    win
-         // });
+         command.sendEvent({
+            type: 'error',
+            message: '[LAUNCHER_LOGGER] [INITIALIZE] --name [DOCKER_CHECK] --error "Docker is not installed or not running"',
+            cmd: 'docker info',
+            win
+         });
          throw error;
       }
    });
@@ -127,17 +124,8 @@ const ipcMainDocker = () => {
          const scriptPath = path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.DOCKER);
          const cmd = `cd "${scriptPath}" && bash ${SCRIPTS_NAME.DOCKER_INSTALL_SCRIPT}`;
          await command.execAsyncStream(cmd);
-
-         // eslint-disable-next-line no-constant-condition
-         while (true) {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            const { stdout } = await command.execAsyncDockerDir("docker info");
-            if (stdout) {
-               break;
-            }
-         }
       } catch (error) {
-         console.log("LEON error", error);
+         console.log(`${EMIT_EVENT_NAME.DOCKER_INSTALL} error`, error);
          throw error;
       }
    });
