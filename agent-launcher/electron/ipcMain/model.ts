@@ -11,6 +11,26 @@ const getModelPath = () => {
 
 const ACTIVE_PATH = 'local_llms/bin/activate'
 
+const checkModelInstall = async (hashs: string[]) => {
+   const path = getModelPath();
+   const status: { [key: string]: boolean } = {};
+   for (const hash of hashs) {
+      try {
+         const cmd = `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms check --hash ${hash}`;
+         const { stdout, stderr } = await command.execAsync( `${cmd}`);
+         console.log("MODEL_CHECK_INSTALL", stdout, stderr);
+         if (stderr) {
+            status[hash] = false;
+         }
+         status[hash] = stdout?.trim()?.toLowerCase() === "true";
+      } catch (error) {
+         console.log("MODEL_CHECK_INSTALL", error);
+         status[hash] = false;
+      }
+   }
+   return status;
+}
+
 const ipcMainModel = () => {
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_STARTER, async (_event) => {
       const path = getModelPath();
@@ -37,23 +57,8 @@ const ipcMainModel = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_CHECK_INSTALL, async (_event, hashs: string[]) => {
-      const path = getModelPath();
-      const results: { [key: string]: boolean } = {};
-      for (const hash of hashs) {
-         try {
-            const cmd = `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms check --hash ${hash}`;
-            const { stdout, stderr } = await command.execAsync( `${cmd}`);
-            console.log("MODEL_CHECK_INSTALL", stdout, stderr);
-            if (stderr) {
-               results[hash] = false;
-            }
-            results[hash] = stdout?.trim()?.toLowerCase() === "true";
-         } catch (error) {
-            console.log("MODEL_CHECK_INSTALL", error);
-            results[hash] = false;
-         }
-      }
-      return results;
+
+      return await checkModelInstall(hashs);
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_CHECK_RUNNING, async (_event) => {
@@ -64,6 +69,19 @@ const ipcMainModel = () => {
       } catch (error) {
          console.log("MODEL_CHECK_RUNNING", error);
          return undefined;
+      }
+   });
+
+   ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL_BASE_MODEL, async (_event, hash: string) => {
+      const path = getModelPath();
+      try {
+         const status = await checkModelInstall([hash]);
+         if (status[hash]) {
+            return true;
+         }
+         await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_DOWNLOAD_BASE} --folder-path "${path}" --hash "${hash}"`);
+      } catch (error) {
+         throw error;
       }
    });
 }

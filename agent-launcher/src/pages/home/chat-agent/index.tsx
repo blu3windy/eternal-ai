@@ -23,7 +23,7 @@ function ChatAgent() {
   const {
     parsedLog,
   } = useParseLogs({
-    functionName: "MODEL_INSTALL",
+    functionNames: ["MODEL_INSTALL"],
     keys: ["step", "hash"]
   });
 

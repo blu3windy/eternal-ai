@@ -9,8 +9,13 @@ const execAsync = async (cmd: string) => {
 };
 
 let dockerDir = '';
+let window: BrowserWindow | null = null;
 
-const sendEvent = (params: { type: string, message: string, cmd: string, win: BrowserWindow }) => {
+const sendEvent = (params: { type: string, message: string, cmd: string, win?: BrowserWindow }) => {
+   if (!params?.win || params?.win?.isDestroyed()) {
+      return;
+   }
+   params.win.focus();
    const {
       type,
       message,
@@ -21,16 +26,20 @@ const sendEvent = (params: { type: string, message: string, cmd: string, win: Br
 }
 
 const getBrowser = () => {
-   const win = BrowserWindow.getAllWindows()[0]; // Get main window
-   if (!win) {
-      console.error("No active Electron window found.");
-      throw new Error("No active Electron window found.");
+   if (!window || window.isDestroyed()) {
+      window = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+      if (!window) {
+         console.error("No active Electron window found.");
+         // throw new Error("No active Electron window found.");
+      }
    }
-   return win;
+   window.focus();
+   return window;
 }
 
 const execAsyncDockerDir = async (cmd: string) => {
    const win = getBrowser();
+
    try {
       // Check and set Docker directory only once
       if (!dockerDir) {

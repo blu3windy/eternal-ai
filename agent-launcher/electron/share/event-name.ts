@@ -25,6 +25,7 @@ const EMIT_EVENT_NAME = {
    MODEL_RUN: "safe-model-run",
    MODEL_CHECK_INSTALL: "safe-model-check-install",
    MODEL_CHECK_RUNNING: "safe-model-check-running",
+   MODEL_INSTALL_BASE_MODEL: "safe-install-base-model",
 
 
    OPEN_EXTRA_LINK: "open-external",

@@ -15,8 +15,6 @@ import ExportPrivateKey from "@pages/home/chat-agent/ExportPrivateKey";
 
 const AgentInfo = () => {
   const {
-    currentModel,
-    setCurrentModel,
     selectedAgent,
     setIsTrade,
     isTrade,
@@ -52,11 +50,7 @@ const AgentInfo = () => {
       <Flex justifyContent={"space-between"} w={"100%"} gap={"6px"}>
         {
           isCanChat && [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type as AgentType) ? (
-            <SelectModel
-              currentModel={currentModel}
-              setCurrentModel={setCurrentModel}
-              showDescription={false}
-            />
+            <SelectModel showDescription={false} />
           ) : (
             <Box/>
           )
@@ -64,7 +58,7 @@ const AgentInfo = () => {
         <Flex gap={"6px"} alignItems={"center"} className={cx(s.contentContainer, isCanChat || showBackupPrvKey ? '' : s.isSetup)}>
           <Flex gap={"6px"} alignItems={"center"} className={s.content}>
             <InfoTooltip iconSize="sm" label={
-              <Flex direction={"column"}>
+              <Flex direction={"column"} p={"8px"}>
                 <Flex direction={"column"} gap={"8px"}>
                   <Text fontSize={"16px"} fontWeight={500}>{selectedAgent?.agent_name}</Text>
                   <Text fontSize={"14px"} fontWeight={400} opacity={0.7}>{description}</Text>

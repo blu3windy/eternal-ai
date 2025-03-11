@@ -17,22 +17,6 @@ command_exists() {
     command -v "$1" &> /dev/null
 }
 
-# Function to wait for Docker to be ready
-wait_for_docker() {
-    local attempts=0
-    local max_attempts=30  # 30 seconds timeout
-    
-    log_message "Waiting for Docker to be ready..."
-    while ! docker info &> /dev/null; do
-        attempts=$((attempts + 1))
-        if [ $attempts -ge $max_attempts ]; then
-            return 1
-        fi
-        sleep 1
-    done
-    return 0
-}
-
 # Step 1: Check and install Homebrew if not present
 if ! command_exists brew; then
     log_message "Homebrew not found. Installing Homebrew in $HOME/homebrew..."
@@ -51,25 +35,23 @@ if ! command_exists docker; then
     log_message "Docker CLI installed successfully"
 else
     log_message "Docker CLI is already installed"
-    
+
     # First check if Docker is already running
     if docker info &> /dev/null; then
         log_message "Docker is already running successfully"
         exit 0
     fi
-    
+
     # Check if Docker Desktop is installed
     if [ -d "/Applications/Docker.app" ]; then
         log_message "Docker Desktop found. Launching application..."
-        
-        # Kill any existing Docker Desktop process
-        pkill -9 Docker || true
-        sleep 2
-        
+
         # Launch Docker Desktop
         open -a Docker
+        sleep 10
+
         log_message "Waiting for Docker Desktop to initialize..."
-        
+
         # Wait for Docker to be ready
         if wait_for_docker; then
             log_message "Docker Desktop is running successfully"
@@ -77,7 +59,6 @@ else
         else
             log_error "Docker Desktop failed to start in time"
             log_message "Attempting to stop Docker Desktop before proceeding to Colima..."
-            pkill -9 Docker || true
             sleep 2
         fi
     fi

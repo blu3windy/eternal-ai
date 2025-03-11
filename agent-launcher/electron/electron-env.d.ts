@@ -49,6 +49,7 @@ interface IElectronAPI {
   modelRun: (hash: string) => Promise<void>
   modelCheckInstall: (hashs: string[]) => Promise<{ [key as string]: boolean }>
   modelCheckRunning: () => Promise<string | undefined>
+  modelInstallBaseModel: (hash: string) => Promise<void>
 
   sendCommand: (cmd: string) => void
   onCommandEvent: (callback: (data: any) => void) => void
