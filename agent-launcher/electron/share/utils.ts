@@ -9,6 +9,7 @@ const SCRIPTS_NAME = {
    PACKAGE_JSON: "package.json",
    SERVER_JS: "server.js",
    MODEL_STARTER: "mac.sh",
+   MODEL_DOWNLOAD_BASE: "download-base-model.sh",
 }
 
 const USER_DATA_FOLDER_NAME = {
