@@ -1,17 +1,30 @@
 import s from "./styles.module.scss";
-import {Box, Button, Divider, Flex, Text, useDisclosure} from "@chakra-ui/react";
+import {
+  Button,
+  Divider,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerOverlay,
+  Flex,
+  Text,
+  useDisclosure
+} from "@chakra-ui/react";
 import SelectModel from "@pages/home/chat-agent/AgentInfo/SelectModel";
-import React, {useContext, useMemo} from "react";
-import {AgentContext} from "@pages/home/provider";
-import {formatCurrency} from "@utils/format.ts";
+import React, { useContext, useMemo } from "react";
+import { AgentContext } from "@pages/home/provider";
+import { formatCurrency } from "@utils/format.ts";
 import Percent24h from "@components/Percent";
 import InfoTooltip from "@components/InfoTooltip";
-import {AgentType} from "@pages/home/list-agent";
+import { AgentType } from "@pages/home/list-agent";
 import HeaderWallet from "@components/header/wallet";
 import cx from 'clsx';
 import AgentOnChainInfo from "@pages/home/trade-agent/onchain-info";
 import BaseModal from "@components/BaseModal";
 import ExportPrivateKey from "@pages/home/chat-agent/ExportPrivateKey";
+import TradeAgent from "@pages/home/trade-agent";
+import AgentTradeProvider from "@pages/home/trade-agent/provider";
 
 const AgentInfo = () => {
   const {
@@ -28,6 +41,7 @@ const AgentInfo = () => {
   } = useContext(AgentContext);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isOpenDrawer, onOpen: onOpenDrawer, onClose: onCloseDrawer } = useDisclosure();
 
   const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
@@ -106,8 +120,8 @@ const AgentInfo = () => {
                  </Button>
               )
            }
-           <Button className={s.btnBuy} onClick={() => setIsTrade((v) => !v)}>
-             {isTrade ? "Chat" : "Buy"}
+           <Button className={s.btnBuy} onClick={onOpenDrawer}>
+             Buy
            </Button>
          </Flex>
          <Flex minW={"350px"} justifyContent={"flex-end"} position={"absolute"} right={"16px"}>
@@ -122,6 +136,21 @@ const AgentInfo = () => {
        >
          <ExportPrivateKey />
        </BaseModal>
+       <Drawer
+          isOpen={isOpenDrawer}
+          placement="right"
+          onClose={onCloseDrawer}
+       >
+         <DrawerOverlay />
+         <DrawerContent>
+           <DrawerCloseButton />
+           <DrawerBody>
+             <AgentTradeProvider>
+               <TradeAgent />
+             </AgentTradeProvider>
+           </DrawerBody>
+         </DrawerContent>
+       </Drawer>
      </>
   );
 };
