@@ -933,7 +933,7 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 								model = "Wan-I2V"
 								promptByte, _ := json.Marshal(map[string]interface{}{
 									"prompt": twitterPost.ExtractContent,
-									"url":    twitterPost.ExtractContent,
+									"url":    twitterPost.ExtractMediaContent,
 								})
 								prompt = string(promptByte)
 							}
