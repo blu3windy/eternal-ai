@@ -19,7 +19,7 @@ const AgentItem = ({ token }: IProps) => {
       if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.Model].includes(selectedAgent.agent_type)) {
          return token?.personality;
       } else {
-         token?.token_desc || token?.twitter_info?.description;
+         return token?.token_desc || token?.twitter_info?.description;
       }
    }, [token]);
 
