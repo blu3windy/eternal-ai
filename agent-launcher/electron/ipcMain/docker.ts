@@ -25,51 +25,63 @@ const ipcMainDocker = () => {
       try {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
+         const folderPathDocker = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER);
 
-         const docker = await getDocker();
-         console.log(EMIT_EVENT_NAME.DOCKER_BUILD, {
-            folderPath
-         });
+         const containers = [
+            "agent-js:launcher-agent-js:",
+            "agent-router:launcher-agent-router:33030",
+         ];
+         const containerArgs = containers.map(c => `--container "${c}"`).join(' ');
 
-         await command.execAsyncDockerDir(
-            `cd "${folderPath}" && ${docker} build -t ${DOCKER_SERVER_JS} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
+         await command.execAsyncStream(
+            `bash "${folderPathDocker}/${SCRIPTS_NAME.DOCKER_BUILD_SCRIPT}" --folder-path "${folderPath}" ${containerArgs}`
          );
 
-         await command.execAsyncDockerDir(
-            `cd "${folderPath}" && ${docker} build -t ${DOCKER_ROUTER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
-         );
-
-         try {
-            await command.execAsyncDockerDir(
-               `${docker} network create network-agent-external`
-            );
-         } catch (error) {
-            console.log('error', error);
-         }
-
-         try {
-            await command.execAsyncDockerDir(
-               `${docker} stop ${DOCKER_ROUTER_NAME}`
-            );
-         } catch (error) {
-            console.log('error', error);
-         }
-
-         try {
-            await command.execAsyncDockerDir(
-               `${docker} rm ${DOCKER_ROUTER_NAME}`
-            );
-         } catch (error) {
-            console.log('error', error);
-         }
-
-         try {
-            await command.execAsyncDockerDir(
-               `${docker} run -d -p 33030:80 --network=network-agent-external --add-host=localmodel:host-gateway --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
-            );
-         } catch (error) {
-            console.log('error', error);
-         }
+         //
+         // const docker = await getDocker();
+         // console.log(EMIT_EVENT_NAME.DOCKER_BUILD, {
+         //    folderPath
+         // });
+         //
+         // await command.execAsyncDockerDir(
+         //    `cd "${folderPath}" && ${docker} build -t ${DOCKER_SERVER_JS} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
+         // );
+         //
+         // await command.execAsyncDockerDir(
+         //    `cd "${folderPath}" && ${docker} build -t ${DOCKER_ROUTER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
+         // );
+         //
+         // try {
+         //    await command.execAsyncDockerDir(
+         //       `${docker} network create network-agent-external`
+         //    );
+         // } catch (error) {
+         //    console.log('error', error);
+         // }
+         //
+         // try {
+         //    await command.execAsyncDockerDir(
+         //       `${docker} stop ${DOCKER_ROUTER_NAME}`
+         //    );
+         // } catch (error) {
+         //    console.log('error', error);
+         // }
+         //
+         // try {
+         //    await command.execAsyncDockerDir(
+         //       `${docker} rm ${DOCKER_ROUTER_NAME}`
+         //    );
+         // } catch (error) {
+         //    console.log('error', error);
+         // }
+         //
+         // try {
+         //    await command.execAsyncDockerDir(
+         //       `${docker} run -d -p 33030:80 --network=network-agent-external --add-host=localmodel:host-gateway --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
+         //    );
+         // } catch (error) {
+         //    console.log('error', error);
+         // }
 
 
          // docker network create --internal network-agent-internal
@@ -80,6 +92,7 @@ const ipcMainDocker = () => {
          console.log('docker build done');
       } catch (error) {
          console.log('error', error);
+         throw error;
       }
    })
 
@@ -177,19 +190,6 @@ const ipcMainDocker = () => {
          }
       } catch (error) {
          console.log(error);
-      }
-   });
-
-   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_CHECK_RUNNING, async (_event, agentName: string, chainId: string) => {
-      try {
-         const dnsHost = `${chainId}-${agentName}`;
-         const docker = await getDocker();
-
-         const { stdout } = await command.execAsyncDockerDir(`${docker} inspect -f '{{.State.Status}}' ${dnsHost}`);
-         return stdout;
-      } catch (error) {
-         console.log(error);
-         return false;
       }
    });
 }

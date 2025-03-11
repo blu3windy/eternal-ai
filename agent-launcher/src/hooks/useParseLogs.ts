@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export type LOG_FUNCTION_NAME = "MODEL_INSTALL" | "INITIALIZE" | "DOCKER_INSTALL"
+export type LOG_FUNCTION_NAME = "MODEL_INSTALL" | "INITIALIZE" | "DOCKER_INSTALL" | "DOCKER_BUILD"
 
 type LogEntry = {
     type: "output" | "error";
