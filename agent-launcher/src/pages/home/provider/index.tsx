@@ -319,6 +319,7 @@ const AgentProvider: React.FC<
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await startDependAgents(agent);
+
             await handleRunDockerAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
             await handleInstallModelAgent();
@@ -330,7 +331,7 @@ const AgentProvider: React.FC<
 
          }
 
-         await sleep(5000);
+         await sleep(3000);
       } catch (e) {
          console.log('startAgent e', e);
       } finally {
@@ -353,7 +354,7 @@ const AgentProvider: React.FC<
 
          }
 
-         await sleep(5000);
+         await sleep(3000);
       } catch (e) {
          console.log('stopAgent e', e);
       } finally {
@@ -513,12 +514,10 @@ const AgentProvider: React.FC<
       if (!agent) return;
 
       try {
-         setIsStarting(true);
          await window.electronAPI.dockerRunAgent(agent?.agent_name, agent?.network_id.toString());
       } catch (e) {
          console.log('handleRunDockerAgent', e);
       } finally {
-         setIsStarting(false);
       }
    };
 
@@ -548,12 +547,10 @@ const AgentProvider: React.FC<
     if (!hash) return;
 
     try {
-      setIsStarting(true);
       await window.electronAPI.modelRun(hash);
     } catch (e) {
       console.log('handleRunModelAgent', e);
     } finally {
-      setIsStarting(false);
     }
   };
 
