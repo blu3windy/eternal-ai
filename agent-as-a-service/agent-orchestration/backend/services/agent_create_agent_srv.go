@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	io "io"
 	"net/http"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/lighthouse"
 	"github.com/sashabaranov/go-openai"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
@@ -169,9 +170,9 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 				return errs.NewError(err)
 			}
 
-			sort.Slice(tweetMentions.Tweets, func(i, j int) bool {
-				return tweetMentions.Tweets[i].CreatedAt < tweetMentions.Tweets[j].CreatedAt
-			})
+			//sort.Slice(tweetMentions.Tweets, func(i, j int) bool {
+			//	return tweetMentions.Tweets[i].CreatedAt < tweetMentions.Tweets[j].CreatedAt
+			//})
 
 			err = s.CreateAgentTwitterPostForGenerateVideo(daos.GetDBMainCtx(ctx), agent.ID, tweetMentions)
 			if err != nil {
@@ -594,6 +595,12 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 										continue
 									}
 
+									imageToVideoInfo := s.DetectTweetIsImageToVideo(v)
+									entityType := "text2video"
+									if imageToVideoInfo.IsImageToVideo {
+										entityType = "image2video"
+									}
+
 									postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
 									m := &models.AgentTwitterPost{
 										NetworkID:             agentInfo.NetworkID,
@@ -610,6 +617,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 										PostType:              models.AgentSnapshotPostActionTypeGenerateVideo,
 										IsMigrated:            true,
 										InferId:               "20250",
+										Type:                  entityType,
 									}
 
 									err = s.dao.Create(tx, m)
@@ -1386,6 +1394,62 @@ func (s *Service) ValidateTweetContentGenerateVideoWithLLM(ctx context.Context, 
 		IsGenerateVideo:      isGenerateVideo,
 		GenerateVideoContent: fullText,
 	}, nil
+}
+
+type TweetImageToVideo struct {
+	IsImageToVideo     bool
+	LighthouseImageUrl string
+}
+
+func (s *Service) UploadImageUrlToLighthouse(ctx context.Context, imageUrl string) (string, error) {
+	filename := fmt.Sprintf("%s", uuid.NewString())
+	resp, err := http.Get(imageUrl)
+	if err != nil {
+		return "", errs.NewError(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return "", errs.NewError(err)
+	}
+
+	cid, err := lighthouse.UploadDataWithRetry(s.conf.Lighthouse.Apikey, filename, body)
+	if err != nil {
+		return "", errs.NewError(err)
+	}
+
+	return cid, nil
+}
+
+func (s *Service) DetectTweetIsImageToVideo(item twitter.TweetLookup) *TweetImageToVideo {
+	isImageToVideo := false
+	cid := ""
+	var err error
+	if len(item.AttachmentMedia) > 0 {
+		fmt.Println("medias", item.AttachmentMedia)
+		firstMedia := item.AttachmentMedia[0]
+		if firstMedia.Type == "photo" {
+			isImageToVideo = true
+
+			// TODO first
+			return &TweetImageToVideo{
+				IsImageToVideo:     isImageToVideo,
+				LighthouseImageUrl: firstMedia.URL,
+			}
+
+			cid, err = s.UploadImageUrlToLighthouse(context.Background(), firstMedia.URL)
+			if err == nil && cid != "" {
+				isImageToVideo = true
+			}
+		}
+	}
+
+	return &TweetImageToVideo{
+		IsImageToVideo:     isImageToVideo,
+		LighthouseImageUrl: lighthouse.IPFSGateway + cid,
+	}
 }
 
 func (s *Service) GetPromptFromTweetContentGenerateVideoWithLLM(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
