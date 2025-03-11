@@ -318,9 +318,11 @@ type (
 )
 
 const (
-	AgentTwitterPostTypePost     AgentTwitterPostType = "post"
-	AgentTwitterPostTypeReview   AgentTwitterPostType = "review"
-	AgentTwitterPostTypeUnReview AgentTwitterPostType = "unreview"
+	AgentTwitterPostTypePost        AgentTwitterPostType = "post"
+	AgentTwitterPostTypeReview      AgentTwitterPostType = "review"
+	AgentTwitterPostTypeUnReview    AgentTwitterPostType = "unreview"
+	AgentTwitterPostTypeText2Video  AgentTwitterPostType = "text2video"
+	AgentTwitterPostTypeImage2video AgentTwitterPostType = "image2video"
 
 	AgentTwitterPostStatusNew              AgentTwitterPostStatus = "new"
 	AgentTwitterPostWaitSubmitVideoInfer   AgentTwitterPostStatus = "wait_submit_video_infer"
@@ -357,10 +359,11 @@ type AgentTwitterPost struct {
 	PostAt                *time.Time `gorm:"index"`
 	Content               string     `gorm:"type:longtext"`
 	ExtractContent        string     `gorm:"type:longtext"`
-	InferData             string     `gorm:"type:longtext"`
-	ReplyContent          string     `gorm:"type:longtext"`
-	ReplyPostId           string     `gorm:"index"`
-	ReplyPostIds          string     `gorm:"type:text"`
+	ExtractMediaContent   string
+	InferData             string `gorm:"type:longtext"`
+	ReplyContent          string `gorm:"type:longtext"`
+	ReplyPostId           string `gorm:"index"`
+	ReplyPostIds          string `gorm:"type:text"`
 	RePostId              string
 	ImageUrl              string
 	InferTxHash           string
