@@ -719,11 +719,12 @@ async def get_relevent_information_v2(
     tweet_id: str = None,
     tweets: List[TweetObject] = None,
     task_name: str = "N/A",
+    use_bing_search: bool = True,
 ) -> Response[StructuredInformationDto]:
-    if tweets is None:
-        if tweet_id is None:
-            return Response(error="Either tweet_id or tweets must be provided")
+    if tweets is None and tweet_id is None:
+        return Response(error="Either tweet_id or tweets must be provided")
 
+    if tweets is None:
         resp: Response[ExtendedTweetInfosDto] = await sync2async(
             get_full_context_by_tweet_id
         )(tweet_id)
@@ -757,9 +758,11 @@ async def get_relevent_information_v2(
     knowledge = await search_from_db(
         kn_base, retrieval_query, top_k=5, threshold=0.85
     )
-    bing_news = await sync2async(search_from_bing)(
-        retrieval_query, top_k=10, task_name=task_name
-    )
+    bing_news = []
+    if use_bing_search:
+        bing_news = await sync2async(search_from_bing)(
+            retrieval_query, top_k=10, task_name=task_name
+        )
     twitter_resp: Response[TweetsDto] = await sync2async(search_twitter_news)(
         retrieval_query,
         limit_api_results=10,

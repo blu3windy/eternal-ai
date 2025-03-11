@@ -63,6 +63,7 @@ class ReplyGameSubtask(ReplySubtaskBase):
             self.kn_base,
             tweets=tweets_context,
             task_name=self.log.task,
+            use_bing_search=False,
         )
         knowledge_v2 = (
             StructuredInformation(knowledge=[], news=[])
