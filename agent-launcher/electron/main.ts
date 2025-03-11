@@ -1,31 +1,29 @@
-import { app, BrowserWindow, screen, autoUpdater, dialog } from "electron";
+import { app, BrowserWindow, screen, dialog } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
+import { autoUpdater } from "electron-updater";
 
-const server = "https://electron-update-server-production.up.railway.app/updates/";
-const feedURL = `${server}latest.yml`;
+if (process.env.NODE_ENV === "development") {
+  autoUpdater.autoDownload = false;
+  autoUpdater.allowDowngrade = true;
+  autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
+}
 
-autoUpdater.setFeedURL({ url: feedURL });
-
+autoUpdater.setFeedURL({
+  provider: "generic",
+  url: "https://electron-update-server-production.up.railway.app/updates/",
+});
 autoUpdater.on("update-available", () => {
-  dialog.showMessageBox({
-    type: "info",
-    title: "Update Available",
-    message: "A new version is downloading...",
-  });
+  console.log("Update available!");
 });
 
-autoUpdater.on("update-downloaded", () => {
-  dialog
-    .showMessageBox({
-      type: "info",
-      title: "Update Ready",
-      message: "Restart the app to apply updates.",
-    })
-    .then(() => {
-      autoUpdater.quitAndInstall();
-    });
+autoUpdater.on("update-not-available", () => {
+  console.log("No update available.");
+});
+
+autoUpdater.on("error", (err) => {
+  console.error("Update error:", err);
 });
 
 // const require = createRequire(import.meta.url);
@@ -58,7 +56,9 @@ runIpcMain();
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
-  autoUpdater.checkForUpdates();
+  setTimeout(() => {
+    autoUpdater.checkForUpdates();
+  }, 5000);
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "app-logo.png"),
     // icon: path.join(__dirname, "../public/icon.png"), // Use icon from public
