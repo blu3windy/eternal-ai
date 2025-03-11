@@ -6,6 +6,7 @@ import { AgentContext } from "../../provider";
 import { DefaultAvatar } from "../../../../components/DefaultAvatar";
 import { formatCurrency, labelAmountOrNumberAdds } from "../../../../utils/format.ts";
 import cs from "clsx";
+import { AgentType } from "@pages/home/list-agent";
 
 interface IProps {
   token: IAgentToken;
@@ -14,7 +15,13 @@ interface IProps {
 const AgentItem = ({ token }: IProps) => {
    const { selectedAgent, setSelectedAgent, installedUtilityAgents } = useContext(AgentContext);
 
-   const description = token?.token_desc || token?.twitter_info?.description;
+   const description = useMemo(() => {
+      if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.Model].includes(selectedAgent.agent_type)) {
+         return token?.personality;
+      } else {
+         token?.token_desc || token?.twitter_info?.description;
+      }
+   }, [token]);
 
    const avatarUrl
     = token?.thumbnail
