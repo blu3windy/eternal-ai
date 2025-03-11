@@ -68,6 +68,15 @@ const ipcMainSafeFile = () => {
          return { error: error.message };
       }
    });
+   ipcMain.handle(EMIT_EVENT_NAME.REMOVE_FOLDERS, async (_, folderName) => {
+      try {
+         const _appDir = path.join(appDir, folderName);
+         await fs.rm(_appDir, { recursive: true, force: true });
+         return true;
+      } catch (error: any) {
+         return false;
+      }
+   });
 };
 
 async function getFolders(folderPath: string) {
