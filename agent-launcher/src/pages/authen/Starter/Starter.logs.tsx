@@ -79,7 +79,7 @@ const StarterLogs = () => {
    return (
       <Box 
          position="relative" 
-         height="192px"
+         height="256px"
          width="100%"
          maxWidth="500px"
          overflow="hidden"
