@@ -1,6 +1,6 @@
 import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState, } from "react";
 import { ETradePlatform, IAgentContext } from "./interface";
-import { IAgentToken, IChainConnected, } from "../../../services/api/agents-token/interface.ts";
+import { IAgentToken, } from "../../../services/api/agents-token/interface.ts";
 import { BASE_CHAIN_ID } from "@constants/chains";
 import { checkFileExistsOnLocal, getFilePathOnLocal, writeFileToLocal, } from "@contract/file";
 import CAgentTokenAPI from "../../../services/api/agents-token";
@@ -22,7 +22,6 @@ const initialValue: IAgentContext = {
    setSelectedAgent: () => {},
    currentModel: undefined,
    setCurrentModel: () => {},
-   chainList: [],
    installAgent: () => {},
    startAgent: () => {},
    stopAgent: () => {},
@@ -60,7 +59,6 @@ const AgentProvider: React.FC<
    const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(
       undefined
    );
-   const [chainList, setChainList] = useState<IChainConnected[]>([]);
    const [isInstalling, setIsInstalling] = useState(false);
    const [isStarting, setIsStarting] = useState(false);
    const [isStopping, setIsStopping] = useState(false);
@@ -75,10 +73,7 @@ const AgentProvider: React.FC<
    const [isModelRequirementSetup, setIsModelRequirementSetup] = useState(false);
    const [installedModelAgents, setInstalledModelAgents] = useState<IAgentToken[]>([]);
 
-   const [currentModel, setCurrentModel] = useState<{
-    name: string;
-    id: string;
-  } | null>(null);
+   const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
 
    const { genAgentSecretKey } = useAuth();
 
@@ -209,23 +204,23 @@ const AgentProvider: React.FC<
    }, [selectedAgent?.id]);
 
 
-   useEffect(() => {
-      if (selectedAgent && chainList) {
-         const supportModelObj = chainList?.find((v) =>
-            compareString(v.chain_id, selectedAgent.network_id)
-         )?.support_model_names;
-
-         if (supportModelObj) {
-            setCurrentModel({
-               name:
-              selectedAgent.agent_base_model || Object.keys(supportModelObj)[0],
-               id:
-              supportModelObj[selectedAgent.agent_base_model]
-              || Object.values(supportModelObj)[0],
-            });
-         }
-      }
-   }, [selectedAgent, chainList]);
+   // useEffect(() => {
+   //    if (selectedAgent && chainList) {
+   //       const supportModelObj = chainList?.find((v) =>
+   //          compareString(v.chain_id, selectedAgent.network_id)
+   //       )?.support_model_names;
+   //
+   //       if (supportModelObj) {
+   //          setCurrentModel({
+   //             name:
+   //            selectedAgent.agent_base_model || Object.keys(supportModelObj)[0],
+   //             id:
+   //            supportModelObj[selectedAgent.agent_base_model]
+   //            || Object.values(supportModelObj)[0],
+   //          });
+   //       }
+   //    }
+   // }, [selectedAgent, chainList]);
 
    const fetchChainList = useCallback(async () => {
       const params: any = {
@@ -591,7 +586,6 @@ const AgentProvider: React.FC<
          setSelectedAgent,
          currentModel,
          setCurrentModel,
-         chainList,
          installAgent,
          startAgent,
          stopAgent,
@@ -621,7 +615,6 @@ const AgentProvider: React.FC<
       setSelectedAgent,
       currentModel,
       setCurrentModel,
-      chainList,
       installAgent,
       startAgent,
       stopAgent,
