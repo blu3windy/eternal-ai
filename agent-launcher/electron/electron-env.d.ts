@@ -52,6 +52,8 @@ interface IElectronAPI {
   modelDownloadedList: () => Promise<ModelInfo[]>
   modelCheckRunning: () => Promise<string | undefined>
   modelInstallBaseModel: (hash: string) => Promise<void>
+  modelDelete: (hash: string) => Promise<void>
+  modelStop: (hash: string) => Promise<void>
 
   sendCommand: (cmd: string) => void
   onCommandEvent: (callback: (data: any) => void) => void

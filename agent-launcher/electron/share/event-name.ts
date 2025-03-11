@@ -24,6 +24,8 @@ const EMIT_EVENT_NAME = {
    MODEL_INSTALL: "safe-model-install",
    MODEL_RUN: "safe-model-run",
    MODEL_DOWNLOADED_LIST: "safe-model-check-install",
+   MODEL_DELETE: "safe-model-delete",
+   MODEL_STOP: "safe-model-stop",
    MODEL_CHECK_RUNNING: "safe-model-check-running",
    MODEL_INSTALL_BASE_MODEL: "safe-install-base-model",
 
