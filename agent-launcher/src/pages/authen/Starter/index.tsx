@@ -8,6 +8,7 @@ import BackgroundWrapper from "@components/BackgroundWrapper";
 import LoadingText from "@components/LoadingText";
 import useParseLogs from "@hooks/useParseLogs.ts";
 import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
+import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 
 
 interface IProps {
@@ -61,6 +62,8 @@ const Starter = (props: IProps) => {
          console.time("DOCKER_BUILD");
          await window.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
+
+         await window.electronAPI.modelInstallBaseModel(MODEL_HASH);
 
          // await window.electronAPI.modelStarter();
 

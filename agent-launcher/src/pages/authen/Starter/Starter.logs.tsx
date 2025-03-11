@@ -13,7 +13,7 @@ const StarterLogs = () => {
    const [userScrolled, setUserScrolled] = useState(false);
    
    const { parsedLogs } = useParseLogs({
-      functionNames: ["INITIALIZE"],
+      functionNames: ["INITIALIZE", "MODEL_INSTALL"],
       keys: ["name", "message", "error"]
    });
 
@@ -88,18 +88,18 @@ const StarterLogs = () => {
                      minHeight="32px"  // Added to ensure minimum height
                   >
                      {/* Name section */}
-                     {log.values.name && (
-                        <Text
-                           color="gray.500"
-                           fontSize="14px"
-                           lineHeight="32px"
-                           width="150px"
-                           flexShrink={0}
-                           fontWeight="500"
-                        >
-                           {log.values.name}:
-                        </Text>
-                     )}
+                     {/*{log.values.name && (*/}
+                     {/*   <Text*/}
+                     {/*      color="gray.500"*/}
+                     {/*      fontSize="14px"*/}
+                     {/*      lineHeight="32px"*/}
+                     {/*      width="150px"*/}
+                     {/*      flexShrink={0}*/}
+                     {/*      fontWeight="500"*/}
+                     {/*   >*/}
+                     {/*      {log.values.name}:*/}
+                     {/*   </Text>*/}
+                     {/*)}*/}
 
                      {/* Message/Error section */}
                      {log.values.error ? (
@@ -127,18 +127,6 @@ const StarterLogs = () => {
                </motion.div>
             ))}
          </VStack>
-
-         {/* Bottom gradient */}
-         <Box
-            position="absolute"
-            bottom={0}
-            left={0}
-            right={0}
-            height="42px"
-            zIndex={2}
-            pointerEvents="none"
-            background="linear-gradient(180deg, rgba(255, 255, 255, 0.00) 0%, rgba(255, 255, 255, 0.85) 53.19%, #FFF 100%)"
-         />
       </Box>
    );
 };
