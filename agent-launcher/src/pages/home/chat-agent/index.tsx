@@ -115,7 +115,7 @@ function ChatAgent() {
                           className={s.installContainer}
                           direction={"column"}
                           // alignItems={"center"}
-                          // justifyContent={"center"}
+                          justifyContent={"center"}
                           w={"100%"}
                           gap={"32px"}
                        >

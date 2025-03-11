@@ -24,7 +24,7 @@ const HandleHome = () => {
 
   return (
     <Flex height={"100%"}>
-      <Box flex={1} maxW={"400px"}>
+      <Box flex={1} maxW={"460px"}>
         <AgentsList />
       </Box>
       <Box
@@ -34,18 +34,15 @@ const HandleHome = () => {
         )}
         flex={2}
       >
-        <Box p={"16px"}>
-          <AgentInfo />
-        </Box>
+         <AgentInfo />
 
         {isTrade ? (
           <AgentTradeProvider>
             <TradeAgent />
           </AgentTradeProvider>
         ) : (
-          <Flex w={"100%"}>
+          <Flex w={"100%"} minW={'700px'} maxW={"800px"} mx={"auto"}>
             <ChatAgent />
-            <Box minW={"350px"} />
           </Flex>
         )}
       </Box>
