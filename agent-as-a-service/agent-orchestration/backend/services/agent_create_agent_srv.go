@@ -1320,46 +1320,61 @@ func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userNam
 }
 
 func (s *Service) ValidateTweetContentGenerateVideoWithLLM(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
-	request := openai.ChatCompletionRequest{
-		Model: "Llama3.3",
-		Messages: []openai.ChatCompletionMessage{
-			openai.ChatCompletionMessage{
-				Role:    "system",
-				Content: "You are an advanced AI tasked with accurately detecting if a tweet on X (formerly Twitter) mentions generating or creating a video. Pay close attention to the phrasing used by the user, ensuring that the tweet contains imperative verbs such as \\\"create,\\\" \\\"generate,\\\" \\\"make,\\\" or \\\"build,\\\" as these indicate a command to generate or create a video. Do not consider tweets that only discuss video generation in a descriptive or non-imperative manner.\\r\\n\\r\\nLook for phrases such as:\\r\\n\\r\\n- \\\"create video\\\"\\r\\n- \\\"generate video\\\"\\r\\n- \\\"make video\\\"\\r\\n- \\\"build video\\\"\\r\\n- \\\"creat video\\\"\\r\\n- \\\"generaet video\\\"\\r\\n\\r\\nAlso, account for underscore-based versions of these phrases, such as:\\r\\n\\r\\n- \\\"create_video\\\"\\r\\n- \\\"generate_video\\\"\\r\\n- \\\"make_video\\\"\\r\\n- \\\"build_video\\\"\\r\\n- \\\"creat_video\\\"\\r\\n- \\\"generaet_video\\\"\\r\\n\\r\\nAnd consider hyphenated versions, such as:\\r\\n\\r\\n- \\\"create-video\\\"\\r\\n- \\\"generate-video\\\"\\r\\n- \\\"make-video\\\"\\r\\n- \\\"build-video\\\"\\r\\n- \\\"creat-video\\\"\\r\\n- \\\"generaet-video\\\"\\r\\n\\r\\nBe mindful of different capitalizations and possible typos (e.g., \\\"Create video,\\\" \\\"Generate video,\\\" \\\"Create-Video,\\\" \\\"Generate-Video,\\\" \\\"Create_Video,\\\" \\\"Generate_Video,\\\" etc.).\\r\\n\\r\\nMake sure the detected phrases are in the imperative form, indicating a direct action or command. Tweets that simply mention or discuss video creation in a non-imperative sense should **not** be flagged as related to generating a video.\\r\\n\\r\\nBefore answering, carefully evaluate the content of the tweet, ensuring that it directly references video creation or generation in an imperative manner. Respond with the highest accuracy possible.\\r\\n\\r\\nReturn the response in the following JSON format:\\r\\n```json\\r\\n{\\r\\n  \\\"is_generate_video\\\": true\\/false\\r\\n}\\r\\n```\\r\\nYour response should reflect whether the tweet is related to video generation or not. Think critically about context, phrasing, and verb form to ensure the most accurate determination.JSON",
-			}, openai.ChatCompletionMessage{
-				Role:    "user",
-				Content: fullText,
+	listSystemPrompts := []string{
+		"You are an advanced AI tasked with accurately detecting if a tweet on X (formerly Twitter) mentions generating or creating a video. Pay close attention to the phrasing used by the user, ensuring that the tweet contains imperative verbs such as \\\"create,\\\" \\\"generate,\\\" \\\"make,\\\" or \\\"build,\\\" as these indicate a command to generate or create a video. Do not consider tweets that only discuss video generation in a descriptive or non-imperative manner.\\r\\n\\r\\nLook for phrases such as:\\r\\n\\r\\n- \\\"create video\\\"\\r\\n- \\\"generate video\\\"\\r\\n- \\\"make video\\\"\\r\\n- \\\"build video\\\"\\r\\n- \\\"creat video\\\"\\r\\n- \\\"generaet video\\\"\\r\\n\\r\\nAlso, account for underscore-based versions of these phrases, such as:\\r\\n\\r\\n- \\\"create_video\\\"\\r\\n- \\\"generate_video\\\"\\r\\n- \\\"make_video\\\"\\r\\n- \\\"build_video\\\"\\r\\n- \\\"creat_video\\\"\\r\\n- \\\"generaet_video\\\"\\r\\n\\r\\nAnd consider hyphenated versions, such as:\\r\\n\\r\\n- \\\"create-video\\\"\\r\\n- \\\"generate-video\\\"\\r\\n- \\\"make-video\\\"\\r\\n- \\\"build-video\\\"\\r\\n- \\\"creat-video\\\"\\r\\n- \\\"generaet-video\\\"\\r\\n\\r\\nBe mindful of different capitalizations and possible typos (e.g., \\\"Create video,\\\" \\\"Generate video,\\\" \\\"Create-Video,\\\" \\\"Generate-Video,\\\" \\\"Create_Video,\\\" \\\"Generate_Video,\\\" etc.).\\r\\n\\r\\nMake sure the detected phrases are in the imperative form, indicating a direct action or command. Tweets that simply mention or discuss video creation in a non-imperative sense should **not** be flagged as related to generating a video.\\r\\n\\r\\nBefore answering, carefully evaluate the content of the tweet, ensuring that it directly references video creation or generation in an imperative manner. Respond with the highest accuracy possible.\\r\\n\\r\\nReturn the response in the following JSON format:\\r\\n```json\\r\\n{\\r\\n  \\\"is_generate_video\\\": true\\/false\\r\\n}\\r\\n```\\r\\nYour response should reflect whether the tweet is related to video generation or not. Think critically about context, phrasing, and verb form to ensure the most accurate determination.JSON",
+	}
+	listStatus := []bool{}
+	for _, systemPrompt := range listSystemPrompts {
+		request := openai.ChatCompletionRequest{
+			Model: "Llama3.3",
+			Messages: []openai.ChatCompletionMessage{
+				openai.ChatCompletionMessage{
+					Role:    "system",
+					Content: systemPrompt,
+				}, openai.ChatCompletionMessage{
+					Role:    "user",
+					Content: fullText,
+				},
 			},
-		},
+		}
+		isGenerateVideo := false
+		response, _, code, err := helpers.HttpRequest(s.conf.KnowledgeBaseConfig.DirectServiceUrl, "POST",
+			map[string]string{
+				"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
+			}, request)
+		if err != nil {
+			isGenerateVideo = false
+		}
+		if code != http.StatusOK {
+			isGenerateVideo = false
+		}
+		res := openai.ChatCompletionResponse{}
+		err = json.Unmarshal(response, &res)
+		if err != nil {
+			isGenerateVideo = false
+		}
+
+		if len(res.Choices) > 0 {
+			result := map[string]bool{}
+			res.Choices[0].Message.Content = strings.Replace(res.Choices[0].Message.Content, "```json", "", 1)
+			res.Choices[0].Message.Content = strings.Replace(res.Choices[0].Message.Content, "```", "", 1)
+			err = json.Unmarshal([]byte(res.Choices[0].Message.Content), &result)
+			if err != nil {
+				isGenerateVideo = false
+			}
+			isGenerateVideo = result["is_generate_video"]
+		}
+		listStatus = append(listStatus, isGenerateVideo)
 	}
-	response, _, code, err := helpers.HttpRequest(s.conf.KnowledgeBaseConfig.DirectServiceUrl, "POST",
-		map[string]string{
-			"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
-		}, request)
-	if err != nil {
-		return nil, err
-	}
-	if code != http.StatusOK {
-		return nil, fmt.Errorf("err while get response code:%v ,body:%v", code, string(response))
-	}
-	res := openai.ChatCompletionResponse{}
-	err = json.Unmarshal(response, &res)
-	if err != nil {
-		return nil, err
+	score := 0
+	for _, status := range listStatus {
+		if status {
+			score++
+		}
 	}
 	isGenerateVideo := false
-	if len(res.Choices) > 0 {
-		result := map[string]bool{}
-		res.Choices[0].Message.Content = strings.Replace(res.Choices[0].Message.Content, "```json", "", 1)
-		res.Choices[0].Message.Content = strings.Replace(res.Choices[0].Message.Content, "```", "", 1)
-		err = json.Unmarshal([]byte(res.Choices[0].Message.Content), &result)
-		if err != nil {
-			return &models.TweetParseInfo{
-				IsGenerateVideo:      false,
-				GenerateVideoContent: fullText,
-			}, nil
-		}
-		isGenerateVideo = result["is_generate_video"]
+	if score*3 >= len(listStatus)*2 {
+		isGenerateVideo = true
 	}
 	/*if isGenerateVideo {
 		return s.GetPromptFromTweetContentGenerateVideoWithLLM(ctx, userName, fullText)
@@ -1367,7 +1382,7 @@ func (s *Service) ValidateTweetContentGenerateVideoWithLLM(ctx context.Context, 
 	return &models.TweetParseInfo{
 		IsGenerateVideo:      isGenerateVideo,
 		GenerateVideoContent: fullText,
-	}, err
+	}, nil
 }
 
 func (s *Service) GetPromptFromTweetContentGenerateVideoWithLLM(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
