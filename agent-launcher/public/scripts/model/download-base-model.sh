@@ -26,17 +26,19 @@ filter_and_log() {
                 if [ "$current" -eq 0 ]; then
                     percentage=5
                 else
-                    # Calculate percentage with floating point using awk
-                    percentage=$(awk "BEGIN { printf \"%.0f\", (($current * 95) / $total) + 5 }")
+                    percentage=$(awk "BEGIN { printf \"%.0f\", (($current * 98) / $total) + 2 }")
                 fi
-                
-                log_message "Downloading ${percentage}%"
+
+                # Create fancy progress message
+                # progress_bar="▰▰▰▱▱▱▱▱▱▱"  # Example progress bar
+                log_message "⚡ Downloading model... ${percentage}% | ${current}/${total} files"
             else
                 log_message "$line"
             fi
         fi
     done
 }
+
 # Parse command line arguments
 FOLDER_PATH=""
 MODEL_HASH=""
