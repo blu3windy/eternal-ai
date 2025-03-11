@@ -37,7 +37,7 @@ else
     log_message "Docker CLI is already installed"
 
     # First check if Docker is already running
-    if docker info &> /dev/null; then
+    if docker ps &> /dev/null; then
         log_message "Docker is already running successfully"
         exit 0
     fi
