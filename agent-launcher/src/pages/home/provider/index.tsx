@@ -46,6 +46,7 @@ const initialValue: IAgentContext = {
    requireInstall: false,
    isModelRequirementSetup: false,
    installedModelAgents: [],
+   installedAgents: undefined
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);

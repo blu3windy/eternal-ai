@@ -104,9 +104,8 @@
     ],
     "publish": [
       {
-        "provider": "github",
-        "owner": "your-github-username",
-        "repo": "your-repo-name"
+        "provider": "generic",
+        "url": "https://electron-update-server-production.up.railway.app/updates/"
       }
     ],
     "files": [
