@@ -8,6 +8,7 @@ import (
 	io "io"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -170,9 +171,9 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 				return errs.NewError(err)
 			}
 
-			//sort.Slice(tweetMentions.Tweets, func(i, j int) bool {
-			//	return tweetMentions.Tweets[i].CreatedAt < tweetMentions.Tweets[j].CreatedAt
-			//})
+			sort.Slice(tweetMentions.Tweets, func(i, j int) bool {
+				return tweetMentions.Tweets[i].CreatedAt < tweetMentions.Tweets[j].CreatedAt
+			})
 
 			err = s.CreateAgentTwitterPostForGenerateVideo(daos.GetDBMainCtx(ctx), agent.ID, tweetMentions)
 			if err != nil {
