@@ -45,19 +45,21 @@ export const SortBy = [
 export enum FilterOption {
   All = 'all',
   Model = 'model',
-  NonModel = 'non-model',
+  Utility = 'non-model',
   Installed = 'installed',
   NonInstalled = 'non-installed',
   Infra = 'infra',
+   Character = 'character',
 }
 
 export const FilterBy = [
    { value: FilterOption.All, label: 'All', description: 'All available agents.' },
+   { value: FilterOption.Character, label: 'Character', description: 'Agents providing APIs or services post and engage automatically on social networks.' },
    { value: FilterOption.Model, label: 'Model agent', description: 'Agents providing direct access to specific AI models (LLaMA, DeepSeek, Hermes,…).' },
-   { value: FilterOption.NonModel, label: 'Utility agent', description: 'Task-focused agents built with Python or JavaScript.' },
-   { value: FilterOption.Installed, label: 'Installed', description: 'Agents currently installed.' },
-   { value: FilterOption.NonInstalled, label: 'Available', description: 'Agents available for installation.' },
+   { value: FilterOption.Utility, label: 'Utility agent', description: 'Task-focused agents built with Python or JavaScript.' },
    { value: FilterOption.Infra, label: 'Infra', description: 'Agents providing APIs or services to customize and manage other agents.' },
+   { value: FilterOption.Installed, label: 'Installed', description: 'Agents currently installed.' },
+   // { value: FilterOption.NonInstalled, label: 'Available', description: 'Agents available for installation.' },
 ];
 
 export enum AgentType {
@@ -141,16 +143,15 @@ const AgentsList = () => {
             } else if (FilterOption.NonInstalled === refParams.current.filter) {
                params.installed = false;
             }
-         } else if ([FilterOption.NonModel].includes(refParams.current.filter)) {
-            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].join(',');
+         } else if ([FilterOption.Character].includes(refParams.current.filter)) {
+            params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
          } else if ([FilterOption.Model].includes(refParams.current.filter)) {
             params.agent_types = [AgentType.Model].join(',');
+         } else if ([FilterOption.Utility].includes(refParams.current.filter)) {
+            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython].join(',');
          } else if ([FilterOption.Infra].includes(refParams.current.filter)) {
             params.agent_types = [AgentType.Infra].join(',');
          }
-        //  } else if ([FilterOption.Popular].includes(refParams.current.filter)) {
-
-        //  }
 
          const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
 
