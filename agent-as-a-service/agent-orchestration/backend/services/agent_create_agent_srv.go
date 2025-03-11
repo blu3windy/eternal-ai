@@ -601,6 +601,11 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 									if imageToVideoInfo.IsImageToVideo {
 										entityType = models.AgentTwitterPostTypeImage2video
 										extractMediaContent = imageToVideoInfo.LighthouseImageUrl
+										lastIndexOfHTTPs := strings.LastIndex(tokenInfo.GenerateVideoContent, "https://")
+										if lastIndexOfHTTPs > 0 {
+											tokenInfo.GenerateVideoContent = tokenInfo.GenerateVideoContent[:lastIndexOfHTTPs]
+											tokenInfo.GenerateVideoContent = strings.TrimSpace(tokenInfo.GenerateVideoContent)
+										}
 									}
 
 									postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
