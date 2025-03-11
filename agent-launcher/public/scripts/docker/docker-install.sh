@@ -59,14 +59,14 @@ if ! docker info &> /dev/null; then
     fi
 fi
 
-# Step 4: Start Colima
-log_message "Starting Colima Docker runtime..."
-if colima start; then
-    log_message "Colima started successfully"
-else
-    log_error "Colima failed to start"
-    exit 1
-fi
+## Step 4: Start Colima
+#log_message "Starting Colima Docker runtime..."
+#if colima start; then
+#    log_message "Colima started successfully"
+#else
+#    log_error "Colima failed to start"
+#    exit 1
+#fi
 
 # Final Docker check
 if docker info &> /dev/null; then
