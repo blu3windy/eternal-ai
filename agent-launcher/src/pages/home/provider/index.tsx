@@ -15,6 +15,7 @@ import uniq from "lodash.uniq";
 import CAgentContract from "@contract/agent/index.ts";
 import { AgentType, SortOption } from "@pages/home/list-agent";
 import sleep from "@utils/sleep.ts";
+import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 
 const initialValue: IAgentContext = {
    loading: false,
@@ -231,7 +232,7 @@ const AgentProvider: React.FC<
          chain: '',
       };
       const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
-      const installedHash = ['bafkreic5e3lsc3bg4pnb3qpiqz2732pjqkbn2wv5ar3ilpxykd45nzb6za'];
+      const installedHash = [MODEL_HASH];
 
       const agentHashes = await Promise.all(
          newTokens.map(t => getModelAgentHash(t))
