@@ -1,5 +1,7 @@
 /// <reference types="vite-plugin-electron/electron-env" />
 
+import { ModelInfo } from "./share/model.ts";
+
 declare namespace NodeJS {
   interface ProcessEnv {
     /**
@@ -47,7 +49,7 @@ interface IElectronAPI {
   modelStarter: () => Promise<void>
   modelInstall: (hash: string) => Promise<void>
   modelRun: (hash: string) => Promise<void>
-  modelCheckInstall: (hashs: string[]) => Promise<{ [key as string]: boolean }>
+  modelDownloadedList: () => Promise<ModelInfo[]>
   modelCheckRunning: () => Promise<string | undefined>
   modelInstallBaseModel: (hash: string) => Promise<void>
 
