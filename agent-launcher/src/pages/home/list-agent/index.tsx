@@ -128,7 +128,7 @@ const AgentsList = () => {
             limit: refParams.current.limit,
             sort_col: refParams.current.sort,
             search: refParams.current.search,
-            filter_col: refParams.current.filter,
+            // filter_col: refParams.current.filter,
             chain: '',
          };
 
