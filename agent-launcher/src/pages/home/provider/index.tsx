@@ -132,7 +132,7 @@ const AgentProvider: React.FC<
       }
    }, [selectedAgent?.id]);
 
-   const intervalCheckAgentRunning = (agent) => {
+   const intervalCheckAgentRunning = (agent: IAgentToken) => {
       if (refInterval.current) {
          clearInterval(refInterval.current);
       }
@@ -144,10 +144,8 @@ const AgentProvider: React.FC<
 
    useEffect(() => {
       if (selectedAgent) {
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent.agent_type)
-            && installedUtilityAgents?.some?.(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
-            setIsInstalled(true);
-            cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id] });
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent.agent_type)) {
+            checkUtilityAgentInstalled(selectedAgent);
          } else if ([AgentType.Model].includes(selectedAgent.agent_type)) {
             checkModelAgentInstalled(selectedAgent);
          } else {
@@ -160,16 +158,12 @@ const AgentProvider: React.FC<
    const checkAgentRunning = async (agent) => {
       try {
          if(agent) {
-            // const res = await window.electronAPI.dockerCheckRunning(selectedAgent?.agent_name as any, selectedAgent?.network_id.toString() as any);
-            const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+            if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+               const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+               setIsRunning(true);
+            } else if ([AgentType.Model].includes(agent.agent_type)) {
 
-            setIsRunning(true);
-
-            // if (res === 'running') {
-            //    setIsRunning(true);
-            // } else {
-            //    setIsRunning(false);
-            // }
+            }
          }
       } catch (err) {
          console.error("Check agent running error:", err);
@@ -536,6 +530,22 @@ const AgentProvider: React.FC<
       }
    }
 
+   const checkUtilityAgentInstalled = async (agent: IAgentToken) => {
+      try {
+         if (installedUtilityAgents?.some?.(key => key === `${agent.network_id}-${agent.agent_name}`)) {
+            setIsInstalled(true);
+            cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
+         } else {
+            setIsInstalled(false);
+            cPumpAPI.saveAgentInstalled({ ids: [agent.id], action: "uninstall" });
+         }
+      } catch (e) {
+         console.log('checkUtilityAgentInstalled e', e);
+      } finally {
+
+      }
+   }
+
    const handleInstallModelAgent = async () => {
       if(!isModelRequirementSetup) {
          await window.electronAPI.modelStarter();
@@ -543,16 +553,17 @@ const AgentProvider: React.FC<
       }
    }
 
-  const handleRunModelAgent = async (hash?: string) => {
-    if (!hash) return;
+   const handleRunModelAgent = async (hash?: string) => {
+      if (!hash) return;
 
-    try {
-      await window.electronAPI.modelRun(hash);
-    } catch (e) {
-      console.log('handleRunModelAgent', e);
-    } finally {
-    }
-  };
+      try {
+         await window.electronAPI.modelRun(hash);
+      } catch (e) {
+         console.log('handleRunModelAgent', e);
+      } finally {
+
+      }
+   };
 
    const checkModelAgentInstalled = async (agent: IAgentToken) => {
       try {
@@ -573,7 +584,7 @@ const AgentProvider: React.FC<
       }
    }
 
-  const contextValues: any = useMemo(() => {
+   const contextValues: any = useMemo(() => {
       return {
          loading,
          selectedAgent,
