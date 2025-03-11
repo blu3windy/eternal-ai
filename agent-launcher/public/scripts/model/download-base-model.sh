@@ -36,6 +36,21 @@ filter_and_log() {
                 log_message "$line"
             fi
         fi
+
+        #MODEL_INSTALL_LLAMA
+        if [[ $line == *"[MODEL_INSTALL_LLAMA]"* ]]; then
+            if [[ $line == *"--error"* ]]; then
+                # Extract error message between quotes
+                if [[ $line =~ --error\ \"([^\"]*)\" ]]; then
+                    log_error "${BASH_REMATCH[1]}"
+                fi
+            elif [[ $line == *"--message"* ]]; then
+                # Extract message between quotes
+                if [[ $line =~ --message\ \"([^\"]*)\" ]]; then
+                    log_message "${BASH_REMATCH[1]}"
+                fi
+            fi
+        fi
     done
 }
 
