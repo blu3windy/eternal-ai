@@ -15,8 +15,6 @@ import ExportPrivateKey from "@pages/home/chat-agent/ExportPrivateKey";
 
 const AgentInfo = () => {
   const {
-    currentModel,
-    setCurrentModel,
     selectedAgent,
     setIsTrade,
     isTrade,
@@ -52,11 +50,7 @@ const AgentInfo = () => {
       <Flex justifyContent={"space-between"} w={"100%"} gap={"6px"}>
         {
           isCanChat && [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type as AgentType) ? (
-            <SelectModel
-              currentModel={currentModel}
-              setCurrentModel={setCurrentModel}
-              showDescription={false}
-            />
+            <SelectModel showDescription={false} />
           ) : (
             <Box/>
           )
