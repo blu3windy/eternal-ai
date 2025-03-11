@@ -354,7 +354,7 @@ const AgentProvider: React.FC<
 
          }
 
-         await sleep(3000);
+         await sleep(2000);
       } catch (e) {
          console.log('stopAgent e', e);
       } finally {
