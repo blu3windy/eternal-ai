@@ -95,9 +95,10 @@ const InfoTooltip = (props: InfoTooltipProps) => {
                   style={{
                      padding: "8px 12px",
                      background: "#F8F9FA",
-                     border: "1px solid #ECECED",
-                     borderRadius: "4px",
-                     boxShadow: "0px 0px 24px -6px #0000001F",
+                     border: "1px solid #EFEFEF",
+                     borderRadius: "20px",
+                     boxShadow: "0px 0px 32px 0px #0000001A",
+
                   }}
                >
                   {typeof label === "string" ? (

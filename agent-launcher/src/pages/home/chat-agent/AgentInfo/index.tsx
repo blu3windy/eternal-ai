@@ -58,7 +58,7 @@ const AgentInfo = () => {
         <Flex gap={"6px"} alignItems={"center"} className={cx(s.contentContainer, isCanChat || showBackupPrvKey ? '' : s.isSetup)}>
           <Flex gap={"6px"} alignItems={"center"} className={s.content}>
             <InfoTooltip iconSize="sm" label={
-              <Flex direction={"column"}>
+              <Flex direction={"column"} p={"8px"}>
                 <Flex direction={"column"} gap={"8px"}>
                   <Text fontSize={"16px"} fontWeight={500}>{selectedAgent?.agent_name}</Text>
                   <Text fontSize={"14px"} fontWeight={400} opacity={0.7}>{description}</Text>
