@@ -88,7 +88,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    useEffect(() => {
       chatAgentDatabase.loadChatItems(threadId).then((items) => {
          if (items?.length === 0) {
-            //
+            setMessages([]);
          } else {
             const filterMessages = items
                ?.filter((item) => item.status !== 'failed')
