@@ -1,6 +1,6 @@
 import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState, } from "react";
 import { ETradePlatform, IAgentContext } from "./interface";
-import { IAgentToken, IChainConnected, } from "../../../services/api/agents-token/interface.ts";
+import { IAgentToken, } from "../../../services/api/agents-token/interface.ts";
 import { BASE_CHAIN_ID } from "@constants/chains";
 import { checkFileExistsOnLocal, getFilePathOnLocal, writeFileToLocal, } from "@contract/file";
 import CAgentTokenAPI from "../../../services/api/agents-token";
@@ -22,7 +22,6 @@ const initialValue: IAgentContext = {
    setSelectedAgent: () => {},
    currentModel: undefined,
    setCurrentModel: () => {},
-   chainList: [],
    installAgent: () => {},
    startAgent: () => {},
    stopAgent: () => {},
@@ -60,7 +59,6 @@ const AgentProvider: React.FC<
    const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(
       undefined
    );
-   const [chainList, setChainList] = useState<IChainConnected[]>([]);
    const [isInstalling, setIsInstalling] = useState(false);
    const [isStarting, setIsStarting] = useState(false);
    const [isStopping, setIsStopping] = useState(false);
@@ -75,10 +73,7 @@ const AgentProvider: React.FC<
    const [isModelRequirementSetup, setIsModelRequirementSetup] = useState(false);
    const [installedModelAgents, setInstalledModelAgents] = useState<IAgentToken[]>([]);
 
-   const [currentModel, setCurrentModel] = useState<{
-    name: string;
-    id: string;
-  } | null>(null);
+   const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
 
    const { genAgentSecretKey } = useAuth();
 
@@ -132,7 +127,7 @@ const AgentProvider: React.FC<
       }
    }, [selectedAgent?.id]);
 
-   const intervalCheckAgentRunning = (agent) => {
+   const intervalCheckAgentRunning = (agent: IAgentToken) => {
       if (refInterval.current) {
          clearInterval(refInterval.current);
       }
@@ -144,10 +139,8 @@ const AgentProvider: React.FC<
 
    useEffect(() => {
       if (selectedAgent) {
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent.agent_type)
-            && installedUtilityAgents?.some?.(key => key === `${selectedAgent.network_id}-${selectedAgent.agent_name}`)) {
-            setIsInstalled(true);
-            cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id] });
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent.agent_type)) {
+            checkUtilityAgentInstalled(selectedAgent);
          } else if ([AgentType.Model].includes(selectedAgent.agent_type)) {
             checkModelAgentInstalled(selectedAgent);
          } else {
@@ -160,16 +153,12 @@ const AgentProvider: React.FC<
    const checkAgentRunning = async (agent) => {
       try {
          if(agent) {
-            // const res = await window.electronAPI.dockerCheckRunning(selectedAgent?.agent_name as any, selectedAgent?.network_id.toString() as any);
-            const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+            if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+               const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+               setIsRunning(true);
+            } else if ([AgentType.Model].includes(agent.agent_type)) {
 
-            setIsRunning(true);
-
-            // if (res === 'running') {
-            //    setIsRunning(true);
-            // } else {
-            //    setIsRunning(false);
-            // }
+            }
          }
       } catch (err) {
          console.error("Check agent running error:", err);
@@ -215,23 +204,23 @@ const AgentProvider: React.FC<
    }, [selectedAgent?.id]);
 
 
-   useEffect(() => {
-      if (selectedAgent && chainList) {
-         const supportModelObj = chainList?.find((v) =>
-            compareString(v.chain_id, selectedAgent.network_id)
-         )?.support_model_names;
-
-         if (supportModelObj) {
-            setCurrentModel({
-               name:
-              selectedAgent.agent_base_model || Object.keys(supportModelObj)[0],
-               id:
-              supportModelObj[selectedAgent.agent_base_model]
-              || Object.values(supportModelObj)[0],
-            });
-         }
-      }
-   }, [selectedAgent, chainList]);
+   // useEffect(() => {
+   //    if (selectedAgent && chainList) {
+   //       const supportModelObj = chainList?.find((v) =>
+   //          compareString(v.chain_id, selectedAgent.network_id)
+   //       )?.support_model_names;
+   //
+   //       if (supportModelObj) {
+   //          setCurrentModel({
+   //             name:
+   //            selectedAgent.agent_base_model || Object.keys(supportModelObj)[0],
+   //             id:
+   //            supportModelObj[selectedAgent.agent_base_model]
+   //            || Object.values(supportModelObj)[0],
+   //          });
+   //       }
+   //    }
+   // }, [selectedAgent, chainList]);
 
    const fetchChainList = useCallback(async () => {
       const params: any = {
@@ -536,6 +525,22 @@ const AgentProvider: React.FC<
       }
    }
 
+   const checkUtilityAgentInstalled = async (agent: IAgentToken) => {
+      try {
+         if (installedUtilityAgents?.some?.(key => key === `${agent.network_id}-${agent.agent_name}`)) {
+            setIsInstalled(true);
+            cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
+         } else {
+            setIsInstalled(false);
+            cPumpAPI.saveAgentInstalled({ ids: [agent.id], action: "uninstall" });
+         }
+      } catch (e) {
+         console.log('checkUtilityAgentInstalled e', e);
+      } finally {
+
+      }
+   }
+
    const handleInstallModelAgent = async () => {
       if(!isModelRequirementSetup) {
          await window.electronAPI.modelStarter();
@@ -543,16 +548,17 @@ const AgentProvider: React.FC<
       }
    }
 
-  const handleRunModelAgent = async (hash?: string) => {
-    if (!hash) return;
+   const handleRunModelAgent = async (hash?: string) => {
+      if (!hash) return;
 
-    try {
-      await window.electronAPI.modelRun(hash);
-    } catch (e) {
-      console.log('handleRunModelAgent', e);
-    } finally {
-    }
-  };
+      try {
+         await window.electronAPI.modelRun(hash);
+      } catch (e) {
+         console.log('handleRunModelAgent', e);
+      } finally {
+
+      }
+   };
 
    const checkModelAgentInstalled = async (agent: IAgentToken) => {
       try {
@@ -573,14 +579,13 @@ const AgentProvider: React.FC<
       }
    }
 
-  const contextValues: any = useMemo(() => {
+   const contextValues: any = useMemo(() => {
       return {
          loading,
          selectedAgent,
          setSelectedAgent,
          currentModel,
          setCurrentModel,
-         chainList,
          installAgent,
          startAgent,
          stopAgent,
@@ -610,7 +615,6 @@ const AgentProvider: React.FC<
       setSelectedAgent,
       currentModel,
       setCurrentModel,
-      chainList,
       installAgent,
       startAgent,
       stopAgent,

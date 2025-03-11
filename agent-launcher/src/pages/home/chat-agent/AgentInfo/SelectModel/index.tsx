@@ -34,24 +34,20 @@ export const RenameDescriptionModels: any = {
 };
 
 type Props = {
-  // chainId?: any;
-  //   showHistory?: boolean;
   disabled?: boolean;
-  currentModel: IAgentToken | null;
-  setCurrentModel: (v: any) => void;
   title?: string;
   className?: string;
   showDescription?: boolean;
 };
 
 const ItemToken = ({
-   setCurrentModel,
+   onSelect,
    onClose,
    agent,
    models,
    isSelected,
 }: {
-  setCurrentModel: any;
+  onSelect: any;
   onClose: any;
   agent: IAgentToken,
   models: any;
@@ -65,7 +61,7 @@ const ItemToken = ({
             // isDisabled && s.disabled,
          )}
          onClick={() => {
-            setCurrentModel(agent);
+            onSelect(agent);
             onClose();
          }}
       >
@@ -99,13 +95,11 @@ const ItemToken = ({
 };
 
 const SelectModel = ({
-   currentModel,
-   setCurrentModel,
    disabled,
    className,
    showDescription = true,
 }: Props) => {
-   const { installedModelAgents } = useContext(AgentContext);
+   const { installedModelAgents, currentModel, setCurrentModel, startAgent } = useContext(AgentContext);
    const [models, setModels] = useState<any>();
 
    const { isOpen, onOpen, onClose } = useDisclosure();
@@ -173,7 +167,10 @@ const SelectModel = ({
                         <ItemToken
                            key={t.id}
                            agent={t}
-                           setCurrentModel={setCurrentModel}
+                           onSelect={(agent) => {
+                              setCurrentModel(agent);
+                              startAgent(agent);
+                           }}
                            onClose={onClose}
                            models={models}
                            isSelected={currentModel?.id === t.id}
