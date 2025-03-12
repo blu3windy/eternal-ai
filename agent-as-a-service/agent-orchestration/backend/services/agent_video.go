@@ -3,24 +3,21 @@ package services
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 	"github.com/jinzhu/gorm"
 )
 
-func (s *Service) CreateAgentVideoByPostID(ctx context.Context, twitterPostID uint) error {
+func (s *Service) CreateCoinForVideoByPostID(ctx context.Context, twitterPostID uint) error {
 	err := s.JobRunCheck(
 		ctx,
 		fmt.Sprintf("CreateAgentVideoByPostID_%d", twitterPostID),
 		func() error {
-			var reqMeme *serializers.MemeReq
-			creator := strings.ToLower(s.conf.GetConfigKeyString(models.BASE_CHAIN_ID, "meme_pool_address"))
 			err := daos.WithTransaction(
 				daos.GetDBMainCtx(ctx),
 				func(tx *gorm.DB) error {
@@ -38,10 +35,10 @@ func (s *Service) CreateAgentVideoByPostID(ctx context.Context, twitterPostID ui
 					}
 
 					if twitterPost != nil && twitterPost.Status == models.AgentTwitterPostStatusReplied {
-						agentInfo, err := s.dao.FirstAgentInfo(
+						inst, err := s.dao.FirstAgentVideo(
 							tx,
 							map[string][]interface{}{
-								"ref_tweet_id = ?": {twitterPost.ID},
+								"agent_twitter_post_id = ?": {twitterPost.ID},
 							},
 							map[string][]interface{}{},
 							[]string{},
@@ -50,7 +47,26 @@ func (s *Service) CreateAgentVideoByPostID(ctx context.Context, twitterPostID ui
 							return errs.NewError(err)
 						}
 
-						if agentInfo == nil {
+						if inst == nil {
+							coinDesc := strings.TrimSpace(fmt.Sprintf(`
+							%s
+
+							@%s tweet https://x.com/%s/status/%s`,
+								twitterPost.ExtractContent,
+								twitterPost.TwitterUsername, twitterPost.TwitterUsername,
+								twitterPost.TwitterPostID,
+							))
+
+							inst := &models.AgentVideo{
+								TokenNetworkID:     models.BASE_CHAIN_ID,
+								TokenImageUrl:      twitterPost.ImageUrl,
+								OwnerTwitterID:     twitterPost.TwitterID,
+								AgentTwitterPostID: twitterPost.ID,
+								TokenDesc:          twitterPost.ExtractContent,
+								TokenStatus:        "pending",
+								CoinDesc:           coinDesc,
+							}
+
 							user, _ := s.dao.FirstUser(
 								tx,
 								map[string][]interface{}{
@@ -62,70 +78,30 @@ func (s *Service) CreateAgentVideoByPostID(ctx context.Context, twitterPostID ui
 							)
 
 							if user != nil {
-								creator = user.Address
+								inst.UserAddress = strings.ToLower(user.Address)
 							}
 
-							agentInfo := &models.AgentInfo{
-								NetworkID:      models.BASE_CHAIN_ID,
-								NetworkName:    models.GetChainName(models.BASE_CHAIN_ID),
-								SystemPrompt:   twitterPost.Prompt,
-								AgentName:      twitterPost.TokenName,
-								TokenMode:      string(models.TokenSetupEnumAutoCreate),
-								AgentType:      models.AgentInfoAgentTypeVideo,
-								TmpTwitterID:   twitterPost.GetOwnerTwitterID(),
-								TokenNetworkID: models.BASE_CHAIN_ID,
-								Version:        "2",
-								AgentID:        helpers.RandomBigInt(12).Text(16),
-								ScanEnabled:    true,
-								Creator:        creator,
-								RefTweetID:     twitterPost.ID,
-								TokenImageUrl:  twitterPost.ImageUrl,
+							if os.Getenv("DEV") == "true" {
+								inst.PayoutRecipient = "0xcEa81Bc56E7431B920380Ca71F92a2bd6B52Bc30"
+							} else {
+								ethAddress, err := s.CreateETHAddress(ctx)
+								if err != nil {
+									return errs.NewError(err)
+								}
+								inst.PayoutRecipient = ethAddress
 							}
 
-							agentInfo.TokenMode = string(models.TokenSetupEnumAutoCreate)
 							tokenInfo, _ := s.GenerateTokenInfoFromVideoPrompt(ctx, twitterPost.ExtractContent)
 							if tokenInfo != nil && tokenInfo.TokenSymbol != "" {
-								agentInfo.TokenName = tokenInfo.TokenName
-								agentInfo.TokenSymbol = tokenInfo.TokenSymbol
+								inst.TokenName = tokenInfo.TokenName
+								inst.TokenSymbol = tokenInfo.TokenSymbol
 							}
 
-							agentInfo.TokenDesc = twitterPost.ExtractContent
-							agentInfo.TokenNetworkID = models.BASE_CHAIN_ID
-							agentInfo.SystemPrompt = twitterPost.ExtractContent
-							agentInfo.MetaData = twitterPost.ExtractContent
-							agentInfo.TokenStatus = "pending"
-							agentInfo.EaiBalance = numeric.NewBigFloatFromString("50")
-							agentInfo.Status = models.AssistantStatusReady
-
-							err = s.dao.Create(tx, agentInfo)
+							//call api create coins
+							inst.TokenAddress = "xxx"
+							err = s.dao.Create(tx, inst)
 							if err != nil {
 								return errs.NewError(err)
-							}
-
-							agentTokenInfo := &models.AgentTokenInfo{}
-							agentTokenInfo.AgentInfoID = agentInfo.ID
-							agentTokenInfo.NetworkID = models.BASE_CHAIN_ID
-							agentTokenInfo.NetworkName = models.GetChainName(agentTokenInfo.NetworkID)
-							err = s.dao.Create(tx, agentTokenInfo)
-							if err != nil {
-								return errs.NewError(err)
-							}
-
-							agentInfo.TokenInfoID = agentTokenInfo.ID
-							err = s.dao.Save(tx, agentInfo)
-							if err != nil {
-								return errs.NewError(err)
-							}
-
-							reqMeme = &serializers.MemeReq{
-								Name:            agentInfo.TokenName,
-								Ticker:          agentInfo.TokenSymbol,
-								Description:     agentInfo.TokenDesc,
-								Image:           agentInfo.TokenImageUrl,
-								Twitter:         fmt.Sprintf("https://x.com/%s", agentInfo.TwitterUsername),
-								AgentInfoID:     agentInfo.ID,
-								BaseTokenSymbol: string(models.BaseTokenSymbolEAI),
-								NotGraduated:    true,
 							}
 						}
 					}
@@ -138,14 +114,6 @@ func (s *Service) CreateAgentVideoByPostID(ctx context.Context, twitterPostID ui
 				return errs.NewError(err)
 			}
 
-			if reqMeme != nil {
-				_, err = s.CreateMeme(
-					ctx, creator,
-					models.BASE_CHAIN_ID, reqMeme)
-				if err != nil {
-					return errs.NewError(err)
-				}
-			}
 			return nil
 		},
 	)
@@ -200,75 +168,21 @@ func (s *Service) GenerateTokenInfoFromVideoPrompt(ctx context.Context, sysPromp
 	return info, nil
 }
 
-func (s *Service) GetDashboardAgentVideo(ctx context.Context, userAddress string, tokenAddress, search string, sortListStr []string, page, limit int,
-) ([]*models.AgentInfo, uint, error) {
-	sortDefault := "ifnull(agent_infos.priority, 0) desc, meme_market_cap desc"
-	if len(sortListStr) > 0 {
-		sortDefault = strings.Join(sortListStr, ", ")
-	}
-
-	selected := []string{
-		`ifnull(agent_infos.reply_latest_time, agent_infos.updated_at) reply_latest_time`,
-		"agent_infos.*",
-		`ifnull((cast(( memes.price - memes.price_last24h) / memes.price_last24h * 100 as decimal(20, 2))), ifnull(agent_token_infos.price_change,0)) meme_percent`,
-		`cast(case when ifnull(agent_token_infos.usd_market_cap, 0) then ifnull(agent_token_infos.usd_market_cap, 0)
-		when ifnull(memes.price_usd*memes.total_suply, 0) > 0 then ifnull(memes.price_usd*memes.total_suply, 0) end as decimal(36, 18)) meme_market_cap`,
-		`ifnull(memes.price_usd, agent_token_infos.price_usd) meme_price`,
-		`ifnull(memes.volume_last24h*memes.price_usd, agent_token_infos.volume_last24h) meme_volume_last24h`,
-	}
-	joinFilters := map[string][]any{
-		`
-			left join memes on agent_infos.id = memes.agent_info_id and memes.deleted_at IS NULL
-			left join agent_token_infos on agent_token_infos.id = agent_infos.token_info_id
-			left join twitter_users on twitter_users.twitter_id = agent_infos.tmp_twitter_id and  agent_infos.tmp_twitter_id is not null
-		`: {},
-	}
-
-	filters := map[string][]any{
-		`	
-			((agent_infos.agent_contract_address is not null and agent_infos.agent_contract_address != "") or (agent_infos.agent_type=2 and agent_infos.status="ready") or agent_infos.token_address != "")
-			and ifnull(agent_infos.priority, 0) >= 0
-			and agent_infos.id != 15
-		`: {},
-		`agent_infos.token_address != "" and ifnull(memes.status, "") not in ("created", "pending")`: {},
-		`agent_infos.agent_type = ?`: {models.AgentInfoAgentTypeVideo},
-	}
-
-	if search != "" {
-		search = fmt.Sprintf("%%%s%%", strings.ToLower(search))
-		filters[`
-			LOWER(agent_infos.token_name) like ? 
-			or LOWER(agent_infos.token_symbol) like ? 
-			or LOWER(agent_infos.token_address) like ?
-			or LOWER(agent_infos.twitter_username) like ?
-			or LOWER(agent_infos.agent_name) like ?
-			or ifnull(twitter_users.twitter_username, "") like ?
-			or ifnull(twitter_users.name, "") like ?
-		`] = []any{search, search, search, search, search, search, search}
-	}
-
-	if tokenAddress != "" {
-		filters["LOWER(agent_infos.token_address) = ? or agent_infos.agent_id = ? or agent_infos.id = ?"] = []any{strings.ToLower(tokenAddress), tokenAddress, tokenAddress}
-	}
-
-	//filter instlled app
-	agents, err := s.dao.FindAgentInfoJoinSelect(
+func (s *Service) GetListUserVideo(ctx context.Context, userAddress string) ([]*models.AgentVideo, error) {
+	res, err := s.dao.FindAgentVideo(
 		daos.GetDBMainCtx(ctx),
-		selected,
-		joinFilters,
-		filters,
-		map[string][]any{
-			"TwitterInfo":    {},
-			"TmpTwitterInfo": {},
-			"Meme":           {`deleted_at IS NULL and status not in ("created", "pending")`},
-			"TokenInfo":      {},
+		map[string][]interface{}{
+			"user_address = ? ": {strings.ToLower(userAddress)},
 		},
-		[]string{sortDefault},
-		page, limit,
+		map[string][]interface{}{
+			"AgentTwitterPost": {},
+		},
+		[]string{"id desc"},
+		0,
+		1000,
 	)
 	if err != nil {
-		return nil, 0, errs.NewError(err)
+		return nil, errs.NewError(err)
 	}
-
-	return agents, 0, nil
+	return res, nil
 }

@@ -691,3 +691,23 @@ type AgentUtilityRecentChat struct {
 	Address     string `gorm:"unique_index:agent_utility_recent_chat_main_idx"`
 	AgentInfoID uint   `gorm:"unique_index:agent_utility_recent_chat_main_idx"`
 }
+
+type AgentVideo struct {
+	gorm.Model
+	TokenName          string
+	TokenSymbol        string
+	TokenAddress       string
+	TokenStatus        string
+	TokenImageUrl      string
+	TokenDesc          string `gorm:"type:longtext"`
+	CoinDesc           string `gorm:"type:longtext"`
+	TokenNetworkID     uint64
+	PayoutRecipient    string       `gorm:"index"`
+	UserAddress        string       `gorm:"index"`
+	OwnerTwitterID     string       `gorm:"index"`
+	OwnerTwitterInfo   *TwitterUser `gorm:"foreignKey:twitter_id;AssociationForeignKey:owner_twitter_id"`
+	AgentTwitterPostID uint         `gorm:"unique_index"`
+	AgentTwitterPost   *AgentTwitterPost
+	TotalReward        numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	ClaimedReward      numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+}

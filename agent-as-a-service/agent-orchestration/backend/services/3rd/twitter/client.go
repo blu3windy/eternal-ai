@@ -553,6 +553,29 @@ func (c *Client) GetTwitterOAuthTokenWithKeyForCreateAgent(clientID, clientSecre
 	return &resp, nil
 }
 
+func (c *Client) GetTwitterOAuthTokenWithKeyForVideoReward(clientID, clientSecret, code string, callbackUrl, address string) (*TwitterTokenResponse, error) {
+	var resp TwitterTokenResponse
+	redirectUri := fmt.Sprintf(`%s?callback=%s&address=%s&agent_id=2&client_id=%s`, c.RedirectUri, callbackUrl, address, clientID)
+	postData := map[string]interface{}{
+		"client_id":     c.OauthClientId,
+		"code_verifier": "challenge",
+		"redirect_uri":  redirectUri,
+		"grant_type":    "authorization_code",
+		"code":          code,
+	}
+
+	err := c.postJSONWithKey(
+		TWITTER_OAUTH_TOKEN_URL, clientID, clientSecret,
+		map[string]string{},
+		postData,
+		&resp,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
 func (c *Client) GetTwitterOAuthTokenWithKeyForDeveloper(clientID, clientSecret, code string, callbackUrl, address string) (*TwitterTokenResponse, error) {
 	var resp TwitterTokenResponse
 	redirectUri := fmt.Sprintf(`%s?callback=%s&address=%s&agent_id=0&client_id=%s`, c.RedirectUri, callbackUrl, address, clientID)
