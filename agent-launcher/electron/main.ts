@@ -114,7 +114,7 @@ function createWindow() {
    }, 5000);
 
    win = new BrowserWindow({
-      icon: path.join(process.env.VITE_PUBLIC, "app-logo.png"),
+      icon: path.join(process.env.VITE_PUBLIC!, "app-logo.png"),
       // icon: path.join(__dirname, "../public/icon.png"), // Use icon from public
       webPreferences: {
          preload: path.join(app.getAppPath(), "dist-electron", "preload.mjs"),

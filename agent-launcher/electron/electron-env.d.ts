@@ -23,7 +23,7 @@ declare namespace NodeJS {
   }
 }
 
-interface IElectronAPI {
+export interface IElectronAPI {
   keytarSave: (key: string, value: string) => Promise<{ success: boolean, error?: string }>
   keytarGet: (key: string) => Promise<string>
   keytarRemove: (key: string) => Promise<{ success: boolean, error?: string }>
@@ -62,8 +62,9 @@ interface IElectronAPI {
   openExternal: (url: string) => Promise<void>
 }
 
-// Used in Renderer process, expose in `preload.ts`
-interface Window {
-  ipcRenderer: import('electron').IpcRenderer
-  electronAPI: IElectronAPI
+declare global {
+  interface Window {
+    ipcRenderer: import('electron').IpcRenderer
+    electronAPI: IElectronAPI
+  }
 }
