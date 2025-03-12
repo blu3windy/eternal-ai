@@ -7,6 +7,7 @@ import { DefaultAvatar } from "../../../../components/DefaultAvatar";
 import { formatCurrency, labelAmountOrNumberAdds } from "../../../../utils/format.ts";
 import cs from "clsx";
 import { AgentType } from "@pages/home/list-agent";
+import CustomMarkdown from "@components/CustomMarkdown";
 
 interface IProps {
   token: IAgentToken;
@@ -115,7 +116,13 @@ const AgentItem = ({ token }: IProps) => {
                </Flex>
                {
                   description && (
-                     <Text className={s.descriptionText}>{description}</Text>
+                     <div className={cs(s.descriptionText, "markdown")}>
+                        <CustomMarkdown
+                           content={description}
+                           isLight={false}
+                           removeThink={false}
+                        />
+                     </div>
                   )
                }
                <Flex gap={"8px"}>
