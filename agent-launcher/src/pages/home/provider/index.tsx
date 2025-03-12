@@ -288,6 +288,7 @@ const AgentProvider: React.FC<
       try {
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             setIsStarting(true);
+            await installUtilityAgent(agent);
             await startDependAgents(agent);
 
             await handleRunDockerAgent(agent);
