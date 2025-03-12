@@ -212,13 +212,13 @@ const SelectModel = ({
                         <ItemToken
                            key={t.id}
                            agent={t}
-                           onSelect={(agent) => {
+                           onSelect={(agent: IAgentToken) => {
                               startAgent(agent);
                            }}
                            onClose={onClose}
                            models={models}
                            isSelected={currentModel?.id === t.id}
-                           onDelete={(agent) => {
+                           onDelete={(agent: IAgentToken) => {
                               unInstallAgent(agent);
                            }}
                         />

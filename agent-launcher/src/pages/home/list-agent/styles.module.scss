@@ -121,6 +121,31 @@
   //border-bottom: 1px solid #CCCED2;
 }
 
+.options {
+  .option {
+    background-color: #FFF;
+    border-radius: 100px;
+    cursor: pointer;
+
+    p {
+      font-size: 12px;
+      font-weight: 500;
+      color: #000;
+      opacity: 0.5;
+      white-space: nowrap;
+    }
+
+    &.isSelected {
+      background-color: #000;
+
+      p {
+        color: #FFF;
+        opacity: 1;
+      }
+    }
+  }
+}
+
 .select {
   position: relative;
   //padding-left: 12px;
