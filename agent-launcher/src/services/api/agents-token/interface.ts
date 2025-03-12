@@ -78,6 +78,7 @@ export interface IAgentToken {
   required_wallet?: boolean;
   is_onchain?: boolean;
   prompt_calls: number;
+  ipfsHash?: string;
 }
 
 export interface Meme {

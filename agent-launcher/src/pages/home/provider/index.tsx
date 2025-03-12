@@ -47,6 +47,8 @@ const initialValue: IAgentContext = {
    requireInstall: false,
    isModelRequirementSetup: false,
    installedModelAgents: [],
+   unInstallAgent: () => {},
+   isUnInstalling: false,
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -62,6 +64,7 @@ const AgentProvider: React.FC<
       undefined
    );
    const [isInstalling, setIsInstalling] = useState(false);
+   const [isUnInstalling, setIsUnInstalling] = useState(false);
    const [isStarting, setIsStarting] = useState(false);
    const [isStopping, setIsStopping] = useState(false);
    const [isTrade, setIsTrade] = useState(false);
@@ -332,8 +335,9 @@ const AgentProvider: React.FC<
    };
 
    const unInstallAgent = async (agent: IAgentToken) => {
+      console.log('unInstallAgent', agent);
       try {
-         setIsInstalling(true);
+         setIsUnInstalling(true);
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await stopAgent(agent);
@@ -345,23 +349,13 @@ const AgentProvider: React.FC<
             if (newAgent) {
                await startAgent(newAgent);
             }
-
-            // await handleInstallModelAgent();
-            //
-            // const ipfsHash = await getModelAgentHash(agent);
-            // console.log('====ipfsHash', ipfsHash);
-            // await window.electronAPI.modelInstall(ipfsHash);
-            // setIsInstalled(true);
-            // cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
-            //
-            // await handleRunModelAgent(ipfsHash);
          } else {
 
          }
       } catch (e) {
          console.log('unInstallAgent e', e);
       } finally {
-         setIsInstalling(false);
+         setIsUnInstalling(false);
          handleGetExistAgentFolders();
       }
    }
@@ -623,6 +617,8 @@ const AgentProvider: React.FC<
          requireInstall,
          isModelRequirementSetup,
          installedModelAgents,
+         unInstallAgent,
+         isUnInstalling,
       };
    }, [
       loading,
@@ -652,6 +648,8 @@ const AgentProvider: React.FC<
       requireInstall,
       isModelRequirementSetup,
       installedModelAgents,
+      unInstallAgent,
+      isUnInstalling,
    ]);
 
    return (
