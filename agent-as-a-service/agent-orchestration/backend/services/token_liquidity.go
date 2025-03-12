@@ -68,6 +68,7 @@ func (s *Service) CreateMeme(ctx context.Context, address string, networkID uint
 		ReqSyncAt:         helpers.TimeNow(),
 		SyncAt:            helpers.TimeNow(),
 		TokenId:           helpers.RandomBigInt(32).String(),
+		NotGraduated:      req.NotGraduated,
 	}
 	switch meme.NetworkID {
 	case models.BASE_CHAIN_ID,
