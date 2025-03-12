@@ -193,6 +193,7 @@ const ipcMainDocker = () => {
          await command.execAsyncStream(`bash "${scriptPath}" stop ${paramsStr}`);
       } catch (error) {
          console.log(error);
+         throw error;
       }
    });
 }
