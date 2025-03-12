@@ -54,9 +54,9 @@ export enum FilterOption {
 
 export const FilterBy = [
    { value: FilterOption.All, label: 'All', description: 'All available agents.' },
-   { value: FilterOption.Character, label: 'Character', description: 'Agents providing APIs or services post and engage automatically on social networks.' },
-   { value: FilterOption.Model, label: 'Model agent', description: 'Agents providing direct access to specific AI models (LLaMA, DeepSeek, Hermes,…).' },
-   { value: FilterOption.Utility, label: 'Utility agent', description: 'Task-focused agents built with Python or JavaScript.' },
+   { value: FilterOption.Character, label: 'Character', description: 'Agents with unique personalities, offering engaging chat experiences and interactions.' },
+   { value: FilterOption.Model, label: 'Model', description: 'Agents providing direct access to specific AI models (LLaMA, DeepSeek, Hermes,…).' },
+   { value: FilterOption.Utility, label: 'Utility', description: 'Task-focused agents built with Python or JavaScript.' },
    { value: FilterOption.Infra, label: 'Infra', description: 'Agents providing APIs or services to customize and manage other agents.' },
    { value: FilterOption.Installed, label: 'Installed', description: 'Agents currently installed.' },
    // { value: FilterOption.NonInstalled, label: 'Available', description: 'Agents available for installation.' },
