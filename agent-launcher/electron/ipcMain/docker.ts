@@ -12,10 +12,6 @@ import {
 import command from "../share/command-tool.ts";
 import { copyFiles } from "../share/scripts.ts";
 
-const getDocker = async () => {
-   return 'docker'
-}
-
 const DOCKER_NAME = 'launcher-agent';
 const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
 const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
@@ -28,8 +24,8 @@ const ipcMainDocker = () => {
          const folderPathDocker = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER);
 
          const containers = [
-            "agent-js:launcher-agent-js:",
-            "agent-router:launcher-agent-router:33030",
+            `agent-js:${DOCKER_SERVER_JS}:`,
+            `agent-router:${DOCKER_ROUTER_NAME}:33030`,
          ];
          const containerArgs = containers.map(c => `--container "${c}"`).join(' ');
 
@@ -145,46 +141,56 @@ const ipcMainDocker = () => {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
          const dnsHost = `${chainId}-${agentName}`;
-         const docker = await getDocker();
+         const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
 
+         const params = [
+            `--folder-path "${folderPath}"`,
+            `--container-name "${dnsHost}"`,
+            `--image-name "${DOCKER_SERVER_JS}"`,
+            `--code-language-snippet "js"`,
+         ]
+         const paramsStr = params.join(' ');
+         await command.execAsyncStream(`bash "${scriptPath}" run ${paramsStr}`);
 
-         const cmds: string[] = [
-            `cd "${folderPath}" && ${docker} stop ${dnsHost}`,
-            `cd "${folderPath}" && ${docker} rm ${dnsHost}`,
-         ];
-
-         for (const cmd of cmds) {
-            await executeWithIgnoreError(
-               async () => {
-                  await command.execAsyncDockerDir(cmd);
-               }
-            )
-         }
-         const { stdout } = await command.execAsyncDockerDir(
-            `cd "${folderPath}" && ${docker} run -d -v "${folderPath}/agents/${dnsHost}/prompt.js":/app/src/prompt.js --network network-agent-external --add-host=localmodel:host-gateway --name ${dnsHost} ${DOCKER_SERVER_JS}`
-         );
-         console.log(stdout);
+         // const cmds: string[] = [
+         //    `cd "${folderPath}" && ${docker} stop ${dnsHost}`,
+         //    `cd "${folderPath}" && ${docker} rm ${dnsHost}`,
+         // ];
+         //
+         // for (const cmd of cmds) {
+         //    await executeWithIgnoreError(
+         //       async () => {
+         //          await command.execAsyncDockerDir(cmd);
+         //       }
+         //    )
+         // }
+         //
+         // console.log("LEON TEST", {
+         //    cmds,
+         //    test: `cd "${folderPath}" && ${docker} run -d -v "${folderPath}/agents/${dnsHost}/prompt.js":/app/src/prompt.js --network network-agent-external --add-host=localmodel:host-gateway --name ${dnsHost} ${DOCKER_SERVER_JS}`
+         // })
+         //
+         // const { stdout } = await command.execAsyncDockerDir(
+         //    `cd "${folderPath}" && ${docker} run -d -v "${folderPath}/agents/${dnsHost}/prompt.js":/app/src/prompt.js --network network-agent-external --add-host=localmodel:host-gateway --name ${dnsHost} ${DOCKER_SERVER_JS}`
+         // );
+         // console.log(stdout);
       } catch (error) {
-         console.log(error);
+         throw error;
       }
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_STOP_AGENT, async (_event, agentName: string, chainId: string) => {
       try {
+         const userDataPath = app.getPath("userData");
+         const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
          const dnsHost = `${chainId}-${agentName}`;
-         const docker = await getDocker();
-         const cmds: string[] = [
-            `${docker} stop ${dnsHost}`,
-            `${docker} rm ${dnsHost}`,
-         ];
+         const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
 
-         for (const cmd of cmds) {
-            await executeWithIgnoreError(
-               async () => {
-                  await command.execAsyncDockerDir(cmd);
-               }
-            )
-         }
+         const params = [
+            `--container-name "${dnsHost}"`,
+         ]
+         const paramsStr = params.join(' ');
+         await command.execAsyncStream(`bash "${scriptPath}" stop ${paramsStr}`);
       } catch (error) {
          console.log(error);
       }
