@@ -4,12 +4,6 @@ import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 
-if (process.env.NODE_ENV === "development") {
-  autoUpdater.autoDownload = false;
-  autoUpdater.allowDowngrade = true;
-  autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
-}
-
 autoUpdater.setFeedURL({
   provider: "generic",
   url: "https://electron-update-server-production.up.railway.app/updates/",
@@ -60,23 +54,26 @@ autoUpdater.on("update-downloaded", (info) => {
     .then(({ response }) => {
       if (response === 0) {
         // User clicked "Restart"
-        autoUpdater.quitAndInstall();
+        // Delay to ensure update applies correctly
+        setTimeout(() => {
+          autoUpdater.quitAndInstall();
+        }, 3000);
       }
     });
 });
 
 // 🔹 Track download progress
 autoUpdater.on("download-progress", (progress) => {
-  let percentage = Math.round(progress.percent);
-  dialog.showMessageBox({
-    type: "info",
-    title: "Processing",
-    message: `Downloading... ${percentage}% (${(
-      progress.transferred /
-      1024 /
-      1024
-    ).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB)`,
-  });
+//   let percentage = Math.round(progress.percent);
+  //   dialog.showMessageBox({
+  //     type: "info",
+  //     title: "Processing",
+  //     message: `Downloading... ${percentage}% (${(
+  //       progress.transferred /
+  //       1024 /
+  //       1024
+  //     ).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB)`,
+  //   });
 });
 
 // const require = createRequire(import.meta.url);
