@@ -701,6 +701,7 @@ type AgentVideo struct {
 	TokenImageUrl      string
 	TokenDesc          string `gorm:"type:longtext"`
 	CoinDesc           string `gorm:"type:longtext"`
+	TxHash             string
 	TokenNetworkID     uint64
 	PayoutRecipient    string       `gorm:"index"`
 	UserAddress        string       `gorm:"index"`
