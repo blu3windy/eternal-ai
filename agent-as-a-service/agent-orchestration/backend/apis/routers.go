@@ -139,6 +139,8 @@ func (s *Server) Routers() {
 
 			agentAPI.GET("/dashboard", s.GetDashBoardAgent)
 			agentAPI.GET("/dashboard/:token_address", s.GetDashBoardAgentDetail)
+			agentAPI.GET("/dashboard/video", s.GetDashBoardAgentVideo)
+			agentAPI.GET("/dashboard/video/:token_address", s.GetDashBoardAgentVideoDetail)
 			agentAPI.GET("/token-info/:id", s.GetTokenInfoByContract)
 
 			// dojo

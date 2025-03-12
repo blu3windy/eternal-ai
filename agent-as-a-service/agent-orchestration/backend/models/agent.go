@@ -63,6 +63,7 @@ const (
 	AgentInfoAgentTypeJs            AgentInfoAgentType = 6
 	AgentInfoAgentTypePython        AgentInfoAgentType = 7
 	AgentInfoAgentTypeInfa          AgentInfoAgentType = 8
+	AgentInfoAgentTypeVideo         AgentInfoAgentType = 9
 )
 
 type (

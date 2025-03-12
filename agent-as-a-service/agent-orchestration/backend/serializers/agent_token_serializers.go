@@ -26,6 +26,7 @@ type MemeReq struct {
 	FbPair          bool             `json:"fb_pair"`
 	AgentInfoID     uint             `json:"agent_info_id"`
 	BaseTokenSymbol string           `json:"base_token_symbol"`
+	NotGraduated    bool             `json:"not_graduated"`
 }
 
 type MemeResp struct {
