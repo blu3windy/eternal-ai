@@ -172,7 +172,7 @@ const SelectModel = ({
    return (
       <>
          <Box className={cs(s.container, className)}>
-            <Popover placement="bottom-end" isOpen={isOpen} onClose={onClose}>
+            <Popover placement="bottom-start" isOpen={isOpen} onClose={onClose}>
                <PopoverTrigger>
                   <Flex
                      className={s.dropboxButton}
@@ -205,6 +205,7 @@ const SelectModel = ({
                   boxShadow={'0px 0px 24px -6px #0000001F'}
                   borderRadius={'16px'}
                   background={'#fff'}
+                  minW={'600px'}
                >
                   {installedModelAgents.map((t, i) => (
                      <>
