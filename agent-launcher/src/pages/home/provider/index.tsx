@@ -77,6 +77,7 @@ const AgentProvider: React.FC<
    const [isBackupedPrvKey, setIsBackupedPrvKey] = useState(false);
    const [isModelRequirementSetup, setIsModelRequirementSetup] = useState(false);
    const [installedModelAgents, setInstalledModelAgents] = useState<IAgentToken[]>([]);
+   const [availableModelAgents, setAvailableModelAgents] = useState<IAgentToken[]>([]);
 
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
 
@@ -111,13 +112,19 @@ const AgentProvider: React.FC<
    // console.log("stephen: isRunning", isRunning);
    // console.log("stephen: requireInstall", requireInstall);
    // console.log("stephen: isInstalled", isInstalled);
+   // console.log('stephen availableModelAgents', availableModelAgents);
+   // console.log('stephen installedModelAgents', installedModelAgents);
    // console.log("================================");
 
    useEffect(() => {
-      fetchInstalledModelAgents();
       fetchCoinPrices();
-      handleGetExistAgentFolders();
+      fetchAvailableModelAgents();
+      fetchInstalledUtilityAgents();
    }, []);
+
+   useEffect(() => {
+      fetchInstalledModelAgents();
+   }, [availableModelAgents]);
 
    useEffect(() => {
       if (selectedAgent) {
@@ -208,45 +215,54 @@ const AgentProvider: React.FC<
       return getTradePlatform(selectedAgent as any);
    }, [selectedAgent?.id]);
 
-   const fetchInstalledModelAgents = useCallback(async () => {
-      const params: any = {
-         page: 1,
-         limit: 100,
-         sort_col: SortOption.CreatedAt,
-         agent_types: [AgentType.Model].join(','),
-         chain: '',
-      };
-      const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
+   const fetchAvailableModelAgents = async () => {
+      try {
+         const params: any = {
+            page: 1,
+            limit: 100,
+            sort_col: SortOption.CreatedAt,
+            agent_types: [AgentType.Model].join(','),
+            chain: '',
+         };
+         const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
+
+         const agentHashes = await Promise.all(
+            newTokens.map(t => getModelAgentHash(t))
+         );
+
+         const res = newTokens.map((t, index) => ({ ...t, ipfsHash: agentHashes[index] }));
+
+         setAvailableModelAgents(res);
+      } catch (e) {
+
+      } finally {
+
+      }
+   }
+
+   const fetchInstalledModelAgents = async () => {
       const installedModels: ModelInfo[] = await window.electronAPI.modelDownloadedList();
       const runningModelHash = await window.electronAPI.modelCheckRunning();
-      const installedHash = [...installedModels.map(r => r.hash), 'bafkreic5e3lsc3bg4pnb3qpiqz2732pjqkbn2wv5ar3ilpxykd45nzb6za'];
+      const installedHashes = [...installedModels.map(r => r.hash)];
 
-      const agentHashes = await Promise.all(
-         newTokens.map(t => getModelAgentHash(t))
-      )
-
-      console.log('stephen newTokens', newTokens);
-      console.log('stephen installedHash', installedModels);
-      console.log('stephen agentHashes', agentHashes);
-
-      const installedAgents = newTokens.filter((t, index) => installedHash.includes(agentHashes[index]));
+      const installedAgents = availableModelAgents?.filter((t, index) => installedHashes.includes(t.ipfsHash as string));
 
       setInstalledModelAgents(installedAgents);
 
       if (!runningModelHash) {
-         const defaultModelAgent = newTokens.find((t, index) => agentHashes[index] === MODEL_HASH);
+         const defaultModelAgent = installedAgents.find((t, index) => t.ipfsHash === MODEL_HASH) || installedAgents[0];
 
          if (defaultModelAgent) {
             await startAgent(defaultModelAgent);
          }
       } else {
-         const runningModelAgent = installedAgents.find((t, index) => agentHashes[index] === runningModelHash);
+         const runningModelAgent = installedAgents.find((t, index) => t.ipfsHash === runningModelHash);
 
          if(runningModelAgent) {
             setCurrentModel(runningModelAgent);
          }
       }
-   }, []);
+   }
 
    const fetchCoinPrices = async () => {
       try {
@@ -262,6 +278,8 @@ const AgentProvider: React.FC<
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
+
+            fetchInstalledUtilityAgents();
          } else if (agent.agent_type === AgentType.Model) {
             await handleInstallModelAgentRequirement();
 
@@ -273,6 +291,8 @@ const AgentProvider: React.FC<
             cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
 
             await startAgent(agent);
+
+            fetchInstalledModelAgents();
          } else {
 
          }
@@ -280,7 +300,6 @@ const AgentProvider: React.FC<
          console.log('installAgent e', e);
       } finally {
          setIsInstalling(false);
-         handleGetExistAgentFolders();
       }
    }
 
@@ -296,7 +315,7 @@ const AgentProvider: React.FC<
             await handleInstallModelAgentRequirement();
 
             const ipfsHash = await getModelAgentHash(agent);
-            console.log('====ipfsHash', ipfsHash);
+            console.log('startAgent ====ipfsHash', ipfsHash);
 
             await handleRunModelAgent(ipfsHash);
             setCurrentModel(agent);
@@ -344,12 +363,20 @@ const AgentProvider: React.FC<
             await stopAgent(agent);
 
             await removeUtilityAgent(agent);
+
+            fetchInstalledUtilityAgents();
          } else if (agent.agent_type === AgentType.Model) {
             const newAgent = installedModelAgents.filter(a => a.id !== agent.id)[0];
 
             if (newAgent) {
                await startAgent(newAgent);
             }
+
+            const ipfsHash = await getModelAgentHash(agent);
+            console.log('unInstallAgent ====ipfsHash', ipfsHash);
+            await window.electronAPI.modelDelete(ipfsHash);
+
+            fetchInstalledModelAgents();
          } else {
 
          }
@@ -357,7 +384,6 @@ const AgentProvider: React.FC<
          console.log('unInstallAgent e', e);
       } finally {
          setIsUnInstalling(false);
-         handleGetExistAgentFolders();
       }
    }
 
@@ -525,10 +551,10 @@ const AgentProvider: React.FC<
       await window.electronAPI.dockerStopAgent(agent?.agent_name, agent?.network_id.toString());
    };
 
-   const handleGetExistAgentFolders = async () => {
+   const fetchInstalledUtilityAgents = async () => {
       try {
-         const folders = await window.electronAPI.getExistAgentFolders();
-         setInstalledUtilityAgents(folders || [])
+         const installedUtilities = await window.electronAPI.getExistAgentFolders();
+         setInstalledUtilityAgents(installedUtilities || []);
       } catch (error) {
         
       }
