@@ -694,21 +694,27 @@ type AgentUtilityRecentChat struct {
 
 type AgentVideo struct {
 	gorm.Model
-	TokenName          string
-	TokenSymbol        string
-	TokenAddress       string
-	TokenStatus        string
-	TokenImageUrl      string
-	TokenDesc          string `gorm:"type:longtext"`
-	CoinDesc           string `gorm:"type:longtext"`
-	TxHash             string
-	TokenNetworkID     uint64
-	PayoutRecipient    string       `gorm:"index"`
-	UserAddress        string       `gorm:"index"`
-	OwnerTwitterID     string       `gorm:"index"`
-	OwnerTwitterInfo   *TwitterUser `gorm:"foreignKey:twitter_id;AssociationForeignKey:owner_twitter_id"`
-	AgentTwitterPostID uint         `gorm:"unique_index"`
-	AgentTwitterPost   *AgentTwitterPost
-	TotalReward        numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	ClaimedReward      numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	TokenName             string
+	TokenSymbol           string
+	TokenAddress          string
+	TokenStatus           string
+	TokenImageUrl         string
+	TokenDesc             string `gorm:"type:longtext"`
+	CoinDesc              string `gorm:"type:longtext"`
+	TxHash                string
+	TokenNetworkID        uint64
+	UserAddress           string       `gorm:"index"`
+	OwnerTwitterID        string       `gorm:"index"`
+	OwnerTwitterInfo      *TwitterUser `gorm:"foreignKey:twitter_id;AssociationForeignKey:owner_twitter_id"`
+	AgentTwitterPostID    uint         `gorm:"unique_index"`
+	AgentTwitterPost      *AgentTwitterPost
+	TotalReward           numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	ClaimedReward         numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	AgentVideoRecipientID uint
+}
+
+type AgentVideoRecipient struct {
+	gorm.Model
+	OwnerTwitterID   string `gorm:"unique_index"`
+	RecipientAddress string `gorm:"index"`
 }

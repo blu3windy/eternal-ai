@@ -48,60 +48,84 @@ func (s *Service) CreateCoinForVideoByPostID(ctx context.Context, twitterPostID 
 						}
 
 						if inst == nil {
-							coinDesc := strings.TrimSpace(fmt.Sprintf(`
-							%s
-
-							@%s tweet https://x.com/%s/status/%s`,
-								twitterPost.ExtractContent,
-								twitterPost.TwitterUsername, twitterPost.TwitterUsername,
-								twitterPost.TwitterPostID,
-							))
-
-							inst := &models.AgentVideo{
-								TokenNetworkID:     models.BASE_CHAIN_ID,
-								TokenImageUrl:      twitterPost.ImageUrl,
-								OwnerTwitterID:     twitterPost.TwitterID,
-								AgentTwitterPostID: twitterPost.ID,
-								TokenDesc:          twitterPost.ExtractContent,
-								TokenStatus:        "pending",
-								CoinDesc:           coinDesc,
-							}
-
-							user, _ := s.dao.FirstUser(
+							recipient, err := s.dao.FirstAgentVideoRecipient(
 								tx,
 								map[string][]interface{}{
-									"network_id = ?": {models.GENERTAL_NETWORK_ID},
-									"twitter_id = ?": {twitterPost.GetOwnerTwitterID()},
+									"owner_twitter_id = ?": {twitterPost.TwitterID},
 								},
 								map[string][]interface{}{},
-								false,
+								[]string{},
 							)
-
-							if user != nil {
-								inst.UserAddress = strings.ToLower(user.Address)
+							if err != nil {
+								return errs.NewError(err)
 							}
+							if recipient == nil {
+								recipient = &models.AgentVideoRecipient{
+									OwnerTwitterID: twitterPost.TwitterID,
+								}
+								if os.Getenv("DEV") == "true" {
+									recipient.RecipientAddress = "0xcEa81Bc56E7431B920380Ca71F92a2bd6B52Bc30"
+								} else {
+									ethAddress, err := s.CreateETHAddress(ctx)
+									if err != nil {
+										return errs.NewError(err)
+									}
+									recipient.RecipientAddress = ethAddress
+								}
 
-							if os.Getenv("DEV") == "true" {
-								inst.PayoutRecipient = "0xcEa81Bc56E7431B920380Ca71F92a2bd6B52Bc30"
-							} else {
-								ethAddress, err := s.CreateETHAddress(ctx)
+								err = s.dao.Create(tx, inst)
 								if err != nil {
 									return errs.NewError(err)
 								}
-								inst.PayoutRecipient = ethAddress
 							}
 
-							tokenInfo, _ := s.GenerateTokenInfoFromVideoPrompt(ctx, twitterPost.ExtractContent)
-							if tokenInfo != nil && tokenInfo.TokenSymbol != "" {
-								inst.TokenName = tokenInfo.TokenName
-								inst.TokenSymbol = tokenInfo.TokenSymbol
-							}
+							if recipient != nil {
+								coinDesc := strings.TrimSpace(fmt.Sprintf(`
+								%s
+	
+								@%s tweet https://x.com/%s/status/%s`,
+									twitterPost.ExtractContent,
+									twitterPost.TwitterUsername, twitterPost.TwitterUsername,
+									twitterPost.TwitterPostID,
+								))
 
-							//call api create coins
-							inst.TokenAddress = "xxx"
-							err = s.dao.Create(tx, inst)
-							if err != nil {
-								return errs.NewError(err)
+								inst := &models.AgentVideo{
+									TokenNetworkID:        models.BASE_CHAIN_ID,
+									TokenImageUrl:         twitterPost.ImageUrl,
+									OwnerTwitterID:        twitterPost.TwitterID,
+									AgentTwitterPostID:    twitterPost.ID,
+									TokenDesc:             twitterPost.ExtractContent,
+									TokenStatus:           "pending",
+									CoinDesc:              coinDesc,
+									AgentVideoRecipientID: recipient.ID,
+								}
+
+								user, _ := s.dao.FirstUser(
+									tx,
+									map[string][]interface{}{
+										"network_id = ?": {models.GENERTAL_NETWORK_ID},
+										"twitter_id = ?": {twitterPost.GetOwnerTwitterID()},
+									},
+									map[string][]interface{}{},
+									false,
+								)
+
+								if user != nil {
+									inst.UserAddress = strings.ToLower(user.Address)
+								}
+
+								tokenInfo, _ := s.GenerateTokenInfoFromVideoPrompt(ctx, twitterPost.ExtractContent)
+								if tokenInfo != nil && tokenInfo.TokenSymbol != "" {
+									inst.TokenName = tokenInfo.TokenName
+									inst.TokenSymbol = tokenInfo.TokenSymbol
+								}
+
+								//call api create coins
+								inst.TokenAddress = "xxx"
+								err = s.dao.Create(tx, inst)
+								if err != nil {
+									return errs.NewError(err)
+								}
 							}
 						}
 					}
@@ -168,12 +192,23 @@ func (s *Service) GenerateTokenInfoFromVideoPrompt(ctx context.Context, sysPromp
 	return info, nil
 }
 
-func (s *Service) GetListUserVideo(ctx context.Context, userAddress string) ([]*models.AgentVideo, error) {
+func (s *Service) GetListUserVideo(ctx context.Context, userAddres, search string) ([]*models.AgentVideo, error) {
+	filters := map[string][]interface{}{
+		"user_address = ? ": {strings.ToLower(userAddres)},
+	}
+
+	if search != "" {
+		search = fmt.Sprintf("%%%s%%", strings.ToLower(search))
+		filters[`
+			LOWER(token_name) like ? 
+			or LOWER(token_symbol) like ? 
+			or LOWER(token_address) like ?
+		`] = []any{search, search, search}
+	}
+
 	res, err := s.dao.FindAgentVideo(
 		daos.GetDBMainCtx(ctx),
-		map[string][]interface{}{
-			"user_address = ? ": {strings.ToLower(userAddress)},
-		},
+		filters,
 		map[string][]interface{}{
 			"AgentTwitterPost": {},
 		},

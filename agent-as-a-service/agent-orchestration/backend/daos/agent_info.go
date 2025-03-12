@@ -175,3 +175,14 @@ func (d *DAO) FindAgentVideo(tx *gorm.DB, filters map[string][]interface{}, prel
 	}
 	return ms, nil
 }
+
+func (d *DAO) FirstAgentVideoRecipient(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string) (*models.AgentVideoRecipient, error) {
+	var m models.AgentVideoRecipient
+	if err := d.first(tx, &m, filters, preloads, orders, false); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &m, nil
+}
