@@ -99,7 +99,7 @@ const AgentProvider: React.FC<
       return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
    }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
 
-   console.log("stephen: selectedAgent", selectedAgent);
+   // console.log("stephen: selectedAgent", selectedAgent);
    // console.log("stephen: currentModel", currentModel);
    // console.log("stephen: agentWallet", agentWallet);
    // console.log("stephen: installedAgents", installedAgents);
@@ -107,10 +107,10 @@ const AgentProvider: React.FC<
    // console.log("stephen: isRunning", isRunning);
    // console.log("stephen: requireInstall", requireInstall);
    // console.log("stephen: isInstalled", isInstalled);
-   console.log("================================");
+   // console.log("================================");
 
    useEffect(() => {
-      fetchChainList();
+      fetchInstalledModelAgents();
       fetchCoinPrices();
       handleGetExistAgentFolders();
    }, []);
@@ -149,7 +149,7 @@ const AgentProvider: React.FC<
             cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id], action: "uninstall" });
          }
       }
-   }, [selectedAgent?.id, installedUtilityAgents]);
+   }, [selectedAgent?.id, installedUtilityAgents, installedModelAgents]);
 
    const checkAgentRunning = async (agent) => {
       try {
@@ -204,26 +204,7 @@ const AgentProvider: React.FC<
       return getTradePlatform(selectedAgent as any);
    }, [selectedAgent?.id]);
 
-
-   // useEffect(() => {
-   //    if (selectedAgent && chainList) {
-   //       const supportModelObj = chainList?.find((v) =>
-   //          compareString(v.chain_id, selectedAgent.network_id)
-   //       )?.support_model_names;
-   //
-   //       if (supportModelObj) {
-   //          setCurrentModel({
-   //             name:
-   //            selectedAgent.agent_base_model || Object.keys(supportModelObj)[0],
-   //             id:
-   //            supportModelObj[selectedAgent.agent_base_model]
-   //            || Object.values(supportModelObj)[0],
-   //          });
-   //       }
-   //    }
-   // }, [selectedAgent, chainList]);
-
-   const fetchChainList = useCallback(async () => {
+   const fetchInstalledModelAgents = useCallback(async () => {
       const params: any = {
          page: 1,
          limit: 100,
@@ -603,9 +584,11 @@ const AgentProvider: React.FC<
    const checkModelAgentInstalled = async (agent: IAgentToken) => {
       try {
          const ipfsHash = await getModelAgentHash(agent);
-         const res = await window.electronAPI.modelCheckInstall([ipfsHash]);
 
-         if (res[ipfsHash]) {
+         const res: ModelInfo[] = await window.electronAPI.modelDownloadedList();
+         const installedHash = res.map(r => r.hash);
+
+         if (installedHash.includes(ipfsHash)) {
             setIsInstalled(true);
             cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
          } else {
