@@ -26,6 +26,7 @@ type MemeReq struct {
 	FbPair          bool             `json:"fb_pair"`
 	AgentInfoID     uint             `json:"agent_info_id"`
 	BaseTokenSymbol string           `json:"base_token_symbol"`
+	NotGraduated    bool             `json:"not_graduated"`
 }
 
 type MemeResp struct {
@@ -465,4 +466,50 @@ type TransferCatReq struct {
 	SendAmount      string `json:"send_amount"`
 	SenderAddress   string `json:"sender_address"`
 	WifPrivateKey   string `json:"wif_private_key"`
+}
+
+type UserVideoResp struct {
+	ID                 uint                  `json:"id"`
+	CreatedAt          time.Time             `json:"created_at"`
+	TokenName          string                `json:"token_name"`
+	TokenSymbol        string                `json:"token_symbol"`
+	TokenAddress       string                `json:"token_address"`
+	TokenImageUrl      string                `json:"token_image_url"`
+	TokenDesc          string                `json:"token_desc"`
+	PayoutRecipient    string                `json:"payout_recipient"`
+	UserAddress        string                `json:"user_address"`
+	OwnerTwitterID     string                `json:"owner_twitter_id"`
+	AgentTwitterPostID uint                  `json:"agent_twitter_post_id"`
+	AgentTwitterPost   *AgentTwitterPostResp `json:"agent_twitter_post"`
+	TotalReward        numeric.BigFloat      `json:"total_reward"`
+	ClaimedReward      numeric.BigFloat      `json:"claimed_reward"`
+}
+
+func NewUserVideoResp(m *models.AgentVideo) *UserVideoResp {
+	if m == nil {
+		return nil
+	}
+	return &UserVideoResp{
+		ID:                 m.ID,
+		CreatedAt:          m.CreatedAt,
+		TokenName:          m.TokenName,
+		TokenSymbol:        m.TokenSymbol,
+		TokenAddress:       m.TokenAddress,
+		TokenImageUrl:      m.TokenImageUrl,
+		TokenDesc:          m.TokenDesc,
+		UserAddress:        m.UserAddress,
+		OwnerTwitterID:     m.OwnerTwitterID,
+		AgentTwitterPostID: m.AgentTwitterPostID,
+		TotalReward:        m.TotalReward,
+		ClaimedReward:      m.ClaimedReward,
+		AgentTwitterPost:   NewAgentTwitterPostResp(m.AgentTwitterPost),
+	}
+}
+
+func NewUserVideoRespArray(arr []*models.AgentVideo) []*UserVideoResp {
+	resps := []*UserVideoResp{}
+	for _, r := range arr {
+		resps = append(resps, NewUserVideoResp(r))
+	}
+	return resps
 }

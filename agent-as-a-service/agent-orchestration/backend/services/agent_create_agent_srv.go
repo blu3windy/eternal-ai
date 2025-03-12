@@ -522,7 +522,8 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, tweetId stri
 		}
 
 		_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
-		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND] a requirement gen video, db_id=%v, post :%v ", m.ID, fullText))
+		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND] a requirement gen video, db_id=%v, tweet_id=%v, post :%v ",
+			m.ID, m.TwitterPostID, fullText))
 		return m, nil
 	}
 
@@ -699,6 +700,7 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 		ctx,
 		fmt.Sprintf("AgentTwitterPostGenerateVideoByUserTweetId_%d", twitterPostID),
 		func() error {
+			isCreateAgentVideo := false
 			err := daos.WithTransaction(
 				daos.GetDBMainCtx(ctx),
 				func(tx *gorm.DB) error {
@@ -770,6 +772,9 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 							}
 							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success gen video reply twitter id=%v,\n, Prompt:%v \n https://x.com/%v/status/%v \n process time :%v",
 								twitterPost.ID, twitterPost.ExtractContent, twitterPost.TwitterUsername, twitterPost.TwitterPostID, time.Since(twitterPost.CreatedAt)))
+
+							//create agent and token
+							isCreateAgentVideo = true
 						}
 					}
 
@@ -780,6 +785,10 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 				return errs.NewError(err)
 			}
 
+			if isCreateAgentVideo {
+				fmt.Println(1)
+				// go s.CreateCoinForVideoByPostID(ctx, twitterPostID)
+			}
 			return nil
 		},
 	)

@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func (s *Server) AdminTriggerJob(c *gin.Context) {
@@ -60,6 +62,7 @@ func (s *Server) AdminHandleVideo(c *gin.Context) {
 
 	agentTwitterPost, err := s.nls.HandleGenerateVideoWithSpecificTweet(daos.GetDBMainCtx(context.Background()), request.TweetID, s.conf.VideoAiAgentInfoId, nil, nil)
 	if err != nil {
+		logger.Error("handle_video", "internal_api_key error", zap.Error(err))
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}

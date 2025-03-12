@@ -732,6 +732,7 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 			and agent_infos.id != 15
 		`: {},
 		`agent_infos.token_address != "" and ifnull(memes.status, "") not in ("created", "pending")`: {},
+		`agent_infos.agent_type != ?`: {models.AgentInfoAgentTypeVideo},
 	}
 
 	if search != "" {

@@ -174,6 +174,8 @@ func (s *Server) Routers() {
 			agentAPI.POST("/add-library", s.AddAgentLibrary)
 			agentAPI.GET("/check-exist", s.CheckNameExist)
 
+			agentAPI.GET("/video", s.authCheckTK1TokenMiddleware(), s.GetListUserVideo)
+
 		}
 
 		nftWithAuthAPI := rootAPI.Group("/nft", s.authCheckTK1TokenMiddleware())
