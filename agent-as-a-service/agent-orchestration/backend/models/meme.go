@@ -103,7 +103,8 @@ type Meme struct {
 	SyncAt            *time.Time
 	Fee               numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	ExternalTradeUrl  string
-	NumRetries        int `gorm:"default:0"`
+	NumRetries        int  `gorm:"default:0"`
+	NotGraduated      bool `gorm:"default:0"`
 
 	//
 	Percent                float64 `gorm:"-"`

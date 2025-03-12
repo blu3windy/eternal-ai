@@ -615,6 +615,7 @@ func (s *Service) JobMemeRemovePositionInternal(ctx context.Context) error {
 					"remove_pool1_tx_hash = ''": {},
 					`network_id != ?`:           {models.BITTENSOR_CHAIN_ID},
 					"num_retries < 3":           {},
+					"not_graduated = false":     {},
 				},
 				map[string][]any{},
 				[]string{
@@ -755,6 +756,7 @@ func (s *Service) JobMemeAddPositionUniswap(ctx context.Context) error {
 					"add_pool2_tx_hash = ''": {},
 					`network_id != ?`:        {models.BITTENSOR_CHAIN_ID},
 					"num_retries < 3":        {},
+					"not_graduated = false":  {},
 				},
 				map[string][]any{},
 				[]string{
@@ -1345,6 +1347,7 @@ func (s *Service) JobCheckMemeReachMarketCap(ctx context.Context) error {
 				`price_usd * supply >= 69000`: {},
 				`status = ?`:                  {models.MemeStatusAddPoolLevel1},
 				`network_id != ?`:             {models.BITTENSOR_CHAIN_ID},
+				"not_graduated = false":       {},
 			}
 			memes, err := s.dao.FindMeme(daos.GetDBMainCtx(ctx),
 				filters,
