@@ -684,3 +684,9 @@ type AgentUtilityInstall struct {
 	Address     string `gorm:"unique_index:agent_utility_install_main_idx"`
 	AgentInfoID uint   `gorm:"unique_index:agent_utility_install_main_idx"`
 }
+
+type AgentUtilityRecentChat struct {
+	gorm.Model
+	Address     string `gorm:"unique_index:agent_utility_recent_chat_main_idx"`
+	AgentInfoID uint   `gorm:"unique_index:agent_utility_recent_chat_main_idx"`
+}

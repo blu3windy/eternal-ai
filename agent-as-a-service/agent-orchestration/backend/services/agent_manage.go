@@ -1438,6 +1438,28 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 	return true, nil
 }
 
+func (s *Service) MarkRecentChatUtilityAgent(ctx context.Context, address string, req *serializers.AgentActionReq) (bool, error) {
+	err := daos.WithTransaction(
+		daos.GetDBMainCtx(ctx),
+		func(tx *gorm.DB) error {
+			for _, agentID := range req.Ids {
+				inst := &models.AgentUtilityRecentChat{
+					Address:     strings.ToLower(address),
+					AgentInfoID: agentID,
+				}
+				_ = s.dao.Create(tx, inst)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return false, errs.NewError(err)
+	}
+
+	return true, nil
+}
+
 func (s *Service) MarkPromptCountUtilityAgent(ctx context.Context, address string, agentID uint) (bool, error) {
 	err := daos.WithTransaction(
 		daos.GetDBMainCtx(ctx),
