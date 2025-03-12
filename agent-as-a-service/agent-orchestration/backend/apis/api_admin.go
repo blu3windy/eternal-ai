@@ -2,6 +2,7 @@ package apis
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/gin-gonic/gin"
@@ -57,11 +58,17 @@ func (s *Server) AdminHandleVideo(c *gin.Context) {
 		return
 	}
 
-	err := s.nls.HandleGenerateVideoWithSpecificTweet(daos.GetDBMainCtx(context.Background()), request.TweetID, s.conf.VideoAiAgentInfoId)
+	agentTwitterPost, err := s.nls.HandleGenerateVideoWithSpecificTweet(daos.GetDBMainCtx(context.Background()), request.TweetID, s.conf.VideoAiAgentInfoId, nil, nil)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(200, gin.H{"message": "video generation started"})
+	if agentTwitterPost == nil {
+		c.JSON(200, gin.H{"message": "agent twitter post is nil"})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": fmt.Sprintf("SUCCESS insert agent twitter post id: %d", agentTwitterPost.ID)})
+	return
 }
