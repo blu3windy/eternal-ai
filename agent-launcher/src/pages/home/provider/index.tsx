@@ -14,9 +14,9 @@ import STORAGE_KEYS from "@constants/storage-key.ts";
 import uniq from "lodash.uniq";
 import CAgentContract from "@contract/agent/index.ts";
 import { AgentType, SortOption } from "@pages/home/list-agent";
-import sleep from "@utils/sleep.ts";
 import { ModelInfo } from "../../../../electron/share/model.ts";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
+import sleep from "@utils/sleep.ts";
 
 const initialValue: IAgentContext = {
    loading: false,
@@ -222,6 +222,10 @@ const AgentProvider: React.FC<
          newTokens.map(t => getModelAgentHash(t))
       )
 
+      console.log('stephen newTokens', newTokens);
+      console.log('stephen installedHash', installedModels);
+      console.log('stephen agentHashes', agentHashes);
+
       const installedAgents = newTokens.filter((t, index) => installedHash.includes(agentHashes[index]));
 
       setInstalledModelAgents(installedAgents);
@@ -296,7 +300,7 @@ const AgentProvider: React.FC<
 
          }
 
-         await sleep(3000);
+         await sleep(2000);
       } catch (e) {
          console.log('startAgent e', e);
       } finally {
@@ -318,8 +322,6 @@ const AgentProvider: React.FC<
          } else {
 
          }
-
-         await sleep(2000);
       } catch (e) {
          console.log('stopAgent e', e);
       } finally {
