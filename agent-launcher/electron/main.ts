@@ -14,16 +14,69 @@ autoUpdater.setFeedURL({
   provider: "generic",
   url: "https://electron-update-server-production.up.railway.app/updates/",
 });
-autoUpdater.on("update-available", () => {
-  console.log("Update available!");
+autoUpdater.on("update-available", (info) => {
+  dialog
+    .showMessageBox({
+      type: "info",
+      title: "Update Available",
+      message: `A new version (v${info.version}) is available. Download now?`,
+      buttons: ["Update", "Later"],
+    })
+    .then(({ response }) => {
+      if (response === 0) {
+        // User clicked "Update"
+        autoUpdater.downloadUpdate().catch((err) => {
+          console.error("Download failed:", err);
+          dialog.showMessageBox({
+            type: "info",
+            title: "Update Ready",
+            message: `Download failed: ${JSON.stringify(err)}`,
+          });
+        });
+      }
+    });
 });
 
 autoUpdater.on("update-not-available", () => {
-  console.log("No update available.");
+  dialog.showMessageBox({
+    message: "No update available.",
+  });
 });
 
 autoUpdater.on("error", (err) => {
   console.error("Update error:", err);
+});
+
+// 🔹 Event: When update is downloaded
+autoUpdater.on("update-downloaded", (info) => {
+  console.log(`Update downloaded: v${info.version}`);
+  dialog
+    .showMessageBox({
+      type: "info",
+      title: "Update Ready",
+      message: `Version ${info.version} is downloaded. Restart to apply?`,
+      buttons: ["Restart", "Later"],
+    })
+    .then(({ response }) => {
+      if (response === 0) {
+        // User clicked "Restart"
+        autoUpdater.quitAndInstall();
+      }
+    });
+});
+
+// 🔹 Track download progress
+autoUpdater.on("download-progress", (progress) => {
+  let percentage = Math.round(progress.percent);
+  dialog.showMessageBox({
+    type: "info",
+    title: "Processing",
+    message: `Downloading... ${percentage}% (${(
+      progress.transferred /
+      1024 /
+      1024
+    ).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB)`,
+  });
 });
 
 // const require = createRequire(import.meta.url);
@@ -57,7 +110,9 @@ function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
   setTimeout(() => {
-    autoUpdater.checkForUpdates();
+    autoUpdater.checkForUpdates().catch((err) => {
+      console.error("Update check failed:", err);
+    });
   }, 5000);
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "app-logo.png"),
