@@ -107,7 +107,6 @@ const ipcMainDocker = () => {
    })
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL, async (_event) => {
-      const win = command.getBrowser();
 
       try {
          const { stdout, stderr } = await command.execAsyncDockerDir("docker info");
@@ -117,7 +116,6 @@ const ipcMainDocker = () => {
                message: '[LAUNCHER_LOGGER] [INITIALIZE] --name [DOCKER_CHECK] --error "Docker is not installed or not running"',
                cmd: 'docker info',
                type: 'error',
-               win
             });
          }
       } catch (error) {
@@ -125,7 +123,6 @@ const ipcMainDocker = () => {
             type: 'error',
             message: '[LAUNCHER_LOGGER] [INITIALIZE] --name [DOCKER_CHECK] --error "Docker is not installed or not running"',
             cmd: 'docker info',
-            win
          });
          throw error;
       }

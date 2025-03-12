@@ -11,35 +11,28 @@ const execAsync = async (cmd: string) => {
 let dockerDir = '';
 let window: BrowserWindow | null = null;
 
-const sendEvent = (params: { type: string, message: string, cmd: string, win?: BrowserWindow }) => {
-   if (!params?.win || params?.win?.isDestroyed()) {
-      return;
-   }
-   params.win.focus();
+
+const getBrowser = () => {
+   return window;
+}
+
+const setWindow = (win: BrowserWindow) => {
+   window = win;
+}
+
+const sendEvent = (params: { type: string, message: string, cmd: string }) => {
+   const win = getBrowser();
    const {
       type,
       message,
       cmd,
-      win
    } = params;
-   win.webContents.send("command-event", { type, message, cmd });
-}
-
-const getBrowser = () => {
-   if (!window || window.isDestroyed()) {
-      window = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
-      if (!window) {
-         console.error("No active Electron window found.");
-         // throw new Error("No active Electron window found.");
-      }
+   if (win && !win.isDestroyed()) {
+      win.webContents.send("command-event", { type, message, cmd });
    }
-   window.focus();
-   return window;
 }
 
 const execAsyncDockerDir = async (cmd: string) => {
-   const win = getBrowser();
-
    try {
       // Check and set Docker directory only once
       if (!dockerDir) {
@@ -99,13 +92,13 @@ const execAsyncDockerDir = async (cmd: string) => {
          // Check which files exist
          fs.readdir(scriptsPath, (err, files) => {
             if (err) {
-               sendEvent({ type: "error", message: err.message, cmd, win });
+               sendEvent({ type: "error", message: err.message, cmd });
             } else {
-               sendEvent({ type: "output", message: `files: ${JSON.stringify(files)}`, cmd, win });
+               sendEvent({ type: "output", message: `files: ${JSON.stringify(files)}`, cmd });
             }
          });
 
-         sendEvent({ type: "output", message: `Docker Dir: ${dockerDir || "Not Found"}`, cmd, win });
+         sendEvent({ type: "output", message: `Docker Dir: ${dockerDir || "Not Found"}`, cmd });
       }
 
       const env = dockerDir ? { ...process.env, PATH: `${dockerDir}:${process.env.PATH}` } : process.env;
@@ -115,40 +108,39 @@ const execAsyncDockerDir = async (cmd: string) => {
 
       if (stderr) {
          console.log(stderr);
-         sendEvent({ type: "error", message: stderr, cmd, win });
+         sendEvent({ type: "error", message: stderr, cmd });
       } else {
          console.log(stdout)
-         sendEvent({ type: "output", message: stdout, cmd, win });
+         sendEvent({ type: "output", message: stdout, cmd });
       }
       return { stdout, stderr };
    } catch (error: any) {
-      sendEvent({ type: "error", message: error.message || "Unknown error", cmd, win });
+      sendEvent({ type: "error", message: error.message || "Unknown error", cmd });
       throw error; // Re-throw the error after posting it to UI
    }
 };
 
 const execAsyncStream = (_cmd: string, isZSH = true) => {
    return new Promise<void>((resolve, reject) => {
-      const win = getBrowser();
       const cmd = isZSH ? `zsh -l -c '${_cmd}'` : _cmd;
       const process = exec(cmd);
 
       process.stdout?.on("data", (data) => {
          console.log(data.toString());
-         sendEvent({ type: "output", message: data.toString(), cmd, win });
+         sendEvent({ type: "output", message: data.toString(), cmd });
       });
 
       process.stderr?.on("data", (data) => {
          console.error(data.toString());
-         sendEvent({ type: "error", message: data.toString(), cmd, win });
+         sendEvent({ type: "error", message: data.toString(), cmd });
       });
 
       process.on("close", (code) => {
          if (code === 0) {
-            sendEvent({ type: "done", message: "Process completed successfully", cmd, win });
+            sendEvent({ type: "done", message: "Process completed successfully", cmd });
             resolve();
          } else {
-            sendEvent({ type: "error", message: `Process exited with code ${code}`, cmd, win });
+            sendEvent({ type: "error", message: `Process exited with code ${code}`, cmd });
             reject(new Error(`Exited with code ${code}`));
          }
       });
@@ -160,7 +152,8 @@ const command = {
    execAsyncStream,
    execAsyncDockerDir,
    sendEvent,
-   getBrowser
+   getBrowser,
+   setWindow,
 }
 
 export default command;

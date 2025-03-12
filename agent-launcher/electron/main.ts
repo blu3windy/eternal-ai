@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
+import command from "./share/command-tool.ts";
 
 autoUpdater.setFeedURL({
    provider: "generic",
@@ -148,6 +149,8 @@ function createWindow() {
       // win.loadFile('dist/index.html')
       win.loadFile(path.join(RENDERER_DIST, "index.html"));
    }
+
+   command.setWindow(win);
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
