@@ -62,6 +62,10 @@ const ItemToken = ({
       || agent?.token_image_url
       || agent?.twitter_info?.twitter_avatar;
 
+   const modelSize = useMemo(() => {
+      return 1.89;
+   }, []);
+
    const handleRemoveAgent = e => {
       e?.preventDefault();
       e?.stopPropagation();
@@ -105,7 +109,7 @@ const ItemToken = ({
                   </Text>
                   <Flex gap={"4px"} alignItems={"center"}>
                      <Text className={s.itemAmount}>
-                        {RenameModels?.[agent.agent_base_model as any] || agent.agent_base_model}
+                        {RenameModels?.[agent.agent_base_model as any] || agent.agent_base_model} ({modelSize} GB)
                      </Text>
                      {
                         agent.ipfsHash !== MODEL_HASH && (
