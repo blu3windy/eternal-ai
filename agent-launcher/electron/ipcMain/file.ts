@@ -52,9 +52,8 @@ const ipcMainSafeFile = () => {
    ipcMain.handle(EMIT_EVENT_NAME.ACCESS_FILE, async (_, fileName, folderName) => {
       try {
          const _appDir = path.join(appDir, folderName);
-         await checkAndCreateFolder(_appDir);
          const filePath = path.join(_appDir, fileName);
-         await fs.access(filePath);
+         await fs.stat(filePath);
          return true;
       } catch (error) {
          return false;

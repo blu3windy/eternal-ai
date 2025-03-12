@@ -384,7 +384,7 @@ const AgentProvider: React.FC<
       
          const codeVersion = await cAgent.getCurrentVersion();
 
-         const oldCodeVersion = Number(localStorage.getItem(agent.agent_contract_address));
+         const oldCodeVersion = Number(localStorageService.getItem(agent.agent_contract_address));
          const fileNameOnLocal = `prompt.${codeLang}`;
          const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
 
@@ -401,6 +401,7 @@ const AgentProvider: React.FC<
             const base64Array = splitBase64(codeBase64);
             const code = base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
             filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
+            localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
             console.log('filePath New', filePath)
          }
       }
