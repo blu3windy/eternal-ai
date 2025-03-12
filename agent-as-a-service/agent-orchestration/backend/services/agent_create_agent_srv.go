@@ -522,7 +522,8 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, tweetId stri
 		}
 
 		_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
-		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND] a requirement gen video, db_id=%v, post :%v ", m.ID, fullText))
+		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND] a requirement gen video, db_id=%v, tweet_id=%v, post :%v ",
+			m.ID, m.TwitterPostID, fullText))
 		return m, nil
 	}
 
