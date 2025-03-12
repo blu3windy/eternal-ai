@@ -4,6 +4,7 @@ import command from "../share/command-tool.ts";
 import { SCRIPTS_NAME } from "../share/utils.ts";
 import { getFolderPath, ACTIVE_PATH, downloadedModels, deleteModel } from "../share/model.ts";
 import { validateDiskSpace } from "../share/utils.ts";
+import { dialogCheckDist } from "../share/file-size.ts";
 
 // Constants for size calculations
 const MB_TO_GB = 1024; // 1 GB = 1024 MB
@@ -17,39 +18,9 @@ const ipcMainModel = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL, async (_event, hash: string) => {
       try {
-         // Get number of files from IPFS
-         const files = await fetch("https://gateway.mesh3.network/ipfs/bafkreic5e3lsc3bg4pnb3qpiqz2732pjqkbn2wv5ar3ilpxykd45nzb6za")
-            .then((res) => res.json())
-            .then((res) => res.num_of_file);
-
-         // Calculate total size in GB
-         const totalSizeGB = (files * MODEL_CHUNK_SIZE_MB) / MB_TO_GB;
-         
-         // Check disk space before proceeding
-         const requiredGB = Math.ceil(totalSizeGB); // Round up to ensure we have enough space
          const path = getFolderPath();
-         
-         const { isValid, availableSpace, requiredSpace } = await validateDiskSpace(requiredGB, path);
 
-         console.log("MODEL_INSTALL Space Check:", {
-            files,
-            totalSizeGB,
-            isValid,
-            availableSpace,
-            requiredSpace
-         });
-         
-         if (!isValid) {
-            const response = await dialog.showMessageBox({
-               type: 'warning',
-               title: 'Insufficient Disk Space',
-               message: 'Not enough disk space to install the model',
-               detail: `Model Size: ${(Number(totalSizeGB.toFixed(2)) / 2).toFixed(2)}GB\nAvailable space: ${availableSpace}GB\nRequired space (with buffer): ${requiredSpace}GB\n\nPlease free up some disk space and try again.`,
-               buttons: ['OK'],
-               defaultId: 0
-            });
-            throw new Error('Insufficient disk space');
-         }
+         await dialogCheckDist(hash);
 
          // Proceed with installation if disk space is sufficient
          await command.execAsyncStream(
