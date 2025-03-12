@@ -4,7 +4,7 @@ import { useContext } from "react";
 import MainLayout from "../../components/layout";
 import FundAgentProvider from "../../providers/FundAgent";
 import ChatAgent from "./chat-agent";
-import AgentInfo from "./chat-agent/AgentInfo";
+import AgentTopInfo from "./chat-agent/AgentTopInfo";
 import AgentsList from "./list-agent";
 import AgentProvider, { AgentContext } from "./provider";
 import s from "./styles.module.scss";
@@ -32,7 +32,7 @@ const HandleHome = () => {
         )}
         flex={2}
       >
-         <AgentInfo />
+         <AgentTopInfo />
 
          <Flex w={"100%"} minW={'700px'} maxW={"800px"} mx={"auto"}>
             <ChatAgent />

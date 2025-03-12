@@ -11,7 +11,7 @@ import {
   Text,
   useDisclosure
 } from "@chakra-ui/react";
-import SelectModel from "@pages/home/chat-agent/AgentInfo/SelectModel";
+import SelectModel from "@pages/home/chat-agent/AgentTopInfo/SelectModel";
 import React, { useContext, useMemo } from "react";
 import { AgentContext } from "@pages/home/provider";
 import { formatCurrency } from "@utils/format.ts";
@@ -26,7 +26,7 @@ import ExportPrivateKey from "@pages/home/chat-agent/ExportPrivateKey";
 import TradeAgent from "@pages/home/trade-agent";
 import AgentTradeProvider from "@pages/home/trade-agent/provider";
 
-const AgentInfo = () => {
+const AgentTopInfo = () => {
   const {
     selectedAgent,
     setIsTrade,
@@ -155,4 +155,4 @@ const AgentInfo = () => {
   );
 };
 
-export default AgentInfo;
+export default AgentTopInfo;
