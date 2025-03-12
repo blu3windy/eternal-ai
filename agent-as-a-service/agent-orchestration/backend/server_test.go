@@ -116,3 +116,21 @@ func Test_UpdateTokenPrice(t *testing.T) {
 	// ts.CreateGenerateVideoByTweetID(daos.GetDBMainCtx(context.Background()), "1895369759690219863")
 	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 34584)
 }
+
+func Test_IPFS(t *testing.T) {
+	resp := map[string]any{
+		"name":          "XXX",
+		"description":   "XXX Description ...",
+		"symbol":        "XXX",
+		"image":         "https://xxx.jpg",
+		"animation_url": "https://xxx.mp4",
+		"content": map[string]any{
+			"uri":  "https://xxx.mp4",
+			"mime": "video/mp4",
+		},
+	}
+	jsonString, _ := json.Marshal(resp)
+	fmt.Println(
+		ts.IpfsUploadDataForName(context.Background(), "data", jsonString),
+	)
+}
