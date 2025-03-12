@@ -26,17 +26,34 @@ filter_and_log() {
                 if [ "$current" -eq 0 ]; then
                     percentage=5
                 else
-                    # Calculate percentage with floating point using awk
-                    percentage=$(awk "BEGIN { printf \"%.0f\", (($current * 95) / $total) + 5 }")
+                    percentage=$(awk "BEGIN { printf \"%.0f\", (($current * 98) / $total) + 2 }")
                 fi
-                
-                log_message "Downloading ${percentage}%"
+
+                # Create fancy progress message
+                # progress_bar="▰▰▰▱▱▱▱▱▱▱"  # Example progress bar
+                log_message "⚡ Downloading model... ${percentage}% | ${current}/${total} files"
             else
                 log_message "$line"
             fi
         fi
+
+        #MODEL_INSTALL_LLAMA
+        if [[ $line == *"[MODEL_INSTALL_LLAMA]"* ]]; then
+            if [[ $line == *"--error"* ]]; then
+                # Extract error message between quotes
+                if [[ $line =~ --error\ \"([^\"]*)\" ]]; then
+                    log_error "${BASH_REMATCH[1]}"
+                fi
+            elif [[ $line == *"--message"* ]]; then
+                # Extract message between quotes
+                if [[ $line =~ --message\ \"([^\"]*)\" ]]; then
+                    log_message "${BASH_REMATCH[1]}"
+                fi
+            fi
+        fi
     done
 }
+
 # Parse command line arguments
 FOLDER_PATH=""
 MODEL_HASH=""

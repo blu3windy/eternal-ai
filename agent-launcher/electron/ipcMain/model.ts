@@ -1,50 +1,24 @@
 import { app, ipcMain } from "electron";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 import command from "../share/command-tool.ts";
-import path from "path";
-import { SCRIPTS_NAME, USER_DATA_FOLDER_NAME } from "../share/utils.ts";
+import { SCRIPTS_NAME } from "../share/utils.ts";
+import { getFolderPath, ACTIVE_PATH, downloadedModels, deleteModel } from "../share/model.ts";
 
-const getModelPath = () => {
-   const userDataPath = app.getPath("userData");
-   return path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.MODEL);
-}
-
-const ACTIVE_PATH = 'local_llms/bin/activate'
-
-const checkModelInstall = async (hashs: string[]) => {
-   const path = getModelPath();
-   const status: { [key: string]: boolean } = {};
-   for (const hash of hashs) {
-      try {
-         const cmd = `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms check --hash ${hash}`;
-         const { stdout, stderr } = await command.execAsync( `${cmd}`);
-         console.log("MODEL_CHECK_INSTALL", stdout, stderr);
-         if (stderr) {
-            status[hash] = false;
-         }
-         status[hash] = stdout?.trim()?.toLowerCase() === "true";
-      } catch (error) {
-         console.log("MODEL_CHECK_INSTALL", error);
-         status[hash] = false;
-      }
-   }
-   return status;
-}
 
 const ipcMainModel = () => {
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_STARTER, async (_event) => {
-      const path = getModelPath();
+      const path = getFolderPath();
       await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_STARTER}`);
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL, async (_event, hash: string) => {
-      const path = getModelPath();
+      const path = getFolderPath();
       await command.execAsyncStream( `cd "${path}" && source "${path}/${ACTIVE_PATH}" && local-llms download --hash ${hash}`)
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_RUN, async (_event, hash: string) => {
       try {
-         const path = getModelPath();
+         const path = getFolderPath();
          console.log("MODEL_RUN 0000");
 
          const data = await command.execAsyncStream( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms start --hash ${hash}`, false);
@@ -56,13 +30,12 @@ const ipcMainModel = () => {
       }
    });
 
-   ipcMain.handle(EMIT_EVENT_NAME.MODEL_CHECK_INSTALL, async (_event, hashs: string[]) => {
-
-      return await checkModelInstall(hashs);
+   ipcMain.handle(EMIT_EVENT_NAME.MODEL_DOWNLOADED_LIST, async (_event, hashs: string[]) => {
+      return await downloadedModels()
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_CHECK_RUNNING, async (_event) => {
-      const path = getModelPath();
+      const path = getFolderPath();
       try {
          const { stdout } = await command.execAsync( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms status`);
          return !!stdout
@@ -73,15 +46,30 @@ const ipcMainModel = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL_BASE_MODEL, async (_event, hash: string) => {
-      const path = getModelPath();
+      const path = getFolderPath();
       try {
-         const status = await checkModelInstall([hash]);
-         if (status[hash]) {
+         const models = await downloadedModels();
+         if (models.some((model) => model.hash === hash)) {
             return true;
          }
          await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_DOWNLOAD_BASE} --folder-path "${path}" --hash "${hash}"`);
       } catch (error) {
          throw error;
+      }
+   });
+
+   ipcMain.handle(EMIT_EVENT_NAME.MODEL_DELETE, async (_event, hash: string) => {
+      await deleteModel(hash);
+   });
+
+   ipcMain.handle(EMIT_EVENT_NAME.MODEL_STOP, async (_event, hash: string) => {
+      const path = getFolderPath();
+      try {
+         const data = await command.execAsyncStream( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms stop --hash ${hash}`, false);
+         return data;
+      } catch (error) {
+         console.log("MODEL_STOP", error);
+         return false;
       }
    });
 }

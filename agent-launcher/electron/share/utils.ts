@@ -5,6 +5,7 @@ export const PUBLIC_SCRIPT = 'public/scripts';
 
 const SCRIPTS_NAME = {
    DOCKER_INSTALL_SCRIPT: "docker-install.sh",
+   DOCKER_BUILD_SCRIPT: "docker-build.sh",
    DOCKER_FILE : "Dockerfile",
    PACKAGE_JSON: "package.json",
    SERVER_JS: "server.js",

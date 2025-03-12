@@ -15,6 +15,7 @@ import uniq from "lodash.uniq";
 import CAgentContract from "@contract/agent/index.ts";
 import { AgentType, SortOption } from "@pages/home/list-agent";
 import sleep from "@utils/sleep.ts";
+import { ModelInfo } from "../../../../electron/share/model.ts";
 
 const initialValue: IAgentContext = {
    loading: false,
@@ -45,7 +46,6 @@ const initialValue: IAgentContext = {
    requireInstall: false,
    isModelRequirementSetup: false,
    installedModelAgents: [],
-   installedAgents: undefined
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -232,12 +232,16 @@ const AgentProvider: React.FC<
          chain: '',
       };
       const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
-      const chainList = await cPumpAPI.getChainList();
+      const res: ModelInfo[] = await window.electronAPI.modelDownloadedList();
+      const installedHash = res.map(r => r.hash);
 
-      console.log('stephen newTokens', newTokens);
-      console.log('stephen chainList', chainList);
+      const agentHashes = await Promise.all(
+         newTokens.map(t => getModelAgentHash(t))
+      )
 
-      setInstalledModelAgents(newTokens);
+      const installedAgents = newTokens.filter((t, index) => installedHash.includes(agentHashes[index]));
+
+      setInstalledModelAgents(installedAgents);
 
       // if (!!chainList && chainList.length > 0) {
       //    const list = chainList.map((chain) => {
@@ -283,15 +287,15 @@ const AgentProvider: React.FC<
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
-           await handleInstallModelAgent();
+            await handleInstallModelAgentRequirement();
 
             const ipfsHash = await getModelAgentHash(agent);
-           console.log('====ipfsHash', ipfsHash);
-           await window.electronAPI.modelInstall(ipfsHash);
+            console.log('====ipfsHash', ipfsHash);
+            await window.electronAPI.modelInstall(ipfsHash);
             setIsInstalled(true);
             cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
 
-           await handleRunModelAgent(ipfsHash);
+            await handleRunModelAgent(ipfsHash);
          } else {
 
          }
@@ -312,11 +316,11 @@ const AgentProvider: React.FC<
 
             await handleRunDockerAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
-            await handleInstallModelAgent();
+            await handleInstallModelAgentRequirement();
 
-           const ipfsHash = await getModelAgentHash(agent);
-           console.log('====ipfsHash', ipfsHash);
-           await handleRunModelAgent(ipfsHash);
+            const ipfsHash = await getModelAgentHash(agent);
+            console.log('====ipfsHash', ipfsHash);
+            await handleRunModelAgent(ipfsHash);
          } else {
 
          }
@@ -354,15 +358,50 @@ const AgentProvider: React.FC<
       }
    };
 
+   const unInstallAgent = async (agent: IAgentToken) => {
+      try {
+         setIsInstalling(true);
+
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+            await stopAgent(agent);
+
+            await removeUtilityAgent(agent);
+         } else if (agent.agent_type === AgentType.Model) {
+            const newAgent = installedModelAgents.filter(a => a.id !== agent.id)[0];
+
+            if (newAgent) {
+               await startAgent(newAgent);
+            }
+
+            // await handleInstallModelAgent();
+            //
+            // const ipfsHash = await getModelAgentHash(agent);
+            // console.log('====ipfsHash', ipfsHash);
+            // await window.electronAPI.modelInstall(ipfsHash);
+            // setIsInstalled(true);
+            // cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
+            //
+            // await handleRunModelAgent(ipfsHash);
+         } else {
+
+         }
+      } catch (e) {
+         console.log('unInstallAgent e', e);
+      } finally {
+         setIsInstalling(false);
+         handleGetExistAgentFolders();
+      }
+   }
+
    const getModelAgentHash = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
          const codeVersion = await cAgent.getCurrentVersion();
-        const ipfsHash = await cAgent.getAgentCode(codeVersion);
-        return ipfsHash;
+         const ipfsHash = await cAgent.getAgentCode(codeVersion);
+         return ipfsHash?.replaceAll('\n', '');
       }
-    }
+   }
 
    const installUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
@@ -542,7 +581,7 @@ const AgentProvider: React.FC<
       }
    }
 
-   const handleInstallModelAgent = async () => {
+   const handleInstallModelAgentRequirement = async () => {
       if(!isModelRequirementSetup) {
          await window.electronAPI.modelStarter();
          setIsModelRequirementSetup(true);

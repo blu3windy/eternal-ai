@@ -88,9 +88,6 @@ const ChatMessage = ({
       );
     }
 
-    console.log('message', message);
-    
-
     return (
       <div className={cs(s.markdown, "markdown")}>
         <CustomMarkdown

@@ -1,0 +1,124 @@
+#!/bin/bash
+
+# Logging functions
+log_message() {
+    local message="$1"
+    if [[ -n "${message// }" ]]; then
+        echo "[LAUNCHER_LOGGER] [DOCKER_BUILD] --name DOCKER_BUILD --message \"$message\""
+    fi
+}
+
+log_error() {
+    local message="$1"
+    if [[ -n "${message// }" ]]; then
+        echo "[LAUNCHER_LOGGER] [DOCKER_BUILD] --name DOCKER_BUILD --error \"$message\"" >&2
+    fi
+}
+
+# Parse command line arguments
+FOLDER_PATH=""
+DOCKER_CONTAINERS=()
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --folder-path)
+            FOLDER_PATH="$2"
+            shift 2
+            ;;
+        --container)
+            DOCKER_CONTAINERS+=("$2")
+            shift 2
+            ;;
+        *)
+            log_error "Unknown parameter: $1"
+            exit 1
+            ;;
+    esac
+done
+
+# Validate parameters
+if [ -z "$FOLDER_PATH" ]; then
+    log_error "Missing required parameter: --folder-path"
+    exit 1
+fi
+
+if [ ${#DOCKER_CONTAINERS[@]} -eq 0 ]; then
+    DOCKER_CONTAINERS=(
+        "agent-js:launcher-agent-js:"
+        "agent-router:launcher-agent-router:33030"
+    )
+fi
+
+# Change to target directory
+cd "$FOLDER_PATH" || {
+    log_error "Failed to access directory: $FOLDER_PATH"
+    exit 1
+}
+
+# Create network silently
+docker network create network-agent-external 2>/dev/null || true
+
+# Track overall success and running containers
+build_success=true
+declare -a running_containers=()
+
+# Loop through container configurations
+for container in "${DOCKER_CONTAINERS[@]}"; do
+    IFS=':' read -r folder_name container_name port <<< "$container"
+    
+    log_message "Building $container_name..."
+    
+    # Check folder and Dockerfile
+    if [ ! -d "./${folder_name}" ] || [ ! -f "./${folder_name}/Dockerfile" ]; then
+        log_error "Missing required files for $container_name"
+        build_success=false
+        continue
+    fi
+    
+    # Build image
+    if ! docker build -t "${container_name}" "./${folder_name}" > /dev/null 2>&1; then
+        log_error "Failed to build $container_name"
+        build_success=false
+        continue
+    fi
+    
+    log_message "Built $container_name successfully"
+
+    # Stop and remove silently
+    docker stop "${container_name}" 2>/dev/null || true
+    docker rm "${container_name}" 2>/dev/null || true
+
+    # Run new container if it has a port
+    if [ -n "$port" ]; then
+        log_message "Starting $container_name..."
+        if ! docker run -d -p "${port}:80" --network=network-agent-external --add-host=localmodel:host-gateway --name "${container_name}" "${container_name}" > /dev/null 2>&1; then
+            log_error "Failed to start $container_name"
+            build_success=false
+            continue
+        fi
+        log_message "Started $container_name successfully"
+        running_containers+=("$container_name:$port")
+    else
+        running_containers+=("$container_name:none")
+    fi
+done
+
+if [ "$build_success" = true ]; then
+    log_message "All containers ready"
+    
+    # Show running containers status
+    log_message "Container Status:"
+    for container in "${running_containers[@]}"; do
+        IFS=':' read -r name port <<< "$container"
+        if [ "$port" = "none" ]; then
+            log_message "• $name (built)"
+        else
+            log_message "• $name (running on port $port)"
+        fi
+    done
+    
+    exit 0
+else
+    log_error "Setup failed"
+    exit 1
+fi
