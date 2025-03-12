@@ -11,7 +11,7 @@ import {
    useDisclosure
 } from '@chakra-ui/react';
 import cs from 'classnames';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import s from './styles.module.scss';
 import { AgentContext } from "@pages/home/provider";
 import CAgentTokenAPI from "../../../../../services/api/agents-token";
@@ -53,6 +53,12 @@ const ItemToken = ({
   models: any;
   isSelected: boolean;
 }) => {
+
+   const avatarUrl
+      = agent?.thumbnail
+      || agent?.token_image_url
+      || agent?.twitter_info?.twitter_avatar;
+
    return (
       <Flex
          className={cs(
@@ -66,19 +72,29 @@ const ItemToken = ({
          }}
       >
          <Flex alignItems={'center'} justifyContent={'space-between'}>
-            <Flex alignItems={'flex-start'} gap="24px">
-               <Image
-                  className={s.itemIcon}
-                  src={`icons/ic-llama.png`}
-               />
+            <Flex alignItems={'flex-start'} gap="16px">
+               {avatarUrl ? (
+                  <Image
+                     className={s.itemIcon}
+                     src={avatarUrl}
+                     borderRadius={'50%'}
+                  />
+               ) : (
+                  <Image
+                     className={s.itemIcon}
+                     src={`icons/ic-llama.png`}
+                  />
+               )}
+
+
                <Flex direction="column" gap="4px">
                   <Text className={s.itemTitle}>
-                     {RenameModels?.[agent.agent_base_model as any] || agent.agent_base_model}
+                     {RenameDescriptionModels?.[models?.[agent.agent_base_model]]
+                        || RenameDescriptionModels?.[agent.agent_base_model]
+                        || models?.[agent.agent_base_model]}
                   </Text>
                   <Text className={s.itemAmount}>
-                     {RenameDescriptionModels?.[models?.[agent.agent_base_model]]
-                || RenameDescriptionModels?.[agent.agent_base_model]
-                || models?.[agent.agent_base_model]}
+                     {RenameModels?.[agent.agent_base_model as any] || agent.agent_base_model}
                   </Text>
                </Flex>
             </Flex>
@@ -99,7 +115,7 @@ const SelectModel = ({
    className,
    showDescription = true,
 }: Props) => {
-   const { installedModelAgents, currentModel, setCurrentModel, startAgent } = useContext(AgentContext);
+   const { installedModelAgents, currentModel, startAgent } = useContext(AgentContext);
    const [models, setModels] = useState<any>();
 
    const { isOpen, onOpen, onClose } = useDisclosure();
@@ -168,7 +184,6 @@ const SelectModel = ({
                            key={t.id}
                            agent={t}
                            onSelect={(agent) => {
-                              setCurrentModel(agent);
                               startAgent(agent);
                            }}
                            onClose={onClose}

@@ -5,7 +5,7 @@ import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.
 import ChatList from "@pages/home/chat-agent/ChatAgent/components/ChatList";
 import InputText from "@pages/home/chat-agent/ChatAgent/components/InputText";
 import { AgentContext } from "@pages/home/provider";
-import {Button, Flex, Text} from "@chakra-ui/react";
+import { Button, Flex, Text } from "@chakra-ui/react";
 
 const ChatBox = () => {
   const { loading, onRetryErrorMessage } = useChatAgentProvider();

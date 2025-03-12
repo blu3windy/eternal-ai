@@ -16,6 +16,7 @@ import CAgentContract from "@contract/agent/index.ts";
 import { AgentType, SortOption } from "@pages/home/list-agent";
 import sleep from "@utils/sleep.ts";
 import { ModelInfo } from "../../../../electron/share/model.ts";
+import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 
 const initialValue: IAgentContext = {
    loading: false,
@@ -213,8 +214,9 @@ const AgentProvider: React.FC<
          chain: '',
       };
       const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
-      const res: ModelInfo[] = await window.electronAPI.modelDownloadedList();
-      const installedHash = res.map(r => r.hash);
+      const installedModels: ModelInfo[] = await window.electronAPI.modelDownloadedList();
+      const runningModelHash = await window.electronAPI.modelCheckRunning();
+      const installedHash = [...installedModels.map(r => r.hash), 'bafkreic5e3lsc3bg4pnb3qpiqz2732pjqkbn2wv5ar3ilpxykd45nzb6za'];
 
       const agentHashes = await Promise.all(
          newTokens.map(t => getModelAgentHash(t))
@@ -224,33 +226,19 @@ const AgentProvider: React.FC<
 
       setInstalledModelAgents(installedAgents);
 
-      // if (!!chainList && chainList.length > 0) {
-      //    const list = chainList.map((chain) => {
-      //       const modelDetailParams = chain?.model_details?.[0]?.params
-      //          ? JSON.parse(chain?.model_details?.[0]?.params)
-      //          : {};
-      //
-      //       console.log('stephen: modelDetailParams', modelDetailParams);
-      //
-      //       const _chain = {
-      //          ...chain,
-      //          tag: `@${modelDetailParams?.model_name || ""}`,
-      //       };
-      //
-      //       if (!chain.balance) {
-      //          return {
-      //             ..._chain,
-      //             balance: "0",
-      //             formatBalance: "0",
-      //          };
-      //       }
-      //       return _chain;
-      //    });
-      //
-      //    console.log('stephen list', chainList);
-      //
-      //    setChainList(list);
-      // }
+      if (!runningModelHash) {
+         const defaultModelAgent = newTokens.find((t, index) => agentHashes[index] === MODEL_HASH);
+
+         if (defaultModelAgent) {
+            await startAgent(defaultModelAgent);
+         }
+      } else {
+         const runningModelAgent = installedAgents.find((t, index) => agentHashes[index] === runningModelHash);
+
+         if(runningModelAgent) {
+            setCurrentModel(runningModelAgent);
+         }
+      }
    }, []);
 
    const fetchCoinPrices = async () => {
@@ -273,10 +261,11 @@ const AgentProvider: React.FC<
             const ipfsHash = await getModelAgentHash(agent);
             console.log('====ipfsHash', ipfsHash);
             await window.electronAPI.modelInstall(ipfsHash);
+
             setIsInstalled(true);
             cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
 
-            await handleRunModelAgent(ipfsHash);
+            await startAgent(agent);
          } else {
 
          }
@@ -290,9 +279,8 @@ const AgentProvider: React.FC<
 
    const startAgent = async (agent: IAgentToken) => {
       try {
-         setIsStarting(true);
-
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+            setIsStarting(true);
             await startDependAgents(agent);
 
             await handleRunDockerAgent(agent);
@@ -301,7 +289,9 @@ const AgentProvider: React.FC<
 
             const ipfsHash = await getModelAgentHash(agent);
             console.log('====ipfsHash', ipfsHash);
+
             await handleRunModelAgent(ipfsHash);
+            setCurrentModel(agent);
          } else {
 
          }
