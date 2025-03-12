@@ -160,7 +160,7 @@ function ChatAgent() {
                                        onClick={handleInstall}
                                        isLoading={isInstalling}
                                        isDisabled={isInstalling}
-                                       loadingText={totalStep > 0 ? `${formatCurrency(currentStep / totalStep * 100, 0, 0)}%` : '0%'}
+                                       loadingText={totalStep > 0 ? `${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : '0%'}
                                     >
                              Install
                                     </Button>
