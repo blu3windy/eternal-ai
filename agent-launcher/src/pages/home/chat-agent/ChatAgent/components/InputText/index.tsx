@@ -8,6 +8,7 @@ import s from "./styles.module.scss";
 import localStorageService from "../../../../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 import { compareString } from "@utils/string.ts";
+import CAgentTokenAPI from "@services/api/agents-token";
 
 interface IProps {
   inputRef?: any;
@@ -40,6 +41,8 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
     requireInstall,
   } = useContext(AgentContext);
 
+  const cPumpAPI = new CAgentTokenAPI();
+
   const handleStartAgent = () => {
     startAgent(selectedAgent);
   };
@@ -68,6 +71,8 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
       }
 
       localStorageService.setItem(STORAGE_KEYS.RECENT_AGENTS, JSON.stringify(recentAgents));
+
+      cPumpAPI.saveRecentAgents({ ids: recentAgents })
     }
   };
 
