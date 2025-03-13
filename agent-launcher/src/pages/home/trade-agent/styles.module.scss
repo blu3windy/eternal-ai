@@ -1,16 +1,29 @@
 .container {
   max-height: calc(
-    100vh - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 48px - 16px
+    100vh - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 48px
   );
   overflow: auto;
   height: 100vh;
   width: 100%;
-  padding: 16px;
+  // padding: 16px;
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+
+  &::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
 }
 .tradeContainer {
-  background-color: #f0f0f5;
+  // background-color: #f0f0f5;
   flex-direction: column;
-  width: 350px;
-  border-radius: 16px;
+  width: 100%;
+  // border-radius: 16px;
   justify-content: space-between;
+}
+
+.percent {
+  font-size: 28px;
+  font-weight: 400;
+  align-self: unset;
+  color: #07AB04;
 }

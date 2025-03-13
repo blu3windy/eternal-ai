@@ -48,7 +48,7 @@ const Curving = (props: Props) => {
    return (
       <Flex className={s.container}>
          <Flex flexDirection={"column"} gap={"4px"}>
-            <Text>
+            <Text fontSize={'14px'} fontWeight={'500'}>
           Bonding curve progress:{" "}
                <span className={s.textPercent}>
                   {formatCurrency(percent, 0, 2)}%
@@ -63,7 +63,7 @@ const Curving = (props: Props) => {
                borderRadius={"100px"}
             />
          </Flex>
-         <Text fontSize={"12px"} mt={"12px"}>
+         <Text fontSize={"14px"} fontWeight={'400'} mt={"12px"} opacity={0.7}>
         When the market cap reaches ${formatCurrency(maxMarketCap, 0, 2)} all
         the liquidity from the bonding curve will be deposited into {dexName}{" "}
         and burned. progression increases as the price goes up.

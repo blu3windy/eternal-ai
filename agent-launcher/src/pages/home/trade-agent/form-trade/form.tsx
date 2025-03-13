@@ -255,7 +255,7 @@ const FormTradeAgent = () => {
         />
       </InputWrapper>
       <BuySellChooseAmount />
-      <Flex my={"20px"} flexDirection={"column"}>
+      <Flex my={"12px"} flexDirection={"column"}>
         <Flex gap={"2px"} alignItems={"center"}>
           <Text fontWeight={400} fontSize={"14px"} color={"#657786"}>
             Receive:

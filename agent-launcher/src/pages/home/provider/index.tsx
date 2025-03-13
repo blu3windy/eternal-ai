@@ -128,7 +128,7 @@ const AgentProvider: React.FC<
 
    useEffect(() => {
       if (selectedAgent) {
-         const agentsHasWallet = localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
+         const agentsHasWallet = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
          if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id?.toString())) {
             createAgentWallet();
          } else {
@@ -184,9 +184,9 @@ const AgentProvider: React.FC<
          const prvKey = await genAgentSecretKey({ chainId: selectedAgent?.network_id.toString(), agentName: selectedAgent?.agent_name });
          setAgentWallet(new Wallet(prvKey));
 
-         const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
+         const agentsHasWallet = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
 
-         localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
+         localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, selectedAgent?.id]) : [selectedAgent?.id]));
       } catch (err) {
          console.error("Create agent wallet error:", err);
       } finally {
