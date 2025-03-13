@@ -57,7 +57,7 @@ const ipcMainModel = () => {
       // Proceed with installation if disk space is sufficient
       const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" && local-llms download --hash ${hash}`;
       await command.execAsyncStream(cmd);
-      await _loopCheckDownloaded(hash);
+      // await _loopCheckDownloaded(hash);
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_RUN, async (_event, hash: string) => {
@@ -93,9 +93,9 @@ const ipcMainModel = () => {
       }
       await dialogCheckDist(hash);
       await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_DOWNLOAD_BASE} --folder-path "${path}" --hash "${hash}"`);
-
-      // loop until the model is downloaded
-      await _loopCheckDownloaded(hash);
+      //
+      // // loop until the model is downloaded
+      // await _loopCheckDownloaded(hash);
    });
 }
 
