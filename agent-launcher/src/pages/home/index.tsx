@@ -4,54 +4,53 @@ import { useContext } from "react";
 import MainLayout from "../../components/layout";
 import FundAgentProvider from "../../providers/FundAgent";
 import ChatAgent from "./chat-agent";
-import AgentInfo from "./chat-agent/AgentInfo";
+import AgentTopInfo from "./chat-agent/AgentTopInfo";
 import AgentsList from "./list-agent";
 import AgentProvider, { AgentContext } from "./provider";
 import s from "./styles.module.scss";
 
 type Props = {
-  // some props
+   // some props
 };
 
 const HandleHome = () => {
-  const { isCanChat, isBackupedPrvKey, selectedAgent, agentWallet } =
-    useContext(AgentContext);
+   const { isCanChat, isBackupedPrvKey, selectedAgent, agentWallet } =
+      useContext(AgentContext);
 
-  const showBackupPrvKey =
-    selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
+   const showBackupPrvKey =
+      selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
-  return (
-    <Flex height={"100%"}>
-      <Box flex={1} maxW={"460px"}>
-        <AgentsList />
-      </Box>
-      <Box
-        className={cx(
-          s.detailContainer,
-          isCanChat || showBackupPrvKey ? "" : s.isSetup
-        )}
-        flex={2}
-      >
-         <AgentInfo />
-
-         <Flex w={"100%"} minW={'700px'} maxW={"800px"} mx={"auto"}>
-            <ChatAgent />
-         </Flex>
-      </Box>
-    </Flex>
-  );
+   return (
+      <Flex height={"100%"}>
+         <Box flex={1} maxW={"460px"}>
+            <AgentsList />
+         </Box>
+         <Box
+            className={cx(
+               s.detailContainer,
+               isCanChat || showBackupPrvKey ? "" : s.isSetup
+            )}
+            flex={2}
+         >
+            <AgentTopInfo />
+            <Flex w={"clamp(300px, 60%, 800px)"} mx={"auto"}>
+               <ChatAgent />
+            </Flex>
+         </Box>
+      </Flex>
+   );
 };
 
 const Home = (_props: Props) => {
-  return (
-    <MainLayout className={s.container}>
-      <AgentProvider>
-        <FundAgentProvider>
-          <HandleHome />
-        </FundAgentProvider>
-      </AgentProvider>
-    </MainLayout>
-  );
+   return (
+      <MainLayout className={s.container}>
+         <AgentProvider>
+            <FundAgentProvider>
+               <HandleHome />
+            </FundAgentProvider>
+         </AgentProvider>
+      </MainLayout>
+   );
 };
 
 export default Home;

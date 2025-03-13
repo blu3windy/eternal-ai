@@ -57,7 +57,7 @@ const Starter = (props: IProps) => {
          await globalThis.electronAPI.dockerInstall();
          console.timeEnd("DOCKER_INSTALL");
 
-         await globalThis.electronAPI.dockerCheckInstall();
+         // await window.electronAPI.dockerCheckInstall();
 
          console.time("DOCKER_BUILD");
          await globalThis.electronAPI.dockerBuild();

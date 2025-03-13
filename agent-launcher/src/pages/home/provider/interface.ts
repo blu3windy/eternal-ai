@@ -36,4 +36,6 @@ export interface IAgentContext {
   requireInstall: boolean;
   isModelRequirementSetup: boolean;
   installedModelAgents: IAgentToken[];
+  unInstallAgent: any;
+  isUnInstalling: boolean;
 }

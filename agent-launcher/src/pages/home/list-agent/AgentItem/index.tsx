@@ -7,6 +7,7 @@ import { DefaultAvatar } from "../../../../components/DefaultAvatar";
 import { formatCurrency, labelAmountOrNumberAdds } from "../../../../utils/format.ts";
 import cs from "clsx";
 import { AgentType } from "@pages/home/list-agent";
+import CustomMarkdown from "@components/CustomMarkdown";
 
 interface IProps {
   token: IAgentToken;
@@ -16,7 +17,7 @@ const AgentItem = ({ token }: IProps) => {
    const { selectedAgent, setSelectedAgent, installedUtilityAgents } = useContext(AgentContext);
 
    const description = useMemo(() => {
-      if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.Model].includes(selectedAgent.agent_type)) {
+      if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.Model].includes(token.agent_type)) {
          return token?.personality;
       } else {
          return token?.token_desc || token?.twitter_info?.description;
@@ -115,7 +116,13 @@ const AgentItem = ({ token }: IProps) => {
                </Flex>
                {
                   description && (
-                     <Text className={s.descriptionText}>{description}</Text>
+                     <div className={cs(s.descriptionText, "markdown")}>
+                        <CustomMarkdown
+                           content={description}
+                           isLight={false}
+                           removeThink={false}
+                        />
+                     </div>
                   )
                }
                <Flex gap={"8px"}>

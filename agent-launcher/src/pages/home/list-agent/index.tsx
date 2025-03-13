@@ -23,6 +23,7 @@ import debounce from 'lodash.debounce';
 import {AgentContext} from "../provider";
 import uniqBy from 'lodash.uniqby';
 import CAgentTokenAPI from "../../../services/api/agents-token";
+import cx from 'clsx';
 
 export enum SortOption {
   MarketCap = 'meme_market_cap',
@@ -54,13 +55,19 @@ export enum FilterOption {
 
 export const FilterBy = [
    { value: FilterOption.All, label: 'All', description: 'All available agents.' },
-   { value: FilterOption.Character, label: 'Character', description: 'Agents providing APIs or services post and engage automatically on social networks.' },
-   { value: FilterOption.Model, label: 'Model agent', description: 'Agents providing direct access to specific AI models (LLaMA, DeepSeek, Hermes,…).' },
-   { value: FilterOption.Utility, label: 'Utility agent', description: 'Task-focused agents built with Python or JavaScript.' },
+   { value: FilterOption.Character, label: 'Character', description: 'Agents with unique personalities, offering engaging chat experiences and interactions.' },
+   { value: FilterOption.Model, label: 'Model', description: 'Agents providing direct access to specific AI models (LLaMA, DeepSeek, Hermes,…).' },
+   { value: FilterOption.Utility, label: 'Utility', description: 'Task-focused agents built with Python or JavaScript.' },
    { value: FilterOption.Infra, label: 'Infra', description: 'Agents providing APIs or services to customize and manage other agents.' },
    { value: FilterOption.Installed, label: 'Installed', description: 'Agents currently installed.' },
    // { value: FilterOption.NonInstalled, label: 'Available', description: 'Agents available for installation.' },
 ];
+
+export const FilterBy2 = [
+   { value: FilterOption.All, label: 'Store Agent', description: 'All available agents.', icon: '/icons/ic-store-agent.svg' },
+   { value: FilterOption.Installed, label: 'Your Agent', description: 'Agents currently installed.', icon: undefined },
+   { value: FilterOption.NonInstalled, label: 'Recommend', description: 'Recommend', icon: undefined },
+]
 
 export enum AgentType {
   Normal = 0,
@@ -240,6 +247,43 @@ const AgentsList = () => {
       );
    };
 
+   const renderFilterOptions = () => {
+      return (
+         <Flex gap={'6px'} className={s.options}>
+            {FilterBy2.map(option => {
+               return (
+                  <Flex
+                     alignItems={"center"}
+                     gap={"4px"}
+                     p={"2px 10px"}
+                     className={cx(s.option, filter === option.value ? s.isSelected : '')}
+                     onClick={() => {
+                        const filter = option.value as FilterOption;
+                        setFilter(filter);
+                        refParams.current = {
+                           ...refParams.current,
+                           filter: filter,
+                        };
+                        throttleGetTokens(true);
+                     }}>
+                     {
+                        option.icon && (
+                           <Image
+                              minW={"16px"}
+                              width="16px"
+                              src={option.icon}
+                              alt={option.label}
+                           />
+                        )
+                     }
+                     <Text>{option.label}</Text>
+                  </Flex>
+               );
+            })}
+         </Flex>
+      )
+   }
+
    const renderFilterMenu = () => {
       return (
          <Flex
@@ -329,19 +373,18 @@ const AgentsList = () => {
    const renderSortMenu = () => {
       return (
          <Flex
-            flex={1}
             flexDirection={'row'}
             className={s.select}
             alignItems={'center'}
          >
-            <Text
+{/*            <Text
                fontSize={'14px'}
                opacity={'0.7'}
                fontWeight={'400'}
                whiteSpace={"nowrap"}
             >
           Sort by
-            </Text>
+            </Text>*/}
             <Popover styleConfig={{ width: "100%" }} placement="bottom-end" isOpen={isOpenSort} onClose={onCloseSort}>
                <PopoverTrigger>
                   <Box
@@ -349,7 +392,7 @@ const AgentsList = () => {
                      as={Button}
                      onClick={onToggleSort}
                   >
-                     <Text fontSize={'14px'} fontWeight={500}>
+                     <Text fontSize={'12px'} fontWeight={500}>
                         {SortBy.find(s => s.value === sort)?.label}
                      </Text>
                      <Image
@@ -416,9 +459,9 @@ const AgentsList = () => {
             >
                {renderSearch()}
             </Flex>
-            <Flex gap={"24px"} mt={"20px"}>
-               {renderFilterMenu()}
-               <Divider orientation={'vertical'} borderColor={'#000'} opacity={0.2} h={"20px"} m={'auto 0'}/>
+            <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
+               {/*{renderFilterMenu()}*/}
+               {renderFilterOptions()}
                {renderSortMenu()}
             </Flex>
          </Flex>

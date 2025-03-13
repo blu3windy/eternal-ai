@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
+import command from "./share/command-tool.ts";
 
 if (process.env.NODE_ENV === "development") {
   autoUpdater.autoDownload = false;
@@ -144,10 +145,6 @@ function createWindow() {
     win?.webContents.send("main-process-message", new Date().toLocaleString());
   });
 
-  win.on("closed", () => {
-    win = null;
-  });
-
   autoUpdater.on("update-available", (info) => {
     console.log("Update available:", info);
     win?.webContents.send("update-available", info);
@@ -169,6 +166,12 @@ function createWindow() {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
+  win.on("closed", () => {
+    win = null;
+  });
+
+
+  command.setWindow(win);
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

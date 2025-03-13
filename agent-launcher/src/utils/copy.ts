@@ -1,4 +1,4 @@
-const safeCopy = async (text?: string) => {
+const safeCopy = async (text?: string): Promise<void> => {
    if (text) {
       await globalThis.electronAPI.safeCopy(text);
    }

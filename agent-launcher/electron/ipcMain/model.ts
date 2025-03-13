@@ -1,9 +1,14 @@
-import { app, ipcMain } from "electron";
+import { app, ipcMain, dialog } from "electron";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 import command from "../share/command-tool.ts";
 import { SCRIPTS_NAME } from "../share/utils.ts";
 import { getFolderPath, ACTIVE_PATH, downloadedModels, deleteModel } from "../share/model.ts";
+import { validateDiskSpace } from "../share/utils.ts";
+import { dialogCheckDist } from "../share/file-size.ts";
 
+// Constants for size calculations
+const MB_TO_GB = 1024; // 1 GB = 1024 MB
+const MODEL_CHUNK_SIZE_MB = 430; // Size per chunk in MB
 
 const ipcMainModel = () => {
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_STARTER, async (_event) => {
@@ -12,8 +17,19 @@ const ipcMainModel = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL, async (_event, hash: string) => {
-      const path = getFolderPath();
-      await command.execAsyncStream( `cd "${path}" && source "${path}/${ACTIVE_PATH}" && local-llms download --hash ${hash}`)
+      try {
+         const path = getFolderPath();
+
+         await dialogCheckDist(hash);
+
+         // Proceed with installation if disk space is sufficient
+         await command.execAsyncStream(
+            `cd "${path}" && source "${path}/${ACTIVE_PATH}" && local-llms download --hash ${hash}`
+         );
+      } catch (error) {
+         console.error('Model installation error:', error);
+         throw error;
+      }
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_RUN, async (_event, hash: string) => {
