@@ -64,9 +64,8 @@ const AgentDetail = () => {
          // alignItems={"center"}
          justifyContent={"center"}
          w={"100%"}
-         gap={"32px"}
       >
-         <Flex w={"100%"} justifyContent={"space-between"} alignItems={"center"}>
+         <Flex  w={"100%"} justifyContent={"space-between"} alignItems={"center"}>
             <Flex gap={"16px"} alignItems={"center"}>
                <Image w="80px" h="80px" src={avatarUrl} borderRadius={"50%"} />
                <Flex direction={"column"} gap={"16px"}>
@@ -111,15 +110,17 @@ const AgentDetail = () => {
                Get
             </Button>
          </Flex>
-         {description && (
-            <div className={cs(s.descriptionText, "markdown")}>
-               <CustomMarkdown
-                  content={description}
-                  isLight={false}
-                  removeThink={false}
-               />
-            </div>
-         )}
+         <Flex h={'100%'} overflow={'auto'} marginBottom={'28px'} className={s.wDescription}>
+            {description && (
+               <div className={cs(s.descriptionText, "markdown")}>
+                  <CustomMarkdown
+                     content={description}
+                     isLight={false}
+                     removeThink={false}
+                  />
+               </div>
+            )}
+         </Flex>
       </Flex>
    )
 }

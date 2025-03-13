@@ -1,5 +1,6 @@
 .container {
   height: 100%;
+  margin-top: 12px;
 
   .nameText {
     color: #fff;
@@ -16,8 +17,17 @@
     border-radius: 100px;
   }
 
+  .wDescription {
+    &::-webkit-scrollbar {
+      width: 0 !important;
+    }
+
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   .descriptionText {
-    margin-top: 40px;
+    margin-top: 8px;
     font-size: 16px;
     font-weight: 400;
     color: #fff;
