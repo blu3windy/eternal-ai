@@ -44,5 +44,11 @@ export default defineConfig({
          "@stores": path.resolve(__dirname, 'src/stores'),
          "@services": path.resolve(__dirname, 'src/services'),
       }
+   },
+   build: {
+      minify: 'esbuild', // ✅ Use esbuild for fast minification
+   },
+   esbuild: {
+      drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [], // ✅ Drop console logs in production only
    }
 })

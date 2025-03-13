@@ -45,7 +45,9 @@ const Starter = (props: IProps) => {
          await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
 
+         console.time("MODEL_BASE");
          await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
+         console.timeEnd("MODEL_BASE");
 
          setChecking(false);
       } catch (error) {
