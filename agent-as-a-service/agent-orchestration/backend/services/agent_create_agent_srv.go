@@ -514,7 +514,7 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 			continue
 		}
 
-		imageToVideoInfo := s.DetectTweetIsImageToVideo(v)
+		imageToVideoInfo := s.DetectTweetIsImageToVideo(twitterInfo, v)
 		entityType := models.AgentTwitterPostTypeText2Video
 		extractMediaContent := ""
 		if imageToVideoInfo.IsImageToVideo {
@@ -1416,7 +1416,7 @@ func (s *Service) UploadImageUrlToLighthouse(ctx context.Context, imageUrl strin
 	return cid, nil
 }
 
-func (s *Service) DetectTweetIsImageToVideo(item twitter.TweetLookup) *TweetImageToVideo {
+func (s *Service) DetectTweetIsImageToVideo(twitterInfo *models.TwitterInfo, item twitter.TweetLookup) *TweetImageToVideo {
 	isImageToVideo := false
 	cid := ""
 	var err error
@@ -1435,6 +1435,40 @@ func (s *Service) DetectTweetIsImageToVideo(item twitter.TweetLookup) *TweetImag
 			cid, err = s.UploadImageUrlToLighthouse(context.Background(), firstMedia.URL)
 			if err == nil && cid != "" {
 				isImageToVideo = true
+			}
+		}
+	}
+
+	if len(item.Tweet.ReferencedTweets) > 0 {
+		for _, refTweet := range item.Tweet.ReferencedTweets {
+			if refTweet.Type == "quoted" {
+				refTweetID := refTweet.ID
+				refTweetDetails, err := s.twitterWrapAPI.LookupUserTweets(twitterInfo.AccessToken, []string{refTweetID})
+				if err == nil && refTweetDetails != nil {
+					for k, v := range *refTweetDetails {
+						if k != refTweetID {
+							continue
+						}
+
+						if len(v.AttachmentMedia) > 0 {
+							firstMedia := v.AttachmentMedia[0]
+							if firstMedia.Type == "photo" {
+								isImageToVideo = true
+
+								// TODO first
+								return &TweetImageToVideo{
+									IsImageToVideo:     isImageToVideo,
+									LighthouseImageUrl: firstMedia.URL,
+								}
+
+								cid, err = s.UploadImageUrlToLighthouse(context.Background(), firstMedia.URL)
+								if err == nil && cid != "" {
+									isImageToVideo = true
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
