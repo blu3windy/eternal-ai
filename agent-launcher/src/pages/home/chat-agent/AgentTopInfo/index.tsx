@@ -136,7 +136,7 @@ const AgentTopInfo = () => {
                   Buy
                </Button>
             </Flex>
-            <Flex minW={"350px"} justifyContent={"flex-end"} position={"absolute"} right={"16px"}>
+            <Flex justifyContent={"flex-end"} position={"absolute"} right={"16px"}>
                <HeaderWallet color={color}/>
             </Flex>
          </Flex>
