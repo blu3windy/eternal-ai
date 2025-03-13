@@ -129,7 +129,8 @@ const AgentProvider: React.FC<
    useEffect(() => {
       if (selectedAgent) {
          const agentsHasWallet = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
-         if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id?.toString())) {
+
+         if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id)) {
             createAgentWallet();
          } else {
             setAgentWallet(undefined)
