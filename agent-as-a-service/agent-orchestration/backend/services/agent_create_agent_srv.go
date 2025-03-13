@@ -520,10 +520,14 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 		if imageToVideoInfo.IsImageToVideo {
 			entityType = models.AgentTwitterPostTypeImage2video
 			extractMediaContent = imageToVideoInfo.LighthouseImageUrl
-			lastIndexOfHTTPs := strings.LastIndex(tweetParseInfo.GenerateVideoContent, "https://")
-			if lastIndexOfHTTPs > 0 {
-				tweetParseInfo.GenerateVideoContent = tweetParseInfo.GenerateVideoContent[:lastIndexOfHTTPs]
-				tweetParseInfo.GenerateVideoContent = strings.TrimSpace(tweetParseInfo.GenerateVideoContent)
+			for {
+				lastIndexOfHTTPs := strings.LastIndex(tweetParseInfo.GenerateVideoContent, "https://")
+				if lastIndexOfHTTPs > 0 {
+					tweetParseInfo.GenerateVideoContent = tweetParseInfo.GenerateVideoContent[:lastIndexOfHTTPs]
+					tweetParseInfo.GenerateVideoContent = strings.TrimSpace(tweetParseInfo.GenerateVideoContent)
+				} else {
+					break
+				}
 			}
 		}
 
