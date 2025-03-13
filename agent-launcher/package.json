@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "postinstall": "electron-builder install-app-deps",
     "build": "tsc && vite build && electron-builder --mac --universal -- -p always",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
@@ -123,7 +124,8 @@
         "zip"
       ],
       "icon": "public/icons/app-logo.png",
-      "artifactName": "${productName}-Mac-${version}.${ext}"
+      "artifactName": "${productName}-Mac-${version}.${ext}",
+      "minimumSystemVersion": "13.0.1"
     },
     "extraResources": [
       {

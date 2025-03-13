@@ -17,12 +17,10 @@ const ipcMainKeyChain = () => {
      * @returns {Promise<{success: boolean, error?: string}>} - The result of the operation.
      */
    ipcMain.handle(EMIT_EVENT_NAME.KEYTAR_SAVE, async (_event, key: string, value: string) => {
-      console.log(`[Main Process] Saving password for: ${key}`);
       try {
          await keytar.setPassword(SERVICE_NAME, key, value);
          return { success: true };
       } catch (error: any) {
-         console.error(`[Main Process] Error saving password: ${error.message}`);
          return { success: false, error: error.message };
       }
    });
@@ -39,8 +37,6 @@ const ipcMainKeyChain = () => {
          const text = await keytar.getPassword(SERVICE_NAME, key);
          return text;
       } catch (error: any) {
-         console.error(`[Main Process] Error retrieving password: ${error.message}`);
-         // return { success: false, error: error.message };
          throw error;
       }
    });
@@ -52,12 +48,10 @@ const ipcMainKeyChain = () => {
      * @returns {Promise<{success: boolean, error?: string}>} - The result of the operation.
      */
    ipcMain.handle(EMIT_EVENT_NAME.KEYTAR_REMOVE, async (_event, key: string) => {
-      console.log(`[Main Process] Deleting password for: ${key}`);
       try {
          await keytar.deletePassword(SERVICE_NAME, key);
          return { success: true };
       } catch (error: any) {
-         console.error(`[Main Process] Error deleting password: ${error.message}`);
          return { success: false, error: error.message };
       }
    });

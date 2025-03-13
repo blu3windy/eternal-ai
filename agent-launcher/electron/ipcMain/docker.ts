@@ -39,8 +39,6 @@ const ipcMainDocker = () => {
          ];
          const containerArgs = containers.map(c => `--container "${c}"`).join(' ');
 
-         console.log(`LEON 111 bash "${folderPathDocker}/${SCRIPTS_NAME.DOCKER_BUILD_SCRIPT}" --folder-path "${folderPath}" ${containerArgs}`);
-
          await command.execAsyncStream(
             `bash "${folderPathDocker}/${SCRIPTS_NAME.DOCKER_BUILD_SCRIPT}" --folder-path "${folderPath}" ${containerArgs}`
          );
@@ -90,13 +88,10 @@ const ipcMainDocker = () => {
          // } catch (error) {
          //    console.log('error', error);
          // }
-
-
          // docker network create --internal network-agent-internal
          // docker network create network-agent-external
          //
          // docker run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name agentrouter agentrouter
-
          console.log('docker build done');
       } catch (error) {
          console.log('error', error);
