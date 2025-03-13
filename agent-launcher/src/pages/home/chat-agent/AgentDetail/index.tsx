@@ -7,12 +7,15 @@ import React, { useContext, useMemo } from "react";
 import { AgentType } from "@pages/home/list-agent";
 import { AgentContext } from "@pages/home/provider";
 import useParseLogs from "@hooks/useParseLogs.ts";
+import { LLM_MODELS } from "@constants/models.ts";
+import { compareString } from "@utils/string.ts";
 
 const AgentDetail = () => {
    const {
       selectedAgent,
       installAgent,
       isInstalling,
+      availableModelAgents,
    } = useContext(AgentContext);
 
    const {
@@ -37,8 +40,6 @@ const AgentDetail = () => {
       }
    }, [parsedLog?.values]);
 
-   console.log('parsedLog', parsedLog);
-
    const avatarUrl
       = selectedAgent?.thumbnail
       || selectedAgent?.token_image_url
@@ -52,6 +53,16 @@ const AgentDetail = () => {
          return selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
       }
    }, [selectedAgent]);
+
+   const modelInfo = useMemo(() => {
+      const modelAgent = availableModelAgents?.find(agent => agent.id === selectedAgent?.id);
+
+      if (modelAgent) {
+         return LLM_MODELS.find(model => compareString(model.hash, modelAgent.ipfsHash));
+      }
+
+      return undefined;
+   }, [selectedAgent, availableModelAgents]);
 
    const handleInstall = () => {
       installAgent(selectedAgent);
@@ -96,6 +107,18 @@ const AgentDetail = () => {
                         )}
                      </Text>
                      <Text className={s.infoText}>{formatCurrency(selectedAgent?.prompt_calls, 0, 0)}{' '}<Text as={'span'} color={"#FFF"}>prompt{labelAmountOrNumberAdds(selectedAgent?.prompt_calls || 0)}</Text></Text>
+                     {
+                        modelInfo && (
+                           <>
+                              <Text className={s.infoText}>
+                                 Storage Require: {modelInfo.size} GB
+                              </Text>
+                              <Text className={s.infoText}>
+                                 Ram Require: {modelInfo.ram} GB
+                              </Text>
+                           </>
+                        )
+                     }
                   </Flex>
                </Flex>
             </Flex>

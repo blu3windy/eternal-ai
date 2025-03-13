@@ -47,6 +47,7 @@ const initialValue: IAgentContext = {
    requireInstall: false,
    isModelRequirementSetup: false,
    installedModelAgents: [],
+   availableModelAgents: [],
    unInstallAgent: () => {},
    isUnInstalling: false,
 };
@@ -652,6 +653,7 @@ const AgentProvider: React.FC<
          requireInstall,
          isModelRequirementSetup,
          installedModelAgents,
+         availableModelAgents,
          unInstallAgent,
          isUnInstalling,
       };
@@ -683,6 +685,7 @@ const AgentProvider: React.FC<
       requireInstall,
       isModelRequirementSetup,
       installedModelAgents,
+      availableModelAgents,
       unInstallAgent,
       isUnInstalling,
    ]);
