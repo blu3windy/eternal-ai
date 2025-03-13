@@ -64,7 +64,7 @@ export const FilterBy = [
 ];
 
 export const FilterBy2 = [
-   { value: FilterOption.All, label: 'Store Agent', description: 'All available agents.', icon: '/icons/ic-store-agent.svg' },
+   { value: FilterOption.All, label: 'Store Agent', description: 'All available agents.', icon: 'icons/ic-store-agent.svg' },
    { value: FilterOption.Installed, label: 'Your Agent', description: 'Agents currently installed.', icon: undefined },
    { value: FilterOption.NonInstalled, label: 'Recommend', description: 'Recommend', icon: undefined },
 ]
