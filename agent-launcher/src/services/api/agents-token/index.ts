@@ -100,6 +100,14 @@ class CAgentTokenAPI extends CApiClient {
       throw e;
     }
   };
+
+  public saveRecentAgents = async (
+     params: any
+  ): Promise<any> => {
+    const res = (await this.api.post("/agent/recent-chat", params)) as any;
+    return res;
+  };
+
 }
 
 export default CAgentTokenAPI;

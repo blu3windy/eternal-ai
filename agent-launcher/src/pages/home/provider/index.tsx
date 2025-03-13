@@ -129,7 +129,8 @@ const AgentProvider: React.FC<
    useEffect(() => {
       if (selectedAgent) {
          const agentsHasWallet = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
-         if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id?.toString())) {
+
+         if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id)) {
             createAgentWallet();
          } else {
             setAgentWallet(undefined)
@@ -245,18 +246,25 @@ const AgentProvider: React.FC<
       const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
       const installedHashes = [...installedModels.map(r => r.hash)];
 
-      const installedAgents = availableModelAgents?.filter((t, index) => installedHashes.includes(t.ipfsHash as string));
+      let installedAgents: IAgentToken[] = availableModelAgents?.filter((t, index) => installedHashes.includes(t.ipfsHash as string));
+
+      installedAgents = installedAgents?.map(agent => {
+         return {
+            ...agent,
+            sizeGb: installedModels.find(m => m.hash === agent.ipfsHash)?.sizeGb || 0
+         }
+      }) as IAgentToken[] || [];
 
       setInstalledModelAgents(installedAgents);
 
       if (!runningModelHash) {
-         const defaultModelAgent = installedAgents.find((t, index) => t.ipfsHash === MODEL_HASH) || installedAgents[0];
+         const defaultModelAgent = installedAgents.find((t, index) => compareString(t.ipfsHash, MODEL_HASH)) || installedAgents[0];
 
          if (defaultModelAgent) {
             await startAgent(defaultModelAgent);
          }
       } else {
-         const runningModelAgent = installedAgents.find((t, index) => t.ipfsHash === runningModelHash);
+         const runningModelAgent = installedAgents?.find(t => compareString(t.ipfsHash, runningModelHash?.trim()));
 
          if(runningModelAgent) {
             setCurrentModel(runningModelAgent);
