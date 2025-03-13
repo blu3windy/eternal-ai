@@ -383,8 +383,26 @@ func (s *Service) GetGenerateVideoCheckTweetHandledRedisKey(tweetId string) stri
 	return fmt.Sprintf("CheckedForTweetGenerateVideo_V3_%s", tweetId)
 }
 
-func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, tweetId string, agentInfoMentionID uint, agentInfo *models.AgentInfo, twitterInfo *models.TwitterInfo) (*models.AgentTwitterPost, error) {
+type HandleGenerateVideoRequest struct {
+	TweetID            string
+	AgentInfoMentionID uint
+	AgentInfo          *models.AgentInfo
+	TwitterInfo        *models.TwitterInfo
+
+	DecideToHandle *bool
+	PromptToHandle *string
+}
+
+func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleRequest *HandleGenerateVideoRequest) (*models.AgentTwitterPost, error) {
 	var err error
+	if handleRequest == nil {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	tweetId := handleRequest.TweetID
+	agentInfoMentionID := handleRequest.AgentInfoMentionID
+	agentInfo := handleRequest.AgentInfo
+	twitterInfo := handleRequest.TwitterInfo
+
 	if agentInfo == nil {
 		agentInfo, err = s.dao.FirstAgentInfoByID(
 			tx,
@@ -471,15 +489,28 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, tweetId stri
 		re := regexp.MustCompile(`^(@[\w_]+\s+)+`)
 		fullText = re.ReplaceAllString(fullText, "")
 		fullText = strings.TrimSpace(fullText)
-		tokenInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), agentInfo.TwitterUsername, fullText)
-		if tokenInfo == nil || tokenInfo.IsGenerateVideo == false {
-			tokenInfo, err = s.ValidateTweetContentGenerateVideoWithLLM(context.Background(), agentInfo.TwitterUsername, fullText)
+		tweetParseInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), agentInfo.TwitterUsername, fullText)
+
+		if handleRequest.DecideToHandle != nil && *handleRequest.DecideToHandle {
+			if tweetParseInfo == nil {
+				tweetParseInfo = &models.TweetParseInfo{}
+			}
+			tweetParseInfo.IsGenerateVideo = true
+			tweetParseInfo.GenerateVideoContent = fullText
+
+			if handleRequest.PromptToHandle != nil && *handleRequest.PromptToHandle != "" {
+				tweetParseInfo.GenerateVideoContent = *handleRequest.PromptToHandle
+			}
+		}
+
+		if tweetParseInfo == nil || tweetParseInfo.IsGenerateVideo == false {
+			tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM(context.Background(), agentInfo.TwitterUsername, fullText)
 			if err != nil {
 				continue
 			}
 		}
-		if tokenInfo == nil || tokenInfo.IsGenerateVideo == false {
-			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL_SYNTAX] a requirement gen video with fail syntax :%v ", fullText))
+		if tweetParseInfo == nil || tweetParseInfo.IsGenerateVideo == false {
+			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL_SYNTAX] a requirement gen fail syntax tw_id=%v,  full_text:%v ", tweetId, fullText))
 			continue
 		}
 
@@ -489,10 +520,10 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, tweetId stri
 		if imageToVideoInfo.IsImageToVideo {
 			entityType = models.AgentTwitterPostTypeImage2video
 			extractMediaContent = imageToVideoInfo.LighthouseImageUrl
-			lastIndexOfHTTPs := strings.LastIndex(tokenInfo.GenerateVideoContent, "https://")
+			lastIndexOfHTTPs := strings.LastIndex(tweetParseInfo.GenerateVideoContent, "https://")
 			if lastIndexOfHTTPs > 0 {
-				tokenInfo.GenerateVideoContent = tokenInfo.GenerateVideoContent[:lastIndexOfHTTPs]
-				tokenInfo.GenerateVideoContent = strings.TrimSpace(tokenInfo.GenerateVideoContent)
+				tweetParseInfo.GenerateVideoContent = tweetParseInfo.GenerateVideoContent[:lastIndexOfHTTPs]
+				tweetParseInfo.GenerateVideoContent = strings.TrimSpace(tweetParseInfo.GenerateVideoContent)
 			}
 		}
 
@@ -505,7 +536,7 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, tweetId stri
 			TwitterName:           v.User.Name,
 			TwitterPostID:         v.Tweet.ID, // bai reply
 			Content:               fullText,
-			ExtractContent:        tokenInfo.GenerateVideoContent,
+			ExtractContent:        tweetParseInfo.GenerateVideoContent,
 			ExtractMediaContent:   extractMediaContent,
 			Status:                models.AgentTwitterPostWaitSubmitVideoInfer,
 			PostAt:                postedAt,
@@ -562,7 +593,13 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 	handledTweetID := make([]string, 0, len(tweetMentions.Tweets))
 
 	for _, item := range tweetMentions.Tweets {
-		_, err = s.HandleGenerateVideoWithSpecificTweet(tx, item.ID, agentInfoID, agentInfo, twitterInfo)
+		_, err = s.HandleGenerateVideoWithSpecificTweet(tx, &HandleGenerateVideoRequest{
+			TweetID:            item.ID,
+			AgentInfoMentionID: agentInfoID,
+			AgentInfo:          agentInfo,
+			TwitterInfo:        twitterInfo,
+		})
+
 		if err == nil {
 			handledTweetID = append(handledTweetID, item.ID)
 		}
