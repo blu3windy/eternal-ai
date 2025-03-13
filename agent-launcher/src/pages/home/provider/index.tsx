@@ -94,11 +94,12 @@ const AgentProvider: React.FC<
 
 
    const requireInstall = useMemo(() => {
-      if (selectedAgent) {
-         return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model, AgentType.Infra].includes(selectedAgent?.agent_type as AgentType);
-      }
-
-      return false;
+      return true;
+      // if (selectedAgent) {
+      //    return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model, AgentType.Infra].includes(selectedAgent?.agent_type as AgentType);
+      // }
+      //
+      // return false;
    }, [selectedAgent?.id]);
 
    const isCanChat = useMemo(() => {
@@ -172,6 +173,8 @@ const AgentProvider: React.FC<
                setIsRunning(true);
             } else if ([AgentType.Model].includes(agent.agent_type)) {
 
+            } else {
+               setIsRunning(true);
             }
          }
       } catch (err) {
@@ -302,7 +305,8 @@ const AgentProvider: React.FC<
 
             fetchInstalledModelAgents();
          } else {
-
+            setIsInstalled(true);
+            cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
          }
       } catch (e) {
          console.log('installAgent e', e);

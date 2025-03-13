@@ -25,6 +25,9 @@ import BaseModal from "@components/BaseModal";
 import ExportPrivateKey from "@pages/home/chat-agent/ExportPrivateKey";
 import TradeAgent from "@pages/home/trade-agent";
 import AgentTradeProvider from "@pages/home/trade-agent/provider";
+import { addressFormater } from "@utils/string";
+import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
+import Avatar from "@components/Avatar";
 
 const AgentTopInfo = () => {
    const {
@@ -67,6 +70,13 @@ const AgentTopInfo = () => {
       stopAgent(selectedAgent);
    };
 
+   const handleClickCreator = (e: any) => {
+      e?.preventDefault();
+      e?.stopPropagation();
+      if (selectedAgent?.tmp_twitter_info?.twitter_username)
+         window.open(`https://x.com/${selectedAgent?.tmp_twitter_info?.twitter_username}`);
+   };
+
    return (
       <>
          <Flex className={s.container} position={"relative"}>
@@ -87,6 +97,31 @@ const AgentTopInfo = () => {
                      <Flex direction={"column"} p={"8px"}>
                         <Flex direction={"column"} gap={"8px"}>
                            <Text fontSize={"16px"} fontWeight={500}>{selectedAgent?.agent_name}</Text>
+                           <Flex
+                              alignItems="center"
+                              gap="4px"
+                              onClick={handleClickCreator}
+                           >
+                              <Text color="#000000" fontSize="12px" fontWeight="400" opacity={0.7}>
+                                 by
+                              </Text>
+                              {selectedAgent?.tmp_twitter_info?.twitter_avatar ? (
+                                 <Avatar
+                                    url={selectedAgent?.tmp_twitter_info?.twitter_avatar}
+                                    width={16}
+                                 />
+                              ) : (
+                                 <Jazzicon
+                                    diameter={16}
+                                    seed={jsNumberForAddress(selectedAgent?.creator || '')}
+                                 />
+                              )}
+                              <Text color="#000000" fontSize="12px" fontWeight="400" opacity={0.7}>
+                                 {selectedAgent?.tmp_twitter_info?.twitter_username
+                                    ? `@${selectedAgent?.tmp_twitter_info?.twitter_username}`
+                                    : addressFormater(selectedAgent?.creator)}
+                              </Text>
+                           </Flex>
                            <Text fontSize={"14px"} fontWeight={400} opacity={0.7}>{description}</Text>
                         </Flex>
                         <Divider color={"#E2E4E8"} my={"16px"}/>
