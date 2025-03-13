@@ -258,13 +258,13 @@ const AgentProvider: React.FC<
       setInstalledModelAgents(installedAgents);
 
       if (!runningModelHash) {
-         const defaultModelAgent = installedAgents.find((t, index) => t.ipfsHash === MODEL_HASH) || installedAgents[0];
+         const defaultModelAgent = installedAgents.find((t, index) => compareString(t.ipfsHash, MODEL_HASH)) || installedAgents[0];
 
          if (defaultModelAgent) {
             await startAgent(defaultModelAgent);
          }
       } else {
-         const runningModelAgent = installedAgents.find((t, index) => t.ipfsHash === runningModelHash);
+         const runningModelAgent = installedAgents?.find(t => compareString(t.ipfsHash, runningModelHash?.trim()));
 
          if(runningModelAgent) {
             setCurrentModel(runningModelAgent);
