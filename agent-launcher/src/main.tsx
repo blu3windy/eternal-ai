@@ -10,7 +10,7 @@ import UpdateBanner from "@components/UpdateBanner/index.tsx";
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ChakraProvider>
-      <UpdateBanner />
+      {/* <UpdateBanner /> */}
       <App />
     </ChakraProvider>
   </React.StrictMode>
