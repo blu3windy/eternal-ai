@@ -144,7 +144,7 @@ const AgentsList = () => {
 
          if ([FilterOption.Installed, FilterOption.NonInstalled].includes(refParams.current.filter)) {
             if (FilterOption.Installed === refParams.current.filter) {
-               params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].join(',');
+               params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model, AgentType.Infra].join(',');
                params.installed = true;
             } else if (FilterOption.NonInstalled === refParams.current.filter) {
                params.installed = false;
