@@ -340,6 +340,7 @@ const (
 	AgentTwitterPostStatusRepliedCancelled AgentTwitterPostStatus = "replied_cancelled"
 	AgentTwitterPostStatusReposted         AgentTwitterPostStatus = "reposted"
 	AgentTwitterPostStatusRepostedError    AgentTwitterPostStatus = "reposted_error"
+	AgentTwitterPostStatusDone             AgentTwitterPostStatus = "done"
 )
 
 type AgentTwitterPost struct {
@@ -700,8 +701,6 @@ type AgentVideo struct {
 	TokenStatus           string
 	TokenImageUrl         string
 	TokenDesc             string `gorm:"type:longtext"`
-	CoinDesc              string `gorm:"type:longtext"`
-	TxHash                string
 	TokenNetworkID        uint64
 	UserAddress           string       `gorm:"index"`
 	OwnerTwitterID        string       `gorm:"index"`
@@ -710,6 +709,10 @@ type AgentVideo struct {
 	AgentTwitterPost      *AgentTwitterPost
 	TotalReward           numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	ClaimedReward         numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	Uri                   string
+	RecipientAddress      string `gorm:"index"`
+	TxHash                string
+	Error                 string
 	AgentVideoRecipientID uint
 }
 

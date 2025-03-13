@@ -270,6 +270,7 @@ type Config struct {
 		AgentID           uint   `json:"agent_id"`
 		Fee               uint   `json:"fee"`
 	} `json:"infra_twitter_app"`
+	ZoraCoinAdmin string `json:"zora_coin_admin"`
 }
 
 func (cf *Config) ExistsedConfigKey(networkID uint64, name string) bool {

@@ -109,7 +109,7 @@ func Test_OpenAI(t *testing.T) {
 
 func Test_SRV(t *testing.T) {
 	// ts.JobExecuteInfraTwitterAppRequest(context.Background())
-	ts.CreateCoinForVideoByPostID(context.Background(), 34887)
+	ts.CreateAgentVideoByPostID(context.Background(), 34947)
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {

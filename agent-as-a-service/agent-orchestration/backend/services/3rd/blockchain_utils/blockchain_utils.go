@@ -383,3 +383,40 @@ func (c *Client) SolanaBalanceByToken(address, mint string) (*SolanaBalanceByTok
 	}
 	return resp.Result, nil
 }
+
+type ZoraCreateCoinReq struct {
+	Name      string   `json:"name"`
+	Symbol    string   `json:"symbol"`
+	Uri       string   `json:"uri"`
+	Recipient string   `json:"recipient"`
+	Deployer  string   `json:"deployer"`
+	Owners    []string `json:"owners"`
+}
+
+type ZoraCreateCoinResp struct {
+	Hash       string `json:"hash"`
+	Address    string `json:"address"`
+	Deployment struct {
+		PayoutRecipient string `json:"payoutRecipient"`
+		Caller          string `json:"caller"`
+		Uri             string `json:"uri"`
+		Coin            string `json:"coin"`
+		Pool            string `json:"pool"`
+	} `json:"deployment"`
+}
+
+func (c *Client) ZoraCreateCoin(req *ZoraCreateCoinReq) (*ZoraCreateCoinResp, error) {
+	resp := struct {
+		Result *ZoraCreateCoinResp `json:"result"`
+	}{}
+	err := c.methodJSON(
+		http.MethodPost,
+		c.buildUrl("/zora/create-coin"),
+		req,
+		&resp,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Result, nil
+}
