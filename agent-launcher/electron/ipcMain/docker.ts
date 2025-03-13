@@ -17,6 +17,16 @@ const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
 const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
 
 const ipcMainDocker = () => {
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_COPY_BUILD, async (_event) => {
+      try {
+         await copyFiles();
+         return true;
+      } catch (error) {
+         console.log(error);
+         return false;
+      }
+   })
+
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_BUILD, async (_event) => {
       try {
          const userDataPath = app.getPath("userData");
@@ -28,6 +38,8 @@ const ipcMainDocker = () => {
             `agent-router:${DOCKER_ROUTER_NAME}:33030`,
          ];
          const containerArgs = containers.map(c => `--container "${c}"`).join(' ');
+
+         console.log(`LEON 111 bash "${folderPathDocker}/${SCRIPTS_NAME.DOCKER_BUILD_SCRIPT}" --folder-path "${folderPath}" ${containerArgs}`);
 
          await command.execAsyncStream(
             `bash "${folderPathDocker}/${SCRIPTS_NAME.DOCKER_BUILD_SCRIPT}" --folder-path "${folderPath}" ${containerArgs}`
@@ -89,16 +101,6 @@ const ipcMainDocker = () => {
       } catch (error) {
          console.log('error', error);
          throw error;
-      }
-   })
-
-   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_COPY_BUILD, async (_event) => {
-      try {
-         await copyFiles();
-         return true;
-      } catch (error) {
-         console.log(error);
-         return false;
       }
    })
 
