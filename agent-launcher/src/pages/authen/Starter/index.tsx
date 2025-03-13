@@ -1,22 +1,17 @@
-
 import { Center, Image, Text } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
-import BaseButton from "@components/BaseButton";
-import sleep from "@utils/sleep.ts";
 import BackgroundWrapper from "@components/BackgroundWrapper";
 import LoadingText from "@components/LoadingText";
-import useParseLogs from "@hooks/useParseLogs.ts";
 import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
-
 
 interface IProps {
    loadingUser: boolean;
    onCheckHasUser: () => Promise<void>;
 }
 
-type Step = "INITIALIZING" | "REQUEST_INSTALL_DOCKER";
+type Step = "INITIALIZING";
 
 const LoadingIcon = () => (
    <Image
@@ -32,18 +27,7 @@ const Starter = (props: IProps) => {
    const { setChecking } = useStarter();
    const initRef = useRef(false);
 
-   const {
-      parsedLogs
-   } = useParseLogs({
-      functionNames: ["INITIALIZE"],
-      keys: ["name", "message", "error"]
-   })
-
-   console.log("Parsed Logs:", parsedLogs);
-
    const [step] = useState<Step>("INITIALIZING");
-   const [installing, setInstalling] = useState<boolean>(false);
-   const [installError, setInstallError] = useState<string | undefined>();
 
    const onInit = async (ignoreCopy?: boolean) => {
       try {
@@ -57,50 +41,19 @@ const Starter = (props: IProps) => {
          await globalThis.electronAPI.dockerInstall();
          console.timeEnd("DOCKER_INSTALL");
 
-         // await window.electronAPI.dockerCheckInstall();
-
          console.time("DOCKER_BUILD");
          await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
 
          await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
 
-         // await globalThis.electronAPI.modelStarter();
-
          setChecking(false);
-
-         // await globalThis.electronAPI.modelStarter();
-
-         // const hasDocker = await globalThis.electronAPI.dockerCheckInstall();
-         // if (hasDocker) {
-         //    await globalThis.electronAPI.dockerBuild();
-         //    // await globalThis.electronAPI.modelStarter();
-         //    setChecking(false);
-         // } else {
-         //    setStep("REQUEST_INSTALL_DOCKER");
-         // }
       } catch (error) {
-         // alert("Error while checking Docker" + globalThis.electronAPI);
-         console.error(error);
+
       } finally {
          console.timeEnd("FULL_LOAD_TIME");
       }
    }
-
-   const onInstallDocker = async () => {
-      try {
-         setInstalling(true);
-         await sleep(2000)
-         await globalThis.electronAPI.dockerInstall();
-         await onInit(true);
-         setInstalling(false);
-      } catch (error: any) {
-         setInstalling(false);
-         setInstallError(error?.message);
-      }
-   }
-
-
    const renderContent = () => {
       switch (step) {
       case "INITIALIZING": {
@@ -109,26 +62,6 @@ const Starter = (props: IProps) => {
                <LoadingIcon />
                <LoadingText dataText="Initializing..." />
                <StarterLogs />
-            </Center>
-         )
-      }
-      case "REQUEST_INSTALL_DOCKER": {
-         return (
-            <Center flexDirection="column" gap="24px">
-               <Text fontSize="20px" fontWeight="500" opacity="0.75">
-                  Docker is not installed, please install Docker to continue
-               </Text>
-               <BaseButton
-                  maxWidth={"200px"}
-                  isDisabled={installing}
-                  isLoading={installing}
-                  onClick={onInstallDocker}
-               >
-                  Install Docker
-               </BaseButton>
-               <Text color="red" fontSize="14px">
-                  {installError}
-               </Text>
             </Center>
          )
       }}
