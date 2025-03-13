@@ -43,30 +43,33 @@ export const SortBy = [
    { value: SortOption.Popuplar, label: 'Popular' },
 ];
 
-export enum FilterOption {
-  All = 'all',
+export enum CategoryOption {
+   All = 'all',
   Model = 'model',
   Utility = 'non-model',
-  Installed = 'installed',
-  NonInstalled = 'non-installed',
   Infra = 'infra',
-   Character = 'character',
+  Character = 'character',
 }
 
-export const FilterBy = [
+export enum FilterOption {
+   All = 'all',
+   Installed = 'installed',
+}
+
+export const Category = [
    { value: FilterOption.All, label: 'All', description: 'All available agents.' },
-   { value: FilterOption.Character, label: 'Character', description: 'Agents with unique personalities, offering engaging chat experiences and interactions.' },
-   { value: FilterOption.Model, label: 'Model', description: 'Agents providing direct access to specific AI models (LLaMA, DeepSeek, Hermes,…).' },
-   { value: FilterOption.Utility, label: 'Utility', description: 'Task-focused agents built with Python or JavaScript.' },
-   { value: FilterOption.Infra, label: 'Infra', description: 'Agents providing APIs or services to customize and manage other agents.' },
-   { value: FilterOption.Installed, label: 'Installed', description: 'Agents currently installed.' },
+   { value: CategoryOption.Character, label: 'Character', description: 'Agents with unique personalities, offering engaging chat experiences and interactions.' },
+   { value: CategoryOption.Model, label: 'Model', description: 'Agents providing direct access to specific AI models (LLaMA, DeepSeek, Hermes,…).' },
+   { value: CategoryOption.Utility, label: 'Utility', description: 'Task-focused agents built with Python or JavaScript.' },
+   { value: CategoryOption.Infra, label: 'Infra', description: 'Agents providing APIs or services to customize and manage other agents.' },
+   // { value: FilterOption.Installed, label: 'Installed', description: 'Agents currently installed.' },
    // { value: FilterOption.NonInstalled, label: 'Available', description: 'Agents available for installation.' },
 ];
 
-export const FilterBy2 = [
+export const AgentOptions = [
    { value: FilterOption.All, label: 'Store Agent', description: 'All available agents.', icon: 'icons/ic-store-agent.svg' },
    { value: FilterOption.Installed, label: 'Your Agent', description: 'Agents currently installed.', icon: undefined },
-   { value: FilterOption.NonInstalled, label: 'Recommend', description: 'Recommend', icon: undefined },
+   // { value: FilterOption.NonInstalled, label: 'Recommend', description: 'Recommend', icon: undefined },
 ]
 
 export enum AgentType {
@@ -98,6 +101,7 @@ const AgentsList = () => {
 
    const [sort, setSort] = useState<SortOption>(SortOption.CreatedAt);
    const [filter, setFilter] = useState<FilterOption>(FilterOption.All);
+   const [category, setCategory] = useState<CategoryOption>(CategoryOption.Character);
    const [loaded, setLoaded] = useState(false);
    const refLoading = useRef(false);
 
@@ -109,6 +113,7 @@ const AgentsList = () => {
       page: 1,
       limit: 30,
       sort,
+      category,
       filter,
       // order: OrderOption.Desc,
       search: '',
@@ -142,23 +147,20 @@ const AgentsList = () => {
             chain: '',
          };
 
+         params.agent_types = AgentType.All;
 
-         if ([FilterOption.Installed, FilterOption.NonInstalled].includes(refParams.current.filter)) {
-            params.agent_types = AgentType.All;
-            if (FilterOption.Installed === refParams.current.filter) {
-               params.installed = true;
-            } else if (FilterOption.NonInstalled === refParams.current.filter) {
-               params.installed = false;
-               params.sort_col = SortOption.MarketCap;
-            }
-         } else if ([FilterOption.Character].includes(refParams.current.filter)) {
+         if ([CategoryOption.Character].includes(refParams.current.category)) {
             params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
-         } else if ([FilterOption.Model].includes(refParams.current.filter)) {
+         } else if ([CategoryOption.Model].includes(refParams.current.category)) {
             params.agent_types = [AgentType.Model].join(',');
-         } else if ([FilterOption.Utility].includes(refParams.current.filter)) {
+         } else if ([CategoryOption.Utility].includes(refParams.current.category)) {
             params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython].join(',');
-         } else if ([FilterOption.Infra].includes(refParams.current.filter)) {
+         } else if ([CategoryOption.Infra].includes(refParams.current.category)) {
             params.agent_types = [AgentType.Infra].join(',');
+         }
+
+         if (FilterOption.Installed === refParams.current.filter) {
+            params.installed = true;
          }
 
          const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
@@ -250,20 +252,23 @@ const AgentsList = () => {
 
    const renderFilterOptions = () => {
       return (
-         <Flex gap={'6px'} className={s.options}>
-            {FilterBy2.map(option => {
+         <Flex gap={'12px'} className={s.options} w={"100%"}>
+            {AgentOptions.map(option => {
                return (
                   <Flex
+                     flex={1}
+                     justifyContent={"center"}
                      alignItems={"center"}
                      gap={"4px"}
                      p={"2px 10px"}
+                     h={"32px"}
                      className={cx(s.option, filter === option.value ? s.isSelected : '')}
                      onClick={() => {
-                        const filter = option.value as FilterOption;
-                        setFilter(filter);
+                        const _filter = option.value as FilterOption;
+                        setFilter(_filter);
                         refParams.current = {
                            ...refParams.current,
-                           filter: filter,
+                           filter: _filter,
                         };
                         throttleGetTokens(true);
                      }}>
@@ -285,7 +290,7 @@ const AgentsList = () => {
       )
    }
 
-   const renderFilterMenu = () => {
+   const renderCategoryMenu = () => {
       return (
          <Flex
             flex={1}
@@ -309,7 +314,7 @@ const AgentsList = () => {
                      onClick={onToggleFilter}
                   >
                      <Text fontSize={'14px'} fontWeight={500}>
-                        {FilterBy.find(s => s.value === filter)?.label}
+                        {Category.find(s => s.value === category)?.label}
                      </Text>
                      <Image
                         src={'icons/ic-angle-down.svg'}
@@ -325,7 +330,7 @@ const AgentsList = () => {
                   borderRadius={'16px'}
                   background={'#fff'}
                >
-                  {FilterBy.map((option, index) => (
+                  {Category.map((option, index) => (
                      <>
                         <Flex
                            direction={"column"}
@@ -337,11 +342,11 @@ const AgentsList = () => {
                            }}
                            cursor="pointer"
                            onClick={(e) => {
-                              const filter = option.value as FilterOption;
-                              setFilter(filter);
+                              const _category = option.value as CategoryOption;
+                              setCategory(_category);
                               refParams.current = {
                                  ...refParams.current,
-                                 filter: filter,
+                                 category: _category,
                               };
                               throttleGetTokens(true);
                               onCloseFilter();
@@ -372,18 +377,19 @@ const AgentsList = () => {
    const renderSortMenu = () => {
       return (
          <Flex
+            flex={1}
             flexDirection={'row'}
             className={s.select}
             alignItems={'center'}
          >
-{/*            <Text
+            <Text
                fontSize={'14px'}
                opacity={'0.7'}
                fontWeight={'400'}
                whiteSpace={"nowrap"}
             >
           Sort by
-            </Text>*/}
+            </Text>
             <Popover styleConfig={{ width: "100%" }} placement="bottom-end" isOpen={isOpenSort} onClose={onCloseSort}>
                <PopoverTrigger>
                   <Box
@@ -391,7 +397,7 @@ const AgentsList = () => {
                      as={Button}
                      onClick={onToggleSort}
                   >
-                     <Text fontSize={'12px'} fontWeight={500}>
+                     <Text fontSize={'14px'} fontWeight={500}>
                         {SortBy.find(s => s.value === sort)?.label}
                      </Text>
                      <Image
@@ -461,6 +467,10 @@ const AgentsList = () => {
             <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
                {/*{renderFilterMenu()}*/}
                {renderFilterOptions()}
+            </Flex>
+            <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
+               {renderCategoryMenu()}
+               <Divider orientation={'vertical'} borderColor={'#000'} opacity={0.2} h={"20px"} m={'auto 0'}/>
                {renderSortMenu()}
             </Flex>
          </Flex>
