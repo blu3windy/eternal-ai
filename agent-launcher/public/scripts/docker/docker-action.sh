@@ -70,7 +70,7 @@ echo "Code Language Snippet: $CODE_LANGUAGE_SNIPPET"
 run_container() {
   docker stop "$CONTAINER_NAME" 2>/dev/null || true
   docker rm "$CONTAINER_NAME" 2>/dev/null || true
-  docker run -d -v "$FOLDER_PATH/agents/84532-BTT01/prompt.$CODE_LANGUAGE_SNIPPET":/app/src/prompt.$CODE_LANGUAGE_SNIPPET --network network-agent-external --add-host=localmodel:host-gateway --name $CONTAINER_NAME $IMAGE_NAME
+  docker run -d -v "$FOLDER_PATH/agents/$CONTAINER_NAME/prompt.$CODE_LANGUAGE_SNIPPET":/app/src/prompt.$CODE_LANGUAGE_SNIPPET --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
 }
 
 # Function to stop a Docker container
@@ -100,7 +100,7 @@ case "$action" in
     if [ -z "$CONTAINER_NAME" ]; then
       log_error "Missing Container Name"
     fi
-    stop_container "$container_name"
+    stop_container "$CONTAINER_NAME"
     ;;
   *)
     log_error "Invalid action: $action"
