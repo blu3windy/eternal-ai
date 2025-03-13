@@ -1,5 +1,5 @@
 import { Flex, Text } from "@chakra-ui/react";
-import Percent24h from "@components/Percent";
+// import Percent24h from "@components/Percent";
 import { AgentContext } from "@pages/home/provider";
 import { formatCurrency } from "@utils/format";
 import { Form, Formik } from "formik";
@@ -114,7 +114,7 @@ const FormTradeAgentContainer = () => {
   };
 
   return (
-    <Flex p={"24px"} flexDirection={"column"} gap={"24px"}>
+    <Flex p={"4px"} flexDirection={"column"} gap={"24px"}>
       <Flex justifyContent={"space-between"}>
         <Flex
           flexDirection={"column"}
@@ -140,11 +140,22 @@ const FormTradeAgentContainer = () => {
           alignItems={"center"}
           className={s.col}
         >
-          <Text className={s.title}>24H %</Text>
-          <Percent24h
+          <Text className={s.title}>24H volume</Text>
+          <Text className={s.value}>
+            {Number(selectedAgent?.meme?.volume_last24h) <= 0.0000001
+              ? '$0'
+             : `$${formatCurrency(
+                  new BigNumber(selectedAgent?.meme?.volume_last24h).toString(),
+                   0,
+                   0,
+                  'BTC',
+                 false,
+            )}`}
+          </Text>
+          {/* <Percent24h
             percent={selectedAgent?.meme?.percent}
             clsName={s.value}
-          />
+          /> */}
         </Flex>
         <Flex
           flexDirection={"column"}

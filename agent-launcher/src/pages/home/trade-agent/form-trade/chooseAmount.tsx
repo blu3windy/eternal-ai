@@ -19,7 +19,7 @@ const BuySellChooseAmount = () => {
    };
 
    return (
-      <SimpleGrid gap={"8px"} columns={PERCENTS.length}>
+      <SimpleGrid gap={"8px"} columns={PERCENTS.length} mt={'-8px'}>
          {PERCENTS.map((a: any, i) => (
             <Flex
                className={cs(

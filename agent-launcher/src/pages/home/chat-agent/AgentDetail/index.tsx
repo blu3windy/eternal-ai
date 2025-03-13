@@ -110,7 +110,7 @@ const AgentDetail = () => {
                Get
             </Button>
          </Flex>
-         <Flex h={'100%'} overflow={'auto'} marginBottom={'28px'} className={s.wDescription}>
+         <Flex h={'100%'} overflow={'auto'} marginLeft={'8px'} marginBottom={'28px'} className={s.wDescription}>
             {description && (
                <div className={cs(s.descriptionText, "markdown")}>
                   <CustomMarkdown

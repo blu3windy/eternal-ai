@@ -154,7 +154,7 @@ const AgentTopInfo = () => {
             onClose={onCloseDrawer}
          >
             <DrawerOverlay/>
-            <DrawerContent>
+            <DrawerContent bg={'#EDEDF2'} minW={'420px'}>
                <DrawerCloseButton/>
                <DrawerBody>
                   <AgentTradeProvider>
