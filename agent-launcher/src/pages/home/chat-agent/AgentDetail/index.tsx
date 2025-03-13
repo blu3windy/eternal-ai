@@ -16,6 +16,7 @@ const AgentDetail = () => {
       installAgent,
       isInstalling,
       availableModelAgents,
+      isInstalled,
    } = useContext(AgentContext);
 
    const {
@@ -65,6 +66,8 @@ const AgentDetail = () => {
    }, [selectedAgent, availableModelAgents]);
 
    const handleInstall = () => {
+      if (isInstalled) return;
+
       installAgent(selectedAgent);
    };
 
@@ -127,10 +130,11 @@ const AgentDetail = () => {
                className={s.btnInstall}
                onClick={handleInstall}
                isLoading={isInstalling}
-               isDisabled={isInstalling}
+               isDisabled={isInstalling || isInstalled}
                loadingText={totalStep > 0 ? `${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : '0%'}
+               cursor={isInstalled ? 'not-allowed' : 'pointer'}
             >
-               Get
+               {isInstalled ? 'Downloaded' : 'Get'}
             </Button>
          </Flex>
          <Flex h={'100%'} overflow={'auto'} marginLeft={'8px'} marginBottom={'28px'} className={s.wDescription}>

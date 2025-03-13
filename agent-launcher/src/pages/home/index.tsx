@@ -1,11 +1,11 @@
 import { Box, Flex } from "@chakra-ui/react";
 import cx from "clsx";
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import MainLayout from "../../components/layout";
 import FundAgentProvider from "../../providers/FundAgent";
 import ChatAgent from "./chat-agent";
 import AgentTopInfo from "./chat-agent/AgentTopInfo";
-import AgentsList from "./list-agent";
+import AgentsList, { AgentType } from "./list-agent";
 import AgentProvider, { AgentContext } from "./provider";
 import s from "./styles.module.scss";
 
@@ -20,6 +20,10 @@ const HandleHome = () => {
    const showBackupPrvKey =
       selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
+   const isAllowChat = useMemo(() => {
+      return ![AgentType.Model].includes(selectedAgent?.agent_type);
+   }, [selectedAgent]);
+
    return (
       <Flex height={"100%"}>
          <Box flex={1} maxW={"460px"}>
@@ -28,7 +32,7 @@ const HandleHome = () => {
          <Box
             className={cx(
                s.detailContainer,
-               isCanChat || showBackupPrvKey ? "" : s.isSetup
+               (isCanChat && isAllowChat) || showBackupPrvKey ? "" : s.isSetup
             )}
             flex={2}
          >
