@@ -35,6 +35,7 @@ func (s *Service) CreateAgentVideoByPostID(ctx context.Context, twitterPostID ui
 					daos.GetDBMainCtx(ctx),
 					map[string][]interface{}{
 						"ref_tweet_id = ?": {twitterPost.ID},
+						"agent_type = ?":   {models.AgentInfoAgentTypeVideo},
 					},
 					map[string][]interface{}{},
 					[]string{},
