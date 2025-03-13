@@ -772,8 +772,14 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 								var err error
 								for i := 0; i < 5; i++ {
 									time.Sleep(time.Duration(i*5) * time.Second)
-									contentReply := fmt.Sprintf("Here's the Eternal AI video of %v \n\nOnchain Prompt: https://basescan.org/tx/%v\nOnchain Video: https://basescan.org/tx/%v\n\n@bankrbot create a token for this video from the prompt.",
+
+									contentReply := fmt.Sprintf("Here's the Eternal AI video of %v \n\nOnchain Prompt: https://basescan.org/tx/%v\nOnchain Video: https://basescan.org/tx/%v",
 										twitterPost.ExtractContent, twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash)
+
+									if twitterPost.TwitterID == "1576893241127219200" {
+										contentReply += "\n\n@bankrbot create a token for this video from the prompt."
+									}
+
 									refId, _err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
 									if _err == nil {
 										return refId, nil
