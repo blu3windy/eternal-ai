@@ -8,6 +8,7 @@ const ACTIVE_PATH = 'local_llms/bin/activate';
 export interface ModelInfo {
     hash: string;
     type: string;
+    sizeGb: number;
 }
 
 const getFolderPath = () => {
@@ -15,6 +16,18 @@ const getFolderPath = () => {
    return path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.MODEL);
 }
 
+// Function to get file details including size, type, and hash
+function getFileDetails(directoryPath: string, file: string) {
+   const filePath = path.join(directoryPath, file);
+   const stats = fs.statSync(filePath); // Get file statistics
+
+   // Split filename into hash and type
+   const [hash, type] = file.split(".");
+   const size = stats.size; // Get file size in bytes
+   const sizeGb = Number((size / (1000 * 1000 * 1000)).toFixed(2)); // Using 1000 for decimal GB
+
+   return { sizeGb, type, hash };
+}
 
 const downloadedModels = async () => {
    try {
@@ -39,11 +52,9 @@ const downloadedModels = async () => {
             return fs.statSync(filePath).isFile();
          })
          .map((file) => {
-            // Split filename into hash and type
-            const [hash, type] = file.split(".");
-            return { hash, type };
+            return getFileDetails(storagePath, file);
          })
-         .filter((model) => model.hash && model.type); // Filter out invalid entries
+         .filter((model) => model.hash && model.type && model.sizeGb); // Filter out invalid entries
 
       return models;
    } catch (error) {
