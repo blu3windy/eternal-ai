@@ -57,7 +57,7 @@ export enum FilterOption {
 }
 
 export const Category = [
-   { value: FilterOption.All, label: 'All', description: 'All available agents.' },
+   // { value: FilterOption.All, label: 'All', description: 'All available agents.' },
    { value: CategoryOption.Character, label: 'Character', description: 'Agents with unique personalities, offering engaging chat experiences and interactions.' },
    { value: CategoryOption.Model, label: 'Model', description: 'Agents providing direct access to specific AI models (LLaMA, DeepSeek, Hermes,…).' },
    { value: CategoryOption.Utility, label: 'Utility', description: 'Task-focused agents built with Python or JavaScript.' },
@@ -147,7 +147,7 @@ const AgentsList = () => {
             chain: '',
          };
 
-         params.agent_types = AgentType.All;
+         // params.agent_types = AgentType.All;
 
          if ([CategoryOption.Character].includes(refParams.current.category)) {
             params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
