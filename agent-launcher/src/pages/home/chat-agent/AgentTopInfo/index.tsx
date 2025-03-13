@@ -88,7 +88,7 @@ const AgentTopInfo = () => {
                }
             </Flex>
             <Flex
-               gap={"6px"} justifyContent={"flex-end"} alignItems={"center"}
+               gap={"6px"} justifyContent={"center"} alignItems={"center"}
                className={cx(s.contentContainer, isCanChat || showBackupPrvKey ? '' : s.isSetup)}
                w="clamp(300px, 60%, 800px)" mx={"auto"}
             >
