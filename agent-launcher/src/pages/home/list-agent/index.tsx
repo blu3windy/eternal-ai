@@ -143,12 +143,12 @@ const AgentsList = () => {
 
 
          if ([FilterOption.Installed, FilterOption.NonInstalled].includes(refParams.current.filter)) {
-            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model, AgentType.Infra].join(',');
-
             if (FilterOption.Installed === refParams.current.filter) {
+               params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model, AgentType.Infra].join(',');
                params.installed = true;
             } else if (FilterOption.NonInstalled === refParams.current.filter) {
                params.installed = false;
+               params.sort_col = SortOption.MarketCap;
             }
          } else if ([FilterOption.Character].includes(refParams.current.filter)) {
             params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
@@ -327,7 +327,7 @@ const AgentsList = () => {
                   {FilterBy.map((option, index) => (
                      <>
                         <Flex
-                          direction={"column"}
+                           direction={"column"}
                            gap={'4px'}
                            // alignItems={'center'}
                            padding={'16px 16px'}
@@ -351,12 +351,10 @@ const AgentsList = () => {
                            </Text>
                            {
                               option.description && (
-                               <Text fontSize={'12px'} fontWeight={400} opacity={0.7}>
-                                  {
-                                     option.description
-                                  }
-                               </Text>
-                             )
+                                 <Text fontSize={'12px'} fontWeight={400} opacity={0.7}>
+                                    {option.description}
+                                 </Text>
+                              )
                            }
                         </Flex>
                         {index < SortBy.length && (
