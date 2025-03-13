@@ -56,15 +56,14 @@ const ItemToken = ({
   models: any;
   isSelected: boolean;
 }) => {
-
    const avatarUrl
       = agent?.thumbnail
       || agent?.token_image_url
       || agent?.twitter_info?.twitter_avatar;
 
    const modelSize = useMemo(() => {
-      return 1.89;
-   }, []);
+      return agent?.sizeGb || 0;
+   }, [agent]);
 
    const handleRemoveAgent = e => {
       e?.preventDefault();

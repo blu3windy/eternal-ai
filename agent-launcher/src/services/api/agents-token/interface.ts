@@ -79,6 +79,7 @@ export interface IAgentToken {
   is_onchain?: boolean;
   prompt_calls: number;
   ipfsHash?: string;
+  sizeGb?: number;
 }
 
 export interface Meme {
