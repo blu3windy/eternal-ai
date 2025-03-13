@@ -1,6 +1,6 @@
 const safeCopy = async (text?: string) => {
    if (text) {
-      await window.electronAPI.safeCopy(text);
+      await globalThis.electronAPI.safeCopy(text);
    }
 }
 

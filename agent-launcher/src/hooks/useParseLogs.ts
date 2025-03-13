@@ -84,7 +84,7 @@ const useParseLogs = (props: LoggersProps) => {
    useEffect(() => {
       if (!init.current) {
          init.current = true;
-         window.electronAPI.onCommandEvent(onParseLog);
+         globalThis.electronAPI.onCommandEvent(onParseLog);
       }
    }, [onParseLog]);
 

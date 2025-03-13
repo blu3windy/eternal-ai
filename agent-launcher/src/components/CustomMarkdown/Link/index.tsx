@@ -37,7 +37,7 @@ const CustomLink = ({
       target="_blank"
       onClick={(e) => {
         e.preventDefault();
-        window.electronAPI.openExternal(href); // Open in system browser
+        globalThis.electronAPI.openExternal(href); // Open in system browser
       }}
     >
       {formatMessage}

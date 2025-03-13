@@ -9,7 +9,7 @@ export enum ETradePlatform {
 
 export interface IAgentContext {
   loading: boolean;
-  selectedAgent?: IAgentToken;
+  selectedAgent?: IAgentToken & any;
   setSelectedAgent: any;
   currentModel: any;
   setCurrentModel: any;

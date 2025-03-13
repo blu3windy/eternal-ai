@@ -1,13 +1,12 @@
+import { persistor, store } from "@stores/index.ts";
+import { Navigate, Route, HashRouter as Router, Routes } from "react-router-dom";
 import ROUTERS from "./constants/route-path";
+import { AuthProvider } from "./pages/authen/provider.tsx";
 import Home from "./pages/home";
 import Mine from "./pages/mine";
-import { AuthProvider } from "./pages/authen/provider.tsx";
-import { persistor, store } from "@stores/index.ts";
-import { HashRouter as Router, Navigate, Route, Routes } from "react-router-dom";
 
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
-import { useEffect } from "react";
 
 function App() {
    return (

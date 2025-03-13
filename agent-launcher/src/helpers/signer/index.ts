@@ -8,12 +8,12 @@ const KEYTAR_STORAGE_NAME = {
 class EaiSigner {
 
    static async getCipherText() {
-      return await window.electronAPI.keytarGet(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
+      return await globalThis.electronAPI.keytarGet(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
    }
 
    static async hasUser() {
       try {
-         const cipherText = await window.electronAPI.keytarGet(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
+         const cipherText = await globalThis.electronAPI.keytarGet(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
          return !!cipherText;
       } catch (e) {
          return false;
@@ -31,11 +31,11 @@ class EaiSigner {
          value: prvKey,
          pass
       });
-      await window.electronAPI.keytarSave(KEYTAR_STORAGE_NAME.CIPHER_TEXT, cipherText);
+      await globalThis.electronAPI.keytarSave(KEYTAR_STORAGE_NAME.CIPHER_TEXT, cipherText);
    }
 
    static async getStorageKey({ pass }: { pass: string }) {
-      const cipherText = await window.electronAPI.keytarGet(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
+      const cipherText = await globalThis.electronAPI.keytarGet(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
       console.log("cipherText", cipherText)
       if (cipherText) {
          return eaiCrypto.decryptAES({
@@ -47,11 +47,11 @@ class EaiSigner {
    }
 
    static async removeStorageKey() {
-      await window.electronAPI.keytarRemove(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
+      await globalThis.electronAPI.keytarRemove(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
    }
 
    static async reset() {
-      await window.electronAPI.keytarRemove(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
+      await globalThis.electronAPI.keytarRemove(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
    }
 }
 

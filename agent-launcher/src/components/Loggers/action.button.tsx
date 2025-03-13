@@ -8,28 +8,28 @@ const ActionButtons = () => {
       <Flex gap="12px" flexWrap="wrap" width="100%" alignItems="center">
          <Button
             onClick={() => {
-               window.electronAPI.modelStarter();
+               globalThis.electronAPI.modelStarter();
             }}
          >
               INSTALL LLAMA.CPP
          </Button>
          <Button
             onClick={() => {
-               window.electronAPI.modelInstall(MODEL_HASH);
+               globalThis.electronAPI.modelInstall(MODEL_HASH);
             }}
          >
              INSTALL MODEL
          </Button>
          <Button
             onClick={() => {
-               window.electronAPI.modelRun(MODEL_HASH);
+               globalThis.electronAPI.modelRun(MODEL_HASH);
             }}
          >
              RUN MODEL
          </Button>
          <Button
             onClick={() => {
-               window.electronAPI.modelCheckInstall([MODEL_HASH]).then((hashes) => {
+               globalThis.electronAPI.modelCheckInstall([MODEL_HASH]).then((hashes) => {
                   alert(JSON.stringify(hashes));
                });
             }}
@@ -38,7 +38,7 @@ const ActionButtons = () => {
          </Button>
          <Button
             onClick={() => {
-               window.electronAPI.modelCheckRunning().then((hash?: string) => {
+               globalThis.electronAPI.modelCheckRunning().then((hash?: string) => {
                   alert(hash ? `Model is running with hash: ${hash}` : "Model is not running");
                });
             }}

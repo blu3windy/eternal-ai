@@ -4,77 +4,84 @@ import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 
+if (process.env.NODE_ENV === "development") {
+  autoUpdater.autoDownload = false;
+  autoUpdater.allowDowngrade = true;
+  autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
+}
+
 autoUpdater.setFeedURL({
   provider: "generic",
   url: "https://electron-update-server-production.up.railway.app/updates/",
 });
-autoUpdater.on("update-available", (info) => {
-  dialog
-    .showMessageBox({
-      type: "info",
-      title: "Update Available",
-      message: `A new version (v${info.version}) is available. Download now?`,
-      buttons: ["Update", "Later"],
-    })
-    .then(({ response }) => {
-      if (response === 0) {
-        // User clicked "Update"
-        autoUpdater.downloadUpdate().catch((err) => {
-          console.error("Download failed:", err);
-          dialog.showMessageBox({
-            type: "info",
-            title: "Update Ready",
-            message: `Download failed: ${JSON.stringify(err)}`,
-          });
-        });
-      }
-    });
-});
 
-autoUpdater.on("update-not-available", () => {
-  dialog.showMessageBox({
-    message: "No update available.",
-  });
-});
+// autoUpdater.on("update-available", (info) => {
+//   dialog
+//     .showMessageBox({
+//       type: "info",
+//       title: "Update Available",
+//       message: `A new version (v${info.version}) is available. Download now?`,
+//       buttons: ["Update", "Later"],
+//     })
+//     .then(({ response }) => {
+//       if (response === 0) {
+//         // User clicked "Update"
+//         autoUpdater.downloadUpdate().catch((err) => {
+//           console.error("Download failed:", err);
+//           dialog.showMessageBox({
+//             type: "info",
+//             title: "Update Ready",
+//             message: `Download failed: ${JSON.stringify(err)}`,
+//           });
+//         });
+//       }
+//     });
+// });
 
-autoUpdater.on("error", (err) => {
-  console.error("Update error:", err);
-});
+// autoUpdater.on("update-not-available", () => {
+//   dialog.showMessageBox({
+//     message: "No update available.",
+//   });
+// });
+
+// autoUpdater.on("error", (err) => {
+//   console.error("Update error:", err);
+// });
 
 // 🔹 Event: When update is downloaded
-autoUpdater.on("update-downloaded", (info) => {
-  console.log(`Update downloaded: v${info.version}`);
-  dialog
-    .showMessageBox({
-      type: "info",
-      title: "Update Ready",
-      message: `Version ${info.version} is downloaded. Restart to apply?`,
-      buttons: ["Restart", "Later"],
-    })
-    .then(({ response }) => {
-      if (response === 0) {
-        // User clicked "Restart"
-        // Delay to ensure update applies correctly
-        setTimeout(() => {
-          autoUpdater.quitAndInstall();
-        }, 3000);
-      }
-    });
-});
+// autoUpdater.on("update-downloaded", (info) => {
+//   console.log(`Update downloaded: v${info.version}`);
+//   dialog
+//     .showMessageBox({
+//       type: "info",
+//       title: "Update Ready",
+//       message: `Version ${info.version} is downloaded. Restart to apply?`,
+//       buttons: ["Restart", "Later"],
+//     })
+//     .then(({ response }) => {
+//       if (response === 0) {
+//         // User clicked "Restart"
+//         // Delay to ensure update applies correctly
+//         setTimeout(() => {
+//           autoUpdater.quitAndInstall();
+//         }, 3000);
+//       }
+//     });
+// });
 
-// 🔹 Track download progress
-autoUpdater.on("download-progress", (progress) => {
-//   let percentage = Math.round(progress.percent);
-  //   dialog.showMessageBox({
-  //     type: "info",
-  //     title: "Processing",
-  //     message: `Downloading... ${percentage}% (${(
-  //       progress.transferred /
-  //       1024 /
-  //       1024
-  //     ).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB)`,
-  //   });
-});
+// // 🔹 Track download progress
+// autoUpdater.on("download-progress", (progress) => {
+// //   let percentage = Math.round(progress.percent);
+//   //   dialog.showMessageBox({
+//   //     type: "info",
+//   //     title: "Processing",
+//   //     message: `Downloading... ${percentage}% (${(
+//   //       progress.transferred /
+//   //       1024 /
+//   //       1024
+//   //     ).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB)`,
+//   //   });
+// });
 
 // const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -112,7 +119,7 @@ function createWindow() {
     });
   }, 5000);
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, "app-logo.png"),
+    icon: path.join(process.env.VITE_PUBLIC as any, "app-logo.png"),
     // icon: path.join(__dirname, "../public/icon.png"), // Use icon from public
     webPreferences: {
       preload: path.join(app.getAppPath(), "dist-electron", "preload.mjs"),
@@ -139,6 +146,21 @@ function createWindow() {
 
   win.on("closed", () => {
     win = null;
+  });
+
+  autoUpdater.on("update-available", (info) => {
+    console.log("Update available:", info);
+    win?.webContents.send("update-available", info);
+  });
+
+  autoUpdater.on("download-progress", (info) => {
+    console.log("Update available:", info);
+    win?.webContents.send("download-progress", info);
+  });
+
+  autoUpdater.on("update-downloaded", (info) => {
+    console.log("update-downloaded:", info);
+    win?.webContents.send("update-downloaded", info);
   });
 
   if (VITE_DEV_SERVER_URL) {

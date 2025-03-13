@@ -32,7 +32,7 @@ const Loggers = () => {
    useEffect(() => {
       if (!initialized.current) {
          initialized.current = true;
-         window.electronAPI.onCommandEvent(handleNewLog);
+         globalThis.electronAPI.onCommandEvent(handleNewLog);
       }
    }, [handleNewLog]);
 

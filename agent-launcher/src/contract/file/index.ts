@@ -29,7 +29,7 @@ export async function readFileOnChain(chainId: number, fileName: string) {
 
 export async function readFileOnLocal(fileName: string, folderName: string): Promise<string> {
    try {
-      const data = await window.electronAPI.readFile(fileName, folderName);
+      const data = await globalThis.electronAPI.readFile(fileName, folderName);
       return data;
    } catch (error) {
       console.error("Error reading file:", error);
@@ -39,7 +39,7 @@ export async function readFileOnLocal(fileName: string, folderName: string): Pro
 
 export async function getFilePathOnLocal(fileName: string, folderName: string): Promise<string> {
    try {
-      const data = await window.electronAPI.getFilePath(fileName, folderName);
+      const data = await globalThis.electronAPI.getFilePath(fileName, folderName);
       return data;
    } catch (error) {
       return '';
@@ -48,7 +48,7 @@ export async function getFilePathOnLocal(fileName: string, folderName: string): 
 
 export async function checkFileExistsOnLocal(fileName: string, folderName: string) {
    try {
-      return await window.electronAPI.accessFile(fileName, folderName); // Check if file exists
+      return await globalThis.electronAPI.accessFile(fileName, folderName); // Check if file exists
    } catch {
       // File does not exist
       return false;
@@ -57,7 +57,7 @@ export async function checkFileExistsOnLocal(fileName: string, folderName: strin
 
 export async function writeFileToLocal(fileName: string, folderName: string, content: string) {
    try {
-      return await window.electronAPI.writeFile(fileName, folderName, content);
+      return await globalThis.electronAPI.writeFile(fileName, folderName, content);
    } catch {
       return undefined;
    }

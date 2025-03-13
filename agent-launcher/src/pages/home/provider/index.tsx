@@ -232,7 +232,7 @@ const AgentProvider: React.FC<
          chain: '',
       };
       const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
-      const res: ModelInfo[] = await window.electronAPI.modelDownloadedList();
+      const res: ModelInfo[] = await globalThis.electronAPI.modelDownloadedList();
       const installedHash = res.map(r => r.hash);
 
       const agentHashes = await Promise.all(
@@ -291,7 +291,7 @@ const AgentProvider: React.FC<
 
             const ipfsHash = await getModelAgentHash(agent);
             console.log('====ipfsHash', ipfsHash);
-            await window.electronAPI.modelInstall(ipfsHash);
+            await globalThis.electronAPI.modelInstall(ipfsHash);
             setIsInstalled(true);
             cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
 
@@ -377,7 +377,7 @@ const AgentProvider: React.FC<
             //
             // const ipfsHash = await getModelAgentHash(agent);
             // console.log('====ipfsHash', ipfsHash);
-            // await window.electronAPI.modelInstall(ipfsHash);
+            // await globalThis.electronAPI.modelInstall(ipfsHash);
             // setIsInstalled(true);
             // cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
             //
@@ -442,7 +442,7 @@ const AgentProvider: React.FC<
       if (agent && !!agent.agent_name) {
         try {
           const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
-          await window.electronAPI.removeFolder(folderNameOnLocal);
+          await globalThis.electronAPI.removeFolder(folderNameOnLocal);
         } catch (error) {
         }
       }
@@ -543,7 +543,7 @@ const AgentProvider: React.FC<
       if (!agent) return;
 
       try {
-         await window.electronAPI.dockerRunAgent(agent?.agent_name, agent?.network_id.toString());
+         await globalThis.electronAPI.dockerRunAgent(agent?.agent_name, agent?.network_id.toString());
       } catch (e) {
          console.log('handleRunDockerAgent', e);
       } finally {
@@ -553,12 +553,12 @@ const AgentProvider: React.FC<
    const handleStopDockerAgent = async (agent?: IAgentToken) => {
       if (!agent) return;
 
-      await window.electronAPI.dockerStopAgent(agent?.agent_name, agent?.network_id.toString());
+      await globalThis.electronAPI.dockerStopAgent(agent?.agent_name, agent?.network_id.toString());
    };
 
    const handleGetExistAgentFolders = async () => {
       try {
-         const folders = await window.electronAPI.getExistAgentFolders();
+         const folders = await globalThis.electronAPI.getExistAgentFolders();
          setInstalledUtilityAgents(folders || [])
       } catch (error) {
         
@@ -583,7 +583,7 @@ const AgentProvider: React.FC<
 
    const handleInstallModelAgentRequirement = async () => {
       if(!isModelRequirementSetup) {
-         await window.electronAPI.modelStarter();
+         await globalThis.electronAPI.modelStarter();
          setIsModelRequirementSetup(true);
       }
    }
@@ -592,7 +592,7 @@ const AgentProvider: React.FC<
       if (!hash) return;
 
       try {
-         await window.electronAPI.modelRun(hash);
+         await globalThis.electronAPI.modelRun(hash);
       } catch (e) {
          console.log('handleRunModelAgent', e);
       } finally {
@@ -603,7 +603,7 @@ const AgentProvider: React.FC<
    const checkModelAgentInstalled = async (agent: IAgentToken) => {
       try {
          const ipfsHash = await getModelAgentHash(agent);
-         const res = await window.electronAPI.modelCheckInstall([ipfsHash]);
+         const res = await globalThis.electronAPI.modelCheckInstall([ipfsHash]);
 
          if (res[ipfsHash]) {
             setIsInstalled(true);

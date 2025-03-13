@@ -50,37 +50,37 @@ const Starter = (props: IProps) => {
          console.time("FULL_LOAD_TIME");
          await onCheckHasUser();
          if (!ignoreCopy) {
-            await window.electronAPI.dockerCopyBuild();
+            await globalThis.electronAPI.dockerCopyBuild();
          }
 
          console.time("DOCKER_INSTALL");
-         await window.electronAPI.dockerInstall();
+         await globalThis.electronAPI.dockerInstall();
          console.timeEnd("DOCKER_INSTALL");
 
-         await window.electronAPI.dockerCheckInstall();
+         await globalThis.electronAPI.dockerCheckInstall();
 
          console.time("DOCKER_BUILD");
-         await window.electronAPI.dockerBuild();
+         await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
 
-         await window.electronAPI.modelInstallBaseModel(MODEL_HASH);
+         await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
 
-         // await window.electronAPI.modelStarter();
+         // await globalThis.electronAPI.modelStarter();
 
          setChecking(false);
 
-         // await window.electronAPI.modelStarter();
+         // await globalThis.electronAPI.modelStarter();
 
-         // const hasDocker = await window.electronAPI.dockerCheckInstall();
+         // const hasDocker = await globalThis.electronAPI.dockerCheckInstall();
          // if (hasDocker) {
-         //    await window.electronAPI.dockerBuild();
-         //    // await window.electronAPI.modelStarter();
+         //    await globalThis.electronAPI.dockerBuild();
+         //    // await globalThis.electronAPI.modelStarter();
          //    setChecking(false);
          // } else {
          //    setStep("REQUEST_INSTALL_DOCKER");
          // }
       } catch (error) {
-         // alert("Error while checking Docker" + window.electronAPI);
+         // alert("Error while checking Docker" + globalThis.electronAPI);
          console.error(error);
       } finally {
          console.timeEnd("FULL_LOAD_TIME");
@@ -91,7 +91,7 @@ const Starter = (props: IProps) => {
       try {
          setInstalling(true);
          await sleep(2000)
-         await window.electronAPI.dockerInstall();
+         await globalThis.electronAPI.dockerInstall();
          await onInit(true);
          setInstalling(false);
       } catch (error: any) {

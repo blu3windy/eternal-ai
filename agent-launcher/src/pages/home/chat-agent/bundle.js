@@ -4962,7 +4962,7 @@ const _1n$2 = BigInt(1);
 // - each multiplication is 'Math.ceil(CURVE_ORDER / 𝑊) + 1' point additions (fixed for any scalar)
 // - +1 window is neccessary for wNAF
 // - wNAF reduces table size: 2x less memory + 2x faster generation, but 10% slower multiplication
-// TODO: Research returning 2d JS array of windows, instead of a single window. This would allow
+// TODO: Research returning 2d JS array of windows, instead of a single globalThis. This would allow
 // windows to be in different memory locations
 function wNAF(c, bits) {
    const constTimeNegate = (condition, item) => {
@@ -4991,7 +4991,7 @@ function wNAF(c, bits) {
          return p;
       },
       /**
-     * Creates a wNAF precomputation window. Used for caching.
+     * Creates a wNAF precomputation globalThis. Used for caching.
      * Default window size is set by `utils.precompute()` and is equal to 8.
      * Number of precomputed points depends on the curve size:
      * 2^(𝑊−1) * (Math.ceil(𝑛 / 𝑊) + 1), where:
@@ -5054,7 +5054,7 @@ function wNAF(c, bits) {
             // This code was first written with assumption that 'f' and 'p' will never be infinity point:
             // since each addition is multiplied by 2 ** W, it cannot cancel each other. However,
             // there is negate now: it is possible that negated element from low value
-            // would be the same as high element, which will create carry into next window.
+            // would be the same as high element, which will create carry into next globalThis.
             // It's not obvious how this can fail, but still worth investigating later.
             // Check if we're onto Zero point.
             // Add random point inside current window to f.

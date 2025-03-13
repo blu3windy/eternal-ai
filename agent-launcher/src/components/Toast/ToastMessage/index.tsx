@@ -25,7 +25,7 @@ const ToastMessage: React.FC<ToastMessageIProps> = ({
       target = "_self";
     }
 
-    return window.electronAPI.openExternal(url);
+    return globalThis.electronAPI.openExternal(url);
   };
 
   return (

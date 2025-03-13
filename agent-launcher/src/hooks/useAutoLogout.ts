@@ -19,14 +19,14 @@ const useAutoLogout = () => {
       const events = ["mousemove", "keydown", "click"];
 
       events.forEach((event) => {
-         window.addEventListener(event, resetTimer);
+         globalThis.addEventListener(event, resetTimer);
       });
 
       resetTimer(); // Initialize timer
 
       return () => {
          events.forEach((event) => {
-            window.removeEventListener(event, resetTimer);
+            globalThis.removeEventListener(event, resetTimer);
          });
          if (timeoutRef.current) clearTimeout(timeoutRef.current);
       };

@@ -17,7 +17,7 @@ const AgentOnChainInfo = () => {
                className={s.right}
                as={"a"}
                onClick={() => {
-                  window.electronAPI.openExternal(
+                  globalThis.electronAPI.openExternal(
                      `${getExplorerByChain({
                         chainId: selectedAgent?.token_network_id as any,
                         type: "address",

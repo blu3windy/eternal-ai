@@ -31,6 +31,10 @@ const EMIT_EVENT_NAME = {
 
 
    OPEN_EXTRA_LINK: "open-external",
+
+
+   CHECK_FOR_UPDATE: "check-for-updates",
+   UPDATE_AVAILABLE: "update-available"
 }
 
 export {

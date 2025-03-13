@@ -188,7 +188,7 @@ const FormTradeAgentContainer = () => {
         selectedAgent?.meme?.trade_url ? (
           <Flex
             onClick={() =>
-              window.electronAPI.openExternal(selectedAgent?.meme?.trade_url)
+              globalThis.electronAPI.openExternal(selectedAgent?.meme?.trade_url)
             }
             className={s.btnTrade}
           >
