@@ -94,13 +94,13 @@ case "$action" in
     if [ -z "$CODE_LANGUAGE_SNIPPET" ]; then
         log_error "Missing Code Language Snippet"
     fi
-    run_container "$CONTAINER_NAME" "$IMAGE_NAME" "$FOLDER_PATH" "$CODE_LANGUAGE_SNIPPET"
+    run_container
     ;;
   stop)
     if [ -z "$CONTAINER_NAME" ]; then
       log_error "Missing Container Name"
     fi
-    stop_container "$CONTAINER_NAME"
+    stop_container
     ;;
   *)
     log_error "Invalid action: $action"
