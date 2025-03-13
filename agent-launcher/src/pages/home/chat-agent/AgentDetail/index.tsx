@@ -111,10 +111,10 @@ const AgentDetail = () => {
                         modelInfo && (
                            <>
                               <Text className={s.infoText}>
-                                 Storage Require: {modelInfo.size} GB
+                                 Storage required: {modelInfo.size} GB
                               </Text>
                               <Text className={s.infoText}>
-                                 Ram Require: {modelInfo.ram} GB
+                                 RAM required: {modelInfo.ram} GB
                               </Text>
                            </>
                         )
