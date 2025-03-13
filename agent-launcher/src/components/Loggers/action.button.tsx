@@ -29,9 +29,14 @@ const ActionButtons = () => {
          </Button>
          <Button
             onClick={() => {
-               // window.electronAPI.modelCheckInstall([MODEL_HASH]).then((hashes) => {
-               //    alert(JSON.stringify(hashes));
-               // });
+               window.electronAPI.modelDownloadedList().then((data) => {
+                  console.log(data);
+                  alert(
+                     data.length > 0
+                        ? `Model is installed with hash: ${data.map((item) => item.hash).join(", ")}`
+                        : "Model is not installed"
+                  );
+               });
             }}
          >
              MODEL CHECK INSTALL
