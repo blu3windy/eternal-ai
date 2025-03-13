@@ -245,7 +245,6 @@ func (s *Service) GetDashboardAgentVideo(ctx context.Context, userAddress string
 		joinFilters,
 		filters,
 		map[string][]any{
-			"TwitterInfo":    {},
 			"TmpTwitterInfo": {},
 			"Meme":           {`deleted_at IS NULL and status not in ("created", "pending")`},
 			"TokenInfo":      {},
