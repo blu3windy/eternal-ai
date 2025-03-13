@@ -1,11 +1,13 @@
-import { Button, Divider, Flex, Box } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 import React, { useContext } from "react";
 import AutosizeTextarea from "react-autosize-textarea";
 import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import useFundAgent from "../../../../../../providers/FundAgent/useFundAgent.ts";
 import { AgentContext } from "@pages/home/provider";
 import s from "./styles.module.scss";
-import AgentWalletInfo from "@pages/home/chat-agent/AgentWalletInfo";
+import localStorageService from "../../../../../../storage/LocalStorageService.ts";
+import STORAGE_KEYS from "@constants/storage-key.ts";
+import { compareString } from "@utils/string.ts";
 
 interface IProps {
   inputRef?: any;
@@ -56,6 +58,16 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
     if (isSend && !loading) {
       publishEvent(_message);
       setMessage("");
+
+      let recentAgents = JSON.parse(localStorageService.getItem(STORAGE_KEYS.RECENT_AGENTS)!) || [];
+      recentAgents = recentAgents.filter(id => !compareString(id, selectedAgent?.id?.toString()));
+      recentAgents.unshift(selectedAgent?.id);
+
+      if (recentAgents.length > 10) {
+        recentAgents = recentAgents.slice(0, 10);
+      }
+
+      localStorageService.setItem(STORAGE_KEYS.RECENT_AGENTS, JSON.stringify(recentAgents));
     }
   };
 
