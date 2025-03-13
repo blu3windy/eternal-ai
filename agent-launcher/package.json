@@ -123,7 +123,8 @@
         "zip"
       ],
       "icon": "public/icons/app-logo.png",
-      "artifactName": "${productName}-Mac-${version}.${ext}"
+      "artifactName": "${productName}-Mac-${version}.${ext}",
+      "minimumSystemVersion": "13.0.1"
     },
     "extraResources": [
       {
