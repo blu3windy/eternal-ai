@@ -49,7 +49,7 @@ const ipcMainModel = () => {
       const path = getFolderPath();
       try {
          const { stdout } = await command.execAsync( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms status`);
-         return !!stdout
+         return stdout
       } catch (error) {
          console.log("MODEL_CHECK_RUNNING", error);
          return undefined;

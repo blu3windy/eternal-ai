@@ -44,6 +44,7 @@ const ActionButtons = () => {
          <Button
             onClick={() => {
                globalThis.electronAPI.modelCheckRunning().then((hash?: string) => {
+                  console.log(hash);
                   alert(hash ? `Model is running with hash: ${hash}` : "Model is not running");
                });
             }}
