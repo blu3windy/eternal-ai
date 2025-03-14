@@ -102,13 +102,11 @@ const ItemToken = ({
 
                <Flex direction="column" gap="4px">
                   <Text className={s.itemTitle}>
-                     {RenameDescriptionModels?.[models?.[agent.agent_base_model]]
-                        || RenameDescriptionModels?.[agent.agent_base_model]
-                        || models?.[agent.agent_base_model]}
+                     {agent?.personality}
                   </Text>
                   <Flex gap={"4px"} alignItems={"center"}>
                      <Text className={s.itemAmount}>
-                        {RenameModels?.[agent.agent_base_model as any] || agent.agent_base_model} ({modelSize} GB)
+                        {agent?.agent_name} ({modelSize} GB)
                      </Text>
                      {
                         agent.ipfsHash !== MODEL_HASH && (
@@ -181,16 +179,11 @@ const SelectModel = ({
                   >
                      <Box flex={1}>
                         <Text className={s.title}>
-                           {RenameModels?.[currentModel?.agent_base_model as any]
-                    || currentModel?.agent_base_model}
+                           {currentModel?.agent_name}
                         </Text>
                         {showDescription && (
                            <Text className={s.amount}>
-                              {RenameDescriptionModels?.[
-                                 models?.[currentModel?.agent_base_model as any]
-                              ]
-                      || RenameDescriptionModels?.[currentModel?.agent_base_model as any]
-                      || models?.[currentModel?.agent_base_model as any]}
+                              {currentModel?.personality}
                            </Text>
                         )}
                      </Box>
