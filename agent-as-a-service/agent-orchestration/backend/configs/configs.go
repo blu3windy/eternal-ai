@@ -192,6 +192,7 @@ type Config struct {
 	VideoAiAgentInfoId                uint   `json:"video_ai_agent_info_id"`
 	VideoTelegramKey                  string `json:"video_telegram_key"`
 	VideoActivitiesTelegramAlert      string `json:"video_activities_telegram_alert"`
+	GenMagicVideoPrompt               bool   `json:"gen_magic_video_prompt"`
 	MagicVideoActivitiesTelegramAlert string `json:"magic_video_activities_telegram_alert"`
 	NobullshitAgentInfoId             uint   `json:"nobullshit_agent_info_id"`
 	LaunchpadAgentInfoId              uint   `json:"launchpad_agent_info_id"`
