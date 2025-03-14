@@ -1045,7 +1045,7 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success submit infer gen video db_id:%v \n infer id :%v \n tx :%v ", twitterPost.ID, twitterPost.InferId, twitterPost.InferTxHash))
 
 							// submit magic prompt
-							if twitterPost.Type == models.AgentTwitterPostTypeImage2video {
+							if twitterPost.Type == models.AgentTwitterPostTypeImage2video && s.conf.GenMagicVideoPrompt {
 								videoMagicPrompt, err := s.GetVideoMagicPromptFromImage(ctx, twitterPost.ExtractContent, twitterPost.ExtractMediaContent)
 								if err != nil {
 									return nil
