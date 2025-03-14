@@ -43,6 +43,8 @@ export default defineConfig({
          "@contract": path.resolve(__dirname, 'src/contract'),
          "@stores": path.resolve(__dirname, 'src/stores'),
          "@services": path.resolve(__dirname, 'src/services'),
+         "@providers": path.resolve(__dirname, 'src/providers'),
+         "@storage": path.resolve(__dirname, 'src/storage'),
       }
    },
    build: {

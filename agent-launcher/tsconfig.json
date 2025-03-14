@@ -32,7 +32,9 @@
       "@helpers/*": ["src/helpers/*"],
       "@stores/*": ["src/stores/*"],
       "@interfaces/*": ["src/interfaces/*"],
-      "@services/*": ["src/services/*"]
+      "@services/*": ["src/services/*"],
+      "@storage/*": ["src/storage/*"],
+      "@providers/*": ["src/providers/*"],
     }
   },
   "include": ["src", "electron"],

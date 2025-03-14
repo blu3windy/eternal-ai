@@ -6,22 +6,22 @@ import STORAGE_KEYS from "@constants/storage-key.ts";
 export const TIMEOUT = 5 * 60000;
 export const HEADERS = { 'Content-Type': 'application/json' };
 
-export const getAuthenToken = () => {
-   const authToken = localStorageService.getItem(STORAGE_KEYS.AUTHEN_TOKEN);
+export const getAuthenToken = async () => {
+   const authToken = await localStorageService.getItem(STORAGE_KEYS.AUTHEN_TOKEN);
    if (authToken) {
-     return authToken;
+      return authToken;
    }
    return '';
 };
 
-export const getClientHeaders = () => {
+export const getClientHeaders = async () => {
    const headers = {
       ...HEADERS,
    } as Partial<AxiosHeaders>;
-   const authToken = getAuthenToken();
+   const authToken = await getAuthenToken();
 
    if (authToken) {
-     headers.Authorization = `${authToken}`;
+      headers.Authorization = `${authToken}`;
    }
    return headers;
 };
@@ -36,12 +36,12 @@ const createAxiosInstance = ({ baseURL = '' }: { baseURL: string }) => {
    });
 
    instance.interceptors.request.use(
-      (config) => {
-      const authToken = getAuthenToken();
+      async (config) => {
+         const authToken = await getAuthenToken();
 
-      if (authToken) {
-        config.headers.Authorization = `${authToken}`;
-      }
+         if (authToken) {
+            config.headers.Authorization = `${authToken}`;
+         }
          return config;
       },
       (error) => {
@@ -97,11 +97,11 @@ export const createCustomAxiosInstance = ({
    });
 
    instance.interceptors.request.use(
-      (config) => {
-      const authToken = getAuthenToken();
-      if (authToken) {
-        config.headers.Authorization = `Bearer ${authToken}`;
-      }
+      async (config) => {
+         const authToken = await getAuthenToken();
+         if (authToken) {
+            config.headers.Authorization = `Bearer ${authToken}`;
+         }
          return config;
       },
       (error) => {

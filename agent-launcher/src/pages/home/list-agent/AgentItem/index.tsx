@@ -1,13 +1,13 @@
 import { Flex, Grid, Image, Text } from '@chakra-ui/react';
 import React, { useContext, useMemo } from 'react';
 import s from './styles.module.scss';
-import { IAgentToken } from "../../../../services/api/agents-token/interface.ts";
-import { AgentContext } from "../../provider";
-import { DefaultAvatar } from "../../../../components/DefaultAvatar";
-import { formatCurrency, labelAmountOrNumberAdds } from "../../../../utils/format.ts";
+import { IAgentToken } from "@services/api/agents-token/interface.ts";
+import { DefaultAvatar } from "@components/DefaultAvatar";
+import { formatCurrency, labelAmountOrNumberAdds } from "@utils/format.ts";
 import cs from "clsx";
 import { AgentType } from "@pages/home/list-agent";
 import CustomMarkdown from "@components/CustomMarkdown";
+import { AgentContext } from "@pages/home/provider";
 
 interface IProps {
   token: IAgentToken;

@@ -1,31 +1,29 @@
-import Store from 'electron-store';
 
 class LocalStorageService {
-   private store: Store;
+
+   private readonly electronAPI = window.electronAPI
 
    constructor() {
-      this.store = new Store();
+      if (!this.electronAPI) {
+         this.electronAPI = window.electronAPI
+      }
    }
 
-   setItem(key: string, value: string): void {
-      this.store.set(key, value);
-      console.log(`Set item: ${key} = ${value}`); // Log the set operation
+   async setItem(key: string, value: string) {
+      await this.electronAPI.storeSetItem(key, value);
    }
 
-   getItem(key: string): string | null {
-      const value = this.store.get(key);
-      console.log(`Get item: ${key} = ${value}`); // Log the get operation
-      return typeof value === 'string' ? value : null;
+   async getItem(key: string): Promise<string> {
+      const value = await this.electronAPI.storeGetItem(key);
+      return value || '';
    }
 
-   removeItem(key: string): void {
-      this.store.delete(key);
-      console.log(`Removed item: ${key}`); // Log the remove operation
+   async removeItem(key: string) {
+      await this.electronAPI.storeRemoveItem(key);
    }
 
-   clear(): void {
-      this.store.clear();
-      console.log('Cleared all items'); // Log the clear operation
+   async clear() {
+      await this.electronAPI.storeClear();
    }
 }
 
