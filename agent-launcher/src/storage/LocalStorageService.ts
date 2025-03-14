@@ -1,21 +1,32 @@
+import Store from 'electron-store';
+
 class LocalStorageService {
-  constructor(private storage: Storage = localStorage) {}
+   private store: Store;
 
-  setItem(key: string, value: string): void {
-    this.storage.setItem(key, value);
-  }
+   constructor() {
+      this.store = new Store();
+   }
 
-  getItem(key: string): string | null {
-    return this.storage.getItem(key);
-  }
+   setItem(key: string, value: string): void {
+      this.store.set(key, value);
+      console.log(`Set item: ${key} = ${value}`); // Log the set operation
+   }
 
-  removeItem(key: string): void {
-    this.storage.removeItem(key);
-  }
+   getItem(key: string): string | null {
+      const value = this.store.get(key);
+      console.log(`Get item: ${key} = ${value}`); // Log the get operation
+      return typeof value === 'string' ? value : null;
+   }
 
-  clear(): void {
-    this.storage.clear();
-  }
+   removeItem(key: string): void {
+      this.store.delete(key);
+      console.log(`Removed item: ${key}`); // Log the remove operation
+   }
+
+   clear(): void {
+      this.store.clear();
+      console.log('Cleared all items'); // Log the clear operation
+   }
 }
 
 const localStorageService = new LocalStorageService();
