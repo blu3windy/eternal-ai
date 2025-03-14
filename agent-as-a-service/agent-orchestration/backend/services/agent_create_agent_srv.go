@@ -1037,13 +1037,18 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 								if err != nil {
 									return nil
 								}
+								promptByte, _ := json.Marshal(map[string]interface{}{
+									"prompt": videoMagicPrompt,
+									"url":    twitterPost.ExtractMediaContent,
+								})
+								prompt = string(promptByte)
 								response, _, code, err := helpers.HttpRequest(s.conf.KnowledgeBaseConfig.OnChainUrl, "POST",
 									map[string]string{
 										"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
 									}, map[string]interface{}{
 										"chain_id":          "8453",
 										"model":             model,
-										"prompt":            videoMagicPrompt,
+										"prompt":            prompt,
 										"only_create_infer": true,
 									})
 								if err != nil {
