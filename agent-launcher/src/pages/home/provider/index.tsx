@@ -50,6 +50,7 @@ const initialValue: IAgentContext = {
    availableModelAgents: [],
    unInstallAgent: () => {},
    isUnInstalling: false,
+   installedSocialAgents: [],
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -79,6 +80,7 @@ const AgentProvider: React.FC<
    const [isModelRequirementSetup, setIsModelRequirementSetup] = useState(false);
    const [installedModelAgents, setInstalledModelAgents] = useState<IAgentToken[]>([]);
    const [availableModelAgents, setAvailableModelAgents] = useState<IAgentToken[]>([]);
+   const [installedSocialAgents, setInstalledSocialAgents] = useState<number[]>([]);
 
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
 
@@ -154,16 +156,15 @@ const AgentProvider: React.FC<
 
    useEffect(() => {
       if (selectedAgent) {
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent.agent_type)) {
+         if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(selectedAgent.agent_type)) {
+            checkSocialAgentInstalled(selectedAgent);
+         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent.agent_type)) {
             checkUtilityAgentInstalled(selectedAgent);
          } else if ([AgentType.Model].includes(selectedAgent.agent_type)) {
             checkModelAgentInstalled(selectedAgent);
-         } else {
-            setIsInstalled(false);
-            cPumpAPI.saveAgentInstalled({ ids: [selectedAgent.id], action: "uninstall" });
          }
       }
-   }, [selectedAgent?.id, installedUtilityAgents, installedModelAgents]);
+   }, [selectedAgent?.id, installedUtilityAgents, installedModelAgents, installedSocialAgents]);
 
    const checkAgentRunning = async (agent) => {
       try {
@@ -284,29 +285,45 @@ const AgentProvider: React.FC<
    };
 
 
+   const setAgentInstalled = (agent: IAgentToken) => {
+      setIsInstalled(true);
+      cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
+   }
+
+   const setAgentUnInstalled = (agent: IAgentToken) => {
+      setIsInstalled(false);
+      cPumpAPI.saveAgentInstalled({ ids: [agent.id], action: "uninstall" });
+   }
+
    const installAgent = async (agent: IAgentToken) => {
       try {
          setIsInstalling(true);
+         if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(agent.agent_type)) {
+            const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
 
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+            localStorageService.setItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
+
+            fetchInstalledSocialAgents(); //fetch then check agent installed in useEffect
+
+            // setAgentInstalled(agent);
+         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
 
-            fetchInstalledUtilityAgents();
+            fetchInstalledUtilityAgents(); //fetch then check agent installed in useEffect
+
+            // setAgentInstalled(agent);
          } else if (agent.agent_type === AgentType.Model) {
             await handleInstallModelAgentRequirement();
 
             const ipfsHash = await getModelAgentHash(agent);
             console.log('====ipfsHash', ipfsHash);
             await globalThis.electronAPI.modelInstall(ipfsHash);
-            setIsInstalled(true);
-            cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
 
             await startAgent(agent);
 
-            fetchInstalledModelAgents();
-         } else {
-            setIsInstalled(true);
-            cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
+            fetchInstalledModelAgents(); //fetch then check agent installed in useEffect
+
+            // setAgentInstalled(agent);
          }
       } catch (e) {
          console.log('installAgent e', e);
@@ -575,11 +592,9 @@ const AgentProvider: React.FC<
    const checkUtilityAgentInstalled = async (agent: IAgentToken) => {
       try {
          if (installedUtilityAgents?.some?.(key => key === `${agent.network_id}-${agent.agent_name}`)) {
-            setIsInstalled(true);
-            cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
+            setAgentInstalled(agent);
          } else {
-            setIsInstalled(false);
-            cPumpAPI.saveAgentInstalled({ ids: [agent.id], action: "uninstall" });
+            setAgentUnInstalled(agent);
          }
       } catch (e) {
          console.log('checkUtilityAgentInstalled e', e);
@@ -615,11 +630,35 @@ const AgentProvider: React.FC<
          const installedHash = res.map(r => r.hash);
 
          if (installedHash.includes(ipfsHash)) {
-            setIsInstalled(true);
-            cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
+            setAgentInstalled(agent);
          } else {
-            setIsInstalled(false);
-            cPumpAPI.saveAgentInstalled({ ids: [agent.id], action: "uninstall" });
+            setAgentUnInstalled(agent);
+         }
+      } catch (e) {
+         console.log('checkModelAgentInstalled e', e);
+      } finally {
+
+      }
+   }
+
+   const fetchInstalledSocialAgents = async () => {
+      try {
+         const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
+
+         setInstalledSocialAgents(agentIds || [])
+      } catch (error) {
+
+      }
+   }
+
+   const checkSocialAgentInstalled = async (agent: IAgentToken) => {
+      try {
+         const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
+
+         if (agentIds.includes(agent.id)) {
+            setAgentInstalled(agent);
+         } else {
+            setAgentUnInstalled(agent);
          }
       } catch (e) {
          console.log('checkModelAgentInstalled e', e);
@@ -660,6 +699,7 @@ const AgentProvider: React.FC<
          availableModelAgents,
          unInstallAgent,
          isUnInstalling,
+         installedSocialAgents,
       };
    }, [
       loading,
@@ -692,6 +732,7 @@ const AgentProvider: React.FC<
       availableModelAgents,
       unInstallAgent,
       isUnInstalling,
+      installedSocialAgents,
    ]);
 
    return (

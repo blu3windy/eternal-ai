@@ -39,4 +39,5 @@ export interface IAgentContext {
   availableModelAgents: IAgentToken[];
   unInstallAgent: any;
   isUnInstalling: boolean;
+  installedSocialAgents: number[];
 }
