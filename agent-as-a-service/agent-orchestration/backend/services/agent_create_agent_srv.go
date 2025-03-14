@@ -754,8 +754,10 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideoMagicPrompt(ctx context.
 							err = s.dao.Save(tx, twitterPost)
 							return s.dao.Save(tx, twitterPost)
 						})
-					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("success find a video with magic prompt \n gen https://x.com/%v/status/%v \n normal_video :%v \n video with magic prompt :https://gateway.lighthouse.storage/ipfs/%v ",
-						twitterPost.TwitterUsername, twitterPost.TwitterPostID, twitterPost.ImageUrl, response.Data.CID))
+					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("success find a video with magic prompt \n gen https://x.com/%v/status/%v \n normal_video :%v ",
+						twitterPost.TwitterUsername, twitterPost.TwitterPostID, twitterPost.ImageUrl))
+					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("video with magic prompt :https://gateway.lighthouse.storage/ipfs/%v ",
+						response.Data.CID))
 				}
 			}
 			return retErr
