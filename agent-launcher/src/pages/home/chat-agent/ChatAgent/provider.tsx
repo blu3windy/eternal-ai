@@ -230,7 +230,48 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                status: 'received',
             });
          } else if (selectedAgent?.agent_type === AgentType.Model) {
+            let isGeneratedDone = false;
+            await AgentAPI.chatAgentModelStreamCompletions({
+               payload: {
+                  ...params,
+               },
+               streamHandlers: {
+                  onStream: (content: string, chunk: string, options) => {
+                     const text = content;
 
+                     if (isGeneratedDone) {
+                        setIsLoading(false);
+                        updateMessage(messageId, {
+                           msg: text,
+                           status: 'pre-done',
+                           queryMessageState: options?.message,
+                           onchain_data: options.onchain_data,
+                        });
+                     } else {
+                        isGeneratedDone = !!options?.isGeneratedDone;
+                        updateMessage(messageId, {
+                           msg: text,
+                           status: text.trim().length ? 'receiving' : 'waiting',
+                           queryMessageState: options?.message,
+                           onchain_data: options.onchain_data,
+                        });
+                     }
+                  },
+                  onFinish: (content: string, options) => {
+                     updateMessage(messageId, {
+                        status: 'received',
+                        queryMessageState: options?.message,
+                        onchain_data: options.onchain_data,
+                     });
+                  },
+                  onFail: (err: any) => {
+                     // updateMessage(messageId, {
+                     //   status: 'failed',
+                     //   msg: (err as any)?.message || 'Something went wrong!',
+                     // });
+                  },
+               },
+            });
          } else {
             let isGeneratedDone = false;
             await AgentAPI.chatStreamCompletions({

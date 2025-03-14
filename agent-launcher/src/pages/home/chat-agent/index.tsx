@@ -20,14 +20,14 @@ function ChatAgent() {
 
    const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
-   const isAllowChat = useMemo(() => {
-      return ![AgentType.Model].includes(selectedAgent?.agent_type);
-   }, [selectedAgent]);
+   // const isAllowChat = useMemo(() => {
+   //    return ![AgentType.Model].includes(selectedAgent?.agent_type);
+   // }, [selectedAgent]);
 
    return (
       <Box className={s.container}>
          {/* <AgentTopInfo /> */}
-         {isCanChat && isAllowChat ? (
+         {isCanChat ? (
             <ChatAgentProvider>
                <ChatBox />
             </ChatAgentProvider>

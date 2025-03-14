@@ -173,7 +173,10 @@ const AgentProvider: React.FC<
                const res = await cPumpAPI.checkAgentServiceRunning({ agent });
                setIsRunning(true);
             } else if ([AgentType.Model].includes(agent.agent_type)) {
+               const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
+               const ipfsHash = await getModelAgentHash(agent);
 
+               setIsRunning(ipfsHash === runningModelHash);
             } else {
                setIsRunning(true);
             }
@@ -341,6 +344,7 @@ const AgentProvider: React.FC<
 
             await handleRunDockerAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
+            setIsStarting(true);
             await handleInstallModelAgentRequirement();
 
             const ipfsHash = await getModelAgentHash(agent);
