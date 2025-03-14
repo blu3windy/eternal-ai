@@ -101,7 +101,7 @@ const AgentsList = () => {
 
    const [sort, setSort] = useState<SortOption>(SortOption.CreatedAt);
    const [filter, setFilter] = useState<FilterOption>(FilterOption.All);
-   const [category, setCategory] = useState<CategoryOption>(CategoryOption.Character);
+   const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
    const [loaded, setLoaded] = useState(false);
    const refLoading = useRef(false);
 
@@ -147,8 +147,6 @@ const AgentsList = () => {
             chain: '',
          };
 
-         // params.agent_types = AgentType.All;
-
          if ([CategoryOption.Character].includes(refParams.current.category)) {
             params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
          } else if ([CategoryOption.Model].includes(refParams.current.category)) {
@@ -157,6 +155,8 @@ const AgentsList = () => {
             params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython].join(',');
          } else if ([CategoryOption.Infra].includes(refParams.current.category)) {
             params.agent_types = [AgentType.Infra].join(',');
+         } else {
+            params.agent_type = AgentType.All;
          }
 
          if (FilterOption.Installed === refParams.current.filter) {
