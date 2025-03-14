@@ -28,6 +28,7 @@ type IChatAgentProviderContext = {
   setIsLoadingMessages: (value: boolean) => void;
   publishEvent: (message: string) => void;
   scrollableRef: React.RefObject<ScrollableFeed>;
+   scrollRef: any;
   loading: boolean;
   info?: {
     name: string;
@@ -53,10 +54,12 @@ const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
    isFocusChatInput: false,
    setIsFocusChatInput: () => {},
    isAllowChat: false,
+   scrollRef: undefined,
 });
 
 export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const scrollableRef = useRef<ScrollableFeed | null>(null);
+   const scrollRef = useRef<any>(null);
 
    const [loading, setIsLoading] = useState(false);
    const [info, setInfo] = useState<
@@ -282,66 +285,75 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          });
       } finally {
          setIsLoading(false);
+         scrollRef.current.scrollIntoView({ behavior: 'smooth' });
       }
    };
 
    const updateMessage = (id: string, data: Partial<IChatMessage>) => {
-      setMessages((prev) => {
-         const matchedMessageIndex = prev.findLastIndex((i) => i.id === id);
-         if (matchedMessageIndex !== -1) {
-            if (data.status === 'failed') {
-               if (prev[matchedMessageIndex].msg) {
-                  prev[matchedMessageIndex].status = 'received';
-               } else {
-                  prev[matchedMessageIndex].status = 'failed';
+      try {
+         setMessages((prev) => {
+            const matchedMessageIndex = prev.findLastIndex((i) => i.id === id);
+            if (matchedMessageIndex !== -1) {
+               if (data.status === 'failed') {
+                  if (prev[matchedMessageIndex].msg) {
+                     prev[matchedMessageIndex].status = 'received';
+                  } else {
+                     prev[matchedMessageIndex].status = 'failed';
+                  }
+                  return [...prev];
+               } else if (
+                  prev[matchedMessageIndex].status === 'waiting'
+                  || prev[matchedMessageIndex].status === 'receiving'
+                  || prev[matchedMessageIndex].status === 'pre-done'
+               ) {
+                  const updatedMessage = {
+                     ...prev[matchedMessageIndex],
+                     ...data,
+                     updatedAt: new Date().toISOString(),
+                     queryMessageState:
+                        data?.queryMessageState
+                        || prev[matchedMessageIndex]?.queryMessageState,
+                     tx_hash:
+                        data?.onchain_data?.propose_tx
+                        || prev[matchedMessageIndex]?.tx_hash,
+                  };
+                  prev[matchedMessageIndex] = updatedMessage;
+
+                  chatAgentDatabase.updateChatItem(
+                     updatedMessage as PersistedMessageType,
+                  );
                }
+
+               const replyToMessageId = prev[matchedMessageIndex].replyTo;
+               const userMessageIndex = prev.findLastIndex(
+                  (i) => i.id === replyToMessageId,
+               );
+
+               if (userMessageIndex !== -1) {
+                  const updatedUserMessage = {
+                     ...prev[userMessageIndex],
+                     tx_hash:
+                        data?.onchain_data?.infer_tx || prev[userMessageIndex]?.tx_hash,
+                  };
+
+                  prev[userMessageIndex] = updatedUserMessage;
+
+                  chatAgentDatabase.updateChatItem(
+                     updatedUserMessage as PersistedMessageType,
+                  );
+               }
+
                return [...prev];
-            } else if (
-               prev[matchedMessageIndex].status === 'waiting'
-          || prev[matchedMessageIndex].status === 'receiving'
-          || prev[matchedMessageIndex].status === 'pre-done'
-            ) {
-               const updatedMessage = {
-                  ...prev[matchedMessageIndex],
-                  ...data,
-                  updatedAt: new Date().toISOString(),
-                  queryMessageState:
-              data?.queryMessageState
-              || prev[matchedMessageIndex]?.queryMessageState,
-                  tx_hash:
-              data?.onchain_data?.propose_tx
-              || prev[matchedMessageIndex]?.tx_hash,
-               };
-               prev[matchedMessageIndex] = updatedMessage;
-
-               chatAgentDatabase.updateChatItem(
-            updatedMessage as PersistedMessageType,
-               );
             }
+            return prev;
+         });
+      } catch (err) {
 
-            const replyToMessageId = prev[matchedMessageIndex].replyTo;
-            const userMessageIndex = prev.findLastIndex(
-               (i) => i.id === replyToMessageId,
-            );
-
-            if (userMessageIndex !== -1) {
-               const updatedUserMessage = {
-                  ...prev[userMessageIndex],
-                  tx_hash:
-              data?.onchain_data?.infer_tx || prev[userMessageIndex]?.tx_hash,
-               };
-
-               prev[userMessageIndex] = updatedUserMessage;
-
-               chatAgentDatabase.updateChatItem(
-            updatedUserMessage as PersistedMessageType,
-               );
-            }
-
-            return [...prev];
-         }
-         return prev;
-      });
+      } finally {
+         setTimeout(() => {
+            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+         }, 200);
+      }
    };
 
    const onRetryErrorMessage = useCallback(
@@ -406,6 +418,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          onRetryErrorMessage,
          isStopReceiving,
          isAllowChat,
+         scrollRef,
       };
    }, [
       messages,
@@ -422,6 +435,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       onRetryErrorMessage,
       isStopReceiving,
       isAllowChat,
+      scrollRef
    ]);
 
    return (
