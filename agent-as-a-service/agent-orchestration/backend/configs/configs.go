@@ -188,16 +188,17 @@ type Config struct {
 		MentionApiKey  string `json:"mention_api_key"`
 		MentionNewFlow bool   `json:"MentionNewFlow"`
 	} `json:"ai_dojo_backend"`
-	EternalAiAgentInfoId         uint   `json:"eternal_ai_agent_info_id"`
-	VideoAiAgentInfoId           uint   `json:"video_ai_agent_info_id"`
-	VideoTelegramKey             string `json:"video_telegram_key"`
-	VideoActivitiesTelegramAlert string `json:"video_activities_telegram_alert"`
-	NobullshitAgentInfoId        uint   `json:"nobullshit_agent_info_id"`
-	LaunchpadAgentInfoId         uint   `json:"launchpad_agent_info_id"`
-	HiroUrl                      string `json:"hiro_url"`
-	OpenseaAPIKey                string `json:"opensea_api_key"`
-	TaApiKey                     string `json:"ta_api_key"`
-	DelegateCash                 struct {
+	EternalAiAgentInfoId              uint   `json:"eternal_ai_agent_info_id"`
+	VideoAiAgentInfoId                uint   `json:"video_ai_agent_info_id"`
+	VideoTelegramKey                  string `json:"video_telegram_key"`
+	VideoActivitiesTelegramAlert      string `json:"video_activities_telegram_alert"`
+	MagicVideoActivitiesTelegramAlert string `json:"magic_video_activities_telegram_alert"`
+	NobullshitAgentInfoId             uint   `json:"nobullshit_agent_info_id"`
+	LaunchpadAgentInfoId              uint   `json:"launchpad_agent_info_id"`
+	HiroUrl                           string `json:"hiro_url"`
+	OpenseaAPIKey                     string `json:"opensea_api_key"`
+	TaApiKey                          string `json:"ta_api_key"`
+	DelegateCash                      struct {
 		Url    string `json:"url"`
 		ApiKey string `json:"api_key"`
 	} `json:"delegate_cash"`

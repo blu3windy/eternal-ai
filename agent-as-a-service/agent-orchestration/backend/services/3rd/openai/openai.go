@@ -234,6 +234,70 @@ func (c OpenAI) TestAgentPersinality(systemPrompt, userPrompt, baseUrl string) (
 	return chatResp, nil
 }
 
+func (c OpenAI) CallDirectlyEternalLLMV2(input map[string]interface{}, baseUrl string) (string, error) {
+	chatResp := ""
+	bodyBytes, _ := json.Marshal(input)
+	req, err := http.NewRequest("POST", baseUrl, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return chatResp, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ApiKey))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return chatResp, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return chatResp, err
+	}
+
+	m := ChatResponse{}
+	err = json.Unmarshal(body, &m)
+	if err != nil {
+		return chatResp, err
+	}
+	if m.Choices != nil && len(m.Choices) > 0 {
+		data := m.Choices[0]
+		if data.Message != nil && data.Message.Content != "" {
+			chatResp = data.Message.Content
+		}
+	}
+
+	return chatResp, nil
+}
+
+func (c OpenAI) CallEternalLLMOnchain(input map[string]interface{}, baseUrl string) (map[string]interface{}, error) {
+
+	bodyBytes, _ := json.Marshal(input)
+	req, err := http.NewRequest("POST", baseUrl, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.ApiKey))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	m := map[string]interface{}{}
+	err = json.Unmarshal(body, &m)
+	return m, err
+}
+
 func (c OpenAI) CallDirectlyEternalLLM(messages, model, baseUrl string, options map[string]interface{}) (string, error) {
 	seed := models.RandSeed()
 	bodyReq := map[string]interface{}{
