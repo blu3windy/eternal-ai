@@ -844,7 +844,9 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 										twitterPost.ExtractContent, twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash)
 
 									if twitterPost.TwitterID == "1576893241127219200" {
-										contentReply += "\n\n@bankrbot create a token for this video from the prompt."
+										if twitterPost.TokenName != "" && twitterPost.TokenSymbol != "" {
+											contentReply += fmt.Sprintf("\n\n@bankrbot create a token from the prompt. Name: %v. Ticker: %v.", twitterPost.TokenName, twitterPost.TokenSymbol)
+										}
 									}
 
 									refId, _err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
