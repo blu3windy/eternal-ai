@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     from app.api import router as app_router
     from app.handlers import prepare_milvus_collection, deduplicate_task, resume_pending_tasks
-    prepare_milvus_collection()
+    # prepare_milvus_collection()
 
     schedule.every(300).minutes.do(deduplicate_task)
     schedule.every(5).minutes.do(resume_pending_tasks)
