@@ -81,7 +81,7 @@ const AgentDetail = () => {
       >
          <Flex  w={"100%"} justifyContent={"space-between"} alignItems={"center"}>
             <Flex gap={"16px"} alignItems={"center"}>
-               <Image w="80px" h="80px" src={avatarUrl} borderRadius={"50%"} />
+               <Image w="80px" h="80px" src={avatarUrl} borderRadius={"50%"} objectFit={'cover'}/>
                <Flex direction={"column"} gap={"16px"}>
                   <Flex gap={"6px"}>
                      <Text className={s.nameText}>
