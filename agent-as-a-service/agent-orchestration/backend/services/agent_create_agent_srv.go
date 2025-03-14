@@ -711,6 +711,7 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideoMagicPrompt(ctx context.
 						"infer_tx_hash IS NOT NULL  AND infer_tx_hash <> ? ":             {""},
 						"infer_magic_id IS NOT NULL  AND infer_magic_id <> ? ":           {""},
 						"infer_magic_tx_hash IS NOT NULL  AND infer_magic_tx_hash <> ? ": {""},
+						"submit_solution_magic_tx_hash = ? ":                             {""},
 					},
 					map[string][]interface{}{},
 					[]string{},
@@ -746,9 +747,17 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideoMagicPrompt(ctx context.
 					if len(response.Data.TxHash) == 0 {
 						continue
 					}
-
-					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("success find a video with magic prompt \n gen https://x.com/%v/status/%v \n normal_video :%v \n video with magic prompt :https://gateway.lighthouse.storage/ipfs/%v ",
-						twitterPost.TwitterUsername, twitterPost.TwitterPostID, twitterPost.ImageUrl, response.Data.CID))
+					daos.WithTransaction(
+						daos.GetDBMainCtx(ctx),
+						func(tx *gorm.DB) error {
+							twitterPost.SubmitSolutionMagicTxHash = response.Data.TxHash
+							err = s.dao.Save(tx, twitterPost)
+							return s.dao.Save(tx, twitterPost)
+						})
+					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("success find a video with magic prompt \n gen https://x.com/%v/status/%v \n normal_video :%v ",
+						twitterPost.TwitterUsername, twitterPost.TwitterPostID, twitterPost.ImageUrl))
+					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("video with magic prompt :https://gateway.lighthouse.storage/ipfs/%v ",
+						response.Data.CID))
 				}
 			}
 			return retErr
