@@ -731,10 +731,11 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideoMagicPrompt(ctx context.
 						continue
 					}
 					type WorkerProcessHistory struct {
-						CID        string `bson:"cid" json:"cid" json:"cid,omitempty"`
-						ResultLink string `bson:"result_link" json:"result_link" json:"result_link,omitempty"` // link to download result for all model: TEXT AND IMAGE
-						ChainID    string `bson:"chain_id" json:"chain_id" json:"chain_id,omitempty"`
-						TxHash     string `bson:"tx_hash" json:"tx_hash" json:"tx_hash,omitempty"`
+						CID            string `bson:"cid" json:"cid" json:"cid,omitempty"`
+						ResultLink     string `bson:"result_link" json:"result_link" json:"result_link,omitempty"` // link to download result for all model: TEXT AND IMAGE
+						ChainID        string `bson:"chain_id" json:"chain_id" json:"chain_id,omitempty"`
+						TxHash         string `bson:"tx_hash" json:"tx_hash" json:"tx_hash,omitempty"`
+						InferenceInput string `bson:"inference_input" json:"inference_input,omitempty"`
 					}
 					type Response struct {
 						Data WorkerProcessHistory `json:"data"`
@@ -754,10 +755,10 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideoMagicPrompt(ctx context.
 							err = s.dao.Save(tx, twitterPost)
 							return s.dao.Save(tx, twitterPost)
 						})
-					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("success find a video with magic prompt \n gen https://x.com/%v/status/%v ",
-						twitterPost.TwitterUsername, twitterPost.TwitterPostID))
-					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("normal_video :%v ", twitterPost.ImageUrl))
-					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("video with magic prompt :https://gateway.lighthouse.storage/ipfs/%v ",
+					inferInput := map[string]interface{}{}
+					json.Unmarshal([]byte(response.Data.InferenceInput), &inferInput)
+					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("normal_video :%v \n :%v ", twitterPost.ExtractContent, twitterPost.ImageUrl))
+					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("magic prompt :%v \n https://gateway.lighthouse.storage/ipfs/%v ", inferInput["prompt"],
 						response.Data.CID))
 				}
 			}
@@ -1077,7 +1078,7 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 								twitterPost.InferMagicId = strconv.FormatUint(dataResponse.Data.InferID, 10)
 								twitterPost.InferMagicTxHash = dataResponse.Data.TxHash
 								s.dao.Save(tx, twitterPost)
-								s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("success submit gen video with magic prompt infer_normal_id:%v \n  infer_magic_id:%v \n prompt:%v \n magic prompt :%v ", twitterPost.InferId, twitterPost.InferMagicId, twitterPost.ExtractContent, videoMagicPrompt))
+								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success submit gen video with magic prompt infer_normal_id:%v \n  infer_magic_id:%v \n prompt:%v \n magic prompt :%v ", twitterPost.InferId, twitterPost.InferMagicId, twitterPost.ExtractContent, videoMagicPrompt))
 							}
 						}
 					} else {
