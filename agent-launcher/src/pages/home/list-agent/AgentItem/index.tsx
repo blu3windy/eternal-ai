@@ -98,9 +98,9 @@ const AgentItem = ({ token }: IProps) => {
                      </Text>
                      <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
                   </Flex>
-                  {
+{/*                  {
                      isInstalled && <Text className={s.agentTypeTag}>Installed</Text>
-                  }
+                  }*/}
 
                   {/*{
               isUtilityAgent && (
