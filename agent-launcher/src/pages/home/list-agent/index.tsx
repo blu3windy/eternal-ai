@@ -107,7 +107,7 @@ const AgentsList = () => {
 
    const [agents, setAgents] = useState<IAgentToken[]>([]);
 
-   const { setSelectedAgent } = useContext(AgentContext);
+   const { setSelectedAgent, selectedAgent } = useContext(AgentContext);
 
    const refParams = useRef({
       page: 1,
@@ -167,7 +167,10 @@ const AgentsList = () => {
 
          if (isNew) {
             setAgents(newTokens);
-            setSelectedAgent(newTokens[0]);
+
+            if (!selectedAgent) {
+               setSelectedAgent(newTokens[0]);
+            }
          } else {
             setAgents((prevTokens) =>
                uniqBy([...prevTokens, ...newTokens], (token) => token.id),
