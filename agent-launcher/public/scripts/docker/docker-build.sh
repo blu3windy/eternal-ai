@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Logging functions
 log_message() {
     local message="$1"
@@ -18,6 +17,8 @@ log_error() {
 # Parse command line arguments
 FOLDER_PATH=""
 DOCKER_CONTAINERS=()
+
+export PATH="$HOME/homebrew/bin:$PATH"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -55,8 +56,9 @@ cd "$FOLDER_PATH" || {
     exit 1
 }
 
+
 # Create network silently
-docker network create network-agent-external 2>/dev/null || true
+docker network create network-agent-external || true
 
 # Track overall success and running containers
 build_success=true
@@ -76,7 +78,7 @@ for container in "${DOCKER_CONTAINERS[@]}"; do
     fi
     
     # Build image
-    if ! docker build -t "${container_name}" "./${folder_name}" > /dev/null 2>&1; then
+    if ! docker build -t "${container_name}" "./${folder_name}"; then
         log_error "Failed to build $container_name"
         build_success=false
         continue
@@ -85,13 +87,13 @@ for container in "${DOCKER_CONTAINERS[@]}"; do
     log_message "Built $container_name successfully"
 
     # Stop and remove silently
-    docker stop "${container_name}" 2>/dev/null || true
-    docker rm "${container_name}" 2>/dev/null || true
+    docker stop "${container_name}" || true
+    docker rm "${container_name}" || true
 
     # Run new container if it has a port
     if [ -n "$port" ]; then
         log_message "Starting $container_name..."
-        if ! docker run -d -p "${port}:80" --network=network-agent-external --add-host=localmodel:host-gateway --name "${container_name}" "${container_name}" > /dev/null 2>&1; then
+        if ! docker run -d -p "${port}:80" --network=network-agent-external --add-host=localmodel:host-gateway --name "${container_name}" "${container_name}"; then
             log_error "Failed to start $container_name"
             build_success=false
             continue
