@@ -190,7 +190,7 @@ func NewService(conf *configs.Config) *Service {
 	s.AppConfigUseCase = appconfig.NewAppConfigUseCase(appConfigRepo)
 	s.AgentInfoUseCase = agent_info.NewAgentInfoUseCase(agentInfoRepo)
 	InitTeleVideoActivitiesAlert(s.conf.VideoTelegramKey, s.conf.VideoActivitiesTelegramAlert)
-	InitTeleMagicVideoActivitiesAlert(s.conf.VideoTelegramKey, s.conf.VideoActivitiesTelegramAlert)
+	InitTeleMagicVideoActivitiesAlert(s.conf.VideoTelegramKey, s.conf.MagicVideoActivitiesTelegramAlert)
 	return s
 }
 
