@@ -62,9 +62,9 @@ const AgentTopInfo = () => {
 
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
-   const isSocialModel = useMemo(() => {
-      return [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(selectedAgent?.agent_type);
-   }, [selectedAgent]);
+   const allowStopAgent = useMemo(() => {
+      return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type);
+   }, [selectedAgent])
 
    const handleExportPrvKey = () => {
       onOpen();
@@ -131,7 +131,7 @@ const AgentTopInfo = () => {
                         <Divider color={"#E2E4E8"} my={"16px"}/>
                         <AgentOnChainInfo/>
                         {
-                           !isSocialModel && requireInstall && isRunning && (
+                           allowStopAgent && requireInstall && isRunning && (
                               <>
                                  <Divider color={"#E2E4E8"} my={"16px"}/>
                                  <Button
