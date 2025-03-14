@@ -625,11 +625,11 @@ const AgentProvider: React.FC<
    const checkModelAgentInstalled = async (agent: IAgentToken) => {
       try {
          const ipfsHash = await getModelAgentHash(agent);
-         const res = await globalThis.electronAPI.modelCheckInstall([ipfsHash]);
 
-         const installedHash = res.map(r => r.hash);
+         const installedModels: ModelInfo[] = await globalThis.electronAPI.modelDownloadedList();
+         const installedHashes = [...installedModels.map(r => r.hash)];
 
-         if (installedHash.includes(ipfsHash)) {
+         if (installedHashes.includes(ipfsHash)) {
             setAgentInstalled(agent);
          } else {
             setAgentUnInstalled(agent);
