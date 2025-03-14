@@ -20,9 +20,9 @@ const HandleHome = () => {
    const showBackupPrvKey =
       selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
-   const isAllowChat = useMemo(() => {
-      return ![AgentType.Model].includes(selectedAgent?.agent_type);
-   }, [selectedAgent]);
+   // const isAllowChat = useMemo(() => {
+   //    return ![AgentType.Model].includes(selectedAgent?.agent_type);
+   // }, [selectedAgent]);
 
    return (
       <Flex height={"100%"}>
@@ -32,7 +32,7 @@ const HandleHome = () => {
          <Box
             className={cx(
                s.detailContainer,
-               (isCanChat && isAllowChat) || showBackupPrvKey ? "" : s.isSetup
+               isCanChat || showBackupPrvKey ? "" : s.isSetup
             )}
             flex={2}
          >

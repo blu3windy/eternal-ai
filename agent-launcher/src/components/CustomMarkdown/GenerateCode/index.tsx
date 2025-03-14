@@ -30,12 +30,12 @@ const GeneralCode = memo(function ({ children, className, ...rest }: Props) {
    return match ? (
       <>
          <Flex className={s.codeHeader}>
-            <Text className={s.text}>{match?.[1]}</Text>
+            <Text className={s.text} fontWeight={600}>{match?.[1]}</Text>
             <button className={s.copyBtn} onClick={copyCode}>
                <SvgInset
-                  svgUrl={isCopied ? '/svg/ic-check.svg' : 'icons/copy_ic.svg'}
+                  svgUrl={isCopied ? 'icons/ic-check.svg' : 'icons/copy_ic.svg'}
                />
-               <Text className={s.text}>{isCopied ? 'Copied!' : 'Copy code'}</Text>
+               <Text className={s.text} fontWeight={400}>{isCopied ? 'Copied!' : 'Copy code'}</Text>
             </button>
          </Flex>
          <SyntaxHighlighter
@@ -44,11 +44,12 @@ const GeneralCode = memo(function ({ children, className, ...rest }: Props) {
                marginTop: 0,
                borderTopLeftRadius: 0,
                borderTopRightRadius: 0,
+               background: '#E9E9E9'
             }}
             PreTag="div"
             children={codeText}
             language={match?.[1]}
-            style={dracula}
+            // style={dracula}
          />
       </>
    ) : (

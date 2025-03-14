@@ -28,6 +28,7 @@ type IChatAgentProviderContext = {
   setIsLoadingMessages: (value: boolean) => void;
   publishEvent: (message: string) => void;
   scrollableRef: React.RefObject<ScrollableFeed>;
+   scrollRef: any;
   loading: boolean;
   info?: {
     name: string;
@@ -53,10 +54,12 @@ const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
    isFocusChatInput: false,
    setIsFocusChatInput: () => {},
    isAllowChat: false,
+   scrollRef: undefined,
 });
 
 export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const scrollableRef = useRef<ScrollableFeed | null>(null);
+   const scrollRef = useRef<any>(null);
 
    const [loading, setIsLoading] = useState(false);
    const [info, setInfo] = useState<
@@ -72,7 +75,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const { selectedAgent, agentWallet } = useContext(AgentContext);
 
    const id = selectedAgent?.id;
-   const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}` || 'Agent';
+   const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
 
    const cPumpAPI = new CAgentTokenAPI();
 
@@ -86,36 +89,33 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    }, []);
 
    useEffect(() => {
-      chatAgentDatabase.loadChatItems(threadId).then((items) => {
-         if (items?.length === 0) {
-            setMessages([]);
-         } else {
-            const filterMessages = items
-               ?.filter((item) => item.status !== 'failed')
-            // .filter((item) => item.status !== 'waiting')
-               .filter((item) => !!item.msg)
-               .map((item) => ({
-                  ...item,
-                  status: 'received',
-               }));
-            setMessages(filterMessages as any);
+      if (threadId) {
+         setMessages([]);
+         chatAgentDatabase.loadChatItems(threadId).then((items) => {
+            if (items?.length === 0) {
+               publishEvent(INIT_WELCOME_MESSAGE);
+            } else {
+               const filterMessages = items
+                  ?.filter((item) => item.status !== 'failed')
+                  // .filter((item) => item.status !== 'waiting')
+                  .filter((item) => !!item.msg)
+                  .map((item) => ({
+                     ...item,
+                     status: 'received',
+                  }));
+               setMessages(filterMessages as any);
 
-            if (filterMessages) {
-               const lastMessage = filterMessages[filterMessages.length - 1];
+               if (filterMessages) {
+                  const lastMessage = filterMessages[filterMessages.length - 1];
 
-               if (lastMessage.status === 'waiting') {
-                  sendMessageToServer(lastMessage.id, Number(id), lastMessage.msg);
+                  if (lastMessage.status === 'waiting') {
+                     sendMessageToServer(lastMessage.id, Number(id), lastMessage.msg);
+                  }
                }
             }
-         }
-      });
-   }, [threadId]);
-
-   useEffect(() => {
-      if (!!selectedAgent && messages.length === 0 && ![AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model, AgentType.Infra].includes(selectedAgent.agent_type)) {
-         publishEvent(INIT_WELCOME_MESSAGE);
+         });
       }
-   }, [selectedAgent, messages.length]);
+   }, [threadId]);
 
    const lastMessage = messages[messages.length - 1];
    const isStopReceiving
@@ -230,7 +230,48 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                status: 'received',
             });
          } else if (selectedAgent?.agent_type === AgentType.Model) {
+            let isGeneratedDone = false;
+            await AgentAPI.chatAgentModelStreamCompletions({
+               payload: {
+                  ...params,
+               },
+               streamHandlers: {
+                  onStream: (content: string, chunk: string, options) => {
+                     const text = content;
 
+                     if (isGeneratedDone) {
+                        setIsLoading(false);
+                        updateMessage(messageId, {
+                           msg: text,
+                           status: 'pre-done',
+                           queryMessageState: options?.message,
+                           onchain_data: options.onchain_data,
+                        });
+                     } else {
+                        isGeneratedDone = !!options?.isGeneratedDone;
+                        updateMessage(messageId, {
+                           msg: text,
+                           status: text.trim().length ? 'receiving' : 'waiting',
+                           queryMessageState: options?.message,
+                           onchain_data: options.onchain_data,
+                        });
+                     }
+                  },
+                  onFinish: (content: string, options) => {
+                     updateMessage(messageId, {
+                        status: 'received',
+                        queryMessageState: options?.message,
+                        onchain_data: options.onchain_data,
+                     });
+                  },
+                  onFail: (err: any) => {
+                     // updateMessage(messageId, {
+                     //   status: 'failed',
+                     //   msg: (err as any)?.message || 'Something went wrong!',
+                     // });
+                  },
+               },
+            });
          } else {
             let isGeneratedDone = false;
             await AgentAPI.chatStreamCompletions({
@@ -282,66 +323,75 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          });
       } finally {
          setIsLoading(false);
+         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
       }
    };
 
    const updateMessage = (id: string, data: Partial<IChatMessage>) => {
-      setMessages((prev) => {
-         const matchedMessageIndex = prev.findLastIndex((i) => i.id === id);
-         if (matchedMessageIndex !== -1) {
-            if (data.status === 'failed') {
-               if (prev[matchedMessageIndex].msg) {
-                  prev[matchedMessageIndex].status = 'received';
-               } else {
-                  prev[matchedMessageIndex].status = 'failed';
+      try {
+         setMessages((prev) => {
+            const matchedMessageIndex = prev.findLastIndex((i) => i.id === id);
+            if (matchedMessageIndex !== -1) {
+               if (data.status === 'failed') {
+                  if (prev[matchedMessageIndex].msg) {
+                     prev[matchedMessageIndex].status = 'received';
+                  } else {
+                     prev[matchedMessageIndex].status = 'failed';
+                  }
+                  return [...prev];
+               } else if (
+                  prev[matchedMessageIndex].status === 'waiting'
+                  || prev[matchedMessageIndex].status === 'receiving'
+                  || prev[matchedMessageIndex].status === 'pre-done'
+               ) {
+                  const updatedMessage = {
+                     ...prev[matchedMessageIndex],
+                     ...data,
+                     updatedAt: new Date().toISOString(),
+                     queryMessageState:
+                        data?.queryMessageState
+                        || prev[matchedMessageIndex]?.queryMessageState,
+                     tx_hash:
+                        data?.onchain_data?.propose_tx
+                        || prev[matchedMessageIndex]?.tx_hash,
+                  };
+                  prev[matchedMessageIndex] = updatedMessage;
+
+                  chatAgentDatabase.updateChatItem(
+                     updatedMessage as PersistedMessageType,
+                  );
                }
+
+               const replyToMessageId = prev[matchedMessageIndex].replyTo;
+               const userMessageIndex = prev.findLastIndex(
+                  (i) => i.id === replyToMessageId,
+               );
+
+               if (userMessageIndex !== -1) {
+                  const updatedUserMessage = {
+                     ...prev[userMessageIndex],
+                     tx_hash:
+                        data?.onchain_data?.infer_tx || prev[userMessageIndex]?.tx_hash,
+                  };
+
+                  prev[userMessageIndex] = updatedUserMessage;
+
+                  chatAgentDatabase.updateChatItem(
+                     updatedUserMessage as PersistedMessageType,
+                  );
+               }
+
                return [...prev];
-            } else if (
-               prev[matchedMessageIndex].status === 'waiting'
-          || prev[matchedMessageIndex].status === 'receiving'
-          || prev[matchedMessageIndex].status === 'pre-done'
-            ) {
-               const updatedMessage = {
-                  ...prev[matchedMessageIndex],
-                  ...data,
-                  updatedAt: new Date().toISOString(),
-                  queryMessageState:
-              data?.queryMessageState
-              || prev[matchedMessageIndex]?.queryMessageState,
-                  tx_hash:
-              data?.onchain_data?.propose_tx
-              || prev[matchedMessageIndex]?.tx_hash,
-               };
-               prev[matchedMessageIndex] = updatedMessage;
-
-               chatAgentDatabase.updateChatItem(
-            updatedMessage as PersistedMessageType,
-               );
             }
+            return prev;
+         });
+      } catch (err) {
 
-            const replyToMessageId = prev[matchedMessageIndex].replyTo;
-            const userMessageIndex = prev.findLastIndex(
-               (i) => i.id === replyToMessageId,
-            );
-
-            if (userMessageIndex !== -1) {
-               const updatedUserMessage = {
-                  ...prev[userMessageIndex],
-                  tx_hash:
-              data?.onchain_data?.infer_tx || prev[userMessageIndex]?.tx_hash,
-               };
-
-               prev[userMessageIndex] = updatedUserMessage;
-
-               chatAgentDatabase.updateChatItem(
-            updatedUserMessage as PersistedMessageType,
-               );
-            }
-
-            return [...prev];
-         }
-         return prev;
-      });
+      } finally {
+         setTimeout(() => {
+            scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+         }, 200);
+      }
    };
 
    const onRetryErrorMessage = useCallback(
@@ -406,6 +456,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          onRetryErrorMessage,
          isStopReceiving,
          isAllowChat,
+         scrollRef,
       };
    }, [
       messages,
@@ -422,6 +473,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       onRetryErrorMessage,
       isStopReceiving,
       isAllowChat,
+      scrollRef
    ]);
 
    return (

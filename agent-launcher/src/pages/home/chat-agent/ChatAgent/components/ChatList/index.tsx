@@ -14,7 +14,7 @@ interface IProps {
 }
 
 const ChatList = ({ onRetryErrorMessage, isSending = false }: IProps) => {
-   const { messages, isLoadingMessages, scrollableRef, loading }
+   const { messages, isLoadingMessages, scrollableRef, loading, scrollRef }
     = useChatAgentProvider();
 
    const topMostRef = useRef<HTMLDivElement | null>(null);
@@ -29,14 +29,16 @@ const ChatList = ({ onRetryErrorMessage, isSending = false }: IProps) => {
 
    useEffect(() => {
       setTimeout(() => {
-         scrollableRef?.current?.scrollToBottom();
-      }, 200);
+         // scrollableRef?.current?.scrollToBottom();
+         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
    }, []);
 
    const renderBody = () => {
       const onRetryErrorMessageOverride = (messageId: string) => {
          onRetryErrorMessage(messageId);
-         scrollableRef.current?.scrollToBottom();
+         // scrollableRef.current?.scrollToBottom();
+         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
       };
 
       return (
@@ -70,6 +72,7 @@ const ChatList = ({ onRetryErrorMessage, isSending = false }: IProps) => {
                   />
                );
             })}
+            <div ref={scrollRef} />
          </ScrollableFeed>
       );
    };

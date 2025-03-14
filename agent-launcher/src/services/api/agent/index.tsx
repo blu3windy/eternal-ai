@@ -55,6 +55,34 @@ const AgentAPI = {
          return undefined;
       }
    },
+   chatAgentModelStreamCompletions: async ({
+      payload,
+      streamHandlers,
+   }: {
+      payload: ChatCompletionPayload;
+      streamHandlers: ChatCompletionStreamHandler;
+   }): Promise<any> => {
+      const messages = payload.messages.map((item) => ({
+         ...item,
+         content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
+      }));
+      const response = await fetch(`http://localhost:8080/v1/chat/completions`, {
+         method: 'POST',
+         headers: {
+            ...getClientHeaders(),
+         },
+         body: JSON.stringify({ messages: messages, stream: true, seed: 0})
+      });
+
+      if (response.status === 200) {
+         const reader = response.body?.getReader();
+         if (!reader) {
+            throw 'No reader';
+         }
+         return parseStreamAIResponse(reader, streamHandlers);
+      }
+      throw 'API error';
+   },
    chatAgentUtility: async ({ agent, prvKey, messages }: { agent: IAgentToken, prvKey?: string, messages: any[]}): Promise<any> => {
       try {
          const res: AgentInfo = await (new CApiClient()).api.post(
@@ -65,7 +93,7 @@ const AgentAPI = {
             }
          );
          console.log('res>>>AgentInfo', res);
-         
+
          return res;
       } catch (e) {
          return undefined;
