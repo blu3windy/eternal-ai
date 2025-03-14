@@ -757,7 +757,7 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideoMagicPrompt(ctx context.
 						})
 					inferInput := map[string]interface{}{}
 					json.Unmarshal([]byte(response.Data.InferenceInput), &inferInput)
-					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("normal_video :%v \n :%v ", twitterPost.ExtractContent, twitterPost.ImageUrl))
+					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("user prompt  :%v \n :%v ", twitterPost.ExtractContent, twitterPost.ImageUrl))
 					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("magic prompt :%v \n https://gateway.lighthouse.storage/ipfs/%v ", inferInput["prompt"],
 						response.Data.CID))
 				}
