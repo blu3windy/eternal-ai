@@ -1063,7 +1063,7 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 									return nil
 								}
 								twitterPost.InferMagicId = strconv.FormatUint(dataResponse.Data.InferID, 10)
-								twitterPost.InferMagicTxHash = strconv.FormatUint(dataResponse.Data.InferID, 10)
+								twitterPost.InferMagicTxHash = dataResponse.Data.TxHash
 								s.dao.Save(tx, twitterPost)
 								s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("success submit gen video with magic prompt infer_normal_id:%v \n  infer_magic_id:%v \n prompt:%v \n magic prompt :%v ", twitterPost.InferId, twitterPost.InferMagicId, twitterPost.ExtractContent, videoMagicPrompt))
 							}
