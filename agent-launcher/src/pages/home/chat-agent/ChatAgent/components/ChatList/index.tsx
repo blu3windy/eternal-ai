@@ -30,7 +30,7 @@ const ChatList = ({ onRetryErrorMessage, isSending = false }: IProps) => {
    useEffect(() => {
       setTimeout(() => {
          // scrollableRef?.current?.scrollToBottom();
-         scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 300);
    }, []);
 
@@ -38,7 +38,7 @@ const ChatList = ({ onRetryErrorMessage, isSending = false }: IProps) => {
       const onRetryErrorMessageOverride = (messageId: string) => {
          onRetryErrorMessage(messageId);
          // scrollableRef.current?.scrollToBottom();
-         scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
       };
 
       return (

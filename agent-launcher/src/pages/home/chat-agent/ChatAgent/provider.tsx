@@ -75,7 +75,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const { selectedAgent, agentWallet } = useContext(AgentContext);
 
    const id = selectedAgent?.id;
-   const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}` || 'Agent';
+   const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
 
    const cPumpAPI = new CAgentTokenAPI();
 
@@ -89,36 +89,33 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    }, []);
 
    useEffect(() => {
-      chatAgentDatabase.loadChatItems(threadId).then((items) => {
-         if (items?.length === 0) {
-            setMessages([]);
-         } else {
-            const filterMessages = items
-               ?.filter((item) => item.status !== 'failed')
-            // .filter((item) => item.status !== 'waiting')
-               .filter((item) => !!item.msg)
-               .map((item) => ({
-                  ...item,
-                  status: 'received',
-               }));
-            setMessages(filterMessages as any);
+      if (threadId) {
+         setMessages([]);
+         chatAgentDatabase.loadChatItems(threadId).then((items) => {
+            if (items?.length === 0) {
+               publishEvent(INIT_WELCOME_MESSAGE);
+            } else {
+               const filterMessages = items
+                  ?.filter((item) => item.status !== 'failed')
+                  // .filter((item) => item.status !== 'waiting')
+                  .filter((item) => !!item.msg)
+                  .map((item) => ({
+                     ...item,
+                     status: 'received',
+                  }));
+               setMessages(filterMessages as any);
 
-            if (filterMessages) {
-               const lastMessage = filterMessages[filterMessages.length - 1];
+               if (filterMessages) {
+                  const lastMessage = filterMessages[filterMessages.length - 1];
 
-               if (lastMessage.status === 'waiting') {
-                  sendMessageToServer(lastMessage.id, Number(id), lastMessage.msg);
+                  if (lastMessage.status === 'waiting') {
+                     sendMessageToServer(lastMessage.id, Number(id), lastMessage.msg);
+                  }
                }
             }
-         }
-      });
-   }, [threadId]);
-
-   useEffect(() => {
-      if (!!selectedAgent && messages.length === 0 && ![AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Model, AgentType.Infra].includes(selectedAgent.agent_type)) {
-         publishEvent(INIT_WELCOME_MESSAGE);
+         });
       }
-   }, [selectedAgent, messages.length]);
+   }, [threadId]);
 
    const lastMessage = messages[messages.length - 1];
    const isStopReceiving
@@ -285,7 +282,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          });
       } finally {
          setIsLoading(false);
-         scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
       }
    };
 
@@ -351,7 +348,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
       } finally {
          setTimeout(() => {
-            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+            scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
          }, 200);
       }
    };
