@@ -345,62 +345,65 @@ const (
 
 type AgentTwitterPost struct {
 	gorm.Model
-	NetworkID             uint64
-	AgentInfoID           uint `gorm:"index"`
-	AgentInfo             *AgentInfo
-	TwitterID             string
-	TwitterUser           *TwitterUser `gorm:"foreignKey:twitter_id;AssociationForeignKey:twitter_id"`
-	TwitterUsername       string
-	TwitterName           string
-	TwitterPostID         string           `gorm:"unique_index"`
-	TwitterConversationId string           `gorm:"index"`
-	TwitterParentPostID   string           `gorm:"index"`
-	TwitterParentPost     *UserTwitterPost `gorm:"foreignKey:twitter_parent_post_id;AssociationForeignKey:twitter_post_id"`
-	Type                  AgentTwitterPostType
-	PostType              AgentSnapshotPostActionType
-	PostAt                *time.Time `gorm:"index"`
-	Content               string     `gorm:"type:longtext"`
-	ExtractContent        string     `gorm:"type:longtext"`
-	ExtractMediaContent   string
-	InferData             string `gorm:"type:longtext"`
-	ReplyContent          string `gorm:"type:longtext"`
-	ReplyPostId           string `gorm:"index"`
-	ReplyPostIds          string `gorm:"type:text"`
-	RePostId              string
-	ImageUrl              string
-	InferTxHash           string
-	InferId               string
-	SubmitSolutionTxHash  string
-	InferAt               *time.Time
-	InferNum              uint                   `gorm:"default:0"`
-	Status                AgentTwitterPostStatus `gorm:"index"`
-	Prompt                string                 `gorm:"type:longtext"`
-	Error                 string                 `gorm:"type:longtext"`
-	FollowerCount         uint                   `gorm:"default:0"`
-	ReplyPostAt           *time.Time
-	ReplyPostReply        int
-	ReplyPostView         int
-	ReplyPostFavorite     int
-	ReplyPostBookmark     int
-	ReplyPostQuote        int
-	ReplyPostRetweet      int
-	RePostAt              *time.Time
-	InscribeTxHash        string
-	BitcoinTxHash         string
-	ReplyScheduleAt       *time.Time
-	Fee                   numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	IsMigrated            bool             `gorm:"default:0"`
-	TokenName             string
-	TokenSymbol           string
-	TokenAddress          string
-	TokenImageUrl         string
-	TokenDesc             string `gorm:"type:longtext"`
-	TokenImageInferID     string
-	TokenSignature        string
-	IsCreateAgent         bool `gorm:"default:0"`
-	AgentChain            string
-	OwnerUsername         string
-	OwnerTwitterID        string
+	NetworkID                 uint64
+	AgentInfoID               uint `gorm:"index"`
+	AgentInfo                 *AgentInfo
+	TwitterID                 string
+	TwitterUser               *TwitterUser `gorm:"foreignKey:twitter_id;AssociationForeignKey:twitter_id"`
+	TwitterUsername           string
+	TwitterName               string
+	TwitterPostID             string           `gorm:"unique_index"`
+	TwitterConversationId     string           `gorm:"index"`
+	TwitterParentPostID       string           `gorm:"index"`
+	TwitterParentPost         *UserTwitterPost `gorm:"foreignKey:twitter_parent_post_id;AssociationForeignKey:twitter_post_id"`
+	Type                      AgentTwitterPostType
+	PostType                  AgentSnapshotPostActionType
+	PostAt                    *time.Time `gorm:"index"`
+	Content                   string     `gorm:"type:longtext"`
+	ExtractContent            string     `gorm:"type:longtext"`
+	ExtractMediaContent       string
+	InferData                 string `gorm:"type:longtext"`
+	ReplyContent              string `gorm:"type:longtext"`
+	ReplyPostId               string `gorm:"index"`
+	ReplyPostIds              string `gorm:"type:text"`
+	RePostId                  string
+	ImageUrl                  string
+	InferTxHash               string
+	InferId                   string
+	InferMagicId              string
+	InferMagicTxHash          string
+	SubmitSolutionTxHash      string
+	SubmitSolutionMagicTxHash string
+	InferAt                   *time.Time
+	InferNum                  uint                   `gorm:"default:0"`
+	Status                    AgentTwitterPostStatus `gorm:"index"`
+	Prompt                    string                 `gorm:"type:longtext"`
+	Error                     string                 `gorm:"type:longtext"`
+	FollowerCount             uint                   `gorm:"default:0"`
+	ReplyPostAt               *time.Time
+	ReplyPostReply            int
+	ReplyPostView             int
+	ReplyPostFavorite         int
+	ReplyPostBookmark         int
+	ReplyPostQuote            int
+	ReplyPostRetweet          int
+	RePostAt                  *time.Time
+	InscribeTxHash            string
+	BitcoinTxHash             string
+	ReplyScheduleAt           *time.Time
+	Fee                       numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+	IsMigrated                bool             `gorm:"default:0"`
+	TokenName                 string
+	TokenSymbol               string
+	TokenAddress              string
+	TokenImageUrl             string
+	TokenDesc                 string `gorm:"type:longtext"`
+	TokenImageInferID         string
+	TokenSignature            string
+	IsCreateAgent             bool `gorm:"default:0"`
+	AgentChain                string
+	OwnerUsername             string
+	OwnerTwitterID            string
 }
 
 func (m AgentTwitterPost) IsValidSubmitVideoInfer() bool {

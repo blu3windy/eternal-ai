@@ -8,13 +8,32 @@ import (
 
 var teleVideoActivitiesAlert *telego.Bot
 var teleVideoActivitiesChatId int64
-var ListVideoModelAddress = map[string]bool{
-	"0x19aeeffbc0244be6187314a74a443a18aa2cceee": true,
+
+var teleMagicVideoActivitiesAlert *telego.Bot
+var teleMagicVideoActivitiesChatId int64
+
+func InitTeleMagicVideoActivitiesAlert(token, chatId string) {
+	if len(token) == 0 || len(chatId) == 0 {
+		return
+	}
+	teleMagicVideoActivitiesChatId, _ = strconv.ParseInt(chatId, 10, 64)
+	teleMagicVideoActivitiesAlert, _ = telego.NewBot(token, telego.WithDefaultDebugLogger())
+}
+func (s *Service) SendTeleMagicVideoActivitiesAlert(msg string) {
+	if teleMagicVideoActivitiesAlert != nil {
+		go func() {
+			teleMagicVideoActivitiesAlert.SendMessage(
+				&telego.SendMessageParams{
+					ChatID: telego.ChatID{
+						ID: teleMagicVideoActivitiesChatId,
+					},
+					Text: strings.TrimSpace(msg),
+				},
+			)
+		}()
+	}
 }
 
-func (s *Service) IsGenVideoModel(modelAddress string) bool {
-	return ListVideoModelAddress[modelAddress]
-}
 func InitTeleVideoActivitiesAlert(token, chatId string) {
 	if len(token) == 0 || len(chatId) == 0 {
 		return
@@ -22,7 +41,6 @@ func InitTeleVideoActivitiesAlert(token, chatId string) {
 	teleVideoActivitiesChatId, _ = strconv.ParseInt(chatId, 10, 64)
 	teleVideoActivitiesAlert, _ = telego.NewBot(token, telego.WithDefaultDebugLogger())
 }
-
 func (s *Service) SendTeleVideoActivitiesAlert(msg string) {
 	if teleVideoActivitiesAlert != nil {
 		go func() {

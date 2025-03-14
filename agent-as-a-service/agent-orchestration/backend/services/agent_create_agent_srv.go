@@ -696,6 +696,69 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 	return nil
 }
 
+func (s *Service) JobAgentTwitterScanResultGenerateVideoMagicPrompt(ctx context.Context) error {
+	err := s.JobRunCheck(
+		ctx,
+		"JobAgentTwitterScanResultGenerateVideoMagicPrompt",
+		func() error {
+			var retErr error
+			{
+				twitterPosts, err := s.dao.FindAgentTwitterPost(
+					daos.GetDBMainCtx(ctx),
+					map[string][]interface{}{
+						"status = ?": {models.AgentTwitterPostStatusReplied},
+						"infer_id IS NOT NULL  AND infer_id <> ? ":                       {""},
+						"infer_tx_hash IS NOT NULL  AND infer_tx_hash <> ? ":             {""},
+						"infer_magic_id IS NOT NULL  AND infer_magic_id <> ? ":           {""},
+						"infer_magic_tx_hash IS NOT NULL  AND infer_magic_tx_hash <> ? ": {""},
+					},
+					map[string][]interface{}{},
+					[]string{},
+					0,
+					5,
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				for _, twitterPost := range twitterPosts {
+					url := fmt.Sprintf("%v?infer_id=%v&tx_hash=%v", s.conf.GetResultInferUrl, twitterPost.InferMagicId, twitterPost.InferMagicTxHash)
+					body, _, code, err := helpers.HttpRequest(url, "GET", nil, nil)
+					if err != nil {
+						continue
+					}
+					if code != http.StatusOK {
+						continue
+					}
+					type WorkerProcessHistory struct {
+						CID        string `bson:"cid" json:"cid" json:"cid,omitempty"`
+						ResultLink string `bson:"result_link" json:"result_link" json:"result_link,omitempty"` // link to download result for all model: TEXT AND IMAGE
+						ChainID    string `bson:"chain_id" json:"chain_id" json:"chain_id,omitempty"`
+						TxHash     string `bson:"tx_hash" json:"tx_hash" json:"tx_hash,omitempty"`
+					}
+					type Response struct {
+						Data WorkerProcessHistory `json:"data"`
+					}
+					response := &Response{}
+					err = json.Unmarshal(body, &response)
+					if err != nil {
+						continue
+					}
+					if len(response.Data.TxHash) == 0 {
+						continue
+					}
+
+					s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("success find a video with magic prompt \n gen https://x.com/%v/status/%v \n normal_video :%v \n video with magic prompt :https://gateway.lighthouse.storage/ipfs/%v ",
+						twitterPost.TwitterUsername, twitterPost.TwitterPostID, twitterPost.ImageUrl, response.Data.CID))
+				}
+			}
+			return retErr
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
 func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 	err := s.JobRunCheck(
 		ctx,
@@ -966,8 +1029,39 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 							if err != nil {
 								return errs.NewError(err)
 							}
-
 							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success submit infer gen video db_id:%v \n infer id :%v \n tx :%v ", twitterPost.ID, twitterPost.InferId, twitterPost.InferTxHash))
+
+							// submit magic prompt
+							if twitterPost.Type == models.AgentTwitterPostTypeImage2video {
+								videoMagicPrompt, err := s.GetVideoMagicPromptFromImage(ctx, twitterPost.ExtractContent, twitterPost.ExtractMediaContent)
+								if err != nil {
+									return nil
+								}
+								response, _, code, err := helpers.HttpRequest(s.conf.KnowledgeBaseConfig.OnChainUrl, "POST",
+									map[string]string{
+										"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
+									}, map[string]interface{}{
+										"chain_id":          "8453",
+										"model":             model,
+										"prompt":            videoMagicPrompt,
+										"only_create_infer": true,
+									})
+								if err != nil {
+									return nil
+								}
+								if code != http.StatusOK {
+									return nil
+								}
+								dataResponse = DataResponse{}
+								err = json.Unmarshal(response, &dataResponse)
+								if err != nil {
+									return nil
+								}
+								twitterPost.InferMagicId = strconv.FormatUint(dataResponse.Data.InferID, 10)
+								twitterPost.InferMagicTxHash = strconv.FormatUint(dataResponse.Data.InferID, 10)
+								s.dao.Save(tx, twitterPost)
+								s.SendTeleMagicVideoActivitiesAlert(fmt.Sprintf("success submit gen video with magic prompt infer_normal_id:%v \n  infer_magic_id:%v \n prompt:%v \n magic prompt :%v ", twitterPost.InferId, twitterPost.InferMagicId, twitterPost.ExtractContent, videoMagicPrompt))
+							}
 						}
 					} else {
 						twitterPost.Status = models.AgentTwitterConversationInvalid
