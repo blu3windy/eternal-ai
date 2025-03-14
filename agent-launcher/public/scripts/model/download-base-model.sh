@@ -14,6 +14,7 @@ log_error() {
 # Function to filter and log output
 filter_and_log() {
     while IFS= read -r line; do
+        echo "$line"  # Print the line to stdout
         if [[ $line == *"[MODEL_INSTALL]"* ]]; then
             # Check if it's a progress message
             if [[ $line =~ --step\ ([0-9]+)-([0-9]+)\ --hash\ (.*) ]]; then

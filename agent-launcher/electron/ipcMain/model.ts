@@ -83,7 +83,9 @@ const ipcMainModel = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL_BASE_MODEL, async (_event, hash: string) => {
+      console.log("Install base model: ", hash);
       const isDownloaded = await _isDownloaded(hash);
+      console.log("Is downloaded: ", isDownloaded);
       if (isDownloaded) {
          const _runningHash = await _getRunningHash();
          if (!_runningHash) {
@@ -92,10 +94,23 @@ const ipcMainModel = () => {
          return;
       }
       await dialogCheckDist(hash);
-      await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_DOWNLOAD_BASE} --folder-path "${path}" --hash "${hash}"`);
-      //
-      // // loop until the model is downloaded
-      // await _loopCheckDownloaded(hash);
+      
+      let count = 0;
+      await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_STARTER}`);
+      while (count < 4) {
+         try {
+            const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" && local-llms download --hash ${hash}`;
+            await command.execAsyncStream( cmd, false);
+            // await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_DOWNLOAD_BASE} --folder-path "${path}" --hash "${hash}"`);
+            break;
+         } catch (error) {
+            if (count === 3) {
+               throw error
+            }
+            count++;
+            await _sleep(1000 * 30);
+         }
+      }
    });
 }
 

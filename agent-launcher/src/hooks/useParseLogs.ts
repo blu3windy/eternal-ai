@@ -29,50 +29,54 @@ const useParseLogs = (props: LoggersProps) => {
    const [parsedLog, setParsedLog] = useState<IParsedLog | undefined>(undefined);
 
    const onParseLog = useCallback((data: LogEntry) => {
-      const message = data.message;
-      if (!message) return;
+      try {
+         const message = data.message;
+         if (!message) return;
 
-      // Create pattern to match any of the function names
-      const functionNamesPattern = functionNames.join('|');
-      const basePattern = `\\[${prefix}\\]\\s*\\[(${functionNamesPattern})\\]`;
-      const baseRegex = new RegExp(basePattern);
-      
-      // Try to match and extract the function name
-      const baseMatch = message.match(baseRegex);
-      if (!baseMatch) return;
+         // Create pattern to match any of the function names
+         const functionNamesPattern = functionNames.join('|');
+         const basePattern = `\\[${prefix}\\]\\s*\\[(${functionNamesPattern})\\]`;
+         const baseRegex = new RegExp(basePattern);
 
-      // Get the matched function name
-      const matchedFunctionName = baseMatch[1] as LOG_FUNCTION_NAME;
-        
-      // If we have keys, try to extract their values
-      const values: { [key: string]: string } = {};
-        
-      if (keys.length > 0) {
-         keys.forEach(key => {
-            const keyPattern = `--${key}\\s+([^\\s"]+|"[^"]*")`;
-            const keyRegex = new RegExp(keyPattern);
-            const keyMatch = message.match(keyRegex);
-                
-            if (keyMatch) {
-               let value = keyMatch[1];
-               if (value.startsWith('"') && value.endsWith('"')) {
-                  value = value.slice(1, -1);
+         // Try to match and extract the function name
+         const baseMatch = message.match(baseRegex);
+         if (!baseMatch) return;
+
+         // Get the matched function name
+         const matchedFunctionName = baseMatch[1] as LOG_FUNCTION_NAME;
+
+         // If we have keys, try to extract their values
+         const values: { [key: string]: string } = {};
+
+         if (keys.length > 0) {
+            keys.forEach(key => {
+               const keyPattern = `--${key}\\s+([^\\s"]+|"[^"]*")`;
+               const keyRegex = new RegExp(keyPattern);
+               const keyMatch = message.match(keyRegex);
+
+               if (keyMatch) {
+                  let value = keyMatch[1];
+                  if (value.startsWith('"') && value.endsWith('"')) {
+                     value = value.slice(1, -1);
+                  }
+                  values[key] = value;
                }
-               values[key] = value;
-            }
-         });
+            });
+         }
+
+         // Create parsed log entry
+         const parsed: IParsedLog = {
+            prefix,
+            functionName: matchedFunctionName,  // Use the matched function name
+            logEntry: data,
+            values
+         };
+
+         setParsedLog(parsed);
+         setParsedLogs(prev => [...prev, parsed]);
+      } catch (error) {
+         console.error("Error parsing log:", error);
       }
-
-      // Create parsed log entry
-      const parsed: IParsedLog = {
-         prefix,
-         functionName: matchedFunctionName,  // Use the matched function name
-         logEntry: data,
-         values
-      };
-
-      setParsedLog(parsed);
-      setParsedLogs(prev => [...prev, parsed]);
         
    }, [prefix, functionNames, keys]);  // Updated dependencies
 

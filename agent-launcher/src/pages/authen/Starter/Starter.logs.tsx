@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
    Box,
    Text,
@@ -17,6 +17,12 @@ const StarterLogs = () => {
       keys: ["name", "message", "error"]
    });
 
+   // const parsedLogs = useMemo(() => {
+   //    return uniqBy(_parsedLogs, (log) => {
+   //       return log?.values?.message
+   //    })
+   // }, [])
+
    useEffect(() => {
       if (scrollRef.current && !userScrolled) {
          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -31,7 +37,12 @@ const StarterLogs = () => {
 
    const renderMessage = (message: string) => {
       // Check if it's a download progress message
-      const downloadMatch = message.match(/Downloading (\d+)%/);
+      let downloadMatch: any | null = null
+      try {
+         downloadMatch = message.match(/Downloading (\d+)%/) as any;
+      } catch (error) {
+         console.error("Error parsing message:", error);
+      }
       if (downloadMatch) {
          const percentage = parseInt(downloadMatch[1]);
          return (
