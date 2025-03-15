@@ -1044,8 +1044,24 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 							}
 							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success submit infer gen video db_id:%v \n infer id :%v \n tx :%v ", twitterPost.ID, twitterPost.InferId, twitterPost.InferTxHash))
 
+							pendingGenVideo, _ := s.dao.FindAgentTwitterPost(
+								daos.GetDBMainCtx(ctx),
+								map[string][]interface{}{
+									"agent_info_id in (?)": {[]uint{s.conf.VideoAiAgentInfoId}},
+									"status = ?":           {models.AgentTwitterPostStatusInferSubmitted},
+									"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
+									"type = ?":             {models.AgentTwitterPostTypeImage2video},
+								},
+								map[string][]interface{}{},
+								[]string{
+									"post_at asc",
+								},
+								0,
+								5,
+							)
+
 							// submit magic prompt
-							if twitterPost.Type == models.AgentTwitterPostTypeImage2video && s.conf.GenMagicVideoPrompt {
+							if twitterPost.Type == models.AgentTwitterPostTypeImage2video && (s.conf.GenMagicVideoPrompt || len(pendingGenVideo) == 1) {
 								videoMagicPrompt, err := s.GetVideoMagicPromptFromImage(ctx, twitterPost.ExtractContent, twitterPost.ExtractMediaContent)
 								if err != nil {
 									return nil
