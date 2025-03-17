@@ -11,7 +11,7 @@ const ipcMainModel = () => {
    const _sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
    const _onRunModel = async (hash: string) => {
-      await command.execAsyncStream( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms start --hash ${hash}`, false);
+      await command.execAsyncStream( `cd "${path}" && source "${path}/local_llms/bin/activate" && python3 "${path}/local_llms/bin/local-llms" start --hash ${hash}`, false);
    };
 
    const _compareString = (str1: string, str2: string) => {
@@ -25,7 +25,7 @@ const ipcMainModel = () => {
    }
 
    const _getRunningHash = async () => {
-      const stdout = await command.execAsync( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms status`);
+      const stdout = await command.execAsync( `cd "${path}" && source "${path}/local_llms/bin/activate" && python3 "${path}/local_llms/bin/local-llms" status`);
       return stdout?.trim() || undefined;
    }
 
@@ -38,7 +38,7 @@ const ipcMainModel = () => {
       await dialogCheckDist(hash);
 
       // Proceed with installation if disk space is sufficient
-      const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" && local-llms download --hash ${hash}`;
+      const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" && python3 "${path}/local_llms/bin/local-llms" download --hash ${hash}`;
       await command.execAsyncStream(cmd);
       // await _loopCheckDownloaded(hash);
    });
@@ -61,7 +61,7 @@ const ipcMainModel = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_STOP, async (_event, hash: string) => {
-      const cmd =`cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms stop --hash ${hash}`
+      const cmd =`cd "${path}" && source "${path}/local_llms/bin/activate" && python3 "${path}/local_llms/bin/local-llms" stop --hash ${hash}`
       await command.execAsyncStream( cmd, false);
    });
 
@@ -81,7 +81,7 @@ const ipcMainModel = () => {
       await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_STARTER}`);
       while (count < 3) {
          try {
-            const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" && local-llms download --hash ${hash}`;
+            const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" &&  python3 "${path}/local_llms/bin/local-llms" download --hash ${hash}`;
             await command.execAsyncStream( cmd, false);
             await _sleep(1000 * 5);
             // await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_DOWNLOAD_BASE} --folder-path "${path}" --hash "${hash}"`);
