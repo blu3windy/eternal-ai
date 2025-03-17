@@ -14,7 +14,7 @@ const ipcMainModel = () => {
    const _sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
    const _onRunModel = async (hash: string) => {
-      await command.execAsyncStream( `${cd} && ${source} && ${llms} start --hash ${hash}`, false);
+      await command.execAsyncStream( `${cd} && ${source} && ${llms} start --hash ${hash}`);
    };
 
    const _compareString = (str1: string, str2: string) => {
