@@ -504,7 +504,7 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 		}
 
 		if tweetParseInfo == nil || tweetParseInfo.IsGenerateVideo == false {
-			tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), agentInfo.TwitterUsername, fullText)
+			tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), fullText)
 			if err != nil {
 				continue
 			}
@@ -1537,16 +1537,17 @@ func (s *Service) ValidateTweetContentGenerateVideoWithLLM2(ctx context.Context,
 		},
 		{
 			Role:    "user",
-			Content: fmt.Sprintf("Prompt: Think carefully and determine whether the given text is a prompt for video generation.\r\n- If not, return: \"NONE\"\r\n- If yes, extract only the essential details while keeping key elements:\r\nRULES:\r\n- Focus on the core subject: Identify the main object or scene in the prompt.\r\n- Remove unnecessary descriptions: Eliminate vague, redundant, or irrelevant words that do not significantly affect the generated video.\r\n- Retain critical elements: Keep essential aspects such as objects, style, lighting, colors, and composition.\r\n- Use concise and clear language: Rewrite the prompt in a clear and effective way that maximizes model accuracy.\r\n- Return the result in JSON format with the \"optimized_prompt\" key.\r\n\r\nEXAMPLE:\r\nINPUT: \"A cute cat sitting on a windowsill in the morning, with soft lighting and an extremely detailed oil painting style.\"\r\n\r\nOUTPUT: {\"optimized_prompt\": \"Cute cat on a windowsill in the morning, soft lighting, detailed oil painting style.\"}\r\n\r\nEXAMPLE:\r\nINPUT: \"Hello, nice to meet you\"\r\nOUTPUT: {\"optimized_prompt\": \"NONE\"}\r\n\r\nApply these rules to optimize prompts effectively.\r\n\r\nPlease return answer with json format with \"optimized_prompt\" key.\n\nUser Query: %v", fullText),
+			Content: fmt.Sprintf("Prompt: Think carefully and determine whether the given text is a prompt for video generation. If in the initial prompt it was intended to create a video then return yes.\\r\\n- If not, return: 'NONE'\\r\\n- If yes, extract only the essential details while keeping key elements. If the content cannot be extracted, return to the original prompt:\\r\\nRULES:\\r\\n- Focus on the core subject: Identify the main object or scene in the prompt.\\r\\n- Remove unnecessary descriptions: Eliminate vague, redundant, or irrelevant words that do not significantly affect the generated video.\\r\\n- Retain critical elements: Keep essential aspects such as objects, style, lighting, colors, and composition.\\r\\n- Use concise and clear language: Rewrite the prompt in a clear and effective way that maximizes model accuracy.\\r\\n- Return the result in JSON format with the \\\"optimized_prompt\\\" key.\\r\\n\\r\\nEXAMPLE:\\r\\nINPUT: \\\"A cute cat sitting on a windowsill in the morning, with soft lighting and an extremely detailed oil painting style.\\\"\\r\\n\\r\\nOUTPUT: {\\\"optimized_prompt\\\": \\\"Cute cat on a windowsill in the morning, soft lighting, detailed oil painting style.\\\"}\\r\\n\\r\\nEXAMPLE:\\r\\nINPUT: \\\"Hello, nice to meet you\\\"\\r\\nOUTPUT: {\\\"optimized_prompt\\\": \\\"NONE\\\"}\\r\\n\\r\\nApply these rules to optimize prompts effectively.\\r\\n\\r\\nPlease return answer with json format with \\\"optimized_prompt\\\" key.\n\nUser Query: %v", fullText),
 		},
 	})
 	outputChan := make(chan *models.ChatCompletionStreamResponse, 1)
 	errChan := make(chan error, 1)
 	doneChan := make(chan bool, 1)
 	go func() {
-		s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(msg), "neuralmagic/Meta-Llama-3.1-405B-Instruct-quantized.w4a16", s.conf.KnowledgeBaseConfig.DirectServiceUrl, map[string]interface{}{
-			"temperature": 0,
-		}, outputChan, errChan, doneChan)
+		s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(msg), "Qwen",
+			s.conf.KnowledgeBaseConfig.DirectServiceUrl, map[string]interface{}{
+				"temperature": 0,
+			}, outputChan, errChan, doneChan)
 	}()
 	output := ""
 	thinking := false

@@ -369,6 +369,9 @@ func (c OpenAI) CallStreamDirectlyEternalLLM(ctx context.Context, messages, mode
 	if value, ok := options["max_tokens"]; ok {
 		llmRequest.MaxTokens, _ = value.(int)
 	}
+	if value, ok := options["temperature"]; ok {
+		llmRequest.Temperature, _ = value.(float32)
+	}
 	stream, err := client.CreateChatCompletionStream(
 		ctx,
 		llmRequest,
