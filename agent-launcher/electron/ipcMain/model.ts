@@ -83,7 +83,8 @@ const ipcMainModel = () => {
          try {
             const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" &&  python3 "${path}/local_llms/bin/local-llms" download --hash ${hash}`;
             await command.execAsyncStream( cmd, false);
-            await _sleep(1000 * 5);
+            await _sleep(1000 * 3);
+            await _onRunModel(hash);
             // await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_DOWNLOAD_BASE} --folder-path "${path}" --hash "${hash}"`);
             const isDownloaded = await _isDownloaded(hash);
             if (!isDownloaded) {
