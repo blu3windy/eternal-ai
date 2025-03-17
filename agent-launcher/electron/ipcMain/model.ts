@@ -72,9 +72,8 @@ const ipcMainModel = () => {
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL_BASE_MODEL, async (_event, hash: string) => {
       const isDownloaded = await _isDownloaded(hash);
 
-      await command.killProcessUsingPort(8080);
-
       if (isDownloaded) {
+         await command.killProcessUsingPort(8080);
          const _runningHash = await _getRunningHash();
          if (!_runningHash) {
             await _onRunModel(hash);
@@ -83,7 +82,7 @@ const ipcMainModel = () => {
       }
 
       await dialogCheckDist(hash);
-
+      await command.killProcessUsingPort(8080);
       await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_STARTER}`);
 
       let count = 0;
