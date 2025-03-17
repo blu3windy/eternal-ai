@@ -393,7 +393,7 @@ type HandleGenerateVideoRequest struct {
 	PromptToHandle *string
 }
 
-func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleRequest *HandleGenerateVideoRequest) (*models.AgentTwitterPost, error) {
+func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleRequest *HandleGenerateVideoRequest, source string) (*models.AgentTwitterPost, error) {
 	var err error
 	if handleRequest == nil {
 		return nil, errs.NewError(errs.ErrBadRequest)
@@ -570,8 +570,8 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 		}
 
 		_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
-		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND] a requirement gen video, db_id=%v, tweet_id=%v, post :%v ",
-			m.ID, m.TwitterPostID, fullText))
+		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND][%v] a requirement gen video, db_id=%v, tweet_id=%v, post :%v ",
+			source, m.ID, m.TwitterPostID, fullText))
 		return m, nil
 	}
 
@@ -615,7 +615,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 			AgentInfoMentionID: agentInfoID,
 			AgentInfo:          agentInfo,
 			TwitterInfo:        twitterInfo,
-		})
+		}, "scan")
 
 		if err == nil {
 			handledTweetID = append(handledTweetID, item.ID)
