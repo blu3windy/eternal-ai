@@ -504,7 +504,12 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 		}
 
 		if tweetParseInfo == nil || tweetParseInfo.IsGenerateVideo == false {
-			tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), fullText)
+			if s.conf.DetectVideoLLMVersion == "v2" {
+				tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), fullText)
+			} else {
+				tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM(context.Background(), agentInfo.TwitterUsername, fullText)
+			}
+
 			if err != nil {
 				continue
 			}

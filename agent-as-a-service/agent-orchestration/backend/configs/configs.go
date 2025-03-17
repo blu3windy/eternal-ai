@@ -190,6 +190,7 @@ type Config struct {
 	} `json:"ai_dojo_backend"`
 	EternalAiAgentInfoId              uint   `json:"eternal_ai_agent_info_id"`
 	VideoAiAgentInfoId                uint   `json:"video_ai_agent_info_id"`
+	DetectVideoLLMVersion             string `json:"detect_video_llm_version"`
 	VideoTelegramKey                  string `json:"video_telegram_key"`
 	VideoActivitiesTelegramAlert      string `json:"video_activities_telegram_alert"`
 	GenMagicVideoPrompt               bool   `json:"gen_magic_video_prompt"`
