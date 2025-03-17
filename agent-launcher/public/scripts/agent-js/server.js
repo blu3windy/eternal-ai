@@ -1,5 +1,6 @@
-const express = require('express');
-const script = require("./prompt.js");
+import express from 'express';
+import * as script from "./prompt.js";
+
 const app = express();
 const PORT = 80;
 
