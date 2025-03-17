@@ -113,6 +113,8 @@ def serve():
 
     @api_app.post("/prompt")
     async def prompt_handler(body: dict):
+        if body.get('ping') is not None and body.get('ping') == True:
+            return "online"
         nonlocal async_prompt
         return await async_prompt(
             body.get('messages'), 
