@@ -63,7 +63,7 @@ const ipcMainModel = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_STOP, async (_event, hash: string) => {
-      const cmd =`${cd} && ${source} && ${llms} stop --hash ${hash}`
+      const cmd =`${cd} && ${source} && ${llms} stop`
       await command.execAsyncStream(cmd);
    });
 

@@ -51,6 +51,15 @@ const ActionButtons = () => {
          >
              MODEL CHECK RUNNING
          </Button>
+         <Button
+            onClick={() => {
+               globalThis.electronAPI.modelStop(MODEL_HASH).then(() => {
+                  alert("Model stopped");
+               });
+            }}
+         >
+            MODEL STOP
+         </Button>
       </Flex>
    )
 };
