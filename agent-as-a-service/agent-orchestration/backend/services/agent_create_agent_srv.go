@@ -666,10 +666,11 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 						continue
 					}
 					type WorkerProcessHistory struct {
-						CID        string `bson:"cid" json:"cid" json:"cid,omitempty"`
-						ResultLink string `bson:"result_link" json:"result_link" json:"result_link,omitempty"` // link to download result for all model: TEXT AND IMAGE
-						ChainID    string `bson:"chain_id" json:"chain_id" json:"chain_id,omitempty"`
-						TxHash     string `bson:"tx_hash" json:"tx_hash" json:"tx_hash,omitempty"`
+						CID            string `bson:"cid" json:"cid" json:"cid,omitempty"`
+						ResultLink     string `bson:"result_link" json:"result_link" json:"result_link,omitempty"` // link to download result for all model: TEXT AND IMAGE
+						ChainID        string `bson:"chain_id" json:"chain_id" json:"chain_id,omitempty"`
+						TxHash         string `bson:"tx_hash" json:"tx_hash" json:"tx_hash,omitempty"`
+						InferenceInput string `bson:"inference_input" json:"inference_input,omitempty"`
 					}
 					type Response struct {
 						Data WorkerProcessHistory `json:"data"`
@@ -692,6 +693,13 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 							if err != nil {
 								return errs.NewError(err)
 							}
+							prompt := twitterPost.ExtractContent
+							if twitterPost.Type == models.AgentTwitterPostTypeImage2video {
+								inferInput := map[string]interface{}{}
+								json.Unmarshal([]byte(response.Data.InferenceInput), &inferInput)
+								prompt = inferInput["prompt"].(string)
+							}
+
 							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success scan result gen video db_id:%v \n infer_id :%v \n result :%v ", twitterPost.ID, twitterPost.InferId, twitterPost.ImageUrl))
 							return nil
 						})
@@ -1004,8 +1012,12 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 							prompt := twitterPost.ExtractContent
 							if twitterPost.Type == models.AgentTwitterPostTypeImage2video {
 								model = "Wan-I2V"
+								videoMagicPrompt, err := s.GetVideoMagicPromptFromImage(ctx, twitterPost.ExtractContent, twitterPost.ExtractMediaContent)
+								if err != nil {
+									return err
+								}
 								promptByte, _ := json.Marshal(map[string]interface{}{
-									"prompt": twitterPost.ExtractContent,
+									"prompt": videoMagicPrompt,
 									"url":    twitterPost.ExtractMediaContent,
 								})
 								prompt = string(promptByte)
@@ -1056,59 +1068,6 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 								return errs.NewError(err)
 							}
 							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success submit infer gen video db_id:%v \n infer id :%v \n tx :%v ", twitterPost.ID, twitterPost.InferId, twitterPost.InferTxHash))
-
-							pendingGenVideo, _ := s.dao.FindAgentTwitterPost(
-								daos.GetDBMainCtx(ctx),
-								map[string][]interface{}{
-									"agent_info_id in (?)": {[]uint{s.conf.VideoAiAgentInfoId}},
-									"status = ?":           {models.AgentTwitterPostStatusInferSubmitted},
-									"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
-									"type = ?":             {models.AgentTwitterPostTypeImage2video},
-								},
-								map[string][]interface{}{},
-								[]string{
-									"post_at asc",
-								},
-								0,
-								5,
-							)
-
-							// submit magic prompt
-							if twitterPost.Type == models.AgentTwitterPostTypeImage2video && (s.conf.GenMagicVideoPrompt || len(pendingGenVideo) == 1) {
-								videoMagicPrompt, err := s.GetVideoMagicPromptFromImage(ctx, twitterPost.ExtractContent, twitterPost.ExtractMediaContent)
-								if err != nil {
-									return nil
-								}
-								promptByte, _ := json.Marshal(map[string]interface{}{
-									"prompt": videoMagicPrompt,
-									"url":    twitterPost.ExtractMediaContent,
-								})
-								prompt = string(promptByte)
-								response, _, code, err := helpers.HttpRequest(s.conf.KnowledgeBaseConfig.OnChainUrl, "POST",
-									map[string]string{
-										"Authorization": fmt.Sprintf("Bearer %v", s.conf.KnowledgeBaseConfig.OnchainAPIKey),
-									}, map[string]interface{}{
-										"chain_id":          "8453",
-										"model":             model,
-										"prompt":            prompt,
-										"only_create_infer": true,
-									})
-								if err != nil {
-									return nil
-								}
-								if code != http.StatusOK {
-									return nil
-								}
-								dataResponse = DataResponse{}
-								err = json.Unmarshal(response, &dataResponse)
-								if err != nil {
-									return nil
-								}
-								twitterPost.InferMagicId = strconv.FormatUint(dataResponse.Data.InferID, 10)
-								twitterPost.InferMagicTxHash = dataResponse.Data.TxHash
-								s.dao.Save(tx, twitterPost)
-								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success submit gen video with magic prompt infer_normal_id:%v \n  infer_magic_id:%v \n prompt:%v \n magic prompt :%v ", twitterPost.InferId, twitterPost.InferMagicId, twitterPost.ExtractContent, videoMagicPrompt))
-							}
 						}
 					} else {
 						twitterPost.Status = models.AgentTwitterConversationInvalid
