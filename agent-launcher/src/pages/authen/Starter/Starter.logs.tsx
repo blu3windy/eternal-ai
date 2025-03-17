@@ -14,7 +14,7 @@ const StarterLogs = () => {
    
    const { parsedLogs } = useParseLogs({
       functionNames: ["INITIALIZE", "MODEL_INSTALL", "DOCKER_BUILD", "MODEL_INSTALL_LLAMA"],
-      keys: ["name", "message", "error", "steps"]
+      keys: ["name", "message", "error", "step"]
    });
 
    // const parsedLogs = useMemo(() => {
@@ -35,42 +35,15 @@ const StarterLogs = () => {
       setUserScrolled(!isScrolledToBottom);
    };
 
-   const renderMessage = (message: string) => {
-      // Check if it's a download progress message
-      let downloadMatch: any | null = null
-      try {
-         downloadMatch = message.match(/Downloading (\d+)%/) as any;
-      } catch (error) {
-         console.error("Error parsing message:", error);
-      }
-      if (downloadMatch) {
-         const percentage = parseInt(downloadMatch[1]);
-         return (
-            <Box width="100%" position="relative">
-               <Progress
-                  value={percentage}
-                  size="xs"
-                  colorScheme="blue"
-                  borderRadius="full"
-                  hasStripe
-                  isAnimated
-                  bg="gray.100"
-               />
-               <Text
-                  position="absolute"
-                  top="50%"
-                  left="50%"
-                  transform="translate(-50%, -50%)"
-                  color="gray.700"
-                  fontSize="13px"
-                  fontWeight="500"
-                  textAlign="center"
-                  zIndex={1}
-               >
-                  Downloading Model • {percentage}%
-               </Text>
-            </Box>
-         );
+   const renderMessage = (message: string, step: string) => {
+      let _message = message;
+      if (step) {
+         console.log(step)
+         const parser = step.split("-");
+         const current = Number(parser[0]);
+         const total = Number(parser[1]) + 1;
+         const percentage = Math.round((current / total) * 100);
+         _message = `Downloading model... | ${percentage}%`;
       }
 
       // Default message rendering
@@ -82,7 +55,7 @@ const StarterLogs = () => {
             lineHeight="1.4"
             width="100%"
          >
-            {message}
+            {_message}
          </Text>
       );
    };
@@ -163,7 +136,7 @@ const StarterLogs = () => {
                         >
                            {log.values.error}
                         </Text>
-                     ) : renderMessage(log.values.message)}
+                     ) : renderMessage(log.values.message, log.values.step)}
                   </Box>
                </motion.div>
             ))}

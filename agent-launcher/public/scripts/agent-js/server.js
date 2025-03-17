@@ -20,6 +20,7 @@ app.post('/prompt', async (req, res) => {
          res.send('online');
       } else {
          const params = {
+            ...req?.body,
             messages,
             privateKey,
             chainId,
