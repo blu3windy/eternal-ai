@@ -34,9 +34,10 @@ const downloadedModels = async () => {
       const folderPath = getFolderPath();
       // Construct path to llms-storage
       const storagePath = path.join(folderPath, "llms-storage");
+      const local_llms = path.join(folderPath, "local_llms");
 
       // Check if directory exists
-      if (!fs.existsSync(storagePath)) {
+      if (!fs.existsSync(storagePath) || !fs.existsSync(local_llms)) {
          console.log("llms-storage directory not found");
          return [];
       }

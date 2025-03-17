@@ -29,23 +29,6 @@ const ipcMainModel = () => {
       return stdout?.trim() || undefined;
    }
 
-   const _loopCheckDownloaded  = async (hash: string) => {
-      await _sleep(2000);
-      let isDownloadedLoop = false;
-      const maxRetries = 10; // Maximum number of retries
-      let retries = 0;
-      while (!isDownloadedLoop) {
-         isDownloadedLoop = await _isDownloaded(hash);
-         if (!isDownloadedLoop) {
-            await _sleep(1000 * 30);
-            retries++;
-            if (retries >= maxRetries) {
-               throw new Error("Cant merge model.");
-            }
-         }
-      }
-   }
-
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_STARTER, async (_event) => {
       await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_STARTER}`);
    });
@@ -91,6 +74,7 @@ const ipcMainModel = () => {
          }
          return;
       }
+
       await dialogCheckDist(hash);
 
       let count = 0;
