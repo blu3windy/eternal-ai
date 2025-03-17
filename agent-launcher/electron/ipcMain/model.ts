@@ -14,6 +14,7 @@ const ipcMainModel = () => {
    const _sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
    const _onRunModel = async (hash: string) => {
+      await command.killProcessUsingPort(8080);
       await command.execAsyncStream( `${cd} && ${source} && ${llms} start --hash ${hash}`);
    };
 
@@ -65,10 +66,14 @@ const ipcMainModel = () => {
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_STOP, async (_event, hash: string) => {
       const cmd =`${cd} && ${source} && ${llms} stop`
       await command.execAsyncStream(cmd);
+      await command.killProcessUsingPort(8080);
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL_BASE_MODEL, async (_event, hash: string) => {
       const isDownloaded = await _isDownloaded(hash);
+
+      await command.killProcessUsingPort(8080);
+
       if (isDownloaded) {
          const _runningHash = await _getRunningHash();
          if (!_runningHash) {

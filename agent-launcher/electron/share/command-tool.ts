@@ -400,6 +400,34 @@ const execAsyncStream = (_cmd: string, isZSH = true) => {
    });
 };
 
+const killProcessUsingPort = async (port: number) => {
+   try {
+      // Execute the command to find processes using the specified port
+      const lsofOutput = await execAsync(`lsof -i :${port}`);
+
+      // Parse the output to find the PID
+      const lines = lsofOutput.split("\n");
+      for (const line of lines) {
+         const parts = line.trim().split(/\s+/); // Split by whitespace
+         if (parts.length > 1 && parts[0] !== "COMMAND") {
+            // Skip the header line
+            const pid = parts[1]; // Assuming the PID is in the second column
+            console.log(`Killing process with PID: ${pid}`);
+
+            try {
+               await execAsync(`kill ${pid}`);
+               console.log(`Process ${pid} killed successfully.`);
+            } catch (error: any) {
+               console.error(`Failed to kill process ${pid}: ${error.message}`);
+            }
+            // Kill the process
+         }
+      }
+   } catch (error: any) {
+      console.error(`Error: ${error.message}`);
+   }
+};
+
 const command = {
    execAsync,
    execAsyncStream,
@@ -407,6 +435,7 @@ const command = {
    sendEvent,
    getBrowser,
    setWindow,
+   killProcessUsingPort
 }
 
 export default command;
