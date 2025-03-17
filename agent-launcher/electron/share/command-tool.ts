@@ -167,7 +167,17 @@ app.on('before-quit', (event) => {
 });
 
 const execAsync = async (cmd: string) => {
-   return promisify(exec)(cmd, { maxBuffer: MAX_BUFFER });
+   try {
+      const { stdout, stderr } = await promisify(exec)(cmd, { maxBuffer: MAX_BUFFER });
+      if (stderr) {
+         throw new Error(`Command failed with error: ${stderr}`);
+      }
+      sendEvent({ type: "output", message: stdout, cmd });
+      return stdout; // Return the standard output if successful
+   } catch (error: any) {
+      sendEvent({ type: "error", message: error.message || "Unknown error", cmd });
+      throw new Error(`Command "${cmd}" failed: ${error.message}`);
+   }
 };
 
 let dockerDir = '';

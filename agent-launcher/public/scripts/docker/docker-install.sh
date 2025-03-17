@@ -32,6 +32,7 @@ fi
 if ! command_exists docker; then
     log_message "Installing docker via Homebrew..."
     brew install docker
+    brew install docker-credential-helper
     log_message "Docker CLI installed successfully"
 else
     log_message "Docker CLI is already installed"

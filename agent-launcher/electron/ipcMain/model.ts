@@ -25,7 +25,7 @@ const ipcMainModel = () => {
    }
 
    const _getRunningHash = async () => {
-      const { stdout } = await command.execAsync( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms status`);
+      const stdout = await command.execAsync( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms status`);
       return stdout?.trim() || undefined;
    }
 
@@ -69,8 +69,8 @@ const ipcMainModel = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_CHECK_RUNNING, async (_event) => {
-      const { stdout } = await command.execAsync( `cd "${path}" && source "${path}/local_llms/bin/activate" && local-llms status`);
-      return stdout?.trim() || undefined;
+      const hash = await _getRunningHash();
+      return hash;
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_DELETE, async (_event, hash: string) => {
@@ -83,9 +83,7 @@ const ipcMainModel = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL_BASE_MODEL, async (_event, hash: string) => {
-      console.log("Install base model: ", hash);
       const isDownloaded = await _isDownloaded(hash);
-      console.log("Is downloaded: ", isDownloaded);
       if (isDownloaded) {
          const _runningHash = await _getRunningHash();
          if (!_runningHash) {
@@ -94,7 +92,7 @@ const ipcMainModel = () => {
          return;
       }
       await dialogCheckDist(hash);
-      
+
       let count = 0;
       await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_STARTER}`);
       while (count < 3) {
