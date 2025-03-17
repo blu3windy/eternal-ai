@@ -1,7 +1,7 @@
 import { Button, Flex } from "@chakra-ui/react";
 
 
-export const MODEL_HASH = "bafkreiexprizroh7v5hs7t35aiqepg7djizrstd7uwkcssmfvf6w672tvq"
+export const MODEL_HASH = "bafkreideybeu6dpfurmbhqhs2ylscys2gkimfgghg2fjg6ngrmo3wyk2uu"
 
 const ActionButtons = () => {
    return (

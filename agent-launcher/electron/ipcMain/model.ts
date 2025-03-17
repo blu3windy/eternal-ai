@@ -97,14 +97,19 @@ const ipcMainModel = () => {
       
       let count = 0;
       await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_STARTER}`);
-      while (count < 4) {
+      while (count < 3) {
          try {
             const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" && local-llms download --hash ${hash}`;
             await command.execAsyncStream( cmd, false);
+            await _sleep(1000 * 5);
             // await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_DOWNLOAD_BASE} --folder-path "${path}" --hash "${hash}"`);
+            const isDownloaded = await _isDownloaded(hash);
+            if (!isDownloaded) {
+               throw new Error("Model not downloaded");
+            }
             break;
          } catch (error) {
-            if (count === 3) {
+            if (count === 2) {
                throw error
             }
             count++;

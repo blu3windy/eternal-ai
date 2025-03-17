@@ -5,12 +5,12 @@ import { dialog } from "electron";
 
 // Constants for size calculations
 const MB_TO_GB = 1024; // 1 GB = 1024 MB
-const MODEL_CHUNK_SIZE_MB = 430; // Size per chunk in MB
+const MODEL_CHUNK_SIZE_MB = 1024; // Size per chunk in MB
 
 const distSpace = async (hash: string) => {
    const files = await fetch(`https://gateway.mesh3.network/ipfs/${hash}`)
       .then((res) => res.json())
-      .then((res) => res.num_of_file);
+      .then((res) => res.num_of_files);
 
    // Calculate total size in GB
    const totalSizeGB = (files * MODEL_CHUNK_SIZE_MB) / MB_TO_GB;
