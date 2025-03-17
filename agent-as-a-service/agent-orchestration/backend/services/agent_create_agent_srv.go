@@ -851,8 +851,8 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 								for i := 0; i < 5; i++ {
 									time.Sleep(time.Duration(i*5) * time.Second)
 
-									contentReply := fmt.Sprintf("Here's the Eternal AI video of %v \n\nOnchain Prompt: https://basescan.org/tx/%v\nOnchain Video: https://basescan.org/tx/%v",
-										twitterPost.ExtractContent, twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash)
+									contentReply := fmt.Sprintf("Here is your decentralized video.\n\nOnchain Prompt: https://basescan.org/tx/%v\nOnchain Video: https://basescan.org/tx/%v",
+										twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash)
 
 									if twitterPost.TwitterID == "1576893241127219200" {
 										if twitterPost.TokenName != "" && twitterPost.TokenSymbol != "" {
