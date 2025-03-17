@@ -700,7 +700,7 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 								prompt = inferInput["prompt"].(string)
 							}
 
-							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success scan result gen video db_id:%v \n infer_id :%v \n result :%v ", twitterPost.ID, twitterPost.InferId, twitterPost.ImageUrl))
+							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success scan result gen video db_id:%v \n infer_id :%v \n result :%v \n \n user prompt :%v \n magic prompt :%v ", twitterPost.ID, twitterPost.InferId, twitterPost.ImageUrl, twitterPost.ExtractContent, prompt))
 							return nil
 						})
 					if err != nil {
