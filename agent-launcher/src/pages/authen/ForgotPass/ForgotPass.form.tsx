@@ -49,7 +49,7 @@ const FormForgotPass = () => {
                flexDirection="column"
             >
                <Text>
-                  Agent Launcher does not store your password.
+                  Vibe does not store your password.
                   If you're unable to unlock your account,
                   you will need to reset your wallet by providing the Private Key used during account setup.
                </Text>
