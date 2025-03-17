@@ -211,8 +211,9 @@ type AgentInfo struct {
 	SourceUrl      string `gorm:"type:text"` //ipfs_ || ethfs_
 	AuthenUrl      string `gorm:"type:text"`
 	DependAgents   string `gorm:"type:longtext"`
-	RequiredWallet bool
-	IsOnchain      bool
+	RequiredWallet bool   `gorm:"default:0"`
+	IsOnchain      bool   `gorm:"default:0"`
+	IsCustomUi     bool   `gorm:"default:0"`
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string

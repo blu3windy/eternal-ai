@@ -220,6 +220,9 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 					case models.AgentInfoAgentTypePython:
 						{
 							codeLanguage = "python"
+							if agentInfo.IsCustomUi {
+								codeLanguage = "python_custom_ui"
+							}
 						}
 					case models.AgentInfoAgentTypeModel:
 						{
