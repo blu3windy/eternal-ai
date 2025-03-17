@@ -72,7 +72,7 @@ func (s *Server) AdminHandleVideo(c *gin.Context) {
 		handleRequest.DecideToHandle = &decideHandle
 	}
 
-	agentTwitterPost, err := s.nls.HandleGenerateVideoWithSpecificTweet(daos.GetDBMainCtx(context.Background()), handleRequest)
+	agentTwitterPost, err := s.nls.HandleGenerateVideoWithSpecificTweet(daos.GetDBMainCtx(context.Background()), handleRequest, "admin_api")
 	if err != nil {
 		logger.Error("handle_video", "internal_api_key error", zap.Error(err))
 		c.JSON(500, gin.H{"error": err.Error()})
