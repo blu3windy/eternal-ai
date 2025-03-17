@@ -77,26 +77,38 @@ const ipcMainModel = () => {
 
       await dialogCheckDist(hash);
 
-      let count = 0;
       await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_STARTER}`);
-      while (count < 3) {
+
+      let count = 0;
+      const maxRetries = 3;
+      const retryDelay = 30000; // 30 seconds
+      const sleepDuration = 3000; // 3 seconds
+
+      while (count < maxRetries) {
          try {
-            const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" &&  python3 "${path}/local_llms/bin/local-llms" download --hash ${hash}`;
-            await command.execAsyncStream( cmd, false);
-            await _sleep(1000 * 3);
-            await _onRunModel(hash);
-            // await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_DOWNLOAD_BASE} --folder-path "${path}" --hash "${hash}"`);
+            const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" && python3 "${path}/local_llms/bin/local-llms" download --hash ${hash}`;
+        
+            // Execute the command
+            await command.execAsyncStream(cmd, false);
+        
+            // Wait for a short duration before checking if the model is downloaded
+            await _sleep(sleepDuration);
+        
+            // Check if the model is downloaded
             const isDownloaded = await _isDownloaded(hash);
             if (!isDownloaded) {
                throw new Error("Model not downloaded");
             }
-            break;
+        
+            // Run the model if downloaded
+            await _onRunModel(hash);
+            break; // Exit the loop if successful
          } catch (error) {
-            if (count === 2) {
-               throw error
-            }
             count++;
-            await _sleep(1000 * 30);
+            if (count === maxRetries) {
+               throw error; // Rethrow the error after max retries
+            }
+            await _sleep(retryDelay); // Wait before retrying
          }
       }
    });
