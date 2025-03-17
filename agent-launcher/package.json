@@ -97,7 +97,7 @@
   "main": "dist-electron/main.js",
   "build": {
     "appId": "com.eternalai.agent-launcher",
-    "productName": "Agent Launcher",
+    "productName": "Vibe",
     "asar": true,
     "asarUnpack": [
       "node_modules/keytar/**",
