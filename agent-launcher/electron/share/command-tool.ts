@@ -170,7 +170,7 @@ const execAsync = async (cmd: string) => {
    try {
       const { stdout, stderr } = await promisify(exec)(cmd, { maxBuffer: MAX_BUFFER });
       if (stderr) {
-         throw new Error(`Command failed with error: ${stderr}`);
+         sendEvent({ type: "error", message: stderr, cmd });
       }
       sendEvent({ type: "output", message: stdout, cmd });
       return stdout; // Return the standard output if successful
