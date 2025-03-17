@@ -551,6 +551,14 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 			Type:                  entityType,
 		}
 
+		// now support only image to video
+		if entityType != models.AgentTwitterPostTypeImage2video {
+			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[TEXT_TO_VIDEO_FOUND_SKIP] a requirement gen video, db_id=%v, tweet_id=%v, post :%v ",
+				m.ID, m.TwitterPostID, fullText))
+
+			return nil, nil
+		}
+
 		err = s.dao.Create(tx, m)
 		if err != nil {
 			continue
@@ -854,11 +862,11 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 									contentReply := fmt.Sprintf("Here is your decentralized video.\n\nOnchain Prompt: https://basescan.org/tx/%v\nOnchain Video: https://basescan.org/tx/%v",
 										twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash)
 
-									if twitterPost.TwitterID == "1576893241127219200" {
-										if twitterPost.TokenName != "" && twitterPost.TokenSymbol != "" {
-											contentReply += fmt.Sprintf("\n\n@bankrbot create a token from the prompt. Name: %v. Ticker: %v.", twitterPost.TokenName, twitterPost.TokenSymbol)
-										}
-									}
+									//if twitterPost.TwitterID == "1576893241127219200" {
+									//	if twitterPost.TokenName != "" && twitterPost.TokenSymbol != "" {
+									//		contentReply += fmt.Sprintf("\n\n@bankrbot create a token from the prompt. Name: %v. Ticker: %v.", twitterPost.TokenName, twitterPost.TokenSymbol)
+									//	}
+									//}
 
 									refId, _err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
 									if _err == nil {
@@ -1602,6 +1610,13 @@ func (s *Service) DetectTweetIsImageToVideo(twitterInfo *models.TwitterInfo, ite
 					}
 				}
 			}
+
+			if refTweet.Type == "replied_to" {
+				resp, err := s.GetFirstImageFromTweet(twitterInfo, refTweet.ID)
+				if err == nil && resp != nil {
+					return resp
+				}
+			}
 		}
 	}
 
@@ -1609,6 +1624,41 @@ func (s *Service) DetectTweetIsImageToVideo(twitterInfo *models.TwitterInfo, ite
 		IsImageToVideo:     isImageToVideo,
 		LighthouseImageUrl: lighthouse.IPFSGateway + cid,
 	}
+}
+
+func (s *Service) GetFirstImageFromTweet(twitterInfo *models.TwitterInfo, tweetID string) (*TweetImageToVideo, error) {
+	var getImage func(tweetID string) (*TweetImageToVideo, error)
+	getImage = func(tweetID string) (*TweetImageToVideo, error) {
+		tweetDetails, err := s.twitterWrapAPI.LookupUserTweets(twitterInfo.AccessToken, []string{tweetID})
+		if err != nil {
+			return nil, err
+		}
+		if tweetDetails == nil {
+			return nil, fmt.Errorf("no tweet found")
+		}
+
+		for _, tweet := range *tweetDetails {
+			if len(tweet.AttachmentMedia) > 0 {
+				firstMedia := tweet.AttachmentMedia[0]
+				if firstMedia.Type == "photo" {
+					return &TweetImageToVideo{
+						IsImageToVideo:     true,
+						LighthouseImageUrl: firstMedia.URL,
+					}, nil
+				}
+			}
+
+			for _, refTweet := range tweet.Tweet.ReferencedTweets {
+				if refTweet.Type == "replied_to" {
+					return getImage(refTweet.ID)
+				}
+			}
+		}
+
+		return nil, fmt.Errorf("no image found in tweet or its references")
+	}
+
+	return getImage(tweetID)
 }
 
 func (s *Service) GetPromptFromTweetContentGenerateVideoWithLLM(ctx context.Context, userName, fullText string) (*models.TweetParseInfo, error) {
