@@ -21,13 +21,13 @@ handle_error() {
     local exit_code=$1
     local error_msg=$2
     log_error "$error_msg (Exit code: $exit_code)"
-
+    
     # Clean up if needed
     if [[ -n "$VIRTUAL_ENV" ]]; then
         log_message "Deactivating virtual environment..."
         deactivate 2>/dev/null || true
     fi
-
+    
     exit $exit_code
 }
 
@@ -35,45 +35,35 @@ command_exists() {
     command -v "$1" &> /dev/null
 }
 
-# Step 1: Dynamically detect and set Homebrew path
-ARCH=$(uname -m)
-if [ "$ARCH" = "arm64" ]; then
-    BREW_BIN="/opt/homebrew/bin"
-else
-    BREW_BIN="/usr/local/bin"
-fi
-
+# Step 1: Check and install Homebrew if not present
 if ! command_exists brew; then
-    if [ -x "$BREW_BIN/brew" ]; then
-        export PATH="$BREW_BIN:$PATH"
-    else
-        log_error "Homebrew not found in $BREW_BIN. Please install it using: /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
-        handle_error 1 "Homebrew is required but not found."
-    fi
+    export PATH="$HOME/homebrew/bin:$PATH"
 fi
 
-# Step 2: Install or update Python via Homebrew
+# Step 2: Install or Update Python
 log_message "Checking existing Python version..."
-if ! brew list python &>/dev/null; then
-    log_message "Installing Python using Homebrew..."
-    brew install python || handle_error $? "Failed to install Python"
+python3 --version || log_error "No Python installation found."
+
+log_message "Checking system Python..."
+if command_exists python3; then
+    log_message "Python is already installed on the system. Skipping Python installation."
 else
-    log_message "Python is already installed via Homebrew."
+    log_message "No Python found. Installing Python using Homebrew..."
+    brew install python || handle_error $? "Failed to install Python"
 fi
 
-if ! command_exists python3; then
-    handle_error 1 "Python installation verification failed"
-fi
+log_message "Verifying the installed Python version..."
+python3 --version || handle_error $? "Python installation verification failed"
 log_message "Python setup complete."
 
 # Step 3: Update PATH in .zshrc
 log_message "Checking if PATH update is needed in .zshrc..."
-if ! grep -q "export PATH=\"$BREW_BIN:\$PATH\"" ~/.zshrc; then
+if ! grep -q 'export PATH="/opt/homebrew/bin:\$PATH"' ~/.zshrc; then
     log_message "Backing up current .zshrc..."
     cp ~/.zshrc ~/.zshrc.backup.$(date +%Y%m%d%H%M%S) || handle_error $? "Failed to backup .zshrc"
-
+    
     log_message "Updating PATH in .zshrc..."
-    echo "export PATH=\"$BREW_BIN:\$PATH\"" >> ~/.zshrc || handle_error $? "Failed to update .zshrc"
+    echo 'export PATH="/opt/homebrew/bin:$PATH"' >> ~/.zshrc || handle_error $? "Failed to update .zshrc"
     log_message "Please restart your terminal or run 'source ~/.zshrc' manually for changes to take effect."
 else
     log_message "PATH already contains Homebrew bin directory."
