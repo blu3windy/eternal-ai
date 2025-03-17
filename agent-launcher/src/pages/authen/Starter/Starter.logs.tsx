@@ -14,7 +14,7 @@ const StarterLogs = () => {
    
    const { parsedLogs } = useParseLogs({
       functionNames: ["INITIALIZE", "MODEL_INSTALL", "DOCKER_BUILD", "MODEL_INSTALL_LLAMA"],
-      keys: ["name", "message", "error"]
+      keys: ["name", "message", "error", "steps"]
    });
 
    // const parsedLogs = useMemo(() => {

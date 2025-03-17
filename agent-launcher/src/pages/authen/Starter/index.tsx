@@ -50,8 +50,8 @@ const Starter = (props: IProps) => {
          console.timeEnd("MODEL_BASE");
 
          setChecking(false);
-      } catch (error) {
-
+      } catch (error: any) {
+         // alert(error?.message || "Something went wrong.");
       } finally {
          console.timeEnd("FULL_LOAD_TIME");
       }
