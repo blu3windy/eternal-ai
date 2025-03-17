@@ -40,10 +40,10 @@ const StarterLogs = () => {
       if (step) {
          console.log(step)
          const parser = step.split("-");
-         const current = Number(parser[0]);
-         const total = Number(parser[1]) + 1;
+         const current = Number(parser[0]) + 1;
+         const total = Number(parser[1]) + 2;
          const percentage = Math.round((current / total) * 100);
-         _message = `Downloading model... | ${percentage}%`;
+         _message = `⚡ Downloading model... | ${percentage}%`;
       }
 
       // Default message rendering

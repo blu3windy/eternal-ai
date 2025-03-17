@@ -7,11 +7,14 @@ import { dialogCheckDist } from "../share/file-size.ts";
 
 const ipcMainModel = () => {
    const path = getFolderPath();
+   const cd = `cd "${path}"`;
+   const llms = `python3 "${path}/local_llms/bin/local-llms"`;
+   const source = `source "${path}/local_llms/bin/activate"`;
 
    const _sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
    const _onRunModel = async (hash: string) => {
-      await command.execAsyncStream( `cd "${path}" && source "${path}/local_llms/bin/activate" && python3 "${path}/local_llms/bin/local-llms" start --hash ${hash}`, false);
+      await command.execAsyncStream( `${cd} && ${source} && ${llms} start --hash ${hash}`, false);
    };
 
    const _compareString = (str1: string, str2: string) => {
@@ -25,7 +28,7 @@ const ipcMainModel = () => {
    }
 
    const _getRunningHash = async () => {
-      const stdout = await command.execAsync( `cd "${path}" && source "${path}/local_llms/bin/activate" && python3 "${path}/local_llms/bin/local-llms" status`);
+      const stdout = await command.execAsync( `${cd} && ${source} && ${llms} status`);
       return stdout?.trim() || undefined;
    }
 
@@ -36,11 +39,10 @@ const ipcMainModel = () => {
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL, async (_event, hash: string) => {
       // Check if disk space is sufficient
       await dialogCheckDist(hash);
-
       // Proceed with installation if disk space is sufficient
-      const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" && python3 "${path}/local_llms/bin/local-llms" download --hash ${hash}`;
+      const cmd = `${cd} && ${source} && ${llms} download --hash ${hash}`;
       await command.execAsyncStream(cmd);
-      // await _loopCheckDownloaded(hash);
+      await _onRunModel(hash);
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_RUN, async (_event, hash: string) => {
@@ -61,8 +63,8 @@ const ipcMainModel = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_STOP, async (_event, hash: string) => {
-      const cmd =`cd "${path}" && source "${path}/local_llms/bin/activate" && python3 "${path}/local_llms/bin/local-llms" stop --hash ${hash}`
-      await command.execAsyncStream( cmd, false);
+      const cmd =`${cd} && ${source} && ${llms} stop --hash ${hash}`
+      await command.execAsyncStream(cmd);
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL_BASE_MODEL, async (_event, hash: string) => {
@@ -86,10 +88,10 @@ const ipcMainModel = () => {
 
       while (count < maxRetries) {
          try {
-            const cmd = `cd "${path}" && source "${path}/${ACTIVE_PATH}" && python3 "${path}/local_llms/bin/local-llms" download --hash ${hash}`;
+            const cmd = `${cd} && ${source} && ${llms} download --hash ${hash}`;
         
             // Execute the command
-            await command.execAsyncStream(cmd, false);
+            await command.execAsyncStream(cmd);
         
             // Wait for a short duration before checking if the model is downloaded
             await _sleep(sleepDuration);
