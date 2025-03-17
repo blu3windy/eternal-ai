@@ -1,5 +1,6 @@
 import { app, ipcMain } from "electron";
 import { promises as fs } from "fs";
+import AdmZip from "adm-zip";
 import * as path from "path";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 
@@ -75,6 +76,30 @@ const ipcMainSafeFile = () => {
       } catch (error: any) {
          return false;
       }
+   });
+   ipcMain.handle(EMIT_EVENT_NAME.UNZIP_FILE, (_, zipPath, extractTo) => {
+      try {
+         console.log('zipPath', zipPath)
+         console.log('extractTo', extractTo)
+
+        const zip = new AdmZip(zipPath);
+        zip.extractAllTo(extractTo, true); // true = overwrite
+        console.log("Unzip successful!");
+      } catch (err) {
+         console.error("Error unzipping file:", err);
+      }
+   });
+   ipcMain.handle(EMIT_EVENT_NAME.SAVE_ZIPFILE, async (_, fileName, folderName, content) => {
+      const _appDir = path.join(appDir, folderName);
+      await checkAndCreateFolder(_appDir);
+      const filePath = path.join(_appDir, fileName);
+      // Convert the string (base64 or binary) into a Buffer
+      const zipBuffer = Buffer.from(content, "base64"); // Change to "utf-8" if it's plain binary
+
+      // Write buffer to a ZIP file
+      await fs.writeFile(filePath, zipBuffer);
+      console.log("ZIP file saved:", filePath);
+      return filePath;
    });
 };
 

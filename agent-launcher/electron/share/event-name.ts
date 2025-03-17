@@ -10,6 +10,8 @@ const EMIT_EVENT_NAME = {
    WRITE_FILE: "safe-write-file",
    GET_EXIST_FOLDERS: "safe-get-exist-folders",
    REMOVE_FOLDERS: "safe-remove-folders",
+   SAVE_ZIPFILE: "safe-save-zipfile",
+   UNZIP_FILE: "safe-unzip-file",
 
    DOCKER_COPY_BUILD: "safe-docker-copy-build",
    DOCKER_CHECK_INSTALL: "safe-docker-check-install",

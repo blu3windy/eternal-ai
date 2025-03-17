@@ -23,6 +23,7 @@
     "@enzoferey/ethers-error-parser": "^0.2.3",
     "@fontsource/inter": "^5.1.1",
     "@reduxjs/toolkit": "^2.6.0",
+    "adm-zip": "^0.5.16",
     "axios": "^1.7.9",
     "bignumber.js": "^9.1.2",
     "clsx": "^2.1.1",

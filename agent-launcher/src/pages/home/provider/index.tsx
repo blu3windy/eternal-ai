@@ -435,16 +435,15 @@ const AgentProvider: React.FC<
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
 
-         const codeLanguage = await cAgent.getCodeLanguage();
-         let codeLang = 'js';
-         if (codeLanguage === 'python') {
-            codeLang = 'py';
+         let fileNameOnLocal = 'prompt.js';
+         if (agent.agent_type === AgentType.UtilityPython) {
+            fileNameOnLocal = 'app.zip';
          }
       
          const codeVersion = await cAgent.getCurrentVersion();
 
          const oldCodeVersion = Number(localStorageService.getItem(agent.agent_contract_address));
-         const fileNameOnLocal = `prompt.${codeLang}`;
+         
          const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
 
          let filePath: string | undefined = "";
@@ -456,12 +455,25 @@ const AgentProvider: React.FC<
             filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
             console.log('filePath isExisted', filePath)
          } else {
-            const codeBase64 = await cAgent.getAgentCode(codeVersion);
-            const base64Array = splitBase64(codeBase64);
-            const code = base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
-            filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
-            localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
-            console.log('filePath New', filePath)
+            const rawCode = await cAgent.getAgentCode(codeVersion);
+            if (agent.agent_type === AgentType.UtilityPython) {
+               filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode);
+               localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
+               console.log('filePath New', filePath)
+            } else {
+               const base64Array = splitBase64(rawCode);
+               const code = base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
+
+               filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
+               localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
+               console.log('filePath New', filePath)
+            }
+            
+         }
+         
+         if (filePath && agent.agent_type === AgentType.UtilityPython) {
+            console.log('unzipFile', filePath)
+            globalThis.electronAPI.unzipFile(filePath, filePath.replaceAll(`/${fileNameOnLocal}`, ''));
          }
       }
    };
