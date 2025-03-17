@@ -77,6 +77,7 @@ export interface IAgentToken {
   depend_agents?: string;
   required_wallet?: boolean;
   is_onchain?: boolean;
+  is_custom_ui?: boolean;
   prompt_calls: number;
   ipfsHash?: string;
   sizeGb?: number;

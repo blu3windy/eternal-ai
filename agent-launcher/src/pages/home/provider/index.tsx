@@ -478,6 +478,14 @@ const AgentProvider: React.FC<
       }
    };
 
+   const getIsCustomUIOfPythonAgent = async (agent: IAgentToken) => {
+      if (agent && !!agent.agent_contract_address && agent.agent_type === AgentType.UtilityPython) {
+         const chainId = agent?.network_id || BASE_CHAIN_ID;
+         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
+         return (await cAgent.getCodeLanguage()) !== 'python';
+      }
+   }
+
     const removeUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_name) {
         try {
