@@ -133,19 +133,43 @@ const ipcMainDocker = () => {
       }
    });
 
-   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, async (_event, agentName: string, chainId: string) => {
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, async (_event, agentName: string, chainId: string, options) => {
       try {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
          const dnsHost = `${chainId}-${agentName}`;
          const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
 
+         console.log("optionsoptionsoptionsoptions", options)
+         const _options = typeof options === 'string' ? JSON.parse(options) : options;
+         console.log("optionsoptionsoptionsoptions", _options)
+         console.log("optionsoptionsoptionsoptions", _options.privateKey)
+         const language = _options?.language || 'js';
+
+         let imageName = "";
+         switch (language) {
+         case 'js':
+            imageName = DOCKER_SERVER_JS;
+            break;
+         case 'py':
+         case 'py-custom':
+            imageName = `${DOCKER_NAME}-python-${dnsHost}`;
+            break;
+         default:
+            imageName = DOCKER_SERVER_JS;
+         }
+
          const params = [
             `--folder-path "${folderPath}"`,
             `--container-name "${dnsHost}"`,
-            `--image-name "${DOCKER_SERVER_JS}"`,
-            `--code-language-snippet "js"`,
+            `--image-name "${imageName}"`,
+            `--code-language-snippet "${language}"`,
+            `--private-key "${_options?.privateKey}"`,
+            `--port "${8389}"`,
          ]
+
+         console.log(params)
+
          const paramsStr = params.join(' ');
          await command.execAsyncStream(`bash "${scriptPath}" run ${paramsStr}`);
 

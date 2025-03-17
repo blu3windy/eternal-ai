@@ -48,6 +48,14 @@ while [[ "$#" -gt 0 ]]; do
       CODE_LANGUAGE_SNIPPET="$2"
       shift 2
       ;;
+    --private-key)
+      PRIVATE_KEY="$2"
+      shift 2
+      ;;
+    --port)
+      PORT="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown option: $1"
       usage
@@ -67,12 +75,54 @@ echo "Container Name: $CONTAINER_NAME"
 echo "Image Name: $IMAGE_NAME"
 echo "Folder Path: $FOLDER_PATH"
 echo "Code Language Snippet: $CODE_LANGUAGE_SNIPPET"
+echo "PORT: $PORT"
+
+DOCKER_BUILD_SOURCE_PATH="$FOLDER_PATH/agents/$CONTAINER_NAME"
+echo "Build source path: $DOCKER_BUILD_SOURCE_PATH"
 
 # Function to run a Docker container
+
+run_container_js() {
+    docker run -d -v "$FOLDER_PATH/agents/$CONTAINER_NAME/prompt.$CODE_LANGUAGE_SNIPPET":/app/src/prompt.$CODE_LANGUAGE_SNIPPET --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+}
+
+run_container_py() {
+    cd "$DOCKER_BUILD_SOURCE_PATH" || {
+        log_error "Failed to access directory: $DOCKER_BUILD_SOURCE_PATH"
+        exit 1
+    }
+    echo "docker build -t "$IMAGE_NAME" .; docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME""
+    docker build -t "$IMAGE_NAME" .;
+    docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+}
+
+run_container_py_custom() {
+    cd "$DOCKER_BUILD_SOURCE_PATH" || {
+        log_error "Failed to access directory: $DOCKER_BUILD_SOURCE_PATH"
+        exit 1
+    }
+    docker build -t "$IMAGE_NAME" .; docker run -e PRIVATE_KEY="$PRIVATE_KEY" -p "$PORT":80 -network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+}
+
 run_container() {
   docker stop "$CONTAINER_NAME" 2>/dev/null || true
   docker rm "$CONTAINER_NAME" 2>/dev/null || true
-  docker run -d -v "$FOLDER_PATH/agents/$CONTAINER_NAME/prompt.$CODE_LANGUAGE_SNIPPET":/app/src/prompt.$CODE_LANGUAGE_SNIPPET --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+  case "$CODE_LANGUAGE_SNIPPET" in
+    py)
+      run_container_py
+      ;;
+    py-custom)
+      run_container_py_custom
+      ;;
+    js)
+      run_container_js
+      ;;
+    *)
+      log_error "Unsupported code language snippet: $CODE_LANGUAGE_SNIPPET"
+      exit 1
+      ;;
+  esac
+
 }
 
 # Function to stop a Docker container
