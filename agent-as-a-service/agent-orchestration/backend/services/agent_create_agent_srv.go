@@ -504,7 +504,7 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 		}
 
 		if tweetParseInfo == nil || tweetParseInfo.IsGenerateVideo == false {
-			tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM(context.Background(), agentInfo.TwitterUsername, fullText)
+			tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), agentInfo.TwitterUsername, fullText)
 			if err != nil {
 				continue
 			}
@@ -1518,6 +1518,71 @@ func (s *Service) ValidateTweetContentGenerateVideoWithLLM(ctx context.Context, 
 	return &models.TweetParseInfo{
 		IsGenerateVideo:      isGenerateVideo,
 		GenerateVideoContent: fullText,
+	}, nil
+}
+
+func (s *Service) ValidateTweetContentGenerateVideoWithLLM2(ctx context.Context, fullText string) (*models.TweetParseInfo, error) {
+	msg, _ := json.Marshal([]openai.ChatCompletionMessage{
+		{
+			Role:    "system",
+			Content: "You are an AI assistant that verifies whether an input is an video generation prompt.",
+		},
+		{
+			Role:    "user",
+			Content: fmt.Sprintf("Prompt: Think carefully and determine whether the given text is a prompt for video generation.\r\n- If not, return: \"NONE\"\r\n- If yes, extract only the essential details while keeping key elements:\r\nRULES:\r\n- Focus on the core subject: Identify the main object or scene in the prompt.\r\n- Remove unnecessary descriptions: Eliminate vague, redundant, or irrelevant words that do not significantly affect the generated video.\r\n- Retain critical elements: Keep essential aspects such as objects, style, lighting, colors, and composition.\r\n- Use concise and clear language: Rewrite the prompt in a clear and effective way that maximizes model accuracy.\r\n- Return the result in JSON format with the \"optimized_prompt\" key.\r\n\r\nEXAMPLE:\r\nINPUT: \"A cute cat sitting on a windowsill in the morning, with soft lighting and an extremely detailed oil painting style.\"\r\n\r\nOUTPUT: {\"optimized_prompt\": \"Cute cat on a windowsill in the morning, soft lighting, detailed oil painting style.\"}\r\n\r\nEXAMPLE:\r\nINPUT: \"Hello, nice to meet you\"\r\nOUTPUT: {\"optimized_prompt\": \"NONE\"}\r\n\r\nApply these rules to optimize prompts effectively.\r\n\r\nPlease return answer with json format with \"optimized_prompt\" key.\n\nUser Query: %v", fullText),
+		},
+	})
+	outputChan := make(chan *models.ChatCompletionStreamResponse, 1)
+	errChan := make(chan error, 1)
+	doneChan := make(chan bool, 1)
+	go func() {
+		s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(msg), "neuralmagic/Meta-Llama-3.1-405B-Instruct-quantized.w4a16", s.conf.KnowledgeBaseConfig.DirectServiceUrl, map[string]interface{}{
+			"temperature": 0,
+		}, outputChan, errChan, doneChan)
+	}()
+	output := ""
+	thinking := false
+	done := false
+	for !done {
+		select {
+		case <-doneChan:
+			done = true
+		case err := <-errChan:
+			return nil, err
+		case res := <-outputChan:
+			if res.Choices[0].Delta.Content != "" {
+				if strings.Contains(res.Choices[0].Delta.Content, "<think>") {
+					thinking = true
+				} else if strings.Contains(res.Choices[0].Delta.Content, "</think>") {
+					thinking = false
+					continue
+				}
+				if !thinking {
+					output += res.Choices[0].Delta.Content
+				}
+			}
+		case <-time.After(5 * time.Minute):
+			return nil, errors.New("timeout")
+		}
+	}
+
+	type Result struct {
+		OptimizedPrompt string `json:"optimized_prompt"`
+	}
+	var result Result
+	err := json.Unmarshal([]byte(output), &result)
+	if err != nil {
+		return nil, err
+	}
+	if result.OptimizedPrompt == "NONE" {
+		return &models.TweetParseInfo{
+			IsGenerateVideo:      false,
+			GenerateVideoContent: result.OptimizedPrompt,
+		}, nil
+	}
+	return &models.TweetParseInfo{
+		IsGenerateVideo:      true,
+		GenerateVideoContent: result.OptimizedPrompt,
 	}, nil
 }
 

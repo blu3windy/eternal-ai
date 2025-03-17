@@ -44,13 +44,9 @@ func init() {
 }
 
 func Test_JOB(t *testing.T) {
-	fmt.Println(
-		// 	// "OK",
-		// 	// ts.DeployProxyAdminAddress(context.Background(), models.BASE_SEPOLIA_CHAIN_ID),
-		// 	// ts.DeployAgentUpgradeable(context.Background(), 14424),
-		// 	// ts.UpgradeAgentUpgradeable(context.Background(), 0),
-		ts.DeployAgentUpgradeable(context.Background(), 14586),
-	)
+
+	data, err := ts.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), "man opens shirt and shows his fat belly")
+	fmt.Println(data, err)
 	// ts.MemeEventsByTransaction(context.Background(), 56, "")
 	// ts.AgentSnapshotPostCreate(context.Background(), 59166, "", "")
 	// ts.JobScanAgentTwitterPostForTA(context.Background())
