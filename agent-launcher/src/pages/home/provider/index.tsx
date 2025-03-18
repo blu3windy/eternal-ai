@@ -51,6 +51,7 @@ const initialValue: IAgentContext = {
    unInstallAgent: () => {},
    isUnInstalling: false,
    installedSocialAgents: [],
+   isCustomUI: false,
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -81,6 +82,7 @@ const AgentProvider: React.FC<
    const [installedModelAgents, setInstalledModelAgents] = useState<IAgentToken[]>([]);
    const [availableModelAgents, setAvailableModelAgents] = useState<IAgentToken[]>([]);
    const [installedSocialAgents, setInstalledSocialAgents] = useState<number[]>([]);
+   const [isCustomUI, setIsCustomUI] = useState(false);
 
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
 
@@ -107,6 +109,7 @@ const AgentProvider: React.FC<
    const isCanChat = useMemo(() => {
       return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
    }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
+
 
    // console.log("stephen: selectedAgent", selectedAgent);
    // console.log("stephen: currentModel", currentModel);
@@ -137,10 +140,12 @@ const AgentProvider: React.FC<
          if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id)) {
             createAgentWallet();
          } else {
-            setAgentWallet(undefined)
+            setAgentWallet(undefined);
          }
 
          intervalCheckAgentRunning(selectedAgent);
+
+         checkCustomUI(selectedAgent);
       }
    }, [selectedAgent?.id]);
 
@@ -165,6 +170,23 @@ const AgentProvider: React.FC<
          }
       }
    }, [selectedAgent?.id, installedUtilityAgents, installedModelAgents, installedSocialAgents]);
+
+
+   const checkCustomUI = async (agent) => {
+      try {
+         if(agent) {
+            if ([AgentType.UtilityPython].includes(agent.agent_type)) {
+               const res = await getIsCustomUIOfPythonAgent(agent);
+               setIsCustomUI(res);
+            } else {
+               setIsCustomUI(false);
+            }
+         }
+      } catch (err) {
+         console.error("Check agent custom ui error:", err);
+         setIsCustomUI(false);
+      }
+   }
 
    const checkAgentRunning = async (agent) => {
       try {
@@ -484,6 +506,8 @@ const AgentProvider: React.FC<
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
          return (await cAgent.getCodeLanguage()) !== 'python';
       }
+
+      return false;
    }
 
     const removeUtilityAgent = async (agent: IAgentToken) => {
@@ -724,6 +748,7 @@ const AgentProvider: React.FC<
          unInstallAgent,
          isUnInstalling,
          installedSocialAgents,
+         isCustomUI,
       };
    }, [
       loading,
@@ -757,6 +782,7 @@ const AgentProvider: React.FC<
       unInstallAgent,
       isUnInstalling,
       installedSocialAgents,
+      isCustomUI,
    ]);
 
    return (

@@ -40,4 +40,5 @@ export interface IAgentContext {
   unInstallAgent: any;
   isUnInstalling: boolean;
   installedSocialAgents: number[];
+  isCustomUI: boolean;
 }
