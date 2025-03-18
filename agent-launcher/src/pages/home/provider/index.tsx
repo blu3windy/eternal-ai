@@ -587,7 +587,7 @@ const AgentProvider: React.FC<
 
         const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
         const fileNameOnLocal = `prompt.${codeLang}`;
-        const folderNameOnLocal = `${chainId}-${agentName}`;
+        const folderNameOnLocal = `${chainId}-${agentName?.toLowerCase()}`;
 
         const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderNameOnLocal);
         if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
