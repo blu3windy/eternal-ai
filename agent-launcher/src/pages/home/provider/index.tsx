@@ -505,7 +505,7 @@ const AgentProvider: React.FC<
       if (agent && !!agent.agent_contract_address && agent.agent_type === AgentType.UtilityPython) {
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
-         return (await cAgent.getCodeLanguage()) !== 'python';
+         return (await cAgent.getCodeLanguage()) === 'python_custom_ui';
       }
 
       return false;
