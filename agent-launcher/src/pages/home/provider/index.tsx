@@ -17,6 +17,8 @@ import { AgentType, SortOption } from "@pages/home/list-agent";
 import { ModelInfo } from "../../../../electron/share/model.ts";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import sleep from "@utils/sleep.ts";
+import { copyPublicToUserData } from "electron/share/scripts.ts";
+import { USER_DATA_FOLDER_NAME } from "electron/share/utils.ts";
 
 const CODE_LANG_MAP = {
   'python': 'py',
@@ -183,12 +185,10 @@ const AgentProvider: React.FC<
    const checkCustomUI = async (agent) => {
       try {
          if(agent) {
-            if ([AgentType.UtilityPython].includes(agent.agent_type)) {
-               const res = await getIsCustomUIOfPythonAgent(agent);
-               setIsCustomUI(res);
-            } else {
-               setIsCustomUI(false);
-            }
+            const res = await getIsCustomUIOfAgent(agent);
+            setIsCustomUI(res);
+         } else {
+            setIsCustomUI(false);
          }
       } catch (err) {
          console.error("Check agent custom ui error:", err);
@@ -486,17 +486,24 @@ const AgentProvider: React.FC<
             console.log('filePath isExisted', filePath)
          } else {
             const rawCode = await cAgent.getAgentCode(codeVersion);
-            if (agent.agent_type === AgentType.UtilityPython) {
+            if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
                filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode);
                localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
-               console.log('filePath New', filePath)
+               console.log('filePath New', filePath);
+               if (agent.agent_type === AgentType.UtilityPython) {
+                  await copyPublicToUserData({
+                     names: ["Dockerfile", "requirements.txt", "server.py"],
+                     destination: [USER_DATA_FOLDER_NAME.AGENT_DATA, USER_DATA_FOLDER_NAME.AGENTS, folderNameOnLocal],
+                     source: [USER_DATA_FOLDER_NAME.AGENT_PY]
+                  });
+               }
             } else {
                const base64Array = splitBase64(rawCode);
                const code = base64Array.reverse().map(item => isBase64(item) ? atob(item) : item).join('\n');
 
                filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
                localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
-               console.log('filePath New', filePath)
+               console.log('filePath New', filePath);
             }
             
          }
@@ -508,11 +515,11 @@ const AgentProvider: React.FC<
       }
    };
 
-   const getIsCustomUIOfPythonAgent = async (agent: IAgentToken) => {
-      if (agent && !!agent.agent_contract_address && agent.agent_type === AgentType.UtilityPython) {
+   const getIsCustomUIOfAgent = async (agent: IAgentToken) => {
+      if (agent && !!agent.agent_contract_address) {
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
-         return (await cAgent.getCodeLanguage()) === 'python_custom_ui';
+         return (await cAgent.getCodeLanguage()) === 'custom_ui';
       }
 
       return false;

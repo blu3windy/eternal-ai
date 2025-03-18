@@ -83,6 +83,8 @@ export enum AgentType {
   UtilityPython = 7,
   Model = 5,
   Infra = 8,
+  CustomUI = 10,
+  CustomPrompt = 11,
 }
 
 export const AgentTypeName = {
