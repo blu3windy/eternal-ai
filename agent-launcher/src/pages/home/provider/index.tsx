@@ -192,10 +192,7 @@ const AgentProvider: React.FC<
                const res = await cPumpAPI.checkAgentServiceRunning({ agent });
                setIsRunning(true);
             } else if ([AgentType.CustomUI].includes(agent.agent_type)) {
-               console.log("stephen: checkAgentRunning", agent.agent_name?.toLowerCase(), agent.network_id.toString());
                const port = await globalThis.electronAPI.dockerRunningPort(agent.agent_name?.toLowerCase(), agent.network_id.toString());
-               console.log("stephen: port", port);
-               // setCustomUIPort('55000');
                setCustomUIPort(port);
                setIsRunning(true);
             } else if ([AgentType.Model].includes(agent.agent_type)) {
