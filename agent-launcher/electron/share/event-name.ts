@@ -21,6 +21,7 @@ const EMIT_EVENT_NAME = {
    DOCKER_BUILD: "safe-docker-build",
    DOCKER_RUN_AGENT: "safe-docker-run-agent",
    DOCKER_STOP_AGENT: "safe-docker-stop-agent",
+   DOCKER_RUNNING_PORT: "safe-docker-running-port",
    DOCKER_CHECK_RUNNING: "safe-docker-check-running",
 
 

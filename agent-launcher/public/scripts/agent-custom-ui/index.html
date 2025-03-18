@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Environment Variable Display</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+
+    .key-display {
+      padding: 20px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Environment Variable Display</h1>
+  <div class="key-display">
+    <h2>PRIVATE_KEY:</h2>
+    <p id="private-key-display"></p>
+  </div>
+
+  <script>
+    // Get the environment variable from the window object
+    const privateKey = window.PRIVATE_KEY || 'Not Set';
+    document.getElementById('private-key-display').textContent = privateKey;
+  </script>
+</body>
+
+</html>
