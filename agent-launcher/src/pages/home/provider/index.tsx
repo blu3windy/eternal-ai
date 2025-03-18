@@ -168,7 +168,7 @@ const AgentProvider: React.FC<
       if (selectedAgent) {
          if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(selectedAgent.agent_type)) {
             checkSocialAgentInstalled(selectedAgent);
-         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent.agent_type)) {
+         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(selectedAgent.agent_type)) {
             checkUtilityAgentInstalled(selectedAgent);
          } else if ([AgentType.Model].includes(selectedAgent.agent_type)) {
             checkModelAgentInstalled(selectedAgent);
@@ -180,7 +180,7 @@ const AgentProvider: React.FC<
    const checkAgentRunning = async (agent) => {
       try {
          if(agent) {
-            if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+            if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
                const res = await cPumpAPI.checkAgentServiceRunning({ agent });
                setIsRunning(true);
             } else if ([AgentType.Model].includes(agent.agent_type)) {
@@ -348,7 +348,7 @@ const AgentProvider: React.FC<
 
    const startAgent = async (agent: IAgentToken) => {
       try {
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             setIsStarting(true);
             await installUtilityAgent(agent);
             await startDependAgents(agent);
@@ -381,7 +381,7 @@ const AgentProvider: React.FC<
       try {
          setIsStopping(true);
 
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             await handleStopDockerAgent(agent);
             await stopDependAgents(agent);
          } else if (agent.agent_type === AgentType.Model) {
@@ -403,7 +403,7 @@ const AgentProvider: React.FC<
       try {
          setIsUnInstalling(true);
 
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             await stopAgent(agent);
 
             await removeUtilityAgent(agent);
@@ -740,7 +740,7 @@ const AgentProvider: React.FC<
             // Initialize new agent state
             if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(newAgent.agent_type)) {
                checkSocialAgentInstalled(newAgent);
-            } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(newAgent.agent_type)) {
+            } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(newAgent.agent_type)) {
                checkUtilityAgentInstalled(newAgent);
             } else if ([AgentType.Model].includes(newAgent.agent_type)) {
                checkModelAgentInstalled(newAgent);
