@@ -204,10 +204,21 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                role: 'system',
                content: selectedAgent?.personality || '',
             },
-            ...filteredMessages.map((item) => ({
-               role: item.type === 'ai' ? 'assistant' : 'user',
-               content: item.msg,
-            })),
+            ...filteredMessages.reduce((acc: any[], item, index) => {
+               if (index > 0 && 
+                   filteredMessages[index - 1].type !== 'ai' && 
+                   item.type !== 'ai') {
+                  acc.push({
+                     role: 'assistant',
+                     content: ''
+                  });
+               }
+               acc.push({
+                  role: item.type === 'ai' ? 'assistant' : 'user',
+                  content: item.msg
+               });
+               return acc;
+            }, []),
             { role: 'user', content: sendTxt },
          ];
 
