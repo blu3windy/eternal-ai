@@ -320,7 +320,7 @@ const AgentProvider: React.FC<
             fetchInstalledSocialAgents(); //fetch then check agent installed in useEffect
 
             // setAgentInstalled(agent);
-         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
 
             fetchInstalledUtilityAgents(); //fetch then check agent installed in useEffect
@@ -447,7 +447,7 @@ const AgentProvider: React.FC<
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
 
          let fileNameOnLocal = 'prompt.js';
-         if (agent.agent_type === AgentType.UtilityPython) {
+         if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             fileNameOnLocal = 'app.zip';
          }
       
