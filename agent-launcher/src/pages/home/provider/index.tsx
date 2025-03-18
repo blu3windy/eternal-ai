@@ -121,6 +121,7 @@ const AgentProvider: React.FC<
    // console.log("stephen: isInstalled", isInstalled);
    // console.log('stephen availableModelAgents', availableModelAgents);
    // console.log('stephen installedModelAgents', installedModelAgents);
+   // console.log('stephen: isCustomUI', isCustomUI);
    // console.log("================================");
 
    useEffect(() => {

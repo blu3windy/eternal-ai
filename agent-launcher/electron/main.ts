@@ -124,9 +124,11 @@ function createWindow() {
       // icon: path.join(__dirname, "../public/icon.png"), // Use icon from public
       webPreferences: {
          preload: path.join(app.getAppPath(), "dist-electron", "preload.mjs"),
-         webSecurity: false,
+         webSecurity: true,
          nodeIntegration: false,
          contextIsolation: true,
+         webviewTag: true,
+         sandbox: true
       },
       width: width,
       height: height,
