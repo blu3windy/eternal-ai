@@ -1,0 +1,1 @@
+export type CodeLanguage = "js" | "py" | "custom-prompt" | "custom-ui"

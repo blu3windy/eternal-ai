@@ -44,8 +44,8 @@ while [[ "$#" -gt 0 ]]; do
       FOLDER_PATH="$2"
       shift 2
       ;;
-    --code-language-snippet)    
-      CODE_LANGUAGE_SNIPPET="$2"
+    --type)
+      TYPE="$2"
       shift 2
       ;;
     --private-key)
@@ -74,19 +74,14 @@ log_message "Current working directory: $FOLDER_PATH"
 echo "Container Name: $CONTAINER_NAME"
 echo "Image Name: $IMAGE_NAME"
 echo "Folder Path: $FOLDER_PATH"
-echo "Code Language Snippet: $CODE_LANGUAGE_SNIPPET"
-echo "PORT: $PORT"
+echo "Type: $TYPE"
 
 DOCKER_BUILD_SOURCE_PATH="$FOLDER_PATH/agents/$CONTAINER_NAME"
 echo "Build source path: $DOCKER_BUILD_SOURCE_PATH"
 
 # Function to run a Docker container
 
-run_container_js() {
-    docker run -d -v "$FOLDER_PATH/agents/$CONTAINER_NAME/prompt.$CODE_LANGUAGE_SNIPPET":/app/src/prompt.$CODE_LANGUAGE_SNIPPET --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
-}
-
-run_container_py() {
+cd_docker_build_source_path() {
     cd "$DOCKER_BUILD_SOURCE_PATH" || {
         log_error "Failed to access directory: $DOCKER_BUILD_SOURCE_PATH"
         exit 1
@@ -96,29 +91,41 @@ run_container_py() {
     docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
 }
 
-run_container_py_custom() {
-    cd "$DOCKER_BUILD_SOURCE_PATH" || {
-        log_error "Failed to access directory: $DOCKER_BUILD_SOURCE_PATH"
-        exit 1
-    }
-    docker build -t "$IMAGE_NAME" .; docker run -e PRIVATE_KEY="$PRIVATE_KEY" -p "$PORT":80 -network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+run_container_custom_prompt() {
+    cd_docker_build_source_path
+    docker build -t "$IMAGE_NAME" .;
+    docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+}
+
+
+run_container_custom_ui() {
+    cd_docker_build_source_path
+    
+    docker build -t "$IMAGE_NAME" .; 
+    docker run -d -p 0:8080 -e PRIVATE_KEY="$PRIVATE_KEY" --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    # Get the assigned port
+    ASSIGNED_PORT=$(docker port "$CONTAINER_NAME" 8080/tcp | cut -d ':' -f2)
+    log_message "Container $CONTAINER_NAME is running on port: $ASSIGNED_PORT"
 }
 
 run_container() {
   docker stop "$CONTAINER_NAME" 2>/dev/null || true
   docker rm "$CONTAINER_NAME" 2>/dev/null || true
-  case "$CODE_LANGUAGE_SNIPPET" in
-    py)
-      run_container_py
-      ;;
-    py-custom)
-      run_container_py_custom
-      ;;
+  case "$TYPE" in
     js)
       run_container_js
       ;;
+    py)
+      run_container_py
+      ;;
+    custom-ui)
+      run_container_custom_ui
+      ;;
+    custom-prompt)
+      run_container_custom_prompt
+      ;;
     *)
-      log_error "Unsupported code language snippet: $CODE_LANGUAGE_SNIPPET"
+      log_error "Unsupported code language snippet: $TYPE"
       exit 1
       ;;
   esac
@@ -129,6 +136,16 @@ run_container() {
 stop_container() {
   docker stop "$CONTAINER_NAME" 2>/dev/null || true
   docker rm "$CONTAINER_NAME" 2>/dev/null || true
+}
+
+get_port() {
+  # make sure container is running
+  while ! docker ps | grep "$CONTAINER_NAME" > /dev/null; do
+    sleep 1 
+  done
+  # get the assigned port
+  PORT=$(docker port "$CONTAINER_NAME" 8080/tcp | cut -d ':' -f2)
+  echo "$PORT"
 }
 
 
@@ -143,7 +160,7 @@ case "$action" in
     if [ -z "$FOLDER_PATH" ]; then
         log_error "Missing Folder Path"
     fi
-    if [ -z "$CODE_LANGUAGE_SNIPPET" ]; then
+    if [ -z "$TYPE" ]; then
         log_error "Missing Code Language Snippet"
     fi
     run_container
@@ -153,6 +170,12 @@ case "$action" in
       log_error "Missing Container Name"
     fi
     stop_container
+    ;;
+  get-port)
+    if [ -z "$CONTAINER_NAME" ]; then
+      log_error "Missing Container Name"
+    fi
+    get_port
     ;;
   *)
     log_error "Invalid action: $action"

@@ -11,8 +11,9 @@ import {
 } from "../share/utils.ts";
 import command from "../share/command-tool.ts";
 import { copyFiles } from "../share/scripts.ts";
+import { CodeLanguage } from "../types.ts";
 
-const DOCKER_NAME = 'launcher-agent';
+const DOCKER_NAME = 'agent';
 const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
 const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
 
@@ -146,16 +147,22 @@ const ipcMainDocker = () => {
          const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
 
          const _options = typeof options === 'string' ? JSON.parse(options) : options;
-         const language = _options?.language || 'js';
+         const type = (_options?.type || 'js') as CodeLanguage;
 
          let imageName = "";
-         switch (language) {
+
+         switch (type) {
          case 'js':
             imageName = DOCKER_SERVER_JS;
             break;
          case 'py':
-         case 'py-custom':
-            imageName = `${DOCKER_NAME}-python-${dnsHost}`;
+            imageName = `${DOCKER_NAME}-py-${dnsHost}`;
+            break;
+         case 'custom-prompt':
+            imageName = `${DOCKER_NAME}-cp-${dnsHost}`;
+            break;
+         case 'custom-ui':
+            imageName = `${DOCKER_NAME}-cu-${dnsHost}`;
             break;
          default:
             imageName = DOCKER_SERVER_JS;
@@ -165,38 +172,12 @@ const ipcMainDocker = () => {
             `--folder-path "${folderPath}"`,
             `--container-name "${dnsHost}"`,
             `--image-name "${imageName}"`,
-            `--code-language-snippet "${language}"`,
+            `--type "${type}"`,
             `--private-key "${_options?.privateKey}"`,
-            `--port "${8389}"`,
          ]
-
-         console.log(params)
 
          const paramsStr = params.join(' ');
          await command.execAsyncStream(`bash "${scriptPath}" run ${paramsStr}`);
-
-         // const cmds: string[] = [
-         //    `cd "${folderPath}" && ${docker} stop ${dnsHost}`,
-         //    `cd "${folderPath}" && ${docker} rm ${dnsHost}`,
-         // ];
-         //
-         // for (const cmd of cmds) {
-         //    await executeWithIgnoreError(
-         //       async () => {
-         //          await command.execAsyncDockerDir(cmd);
-         //       }
-         //    )
-         // }
-         //
-         // console.log("LEON TEST", {
-         //    cmds,
-         //    test: `cd "${folderPath}" && ${docker} run -d -v "${folderPath}/agents/${dnsHost}/prompt.js":/app/src/prompt.js --network network-agent-external --add-host=localmodel:host-gateway --name ${dnsHost} ${DOCKER_SERVER_JS}`
-         // })
-         //
-         // const { stdout } = await command.execAsyncDockerDir(
-         //    `cd "${folderPath}" && ${docker} run -d -v "${folderPath}/agents/${dnsHost}/prompt.js":/app/src/prompt.js --network network-agent-external --add-host=localmodel:host-gateway --name ${dnsHost} ${DOCKER_SERVER_JS}`
-         // );
-         // console.log(stdout);
       } catch (error) {
          throw error;
       }
