@@ -79,7 +79,7 @@ class CAgentTokenAPI extends CApiClient {
   }): Promise<any> => {
     try {
       const res: any = await this.api.post(
-        `http://localhost:33030/${agent?.network_id}-${agent?.agent_name}/prompt`,
+        `http://localhost:33030/${agent?.network_id}-${agent?.agent_name?.toLowerCase()}/prompt`,
         {
           ping: true,
         }

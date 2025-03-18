@@ -492,7 +492,7 @@ const AgentProvider: React.FC<
                console.log('filePath New', filePath)
             } else {
                const base64Array = splitBase64(rawCode);
-               const code = base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
+               const code = base64Array.reverse().map(item => isBase64(item) ? atob(item) : item).join('\n');
 
                filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
                localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
