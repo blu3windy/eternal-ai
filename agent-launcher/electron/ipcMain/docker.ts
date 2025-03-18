@@ -204,6 +204,19 @@ const ipcMainDocker = () => {
          source: [USER_DATA_FOLDER_NAME.AGENT_PY]
       })
    });
+
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUNNING_PORT, async (_event, agentName: string, chainId: string, ) => {
+      const userDataPath = app.getPath("userData");
+      const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
+      const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
+
+      const dnsHost = getDnsHost(chainId, agentName);
+      const params = [
+         `--container-name "${dnsHost}"`,
+      ]
+      const paramsStr = params.join(' ');
+      await command.execAsyncStream(`bash "${scriptPath}" get-port ${paramsStr}`);
+   });
 }
 
 export default ipcMainDocker;

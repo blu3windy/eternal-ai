@@ -45,8 +45,8 @@ fi
 
 if [ ${#DOCKER_CONTAINERS[@]} -eq 0 ]; then
     DOCKER_CONTAINERS=(
-        "agent-js:launcher-agent-js:"
-        "agent-router:launcher-agent-router:33030"
+        "agent-js:agent-js:"
+        "agent-router:agent-router:33030"
     )
 fi
 
