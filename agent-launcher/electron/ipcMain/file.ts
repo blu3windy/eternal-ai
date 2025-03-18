@@ -3,7 +3,8 @@ import { promises as fs } from "fs";
 import AdmZip from "adm-zip";
 import * as path from "path";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
-
+import { copyPublicToUserData } from "electron/share/scripts.ts";
+import { USER_DATA_FOLDER_NAME } from "electron/share/utils.ts";
 /**
  * ├─┬ agent-data
  * │ ├─┬ agents
@@ -119,6 +120,14 @@ const ipcMainSafeFile = () => {
       console.log("ZIP file saved:", filePath);
       return filePath;
    });
+    ipcMain.handle(EMIT_EVENT_NAME.COPY_REQUIRE_RUN_PYTHON, async (_, folderName) => {
+      await copyPublicToUserData({
+         names: ["Dockerfile", "requirements.txt", "server.py"],
+         destination: [USER_DATA_FOLDER_NAME.AGENT_DATA, USER_DATA_FOLDER_NAME.AGENTS, folderName],
+         source: [USER_DATA_FOLDER_NAME.AGENT_PY]
+      })
+   });
+
 };
 
 export default ipcMainSafeFile;

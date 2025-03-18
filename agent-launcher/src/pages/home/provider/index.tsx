@@ -472,7 +472,7 @@ const AgentProvider: React.FC<
 
          const oldCodeVersion = Number(localStorageService.getItem(agent.agent_contract_address));
          
-         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name?.toLowerCase}`;
+         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name?.toLowerCase()}`;
 
          let filePath: string | undefined = "";
          const isExisted = await checkFileExistsOnLocal(
@@ -489,11 +489,7 @@ const AgentProvider: React.FC<
                localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
                console.log('filePath New', filePath);
                if (agent.agent_type === AgentType.UtilityPython) {
-                  // await copyPublicToUserData({
-                  //    names: ["Dockerfile", "requirements.txt", "server.py"],
-                  //    destination: [USER_DATA_FOLDER_NAME.AGENT_DATA, USER_DATA_FOLDER_NAME.AGENTS, folderNameOnLocal],
-                  //    source: [USER_DATA_FOLDER_NAME.AGENT_PY]
-                  // });
+                  globalThis.electronAPI.copyRequireRunPython(folderNameOnLocal);
                }
             } else {
                const base64Array = splitBase64(rawCode);
