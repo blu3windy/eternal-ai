@@ -7,8 +7,14 @@ const ActionButtons = () => {
    return (
       <Flex gap="12px" flexWrap="wrap" width="100%" alignItems="center">
          <Button
-            onClick={() => {
-               globalThis.electronAPI.dockerRunAgent("custom-ui", "1", JSON.stringify({ privateKey: "12454", type: "custom-ui" }));
+            onClick={async () => {
+
+               try {
+                  await globalThis.electronAPI.dockerRunAgent("anthropic-computer-use", "84532", JSON.stringify({ privateKey: "12454", type: "custom-prompt" }));
+
+               } catch (error: any) {
+                  alert("Error running agent: " + error?.message);
+               }
             }}
          >
             DOCKER_RUN_AGENT

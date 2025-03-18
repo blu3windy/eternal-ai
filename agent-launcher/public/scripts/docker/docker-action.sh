@@ -56,6 +56,10 @@ while [[ "$#" -gt 0 ]]; do
       PORT="$2"
       shift 2
       ;;
+    --wallet-address)
+      WALLET_ADDRESS="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown option: $1"
       usage
@@ -75,6 +79,7 @@ echo "Container Name: $CONTAINER_NAME"
 echo "Image Name: $IMAGE_NAME"
 echo "Folder Path: $FOLDER_PATH"
 echo "Type: $TYPE"
+
 
 DOCKER_BUILD_SOURCE_PATH="$FOLDER_PATH/agents/$CONTAINER_NAME"
 echo "Build source path: $DOCKER_BUILD_SOURCE_PATH"
@@ -99,15 +104,18 @@ run_container_py() {
 
 run_container_custom_prompt() {
     cd_docker_build_source_path
-    docker build -t "$IMAGE_NAME" .; docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    echo "docker build -t "$IMAGE_NAME" .; docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME""
+    docker build -t "$IMAGE_NAME" .;
+    echo "121221122121"
+    docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
 }
 
 
 run_container_custom_ui() {
     cd_docker_build_source_path
-    
-    docker build -t "$IMAGE_NAME" .; 
-    docker run -d -p 0:8080 -e PRIVATE_KEY="$PRIVATE_KEY" --name "$CONTAINER_NAME" "$IMAGE_NAME"
+
+    echo "docker build -t "$IMAGE_NAME" .; docker run -d -p 0:8080 -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --name "$CONTAINER_NAME" "$IMAGE_NAME""
+    docker build -t "$IMAGE_NAME" .; docker run -d -p 0:8080 -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --name "$CONTAINER_NAME" "$IMAGE_NAME"
     # Get the assigned port
     ASSIGNED_PORT=$(docker port "$CONTAINER_NAME" 8080/tcp | cut -d ':' -f2)
     log_message "Container $CONTAINER_NAME is running on port: $ASSIGNED_PORT"
