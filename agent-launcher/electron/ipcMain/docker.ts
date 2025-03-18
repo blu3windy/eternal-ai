@@ -17,6 +17,11 @@ const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
 const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
 
 const ipcMainDocker = () => {
+
+   const getDnsHost = (chainId: string, agentName: string) => {
+      return `${chainId}-${agentName}`.toLowerCase();
+   }
+
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_COPY_BUILD, async (_event) => {
       try {
          await copyFiles();
@@ -137,13 +142,10 @@ const ipcMainDocker = () => {
       try {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
-         const dnsHost = `${chainId}-${agentName}`;
+         const dnsHost = getDnsHost(chainId, agentName);
          const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
 
-         console.log("optionsoptionsoptionsoptions", options)
          const _options = typeof options === 'string' ? JSON.parse(options) : options;
-         console.log("optionsoptionsoptionsoptions", _options)
-         console.log("optionsoptionsoptionsoptions", _options.privateKey)
          const language = _options?.language || 'js';
 
          let imageName = "";
@@ -204,7 +206,7 @@ const ipcMainDocker = () => {
       try {
          const userDataPath = app.getPath("userData");
          const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
-         const dnsHost = `${chainId}-${agentName}`;
+         const dnsHost = getDnsHost(chainId, agentName);
          const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
 
          const params = [

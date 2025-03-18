@@ -8,7 +8,7 @@ const ActionButtons = () => {
       <Flex gap="12px" flexWrap="wrap" width="100%" alignItems="center">
          <Button
             onClick={() => {
-               globalThis.electronAPI.dockerRunAgent("Python.App.1", "84532", JSON.stringify({ privateKey: "12454", port: 1244, language: "py" }));
+               globalThis.electronAPI.dockerRunAgent("python.app.1", "84532", JSON.stringify({ privateKey: "12454", port: 1244, language: "py" }));
             }}
          >
             DOCKER_RUN_AGENT
