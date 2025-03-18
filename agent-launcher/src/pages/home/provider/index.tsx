@@ -468,7 +468,7 @@ const AgentProvider: React.FC<
          } else {
             const rawCode = await cAgent.getAgentCode(codeVersion);
             if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
-               filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode);
+               filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode, agent.agent_type === AgentType.UtilityPython ? 'app' : undefined);
                localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
                console.log('filePath New', filePath);
                
