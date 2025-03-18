@@ -15,7 +15,7 @@ func (s *Service) GetVideoMagicPromptFromImage(ctx context.Context, userPrompt s
 		"messages": []map[string]interface{}{
 			map[string]interface{}{
 				"role":    "system",
-				"content": "You are a helpful assistant specializing in creating smooth and engaging short video content lasting 5 seconds.",
+				"content": "You are a helpful assistant specializing in creating smooth and engaging short video content.",
 			},
 			map[string]interface{}{
 				"role":    "user",
@@ -27,7 +27,7 @@ func (s *Service) GetVideoMagicPromptFromImage(ctx context.Context, userPrompt s
 			},
 			map[string]interface{}{
 				"role":    "user",
-				"content": fmt.Sprintf("I want to create a short video of 5 seconds based on my request : \\n%v \\n Prioritize my request, even if it contrasts with the content of the image. For example, if the image features characters laughing and having fun, my request should be to create a video where they are crying or fighting. The video should exclusively show them crying or fighting. Just provide the prompt.", userPrompt),
+				"content": fmt.Sprintf("I would like to create a short video based on my request: \\n%v \\n Prioritize my request, even if it contrasts with the content of the image. For example, if the image features characters laughing and having fun, my request should be to create a video where they are crying or fighting. The video should exclusively show them crying or fighting. Just provide the prompt.", userPrompt),
 			},
 		},
 	}
