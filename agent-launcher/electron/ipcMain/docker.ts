@@ -10,7 +10,7 @@ import {
    USER_DATA_FOLDER_NAME
 } from "../share/utils.ts";
 import command from "../share/command-tool.ts";
-import { copyFiles } from "../share/scripts.ts";
+import { copyFiles, copyPublicToUserData } from "../share/scripts.ts";
 
 const DOCKER_NAME = 'launcher-agent';
 const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
@@ -218,6 +218,15 @@ const ipcMainDocker = () => {
          console.log(error);
          throw error;
       }
+   });
+
+   ipcMain.handle(EMIT_EVENT_NAME.COPY_REQUIRE_RUN_PYTHON, async (_, folderName) => {
+      console.log('===CopyfolderName', folderName)
+      await copyPublicToUserData({
+         names: ["Dockerfile", "requirements.txt", "server.py"],
+         destination: [USER_DATA_FOLDER_NAME.AGENT_DATA, USER_DATA_FOLDER_NAME.AGENTS, folderName],
+         source: [USER_DATA_FOLDER_NAME.AGENT_PY]
+      })
    });
 }
 

@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
    removeFolder: (folderName: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.REMOVE_FOLDERS, folderName),
    writezipFile: (fileName: string, folderName: string, data: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.SAVE_ZIPFILE, fileName, folderName, data),
    unzipFile: (zipPath: string, extractTo: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.UNZIP_FILE, zipPath, extractTo),
+   copyRequireRunPython: (folderName: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.COPY_REQUIRE_RUN_PYTHON, folderName),
 
    dockerCopyBuild: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_COPY_BUILD),
    dockerCheckInstall: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL),
