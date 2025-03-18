@@ -39,7 +39,7 @@ const WebView: React.FC<WebViewProps> = ({ url, width = '100%', height = '600px'
         // Enable necessary webview features
         webpreferences="contextIsolation, nodeIntegration=false"
         // Allow same origin policy for security
-        allowpopups="true"
+        allowpopups={true}
       />
     </Box>
   );
