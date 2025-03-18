@@ -487,9 +487,9 @@ const AgentProvider: React.FC<
             if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
                filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode);
                localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
-               console.log('filePath New', filePath);
                if (agent.agent_type === AgentType.UtilityPython) {
-                  globalThis.electronAPI.copyRequireRunPython(folderNameOnLocal);
+                  console.log('filePath New', filePath);
+                  await globalThis.electronAPI.copyRequireRunPython(folderNameOnLocal);
                }
             } else {
                const base64Array = splitBase64(rawCode);
