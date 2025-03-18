@@ -1,6 +1,6 @@
 .container {
   .runningWrapper {
-    flex-direction: column;
+    // flex-direction: column;
     border: 1px solid #00000026;
     box-shadow: 0px 0px 24px -6px #0000001A;
 
@@ -42,3 +42,41 @@
   }
 
 }
+
+.attachmentPreview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-height: 0;
+  transition: min-height 0.2s ease;
+
+  &:not(:empty) {
+    min-height: 60px;
+  }
+}
+
+.inputContainer {
+  // display: flex;
+  align-items: center;
+  // gap: 8px;
+
+  .input {
+    flex: 1;
+    min-height: 40px;
+    max-height: 120px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: none;
+    overflow-y: auto;
+
+    &:focus {
+      outline: none;
+      border-color: #3182ce;
+      box-shadow: 0 0 0 1px #3182ce;
+    }
+  }
+} 

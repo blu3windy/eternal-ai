@@ -26,7 +26,7 @@ type IChatAgentProviderContext = {
   messages: IChatMessage[];
   isLoadingMessages: boolean;
   setIsLoadingMessages: (value: boolean) => void;
-  publishEvent: (message: string) => void;
+  publishEvent: (message: string, attachments?: IChatMessage['attachments']) => void;
   scrollableRef: React.RefObject<ScrollableFeed>;
    scrollRef: any;
   loading: boolean;
@@ -121,9 +121,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const isStopReceiving
     = lastMessage?.status === 'receiving' || lastMessage?.status === 'waiting';
 
-   const publishEvent = async (message: string) => {
-      if (!message) return;
-
+   const publishEvent = async (message: string, attachments?: IChatMessage['attachments']) => {
       if (!message || lastMessage?.status === 'waiting' || isStopReceiving) {
          return;
       }
@@ -140,6 +138,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             type: 'human',
             is_reply: false,
             name: 'You',
+            attachments,
             createdAt: new Date().toISOString(),
          };
 

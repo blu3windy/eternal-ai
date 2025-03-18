@@ -61,6 +61,37 @@ const ChatMessage = ({
     }
   }, [message]);
 
+  const renderContent = () => {
+    return (
+      <>
+        {renderMarkdown()}
+        {message.attachments?.map((attachment, index) => (
+          <Box key={index} mt={2}>
+            <Image
+              src={attachment.url}
+              alt="Attached image"
+              maxW="300px"
+              borderRadius="md"
+              loading="lazy"
+              fallback={
+                <Box
+                  w="300px"
+                  h="200px"
+                  bg="gray.100"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <Text color="gray.500">Loading image...</Text>
+                </Box>
+              }
+            />
+          </Box>
+        ))}
+      </>
+    );
+  };
+
   const renderMarkdown = () => {
     if (message.status === "waiting") {
       return <WaitingAnimation color={message?.is_reply ? "black" : "white"} />;
@@ -147,7 +178,7 @@ const ChatMessage = ({
         )}
         alignSelf={message?.is_reply ? "flex-start" : "flex-end"}
       >
-        {renderMarkdown()}
+        {renderContent()}
       </Box>
 
       {(message.status === "receiving" || message.status === "waiting") &&

@@ -134,6 +134,11 @@ export interface IChatMessage {
   updatedAt?: string;
   tx_hash?: string;
   onchain_data?: IOnchainData;
+  attachments?: {
+    type: 'image';
+    url: string;
+    previewUrl?: string;
+  }[];
 }
 
 export enum EAgentTokenStatus {

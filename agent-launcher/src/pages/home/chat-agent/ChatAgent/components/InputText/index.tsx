@@ -1,5 +1,5 @@
-import { Flex } from "@chakra-ui/react";
-import React, { useContext } from "react";
+import { Box, Flex, IconButton } from "@chakra-ui/react";
+import React, { useCallback, useContext, useRef, useState } from "react";
 import AutosizeTextarea from "react-autosize-textarea";
 import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import useFundAgent from "../../../../../../providers/FundAgent/useFundAgent.ts";
@@ -9,6 +9,8 @@ import localStorageService from "../../../../../../storage/LocalStorageService.t
 import STORAGE_KEYS from "@constants/storage-key.ts";
 import { compareString } from "@utils/string.ts";
 import CAgentTokenAPI from "@services/api/agents-token";
+import { useDropzone } from 'react-dropzone';
+import cx from "clsx";
 
 interface IProps {
   inputRef?: any;
@@ -31,27 +33,71 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
   const { setDepositAgentID } = useFundAgent();
   const {
     selectedAgent,
-    stopAgent,
-    isStopping,
     isRunning,
-    isStarting,
-    startAgent,
-    isCanChat,
-    agentWallet,
     requireInstall,
   } = useContext(AgentContext);
 
+  const [message, setMessage] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const imageFiles = acceptedFiles.filter(file => file.type.startsWith('image/'));
+    setAttachments(prev => [...prev, ...imageFiles]);
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif']
+    },
+    noClick: true,
+    noKeyboard: true
+  });
+
   const cPumpAPI = new CAgentTokenAPI();
 
-  const handleStartAgent = () => {
-    startAgent(selectedAgent);
+  const handleSend = async () => {
+    if (!message.trim() && attachments.length === 0) return;
+    if (isStopReceiving) return;
+
+    const uploadedAttachments = await Promise.all(
+      attachments.map(async (file) => {
+        const url = URL.createObjectURL(file);
+        return {
+          type: 'image' as const,
+          url,
+          previewUrl: url
+        };
+      })
+    );
+
+    publishEvent(message, uploadedAttachments);
+    setMessage('');
+    setAttachments([]);
   };
 
-  const handleStopAgent = () => {
-    stopAgent(selectedAgent);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
   };
 
-  const [message, setMessage] = React.useState("");
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAttachImage = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    setAttachments(prev => [...prev, ...imageFiles]);
+  };
+
 
   const isSend = React.useMemo(() => {
     return !!message;
@@ -83,40 +129,68 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
   return (
     <Flex
       direction={"column"}
-      // left="12px"
-      // right="12px"
-      // position={'absolute'}
-      // bottom={'10px'}
       paddingBottom={"10px"}
-      // paddingLeft={'10px'}
-      // paddingRight={'10px'}
-      // background="#101216"
+      {...getRootProps()}
       className={s.container}
     >
+      <Box className={s.attachmentPreview}>
+        {attachments.map((file, index) => (
+          <Box key={index} position="relative" mr={2}>
+            <img
+              src={URL.createObjectURL(file)}
+              alt="attachment preview"
+              style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
+            />
+            <IconButton
+              aria-label="Remove attachment"
+              icon={<span>×</span>}
+              size="xs"
+              position="absolute"
+              top="-8px"
+              right="-8px"
+              borderRadius="full"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemoveAttachment(index);
+              }}
+            />
+          </Box>
+        ))}
+      </Box>
       <Flex
         w={{ base: "100%" }}
         padding="1px"
-        // minHeight={'48px'}
         direction={"row"}
         gap={"12px"}
       >
         <Flex
-          // border="1px solid #5400FB33"
           borderRadius="100px"
           flex={1}
-          // backgroundColor="#000000"
-          // boxShadow={'0px 0px 24px -6px #5400FB1F'}
           minHeight={"60px"}
           overflow="hidden"
           position="relative"
-          className={
-            !requireInstall
-              ? s.runningWrapper
-              : isRunning
-              ? s.runningWrapper
-              : s.stopWrapper
+          className={cx(s.inputContainer, !requireInstall
+            ? s.runningWrapper
+            : isRunning
+            ? s.runningWrapper
+            : s.stopWrapper)
+        
           }
         >
+          <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          accept="image/*"
+          multiple
+          onChange={handleFileChange}
+        />
+        <IconButton
+          aria-label="Attach image"
+          icon={<span>📎</span>}
+          onClick={handleAttachImage}
+          variant="ghost"
+        />
           <AutosizeTextarea
             type="text"
             ref={chatInputRef}
@@ -146,13 +220,7 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
                 : `${selectedAgent?.agent_name} is ready!`
             }
             // onEnter
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && isCanChat) {
-                event.preventDefault();
-                event.stopPropagation();
-                onSendMessage(message);
-              }
-            }}
+            onKeyDown={handleKeyDown}
             onFocus={() => {
               setIsFocusChatInput(true);
               // onFocus && onFocus();
@@ -175,14 +243,15 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
             width="50px"
             backgroundColor="#FFF"
             opacity={isSending || isStopReceiving ? 0.2 : 1}
-            onClick={() => {
-              if (isSending || isStopReceiving || !isAllowChat) {
-                return;
-              }
-              if (isSend) {
-                onSendMessage(message);
-              }
-            }}
+            onClick={handleSend}
+            // onClick={() => {
+            //   if (isSending || isStopReceiving || !isAllowChat) {
+            //     return;
+            //   }
+            //   if (isSend) {
+            //     onSendMessage(message);
+            //   }
+            // }}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -197,19 +266,6 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
               />
             </svg>
           </Flex>
-
-          {/*{
-                  !isAllowChat && (
-                     <Flex
-                        position="absolute"
-                        left={'24px'}
-                        top={'16px'}
-                     >
-                        <Text as={"span"} fontSize={"16px"} fontWeight={400} textDecoration={"underline"} cursor={'pointer'} onClick={handleDeposit}>Deposit</Text>&nbsp;
-                        <Text as={"span"} fontSize={"16px"} fontWeight={400} opacity={0.7}>to chat (cost 1 EAI/chat)</Text>
-                     </Flex>
-                  )
-               }*/}
         </Flex>
       </Flex>
     </Flex>
