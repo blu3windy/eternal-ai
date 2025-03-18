@@ -215,7 +215,12 @@ const ipcMainDocker = () => {
          `--container-name "${dnsHost}"`,
       ]
       const paramsStr = params.join(' ');
-      const port = await command.execAsync(`bash "${scriptPath}" get-port ${paramsStr}`);
+      const stdout = await command.execAsync(`bash "${scriptPath}" get-port ${paramsStr}`);
+      const messages = stdout.split('\n');
+      const port = messages[messages.length - 2].trim();
+      if (Number.isNaN(Number(port))) {
+         throw new Error(`Port is not a number: ${port}`);
+      }
       return port;
    });
 }

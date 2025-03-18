@@ -106,7 +106,6 @@ run_container_custom_prompt() {
     cd_docker_build_source_path
     echo "docker build -t "$IMAGE_NAME" .; docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME""
     docker build -t "$IMAGE_NAME" .;
-    echo "121221122121"
     docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
 }
 
@@ -154,7 +153,7 @@ stop_container() {
 get_port() {
   # make sure container is running
   while ! docker ps | grep "$CONTAINER_NAME" > /dev/null; do
-    sleep 1 
+    sleep 1
   done
   # get the assigned port
   PORT=$(docker port "$CONTAINER_NAME" 8080/tcp | cut -d ':' -f2)

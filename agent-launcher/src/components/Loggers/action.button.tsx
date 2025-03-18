@@ -10,7 +10,7 @@ const ActionButtons = () => {
             onClick={async () => {
 
                try {
-                  await globalThis.electronAPI.dockerRunAgent("anthropic-computer-use", "84532", JSON.stringify({ privateKey: "12454", type: "custom-prompt" }));
+                  await globalThis.electronAPI.dockerRunAgent("custom-ui", "1", JSON.stringify({ privateKey: "12454", type: "custom-ui" }));
 
                } catch (error: any) {
                   alert("Error running agent: " + error?.message);
@@ -18,6 +18,19 @@ const ActionButtons = () => {
             }}
          >
             DOCKER_RUN_AGENT
+         </Button>
+         <Button
+            onClick={async () => {
+
+               try {
+                  const port = await globalThis.electronAPI.dockerRunningPort("custom-ui", "1");
+                  alert(port)
+               } catch (error: any) {
+                  alert("Error running agent: " + error?.message);
+               }
+            }}
+         >
+            DOCKER_RUNNING_PORT
          </Button>
          <Button
             onClick={() => {
