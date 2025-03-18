@@ -32,8 +32,6 @@ import Avatar from "@components/Avatar";
 const AgentTopInfo = () => {
    const {
       selectedAgent,
-      setIsTrade,
-      isTrade,
       isCanChat,
       agentWallet,
       isBackupedPrvKey,
@@ -63,7 +61,7 @@ const AgentTopInfo = () => {
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
    const allowStopAgent = useMemo(() => {
-      return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type);
+      return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(selectedAgent?.agent_type);
    }, [selectedAgent])
 
    const handleExportPrvKey = () => {
