@@ -31,7 +31,7 @@ async function getFolders(folderPath: string) {
       const items = await fs.readdir(folderPath);
       const folderPromises = items.map(async item => {
          try {
-            const stats = await fs.stat(path.join(folderPath, item.toLowerCase()));
+            const stats = await fs.stat(path.join(folderPath, item));
             return stats.isDirectory() ? item : null;
          } catch (error) {
             return null;

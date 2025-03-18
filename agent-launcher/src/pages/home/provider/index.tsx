@@ -18,6 +18,13 @@ import { ModelInfo } from "../../../../electron/share/model.ts";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import sleep from "@utils/sleep.ts";
 
+const CODE_LANG_MAP = {
+  'python': 'py',
+  'javascript': 'js',
+  'python_custom_ui': 'py-custom',
+}
+
+
 const initialValue: IAgentContext = {
    loading: false,
    selectedAgent: undefined,
@@ -121,6 +128,7 @@ const AgentProvider: React.FC<
    // console.log("stephen: isInstalled", isInstalled);
    // console.log('stephen availableModelAgents', availableModelAgents);
    // console.log('stephen installedModelAgents', installedModelAgents);
+   // console.log('stephen: isCustomUI', isCustomUI);
    // console.log("================================");
 
    useEffect(() => {
@@ -466,7 +474,7 @@ const AgentProvider: React.FC<
 
          const oldCodeVersion = Number(localStorageService.getItem(agent.agent_contract_address));
          
-         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
+         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name?.toLowerCase}`;
 
          let filePath: string | undefined = "";
          const isExisted = await checkFileExistsOnLocal(
@@ -484,7 +492,7 @@ const AgentProvider: React.FC<
                console.log('filePath New', filePath)
             } else {
                const base64Array = splitBase64(rawCode);
-               const code = base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
+               const code = base64Array.reverse().map(item => isBase64(item) ? atob(item) : item).join('\n');
 
                filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
                localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
@@ -513,7 +521,7 @@ const AgentProvider: React.FC<
     const removeUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_name) {
         try {
-          const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
+          const folderNameOnLocal = `${agent.network_id}-${agent.agent_name?.toLowerCase()}`;
           await globalThis.electronAPI.removeFolder(folderNameOnLocal);
         } catch (error) {
         }
@@ -586,7 +594,7 @@ const AgentProvider: React.FC<
 
         const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
         const fileNameOnLocal = `prompt.${codeLang}`;
-        const folderNameOnLocal = `${chainId}-${agentName}`;
+        const folderNameOnLocal = `${chainId}-${agentName?.toLowerCase()}`;
 
         const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderNameOnLocal);
         if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
@@ -615,7 +623,21 @@ const AgentProvider: React.FC<
       if (!agent) return;
 
       try {
-         await globalThis.electronAPI.dockerRunAgent(agent?.agent_name, agent?.network_id.toString());
+         const chainId = agent?.network_id || BASE_CHAIN_ID;
+         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
+
+         const codeLanguage = await cAgent.getCodeLanguage();
+         const lang = CODE_LANG_MAP[codeLanguage];
+
+         const options: any = {
+            language: lang
+         };
+
+         if (agent?.required_wallet) {
+            options.privateKey = agentWallet?.privateKey!;
+         }
+
+         await globalThis.electronAPI.dockerRunAgent(agent?.agent_name?.toLowerCase(), agent?.network_id.toString(), JSON.stringify(options));
       } catch (e) {
          console.log('handleRunDockerAgent', e);
       } finally {
@@ -625,7 +647,7 @@ const AgentProvider: React.FC<
    const handleStopDockerAgent = async (agent?: IAgentToken) => {
       if (!agent) return;
 
-      await globalThis.electronAPI.dockerStopAgent(agent?.agent_name, agent?.network_id.toString());
+      await globalThis.electronAPI.dockerStopAgent(agent?.agent_name?.toLowerCase(), agent?.network_id.toString());
    };
 
    const fetchInstalledUtilityAgents = async () => {
@@ -639,7 +661,7 @@ const AgentProvider: React.FC<
 
    const checkUtilityAgentInstalled = async (agent: IAgentToken) => {
       try {
-         if (installedUtilityAgents?.some?.(key => key === `${agent.network_id}-${agent.agent_name}`.toLowerCase())) {
+         if (installedUtilityAgents?.some?.(key => key === `${agent.network_id}-${agent.agent_name?.toLowerCase()}`)) {
             setAgentInstalled(agent);
          } else {
             setAgentUnInstalled(agent);

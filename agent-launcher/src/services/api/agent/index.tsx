@@ -86,7 +86,7 @@ const AgentAPI = {
    chatAgentUtility: async ({ agent, prvKey, messages }: { agent: IAgentToken, prvKey?: string, messages: any[]}): Promise<any> => {
       try {
          const res: AgentInfo = await (new CApiClient()).api.post(
-            `http://localhost:33030/${agent?.network_id}-${agent?.agent_name}/prompt`, {
+            `http://localhost:33030/${agent?.network_id}-${agent?.agent_name?.toLowerCase()}/prompt`, {
                "messages": messages,
                "privateKey": prvKey,
                "chainId": agent?.network_id
