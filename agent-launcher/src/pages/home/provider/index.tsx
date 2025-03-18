@@ -504,7 +504,7 @@ const AgentProvider: React.FC<
       if (agent && !!agent.agent_contract_address && agent.agent_type === AgentType.UtilityPython) {
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
-         return (await cAgent.getCodeLanguage()) !== 'python';
+         return (await cAgent.getCodeLanguage()) === 'python_custom_ui';
       }
 
       return false;
@@ -639,7 +639,7 @@ const AgentProvider: React.FC<
 
    const checkUtilityAgentInstalled = async (agent: IAgentToken) => {
       try {
-         if (installedUtilityAgents?.some?.(key => key === `${agent.network_id}-${agent.agent_name}`)) {
+         if (installedUtilityAgents?.some?.(key => key === `${agent.network_id}-${agent.agent_name}`.toLowerCase())) {
             setAgentInstalled(agent);
          } else {
             setAgentUnInstalled(agent);

@@ -18,7 +18,7 @@ class CAgentContract {
 
    public getCodeLanguage = async () => {
       const codeLanguage = await this.contract.getCodeLanguage();
-      return codeLanguage;
+      return codeLanguage; // javascript / python / python_custom_ui
    };
 
    public getCurrentVersion = async () => {

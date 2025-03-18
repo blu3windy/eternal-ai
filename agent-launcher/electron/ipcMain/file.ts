@@ -11,7 +11,7 @@ import { EMIT_EVENT_NAME } from "../share/event-name.ts";
  * │ │ └── agent_2.js
  * │
  */
-const appDir = path.join(app.getPath('userData'), 'agent-data', 'agents');
+const APP_DIR = path.join(app.getPath('userData'), 'agent-data', 'agents');
 
 const checkAndCreateFolder = async (folderPath: string) => {
    try {
@@ -21,23 +21,43 @@ const checkAndCreateFolder = async (folderPath: string) => {
    }
 }
 
+const getFilePath = (fileName: string, folderName: string): string => {
+   const folderPath = path.join(APP_DIR, folderName.toLowerCase());
+   return path.join(folderPath, fileName);
+};
+
+async function getFolders(folderPath: string) {
+   try {
+      const items = await fs.readdir(folderPath);
+      const folderPromises = items.map(async item => {
+         try {
+            const stats = await fs.stat(path.join(folderPath, item.toLowerCase()));
+            return stats.isDirectory() ? item : null;
+         } catch (error) {
+            return null;
+         }
+      });
+      const folders = (await Promise.all(folderPromises)).filter(Boolean);
+      return folders;
+   } catch (error) {
+      throw error;
+   }
+}
+
 const ipcMainSafeFile = () => {
    ipcMain.handle(EMIT_EVENT_NAME.READ_FILE, async (_, fileName, folderName) => {
-      const _appDir = path.join(appDir, folderName);
-      await checkAndCreateFolder(_appDir);
-      const filePath = path.join(_appDir, fileName);
+      const filePath = getFilePath(fileName, folderName);
+      await checkAndCreateFolder(path.dirname(filePath));
       return await fs.readFile(filePath, 'utf-8');
    });
    ipcMain.handle(EMIT_EVENT_NAME.GET_FILE_PATH, async (_, fileName, folderName) => {
-      const _appDir = path.join(appDir, folderName);
-      await checkAndCreateFolder(_appDir);
-      const filePath = path.join(_appDir, fileName);
+      const filePath = getFilePath(fileName, folderName);
+      await checkAndCreateFolder(path.dirname(filePath));
       return filePath;
    });
    ipcMain.handle(EMIT_EVENT_NAME.WRITE_FILE, async (_, fileName, folderName, content) => {
-      const _appDir = path.join(appDir, folderName);
-      await checkAndCreateFolder(_appDir);
-      const filePath = path.join(_appDir, fileName);
+      const filePath = getFilePath(fileName, folderName);
+      await checkAndCreateFolder(path.dirname(filePath));
       await fs.writeFile(filePath, content, "utf8");
       try {
          const stat = await fs.stat(filePath);
@@ -52,8 +72,7 @@ const ipcMainSafeFile = () => {
    });
    ipcMain.handle(EMIT_EVENT_NAME.ACCESS_FILE, async (_, fileName, folderName) => {
       try {
-         const _appDir = path.join(appDir, folderName);
-         const filePath = path.join(_appDir, fileName);
+         const filePath = getFilePath(fileName, folderName.toLowerCase());
          await fs.stat(filePath);
          return true;
       } catch (error) {
@@ -62,7 +81,7 @@ const ipcMainSafeFile = () => {
    });
    ipcMain.handle(EMIT_EVENT_NAME.GET_EXIST_FOLDERS, async (_) => {
       try {
-         const folders = await getFolders(appDir);
+         const folders = await getFolders(APP_DIR);
          return folders;
       } catch (error: any) {
          return { error: error.message };
@@ -70,8 +89,8 @@ const ipcMainSafeFile = () => {
    });
    ipcMain.handle(EMIT_EVENT_NAME.REMOVE_FOLDERS, async (_, folderName) => {
       try {
-         const _appDir = path.join(appDir, folderName);
-         await fs.rm(_appDir, { recursive: true, force: true });
+         const folderPath = path.join(APP_DIR, folderName.toLowerCase());
+         await fs.rm(folderPath, { recursive: true, force: true });
          return true;
       } catch (error: any) {
          return false;
@@ -90,9 +109,8 @@ const ipcMainSafeFile = () => {
       }
    });
    ipcMain.handle(EMIT_EVENT_NAME.SAVE_ZIPFILE, async (_, fileName, folderName, content) => {
-      const _appDir = path.join(appDir, folderName);
-      await checkAndCreateFolder(_appDir);
-      const filePath = path.join(_appDir, fileName);
+      const filePath = getFilePath(fileName, folderName);
+      await checkAndCreateFolder(path.dirname(filePath));
       // Convert the string (base64 or binary) into a Buffer
       const zipBuffer = Buffer.from(content, "base64"); // Change to "utf-8" if it's plain binary
 
@@ -102,23 +120,5 @@ const ipcMainSafeFile = () => {
       return filePath;
    });
 };
-
-async function getFolders(folderPath: string) {
-   try {
-      const items = await fs.readdir(folderPath);
-      const folderPromises = items.map(async item => {
-         try {
-            const stats = await fs.stat(path.join(folderPath, item));
-            return stats.isDirectory() ? item : null;
-         } catch (error) {
-            return null;
-         }
-      });
-      const folders = (await Promise.all(folderPromises)).filter(Boolean);
-      return folders;
-   } catch (error) {
-      throw error;
-   }
-}
 
 export default ipcMainSafeFile;
