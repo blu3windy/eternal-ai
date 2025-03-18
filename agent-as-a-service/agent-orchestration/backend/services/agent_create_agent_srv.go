@@ -435,13 +435,14 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 	}
 
 	var checkTweetID string
-	redisKeyToCheckHandled := s.GetGenerateVideoCheckTweetHandledRedisKey(tweetId)
-	err = s.GetRedisCachedWithKey(redisKeyToCheckHandled, &checkTweetID)
-	//err := errors.New("redis:nil")
-	if err == nil && checkTweetID != "" {
-		return nil, nil // already handled
+	if source != "admin_api" {
+		redisKeyToCheckHandled := s.GetGenerateVideoCheckTweetHandledRedisKey(tweetId)
+		err = s.GetRedisCachedWithKey(redisKeyToCheckHandled, &checkTweetID)
+		//err := errors.New("redis:nil")
+		if err == nil && checkTweetID != "" {
+			return nil, nil // already handled
+		}
 	}
-
 	twIDs := []string{tweetId}
 	twitterDetail, err := s.twitterWrapAPI.LookupUserTweets(twitterInfo.AccessToken, twIDs)
 	if err != nil {
