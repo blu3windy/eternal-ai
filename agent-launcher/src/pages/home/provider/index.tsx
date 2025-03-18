@@ -617,7 +617,7 @@ const AgentProvider: React.FC<
          const lang = getUtilityAgentCodeLanguage(agent);
 
          const options: any = {
-            language: lang
+            type: lang
          };
 
          if (agent?.required_wallet) {

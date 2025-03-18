@@ -215,7 +215,8 @@ const ipcMainDocker = () => {
          `--container-name "${dnsHost}"`,
       ]
       const paramsStr = params.join(' ');
-      await command.execAsyncStream(`bash "${scriptPath}" get-port ${paramsStr}`);
+      const port = await command.execAsync(`bash "${scriptPath}" get-port ${paramsStr}`);
+      return port;
    });
 }
 
