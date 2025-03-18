@@ -38,7 +38,8 @@ export interface IElectronAPI {
   removeFolder: (folderName: string) => Promise<boolean>
   getExistAgentFolders: () => Promise<string[]>
   unzipFile: (zipPath: string, extractTo: string) => void
-  writezipFile: (fileName: string, folderName: string, data: string) => Promise<string>
+  writezipFile: (fileName: string, folderName: string, data: string, subFolderName?: string) => Promise<string>
+  copyRequireRunPython: (folderName: string) => Promise<void>
 
   dockerCopyBuild: () => Promise<void>
   dockerBuild: () => Promise<void>

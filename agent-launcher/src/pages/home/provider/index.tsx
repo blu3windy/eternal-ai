@@ -70,9 +70,7 @@ const AgentProvider: React.FC<
    tokenAddress: _tokenAddress,
 }: PropsWithChildren & { tokenAddress?: string }): React.ReactElement => {
    const [loading, setLoading] = useState(true);
-   const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(
-      undefined
-   );
+   const [selectedAgent, _setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
    const [isInstalling, setIsInstalling] = useState(false);
    const [isUnInstalling, setIsUnInstalling] = useState(false);
    const [isStarting, setIsStarting] = useState(false);
@@ -89,7 +87,6 @@ const AgentProvider: React.FC<
    const [installedModelAgents, setInstalledModelAgents] = useState<IAgentToken[]>([]);
    const [availableModelAgents, setAvailableModelAgents] = useState<IAgentToken[]>([]);
    const [installedSocialAgents, setInstalledSocialAgents] = useState<number[]>([]);
-   const [isCustomUI, setIsCustomUI] = useState(false);
 
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
 
@@ -153,7 +150,7 @@ const AgentProvider: React.FC<
 
          intervalCheckAgentRunning(selectedAgent);
 
-         checkCustomUI(selectedAgent);
+         // checkCustomUI(selectedAgent);
       }
    }, [selectedAgent?.id]);
 
@@ -179,22 +176,6 @@ const AgentProvider: React.FC<
       }
    }, [selectedAgent?.id, installedUtilityAgents, installedModelAgents, installedSocialAgents]);
 
-
-   const checkCustomUI = async (agent) => {
-      try {
-         if(agent) {
-            if ([AgentType.UtilityPython].includes(agent.agent_type)) {
-               const res = await getIsCustomUIOfPythonAgent(agent);
-               setIsCustomUI(res);
-            } else {
-               setIsCustomUI(false);
-            }
-         }
-      } catch (err) {
-         console.error("Check agent custom ui error:", err);
-         setIsCustomUI(false);
-      }
-   }
 
    const checkAgentRunning = async (agent) => {
       try {
@@ -339,7 +320,7 @@ const AgentProvider: React.FC<
             fetchInstalledSocialAgents(); //fetch then check agent installed in useEffect
 
             // setAgentInstalled(agent);
-         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(agent.agent_type)) {
+         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
 
             fetchInstalledUtilityAgents(); //fetch then check agent installed in useEffect
@@ -466,7 +447,7 @@ const AgentProvider: React.FC<
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
 
          let fileNameOnLocal = 'prompt.js';
-         if (agent.agent_type === AgentType.UtilityPython) {
+         if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             fileNameOnLocal = 'app.zip';
          }
       
@@ -474,7 +455,7 @@ const AgentProvider: React.FC<
 
          const oldCodeVersion = Number(localStorageService.getItem(agent.agent_contract_address));
          
-         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name?.toLowerCase}`;
+         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name?.toLowerCase()}`;
 
          let filePath: string | undefined = "";
          const isExisted = await checkFileExistsOnLocal(
@@ -486,37 +467,31 @@ const AgentProvider: React.FC<
             console.log('filePath isExisted', filePath)
          } else {
             const rawCode = await cAgent.getAgentCode(codeVersion);
-            if (agent.agent_type === AgentType.UtilityPython) {
-               filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode);
+            if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
+               filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode, agent.agent_type === AgentType.UtilityPython ? 'app' : undefined);
                localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
-               console.log('filePath New', filePath)
+               console.log('filePath New', filePath);
+               
+               if (agent.agent_type === AgentType.UtilityPython) {
+                  await globalThis.electronAPI.copyRequireRunPython(folderNameOnLocal);
+               }
+               if (filePath) {
+                  globalThis.electronAPI.unzipFile(filePath, filePath.replaceAll(`/${fileNameOnLocal}`, ''));
+               }
             } else {
                const base64Array = splitBase64(rawCode);
                const code = base64Array.reverse().map(item => isBase64(item) ? atob(item) : item).join('\n');
 
                filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
                localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
-               console.log('filePath New', filePath)
+               console.log('filePath New', filePath);
             }
             
          }
          
-         if (filePath && agent.agent_type === AgentType.UtilityPython) {
-            console.log('unzipFile', filePath)
-            globalThis.electronAPI.unzipFile(filePath, filePath.replaceAll(`/${fileNameOnLocal}`, ''));
-         }
+         
       }
    };
-
-   const getIsCustomUIOfPythonAgent = async (agent: IAgentToken) => {
-      if (agent && !!agent.agent_contract_address && agent.agent_type === AgentType.UtilityPython) {
-         const chainId = agent?.network_id || BASE_CHAIN_ID;
-         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
-         return (await cAgent.getCodeLanguage()) === 'python_custom_ui';
-      }
-
-      return false;
-   }
 
     const removeUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_name) {
@@ -737,6 +712,54 @@ const AgentProvider: React.FC<
       }
    }
 
+   // Handle agent switching smoothly
+   const setSelectedAgent = async (newAgent: IAgentToken | undefined) => {
+      try {
+         // Cleanup current agent if exists
+         if (selectedAgent) {
+            // Clear intervals
+            if (refInterval.current) {
+               clearInterval(refInterval.current);
+            }
+            
+            // Stop running agent if needed
+            if (isRunning) {
+               await stopAgent(selectedAgent);
+            }
+            
+            // Reset states
+            setIsRunning(false);
+            setIsInstalled(false);
+            setAgentWallet(undefined);
+         }
+
+         // Set new agent
+         _setSelectedAgent(newAgent);
+
+         if (newAgent) {
+            // Initialize new agent state
+            if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(newAgent.agent_type)) {
+               checkSocialAgentInstalled(newAgent);
+            } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(newAgent.agent_type)) {
+               checkUtilityAgentInstalled(newAgent);
+            } else if ([AgentType.Model].includes(newAgent.agent_type)) {
+               checkModelAgentInstalled(newAgent);
+            }
+
+            // Check if agent has wallet
+            const agentsHasWallet = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
+            if (agentsHasWallet?.includes(newAgent.id)) {
+               await createAgentWallet();
+            }
+
+            // Start checking agent status
+            intervalCheckAgentRunning(newAgent);
+         }
+      } catch (error) {
+         console.error('Error switching agent:', error);
+      }
+   };
+
    const contextValues: any = useMemo(() => {
       return {
          loading,
@@ -770,7 +793,7 @@ const AgentProvider: React.FC<
          unInstallAgent,
          isUnInstalling,
          installedSocialAgents,
-         isCustomUI,
+         isCustomUI: selectedAgent?.agent_type === AgentType.CustomUI,
       };
    }, [
       loading,
@@ -804,7 +827,6 @@ const AgentProvider: React.FC<
       unInstallAgent,
       isUnInstalling,
       installedSocialAgents,
-      isCustomUI,
    ]);
 
    return (

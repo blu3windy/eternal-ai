@@ -21,9 +21,14 @@ const checkAndCreateFolder = async (folderPath: string) => {
    }
 }
 
-const getFilePath = (fileName: string, folderName: string): string => {
-   const folderPath = path.join(APP_DIR, folderName.toLowerCase());
-   return path.join(folderPath, fileName);
+const getFilePath = (fileName: string, folderName: string, subFolderName?: string): string => {
+   if (subFolderName) {
+      const folderPath = path.join(APP_DIR, folderName.toLowerCase(), subFolderName);
+      return path.join(folderPath, fileName);
+   } else {
+      const folderPath = path.join(APP_DIR, folderName.toLowerCase());
+      return path.join(folderPath, fileName);
+   }
 };
 
 async function getFolders(folderPath: string) {
@@ -108,8 +113,8 @@ const ipcMainSafeFile = () => {
          console.error("Error unzipping file:", err);
       }
    });
-   ipcMain.handle(EMIT_EVENT_NAME.SAVE_ZIPFILE, async (_, fileName, folderName, content) => {
-      const filePath = getFilePath(fileName, folderName);
+   ipcMain.handle(EMIT_EVENT_NAME.SAVE_ZIPFILE, async (_, fileName, folderName, content, subFolderName) => {
+      const filePath = getFilePath(fileName, folderName, subFolderName);
       await checkAndCreateFolder(path.dirname(filePath));
       // Convert the string (base64 or binary) into a Buffer
       const zipBuffer = Buffer.from(content, "base64"); // Change to "utf-8" if it's plain binary
@@ -119,6 +124,8 @@ const ipcMainSafeFile = () => {
       console.log("ZIP file saved:", filePath);
       return filePath;
    });
+   
+
 };
 
 export default ipcMainSafeFile;

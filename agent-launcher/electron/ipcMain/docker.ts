@@ -1,17 +1,13 @@
 import { app, ipcMain } from "electron";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
-import fs from "fs";
 import path from "path";
 import {
-   executeWithIgnoreError,
-   getScriptPath,
-   PUBLIC_SCRIPT,
    SCRIPTS_NAME,
    USER_DATA_FOLDER_NAME
 } from "../share/utils.ts";
 import command from "../share/command-tool.ts";
-import { copyFiles } from "../share/scripts.ts";
 import { CodeLanguage } from "../types.ts";
+import { copyFiles, copyPublicToUserData } from "../share/scripts.ts";
 
 const DOCKER_NAME = 'agent';
 const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
@@ -199,6 +195,14 @@ const ipcMainDocker = () => {
          console.log(error);
          throw error;
       }
+   });
+
+   ipcMain.handle(EMIT_EVENT_NAME.COPY_REQUIRE_RUN_PYTHON, async (_, folderName) => {
+      await copyPublicToUserData({
+         names: ["Dockerfile", "requirements.txt", "server.py"],
+         destination: [USER_DATA_FOLDER_NAME.AGENT_DATA, USER_DATA_FOLDER_NAME.AGENTS, folderName],
+         source: [USER_DATA_FOLDER_NAME.AGENT_PY]
+      })
    });
 }
 
