@@ -467,7 +467,7 @@ const AgentProvider: React.FC<
 
          const oldCodeVersion = Number(localStorageService.getItem(agent.agent_contract_address));
          
-         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
+         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name?.toLowerCase}`;
 
          let filePath: string | undefined = "";
          const isExisted = await checkFileExistsOnLocal(
@@ -514,7 +514,7 @@ const AgentProvider: React.FC<
     const removeUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_name) {
         try {
-          const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
+          const folderNameOnLocal = `${agent.network_id}-${agent.agent_name?.toLowerCase()}`;
           await globalThis.electronAPI.removeFolder(folderNameOnLocal);
         } catch (error) {
         }
@@ -616,7 +616,7 @@ const AgentProvider: React.FC<
       if (!agent) return;
 
       try {
-         await globalThis.electronAPI.dockerRunAgent(agent?.agent_name, agent?.network_id.toString());
+         await globalThis.electronAPI.dockerRunAgent(agent?.agent_name?.toLowerCase(), agent?.network_id.toString());
       } catch (e) {
          console.log('handleRunDockerAgent', e);
       } finally {
@@ -626,7 +626,7 @@ const AgentProvider: React.FC<
    const handleStopDockerAgent = async (agent?: IAgentToken) => {
       if (!agent) return;
 
-      await globalThis.electronAPI.dockerStopAgent(agent?.agent_name, agent?.network_id.toString());
+      await globalThis.electronAPI.dockerStopAgent(agent?.agent_name?.toLowerCase(), agent?.network_id.toString());
    };
 
    const fetchInstalledUtilityAgents = async () => {
@@ -640,7 +640,7 @@ const AgentProvider: React.FC<
 
    const checkUtilityAgentInstalled = async (agent: IAgentToken) => {
       try {
-         if (installedUtilityAgents?.some?.(key => key === `${agent.network_id}-${agent.agent_name}`)) {
+         if (installedUtilityAgents?.some?.(key => key === `${agent.network_id}-${agent.agent_name?.toLowerCase()}`)) {
             setAgentInstalled(agent);
          } else {
             setAgentUnInstalled(agent);
