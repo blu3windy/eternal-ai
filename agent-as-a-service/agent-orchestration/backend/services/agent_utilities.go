@@ -100,7 +100,9 @@ func (s *Service) UpgradeAgentUpgradeable(ctx context.Context, agentInfoID uint)
 	if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
 		agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
 		agentInfo.AgentType != models.AgentInfoAgentTypeInfa &&
-		agentInfo.AgentType != models.AgentInfoAgentTypePython {
+		agentInfo.AgentType != models.AgentInfoAgentTypePython &&
+		agentInfo.AgentType != models.AgentInfoAgentTypeCustomUi &&
+		agentInfo.AgentType != models.AgentInfoAgentTypeCustomPrompt {
 		return "", errs.NewError(errs.ErrBadRequest)
 	}
 	logicAddress := strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "agentupgradeable_address"))
@@ -144,7 +146,9 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 		if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
 			agentInfo.AgentType != models.AgentInfoAgentTypeInfa &&
 			agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
-			agentInfo.AgentType != models.AgentInfoAgentTypePython {
+			agentInfo.AgentType != models.AgentInfoAgentTypePython &&
+			agentInfo.AgentType != models.AgentInfoAgentTypeCustomUi &&
+			agentInfo.AgentType != models.AgentInfoAgentTypeCustomPrompt {
 			return errs.NewError(errs.ErrBadRequest)
 		}
 		if agentInfo.MintHash == "" {
@@ -227,6 +231,14 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 					case models.AgentInfoAgentTypeModel:
 						{
 							codeLanguage = "model"
+						}
+					case models.AgentInfoAgentTypeCustomUi:
+						{
+							codeLanguage = "custom_ui"
+						}
+					case models.AgentInfoAgentTypeCustomPrompt:
+						{
+							codeLanguage = "custom_prompt"
 						}
 					}
 					contractAddress, logicAddress, txHash, err := s.DeployAgentUpgradeableAddress(

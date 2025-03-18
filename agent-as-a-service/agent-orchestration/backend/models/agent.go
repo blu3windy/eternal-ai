@@ -64,6 +64,8 @@ const (
 	AgentInfoAgentTypePython        AgentInfoAgentType = 7
 	AgentInfoAgentTypeInfa          AgentInfoAgentType = 8
 	AgentInfoAgentTypeVideo         AgentInfoAgentType = 9
+	AgentInfoAgentTypeCustomUi      AgentInfoAgentType = 10
+	AgentInfoAgentTypeCustomPrompt  AgentInfoAgentType = 11
 )
 
 type (
