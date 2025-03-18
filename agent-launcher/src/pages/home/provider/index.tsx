@@ -87,7 +87,6 @@ const AgentProvider: React.FC<
    const [installedModelAgents, setInstalledModelAgents] = useState<IAgentToken[]>([]);
    const [availableModelAgents, setAvailableModelAgents] = useState<IAgentToken[]>([]);
    const [installedSocialAgents, setInstalledSocialAgents] = useState<number[]>([]);
-   const [isCustomUI, setIsCustomUI] = useState(false);
 
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
 
@@ -151,7 +150,7 @@ const AgentProvider: React.FC<
 
          intervalCheckAgentRunning(selectedAgent);
 
-         checkCustomUI(selectedAgent);
+         // checkCustomUI(selectedAgent);
       }
    }, [selectedAgent?.id]);
 
@@ -177,20 +176,6 @@ const AgentProvider: React.FC<
       }
    }, [selectedAgent?.id, installedUtilityAgents, installedModelAgents, installedSocialAgents]);
 
-
-   const checkCustomUI = async (agent) => {
-      try {
-         if(agent) {
-            const res = await getIsCustomUIOfAgent(agent);
-            setIsCustomUI(res);
-         } else {
-            setIsCustomUI(false);
-         }
-      } catch (err) {
-         console.error("Check agent custom ui error:", err);
-         setIsCustomUI(false);
-      }
-   }
 
    const checkAgentRunning = async (agent) => {
       try {
@@ -507,16 +492,6 @@ const AgentProvider: React.FC<
       }
    };
 
-   const getIsCustomUIOfAgent = async (agent: IAgentToken) => {
-      if (agent && !!agent.agent_contract_address) {
-         const chainId = agent?.network_id || BASE_CHAIN_ID;
-         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
-         return (await cAgent.getCodeLanguage()) === 'custom_ui';
-      }
-
-      return false;
-   }
-
     const removeUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_name) {
         try {
@@ -754,7 +729,6 @@ const AgentProvider: React.FC<
             // Reset states
             setIsRunning(false);
             setIsInstalled(false);
-            setIsCustomUI(false);
             setAgentWallet(undefined);
          }
 
@@ -779,12 +753,6 @@ const AgentProvider: React.FC<
 
             // Start checking agent status
             intervalCheckAgentRunning(newAgent);
-            
-            // Check UI type for Python agents
-            if ([AgentType.UtilityPython].includes(newAgent.agent_type)) {
-               const hasCustomUI = await getIsCustomUIOfPythonAgent(newAgent);
-               setIsCustomUI(hasCustomUI);
-            }
          }
       } catch (error) {
          console.error('Error switching agent:', error);
@@ -824,7 +792,7 @@ const AgentProvider: React.FC<
          unInstallAgent,
          isUnInstalling,
          installedSocialAgents,
-         isCustomUI,
+         isCustomUI: selectedAgent?.agent_type === AgentType.CustomUI,
       };
    }, [
       loading,
@@ -858,7 +826,6 @@ const AgentProvider: React.FC<
       unInstallAgent,
       isUnInstalling,
       installedSocialAgents,
-      isCustomUI,
    ]);
 
    return (
