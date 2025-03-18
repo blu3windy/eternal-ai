@@ -516,7 +516,8 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 			}
 		}
 		if tweetParseInfo == nil || tweetParseInfo.IsGenerateVideo == false {
-			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL_SYNTAX] a requirement gen fail syntax tw_id=%v,  full_text:%v ", tweetId, fullText))
+			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL_SYNTAX] a requirement gen fail syntax tw_id=%v, tw_user=%v,  full_text:%v ",
+				tweetId, v.User.UserName, fullText))
 			continue
 		}
 
@@ -559,8 +560,9 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 
 		// now support only image to video
 		if entityType != models.AgentTwitterPostTypeImage2video {
-			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[TEXT_TO_VIDEO_FOUND_SKIP] a requirement gen video, db_id=%v, tweet_id=%v, post :%v ",
-				m.ID, m.TwitterPostID, fullText))
+			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[TEXT_TO_VIDEO_FOUND_SKIP] a requirement gen video, db_id=%v,"+
+				" twitter_user=%v tweet_id=%v, post :%v ",
+				m.ID, m.TwitterUsername, m.TwitterPostID, fullText))
 
 			return nil, nil
 		}
@@ -571,8 +573,8 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 		}
 
 		_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
-		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND][%v] a requirement gen video, db_id=%v, tweet_id=%v, post :%v ",
-			source, m.ID, m.TwitterPostID, fullText))
+		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND][%v] a requirement gen video, db_id=%v, twitter_user=%v, tweet_id=%v, post :%v ",
+			source, m.ID, m.TwitterUsername, m.TwitterPostID, fullText))
 		return m, nil
 	}
 
