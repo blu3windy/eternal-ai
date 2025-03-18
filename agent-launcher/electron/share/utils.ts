@@ -19,8 +19,11 @@ const USER_DATA_FOLDER_NAME = {
    AGENT_DATA: "agent-data",
    AGENT_ROUTER: "agent-router",
    AGENT_JS: "agent-js",
+   AGENT_PY: "agent-py",
+   AGENT_PY_CUSTOM: "agent-py-custom",
    MODEL: "model",
-   DOCKER: "docker"
+   DOCKER: "docker",
+   AGENTS: "agents",
 }
 
 const getScriptPath = (fileName: string, home_path = PUBLIC_SCRIPT) => {

@@ -63,6 +63,30 @@ const copyFiles = async () => {
    copyFilesToFolders(folderPaths, FILES_TO_COPY);
 };
 
+const copyPublicToUserData = async (param: {
+   names: string[];
+   destination: string[];
+   source: string[];
+}) => {
+   const userDataPath = app.getPath("userData");
+   for (const name of param.names) {
+      const destinationFolder = path.join(userDataPath, ...param.destination);
+      const destination = path.join(destinationFolder, name);
+      const source = getScriptPath(name,`${[PUBLIC_SCRIPT, ...param.source].join("/")}`);
+
+      // destination: '/Users/macbookpro/Library/Application Support/agent-launcher/agent-data/agent-js/package.json',
+      //    source: '/Users/macbookpro/trustless-computer/eternal-ai/agent-launcher/public/scripts/agent-js/package.json'
+
+
+      if (!fs.existsSync(destinationFolder)) {
+         fs.mkdirSync(destinationFolder, { recursive: true });
+      }
+
+      fs.copyFileSync(source, destination);
+   }
+}
+
 export {
-   copyFiles
+   copyFiles,
+   copyPublicToUserData
 }
