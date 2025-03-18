@@ -1015,12 +1015,16 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 							prompt := twitterPost.ExtractContent
 							if twitterPost.Type == models.AgentTwitterPostTypeImage2video {
 								model = "Wan-I2V"
-								videoMagicPrompt, err := s.GetVideoMagicPromptFromImage(ctx, twitterPost.ExtractContent, twitterPost.ExtractMediaContent)
-								if err != nil {
-									return err
+								if !strings.Contains(twitterPost.Content, "create video:") &&
+									!strings.Contains(twitterPost.Content, "create video :") {
+									videoMagicPrompt, err := s.GetVideoMagicPromptFromImage(ctx, twitterPost.ExtractContent, twitterPost.ExtractMediaContent)
+									if err != nil {
+										return err
+									}
+									prompt = videoMagicPrompt
 								}
 								promptByte, _ := json.Marshal(map[string]interface{}{
-									"prompt": videoMagicPrompt,
+									"prompt": prompt,
 									"url":    twitterPost.ExtractMediaContent,
 								})
 								prompt = string(promptByte)
