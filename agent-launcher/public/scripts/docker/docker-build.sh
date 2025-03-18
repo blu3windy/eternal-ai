@@ -90,6 +90,9 @@ for container in "${DOCKER_CONTAINERS[@]}"; do
     docker stop "${container_name}" || true
     docker rm "${container_name}" || true
 
+    docker stop "launcher-agent-router" || true
+    docker rm "launcher-agent-router" || true
+
     # Run new container if it has a port
     if [ -n "$port" ]; then
         log_message "Starting $container_name..."
