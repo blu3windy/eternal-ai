@@ -41,4 +41,5 @@ export interface IAgentContext {
   isUnInstalling: boolean;
   installedSocialAgents: number[];
   isCustomUI: boolean;
+  customUIPort: string;
 }

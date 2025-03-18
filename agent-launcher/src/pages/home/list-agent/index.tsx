@@ -154,7 +154,7 @@ const AgentsList = () => {
          } else if ([CategoryOption.Model].includes(refParams.current.category)) {
             params.agent_types = [AgentType.Model].join(',');
          } else if ([CategoryOption.Utility].includes(refParams.current.category)) {
-            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython].join(',');
+            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].join(',');
          } else if ([CategoryOption.Infra].includes(refParams.current.category)) {
             params.agent_types = [AgentType.Infra].join(',');
          } else {

@@ -5,12 +5,13 @@ import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.
 import ChatList from "@pages/home/chat-agent/ChatAgent/components/ChatList";
 import InputText from "@pages/home/chat-agent/ChatAgent/components/InputText";
 import { AgentContext } from "@pages/home/provider";
-import { Button, Flex, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Text } from "@chakra-ui/react";
+import WebView from "@components/WebView";
 
 const ChatBox = () => {
   const { loading, onRetryErrorMessage } = useChatAgentProvider();
 
-  const { isRunning, requireInstall, selectedAgent, isStarting, startAgent, agentWallet } = useContext(AgentContext);
+  const { isRunning, requireInstall, selectedAgent, isStarting, startAgent, agentWallet, isCustomUI, customUIPort } = useContext(AgentContext);
 
   const handleStartAgent = () => {
     startAgent(selectedAgent);
@@ -89,20 +90,34 @@ const ChatBox = () => {
             </Flex>
           ) : (
             <>
-              <div
-                className={s.chatList}
-                style={{
-                  height: innerMaxHeight,
-                  overflow: "auto",
-                  // minHeight: innerMaxHeight,
-                }}
-              >
-                <ChatList
-                  onRetryErrorMessage={onRetryErrorMessage}
-                  isSending={loading}
-                />
-              </div>
-              <InputText isSending={loading} />
+            {
+               isCustomUI ? (
+                  <Box width="100%">
+                     <WebView 
+                        url={`http://localhost:${customUIPort}`}
+                        height="calc(100vh - 100px)"
+                        width="100%"
+                        />
+                  </Box>
+               ) : (
+                  <>
+                    <div
+                      className={s.chatList}
+                      style={{
+                        height: innerMaxHeight,
+                        overflow: "auto",
+                        // minHeight: innerMaxHeight,
+                      }}
+                    >
+                      <ChatList
+                        onRetryErrorMessage={onRetryErrorMessage}
+                        isSending={loading}
+                      />
+                    </div>
+                    <InputText isSending={loading} />
+                  </>
+               )
+            }
             </>
           )
         }

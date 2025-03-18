@@ -52,6 +52,7 @@ const initialValue: IAgentContext = {
    isUnInstalling: false,
    installedSocialAgents: [],
    isCustomUI: false,
+   customUIPort: '',
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -80,6 +81,7 @@ const AgentProvider: React.FC<
    const [installedModelAgents, setInstalledModelAgents] = useState<IAgentToken[]>([]);
    const [availableModelAgents, setAvailableModelAgents] = useState<IAgentToken[]>([]);
    const [installedSocialAgents, setInstalledSocialAgents] = useState<number[]>([]);
+   const [customUIPort, setCustomUIPort] = useState<string>('');
 
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
 
@@ -142,8 +144,6 @@ const AgentProvider: React.FC<
          }
 
          intervalCheckAgentRunning(selectedAgent);
-
-         // checkCustomUI(selectedAgent);
       }
    }, [selectedAgent?.id]);
 
@@ -184,11 +184,19 @@ const AgentProvider: React.FC<
    }
 
 
-   const checkAgentRunning = async (agent) => {
+   const checkAgentRunning = async (agent: IAgentToken) => {
       try {
+         console.log("stephen: agent", agent);
          if(agent) {
-            if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
+            if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
                const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+               setIsRunning(true);
+            } else if ([AgentType.CustomUI].includes(agent.agent_type)) {
+               console.log("stephen: checkAgentRunning", agent.agent_name?.toLowerCase(), agent.network_id.toString());
+               const port = await globalThis.electronAPI.dockerRunningPort(agent.agent_name?.toLowerCase(), agent.network_id.toString());
+               console.log("stephen: port", port);
+               // setCustomUIPort('55000');
+               setCustomUIPort(port);
                setIsRunning(true);
             } else if ([AgentType.Model].includes(agent.agent_type)) {
                const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
@@ -202,6 +210,7 @@ const AgentProvider: React.FC<
       } catch (err) {
          console.error("Check agent running error:", err);
          setIsRunning(false);
+         setCustomUIPort('');
       }
    }
 
@@ -616,6 +625,8 @@ const AgentProvider: React.FC<
             options.address = agentWallet?.address!;
          }
 
+         console.log("stephen: options", agent?.agent_name?.toLowerCase(), agent?.network_id.toString(), JSON.stringify(options));
+
          await globalThis.electronAPI.dockerRunAgent(agent?.agent_name?.toLowerCase(), agent?.network_id.toString(), JSON.stringify(options));
       } catch (e) {
          console.log('handleRunDockerAgent', e);
@@ -735,6 +746,7 @@ const AgentProvider: React.FC<
             setIsRunning(false);
             setIsInstalled(false);
             setAgentWallet(undefined);
+            setCustomUIPort('');
          }
 
          // Set new agent
@@ -798,6 +810,7 @@ const AgentProvider: React.FC<
          isUnInstalling,
          installedSocialAgents,
          isCustomUI: selectedAgent?.agent_type === AgentType.CustomUI,
+         customUIPort,
       };
    }, [
       loading,
@@ -831,6 +844,7 @@ const AgentProvider: React.FC<
       unInstallAgent,
       isUnInstalling,
       installedSocialAgents,
+      customUIPort,
    ]);
 
    return (

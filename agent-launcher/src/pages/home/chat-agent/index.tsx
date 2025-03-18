@@ -8,7 +8,6 @@ import BackupPrivateKey from "@pages/home/chat-agent/BackupPrivateKey";
 import CreateAgentWallet from "@pages/home/chat-agent/CreateAgentWallet";
 import AgentDetail from "@pages/home/chat-agent/AgentDetail";
 import { AgentType } from "@pages/home/list-agent";
-import WebView from "@components/WebView";
 
 function ChatAgent() {
    const {
@@ -30,23 +29,9 @@ function ChatAgent() {
       <Box className={s.container}>
          {/* <AgentTopInfo /> */}
          {isCanChat ? (
-            <>
-            {
-               isCustomUI ? (
-                  <Box width="100%">
-                     <WebView 
-        url={'https://eternalai.org/'}
-        height="calc(100vh - 100px)"
-        width="100%"
-      />
-                  </Box>
-               ) : (
-                  <ChatAgentProvider>
-                     <ChatBox />
-                  </ChatAgentProvider>
-               )
-            }
-            </>
+            <ChatAgentProvider>
+               <ChatBox />
+            </ChatAgentProvider>
          ) : (
             <>
                {
