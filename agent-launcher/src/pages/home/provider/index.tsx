@@ -470,9 +470,13 @@ const AgentProvider: React.FC<
             if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
                filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode);
                localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
+               console.log('filePath New', filePath);
+               
                if (agent.agent_type === AgentType.UtilityPython) {
-                  console.log('filePath New', filePath);
                   await globalThis.electronAPI.copyRequireRunPython(folderNameOnLocal);
+               }
+               if (filePath) {
+                  globalThis.electronAPI.unzipFile(filePath, filePath.replaceAll(`/${fileNameOnLocal}`, ''));
                }
             } else {
                const base64Array = splitBase64(rawCode);
@@ -485,10 +489,7 @@ const AgentProvider: React.FC<
             
          }
          
-         if (filePath && agent.agent_type === AgentType.UtilityPython) {
-            console.log('unzipFile', filePath)
-            globalThis.electronAPI.unzipFile(filePath, filePath.replaceAll(`/${fileNameOnLocal}`, ''));
-         }
+         
       }
    };
 
