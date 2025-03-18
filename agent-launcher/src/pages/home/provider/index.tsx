@@ -70,9 +70,7 @@ const AgentProvider: React.FC<
    tokenAddress: _tokenAddress,
 }: PropsWithChildren & { tokenAddress?: string }): React.ReactElement => {
    const [loading, setLoading] = useState(true);
-   const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(
-      undefined
-   );
+   const [selectedAgent, _setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
    const [isInstalling, setIsInstalling] = useState(false);
    const [isUnInstalling, setIsUnInstalling] = useState(false);
    const [isStarting, setIsStarting] = useState(false);
@@ -736,6 +734,61 @@ const AgentProvider: React.FC<
 
       }
    }
+
+   // Handle agent switching smoothly
+   const setSelectedAgent = async (newAgent: IAgentToken | undefined) => {
+      try {
+         // Cleanup current agent if exists
+         if (selectedAgent) {
+            // Clear intervals
+            if (refInterval.current) {
+               clearInterval(refInterval.current);
+            }
+            
+            // Stop running agent if needed
+            if (isRunning) {
+               await stopAgent(selectedAgent);
+            }
+            
+            // Reset states
+            setIsRunning(false);
+            setIsInstalled(false);
+            setIsCustomUI(false);
+            setAgentWallet(undefined);
+         }
+
+         // Set new agent
+         _setSelectedAgent(newAgent);
+
+         if (newAgent) {
+            // Initialize new agent state
+            if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(newAgent.agent_type)) {
+               checkSocialAgentInstalled(newAgent);
+            } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(newAgent.agent_type)) {
+               checkUtilityAgentInstalled(newAgent);
+            } else if ([AgentType.Model].includes(newAgent.agent_type)) {
+               checkModelAgentInstalled(newAgent);
+            }
+
+            // Check if agent has wallet
+            const agentsHasWallet = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
+            if (agentsHasWallet?.includes(newAgent.id)) {
+               await createAgentWallet();
+            }
+
+            // Start checking agent status
+            intervalCheckAgentRunning(newAgent);
+            
+            // Check UI type for Python agents
+            if ([AgentType.UtilityPython].includes(newAgent.agent_type)) {
+               const hasCustomUI = await getIsCustomUIOfPythonAgent(newAgent);
+               setIsCustomUI(hasCustomUI);
+            }
+         }
+      } catch (error) {
+         console.error('Error switching agent:', error);
+      }
+   };
 
    const contextValues: any = useMemo(() => {
       return {
