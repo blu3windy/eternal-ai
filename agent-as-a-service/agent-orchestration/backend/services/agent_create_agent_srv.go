@@ -450,135 +450,135 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 		return nil, errs.NewError(err)
 	}
 
-	if twitterDetail == nil {
-		s.SendTeleVideoActivitiesAlert("[ERROR] twitterDetail is nil")
+	if twitterDetail == nil || len(*twitterDetail) == 0 {
+		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[ERROR] twitterDetail :%v is nil", tweetId))
 		return nil, errors.New("twitterDetail is nil")
 	}
 	var existPosts *models.AgentTwitterPost
-	for k, v := range *twitterDetail { // k is tweet_id and v is tweet detail
-		if strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
-			return nil, nil // same user with agent info
-		}
-
-		if !strings.EqualFold(k, tweetId) {
-			return nil, nil
-		}
-
-		_, err = s.CreateUpdateUserTwitter(tx, v.User.ID)
-		if err != nil {
-			s.SendTeleVideoActivitiesAlert("[ERROR] CreateUpdateUserTwitter error")
-		}
-
-		existPosts, err = s.dao.FirstAgentTwitterPost(
-			tx,
-			map[string][]interface{}{
-				"twitter_post_id = ?": {v.Tweet.ID},
-			},
-			map[string][]interface{}{},
-			[]string{},
-		)
-		if err != nil {
-			return nil, errs.NewError(err)
-		}
-		if existPosts != nil {
-			continue
-		}
-
-		fullText := v.Tweet.GetAllFullText()
-		fullText = strings.Replace(fullText, fmt.Sprintf("@%s", agentInfo.TwitterUsername), "", -1)
-		fullText = strings.TrimSpace(fullText)
-		re := regexp.MustCompile(`^(@[\w_]+\s+)+`)
-		fullText = re.ReplaceAllString(fullText, "")
-		fullText = strings.TrimSpace(fullText)
-		tweetParseInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), agentInfo.TwitterUsername, fullText)
-
-		if handleRequest.DecideToHandle != nil && *handleRequest.DecideToHandle {
-			if tweetParseInfo == nil {
-				tweetParseInfo = &models.TweetParseInfo{}
-			}
-			tweetParseInfo.IsGenerateVideo = true
-			tweetParseInfo.GenerateVideoContent = fullText
-
-			if handleRequest.PromptToHandle != nil && *handleRequest.PromptToHandle != "" {
-				tweetParseInfo.GenerateVideoContent = *handleRequest.PromptToHandle
-			}
-		}
-
-		if tweetParseInfo == nil || tweetParseInfo.IsGenerateVideo == false {
-			if s.conf.DetectVideoLLMVersion == "v2" {
-				tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), fullText)
-			} else {
-				tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM(context.Background(), agentInfo.TwitterUsername, fullText)
-			}
-
-			if err != nil {
-				continue
-			}
-		}
-		if tweetParseInfo == nil || tweetParseInfo.IsGenerateVideo == false {
-			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL_SYNTAX] a requirement gen fail syntax tw_id=%v, tw_user=%v,  full_text:%v ",
-				tweetId, v.User.UserName, fullText))
-			continue
-		}
-
-		imageToVideoInfo := s.DetectTweetIsImageToVideo(twitterInfo, v)
-		entityType := models.AgentTwitterPostTypeText2Video
-		extractMediaContent := ""
-		if imageToVideoInfo.IsImageToVideo {
-			entityType = models.AgentTwitterPostTypeImage2video
-			extractMediaContent = imageToVideoInfo.LighthouseImageUrl
-			for {
-				lastIndexOfHTTPs := strings.LastIndex(tweetParseInfo.GenerateVideoContent, "https://")
-				if lastIndexOfHTTPs > 0 {
-					tweetParseInfo.GenerateVideoContent = tweetParseInfo.GenerateVideoContent[:lastIndexOfHTTPs]
-					tweetParseInfo.GenerateVideoContent = strings.TrimSpace(tweetParseInfo.GenerateVideoContent)
-				} else {
-					break
-				}
-			}
-		}
-
-		postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
-		m := &models.AgentTwitterPost{
-			NetworkID:             agentInfo.NetworkID,
-			AgentInfoID:           agentInfo.ID,
-			TwitterID:             v.User.ID,
-			TwitterUsername:       v.User.UserName,
-			TwitterName:           v.User.Name,
-			TwitterPostID:         v.Tweet.ID, // bai reply
-			Content:               fullText,
-			ExtractContent:        tweetParseInfo.GenerateVideoContent,
-			ExtractMediaContent:   extractMediaContent,
-			Status:                models.AgentTwitterPostWaitSubmitVideoInfer,
-			PostAt:                postedAt,
-			TwitterConversationId: v.Tweet.ConversationID, // bai goc cua conversation
-			PostType:              models.AgentSnapshotPostActionTypeGenerateVideo,
-			IsMigrated:            true,
-			InferId:               "20250",
-			Type:                  entityType,
-		}
-
-		// now support only image to video
-		if entityType != models.AgentTwitterPostTypeImage2video {
-			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[TEXT_TO_VIDEO_FOUND_SKIP] a requirement gen video, db_id=%v,"+
-				" twitter_user=%v tweet_id=%v, post :%v ",
-				m.ID, m.TwitterUsername, m.TwitterPostID, fullText))
-
-			return nil, nil
-		}
-
-		err = s.dao.Create(tx, m)
-		if err != nil {
-			continue
-		}
-
-		_, _ = s.CreateUpdateUserTwitter(tx, m.TwitterID)
-		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND][%v] a requirement gen video, db_id=%v, twitter_user=%v, tweet_id=%v, post :%v ",
-			source, m.ID, m.TwitterUsername, m.TwitterPostID, fullText))
-		return m, nil
+	v, exist := (*twitterDetail)[tweetId]
+	if !exist {
+		return nil, errors.New("twitterDetail is nil")
+	}
+	if strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
+		return nil, fmt.Errorf("poster is not match v.user.id:%v , agent.twitterid:%v", v.User.ID, agentInfo.ID)
 	}
 
-	return existPosts, nil
+	_, err = s.CreateUpdateUserTwitter(tx, v.User.ID)
+	if err != nil {
+		s.SendTeleVideoActivitiesAlert("[ERROR] CreateUpdateUserTwitter error")
+		return nil, errs.NewError(err)
+	}
+
+	existPosts, err = s.dao.FirstAgentTwitterPost(
+		tx,
+		map[string][]interface{}{
+			"twitter_post_id = ?": {v.Tweet.ID},
+		},
+		map[string][]interface{}{},
+		[]string{},
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	if existPosts != nil {
+		return existPosts, nil
+	}
+
+	fullText := v.Tweet.GetAllFullText()
+	fullText = strings.Replace(fullText, fmt.Sprintf("@%s", agentInfo.TwitterUsername), "", -1)
+	fullText = strings.TrimSpace(fullText)
+	re := regexp.MustCompile(`^(@[\w_]+\s+)+`)
+	fullText = re.ReplaceAllString(fullText, "")
+	fullText = strings.TrimSpace(fullText)
+	tweetParseInfo, _ := s.ValidateTweetContentGenerateVideo(context.Background(), agentInfo.TwitterUsername, fullText)
+
+	if handleRequest.DecideToHandle != nil && *handleRequest.DecideToHandle {
+		if tweetParseInfo == nil {
+			tweetParseInfo = &models.TweetParseInfo{}
+		}
+		tweetParseInfo.IsGenerateVideo = true
+		tweetParseInfo.GenerateVideoContent = fullText
+
+		if handleRequest.PromptToHandle != nil && *handleRequest.PromptToHandle != "" {
+			tweetParseInfo.GenerateVideoContent = *handleRequest.PromptToHandle
+		}
+	}
+
+	if tweetParseInfo == nil || tweetParseInfo.IsGenerateVideo == false {
+		if s.conf.DetectVideoLLMVersion == "v2" {
+			tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), fullText)
+		} else {
+			tweetParseInfo, err = s.ValidateTweetContentGenerateVideoWithLLM(context.Background(), agentInfo.TwitterUsername, fullText)
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	if tweetParseInfo == nil || tweetParseInfo.IsGenerateVideo == false {
+		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL_SYNTAX] a requirement gen fail syntax tw_id=%v, tw_user=%v,  full_text:%v ",
+			tweetId, v.User.UserName, fullText))
+		return nil, nil
+	}
+
+	imageToVideoInfo := s.DetectTweetIsImageToVideo(twitterInfo, v)
+	entityType := models.AgentTwitterPostTypeText2Video
+	extractMediaContent := ""
+	if imageToVideoInfo.IsImageToVideo {
+		entityType = models.AgentTwitterPostTypeImage2video
+		extractMediaContent = imageToVideoInfo.LighthouseImageUrl
+		for {
+			lastIndexOfHTTPs := strings.LastIndex(tweetParseInfo.GenerateVideoContent, "https://")
+			if lastIndexOfHTTPs > 0 {
+				tweetParseInfo.GenerateVideoContent = tweetParseInfo.GenerateVideoContent[:lastIndexOfHTTPs]
+				tweetParseInfo.GenerateVideoContent = strings.TrimSpace(tweetParseInfo.GenerateVideoContent)
+			} else {
+				break
+			}
+		}
+	}
+
+	postedAt := helpers.ParseStringToDateTimeTwitter(v.Tweet.CreatedAt)
+	m := &models.AgentTwitterPost{
+		NetworkID:             agentInfo.NetworkID,
+		AgentInfoID:           agentInfo.ID,
+		TwitterID:             v.User.ID,
+		TwitterUsername:       v.User.UserName,
+		TwitterName:           v.User.Name,
+		TwitterPostID:         v.Tweet.ID, // bai reply
+		Content:               fullText,
+		ExtractContent:        tweetParseInfo.GenerateVideoContent,
+		ExtractMediaContent:   extractMediaContent,
+		Status:                models.AgentTwitterPostWaitSubmitVideoInfer,
+		PostAt:                postedAt,
+		TwitterConversationId: v.Tweet.ConversationID, // bai goc cua conversation
+		PostType:              models.AgentSnapshotPostActionTypeGenerateVideo,
+		IsMigrated:            true,
+		InferId:               "20250",
+		Type:                  entityType,
+	}
+
+	// now support only image to video
+	if entityType != models.AgentTwitterPostTypeImage2video {
+		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[TEXT_TO_VIDEO_FOUND_SKIP] a requirement gen video, db_id=%v,"+
+			" twitter_user=%v tweet_id=%v, post :%v ",
+			m.ID, m.TwitterUsername, m.TwitterPostID, fullText))
+
+		return nil, nil
+	}
+
+	err = s.dao.Create(tx, m)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+
+	_, err = s.CreateUpdateUserTwitter(tx, m.TwitterID)
+	if err != nil {
+		s.SendTeleVideoActivitiesAlert("[ERROR] CreateUpdateUserTwitter error")
+		return nil, errs.NewError(err)
+	}
+	s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FOUND][%v] a requirement gen video, db_id=%v, twitter_user=%v, tweet_id=%v, post :%v ",
+		source, m.ID, m.TwitterUsername, m.TwitterPostID, fullText))
+	return m, nil
 }
 
 func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoID uint, tweetMentions *twitter.UserTimeline) error {
