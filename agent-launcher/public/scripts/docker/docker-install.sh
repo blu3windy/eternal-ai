@@ -59,11 +59,11 @@ fi
 log_message "Setting up Colima for Docker runtime..."
 
 # Stop any existing Colima instance
-if command_exists colima; then
-    log_message "Stopping existing Colima instance..."
-    colima stop || true
-    sleep 2
-fi
+#if command_exists colima; then
+#    log_message "Stopping existing Colima instance..."
+#    colima stop || true
+#    sleep 2
+#fi
 
 # Install Colima if needed
 if ! command_exists colima; then
