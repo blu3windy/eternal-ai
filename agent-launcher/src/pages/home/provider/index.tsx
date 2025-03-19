@@ -119,10 +119,6 @@ const AgentProvider: React.FC<
       // return false;
    }, [selectedAgent?.id]);
 
-   const isCanChat = useMemo(() => {
-      return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
-   }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
-
    const isInstalling = useMemo(() => {
       if (selectedAgent) {
          return agentStates[selectedAgent.id].isInstalling;
@@ -170,6 +166,10 @@ const AgentProvider: React.FC<
 
       return false;
    }, [selectedAgent?.id, agentStates]);
+
+   const isCanChat = useMemo(() => {
+      return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
+   }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
 
    console.log("stephen: selectedAgent", selectedAgent);
    // console.log("stephen: currentModel", currentModel);
