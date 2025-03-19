@@ -5,11 +5,15 @@ const cors = require('cors');
 
 const app = express();
 
+// Enable CORS for specific origins
 app.use(cors({
-    origin: ['http://*', 'https://*'],
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-  }));
+    origin: '*',
+    methods: '*',
+    allowedHeaders: '*',
+    credentials: true
+}));
+
+app.options('*', cors()); // Enable preflight for all routes
 
 app.post('/:agentName/prompt', (req, res) => {
     console.log('aaaaaaa');
