@@ -1,7 +1,7 @@
-import {Box, Button, Flex, Text} from "@chakra-ui/react";
+import { Box, Button, Flex, Text } from "@chakra-ui/react";
 import s from './styles.module.scss';
-import React, {useContext} from "react";
-import {AgentContext} from "@pages/home/provider";
+import React, { useContext } from "react";
+import { AgentContext } from "@pages/home/provider";
 import copy from "copy-to-clipboard";
 import toast from "react-hot-toast";
 import localStorageService from "../../../../storage/LocalStorageService.ts";
@@ -17,7 +17,8 @@ const BackupPrivateKey = () => {
    };
   
    const handleContinue = async () => {
-      const agentIds = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
+      const values = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
+      const agentIds = values ? JSON.parse(values) : [];
 
       await localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
 
