@@ -36,7 +36,7 @@ class EaiSigner {
 
    static async getStorageKey({ pass }: { pass: string }) {
       const cipherText = await globalThis.electronAPI.keytarGet(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
-      console.log("cipherText", cipherText)
+
       if (cipherText) {
          return eaiCrypto.decryptAES({
             cipherText,

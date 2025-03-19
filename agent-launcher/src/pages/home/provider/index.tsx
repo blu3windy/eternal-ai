@@ -186,7 +186,7 @@ const AgentProvider: React.FC<
 
    const checkAgentRunning = async (agent: IAgentToken) => {
       try {
-         console.log("stephen: agent", agent);
+         // console.log("stephen: agent", agent);
          if(agent) {
             if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
                const res = await cPumpAPI.checkAgentServiceRunning({ agent });
@@ -205,7 +205,7 @@ const AgentProvider: React.FC<
             }
          }
       } catch (err) {
-         console.error("Check agent running error:", err);
+         console.log("Check agent running error:", err);
          setIsRunning(false);
          setCustomUIPort('');
       }
