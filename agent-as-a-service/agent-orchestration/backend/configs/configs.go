@@ -273,7 +273,12 @@ type Config struct {
 		AgentID           uint   `json:"agent_id"`
 		Fee               uint   `json:"fee"`
 	} `json:"infra_twitter_app"`
-	ZoraCoinAdmin string `json:"zora_coin_admin"`
+	Clanker struct {
+		RequestorAddress         string  `json:"requestor_address"`
+		ApiKey                   string  `json:"api_key"`
+		ApiUrl                   string  `json:"api_url"`
+		CreatorRewardsPercentage float64 `json:"creator_rewards_percentage"`
+	} `json:"clanker"`
 }
 
 func (cf *Config) ExistsedConfigKey(networkID uint64, name string) bool {

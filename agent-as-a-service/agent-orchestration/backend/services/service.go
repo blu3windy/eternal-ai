@@ -27,6 +27,7 @@ import (
 	blockchainutils "github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/blockchain_utils"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/bridgeapi"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/btcapi"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/clanker"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/coingecko"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/coinmarketcap"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/core"
@@ -75,6 +76,7 @@ type Service struct {
 	dexscreener     *dexscreener.DexScreenerAPI
 	openseaService  *opensea.OpenseaService
 	taapi           *taapi.TaApi
+	clanker         *clanker.Client
 	// daos
 	dao *daos.DAO
 
@@ -147,6 +149,7 @@ func NewService(conf *configs.Config) *Service {
 		dexscreener:    dexscreener.NewDexScreenerAPI(),
 		openseaService: opensea.NewOpensea(conf.OpenseaAPIKey),
 		taapi:          taapi.NewTaApi(conf.TaApiKey),
+		clanker:        clanker.NewClankerClient(conf.Clanker.ApiKey, conf.Clanker.ApiUrl),
 	}
 
 	gormDB := mysql.NewDefaultMysqlGormConn(nil, s.conf.DbURL, s.conf.Debug)

@@ -727,3 +727,23 @@ type AgentVideoRecipient struct {
 	OwnerTwitterID   string `gorm:"unique_index"`
 	RecipientAddress string `gorm:"index"`
 }
+
+type ClankerVideoToken struct {
+	gorm.Model
+	TokenName          string
+	TokenSymbol        string
+	TokenAddress       string
+	TokenStatus        string
+	TokenImageUrl      string
+	VideoUrl           string
+	TokenDesc          string       `gorm:"type:longtext"`
+	UserAddress        string       `gorm:"index"`
+	OwnerTwitterID     string       `gorm:"index"`
+	OwnerTwitterInfo   *TwitterUser `gorm:"foreignKey:twitter_id;AssociationForeignKey:owner_twitter_id"`
+	AgentTwitterPostID uint         `gorm:"unique_index"`
+	AgentTwitterPost   *AgentTwitterPost
+	RequestorAddress   string `gorm:"index"`
+	RequestKey         string
+	TxHash             string
+	Error              string
+}

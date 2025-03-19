@@ -934,7 +934,7 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 
 			if isCreateAgentVideo {
 				fmt.Println(1)
-				// go s.CreateAgentVideoByPostID(ctx, twitterPostID)
+				// go s.CreateClankerTokenForVideoByPostID(ctx, twitterPostID)
 			}
 			return nil
 		},

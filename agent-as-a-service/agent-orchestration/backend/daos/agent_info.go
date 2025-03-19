@@ -186,3 +186,14 @@ func (d *DAO) FirstAgentVideoRecipient(tx *gorm.DB, filters map[string][]interfa
 	}
 	return &m, nil
 }
+
+func (d *DAO) FirstClankerVideoToken(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string) (*models.ClankerVideoToken, error) {
+	var m models.ClankerVideoToken
+	if err := d.first(tx, &m, filters, preloads, orders, false); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &m, nil
+}

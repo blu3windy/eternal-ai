@@ -638,46 +638,46 @@ func (s *Server) CheckNameExist(c *gin.Context) {
 
 }
 
-func (s *Server) GetDashBoardAgentVideo(c *gin.Context) {
-	ctx := s.requestContext(c)
-	page, limit := s.pagingFromContext(c)
-	sortStr := s.agentSortListFromContext(c)
-	search := s.stringFromContextQuery(c, "search")
+// func (s *Server) GetDashBoardAgentVideo(c *gin.Context) {
+// 	ctx := s.requestContext(c)
+// 	page, limit := s.pagingFromContext(c)
+// 	sortStr := s.agentSortListFromContext(c)
+// 	search := s.stringFromContextQuery(c, "search")
 
-	userAddress, err := s.getUserAddressFromTK1Token(c)
-	ms, count, err := s.nls.GetDashboardAgentVideo(ctx, userAddress, "", search, sortStr, page, limit)
+// 	userAddress, err := s.getUserAddressFromTK1Token(c)
+// 	ms, count, err := s.nls.GetDashboardAgentVideo(ctx, userAddress, "", search, sortStr, page, limit)
 
-	if err != nil {
-		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
-		return
-	}
-	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentInfoRespArry(ms), Count: &count})
-}
+// 	if err != nil {
+// 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+// 		return
+// 	}
+// 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentInfoRespArry(ms), Count: &count})
+// }
 
-func (s *Server) GetDashBoardAgentVideoDetail(c *gin.Context) {
-	ctx := s.requestContext(c)
-	page, limit := s.pagingFromContext(c)
-	sortStr := s.agentSortListFromContext(c)
-	search := s.stringFromContextQuery(c, "search")
-	tokenAddress := s.stringFromContextParam(c, "token_address")
-	if tokenAddress == "" {
-		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrBadRequest)})
-		return
-	}
-	userAddress, err := s.getUserAddressFromTK1Token(c)
-	ms, _, err := s.nls.GetDashboardAgentVideo(ctx, userAddress, tokenAddress, search, sortStr, page, limit)
+// func (s *Server) GetDashBoardAgentVideoDetail(c *gin.Context) {
+// 	ctx := s.requestContext(c)
+// 	page, limit := s.pagingFromContext(c)
+// 	sortStr := s.agentSortListFromContext(c)
+// 	search := s.stringFromContextQuery(c, "search")
+// 	tokenAddress := s.stringFromContextParam(c, "token_address")
+// 	if tokenAddress == "" {
+// 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrBadRequest)})
+// 		return
+// 	}
+// 	userAddress, err := s.getUserAddressFromTK1Token(c)
+// 	ms, _, err := s.nls.GetDashboardAgentVideo(ctx, userAddress, tokenAddress, search, sortStr, page, limit)
 
-	if err != nil {
-		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
-		return
-	}
-	if len(ms) > 0 {
-		ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentInfoResp(ms[0])})
-		return
-	}
-	ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrTokenNotFound)})
-	return
-}
+// 	if err != nil {
+// 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+// 		return
+// 	}
+// 	if len(ms) > 0 {
+// 		ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentInfoResp(ms[0])})
+// 		return
+// 	}
+// 	ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrTokenNotFound)})
+// 	return
+// }
 
 // func (s *Server) GetListUserVideo(c *gin.Context) {
 // 	ctx := s.requestContext(c)
