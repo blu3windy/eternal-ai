@@ -2,10 +2,10 @@ import { Box, Flex, IconButton } from "@chakra-ui/react";
 import React, { useCallback, useContext, useRef, useState } from "react";
 import AutosizeTextarea from "react-autosize-textarea";
 import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
-import useFundAgent from "../../../../../../providers/FundAgent/useFundAgent.ts";
+import useFundAgent from "@providers/FundAgent/useFundAgent.ts";
 import { AgentContext } from "@pages/home/provider";
 import s from "./styles.module.scss";
-import localStorageService from "../../../../../../storage/LocalStorageService.ts";
+import localStorageService from "@storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 import { compareString } from "@utils/string.ts";
 import CAgentTokenAPI from "@services/api/agents-token";
@@ -20,15 +20,15 @@ interface IProps {
 }
 
 const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
-  const {
-    publishEvent,
-    loading,
-    setIsFocusChatInput,
-    chatInputRef,
-    isFocusChatInput,
-    isStopReceiving,
-    isAllowChat,
-  } = useChatAgentProvider();
+   const {
+      publishEvent,
+      loading,
+      setIsFocusChatInput,
+      chatInputRef,
+      isFocusChatInput,
+      isStopReceiving,
+      isAllowChat,
+   } = useChatAgentProvider();
 
   const { setDepositAgentID } = useFundAgent();
   const {
@@ -65,14 +65,14 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        
+
         reader.onload = () => {
           const base64String = reader.result as string;
           // Remove the data:image/[type];base64, prefix if needed
           // const base64 = base64String.split(',')[1];
           resolve(base64String);
         };
-        
+
         reader.onerror = (error) => {
           reject(error);
         };
@@ -95,7 +95,8 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
     setMessage('');
     setAttachments([]);
 
-    let recentAgents = JSON.parse(localStorageService.getItem(STORAGE_KEYS.RECENT_AGENTS)!) || [];
+     const agents = await localStorageService.getItem(STORAGE_KEYS.RECENT_AGENTS);
+     let recentAgents = JSON.parse(agents || "[]") || [];
     recentAgents = recentAgents.filter(id => !compareString(id, selectedAgent?.id?.toString()));
     recentAgents.unshift(selectedAgent?.id);
 
@@ -103,9 +104,9 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
       recentAgents = recentAgents.slice(0, 10);
     }
 
-    localStorageService.setItem(STORAGE_KEYS.RECENT_AGENTS, JSON.stringify(recentAgents));
+     await localStorageService.setItem(STORAGE_KEYS.RECENT_AGENTS, JSON.stringify(recentAgents));
 
-    cPumpAPI.saveRecentAgents({ ids: recentAgents })
+     await cPumpAPI.saveRecentAgents({ ids: recentAgents })
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -205,7 +206,7 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
             : isRunning
             ? s.runningWrapper
             : s.stopWrapper)
-        
+
           }
         >
           <input

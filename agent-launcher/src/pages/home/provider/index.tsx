@@ -17,6 +17,7 @@ import { AgentType, SortOption } from "@pages/home/list-agent";
 import { ModelInfo } from "../../../../electron/share/model.ts";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import sleep from "@utils/sleep.ts";
+import throttle from "lodash/throttle";
 
 const initialValue: IAgentContext = {
    loading: false,
@@ -89,10 +90,18 @@ const AgentProvider: React.FC<
 
    const cPumpAPI = new CAgentTokenAPI();
 
-   useEffect(() => {
-      const agentIdsHasBackup = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
-      
+   const checkBackup = throttle(useCallback(async () => {
+      const value = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
+      if (!value) {
+         setIsBackupedPrvKey(false);
+         return;
+      }
+      const agentIdsHasBackup = JSON.parse(value);
       setIsBackupedPrvKey(agentWallet && selectedAgent && agentIdsHasBackup && agentIdsHasBackup?.some?.(id => id === selectedAgent?.id));
+   }, []), 1000);
+
+   useEffect(() => {
+      checkBackup();
    }, [selectedAgent, agentWallet]);
 
 
@@ -134,17 +143,23 @@ const AgentProvider: React.FC<
    }, [availableModelAgents]);
 
    useEffect(() => {
-      if (selectedAgent) {
-         const agentsHasWallet = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
+      const fetchWalletData = async () => {
+         if (selectedAgent) {
+            // Await the result of the asynchronous getItem call
+            const walletData = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
+            const agentsHasWallet = JSON.parse(walletData || '[]'); // Default to an empty array if null
 
-         if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id)) {
-            createAgentWallet();
-         } else {
-            setAgentWallet(undefined);
+            if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id)) {
+               createAgentWallet();
+            } else {
+               setAgentWallet(undefined);
+            }
+
+            intervalCheckAgentRunning(selectedAgent);
          }
+      };
 
-         intervalCheckAgentRunning(selectedAgent);
-      }
+      fetchWalletData(); // Call the async function
    }, [selectedAgent?.id]);
 
    const intervalCheckAgentRunning = (agent: IAgentToken) => {
@@ -214,10 +229,13 @@ const AgentProvider: React.FC<
    const createAgentWallet = async () => {
       try {
          if (!selectedAgent) return;
+
          const prvKey = await genAgentSecretKey({ chainId: selectedAgent?.network_id.toString(), agentName: selectedAgent?.agent_name });
          setAgentWallet(new Wallet(prvKey));
 
-         const agentsHasWallet = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
+         // Await the result of the asynchronous getItem call
+         const walletData = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
+         const agentsHasWallet = JSON.parse(walletData || '[]'); // Default to an empty array if null
 
          localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, selectedAgent?.id]) : [selectedAgent?.id]));
       } catch (err) {
@@ -225,7 +243,7 @@ const AgentProvider: React.FC<
       } finally {
 
       }
-   }
+   };
 
    const getTradePlatform = (_pumpToken: IAgentToken | undefined) => {
       if (SUPPORT_TRADE_CHAIN.includes((_pumpToken?.meme?.network_id || "") as any)) {
@@ -468,9 +486,8 @@ const AgentProvider: React.FC<
       
          const codeVersion = await cAgent.getCurrentVersion();
 
-         const oldCodeVersion = Number(localStorageService.getItem(agent.agent_contract_address));
-         
-         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name?.toLowerCase()}`;
+         const oldCodeVersion = Number(await localStorageService.getItem(agent.agent_contract_address));
+         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
 
          let filePath: string | undefined = "";
          const isExisted = await checkFileExistsOnLocal(
@@ -484,9 +501,9 @@ const AgentProvider: React.FC<
             const rawCode = await cAgent.getAgentCode(codeVersion);
             if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
                filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode, agent.agent_type === AgentType.UtilityPython ? 'app' : undefined);
-               localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
+               await localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
                console.log('filePath New', filePath);
-               
+
                if (agent.agent_type === AgentType.UtilityPython) {
                   await globalThis.electronAPI.copyRequireRunPython(folderNameOnLocal);
                }
@@ -498,13 +515,13 @@ const AgentProvider: React.FC<
                const code = base64Array.reverse().map(item => isBase64(item) ? atob(item) : item).join('\n');
 
                filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
-               localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
+               await localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
                console.log('filePath New', filePath);
             }
-            
+
          }
-         
-         
+
+
       }
    };
 
@@ -582,7 +599,7 @@ const AgentProvider: React.FC<
             dependAgents = await installDependAgents(depsAgentStrs, chainId);
          }
 
-         const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
+         const oldCodeVersion = Number(await localStorageService.getItem(agentContractAddr));
          const fileNameOnLocal = `prompt.${codeLang}`;
          const folderNameOnLocal = `${chainId}-${agentName?.toLowerCase()}`;
 
@@ -702,7 +719,7 @@ const AgentProvider: React.FC<
 
    const fetchInstalledSocialAgents = async () => {
       try {
-         const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
+         const agentIds = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
 
          setInstalledSocialAgents(agentIds || [])
       } catch (error) {
@@ -712,7 +729,7 @@ const AgentProvider: React.FC<
 
    const checkSocialAgentInstalled = async (agent: IAgentToken) => {
       try {
-         const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
+         const agentIds = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
 
          if (agentIds && agentIds.includes(agent.id)) {
             setAgentInstalled(agent);
@@ -735,12 +752,12 @@ const AgentProvider: React.FC<
    //          if (refInterval.current) {
    //             clearInterval(refInterval.current);
    //          }
-            
+
    //          // Stop running agent if needed
    //          if (isRunning) {
    //             await stopAgent(selectedAgent);
    //          }
-            
+
    //          // Reset states
    //          setIsRunning(false);
    //          setIsInstalled(false);

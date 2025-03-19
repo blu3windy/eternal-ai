@@ -16,11 +16,11 @@ import s from './styles.module.scss';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import AgentItem from './AgentItem';
 import AppLoading from "../../../components/AppLoading";
-import {useCallback, useContext, useEffect, useRef, useState} from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import throttle from 'lodash.throttle';
-import {IAgentToken} from "../../../services/api/agents-token/interface.ts";
+import { IAgentToken } from "../../../services/api/agents-token/interface.ts";
 import debounce from 'lodash.debounce';
-import {AgentContext} from "../provider";
+import { AgentContext } from "../provider";
 import uniqBy from 'lodash.uniqby';
 import CAgentTokenAPI from "../../../services/api/agents-token";
 import cx from 'clsx';
@@ -267,6 +267,7 @@ const AgentsList = () => {
                      gap={"4px"}
                      p={"2px 10px"}
                      h={"32px"}
+                     key={option.value}
                      className={cx(s.option, filter === option.value ? s.isSelected : '')}
                      onClick={() => {
                         const _filter = option.value as FilterOption;

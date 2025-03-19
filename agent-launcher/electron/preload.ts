@@ -1,5 +1,7 @@
 import { ipcRenderer, contextBridge, shell } from "electron";
 import { EMIT_EVENT_NAME } from "./share/event-name.ts";
+// import Store from 'electron-store';
+// const store = new Store();
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld("ipcRenderer", {
@@ -25,6 +27,8 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
    // You can expose other APTs you need here.
    // ...
 });
+
+console.log('Preload script loaded'); // Add this line to check if the preload script is executed
 
 contextBridge.exposeInMainWorld("electronAPI", {
    keytarSave: (key: string, value: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.KEYTAR_SAVE, key, value),
@@ -70,4 +74,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
    onUpdateAvailable: (callback) => ipcRenderer.on(EMIT_EVENT_NAME.UPDATE_AVAILABLE, (_, info) => callback(info)),
    onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', () => callback()),
    applyUpdate: () => ipcRenderer.send('apply-update'),
+
+
+   storeSetItem: (key: string, value: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_SET_ITEM, key, value),
+   storeGetItem: (key: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_GET_ITEM, key),
+   storeRemoveItem: (key: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_REMOVE_ITEM, key),
+   storeClear: () => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_CLEAR),
 });

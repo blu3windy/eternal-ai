@@ -39,7 +39,12 @@ const EMIT_EVENT_NAME = {
 
 
    CHECK_FOR_UPDATE: "check-for-updates",
-   UPDATE_AVAILABLE: "update-available"
+   UPDATE_AVAILABLE: "update-available",
+
+   STORE_SET_ITEM: "store-set-item",
+   STORE_GET_ITEM: "store-get-item",
+   STORE_REMOVE_ITEM: "store-remove-item",
+   STORE_CLEAR: "store-clear",
 }
 
 export {

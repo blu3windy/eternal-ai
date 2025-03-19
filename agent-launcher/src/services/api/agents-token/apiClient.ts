@@ -1,15 +1,15 @@
 'use client';
 
-import axios, {Axios, AxiosError, AxiosRequestConfig, AxiosResponse,} from 'axios';
-import {BASE_CHAIN_ID, IMAGINE_URL} from "../../../config.ts";
-import localStorageService from "../../../storage/LocalStorageService.ts";
+import axios, { Axios, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { BASE_CHAIN_ID, IMAGINE_URL } from "../../../config.ts";
+import localStorageService from "@storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
-import {getAuthenToken} from "@services/api/http-client.ts";
+import { getAuthenToken } from "@services/api/http-client.ts";
 
 export const IGNORE_ADDRESS_TEXT = '';
 
 class CApiClient {
-  private address = localStorageService.getItem(STORAGE_KEYS.WALLET_ADDRESS);
+   private address: string | undefined = undefined; // Initialize as null
    protected requestConfig: AxiosRequestConfig = {
       baseURL: `${IMAGINE_URL}/api`,
       timeout: 5 * 60000,
@@ -21,29 +21,30 @@ class CApiClient {
    api: Axios;
 
    constructor() {
-      // const wallet = store.getState().wallet.wallet;
-     this.api = axios.create(this.requestConfig);
+      this.api = axios.create(this.requestConfig);
 
+      // @ts-ignore
       this.api.interceptors.request.use(
-         (config: any) => {
+         async (config: AxiosRequestConfig) => {
             const _config = config;
 
-           const authToken = getAuthenToken();
-           if (authToken) {
-             _config.headers.Authorization = `${authToken}`;
-           }
-            let params = _config?.params;
-            if (!params) {
-               params = {};
-            }
-            if (!params?.network) {
-               params.network = BASE_CHAIN_ID;
-            }
-            if (!params?.address) {
-               params.address = this.address;
+            // Fetch the wallet address asynchronously
+            this.address = await localStorageService.getItem(STORAGE_KEYS.WALLET_ADDRESS);
+            console.log('Wallet Address:', this.address); // Log the retrieved address
+
+            // Fetch the auth token asynchronously
+            const authToken = await getAuthenToken();
+            if (authToken) {
+               // Ensure headers is defined
+               _config.headers = _config.headers || {};
+               _config.headers.Authorization = `${authToken}`;
             }
 
-            if (params?.ignoreAddress) {
+            const params = _config?.params || {};
+            params.network = params.network || BASE_CHAIN_ID;
+            params.address = params.address || this.address || '';
+
+            if (params.ignoreAddress) {
                params.address = '';
             }
 
@@ -53,7 +54,7 @@ class CApiClient {
             };
          },
          (error: AxiosError) => {
-            Promise.reject(error);
+            return Promise.reject(error);
          },
       );
 
@@ -77,8 +78,7 @@ class CApiClient {
                return Promise.reject(error);
             } else {
                const response = error?.response?.data || error;
-               const errorMessage
-            = response?.error || error?.Message || JSON.stringify(error);
+               const errorMessage = response?.error || error?.Message || JSON.stringify(error);
                return Promise.reject(errorMessage);
             }
          },

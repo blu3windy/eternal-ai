@@ -64,6 +64,12 @@ export interface IElectronAPI {
 
   // Open extra link
   openExternal: (url: string) => Promise<void>
+
+  // Store
+  storeSetItem: (key: string, value: string) => Promise<void>
+  storeGetItem: (key: string) => Promise<string | null>
+  storeRemoveItem: (key: string) => Promise<void>
+  storeClear: () => Promise<void>
 }
 
 declare global {

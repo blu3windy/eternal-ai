@@ -1,21 +1,30 @@
+
 class LocalStorageService {
-  constructor(private storage: Storage = localStorage) {}
 
-  setItem(key: string, value: string): void {
-    this.storage.setItem(key, value);
-  }
+   private readonly electronAPI = window.electronAPI
 
-  getItem(key: string): string | null {
-    return this.storage.getItem(key);
-  }
+   constructor() {
+      if (!this.electronAPI) {
+         this.electronAPI = window.electronAPI
+      }
+   }
 
-  removeItem(key: string): void {
-    this.storage.removeItem(key);
-  }
+   async setItem(key: string, value: string) {
+      await this.electronAPI.storeSetItem(key, value);
+   }
 
-  clear(): void {
-    this.storage.clear();
-  }
+   async getItem(key: string): Promise<string> {
+      const value = await this.electronAPI.storeGetItem(key);
+      return value || '';
+   }
+
+   async removeItem(key: string) {
+      await this.electronAPI.storeRemoveItem(key);
+   }
+
+   async clear() {
+      await this.electronAPI.storeClear();
+   }
 }
 
 const localStorageService = new LocalStorageService();
