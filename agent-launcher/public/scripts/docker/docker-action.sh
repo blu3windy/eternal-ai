@@ -94,15 +94,6 @@ cd_docker_build_source_path() {
     log_message "Current working directory: $DOCKER_BUILD_SOURCE_PATH"
 }
 
-run_container_js() {
-    docker run -d -v "$FOLDER_PATH/agents/$CONTAINER_NAME/prompt.js":/app/src/prompt.js --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
-}
-
-run_container_py() {
-    cd_docker_build_source_path
-    docker build -t "$IMAGE_NAME" .; docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
-}
-
 run_container_custom_prompt() {
     cd_docker_build_source_path
     docker build -t "$IMAGE_NAME" .;
@@ -123,12 +114,6 @@ run_container() {
   docker stop "$CONTAINER_NAME" 2>/dev/null || true
   docker rm "$CONTAINER_NAME" 2>/dev/null || true
   case "$TYPE" in
-    js)
-      run_container_js
-      ;;
-    py)
-      run_container_py
-      ;;
     custom-ui)
       run_container_custom_ui
       ;;
@@ -136,7 +121,7 @@ run_container() {
       run_container_custom_prompt
       ;;
     *)
-      log_error "Unsupported code language snippet: $TYPE"
+      log_error "Unsupported code this type: $TYPE"
       exit 1
       ;;
   esac
