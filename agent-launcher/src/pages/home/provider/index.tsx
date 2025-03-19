@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState, } from "react";
+import React, { PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState, } from "react";
 import { ETradePlatform, IAgentContext } from "./interface";
 import { IAgentToken, } from "../../../services/api/agents-token/interface.ts";
 import { BASE_CHAIN_ID } from "@constants/chains";
@@ -54,6 +54,8 @@ const initialValue: IAgentContext = {
    installedSocialAgents: [],
    isCustomUI: false,
    customUIPort: '',
+   agentStates: {},
+   updateAgentState: () => {}
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -66,16 +68,10 @@ const AgentProvider: React.FC<
 }: PropsWithChildren & { tokenAddress?: string }): React.ReactElement => {
    const [loading, setLoading] = useState(true);
    const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
-   const [isInstalling, setIsInstalling] = useState(false);
-   const [isUnInstalling, setIsUnInstalling] = useState(false);
-   const [isStarting, setIsStarting] = useState(false);
-   const [isStopping, setIsStopping] = useState(false);
    const [isTrade, setIsTrade] = useState(false);
    const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
    const [coinPrices, setCoinPrices] = useState([]);
-   const [isInstalled, setIsInstalled] = useState(false);
    const [installedUtilityAgents, setInstalledUtilityAgents] = useState<string[]>([]);
-   const [isRunning, setIsRunning] = useState(false);
    const refInterval = useRef<any>();
    const [isBackupedPrvKey, setIsBackupedPrvKey] = useState(false);
    const [isModelRequirementSetup, setIsModelRequirementSetup] = useState(false);
@@ -85,6 +81,15 @@ const AgentProvider: React.FC<
    const [customUIPort, setCustomUIPort] = useState<string>('');
 
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
+
+   const [agentStates, setAgentStates] = useState<Record<number, {
+      isRunning: boolean;
+      isInstalling: boolean;
+      isUnInstalling: boolean;
+      isStarting: boolean;
+      isStopping: boolean;
+      isInstalled: boolean;
+    }>>({});
 
    const { genAgentSecretKey } = useAuth();
 
@@ -114,10 +119,57 @@ const AgentProvider: React.FC<
       // return false;
    }, [selectedAgent?.id]);
 
+   const isInstalling = useMemo(() => {
+      if (selectedAgent) {
+         return agentStates[selectedAgent.id]?.isInstalling || false;
+      }
+
+      return false;
+   }, [selectedAgent?.id, agentStates]);
+
+   const isUnInstalling = useMemo(() => {
+      if (selectedAgent) {
+         return agentStates[selectedAgent.id]?.isUnInstalling || false;
+      }
+
+      return false;
+   }, [selectedAgent?.id, agentStates]);
+
+   const isStarting = useMemo(() => {
+      if (selectedAgent) {
+         return agentStates[selectedAgent.id]?.isStarting || false;
+      }
+
+      return false;
+   }, [selectedAgent?.id, agentStates]);
+
+   const isStopping = useMemo(() => {
+      if (selectedAgent) {
+         return agentStates[selectedAgent.id]?.isStopping || false;
+      }
+
+      return false;
+   }, [selectedAgent?.id, agentStates]);
+
+   const isRunning = useMemo(() => {
+      if (selectedAgent) {
+         return agentStates[selectedAgent.id]?.isRunning || false;
+      }
+
+      return false;
+   }, [selectedAgent?.id, agentStates]);
+
+   const isInstalled = useMemo(() => {
+      if (selectedAgent) {
+         return agentStates[selectedAgent.id]?.isInstalled || false;
+      }
+
+      return false;
+   }, [selectedAgent?.id, agentStates]);
+
    const isCanChat = useMemo(() => {
       return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
    }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
-
 
    console.log("stephen: selectedAgent", selectedAgent);
    // console.log("stephen: currentModel", currentModel);
@@ -136,11 +188,43 @@ const AgentProvider: React.FC<
       fetchCoinPrices();
       fetchAvailableModelAgents();
       fetchInstalledUtilityAgents();
+      loadAgentStates();
    }, []);
 
    useEffect(() => {
       fetchInstalledModelAgents();
    }, [availableModelAgents]);
+
+   const loadAgentStates = async () => {
+      const savedStates = await localStorageService.getItem(STORAGE_KEYS.AGENT_STATES);
+      if (savedStates) {
+        setAgentStates(JSON.parse(savedStates));
+      }
+    };
+
+    useEffect(() => {
+      const saveAgentStates = async () => {
+        await localStorageService.setItem(STORAGE_KEYS.AGENT_STATES, JSON.stringify(agentStates));
+      };
+      saveAgentStates();
+    }, [agentStates]);
+  
+    const updateAgentState = (agentId: number, state: {
+      isRunning?: boolean;
+      isInstalling?: boolean;
+      isUnInstalling?: boolean;
+      isStarting?: boolean;
+      isStopping?: boolean;
+      isInstalled?: boolean;
+    }) => {
+      setAgentStates(prev => ({
+        ...prev,
+        [agentId]: {
+          ...prev[agentId],
+          ...state
+        }
+      }));
+    };
 
    useEffect(() => {
       const fetchWalletData = async () => {
@@ -205,23 +289,35 @@ const AgentProvider: React.FC<
          if(agent) {
             if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
                const res = await cPumpAPI.checkAgentServiceRunning({ agent });
-               setIsRunning(true);
+
+               updateAgentState(agent.id, {
+                  isRunning: true,
+               });
             } else if ([AgentType.CustomUI].includes(agent.agent_type)) {
                const port = await globalThis.electronAPI.dockerRunningPort(agent.agent_name?.toLowerCase(), agent.network_id.toString());
                setCustomUIPort(port);
-               setIsRunning(true);
+
+               updateAgentState(agent.id, {
+                  isRunning: true,
+               });
             } else if ([AgentType.Model].includes(agent.agent_type)) {
                const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
                const ipfsHash = await getModelAgentHash(agent);
 
-               setIsRunning(ipfsHash === runningModelHash);
+               updateAgentState(agent.id, {
+                  isRunning: ipfsHash === runningModelHash,
+               });
             } else {
-               setIsRunning(true);
+               updateAgentState(agent.id, {
+                  isRunning: true,
+               });
             }
          }
       } catch (err) {
          console.log("Check agent running error:", err);
-         setIsRunning(false);
+         updateAgentState(agent.id, {
+            isRunning: false,
+         });
          setCustomUIPort('');
       }
    }
@@ -331,18 +427,27 @@ const AgentProvider: React.FC<
 
 
    const setAgentInstalled = (agent: IAgentToken) => {
-      setIsInstalled(true);
+      updateAgentState(agent.id, {
+         isInstalled: true,
+      });
+
       cPumpAPI.saveAgentInstalled({ ids: [agent.id] });
    }
 
    const setAgentUnInstalled = (agent: IAgentToken) => {
-      setIsInstalled(false);
+      updateAgentState(agent.id, {
+         isInstalled: false,
+      });
+
       cPumpAPI.saveAgentInstalled({ ids: [agent.id], action: "uninstall" });
    }
 
    const installAgent = async (agent: IAgentToken) => {
       try {
-         setIsInstalling(true);
+         updateAgentState(agent.id, {
+            isInstalling: true,
+         });
+
          if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(agent.agent_type)) {
             const agentIds = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
 
@@ -373,20 +478,24 @@ const AgentProvider: React.FC<
       } catch (e) {
          console.log('installAgent e', e);
       } finally {
-         setIsInstalling(false);
+         updateAgentState(agent.id, {
+            isInstalling: false,
+         });
       }
    }
 
    const startAgent = async (agent: IAgentToken) => {
       try {
+         updateAgentState(agent.id, {
+            isStarting: true,
+         });
+
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
-            setIsStarting(true);
             await installUtilityAgent(agent);
             await startDependAgents(agent);
 
             await handleRunDockerAgent(agent);
          } else if (agent.agent_type === AgentType.Model) {
-            setIsStarting(true);
             await handleInstallModelAgentRequirement();
 
             const ipfsHash = await getModelAgentHash(agent);
@@ -402,7 +511,9 @@ const AgentProvider: React.FC<
       } catch (e) {
          console.log('startAgent e', e);
       } finally {
-         setIsStarting(false);
+         updateAgentState(agent.id, {
+            isStarting: false,
+         });
 
          intervalCheckAgentRunning(agent);
       }
@@ -410,7 +521,9 @@ const AgentProvider: React.FC<
 
    const stopAgent = async (agent: IAgentToken) => {
       try {
-         setIsStopping(true);
+         updateAgentState(agent.id, {
+            isStopping: true,
+         });
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             await handleStopDockerAgent(agent);
@@ -425,7 +538,9 @@ const AgentProvider: React.FC<
       } catch (e) {
          console.log('stopAgent e', e);
       } finally {
-         setIsStopping(false);
+         updateAgentState(agent.id, {
+            isStopping: false,
+         });
 
          intervalCheckAgentRunning(agent);
       }
@@ -434,7 +549,9 @@ const AgentProvider: React.FC<
    const unInstallAgent = async (agent: IAgentToken) => {
       console.log('unInstallAgent', agent);
       try {
-         setIsUnInstalling(true);
+         updateAgentState(agent.id, {
+            isUnInstalling: true,
+         });
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             await stopAgent(agent);
@@ -460,7 +577,9 @@ const AgentProvider: React.FC<
       } catch (e) {
          console.log('unInstallAgent e', e);
       } finally {
-         setIsUnInstalling(false);
+         updateAgentState(agent.id, {
+            isUnInstalling: false,
+         });
       }
    }
 
@@ -827,6 +946,8 @@ const AgentProvider: React.FC<
          installedSocialAgents,
          isCustomUI: selectedAgent?.agent_type === AgentType.CustomUI,
          customUIPort,
+         agentStates,
+         updateAgentState,
       };
    }, [
       loading,
@@ -861,6 +982,8 @@ const AgentProvider: React.FC<
       isUnInstalling,
       installedSocialAgents,
       customUIPort,
+      agentStates,
+      updateAgentState
    ]);
 
    return (
@@ -870,4 +993,14 @@ const AgentProvider: React.FC<
    );
 };
 
+export const useAgent = () => {
+   const context = useContext(AgentContext);
+   if (context === undefined) {
+      throw new Error('useAgent must be used within an AgentProvider');
+   }
+   return context;
+}; 
+
+
 export default AgentProvider;
+

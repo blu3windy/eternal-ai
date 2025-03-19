@@ -42,4 +42,20 @@ export interface IAgentContext {
   installedSocialAgents: number[];
   isCustomUI: boolean;
   customUIPort: string;
+  agentStates: Record<number, {
+    isRunning: boolean;
+    isInstalling: boolean;
+    isUnInstalling: boolean;
+    isStarting: boolean;
+    isStopping: boolean;
+    isInstalled: boolean;
+  }>;
+  updateAgentState: (agentId: number, state: {
+    isRunning?: boolean;
+    isInstalling?: boolean;
+    isUnInstalling?: boolean;
+    isStarting?: boolean;
+    isStopping?: boolean;
+    isInstalled?: boolean;
+  }) => void;
 }
