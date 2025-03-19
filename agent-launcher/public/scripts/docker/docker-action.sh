@@ -91,6 +91,7 @@ cd_docker_build_source_path() {
         log_error "Failed to access directory: $DOCKER_BUILD_SOURCE_PATH"
         exit 1
     }
+    log_message "Current working directory: $DOCKER_BUILD_SOURCE_PATH"
 }
 
 run_container_js() {
@@ -104,18 +105,15 @@ run_container_py() {
 
 run_container_custom_prompt() {
     cd_docker_build_source_path
-    echo "docker build -t "$IMAGE_NAME" .; docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME""
     docker build -t "$IMAGE_NAME" .;
     docker run -d --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
-    echo "docker run done"
 }
 
 
 run_container_custom_ui() {
     cd_docker_build_source_path
-
-    echo "docker build -t "$IMAGE_NAME" .; docker run -d -p 0:8080 -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --name "$CONTAINER_NAME" "$IMAGE_NAME""
-    docker build -t "$IMAGE_NAME" .; docker run -d -p 0:8080 -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    docker build -t "$IMAGE_NAME" .;
+    docker run -d -p 0:8080 -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --name "$CONTAINER_NAME" "$IMAGE_NAME"
     # Get the assigned port
     ASSIGNED_PORT=$(docker port "$CONTAINER_NAME" 8080/tcp | cut -d ':' -f2)
     log_message "Container $CONTAINER_NAME is running on port: $ASSIGNED_PORT"
