@@ -206,75 +206,75 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
          const historyMessages = [
             {
-                role: 'system',
-                content: selectedAgent?.personality || '',
+               role: 'system',
+               content: selectedAgent?.personality || '',
             },
             ...filteredMessages.reduce((acc: any[], item, index) => {
-                if (index > 0 && 
-                    filteredMessages[index - 1].type !== 'ai' && 
-                    item.type !== 'ai') {
-                    acc.push({
-                        role: 'assistant',
-                        content: ''
-                    });
-                }
+               if (index > 0 
+                    && filteredMessages[index - 1].type !== 'ai' 
+                    && item.type !== 'ai') {
+                  acc.push({
+                     role: 'assistant',
+                     content: ''
+                  });
+               }
         
-                // Handle messages with attachments
-                if (item.attachments && item.attachments.length > 0) {
+               // Handle messages with attachments
+               if (item.attachments && item.attachments.length > 0) {
                   const messageContent: any[] = [];
                     
-                    // Add text content if exists
-                    if (item.msg) {
+                  // Add text content if exists
+                  if (item.msg) {
                      messageContent.push({
-                            type: 'text',
-                            text: item.msg
+                        type: 'text',
+                        text: item.msg
+                     });
+                  }
+        
+                  // Add image attachments
+                  item.attachments.forEach(attachment => {
+                     if (attachment.type.startsWith('image/')) {
+                        messageContent.push({
+                           type: 'image_url',
+                           image_url: {
+                              url: attachment.url,
+                              detail: ''
+                           }
                         });
-                    }
+                     }
+                  });
         
-                    // Add image attachments
-                    item.attachments.forEach(attachment => {
-                        if (attachment.type.startsWith('image/')) {
-                           messageContent.push({
-                                type: 'image_url',
-                                image_url: {
-                                    url: attachment.url,
-                                    detail: ''
-                                }
-                            });
-                        }
-                    });
+                  acc.push({
+                     role: item.type === 'ai' ? 'assistant' : 'user',
+                     content: messageContent
+                  });
+               } else {
+                  // Regular text message without attachments
+                  acc.push({
+                     role: item.type === 'ai' ? 'assistant' : 'user',
+                     content: item.msg
+                  });
+               }
         
-                    acc.push({
-                        role: item.type === 'ai' ? 'assistant' : 'user',
-                        content: messageContent
-                    });
-                } else {
-                    // Regular text message without attachments
-                    acc.push({
-                        role: item.type === 'ai' ? 'assistant' : 'user',
-                        content: item.msg
-                    });
-                }
-        
-                return acc;
+               return acc;
             }, []),
             // Handle the final message with potential attachments
             {
-                role: 'user',
-                content: sendTxt && attachments?.length 
-                    ? [
-                        { type: 'text', text: sendTxt },
-                        ...attachments.map(attachment => ({
-                            type: 'image_url',
-                            image_url: {
-                                url: attachment.url,
-                                detail: ''
-                            }
-                        }))
-                      ]
-                    : sendTxt
+               role: 'user',
+               content: sendTxt && attachments?.length 
+                  ? [
+                     { type: 'text', text: sendTxt },
+                     ...attachments.map(attachment => ({
+                        type: 'image_url',
+                        image_url: {
+                           url: attachment.url,
+                           detail: ''
+                        }
+                     }))
+                  ]
+                  : sendTxt
             },
-        ];
+         ];
 
          const params: ChatCompletionPayload = {
             messages: historyMessages,
