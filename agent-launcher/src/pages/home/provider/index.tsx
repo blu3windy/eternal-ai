@@ -606,7 +606,9 @@ const AgentProvider: React.FC<
       
          const codeVersion = await cAgent.getCurrentVersion();
 
-         const oldCodeVersion = Number(await localStorageService.getItem(agent.agent_contract_address));
+         const values = await localStorageService.getItem(agent.agent_contract_address);
+         const oldCodeVersion = values ? Number(values) : 0;
+
          const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
 
          let filePath: string | undefined = "";
@@ -719,7 +721,9 @@ const AgentProvider: React.FC<
             dependAgents = await installDependAgents(depsAgentStrs, chainId);
          }
 
-         const oldCodeVersion = Number(await localStorageService.getItem(agentContractAddr));
+         const values = await localStorageService.getItem(agentContractAddr);
+         const oldCodeVersion = values ? Number(values) : 0;
+
          const fileNameOnLocal = `prompt.${codeLang}`;
          const folderNameOnLocal = `${chainId}-${agentName?.toLowerCase()}`;
 
