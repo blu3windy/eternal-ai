@@ -155,6 +155,9 @@ func (s *Server) Routers() {
 			agentAPI.POST("/recent-chat", s.authCheckTK1TokenMiddleware(), s.MarkRecentChatUtilityAgent)
 			agentAPI.POST("/prompt/:id", s.authCheckTK1TokenMiddleware(), s.MarkPromptCountUtilityAgent)
 
+			agentAPI.POST("/like/:id", s.authCheckTK1TokenMiddleware(), s.LikeAgent)
+			agentAPI.GET("/like/:id", s.authCheckTK1TokenMiddleware(), s.CheckAgentLiked)
+
 			agentAPI.POST("/create-local-agent", s.AgentCreateAgentAssistantForLocal)
 			agentAPI.GET("/list-local-agent", s.GetListAgentForDojo)
 

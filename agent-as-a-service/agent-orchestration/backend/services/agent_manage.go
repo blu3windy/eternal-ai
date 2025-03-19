@@ -1503,3 +1503,87 @@ func (s *Service) MarkPromptCountUtilityAgent(ctx context.Context, address strin
 
 	return true, nil
 }
+
+func (s *Service) LikeAgent(ctx context.Context, address string, agentID uint) (bool, error) {
+	err := daos.WithTransaction(
+		daos.GetDBMainCtx(ctx),
+		func(tx *gorm.DB) error {
+			agentReactionHistory, err := s.dao.FirstAgentReactionHistory(
+				tx,
+				map[string][]any{
+					"agent_info_id = ?": []any{agentID},
+					"user_address = ?":  []any{strings.ToLower(address)},
+				},
+				map[string][]any{},
+				[]string{"id desc"},
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			agentInfo, err := s.dao.FirstAgentInfoByID(
+				tx, agentID,
+				map[string][]any{},
+				false,
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			if agentInfo == nil {
+				return errs.NewError(errs.ErrAgentNotFound)
+			}
+
+			if agentReactionHistory == nil {
+				agentReactionHistory = &models.AgentReactionHistory{
+					AgentInfoID: agentID,
+					UserAddress: strings.ToLower(address),
+					Reaction:    "like",
+				}
+				err = s.dao.Create(tx, agentReactionHistory)
+				if err != nil {
+					return errs.NewError(err)
+				}
+
+				err = tx.Model(agentInfo).Update("likes", gorm.Expr("likes + 1")).Error
+				if err != nil {
+					return errs.NewError(err)
+				}
+			} else {
+				//unlike
+				err = tx.Unscoped().Delete(agentReactionHistory).Error
+				if err != nil {
+					return errs.NewError(err)
+				}
+
+				err = tx.Model(agentInfo).Update("likes", gorm.Expr("likes - 1")).Error
+				if err != nil {
+					return errs.NewError(err)
+				}
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return false, errs.NewError(err)
+	}
+
+	return true, nil
+}
+
+func (s *Service) CheckAgentLiked(ctx context.Context, address string, agentID uint) (bool, error) {
+	agentReactionHistory, err := s.dao.FirstAgentReactionHistory(
+		daos.GetDBMainCtx(ctx),
+		map[string][]any{
+			"agent_info_id = ?": []any{agentID},
+			"user_address = ?":  []any{strings.ToLower(address)},
+		},
+		map[string][]any{},
+		[]string{"id desc"},
+	)
+	if err != nil {
+		return false, errs.NewError(err)
+	}
+	return agentReactionHistory != nil, nil
+}

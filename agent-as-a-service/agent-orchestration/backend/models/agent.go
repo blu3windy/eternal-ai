@@ -216,6 +216,7 @@ type AgentInfo struct {
 	RequiredWallet bool   `gorm:"default:0"`
 	IsOnchain      bool   `gorm:"default:0"`
 	IsCustomUi     bool   `gorm:"default:0"`
+	Likes          int64  `gorm:"default:0"`
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string
@@ -746,4 +747,11 @@ type ClankerVideoToken struct {
 	RequestKey         string
 	TxHash             string
 	Error              string
+}
+
+type AgentReactionHistory struct {
+	gorm.Model
+	AgentInfoID uint   `gorm:"index"`
+	UserAddress string `gorm:"index"`
+	Reaction    string
 }
