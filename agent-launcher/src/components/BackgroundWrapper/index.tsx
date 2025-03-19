@@ -1,13 +1,15 @@
-import { FC, PropsWithChildren } from "react";
-import { Flex, Grid, Image, Box, GridProps } from "@chakra-ui/react";
+import { PropsWithChildren } from "react";
+import { Grid, Box, GridProps } from "@chakra-ui/react";
 import { motion } from "framer-motion";
+import SliderCard from "./SliderCard";
 
 interface IProps extends PropsWithChildren {
     className?: string;
     style?: GridProps;
+    showSlider?: boolean;
 }
 
-const BackgroundWrapper = ({ children, className, style }: IProps) => {
+const BackgroundWrapper = ({ children, className, style, showSlider = false }: IProps) => {
    return (
       <Grid
          backgroundColor="white"
@@ -16,10 +18,6 @@ const BackgroundWrapper = ({ children, className, style }: IProps) => {
          flexDirection="column"
          gap="24px"
          as={motion.div}
-         // initial={{ opacity: 0 }}
-         // animate={{ opacity: 1 }}
-         // exit={{ opacity: 0 }}
-         // transition='0.25 easeIn'
          className={className || ""}
          gridTemplateColumns={{
             base: "1fr",
@@ -39,17 +37,13 @@ const BackgroundWrapper = ({ children, className, style }: IProps) => {
                base: "none",
                xl: "block",
             }}
+            backgroundImage="images/bg-main.png"
+            backgroundSize="cover"
+            backgroundPosition="center"
          >
-            <Image
-               src="images/bg-main.png"
-               alt="bg-main"
-               width="100%"
-               height="100%"
-               objectFit="cover" // Ensures it fills available space
-               maxW="none" // Prevents automatic shrinking
-               userSelect="none" // Prevents image from being selected
-               pointerEvents="none" // Prevents image from being clicked
-            />
+            {showSlider && (
+               <SliderCard />
+            )}
          </Box>
       </Grid>
    );
