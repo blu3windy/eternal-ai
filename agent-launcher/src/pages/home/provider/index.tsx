@@ -110,7 +110,7 @@ const AgentProvider: React.FC<
    }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
 
 
-   // console.log("stephen: selectedAgent", selectedAgent);
+   console.log("stephen: selectedAgent", selectedAgent);
    // console.log("stephen: currentModel", currentModel);
    // console.log("stephen: agentWallet", agentWallet);
    // console.log("stephen: installedAgents", installedAgents);
@@ -121,7 +121,7 @@ const AgentProvider: React.FC<
    // console.log('stephen availableModelAgents', availableModelAgents);
    // console.log('stephen installedModelAgents', installedModelAgents);
    // console.log('stephen: isCustomUI', isCustomUI);
-   // console.log("================================");
+   console.log("================================");
 
    useEffect(() => {
       fetchCoinPrices();
@@ -221,6 +221,7 @@ const AgentProvider: React.FC<
 
          localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, selectedAgent?.id]) : [selectedAgent?.id]));
       } catch (err) {
+         console.log("Create agent wallet error:", err);
       } finally {
 
       }
@@ -770,6 +771,7 @@ const AgentProvider: React.FC<
             intervalCheckAgentRunning(newAgent);
          }
       } catch (error) {
+         console.log('Error switching agent:', error);
       }
    };
 
