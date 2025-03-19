@@ -172,6 +172,16 @@ function createWindow() {
       win = null;
    });
 
+   // In your renderer process (e.g., in a React component or main.js)
+   // Just accept on production mode
+   if (process.env.NODE_ENV === "production") {
+      win.webContents.on('before-input-event', (event, input) => {
+         if ((input.control || input.meta) && input.key === 'r') {
+            event.preventDefault(); // Prevent the refresh action
+            console.log("Refresh command ignored");
+         }
+      });
+   }
 
    command.setWindow(win);
 }
