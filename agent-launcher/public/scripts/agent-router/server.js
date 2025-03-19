@@ -7,10 +7,10 @@ const app = express();
 
 // Enable CORS for specific origins
 app.use(cors({
-    origin: '*', // Allow requests from any origin
-    methods: ['GET', 'POST', 'OPTIONS'], // Allow specific methods
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true // Allow credentials if needed
+    origin: '*',
+    methods: '*',
+    allowedHeaders: '*',
+    credentials: true
 }));
 
 app.options('*', cors()); // Enable preflight for all routes
