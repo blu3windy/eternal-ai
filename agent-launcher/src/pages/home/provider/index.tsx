@@ -449,7 +449,8 @@ const AgentProvider: React.FC<
          });
 
          if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(agent.agent_type)) {
-            const agentIds = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
+            const values = await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS);
+            const agentIds = values ? JSON.parse(values) : [];
 
             await localStorageService.setItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
 
@@ -838,7 +839,8 @@ const AgentProvider: React.FC<
 
    const fetchInstalledSocialAgents = async () => {
       try {
-         const agentIds = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
+         const values = await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS);
+         const agentIds = values ? JSON.parse(values) : [];
 
          setInstalledSocialAgents(agentIds || [])
       } catch (error) {
@@ -848,7 +850,8 @@ const AgentProvider: React.FC<
 
    const checkSocialAgentInstalled = async (agent: IAgentToken) => {
       try {
-         const agentIds = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
+         const values = await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS);
+         const agentIds = values ? JSON.parse(values) : [];
 
          if (agentIds && agentIds.includes(agent.id)) {
             setAgentInstalled(agent);
