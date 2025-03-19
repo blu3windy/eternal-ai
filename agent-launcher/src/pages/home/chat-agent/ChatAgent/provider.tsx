@@ -287,7 +287,23 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          }
 
          if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-            const res: string = await AgentAPI.chatAgentUtility({ agent: selectedAgent!, prvKey: agentWallet?.privateKey, messages: [ { role: 'user', content: sendTxt }] });
+            const res: string = await AgentAPI.chatAgentUtility({
+               agent: selectedAgent!, prvKey: agentWallet?.privateKey, messages: [ {
+                  role: 'user',
+                  content: sendTxt && attachments?.length 
+                     ? [
+                        { type: 'text', text: sendTxt },
+                        ...attachments.map(attachment => ({
+                           type: 'image_url',
+                           image_url: {
+                              url: attachment.url,
+                              detail: ''
+                           }
+                        }))
+                     ]
+                     : sendTxt
+               }] 
+            });
             console.log('res>>>>>', res);
             
             updateMessage(messageId, {
