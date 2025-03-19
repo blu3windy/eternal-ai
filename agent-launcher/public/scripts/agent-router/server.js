@@ -16,9 +16,8 @@ app.use(cors({
 app.options('*', cors()); // Enable preflight for all routes
 
 app.post('/:agentName/prompt', (req, res) => {
-    console.log('aaaaaaa');
     const { agentName } = req.params;
-    console.log(agentName);
+    console.log("agentName", agentName);
     const targetUrl = 'http://' + agentName + '/prompt';
     const parsedUrl = url.parse(targetUrl);
     const options = {

@@ -44,7 +44,7 @@ const Starter = (props: IProps) => {
 
    const [step] = useState<Step>("INITIALIZING");
 
-   const [hasError, setHasError] = useState(true);
+   const [hasError, setHasError] = useState(false);
 
    const onInit = async (ignoreCopy?: boolean) => {
       try {
@@ -86,17 +86,18 @@ const Starter = (props: IProps) => {
                <LoadingIcon />
                <LoadingText dataText="Initializing..." />
                <StarterLogs />
-               {/* {hasError && (
+               {hasError && (
                   <BaseButton 
                      maxWidth="120px"
                      onClick={() => {
                         setHasError(false);
-                        onInit();
+                        setChecking(true);
+                        onInit(true).then().catch();
                      }}
                   >
                      Try again
                   </BaseButton>
-               )} */}
+               )}
             </Center>
          )
       }}

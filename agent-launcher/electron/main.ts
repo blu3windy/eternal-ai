@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen, dialog } from "electron";
+import { app, BrowserWindow, screen } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";

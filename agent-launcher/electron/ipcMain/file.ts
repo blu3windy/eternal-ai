@@ -106,9 +106,9 @@ const ipcMainSafeFile = () => {
          console.log('zipPath', zipPath)
          console.log('extractTo', extractTo)
 
-        const zip = new AdmZip(zipPath);
-        zip.extractAllTo(extractTo, true); // true = overwrite
-        console.log("Unzip successful!");
+         const zip = new AdmZip(zipPath);
+         zip.extractAllTo(extractTo, true); // true = overwrite
+         console.log("Unzip successful!");
       } catch (err) {
          console.error("Error unzipping file:", err);
       }
