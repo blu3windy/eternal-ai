@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState, } from "react";
+import React, { PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState, } from "react";
 import { ETradePlatform, IAgentContext } from "./interface";
 import { IAgentToken, } from "../../../services/api/agents-token/interface.ts";
 import { BASE_CHAIN_ID } from "@constants/chains";
@@ -54,6 +54,8 @@ const initialValue: IAgentContext = {
    installedSocialAgents: [],
    isCustomUI: false,
    customUIPort: '',
+   agentStates: {},
+   updateAgentState: () => {}
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -85,6 +87,14 @@ const AgentProvider: React.FC<
    const [customUIPort, setCustomUIPort] = useState<string>('');
 
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
+
+   const [agentStates, setAgentStates] = useState<Record<string, {
+      isRunning: boolean;
+      isInstalling: boolean;
+      isStarting: boolean;
+      isStopping: boolean;
+      isInstalled: boolean;
+    }>>({});
 
    const { genAgentSecretKey } = useAuth();
 
@@ -136,11 +146,42 @@ const AgentProvider: React.FC<
       fetchCoinPrices();
       fetchAvailableModelAgents();
       fetchInstalledUtilityAgents();
+      loadAgentStates();
    }, []);
 
    useEffect(() => {
       fetchInstalledModelAgents();
    }, [availableModelAgents]);
+
+   const loadAgentStates = async () => {
+      const savedStates = await localStorageService.getItem(STORAGE_KEYS.AGENT_STATES);
+      if (savedStates) {
+        setAgentStates(JSON.parse(savedStates));
+      }
+    };
+
+    useEffect(() => {
+      const saveAgentStates = async () => {
+        await localStorageService.setItem(STORAGE_KEYS.AGENT_STATES, JSON.stringify(agentStates));
+      };
+      saveAgentStates();
+    }, [agentStates]);
+  
+    const updateAgentState = (agentId: string, state: {
+      isRunning?: boolean;
+      isInstalling?: boolean;
+      isStarting?: boolean;
+      isStopping?: boolean;
+      isInstalled?: boolean;
+    }) => {
+      setAgentStates(prev => ({
+        ...prev,
+        [agentId]: {
+          ...prev[agentId],
+          ...state
+        }
+      }));
+    };
 
    useEffect(() => {
       const fetchWalletData = async () => {
@@ -827,6 +868,8 @@ const AgentProvider: React.FC<
          installedSocialAgents,
          isCustomUI: selectedAgent?.agent_type === AgentType.CustomUI,
          customUIPort,
+         agentStates,
+         updateAgentState,
       };
    }, [
       loading,
@@ -861,6 +904,8 @@ const AgentProvider: React.FC<
       isUnInstalling,
       installedSocialAgents,
       customUIPort,
+      agentStates,
+      updateAgentState
    ]);
 
    return (
@@ -870,4 +915,14 @@ const AgentProvider: React.FC<
    );
 };
 
+export const useAgent = () => {
+   const context = useContext(AgentContext);
+   if (context === undefined) {
+      throw new Error('useAgent must be used within an AgentProvider');
+   }
+   return context;
+}; 
+
+
 export default AgentProvider;
+
