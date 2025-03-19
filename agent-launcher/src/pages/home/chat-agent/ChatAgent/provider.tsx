@@ -79,6 +79,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
    const cPumpAPI = new CAgentTokenAPI();
 
+   console.log('stephen: messages', messages);
+   console.log('====')
+
    const isAllowChat = useMemo(() => {
       return true;
       // if(selectedAgent) {
@@ -219,7 +222,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
         
                 // Handle messages with attachments
                 if (item.attachments && item.attachments.length > 0) {
-                  const messageContent = [];
+                  const messageContent: any[] = [];
                     
                     // Add text content if exists
                   //   if (item.msg) {
@@ -237,7 +240,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                                 text: item.msg,
                                 image_url: {
                                     url: attachment.url,
-                                    detail: attachment.name || 'Image'
+                                    detail: item.msg
                                 }
                             });
                         }
@@ -265,9 +268,10 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                         { type: 'text', text: sendTxt },
                         ...attachments.map(attachment => ({
                             type: 'image_url',
+                            text: sendTxt,
                             image_url: {
                                 url: attachment.url,
-                                detail: attachment.name || 'Image'
+                                detail: sendTxt
                             }
                         }))
                       ]
