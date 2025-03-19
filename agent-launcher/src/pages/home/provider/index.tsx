@@ -363,7 +363,7 @@ const AgentProvider: React.FC<
       try {
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             setIsStarting(true);
-            await installUtilityAgent(agent);
+            // await installUtilityAgent(agent);
             await startDependAgents(agent);
 
             await handleRunDockerAgent(agent);
@@ -508,105 +508,105 @@ const AgentProvider: React.FC<
       }
    };
 
-    const removeUtilityAgent = async (agent: IAgentToken) => {
+   const removeUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_name) {
-        try {
-          const folderNameOnLocal = `${agent.network_id}-${agent.agent_name?.toLowerCase()}`;
-          await globalThis.electronAPI.removeFolder(folderNameOnLocal);
-        } catch (error) {
-        }
+         try {
+            const folderNameOnLocal = `${agent.network_id}-${agent.agent_name?.toLowerCase()}`;
+            await globalThis.electronAPI.removeFolder(folderNameOnLocal);
+         } catch (error) {
+         }
       }
-    };
+   };
 
-    const startDependAgents = async (agent: IAgentToken) => {
+   const startDependAgents = async (agent: IAgentToken) => {
       const dependAgents = await getDependAgents(agent);
       if (dependAgents.length > 0) {
-        await Promise.all(dependAgents.map(async (agent) => {
-          try {
-            await handleRunDockerAgent(agent);
-          } catch (error) {
-          }
-        }));
-      };
-    };
+         await Promise.all(dependAgents.map(async (agent) => {
+            try {
+               await handleRunDockerAgent(agent);
+            } catch (error) {
+            }
+         }));
+      }
+   };
 
-    const stopDependAgents = async (agent: IAgentToken) => {
+   const stopDependAgents = async (agent: IAgentToken) => {
       const dependAgents = await getDependAgents(agent);
       if (dependAgents.length > 0) {
-        await Promise.all(dependAgents.map(async (agent) => {
-          try {
-            await handleStopDockerAgent(agent);
-          } catch (error) {
-          }
-        }));
-      };
-    };
+         await Promise.all(dependAgents.map(async (agent) => {
+            try {
+               await handleStopDockerAgent(agent);
+            } catch (error) {
+            }
+         }));
+      }
+   };
 
-    const getDependAgents = async (agent: IAgentToken) => {
+   const getDependAgents = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
-        const chainId = agent?.network_id || BASE_CHAIN_ID;
-        const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
-        const codeVersion = await cAgent.getCurrentVersion();
+         const chainId = agent?.network_id || BASE_CHAIN_ID;
+         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
+         const codeVersion = await cAgent.getCurrentVersion();
 
-        const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
-        if (depsAgentStrs.length > 0) {
-          const dependAgents = await installDependAgents(depsAgentStrs, chainId);
-          return dependAgents;
-        }
+         const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+         if (depsAgentStrs.length > 0) {
+            const dependAgents = await installDependAgents(depsAgentStrs, chainId);
+            return dependAgents;
+         }
       }
       return [];
-    };
+   };
 
    const installDependAgents = async (agents: string[], chainId: number) => {
       const installedAgents = new Set<string>();
 
       const agentsData = await Promise.all(agents.map(async (agentContractAddr) => {
-        if (installedAgents.has(agentContractAddr)) {
+         if (installedAgents.has(agentContractAddr)) {
             return null; 
-        }
+         }
 
-        installedAgents.add(agentContractAddr);
+         installedAgents.add(agentContractAddr);
 
-        const cAgent = new CAgentContract({ contractAddress: agentContractAddr, chainId });
-        const codeLanguage = await cAgent.getCodeLanguage();
-        let codeLang = 'js';
-        if (codeLanguage === 'python') {
-          codeLang = 'py';
-        }
-        const codeVersion = await cAgent.getCurrentVersion();
-        const agentName = await cAgent.getAgentName();
-        const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+         const cAgent = new CAgentContract({ contractAddress: agentContractAddr, chainId });
+         const codeLanguage = await cAgent.getCodeLanguage();
+         let codeLang = 'js';
+         if (codeLanguage === 'python') {
+            codeLang = 'py';
+         }
+         const codeVersion = await cAgent.getCurrentVersion();
+         const agentName = await cAgent.getAgentName();
+         const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
 
-        let dependAgents: any[] = [];
-        if (depsAgentStrs.length > 0) {
+         let dependAgents: any[] = [];
+         if (depsAgentStrs.length > 0) {
             dependAgents = await installDependAgents(depsAgentStrs, chainId);
-        }
+         }
 
-        const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
-        const fileNameOnLocal = `prompt.${codeLang}`;
-        const folderNameOnLocal = `${chainId}-${agentName?.toLowerCase()}`;
+         const oldCodeVersion = Number(localStorage.getItem(agentContractAddr));
+         const fileNameOnLocal = `prompt.${codeLang}`;
+         const folderNameOnLocal = `${chainId}-${agentName?.toLowerCase()}`;
 
-        const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderNameOnLocal);
-        if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
+         const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderNameOnLocal);
+         if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
             await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
-        } else {
+         } else {
             const codeBase64 = await cAgent.getAgentCode(codeVersion);
             const base64Array = splitBase64(codeBase64);
             const code =base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
             await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
-        }
-        return [
+         }
+         return [
             ...dependAgents,
             {
-                agent_name: agentName,
-                network_id: chainId,
-                agent_contract_address: agentContractAddr
+               agent_name: agentName,
+               network_id: chainId,
+               agent_contract_address: agentContractAddr
             }
-        ];
+         ];
       }));
       
       return agentsData.flat().filter(Boolean);
-    };
+   };
    
 
    const handleRunDockerAgent = async (agent?: IAgentToken) => {

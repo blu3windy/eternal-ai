@@ -1,8 +1,15 @@
 const express = require('express');
 const http = require('http');
 const url = require('url');
+const cors = require('cors');
 
 const app = express();
+
+app.use(cors({
+    origin: ['http://*', 'https://*'],
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }));
 
 app.post('/:agentName/prompt', (req, res) => {
     console.log('aaaaaaa');
