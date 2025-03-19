@@ -106,7 +106,8 @@ run_container_custom_prompt() {
     cd_docker_build_source_path
     echo "docker build -t "$IMAGE_NAME" .; docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME""
     docker build -t "$IMAGE_NAME" .;
-    docker run --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    docker run -d --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    echo "docker run done"
 }
 
 
