@@ -454,7 +454,7 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 		s.SendTeleVideoActivitiesAlert("[ERROR] twitterDetail is nil")
 		return nil, errors.New("twitterDetail is nil")
 	}
-
+	var existPosts *models.AgentTwitterPost
 	for k, v := range *twitterDetail { // k is tweet_id and v is tweet detail
 		if strings.EqualFold(v.User.ID, agentInfo.TwitterID) {
 			return nil, nil // same user with agent info
@@ -469,7 +469,7 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 			s.SendTeleVideoActivitiesAlert("[ERROR] CreateUpdateUserTwitter error")
 		}
 
-		existPosts, err := s.dao.FirstAgentTwitterPost(
+		existPosts, err = s.dao.FirstAgentTwitterPost(
 			tx,
 			map[string][]interface{}{
 				"twitter_post_id = ?": {v.Tweet.ID},
@@ -578,7 +578,7 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 		return m, nil
 	}
 
-	return nil, nil
+	return existPosts, nil
 }
 
 func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoID uint, tweetMentions *twitter.UserTimeline) error {
