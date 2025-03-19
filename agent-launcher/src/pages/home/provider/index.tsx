@@ -121,7 +121,7 @@ const AgentProvider: React.FC<
 
    const isInstalling = useMemo(() => {
       if (selectedAgent) {
-         return agentStates[selectedAgent.id].isInstalling;
+         return agentStates[selectedAgent.id]?.isInstalling || false;
       }
 
       return false;
@@ -129,7 +129,7 @@ const AgentProvider: React.FC<
 
    const isUnInstalling = useMemo(() => {
       if (selectedAgent) {
-         return agentStates[selectedAgent.id].isUnInstalling;
+         return agentStates[selectedAgent.id]?.isUnInstalling || false;
       }
 
       return false;
@@ -137,7 +137,7 @@ const AgentProvider: React.FC<
 
    const isStarting = useMemo(() => {
       if (selectedAgent) {
-         return agentStates[selectedAgent.id].isStarting;
+         return agentStates[selectedAgent.id]?.isStarting || false;
       }
 
       return false;
@@ -145,7 +145,7 @@ const AgentProvider: React.FC<
 
    const isStopping = useMemo(() => {
       if (selectedAgent) {
-         return agentStates[selectedAgent.id].isStopping;
+         return agentStates[selectedAgent.id]?.isStopping || false;
       }
 
       return false;
@@ -153,7 +153,7 @@ const AgentProvider: React.FC<
 
    const isRunning = useMemo(() => {
       if (selectedAgent) {
-         return agentStates[selectedAgent.id].isRunning;
+         return agentStates[selectedAgent.id]?.isRunning || false;
       }
 
       return false;
@@ -161,7 +161,7 @@ const AgentProvider: React.FC<
 
    const isInstalled = useMemo(() => {
       if (selectedAgent) {
-         return agentStates[selectedAgent.id].isInstalled;
+         return agentStates[selectedAgent.id]?.isInstalled || false;
       }
 
       return false;
