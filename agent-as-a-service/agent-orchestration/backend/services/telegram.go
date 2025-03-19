@@ -1,9 +1,10 @@
 package services
 
 import (
-	"github.com/mymmrac/telego"
 	"strconv"
 	"strings"
+
+	"github.com/mymmrac/telego"
 )
 
 var teleVideoActivitiesAlert *telego.Bot
@@ -41,13 +42,22 @@ func InitTeleVideoActivitiesAlert(token, chatId string) {
 	teleVideoActivitiesChatId, _ = strconv.ParseInt(chatId, 10, 64)
 	teleVideoActivitiesAlert, _ = telego.NewBot(token, telego.WithDefaultDebugLogger())
 }
-func (s *Service) SendTeleVideoActivitiesAlert(msg string) {
+
+func (s *Service) SendTeleVideoActivitiesAlert(msg string, chatId ...string) {
 	if teleVideoActivitiesAlert != nil {
 		go func() {
+			chatID := teleVideoActivitiesChatId
+			var err error
+			if len(chatId) > 0 {
+				chatID, err = strconv.ParseInt(chatId[0], 10, 64)
+				if err != nil {
+					return
+				}
+			}
 			teleVideoActivitiesAlert.SendMessage(
 				&telego.SendMessageParams{
 					ChatID: telego.ChatID{
-						ID: teleVideoActivitiesChatId,
+						ID: chatID,
 					},
 					Text: strings.TrimSpace(msg),
 				},

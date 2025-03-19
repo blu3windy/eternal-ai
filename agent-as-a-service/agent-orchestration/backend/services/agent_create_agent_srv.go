@@ -516,7 +516,7 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 	}
 	if tweetParseInfo == nil || tweetParseInfo.IsGenerateVideo == false {
 		s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL_SYNTAX] a requirement gen fail syntax tw_id=%v, tw_user=%v,  full_text:%v ",
-			tweetId, v.User.UserName, fullText))
+			tweetId, v.User.UserName, fullText), s.conf.VideoFailSyntaxTelegramAlert)
 		return nil, nil
 	}
 
