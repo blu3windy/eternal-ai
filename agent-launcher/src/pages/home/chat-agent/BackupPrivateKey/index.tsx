@@ -16,8 +16,8 @@ const BackupPrivateKey = () => {
       toast.success('Copied.');
    };
   
-  const handleContinue = () => {
-    const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
+   const handleContinue = async () => {
+      const agentIds = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY)!);
 
       localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
 

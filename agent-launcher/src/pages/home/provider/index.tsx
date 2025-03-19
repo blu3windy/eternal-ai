@@ -344,7 +344,7 @@ const AgentProvider: React.FC<
       try {
          setIsInstalling(true);
          if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(agent.agent_type)) {
-            const agentIds = JSON.parse(localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
+            const agentIds = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
 
             localStorageService.setItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
 
@@ -779,7 +779,7 @@ const AgentProvider: React.FC<
    //          }
 
    //          // Check if agent has wallet
-   //          const agentsHasWallet = JSON.parse(localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
+   //          const agentsHasWallet = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
    //          if (agentsHasWallet?.includes(newAgent.id)) {
    //             await createAgentWallet();
    //          }
