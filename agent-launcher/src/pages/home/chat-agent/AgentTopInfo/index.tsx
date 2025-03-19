@@ -61,7 +61,7 @@ const AgentTopInfo = () => {
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
    const allowStopAgent = useMemo(() => {
-      return [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(selectedAgent?.agent_type);
+      return [AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(selectedAgent?.agent_type);
    }, [selectedAgent])
 
    const handleExportPrvKey = () => {
@@ -84,7 +84,7 @@ const AgentTopInfo = () => {
          <Flex className={s.container} position={"relative"}>
             <Flex position={"absolute"} left={"16px"}>
                {
-                  isCanChat && [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type as AgentType) && (
+                  isCanChat && [AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as AgentType) && (
                      <SelectModel showDescription={false}/>
                   )
                }

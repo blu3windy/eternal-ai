@@ -17,7 +17,7 @@ const AgentItem = ({ token }: IProps) => {
    const { selectedAgent, setSelectedAgent, installedUtilityAgents } = useContext(AgentContext);
 
    const description = useMemo(() => {
-      if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.Model].includes(token.agent_type)) {
+      if ([AgentType.Infra, AgentType.Model, AgentType.CustomPrompt].includes(token.agent_type)) {
          return token?.personality;
       } else {
          return token?.token_desc || token?.twitter_info?.description;
