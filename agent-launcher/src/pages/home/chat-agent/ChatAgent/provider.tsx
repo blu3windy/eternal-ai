@@ -291,7 +291,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             params['kb_id'] = `kb-${kbId}`;
          }
 
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra].includes(selectedAgent?.agent_type as any)) {
+         if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
             const res: string = await AgentAPI.chatAgentUtility({ agent: selectedAgent!, prvKey: agentWallet?.privateKey, messages: [ { role: 'user', content: sendTxt }] });
             console.log('res>>>>>', res);
             
