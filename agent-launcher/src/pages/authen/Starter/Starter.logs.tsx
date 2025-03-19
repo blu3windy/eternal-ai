@@ -3,7 +3,6 @@ import {
    Box,
    Text,
    VStack,
-   Progress,
 } from "@chakra-ui/react";
 import useParseLogs from "@hooks/useParseLogs";
 import { motion } from "framer-motion";
@@ -16,12 +15,6 @@ const StarterLogs = () => {
       functionNames: ["INITIALIZE", "MODEL_INSTALL", "DOCKER_BUILD", "MODEL_INSTALL_LLAMA"],
       keys: ["name", "message", "error", "step"]
    });
-
-   // const parsedLogs = useMemo(() => {
-   //    return uniqBy(_parsedLogs, (log) => {
-   //       return log?.values?.message
-   //    })
-   // }, [])
 
    useEffect(() => {
       if (scrollRef.current && !userScrolled) {

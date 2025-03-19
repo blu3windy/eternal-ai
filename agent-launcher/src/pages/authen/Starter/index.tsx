@@ -23,12 +23,12 @@ const LoadingIcon = () => (
    />
 )
 
-const tryExecFunction = async (maxRun: number, func: Promise<void>) => {
+const tryExecFunction = async (maxRun: number, func: any) => {
    // Try to execute the function
    // If function has error, try to execute the function again maxRun times
    for (let i = 0; i < maxRun; i++) {
       try {
-         await func;
+         await func();
       } catch (error) {
          if (i === maxRun - 1) {
             throw error;
@@ -56,18 +56,21 @@ const Starter = (props: IProps) => {
 
          console.time("DOCKER_INSTALL");
 
-         // await tryExecFunction(2, globalThis.electronAPI.dockerInstall);
-         await globalThis.electronAPI.dockerInstall();
+         await tryExecFunction(2, globalThis.electronAPI.dockerInstall);
+         // await globalThis.electronAPI.dockerInstall();
          console.timeEnd("DOCKER_INSTALL");
 
          console.time("DOCKER_BUILD");
 
-         // await tryExecFunction(2, globalThis.electronAPI.dockerBuild);
-         await globalThis.electronAPI.dockerBuild();
+         await tryExecFunction(2, globalThis.electronAPI.dockerBuild);
+         // await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
 
          console.time("MODEL_BASE");
-         await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
+         await tryExecFunction(2, async () => {
+            await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
+         });
+         // await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
          console.timeEnd("MODEL_BASE");
 
          setChecking(false);
