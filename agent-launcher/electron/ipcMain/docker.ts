@@ -170,6 +170,7 @@ const ipcMainDocker = () => {
             `--image-name "${imageName}"`,
             `--type "${type}"`,
             `--private-key "${_options?.privateKey}"`,
+            `--wallet-address "${_options?.address}"`,
          ]
 
          const paramsStr = params.join(' ');

@@ -10,7 +10,7 @@ const ActionButtons = () => {
             onClick={async () => {
 
                try {
-                  await globalThis.electronAPI.dockerRunAgent("leo", "1", JSON.stringify({ privateKey: "12454", type: "custom-prompt" }));
+                  await globalThis.electronAPI.dockerRunAgent("leo2", "1", JSON.stringify({ privateKey: "12454", address: "43422",  type: "custom-ui" }));
 
                } catch (error: any) {
                   alert("Error running agent: " + error?.message);
