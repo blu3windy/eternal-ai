@@ -15,7 +15,7 @@ class CApiClient {
       timeout: 5 * 60000,
       headers: {
          'Content-Type': 'application/json',
-      },
+      } as any,
    };
 
    api: Axios;
@@ -23,9 +23,8 @@ class CApiClient {
    constructor() {
       this.api = axios.create(this.requestConfig);
 
-      // @ts-ignore
       this.api.interceptors.request.use(
-         async (config: AxiosRequestConfig) => {
+         async (config: any) => {
             const _config = config;
 
             // Fetch the wallet address asynchronously

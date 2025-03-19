@@ -62,6 +62,7 @@ const AgentAPI = {
       payload: ChatCompletionPayload;
       streamHandlers: ChatCompletionStreamHandler;
    }): Promise<any> => {
+      const headers = await getClientHeaders();
       const messages = payload.messages.map((item) => ({
          ...item,
          content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
@@ -69,9 +70,9 @@ const AgentAPI = {
       const response = await fetch(`http://localhost:8080/v1/chat/completions`, {
          method: 'POST',
          headers: {
-            ...getClientHeaders(),
+            ...headers,
          },
-         body: JSON.stringify({ messages: messages, stream: true, seed: 0})
+         body: JSON.stringify({ messages: messages, stream: true, seed: 0 })
       });
 
       if (response.status === 200) {
@@ -106,6 +107,7 @@ const AgentAPI = {
     payload: ChatCompletionPayload;
     streamHandlers: ChatCompletionStreamHandler;
   }): Promise<any> => {
+      const headers = await getClientHeaders();
       const messages = payload.messages.map((item) => ({
          ...item,
          content: typeof item.content === 'string' ? `${item.content}`.replace(THINK_TAG_REGEX, '') : item.content,
@@ -114,7 +116,7 @@ const AgentAPI = {
       const response = await fetch(`${IMAGINE_URL}/api/agent/preview/v1`, {
          method: 'POST',
          headers: {
-            ...getClientHeaders(),
+            ...headers,
          },
          body: JSON.stringify({
             messages: JSON.stringify(messages),
