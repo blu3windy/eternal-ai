@@ -60,8 +60,8 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
             const authenToken = await getAuthenToken(signer.privateKey);
 
             if (authenToken) {
-               localStorageService.setItem(STORAGE_KEYS.AUTHEN_TOKEN, authenToken);
-               localStorageService.setItem(
+               await localStorageService.setItem(STORAGE_KEYS.AUTHEN_TOKEN, authenToken);
+               await localStorageService.setItem(
                   STORAGE_KEYS.WALLET_ADDRESS,
                   signer.address
                );

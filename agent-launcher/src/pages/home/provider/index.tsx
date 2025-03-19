@@ -237,7 +237,7 @@ const AgentProvider: React.FC<
          const walletData = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
          const agentsHasWallet = JSON.parse(walletData || '[]'); // Default to an empty array if null
 
-         localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, selectedAgent?.id]) : [selectedAgent?.id]));
+         await localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, selectedAgent?.id]) : [selectedAgent?.id]));
       } catch (err) {
          console.log("Create agent wallet error:", err);
       } finally {
@@ -346,7 +346,7 @@ const AgentProvider: React.FC<
          if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(agent.agent_type)) {
             const agentIds = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS)!);
 
-            localStorageService.setItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
+            await localStorageService.setItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS, JSON.stringify(agentIds ? uniq([...agentIds, selectedAgent?.id]) : [selectedAgent?.id]));
 
             fetchInstalledSocialAgents(); //fetch then check agent installed in useEffect
 
