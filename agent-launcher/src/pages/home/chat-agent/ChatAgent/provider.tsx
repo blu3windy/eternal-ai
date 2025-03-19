@@ -109,7 +109,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   const lastMessage = filterMessages[filterMessages.length - 1];
 
                   if (lastMessage.status === 'waiting') {
-                     sendMessageToServer(lastMessage.id, Number(id), lastMessage.msg);
+                     sendMessageToServer(lastMessage.id, Number(id), lastMessage.msg, lastMessage.attachments);
                   }
                }
             }
@@ -122,6 +122,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
     = lastMessage?.status === 'receiving' || lastMessage?.status === 'waiting';
 
    const publishEvent = async (message: string, attachments?: IChatMessage['attachments']) => {
+
       if (!message || lastMessage?.status === 'waiting' || isStopReceiving) {
          return;
       }
@@ -169,7 +170,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             threadId: threadId,
          });
 
-         await sendMessageToServer(messageId, Number(id), message);
+         await sendMessageToServer(messageId, Number(id), message, attachments);
 
          cPumpAPI.saveAgentPromptCount(Number(id));
       }
@@ -179,6 +180,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       messageId: string,
       agentId: number,
       sendTxt: string,
+      attachments?: IChatMessage['attachments']
    ) => {
       try {
          let filteredMessages = messages
@@ -198,28 +200,82 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          // take last 4 pair messages
          filteredMessages = filteredMessages.slice(-4);
 
+         console.log('filteredMessages', filteredMessages);
+
          const historyMessages = [
             {
-               role: 'system',
-               content: selectedAgent?.personality || '',
+                role: 'system',
+                content: selectedAgent?.personality || '',
             },
             ...filteredMessages.reduce((acc: any[], item, index) => {
-               if (index > 0 && 
-                   filteredMessages[index - 1].type !== 'ai' && 
-                   item.type !== 'ai') {
-                  acc.push({
-                     role: 'assistant',
-                     content: ''
-                  });
-               }
-               acc.push({
-                  role: item.type === 'ai' ? 'assistant' : 'user',
-                  content: item.msg
-               });
-               return acc;
+                if (index > 0 && 
+                    filteredMessages[index - 1].type !== 'ai' && 
+                    item.type !== 'ai') {
+                    acc.push({
+                        role: 'assistant',
+                        content: ''
+                    });
+                }
+        
+                // Handle messages with attachments
+                if (item.attachments && item.attachments.length > 0) {
+                  const messageContent = [];
+                    
+                    // Add text content if exists
+                  //   if (item.msg) {
+                  //       content.push({
+                  //           type: 'text',
+                  //           text: item.msg
+                  //       });
+                  //   }
+        
+                    // Add image attachments
+                    item.attachments.forEach(attachment => {
+                        if (attachment.type.startsWith('image/')) {
+                           messageContent.push({
+                                type: 'image_url',
+                                text: item.msg,
+                                image_url: {
+                                    url: attachment.url,
+                                    detail: attachment.name || 'Image'
+                                }
+                            });
+                        }
+                    });
+        
+                    acc.push({
+                        role: item.type === 'ai' ? 'assistant' : 'user',
+                        content: messageContent
+                    });
+                } else {
+                    // Regular text message without attachments
+                    acc.push({
+                        role: item.type === 'ai' ? 'assistant' : 'user',
+                        content: item.msg
+                    });
+                }
+        
+                return acc;
             }, []),
-            { role: 'user', content: sendTxt },
-         ];
+            // Handle the final message with potential attachments
+            {
+                role: 'user',
+                content: sendTxt && attachments?.length 
+                    ? [
+                        { type: 'text', text: sendTxt },
+                        ...attachments.map(attachment => ({
+                            type: 'image_url',
+                            image_url: {
+                                url: attachment.url,
+                                detail: attachment.name || 'Image'
+                            }
+                        }))
+                      ]
+                    : sendTxt
+            },
+        ];
+
+        console.log('historyMessages', historyMessages);
 
          const params: ChatCompletionPayload = {
             messages: historyMessages,
@@ -444,7 +500,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                threadId: threadId,
             });
 
-            await sendMessageToServer(messageId, Number(id), targetMessage?.msg);
+            await sendMessageToServer(messageId, Number(id), targetMessage?.msg, targetMessage.attachments);
          }
       },
       [messages, id, isStopReceiving],
