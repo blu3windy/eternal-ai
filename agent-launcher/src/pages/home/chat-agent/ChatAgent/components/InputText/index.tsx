@@ -61,13 +61,32 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
     if (!message.trim() && attachments.length === 0) return;
     if (isStopReceiving) return;
 
+    const convertToBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        
+        reader.onload = () => {
+          const base64String = reader.result as string;
+          // Remove the data:image/[type];base64, prefix if needed
+          // const base64 = base64String.split(',')[1];
+          resolve(base64String);
+        };
+        
+        reader.onerror = (error) => {
+          reject(error);
+        };
+      });
+    };
+
     const uploadedAttachments = await Promise.all(
       attachments.map(async (file) => {
-        const url = URL.createObjectURL(file);
+        // const url = URL.createObjectURL(file);
+        const base64 = await convertToBase64(file);
         return {
           type: 'image' as const,
-          url,
-          previewUrl: url
+          url: base64,
+          previewUrl: base64
         };
       })
     );
@@ -75,6 +94,18 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
     publishEvent(message, uploadedAttachments);
     setMessage('');
     setAttachments([]);
+
+    let recentAgents = JSON.parse(localStorageService.getItem(STORAGE_KEYS.RECENT_AGENTS)!) || [];
+    recentAgents = recentAgents.filter(id => !compareString(id, selectedAgent?.id?.toString()));
+    recentAgents.unshift(selectedAgent?.id);
+
+    if (recentAgents.length > 10) {
+      recentAgents = recentAgents.slice(0, 10);
+    }
+
+    localStorageService.setItem(STORAGE_KEYS.RECENT_AGENTS, JSON.stringify(recentAgents));
+
+    cPumpAPI.saveRecentAgents({ ids: recentAgents })
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -103,28 +134,28 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
     return !!message;
   }, [message]);
 
-  const onSendMessage = (_message: string) => {
-    if (isSend && !loading) {
-      publishEvent(_message);
-      setMessage("");
+  // const onSendMessage = (_message: string) => {
+  //   if (isSend && !loading) {
+  //     publishEvent(_message);
+  //     setMessage("");
 
-      let recentAgents = JSON.parse(localStorageService.getItem(STORAGE_KEYS.RECENT_AGENTS)!) || [];
-      recentAgents = recentAgents.filter(id => !compareString(id, selectedAgent?.id?.toString()));
-      recentAgents.unshift(selectedAgent?.id);
+  //     let recentAgents = JSON.parse(localStorageService.getItem(STORAGE_KEYS.RECENT_AGENTS)!) || [];
+  //     recentAgents = recentAgents.filter(id => !compareString(id, selectedAgent?.id?.toString()));
+  //     recentAgents.unshift(selectedAgent?.id);
 
-      if (recentAgents.length > 10) {
-        recentAgents = recentAgents.slice(0, 10);
-      }
+  //     if (recentAgents.length > 10) {
+  //       recentAgents = recentAgents.slice(0, 10);
+  //     }
 
-      localStorageService.setItem(STORAGE_KEYS.RECENT_AGENTS, JSON.stringify(recentAgents));
+  //     localStorageService.setItem(STORAGE_KEYS.RECENT_AGENTS, JSON.stringify(recentAgents));
 
-      cPumpAPI.saveRecentAgents({ ids: recentAgents })
-    }
-  };
+  //     cPumpAPI.saveRecentAgents({ ids: recentAgents })
+  //   }
+  // };
 
-  const handleDeposit = () => {
-    setDepositAgentID(selectedAgent?.agent_id);
-  };
+  // const handleDeposit = () => {
+  //   setDepositAgentID(selectedAgent?.agent_id);
+  // };
 
   return (
     <Flex
@@ -190,6 +221,9 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
           icon={<span>📎</span>}
           onClick={handleAttachImage}
           variant="ghost"
+          _hover={{
+            backgroundColor: 'transparent'
+          }}
         />
           <AutosizeTextarea
             type="text"
