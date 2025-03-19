@@ -36,7 +36,7 @@ const ImportKey = (props: IProps) => {
 
          await onLogin(values.password);
       } catch (error) {
-         console.error(error);
+         console.log(error);
       }
    }
 

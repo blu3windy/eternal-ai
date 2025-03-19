@@ -81,7 +81,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
             setHasUser(true);
          }
       } catch (error) {
-         console.error(error);
+         console.log(error);
       }
    };
 
@@ -91,7 +91,7 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
          const hasUser = await EaiSigner.hasUser();
          setHasUser(hasUser);
       } catch (error) {
-         console.error(error);
+         console.log(error);
       } finally {
          await sleep(500);
          setLoading(false);

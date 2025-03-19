@@ -39,7 +39,7 @@ const CreateNew = (props: IProps) => {
 
          await onLogin(password);
       } catch (e) {
-         console.error(e);
+         console.log(e);
       } finally {
          setLoading(false);
       }

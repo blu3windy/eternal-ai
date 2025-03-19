@@ -221,7 +221,6 @@ const AgentProvider: React.FC<
 
          localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, selectedAgent?.id]) : [selectedAgent?.id]));
       } catch (err) {
-         console.error("Create agent wallet error:", err);
       } finally {
 
       }
@@ -771,7 +770,6 @@ const AgentProvider: React.FC<
             intervalCheckAgentRunning(newAgent);
          }
       } catch (error) {
-         console.error('Error switching agent:', error);
       }
    };
 

@@ -103,7 +103,7 @@ const FormTradeAgentContainer = () => {
 
       dispatch(requestReload());
     } catch (error) {
-      console.error(error);
+      console.log(error);
       showMessage({
         message: getErrorMessage(error).message,
         status: "error",

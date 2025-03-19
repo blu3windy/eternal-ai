@@ -49,7 +49,7 @@ const Login = () => {
          const cipherText = await EaiSigner.getCipherText();
          setCipherText(cipherText)
       } catch (error) {
-         console.error(error);
+         console.log(error);
       } finally {
          setLoading(false);
       }
