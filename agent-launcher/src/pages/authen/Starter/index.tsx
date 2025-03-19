@@ -78,7 +78,9 @@ const Starter = (props: IProps) => {
 
 
    return (
-      <BackgroundWrapper>
+      <BackgroundWrapper
+         showSlider={true}
+      >
          {renderContent()}
       </BackgroundWrapper>
    )

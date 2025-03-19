@@ -13,15 +13,15 @@ const slides = [
       codeImage: "images/studio-1.png",
    },
    {
+      title: "AI for Every Task",
+      description: "Writing, coding, organizing—whatever you need, there’s an AI agent for that.",
+      codeImage: "images/studio-3.png",
+   },
+   {
       title: "Your AI, Your Space",
       description: "No internet? No problem. Your AI runs locally, keeping everything private",
 
       codeImage: "images/studio-2.png",
-   },
-   {
-      title: "AI for Every Task",
-      description: "Writing, coding, organizing—whatever you need, there’s an AI agent for that.",
-      codeImage: "images/studio-3.png",
    },
 ];
 

@@ -32,7 +32,6 @@ const ipcMainKeyChain = () => {
      * @returns {Promise<string>} - The result of the operation.
      */
    ipcMain.handle(EMIT_EVENT_NAME.KEYTAR_GET, async (_event, key: string) => {
-      console.log(`[Main Process] Retrieving : ${key}`);
       try {
          const text = await keytar.getPassword(SERVICE_NAME, key);
          return text;
