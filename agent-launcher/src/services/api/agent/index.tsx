@@ -108,8 +108,9 @@ const AgentAPI = {
   }): Promise<any> => {
       const messages = payload.messages.map((item) => ({
          ...item,
-         content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
+         content: typeof item.content === 'string' ? `${item.content}`.replace(THINK_TAG_REGEX, '') : item.content,
       }));
+      console.log('chatStreamCompletions messages', messages);
       const response = await fetch(`${IMAGINE_URL}/api/agent/preview/v1`, {
          method: 'POST',
          headers: {

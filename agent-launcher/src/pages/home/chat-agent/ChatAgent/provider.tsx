@@ -203,7 +203,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          // take last 4 pair messages
          filteredMessages = filteredMessages.slice(-4);
 
-         console.log('filteredMessages', filteredMessages);
 
          const historyMessages = [
             {
@@ -225,22 +224,21 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   const messageContent: any[] = [];
                     
                     // Add text content if exists
-                  //   if (item.msg) {
-                  //       content.push({
-                  //           type: 'text',
-                  //           text: item.msg
-                  //       });
-                  //   }
+                    if (item.msg) {
+                     messageContent.push({
+                            type: 'text',
+                            text: item.msg
+                        });
+                    }
         
                     // Add image attachments
                     item.attachments.forEach(attachment => {
                         if (attachment.type.startsWith('image/')) {
                            messageContent.push({
                                 type: 'image_url',
-                                text: item.msg,
                                 image_url: {
                                     url: attachment.url,
-                                    detail: item.msg
+                                    detail: ''
                                 }
                             });
                         }
@@ -268,18 +266,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                         { type: 'text', text: sendTxt },
                         ...attachments.map(attachment => ({
                             type: 'image_url',
-                            text: sendTxt,
                             image_url: {
                                 url: attachment.url,
-                                detail: sendTxt
+                                detail: ''
                             }
                         }))
                       ]
                     : sendTxt
             },
         ];
-
-        console.log('historyMessages', historyMessages);
 
          const params: ChatCompletionPayload = {
             messages: historyMessages,
