@@ -5,6 +5,7 @@ import BackgroundWrapper from "@components/BackgroundWrapper";
 import LoadingText from "@components/LoadingText";
 import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
+import BaseButton from "@components/BaseButton";
 
 interface IProps {
    loadingUser: boolean;
@@ -22,12 +23,28 @@ const LoadingIcon = () => (
    />
 )
 
+const tryExecFunction = async (maxRun: number, func: Promise<void>) => {
+   // Try to execute the function
+   // If function has error, try to execute the function again maxRun times
+   for (let i = 0; i < maxRun; i++) {
+      try {
+         await func;
+      } catch (error) {
+         if (i === maxRun - 1) {
+            throw error;
+         }
+      }
+   }
+}
+
 const Starter = (props: IProps) => {
    const { onCheckHasUser } = props;
    const { setChecking } = useStarter();
    const initRef = useRef(false);
 
    const [step] = useState<Step>("INITIALIZING");
+
+   const [hasError, setHasError] = useState(true);
 
    const onInit = async (ignoreCopy?: boolean) => {
       try {
@@ -38,10 +55,14 @@ const Starter = (props: IProps) => {
          }
 
          console.time("DOCKER_INSTALL");
+
+         // await tryExecFunction(2, globalThis.electronAPI.dockerInstall);
          await globalThis.electronAPI.dockerInstall();
          console.timeEnd("DOCKER_INSTALL");
 
          console.time("DOCKER_BUILD");
+
+         // await tryExecFunction(2, globalThis.electronAPI.dockerBuild);
          await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
 
@@ -52,6 +73,7 @@ const Starter = (props: IProps) => {
          setChecking(false);
       } catch (error: any) {
          // alert(error?.message || "Something went wrong.");
+         setHasError(true);
       } finally {
          console.timeEnd("FULL_LOAD_TIME");
       }
@@ -64,6 +86,17 @@ const Starter = (props: IProps) => {
                <LoadingIcon />
                <LoadingText dataText="Initializing..." />
                <StarterLogs />
+               {/* {hasError && (
+                  <BaseButton 
+                     maxWidth="120px"
+                     onClick={() => {
+                        setHasError(false);
+                        onInit();
+                     }}
+                  >
+                     Try again
+                  </BaseButton>
+               )} */}
             </Center>
          )
       }}
