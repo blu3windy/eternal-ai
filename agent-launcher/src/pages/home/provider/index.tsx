@@ -83,6 +83,7 @@ const AgentProvider: React.FC<
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
 
    const [agentStates, setAgentStates] = useState<Record<number, {
+      data: IAgentToken;
       isRunning: boolean;
       isInstalling: boolean;
       isUnInstalling: boolean;
@@ -198,18 +199,19 @@ const AgentProvider: React.FC<
    const loadAgentStates = async () => {
       const savedStates = await localStorageService.getItem(STORAGE_KEYS.AGENT_STATES);
       if (savedStates) {
-        setAgentStates(JSON.parse(savedStates));
+         setAgentStates(JSON.parse(savedStates));
       }
-    };
+   };
 
-    useEffect(() => {
+   useEffect(() => {
       const saveAgentStates = async () => {
-        await localStorageService.setItem(STORAGE_KEYS.AGENT_STATES, JSON.stringify(agentStates));
+         await localStorageService.setItem(STORAGE_KEYS.AGENT_STATES, JSON.stringify(agentStates));
       };
       saveAgentStates();
-    }, [agentStates]);
+   }, [agentStates]);
   
-    const updateAgentState = (agentId: number, state: {
+   const updateAgentState = (agentId: number, state: {
+      data?: IAgentToken;
       isRunning?: boolean;
       isInstalling?: boolean;
       isUnInstalling?: boolean;
@@ -218,13 +220,13 @@ const AgentProvider: React.FC<
       isInstalled?: boolean;
     }) => {
       setAgentStates(prev => ({
-        ...prev,
-        [agentId]: {
-          ...prev[agentId],
-          ...state
-        }
+         ...prev,
+         [agentId]: {
+            ...prev[agentId],
+            ...state
+         }
       }));
-    };
+   };
 
    useEffect(() => {
       const fetchWalletData = async () => {
@@ -298,6 +300,7 @@ const AgentProvider: React.FC<
                const res = await cPumpAPI.checkAgentServiceRunning({ agent });
 
                updateAgentState(agent.id, {
+                  data: agent,
                   isRunning: true,
                });
             } else if ([AgentType.CustomUI].includes(agent.agent_type)) {
@@ -305,6 +308,7 @@ const AgentProvider: React.FC<
                setCustomUIPort(port);
 
                updateAgentState(agent.id, {
+                  data: agent,
                   isRunning: true,
                });
             } else if ([AgentType.Model].includes(agent.agent_type)) {
@@ -312,10 +316,12 @@ const AgentProvider: React.FC<
                const ipfsHash = await getModelAgentHash(agent);
 
                updateAgentState(agent.id, {
+                  data: agent,
                   isRunning: ipfsHash === runningModelHash,
                });
             } else {
                updateAgentState(agent.id, {
+                  data: agent,
                   isRunning: true,
                });
             }
@@ -323,6 +329,7 @@ const AgentProvider: React.FC<
       } catch (err) {
          console.log("checkAgentRunning error:", err);
          updateAgentState(agent.id, {
+            data: agent,
             isRunning: false,
          });
          setCustomUIPort('');
@@ -443,6 +450,7 @@ const AgentProvider: React.FC<
 
    const setAgentInstalled = (agent: IAgentToken) => {
       updateAgentState(agent.id, {
+         data: agent,
          isInstalled: true,
       });
 
@@ -451,6 +459,7 @@ const AgentProvider: React.FC<
 
    const setAgentUnInstalled = (agent: IAgentToken) => {
       updateAgentState(agent.id, {
+         data: agent,
          isInstalled: false,
       });
 
@@ -460,6 +469,7 @@ const AgentProvider: React.FC<
    const installAgent = async (agent: IAgentToken) => {
       try {
          updateAgentState(agent.id, {
+            data: agent,
             isInstalling: true,
          });
 
@@ -497,6 +507,7 @@ const AgentProvider: React.FC<
          console.log('installAgent e', e);
       } finally {
          updateAgentState(agent.id, {
+            data: agent,
             isInstalling: false,
          });
       }
@@ -505,6 +516,7 @@ const AgentProvider: React.FC<
    const startAgent = async (agent: IAgentToken, needUpdateCode?: boolean) => {
       try {
          updateAgentState(agent.id, {
+            data: agent,
             isStarting: true,
          });
 
@@ -530,6 +542,7 @@ const AgentProvider: React.FC<
          console.log('startAgent e', e);
       } finally {
          updateAgentState(agent.id, {
+            data: agent,
             isStarting: false,
          });
 
@@ -540,6 +553,7 @@ const AgentProvider: React.FC<
    const stopAgent = async (agent: IAgentToken) => {
       try {
          updateAgentState(agent.id, {
+            data: agent,
             isStopping: true,
          });
 
@@ -557,6 +571,7 @@ const AgentProvider: React.FC<
          console.log('stopAgent e', e);
       } finally {
          updateAgentState(agent.id, {
+            data: agent,
             isStopping: false,
          });
 
@@ -568,6 +583,7 @@ const AgentProvider: React.FC<
       console.log('unInstallAgent', agent);
       try {
          updateAgentState(agent.id, {
+            data: agent,
             isUnInstalling: true,
          });
 
@@ -596,6 +612,7 @@ const AgentProvider: React.FC<
          console.log('unInstallAgent e', e);
       } finally {
          updateAgentState(agent.id, {
+            data: agent,
             isUnInstalling: false,
          });
       }

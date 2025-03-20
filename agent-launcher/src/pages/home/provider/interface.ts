@@ -43,6 +43,7 @@ export interface IAgentContext {
   isCustomUI: boolean;
   customUIPort: string;
   agentStates: Record<number, {
+    data: IAgentToken;
     isRunning: boolean;
     isInstalling: boolean;
     isUnInstalling: boolean;
@@ -51,6 +52,7 @@ export interface IAgentContext {
     isInstalled: boolean;
   }>;
   updateAgentState: (agentId: number, state: {
+    data?: IAgentToken;
     isRunning?: boolean;
     isInstalling?: boolean;
     isUnInstalling?: boolean;
