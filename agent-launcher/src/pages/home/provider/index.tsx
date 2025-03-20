@@ -97,14 +97,14 @@ const AgentProvider: React.FC<
    const cPumpAPI = new CAgentTokenAPI();
 
    const checkBackup = throttle(useCallback(async () => {
-      const value = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
-      if (!value) {
+      const values = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
+      if (!values) {
          setIsBackupedPrvKey(false);
          return;
       }
-      const agentIdsHasBackup = JSON.parse(value);
+      const agentIdsHasBackup = JSON.parse(values);
       setIsBackupedPrvKey(agentWallet && selectedAgent && agentIdsHasBackup && agentIdsHasBackup?.some?.(id => id === selectedAgent?.id));
-   }, []), 1000);
+   }, [selectedAgent, agentWallet]), 1000);
 
    useEffect(() => {
       checkBackup();
