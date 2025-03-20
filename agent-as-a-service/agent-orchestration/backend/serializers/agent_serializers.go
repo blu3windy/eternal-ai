@@ -136,6 +136,7 @@ type AgentInfoResp struct {
 	IsOnchain                 bool                      `json:"is_onchain"`
 	IsCustomUi                bool                      `json:"is_custom_ui"`
 	Likes                     int64                     `json:"likes"`
+	IsPublic                  bool                      `json:"is_public"`
 }
 
 type AgentTwitterPostResp struct {
@@ -301,6 +302,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		IsOnchain:            m.IsOnchain,
 		IsCustomUi:           m.IsCustomUi,
 		Likes:                m.Likes,
+		IsPublic:             m.IsPublic,
 	}
 
 	if m.NftTokenImage != "" {

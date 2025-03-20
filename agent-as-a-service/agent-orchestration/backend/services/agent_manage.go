@@ -215,6 +215,13 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 
 	if req.AgentType > 0 {
 		agent.AgentType = req.AgentType
+		if req.AgentType == models.AgentInfoAgentTypeModel ||
+			req.AgentType == models.AgentInfoAgentTypeJs ||
+			req.AgentType == models.AgentInfoAgentTypePython ||
+			req.AgentType == models.AgentInfoAgentTypeCustomUi ||
+			req.AgentType == models.AgentInfoAgentTypeCustomPrompt {
+			agent.IsPublic = false
+		}
 	}
 
 	if req.CreateKnowledgeRequest != nil {
@@ -1586,4 +1593,40 @@ func (s *Service) CheckAgentLiked(ctx context.Context, address string, agentID u
 		return false, errs.NewError(err)
 	}
 	return agentReactionHistory != nil, nil
+}
+
+func (s *Service) PublicAgent(ctx context.Context, address string, agentID uint) (bool, error) {
+	err := daos.WithTransaction(
+		daos.GetDBMainCtx(ctx),
+		func(tx *gorm.DB) error {
+			agentInfo, err := s.dao.FirstAgentInfoByID(
+				tx, agentID,
+				map[string][]any{},
+				false,
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			if agentInfo == nil {
+				return errs.NewError(errs.ErrAgentNotFound)
+			}
+
+			if strings.ToLower(address) != agentInfo.Creator {
+				return errs.NewError(errs.ErrUnAuthorization)
+			}
+
+			err = tx.Model(agentInfo).Update("is_public", !agentInfo.IsPublic).Error
+			if err != nil {
+				return errs.NewError(err)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return false, errs.NewError(err)
+	}
+
+	return true, nil
 }
