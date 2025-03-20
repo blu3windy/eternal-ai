@@ -1,4 +1,3 @@
-import s from "./styles.module.scss";
 import {
    Button,
    Divider,
@@ -11,26 +10,28 @@ import {
    Text,
    useDisclosure
 } from "@chakra-ui/react";
-import SelectModel from "@pages/home/chat-agent/AgentTopInfo/SelectModel";
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import { AgentContext } from "@pages/home/provider";
-import { formatCurrency } from "@utils/format.ts";
-import Percent24h from "@components/Percent";
-import InfoTooltip from "@components/InfoTooltip";
-import { AgentType } from "@pages/home/list-agent";
-import HeaderWallet from "@components/header/wallet";
-import cx from 'clsx';
-import AgentOnChainInfo from "@pages/home/trade-agent/onchain-info";
-import BaseModal from "@components/BaseModal";
-import ExportPrivateKey from "@pages/home/chat-agent/ExportPrivateKey";
-import TradeAgent from "@pages/home/trade-agent";
-import AgentTradeProvider from "@pages/home/trade-agent/provider";
-import { addressFormater } from "@utils/string";
-import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import Avatar from "@components/Avatar";
+import BaseModal from "@components/BaseModal";
+import HeaderWallet from "@components/header/wallet";
+import InfoTooltip from "@components/InfoTooltip";
+import Percent24h from "@components/Percent";
 import { BASE_CHAIN_ID } from "@constants/chains";
 import CAgentContract from "@contract/agent";
+import SelectModel from "@pages/home/chat-agent/AgentTopInfo/SelectModel";
+import ExportPrivateKey from "@pages/home/chat-agent/ExportPrivateKey";
+import { AgentType } from "@pages/home/list-agent";
+import { AgentContext } from "@pages/home/provider";
+import TradeAgent from "@pages/home/trade-agent";
+import AgentOnChainInfo from "@pages/home/trade-agent/onchain-info";
+import AgentTradeProvider from "@pages/home/trade-agent/provider";
+import CAgentTokenAPI from "@services/api/agents-token";
 import localStorageService from "@storage/LocalStorageService";
+import { formatCurrency } from "@utils/format.ts";
+import { addressFormater } from "@utils/string";
+import cx from 'clsx';
+import { useContext, useEffect, useMemo, useState } from "react";
+import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
+import s from "./styles.module.scss";
 
 const AgentTopInfo = () => {
    const {
@@ -57,6 +58,10 @@ const AgentTopInfo = () => {
       onClose: onCloseDrawer
    } = useDisclosure();
 
+   const [isLiked, setIsLiked] = useState(false);
+
+   const cAgentTokenAPI = new CAgentTokenAPI();
+
    const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
    const color = useMemo(() => {
@@ -71,8 +76,11 @@ const AgentTopInfo = () => {
       return [AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(selectedAgent?.agent_type);
    }, [selectedAgent])
 
-    useEffect(() => {
-      checkVersionCode();
+   useEffect(() => {
+      if (selectedAgent) {
+         checkVersionCode();
+         checkIsLiked();
+      }
    }, [selectedAgent])
 
    const checkVersionCode = async () => {
@@ -91,6 +99,16 @@ const AgentTopInfo = () => {
          }
       }
    };
+
+   const checkIsLiked = async () => {
+      const res = await cAgentTokenAPI.checkAgentIsLiked(selectedAgent?.id);
+      setIsLiked(res);
+   }
+
+   const handleLikeAgent = async () => {
+      await cAgentTokenAPI.likeAgent(selectedAgent?.id);
+      setIsLiked(true);
+   }
 
    const handleUpdateCode = async () => {
       await stopAgent(selectedAgent);
@@ -112,6 +130,8 @@ const AgentTopInfo = () => {
          window.open(`https://x.com/${selectedAgent?.tmp_twitter_info?.twitter_username}`);
    };
 
+   console.log("stephen: isLiked", isLiked);
+
    return (
       <>
          <Flex className={s.container} position={"relative"}>
@@ -131,7 +151,34 @@ const AgentTopInfo = () => {
                   <InfoTooltip iconSize="sm" label={
                      <Flex direction={"column"} p={"8px"}>
                         <Flex direction={"column"} gap={"8px"}>
-                           <Text fontSize={"16px"} fontWeight={500}>{selectedAgent?.agent_name}</Text>
+                           <Flex alignItems={"center"} gap={"8px"}>
+                              <Text fontSize={"16px"} fontWeight={500}>{selectedAgent?.agent_name}</Text>
+                              <Button 
+                                 isDisabled={isLiked}
+                                 onClick={handleLikeAgent}
+                                 className="like-button"
+                                 variant="contained"
+                                 sx={{
+                                    borderRadius: '20px',
+                                    padding: '4px 16px',
+                                    backgroundColor: isLiked ? '#ffebee' : 'white',
+                                    color: isLiked ? '#e91e63' : '#666',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                                    '&:hover': {
+                                       backgroundColor: isLiked ? '#ffe4e8' : '#f5f5f5',
+                                       transform: 'translateY(-2px)',
+                                       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                                    },
+                                    '&:active': {
+                                       transform: 'translateY(0)',
+                                    },
+                                    transition: 'all 0.3s ease',
+                                 }}
+                              >
+                                 {isLiked ? 'Liked' : 'Like'}
+                              </Button>
+                           </Flex>
+                           
                            <Flex
                               alignItems="center"
                               gap="4px"

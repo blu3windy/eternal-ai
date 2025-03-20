@@ -79,6 +79,7 @@ export interface IAgentToken {
   is_onchain?: boolean;
   is_custom_ui?: boolean;
   prompt_calls: number;
+  likes: number;
   ipfsHash?: string;
   sizeGb?: number;
 }
