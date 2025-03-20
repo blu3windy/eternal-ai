@@ -12,7 +12,7 @@ import {
    useDisclosure
 } from "@chakra-ui/react";
 import SelectModel from "@pages/home/chat-agent/AgentTopInfo/SelectModel";
-import React, { useContext, useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { AgentContext } from "@pages/home/provider";
 import { formatCurrency } from "@utils/format.ts";
 import Percent24h from "@components/Percent";
@@ -28,6 +28,9 @@ import AgentTradeProvider from "@pages/home/trade-agent/provider";
 import { addressFormater } from "@utils/string";
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import Avatar from "@components/Avatar";
+import { BASE_CHAIN_ID } from "@constants/chains";
+import CAgentContract from "@contract/agent";
+import localStorageService from "@storage/LocalStorageService";
 
 const AgentTopInfo = () => {
    const {
@@ -39,6 +42,7 @@ const AgentTopInfo = () => {
       stopAgent,
       requireInstall,
       isRunning,
+      startAgent,
    } = useContext(AgentContext);
 
    const {
@@ -58,11 +62,39 @@ const AgentTopInfo = () => {
       return isCanChat || showBackupPrvKey ? 'black' : 'white';
    }, [isCanChat, showBackupPrvKey]);
 
+   const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
+
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
    const allowStopAgent = useMemo(() => {
       return [AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(selectedAgent?.agent_type);
    }, [selectedAgent])
+
+    useEffect(() => {
+      checkVersionCode();
+   }, [selectedAgent])
+
+   const checkVersionCode = async () => {
+      setHaveNewVersionCode(false);
+      if ([AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(selectedAgent?.agent_type)) {
+         const chainId = selectedAgent?.network_id || BASE_CHAIN_ID;
+         const cAgent = new CAgentContract({
+            contractAddress: selectedAgent.agent_contract_address,
+            chainId: chainId
+         });
+         const codeVersion = await cAgent.getCurrentVersion();
+         const values = await localStorageService.getItem(selectedAgent.agent_contract_address);
+         const oldCodeVersion = values ? Number(values) : 0;
+         if (oldCodeVersion > 0 && codeVersion > oldCodeVersion) {
+            setHaveNewVersionCode(true);
+         }
+      }
+   };
+
+   const handleUpdateCode = async () => {
+      await stopAgent(selectedAgent);
+      await startAgent(selectedAgent, true);
+   }
 
    const handleExportPrvKey = () => {
       onOpen();
@@ -144,6 +176,19 @@ const AgentTopInfo = () => {
                                        <path d="M6 18V6H18V18H6Z" fill="black"/>
                                     </svg>
                                     Stop running {selectedAgent?.agent_name}
+                                 </Button>
+                              </>
+                           )
+                        }
+                        {
+                           hasNewVersionCode && (
+                              <>
+                                 <Divider color={"#E2E4E8"} mt={"16px"} mb={'8px'}/>
+                                 <Button
+                                    className={s.btnUpdateCode}
+                                    onClick={handleUpdateCode}
+                                 >
+                                    A new code version is available. Update now?
                                  </Button>
                               </>
                            )

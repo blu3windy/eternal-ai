@@ -502,14 +502,14 @@ const AgentProvider: React.FC<
       }
    }
 
-   const startAgent = async (agent: IAgentToken) => {
+   const startAgent = async (agent: IAgentToken, needUpdateCode?: boolean) => {
       try {
          updateAgentState(agent.id, {
             isStarting: true,
          });
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
-            // await installUtilityAgent(agent);
+            await installUtilityAgent(agent, needUpdateCode);
             await startDependAgents(agent);
 
             await handleRunDockerAgent(agent);
@@ -611,7 +611,7 @@ const AgentProvider: React.FC<
       }
    }
 
-   const installUtilityAgent = async (agent: IAgentToken) => {
+   const installUtilityAgent = async (agent: IAgentToken, needUpdateCode?: boolean) => {
       if (agent && !!agent.agent_contract_address) {
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({
@@ -636,10 +636,8 @@ const AgentProvider: React.FC<
             fileNameOnLocal,
             folderNameOnLocal
          );
-         if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
-            filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
-            console.log('filePath isExisted', filePath)
-         } else {
+
+         if (!isExisted || needUpdateCode || oldCodeVersion <= 0) {
             const rawCode = await cAgent.getAgentCode(codeVersion);
             if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
                filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode, agent.agent_type === AgentType.UtilityPython ? 'app' : undefined);
@@ -660,9 +658,12 @@ const AgentProvider: React.FC<
                await localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
                console.log('filePath New', filePath);
             }
+         } else {
+            filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+            console.log('filePath isExisted', filePath)
          }
       }
-   }
+   };
 
    const removeUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_name) {
