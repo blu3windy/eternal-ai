@@ -792,12 +792,13 @@ const AgentProvider: React.FC<
          const lang = getUtilityAgentCodeLanguage(agent);
 
          const options: any = {
-            type: lang
+            type: lang,
+            port: agent.docker_port
          };
 
          if (agent?.required_wallet) {
-            options.privateKey = agentWallet?.privateKey!;
-            options.address = agentWallet?.address!;
+            options.privateKey = agentWallet?.privateKey;
+            options.address = agentWallet?.address;
          }
 
          console.log("stephen: options", agent?.agent_name?.toLowerCase(), agent?.network_id.toString(), JSON.stringify(options));
