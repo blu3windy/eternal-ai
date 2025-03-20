@@ -55,6 +55,13 @@ const url = `${server}/`;
 
 log.info('Setting up autoUpdater with URL:', url);
 
+// Configure update behavior first
+autoUpdater.autoDownload = false;
+autoUpdater.allowDowngrade = true;
+autoUpdater.allowPrerelease = true;
+autoUpdater.fullChangelog = true;
+autoUpdater.forceDevUpdateConfig = true;
+
 const updateConfig = {
    provider: 'generic' as const,
    url: url,
@@ -65,18 +72,24 @@ const updateConfig = {
 try {
    autoUpdater.setFeedURL(updateConfig);
    log.info('Feed URL set successfully');
+   
+   // Force configuration after setFeedURL
+   autoUpdater.channel = 'latest';
+   autoUpdater.allowDowngrade = true;
+   autoUpdater.allowPrerelease = true;
+   
+   // Log current configuration
+   log.info('AutoUpdater Configuration:', {
+      currentVersion: app.getVersion(),
+      targetVersion: '0.0.5',
+      allowDowngrade: autoUpdater.allowDowngrade,
+      allowPrerelease: autoUpdater.allowPrerelease,
+      channel: autoUpdater.channel,
+      feedURL: url
+   });
 } catch (err) {
    log.error('Error setting feed URL:', err);
 }
-
-// Configure update behavior
-autoUpdater.forceDevUpdateConfig = true;
-autoUpdater.autoDownload = false;
-autoUpdater.allowDowngrade = true;
-autoUpdater.allowPrerelease = true;
-autoUpdater.fullChangelog = true;
-autoUpdater.disableWebInstaller = true;
-autoUpdater.autoInstallOnAppQuit = false;
 
 // Debug request headers
 autoUpdater.requestHeaders = {
