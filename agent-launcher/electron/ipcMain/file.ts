@@ -78,9 +78,25 @@ const ipcMainSafeFile = () => {
    ipcMain.handle(EMIT_EVENT_NAME.ACCESS_FILE, async (_, fileName, folderName) => {
       try {
          const filePath = getFilePath(fileName, folderName.toLowerCase());
-         await fs.stat(filePath);
-         return true;
+         try {
+            const stats = await fs.stat(filePath);
+            return stats.isFile();
+         } catch (error) {
+            // If file doesn't exist, check if folderName contains fileName
+            const folderPath = path.join(APP_DIR, folderName.toLowerCase());
+            try {
+               const folderStats = await fs.stat(folderPath);
+               if (folderStats.isDirectory()) {
+                  const files = await fs.readdir(folderPath);
+                  return files.includes(fileName);
+               }
+            } catch (folderError) {
+               return false;
+            }
+            return false;
+         }
       } catch (error) {
+         console.error('Error checking file access:', error);
          return false;
       }
    });
@@ -114,6 +130,9 @@ const ipcMainSafeFile = () => {
       }
    });
    ipcMain.handle(EMIT_EVENT_NAME.SAVE_ZIPFILE, async (_, fileName, folderName, content, subFolderName) => {
+      const folderPath = path.join(APP_DIR, folderName.toLowerCase());
+      await fs.rm(folderPath, { recursive: true, force: true });
+
       const filePath = getFilePath(fileName, folderName, subFolderName);
       await checkAndCreateFolder(path.dirname(filePath));
       // Convert the string (base64 or binary) into a Buffer
