@@ -29,9 +29,6 @@ const AgentNotification: React.FC = () => {
    const { agentStates } = useContext(AgentContext);
    const { isOpen, onToggle, onClose } = useDisclosure();
 
-   console.log('agentStates', agentStates);
-   console.log('Object.entries(agentStates)', Object.entries(agentStates));
-
    const pendingAgents = useMemo(() => {
       if (!agentStates) return [];
     

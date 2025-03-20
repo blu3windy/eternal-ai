@@ -133,8 +133,6 @@ const AgentTopInfo = () => {
          window.open(`https://x.com/${selectedAgent?.tmp_twitter_info?.twitter_username}`);
    };
 
-   console.log("stephen: isLiked", isLiked);
-
    return (
       <>
          <Flex className={s.container} position={"relative"}>
