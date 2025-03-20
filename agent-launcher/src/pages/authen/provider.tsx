@@ -196,20 +196,6 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
          {renderContent()}
          <ForgotPass />
          <Loggers />
-         <Text
-            position="absolute"
-            top="auto"
-            left="0"
-            right="0"
-            bottom="20px"
-            color="blue"
-            fontSize="12px"
-            fontWeight="bold"
-            zIndex="1000"
-            textAlign="center"
-         >
-            ELECTRON_UPDATER
-         </Text>
       </AuthContext.Provider>
    );
 };

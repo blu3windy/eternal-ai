@@ -111,7 +111,7 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "https://electron-update-server-production.up.railway.app/updates/"
+        "url": "https://github.com/0x0603/electron-update-server/releases/download/0.0.5"
       }
     ],
     "files": [
@@ -125,13 +125,30 @@
     },
     "mac": {
       "target": [
-        "dmg",
-        "zip"
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
       ],
       "icon": "public/icons/app-logo.png",
       "artifactName": "${productName}-Mac-${version}.${ext}",
-      "minimumSystemVersion": "13.0.1"
+      "minimumSystemVersion": "13.3.1",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "signIgnore": [".*\\.js", ".*\\.dll", ".*\\.node"],
+      "extendInfo": {
+        "NSAppleEventsUsageDescription": "Application requires access to run updates.",
+        "LSMinimumSystemVersion": "13.3.1"
+      },
+      "electronLanguages": ["en"],
+      "electronUpdaterCompatibility": ">=2.15"
     },
+    "afterSign": null,
     "extraResources": [
       {
         "from": "public",

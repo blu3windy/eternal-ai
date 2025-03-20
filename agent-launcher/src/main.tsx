@@ -8,15 +8,15 @@ import "@fontsource/inter";
 import UpdateBanner from "@components/UpdateBanner/index.tsx";
 
 createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <ChakraProvider>
-      {/* <UpdateBanner /> */}
-      <App />
-    </ChakraProvider>
-  </React.StrictMode>
+   <React.StrictMode>
+      <ChakraProvider>
+         <UpdateBanner />
+         <App />
+      </ChakraProvider>
+   </React.StrictMode>
 );
 
 // Use contextBridge
 globalThis.ipcRenderer.on("main-process-message", (_event, message) => {
-  console.log(message);
+   console.log(message);
 });
