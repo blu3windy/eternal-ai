@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "postinstall": "electron-builder install-app-deps",
-    "build": "tsc && vite build && electron-builder --mac --universal -- -p always",
+    "build": "tsc && vite build && electron-builder --mac --universal --x64 --arm64 -p always",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
@@ -126,27 +126,41 @@
     "mac": {
       "target": [
         {
-          "target": "zip",
-          "arch": ["x64", "arm64"]
-        },
-        {
           "target": "dmg",
           "arch": ["x64", "arm64"]
         }
       ],
       "icon": "public/icons/app-logo.png",
       "artifactName": "${productName}-Mac-${version}.${ext}",
-      "minimumSystemVersion": "13.3.1",
+      "minimumSystemVersion": "10.13.0",
       "identity": null,
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "signIgnore": [".*\\.js", ".*\\.dll", ".*\\.node"],
+      "signIgnore": [".*"],
       "extendInfo": {
         "NSAppleEventsUsageDescription": "Application requires access to run updates.",
-        "LSMinimumSystemVersion": "13.3.1"
+        "LSMinimumSystemVersion": "10.13.0"
+      }
+    },
+    "dmg": {
+      "sign": false,
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 400
       },
-      "electronLanguages": ["en"],
-      "electronUpdaterCompatibility": ">=2.15"
+      "internetEnabled": false
     },
     "afterSign": null,
     "extraResources": [

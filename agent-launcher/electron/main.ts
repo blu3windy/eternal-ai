@@ -23,9 +23,27 @@ log.info('Chrome version:', process.versions.chrome);
 autoUpdater.logger = log;
 (autoUpdater.logger as any).transports.file.level = 'debug';
 
-// Disable code signing verification - multiple approaches
+// Disable code signing verification
 process.env.CSC_IDENTITY_AUTO_DISCOVERY = 'false';
 process.env.ELECTRON_DISABLE_CODE_SIGNING = 'true';
+
+// Check if running from DMG/Volume
+const isRunningFromVolume = app.getAppPath().includes('/Volumes/');
+log.info('Running from volume:', isRunningFromVolume);
+
+if (isRunningFromVolume) {
+   log.info('App is running from a volume - showing move to applications dialog');
+   dialog.showMessageBox({
+      type: 'info',
+      title: 'Move to Applications',
+      message: 'Please drag the app to your Applications folder before running.',
+      detail: 'This ensures proper functionality including automatic updates.',
+      buttons: ['OK'],
+      defaultId: 0
+   }).then(() => {
+      app.quit();
+   });
+}
 
 if (process.platform === 'darwin') {
    app.commandLine.appendSwitch('ignore-certificate-errors');
@@ -39,7 +57,9 @@ log.info('Setting up autoUpdater with URL:', url);
 
 const updateConfig = {
    provider: 'generic' as const,
-   url: url
+   url: url,
+   requestHeaders: { 'Cache-Control': 'no-cache' },
+   verifyUpdateCodeSignature: false
 };
 
 try {
@@ -77,7 +97,8 @@ autoUpdater.on("checking-for-update", () => {
       channel: autoUpdater.channel,
       platform: process.platform,
       arch: process.arch,
-      codeSigningDisabled: process.env.ELECTRON_DISABLE_CODE_SIGNING === 'true'
+      codeSigningDisabled: process.env.ELECTRON_DISABLE_CODE_SIGNING === 'true',
+      isRunningFromVolume: isRunningFromVolume
    });
 
    // Log environment variables related to code signing
