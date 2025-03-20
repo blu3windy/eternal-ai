@@ -60,6 +60,10 @@ while [[ "$#" -gt 0 ]]; do
       WALLET_ADDRESS="$2"
       shift 2
       ;;
+    --port)
+      PORT="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown option: $1"
       usage
@@ -97,7 +101,12 @@ cd_docker_build_source_path() {
 run_container_custom_prompt() {
     cd_docker_build_source_path
     docker build -t "$IMAGE_NAME" .;
-    docker run -d --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    if [ -n "$PORT" ]; then
+    docker run -d ${PORT} --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    else
+        docker run -d --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    fi
+
 }
 
 
