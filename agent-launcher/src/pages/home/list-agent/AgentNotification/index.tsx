@@ -36,7 +36,7 @@ const AgentNotification: React.FC = () => {
       if (!agentStates) return [];
     
       return Object.entries(agentStates)
-         .filter(([_, state]) => state.isInstalling || state.isStarting)
+         // .filter(([_, state]) => state.isInstalling || state.isStarting)
          .map(([id, state]) => ({
             id,
             name: state?.data?.agent_name || id,
@@ -67,29 +67,29 @@ const AgentNotification: React.FC = () => {
             <PopoverHeader fontWeight="semibold">
           Agents in Progress
             </PopoverHeader>
-            <PopoverBody maxH="300px" overflowY="auto">
+            <PopoverBody maxH="600px" overflowY="auto">
                <VStack spacing={2} align="stretch">
                   {pendingAgents?.map((agent: any, index: number) => (
                      <>
                         <Grid
-                           templateColumns={'20px 1fr'}
+                           templateColumns={'40px 1fr'}
                            gap="12px"
                            w={'100%'}
                         >
                            <Flex position={"relative"}>
                               {agent.icon ? (
                                  <Image
-                                    w={'20px'}
+                                    w={'40px'}
                                     objectFit={'cover'}
                                     src={agent.icon}
-                                    maxHeight={'20px'}
-                                    maxWidth={'20px'}
+                                    maxHeight={'40px'}
+                                    maxWidth={'40px'}
                                     borderRadius={'50%'}
                                  />
                               ) : (
                                  <DefaultAvatar
-                                    width={'20px'}
-                                    height={'20px'}
+                                    width={'40px'}
+                                    height={'40px'}
                                     name={agent?.name}
                                     fontSize={14}
                                  />
