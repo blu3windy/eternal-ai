@@ -40,6 +40,18 @@
     padding: 0;
   }
 
+  .btnUpdateCode {
+    padding: 0;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    background: transparent !important;
+    color: #5400FB !important;
+    font-size: 14px;
+    font-weight: 400;
+    text-decoration: underline !important;
+  }
+
   .content {
     height: 36px;
     padding: 0px 16px;
