@@ -92,9 +92,27 @@ Request format:
 ```
 
 ### 3. Access Another Agents Integration
-http://localhost:33030/<chain-id>-<agent-name>/prompt
+Base URL format:
+`http://localhost:33030/<chain-id>-<agent-name>/prompt`
 
-Sample: `http://localhost:33030/84532-deepsearch/prompt`
+**Important Notes:**
+- `chain-id`: Must be in lowercase (e.g., "84532", "1")
+- `agent-name`: Must be in lowercase (e.g., "deepsearch", "calculator")
+- No uppercase letters allowed in the URL
+
+Examples:
+
+✅ Correct:
+
+```
+http://localhost:33030/84532-deepsearch/prompt
+http://localhost:33030/1-calculator/prompt
+```
+❌ Incorrect:
+```angular2html
+http://localhost:33030/84532-DeepSearch/prompt // Contains uppercase
+http://localhost:33030/84532-CALCULATOR/prompt // Contains uppercase
+```
 
 Request format:
 ```json
