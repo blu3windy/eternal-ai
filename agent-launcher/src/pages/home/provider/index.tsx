@@ -252,8 +252,10 @@ const AgentProvider: React.FC<
       }
 
       checkAgentRunning(agent);
-
-      refInterval.current = setInterval(checkAgentRunning, 30000, agent);
+      
+      refInterval.current = setInterval(() => {
+         checkAgentRunning(agent, 0, false);
+      }, 30000);
    }
 
    useEffect(() => {
@@ -282,10 +284,15 @@ const AgentProvider: React.FC<
       return '';
    }
 
+   const checkAgentRunning = async (agent: IAgentToken, retryCount = 0, isRetry = false) => {
+      // If this is a retry attempt and we're already checking, don't proceed
+      if (isRetry && refInterval.current) {
+         console.log("Skipping retry as interval check is already running");
+         return;
+      }
 
-   const checkAgentRunning = async (agent: IAgentToken) => {
       try {
-         // console.log("stephen: agent", agent);
+         console.log("checkAgentRunning: agent", agent);
          if(agent) {
             if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
                const res = await cPumpAPI.checkAgentServiceRunning({ agent });
@@ -314,11 +321,19 @@ const AgentProvider: React.FC<
             }
          }
       } catch (err) {
-         console.log("Check agent running error:", err);
+         console.log("checkAgentRunning error:", err);
          updateAgentState(agent.id, {
             isRunning: false,
          });
          setCustomUIPort('');
+
+         // Retry check running
+         if (retryCount < 3) {
+            console.log(`Retrying checkAgentRunning (attempt ${retryCount + 1}/3)...`);
+            // Wait for 2 seconds before retrying
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return checkAgentRunning(agent, retryCount + 1, true);
+         }
       }
    }
 
@@ -642,9 +657,6 @@ const AgentProvider: React.FC<
             }
 
          }
-
-
-      }
    };
 
    const removeUtilityAgent = async (agent: IAgentToken) => {
