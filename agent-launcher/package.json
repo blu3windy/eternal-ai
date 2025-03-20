@@ -104,6 +104,7 @@
     "appId": "com.eternalai.agent-launcher",
     "productName": "Vibe",
     "asar": true,
+    "forceCodeSigning": false,
     "asarUnpack": [
       "node_modules/keytar/**",
       "public/**"
