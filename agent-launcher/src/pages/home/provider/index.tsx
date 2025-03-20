@@ -67,7 +67,7 @@ const AgentProvider: React.FC<
    tokenAddress: _tokenAddress,
 }: PropsWithChildren & { tokenAddress?: string }): React.ReactElement => {
    const [loading, setLoading] = useState(true);
-   const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
+   const [selectedAgent, _setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
    const [isTrade, setIsTrade] = useState(false);
    const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
    const [coinPrices, setCoinPrices] = useState([]);
@@ -96,7 +96,7 @@ const AgentProvider: React.FC<
 
    const cPumpAPI = new CAgentTokenAPI();
 
-   const checkBackup = throttle(useCallback(async () => {
+   const checkBackup = throttle(async () => {
       const values = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
       if (!values) {
          setIsBackupedPrvKey(false);
@@ -104,7 +104,7 @@ const AgentProvider: React.FC<
       }
       const agentIdsHasBackup = JSON.parse(values);
       setIsBackupedPrvKey(agentWallet && selectedAgent && agentIdsHasBackup && agentIdsHasBackup?.some?.(id => id === selectedAgent?.id));
-   }, [selectedAgent, agentWallet]), 1000);
+   }, 1000);
 
    useEffect(() => {
       checkBackup();
@@ -118,7 +118,7 @@ const AgentProvider: React.FC<
       // }
       //
       // return false;
-   }, [selectedAgent?.id]);
+   }, []);
 
    const isInstalling = useMemo(() => {
       if (selectedAgent) {
@@ -126,7 +126,7 @@ const AgentProvider: React.FC<
       }
 
       return false;
-   }, [selectedAgent?.id, agentStates]);
+   }, [selectedAgent, agentStates]);
 
    const isUnInstalling = useMemo(() => {
       if (selectedAgent) {
@@ -134,7 +134,7 @@ const AgentProvider: React.FC<
       }
 
       return false;
-   }, [selectedAgent?.id, agentStates]);
+   }, [selectedAgent, agentStates]);
 
    const isStarting = useMemo(() => {
       if (selectedAgent) {
@@ -142,7 +142,7 @@ const AgentProvider: React.FC<
       }
 
       return false;
-   }, [selectedAgent?.id, agentStates]);
+   }, [selectedAgent, agentStates]);
 
    const isStopping = useMemo(() => {
       if (selectedAgent) {
@@ -150,7 +150,7 @@ const AgentProvider: React.FC<
       }
 
       return false;
-   }, [selectedAgent?.id, agentStates]);
+   }, [selectedAgent, agentStates]);
 
    const isRunning = useMemo(() => {
       if (selectedAgent) {
@@ -158,7 +158,7 @@ const AgentProvider: React.FC<
       }
 
       return false;
-   }, [selectedAgent?.id, agentStates]);
+   }, [selectedAgent, agentStates]);
 
    const isInstalled = useMemo(() => {
       if (selectedAgent) {
@@ -166,7 +166,7 @@ const AgentProvider: React.FC<
       }
 
       return false;
-   }, [selectedAgent?.id, agentStates]);
+   }, [selectedAgent, agentStates]);
 
    const isCanChat = useMemo(() => {
       return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
@@ -904,54 +904,16 @@ const AgentProvider: React.FC<
       }
    }
 
-   // Handle agent switching smoothly
-   // const setSelectedAgent = async (newAgent: IAgentToken | undefined) => {
-   //    try {
-   //       // Cleanup current agent if exists
-   //       if (selectedAgent) {
-   //          // Clear intervals
-   //          if (refInterval.current) {
-   //             clearInterval(refInterval.current);
-   //          }
+   const setSelectedAgent = (newAgent: IAgentToken) => {
+      _setSelectedAgent(newAgent);
 
-   //          // Stop running agent if needed
-   //          if (isRunning) {
-   //             await stopAgent(selectedAgent);
-   //          }
+      const isInstalled = agentStates[newAgent.id]?.isInstalled || false;
+      const isRunning = agentStates[newAgent.id]?.isRunning || false;
 
-   //          // Reset states
-   //          setIsRunning(false);
-   //          setIsInstalled(false);
-   //          setAgentWallet(undefined);
-   //          setCustomUIPort('');
-   //       }
-
-   //       // Set new agent
-   //       _setSelectedAgent(newAgent);
-
-   //       if (newAgent) {
-   //          // Initialize new agent state
-   //          if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(newAgent.agent_type)) {
-   //             checkSocialAgentInstalled(newAgent);
-   //          } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(newAgent.agent_type)) {
-   //             checkUtilityAgentInstalled(newAgent);
-   //          } else if ([AgentType.Model].includes(newAgent.agent_type)) {
-   //             checkModelAgentInstalled(newAgent);
-   //          }
-
-   //          // Check if agent has wallet
-   //          const agentsHasWallet = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET)!);
-   //          if (agentsHasWallet?.includes(newAgent.id)) {
-   //             await createAgentWallet();
-   //          }
-
-   //          // Start checking agent status
-   //          intervalCheckAgentRunning(newAgent);
-   //       }
-   //    } catch (error) {
-   //       console.log('Error switching agent:', error);
-   //    }
-   // };
+      if (isInstalled && !isRunning) {
+         startAgent(newAgent);
+      }
+   }
 
    const contextValues: any = useMemo(() => {
       return {
