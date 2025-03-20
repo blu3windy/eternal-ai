@@ -143,19 +143,25 @@ const ipcMainDocker = () => {
          const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
 
          const _options = typeof options === 'string' ? JSON.parse(options) : options;
-         const type = (_options?.type || 'js') as CodeLanguage;
+         const type = (_options?.type || 'custom-prompt') as CodeLanguage;
 
          let imageName = "";
+         let port = "";
 
          switch (type) {
-         case 'js':
-            imageName = DOCKER_SERVER_JS;
-            break;
-         case 'py':
-            imageName = `${DOCKER_NAME}-py-${dnsHost}`;
-            break;
          case 'custom-prompt':
             imageName = `${DOCKER_NAME}-cp-${dnsHost}`;
+            if (_options?.port) {
+               port = _options.port.split(',').map(p => {
+                  if (p.includes(':')) {
+                     const [host, port] = p.split(':');
+                     return `-p ${host}:${port}`;
+                  }
+                  return `-p ${p}:${p}`;
+               }).join(' ');
+            }
+
+            console.log('leon tetststststst', port);
             break;
          case 'custom-ui':
             imageName = `${DOCKER_NAME}-cu-${dnsHost}`;
@@ -171,6 +177,7 @@ const ipcMainDocker = () => {
             `--type "${type}"`,
             `--private-key "${_options?.privateKey}"`,
             `--wallet-address "${_options?.address}"`,
+            `--port "${port}"`,
          ]
 
          const paramsStr = params.join(' ');
