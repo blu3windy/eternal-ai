@@ -136,6 +136,8 @@ type AgentInfoResp struct {
 	IsOnchain                 bool                      `json:"is_onchain"`
 	IsCustomUi                bool                      `json:"is_custom_ui"`
 	Likes                     int64                     `json:"likes"`
+	IsPublic                  bool                      `json:"is_public"`
+	DockerPort                string                    `json:"docker_port"`
 }
 
 type AgentTwitterPostResp struct {
@@ -301,6 +303,8 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		IsOnchain:            m.IsOnchain,
 		IsCustomUi:           m.IsCustomUi,
 		Likes:                m.Likes,
+		IsPublic:             m.IsPublic,
+		DockerPort:           m.DockerPort,
 	}
 
 	if m.NftTokenImage != "" {

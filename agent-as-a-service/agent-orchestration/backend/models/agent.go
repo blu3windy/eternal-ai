@@ -217,6 +217,8 @@ type AgentInfo struct {
 	IsOnchain      bool   `gorm:"default:0"`
 	IsCustomUi     bool   `gorm:"default:0"`
 	Likes          int64  `gorm:"default:0"`
+	IsPublic       bool   `gorm:"default:1"`
+	DockerPort     string
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string

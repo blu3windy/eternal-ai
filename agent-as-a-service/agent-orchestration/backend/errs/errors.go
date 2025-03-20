@@ -28,7 +28,7 @@ var (
 	ErrTwitterIdNotFound     = &Error{Code: -1011, Message: "Something went wrong. Please try again."}
 	ErrRewardNotFound        = &Error{Code: -1012, Message: "Something went wrong. Please try again."}
 	ErrUnAuthorization       = &Error{Code: -1013, Message: "Something went wrong. Please try again."}
-	ErrInvalidRequest        = &Error{Code: -1013, Message: "Invalid request. Please try again."}
+	ErrInvalidRequest        = &Error{Code: -1014, Message: "Invalid request. Please try again."}
 
 	ErrAlreadyPurchase         = &Error{Code: -2001, Message: "Already purchase apps. Please try again."}
 	ErrAppNotFound             = &Error{Code: -2002, Message: "Something went wrong. Please try again."}

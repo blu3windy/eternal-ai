@@ -393,3 +393,21 @@ func (s *Server) CheckAgentLiked(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
 }
+
+func (s *Server) PublicAgent(c *gin.Context) {
+	ctx := s.requestContext(c)
+	agentID := s.uintFromContextParam(c, "id")
+
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+
+	resp, err := s.nls.PublicAgent(ctx, userAddress, agentID)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+}
