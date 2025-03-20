@@ -43,6 +43,7 @@ const AgentTopInfo = () => {
       requireInstall,
       isRunning,
       startAgent,
+      isStarting
    } = useContext(AgentContext);
 
    const {
@@ -187,6 +188,9 @@ const AgentTopInfo = () => {
                                  <Button
                                     className={s.btnUpdateCode}
                                     onClick={handleUpdateCode}
+                                    isLoading={isStopping || isStarting}
+                                    isDisabled={isStopping || isStarting}
+                                    loadingText={isStarting ? "Starting..." : "Updating..."}
                                  >
                                     A new code version is available. Update now?
                                  </Button>
