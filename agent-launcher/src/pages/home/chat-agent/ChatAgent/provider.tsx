@@ -79,9 +79,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
    const cPumpAPI = new CAgentTokenAPI();
 
-   console.log('stephen: messages', messages);
-   console.log('====')
-
    const isAllowChat = useMemo(() => {
       return true;
       // if(selectedAgent) {
