@@ -36,7 +36,7 @@ const AgentNotification: React.FC = () => {
       if (!agentStates) return [];
     
       return Object.entries(agentStates)
-         // .filter(([_, state]) => state.isInstalling || state.isStarting)
+         .filter(([_, state]) => state.isInstalling || state.isStarting)
          .map(([id, state]) => ({
             id,
             name: state?.data?.agent_name || id,
