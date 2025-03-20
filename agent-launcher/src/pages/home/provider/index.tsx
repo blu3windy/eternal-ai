@@ -475,6 +475,8 @@ const AgentProvider: React.FC<
          } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
 
+            await startAgent(agent);
+
             fetchInstalledUtilityAgents(); //fetch then check agent installed in useEffect
 
             // setAgentInstalled(agent);
@@ -507,7 +509,7 @@ const AgentProvider: React.FC<
          });
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
-            await installUtilityAgent(agent);
+            // await installUtilityAgent(agent);
             await startDependAgents(agent);
 
             await handleRunDockerAgent(agent);
@@ -612,13 +614,16 @@ const AgentProvider: React.FC<
    const installUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
          const chainId = agent?.network_id || BASE_CHAIN_ID;
-         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
+         const cAgent = new CAgentContract({
+            contractAddress: agent.agent_contract_address,
+            chainId: chainId
+         });
 
          let fileNameOnLocal = 'prompt.js';
          if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
             fileNameOnLocal = 'app.zip';
          }
-      
+
          const codeVersion = await cAgent.getCurrentVersion();
 
          const values = await localStorageService.getItem(agent.agent_contract_address);
@@ -655,9 +660,9 @@ const AgentProvider: React.FC<
                await localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
                console.log('filePath New', filePath);
             }
-
          }
-   };
+      }
+   }
 
    const removeUtilityAgent = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_name) {
@@ -1012,14 +1017,4 @@ const AgentProvider: React.FC<
    );
 };
 
-export const useAgent = () => {
-   const context = useContext(AgentContext);
-   if (context === undefined) {
-      throw new Error('useAgent must be used within an AgentProvider');
-   }
-   return context;
-}; 
-
-
 export default AgentProvider;
-
