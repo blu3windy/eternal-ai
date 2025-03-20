@@ -4,35 +4,79 @@ import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 import command from "./share/command-tool.ts";
+import log from 'electron-log';
+
+// Configure logging
+log.transports.file.level = 'debug';
+autoUpdater.logger = log;
+
+// Add version checking event
+autoUpdater.on("checking-for-update", () => {
+   log.info("Checking for update...");
+   log.info("Current version:", app.getVersion());
+});
 
 if (process.env.NODE_ENV === "development") {
    autoUpdater.autoDownload = false;
-   autoUpdater.allowDowngrade = true;
-   autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
+   autoUpdater.allowDowngrade = true;  // Allow downgrade in dev mode
+   autoUpdater.forceDevUpdateConfig = true;
 }
 
+// Configure autoUpdater with more options
 autoUpdater.setFeedURL({
    provider: "generic",
-   url: "https://electron-update-server-production.up.railway.app/updates/",
+   url: "https://composed-rarely-feline.ngrok-free.app/updates",
+   channel: 'latest',
+   updaterCacheDirName: 'agent-launcher-updater'
 });
 
+// Configure update behavior
+autoUpdater.autoDownload = false;
+autoUpdater.allowDowngrade = true;
+autoUpdater.allowPrerelease = true;
+autoUpdater.fullChangelog = true;
+
+// Add more detailed error logging
+autoUpdater.on("error", (err) => {
+   log.error("Update error:", err);
+   log.error("Error details:", {
+      message: err.message,
+      stack: err.stack,
+   });
+   dialog.showMessageBox({
+      type: "error",
+      title: "Update Error",
+      message: `Update error: ${err.message}`,
+      detail: err.stack
+   });
+});
+
+// Allow version overwrite
+autoUpdater.allowPrerelease = true;  // Allow pre-release versions
+autoUpdater.allowDowngrade = true;   // Allow downgrade to handle version overwrites
+autoUpdater.fullChangelog = true;    // Get full changelog
+
+// Add version comparison logic
 autoUpdater.on("update-available", (info) => {
+   log.log("Current version:", app.getVersion());
+   log.log("Available version:", info.version);
+
    dialog
       .showMessageBox({
          type: "info",
          title: "Update Available",
-         message: `A new version (v${info.version}) is available. Download now?`,
+         message: `A new version (v${info.version}) is available. Current version: v${app.getVersion()}. Download now?`,
          buttons: ["Update", "Later"],
+         detail: `Release Date: ${new Date(info.releaseDate).toLocaleString()}`
       })
       .then(({ response }) => {
          if (response === 0) {
-            // User clicked "Update"
             autoUpdater.downloadUpdate().catch((err) => {
                console.error("Download failed:", err);
                dialog.showMessageBox({
-                  type: "info",
-                  title: "Update Ready",
-                  message: `Download failed: ${JSON.stringify(err)}`,
+                  type: "error",
+                  title: "Update Failed",
+                  message: `Download failed: ${err.message}`,
                });
             });
          }
@@ -40,47 +84,52 @@ autoUpdater.on("update-available", (info) => {
 });
 
 autoUpdater.on("update-not-available", () => {
+   log.info("No update available.");
    dialog.showMessageBox({
       message: "No update available.",
    });
 });
 
+// Improve error handling
 autoUpdater.on("error", (err) => {
-   console.error("Update error:", err);
+   log.error("Update error:", err);
+   dialog.showMessageBox({
+      type: "error",
+      title: "Update Error",
+      message: `Update error: ${err.message}`,
+      detail: err.stack
+   });
 });
 
-// 🔹 Event: When update is downloaded
+// Improve update installation
 autoUpdater.on("update-downloaded", (info) => {
-   console.log(`Update downloaded: v${info.version}`);
+   log.log(`Update downloaded: v${info.version}`);
    dialog
       .showMessageBox({
          type: "info",
          title: "Update Ready",
-         message: `Version ${info.version} is downloaded. Restart to apply?`,
+         message: `Version ${info.version} is ready to install. Restart now?`,
+         detail: `Release Date: ${new Date(info.releaseDate).toLocaleString()}`,
          buttons: ["Restart", "Later"],
       })
       .then(({ response }) => {
          if (response === 0) {
-            // User clicked "Restart"
-            // Delay to ensure update applies correctly
+            // Set a flag to prevent multiple restarts
+            const restartPending = true;
             setTimeout(() => {
-               autoUpdater.quitAndInstall();
-            }, 3000);
+               autoUpdater.quitAndInstall(false, true); // Silent restart
+            }, 1000);
          }
       });
 });
 
-// 🔹 Track download progress
+// Update the download progress dialog
 autoUpdater.on("download-progress", (progress) => {
    const percentage = Math.round(progress.percent);
-   dialog.showMessageBox({
-      type: "info",
-      title: "Processing",
-      message: `Downloading... ${percentage}% (${(
-         progress.transferred
-         / 1024
-         / 1024
-      ).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB)`,
+   win?.webContents.send("download-progress", {
+      percent: percentage,
+      transferred: progress.transferred,
+      total: progress.total
    });
 });
 
@@ -114,11 +163,7 @@ runIpcMain();
 function createWindow() {
    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
-   setTimeout(() => {
-      autoUpdater.checkForUpdates().catch((err) => {
-         console.error("Update check failed:", err);
-      });
-   }, 5000);
+
    win = new BrowserWindow({
       icon: path.join(process.env.VITE_PUBLIC as any, "app-logo.png"),
       // icon: path.join(__dirname, "../public/icon.png"), // Use icon from public
@@ -147,20 +192,45 @@ function createWindow() {
       win?.webContents.send("main-process-message", new Date().toLocaleString());
    });
 
-   autoUpdater.on("update-available", (info) => {
-      console.log("Update available:", info);
-      win?.webContents.send("update-available", info);
-   });
+   // Add more detailed logging for update checks
+   setTimeout(() => {
+      log.info('Checking for updates...');
+      log.info('Current app version:', app.getVersion());
+      log.info('Current platform:', process.platform);
+      log.info('Current arch:', process.arch);
+   
+      autoUpdater.checkForUpdates().catch((err) => {
+         log.error('Update check failed:', err);
+         log.error('Error details:', {
+            message: err.message,
+            stack: err.stack
+         });
+      
+         if (process.env.NODE_ENV === "development") {
+            dialog.showMessageBox({
+               type: "error",
+               title: "Update Check Failed",
+               message: `Failed to check for updates: ${err.message}`,
+               detail: err.stack
+            });
+         }
+      });
+   }, 5000);
 
-   autoUpdater.on("download-progress", (info) => {
-      console.log("Update available:", info);
-      win?.webContents.send("download-progress", info);
-   });
+   // autoUpdater.on("update-available", (info) => {
+   //    console.log("Update available:", info);
+   //    win?.webContents.send("update-available", info);
+   // });
 
-   autoUpdater.on("update-downloaded", (info) => {
-      console.log("update-downloaded:", info);
-      win?.webContents.send("update-downloaded", info);
-   });
+   // autoUpdater.on("download-progress", (info) => {
+   //    console.log("Update available:", info);
+   //    win?.webContents.send("download-progress", info);
+   // });
+
+   // autoUpdater.on("update-downloaded", (info) => {
+   //    console.log("update-downloaded:", info);
+   //    win?.webContents.send("update-downloaded", info);
+   // });
 
    if (VITE_DEV_SERVER_URL) {
       win.loadURL(VITE_DEV_SERVER_URL);
