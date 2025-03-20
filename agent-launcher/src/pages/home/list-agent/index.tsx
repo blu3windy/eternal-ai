@@ -24,6 +24,7 @@ import { AgentContext } from "../provider";
 import uniqBy from 'lodash.uniqby';
 import CAgentTokenAPI from "../../../services/api/agents-token";
 import cx from 'clsx';
+import AgentNotification from './AgentNotification/index.tsx';
 
 export enum SortOption {
   MarketCap = 'meme_market_cap',
@@ -257,7 +258,7 @@ const AgentsList = () => {
 
    const renderFilterOptions = () => {
       return (
-         <Flex gap={'12px'} className={s.options} w={"100%"}>
+         <Flex gap={'12px'} className={s.options} w={"100%"} alignItems={"center"}>
             {AgentOptions.map(option => {
                return (
                   <Flex
@@ -292,6 +293,7 @@ const AgentsList = () => {
                   </Flex>
                );
             })}
+            <AgentNotification />
          </Flex>
       )
    }
