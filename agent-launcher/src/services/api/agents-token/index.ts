@@ -115,7 +115,7 @@ class CAgentTokenAPI extends CApiClient {
          `/agent/like/${id}`
       )) as any;
 
-      return res;
+      return typeof res === 'boolean' ? res : false;
    };
 
    public likeAgent = async (

@@ -8,7 +8,8 @@ import {
    DrawerOverlay,
    Flex,
    Text,
-   useDisclosure
+   useDisclosure,
+   Image
 } from "@chakra-ui/react";
 import Avatar from "@components/Avatar";
 import BaseModal from "@components/BaseModal";
@@ -106,6 +107,8 @@ const AgentTopInfo = () => {
    }
 
    const handleLikeAgent = async () => {
+      if (isLiked) return;
+
       await cAgentTokenAPI.likeAgent(selectedAgent?.id);
       setIsLiked(true);
    }
@@ -150,60 +153,45 @@ const AgentTopInfo = () => {
                <Flex gap={"6px"} alignItems={"center"} className={s.content}>
                   <InfoTooltip iconSize="sm" label={
                      <Flex direction={"column"} p={"8px"}>
+   
                         <Flex direction={"column"} gap={"8px"}>
-                           <Flex alignItems={"center"} gap={"8px"}>
-                              <Text fontSize={"16px"} fontWeight={500}>{selectedAgent?.agent_name}</Text>
-                              <Button 
-                                 isDisabled={isLiked}
+                           <Flex alignItems={"center"} gap={"8px"} justifyContent={"space-between"}>
+                              <Flex direction={"column"} gap={"8px"}>
+                                 <Text fontSize={"16px"} fontWeight={500}>{selectedAgent?.agent_name}</Text>
+                                 <Flex
+                                    alignItems="center"
+                                    gap="4px"
+                                    onClick={handleClickCreator}
+                                 >
+                                    <Text color="#000000" fontSize="12px" fontWeight="400" opacity={0.7}>
+                                 by
+                                    </Text>
+                                    {selectedAgent?.tmp_twitter_info?.twitter_avatar ? (
+                                       <Avatar
+                                          url={selectedAgent?.tmp_twitter_info?.twitter_avatar}
+                                          width={16}
+                                       />
+                                    ) : (
+                                       <Jazzicon
+                                          diameter={16}
+                                          seed={jsNumberForAddress(selectedAgent?.creator || '')}
+                                       />
+                                    )}
+                                    <Text color="#000000" fontSize="12px" fontWeight="400" opacity={0.7}>
+                                       {selectedAgent?.tmp_twitter_info?.twitter_username
+                                          ? `@${selectedAgent?.tmp_twitter_info?.twitter_username}`
+                                          : addressFormater(selectedAgent?.creator)}
+                                    </Text>
+                                 </Flex>
+                              </Flex>
+                              <Image src={`icons/${isLiked ? 'ic-liked.svg' : 'ic-like.svg'}`}
+                                 width={"40px"}
+                                 height={"40px"}
                                  onClick={handleLikeAgent}
-                                 className="like-button"
-                                 variant="contained"
-                                 sx={{
-                                    borderRadius: '20px',
-                                    padding: '4px 16px',
-                                    backgroundColor: isLiked ? '#ffebee' : 'white',
-                                    color: isLiked ? '#e91e63' : '#666',
-                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                    '&:hover': {
-                                       backgroundColor: isLiked ? '#ffe4e8' : '#f5f5f5',
-                                       transform: 'translateY(-2px)',
-                                       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                                    },
-                                    '&:active': {
-                                       transform: 'translateY(0)',
-                                    },
-                                    transition: 'all 0.3s ease',
-                                 }}
-                              >
-                                 {isLiked ? 'Liked' : 'Like'}
-                              </Button>
+                                 cursor={isLiked ? 'not-allowed' : 'pointer'}
+                              />
                            </Flex>
                            
-                           <Flex
-                              alignItems="center"
-                              gap="4px"
-                              onClick={handleClickCreator}
-                           >
-                              <Text color="#000000" fontSize="12px" fontWeight="400" opacity={0.7}>
-                                 by
-                              </Text>
-                              {selectedAgent?.tmp_twitter_info?.twitter_avatar ? (
-                                 <Avatar
-                                    url={selectedAgent?.tmp_twitter_info?.twitter_avatar}
-                                    width={16}
-                                 />
-                              ) : (
-                                 <Jazzicon
-                                    diameter={16}
-                                    seed={jsNumberForAddress(selectedAgent?.creator || '')}
-                                 />
-                              )}
-                              <Text color="#000000" fontSize="12px" fontWeight="400" opacity={0.7}>
-                                 {selectedAgent?.tmp_twitter_info?.twitter_username
-                                    ? `@${selectedAgent?.tmp_twitter_info?.twitter_username}`
-                                    : addressFormater(selectedAgent?.creator)}
-                              </Text>
-                           </Flex>
                            <Text fontSize={"14px"} fontWeight={400} opacity={0.7}>{description}</Text>
                         </Flex>
                         <Divider color={"#E2E4E8"} my={"16px"}/>
