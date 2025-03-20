@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow, screen, dialog } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
@@ -16,73 +16,73 @@ autoUpdater.setFeedURL({
    url: "https://electron-update-server-production.up.railway.app/updates/",
 });
 
-// autoUpdater.on("update-available", (info) => {
-//   dialog
-//     .showMessageBox({
-//       type: "info",
-//       title: "Update Available",
-//       message: `A new version (v${info.version}) is available. Download now?`,
-//       buttons: ["Update", "Later"],
-//     })
-//     .then(({ response }) => {
-//       if (response === 0) {
-//         // User clicked "Update"
-//         autoUpdater.downloadUpdate().catch((err) => {
-//           console.error("Download failed:", err);
-//           dialog.showMessageBox({
-//             type: "info",
-//             title: "Update Ready",
-//             message: `Download failed: ${JSON.stringify(err)}`,
-//           });
-//         });
-//       }
-//     });
-// });
+autoUpdater.on("update-available", (info) => {
+   dialog
+      .showMessageBox({
+         type: "info",
+         title: "Update Available",
+         message: `A new version (v${info.version}) is available. Download now?`,
+         buttons: ["Update", "Later"],
+      })
+      .then(({ response }) => {
+         if (response === 0) {
+            // User clicked "Update"
+            autoUpdater.downloadUpdate().catch((err) => {
+               console.error("Download failed:", err);
+               dialog.showMessageBox({
+                  type: "info",
+                  title: "Update Ready",
+                  message: `Download failed: ${JSON.stringify(err)}`,
+               });
+            });
+         }
+      });
+});
 
-// autoUpdater.on("update-not-available", () => {
-//   dialog.showMessageBox({
-//     message: "No update available.",
-//   });
-// });
+autoUpdater.on("update-not-available", () => {
+   dialog.showMessageBox({
+      message: "No update available.",
+   });
+});
 
-// autoUpdater.on("error", (err) => {
-//   console.error("Update error:", err);
-// });
+autoUpdater.on("error", (err) => {
+   console.error("Update error:", err);
+});
 
 // 🔹 Event: When update is downloaded
-// autoUpdater.on("update-downloaded", (info) => {
-//   console.log(`Update downloaded: v${info.version}`);
-//   dialog
-//     .showMessageBox({
-//       type: "info",
-//       title: "Update Ready",
-//       message: `Version ${info.version} is downloaded. Restart to apply?`,
-//       buttons: ["Restart", "Later"],
-//     })
-//     .then(({ response }) => {
-//       if (response === 0) {
-//         // User clicked "Restart"
-//         // Delay to ensure update applies correctly
-//         setTimeout(() => {
-//           autoUpdater.quitAndInstall();
-//         }, 3000);
-//       }
-//     });
-// });
+autoUpdater.on("update-downloaded", (info) => {
+   console.log(`Update downloaded: v${info.version}`);
+   dialog
+      .showMessageBox({
+         type: "info",
+         title: "Update Ready",
+         message: `Version ${info.version} is downloaded. Restart to apply?`,
+         buttons: ["Restart", "Later"],
+      })
+      .then(({ response }) => {
+         if (response === 0) {
+            // User clicked "Restart"
+            // Delay to ensure update applies correctly
+            setTimeout(() => {
+               autoUpdater.quitAndInstall();
+            }, 3000);
+         }
+      });
+});
 
-// // 🔹 Track download progress
-// autoUpdater.on("download-progress", (progress) => {
-// //   let percentage = Math.round(progress.percent);
-//   //   dialog.showMessageBox({
-//   //     type: "info",
-//   //     title: "Processing",
-//   //     message: `Downloading... ${percentage}% (${(
-//   //       progress.transferred /
-//   //       1024 /
-//   //       1024
-//   //     ).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB)`,
-//   //   });
-// });
+// 🔹 Track download progress
+autoUpdater.on("download-progress", (progress) => {
+   const percentage = Math.round(progress.percent);
+   dialog.showMessageBox({
+      type: "info",
+      title: "Processing",
+      message: `Downloading... ${percentage}% (${(
+         progress.transferred
+         / 1024
+         / 1024
+      ).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB)`,
+   });
+});
 
 // const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

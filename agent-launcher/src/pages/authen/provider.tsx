@@ -23,6 +23,8 @@ import { BASE_CHAIN_ID } from "../../config.ts";
 import EaiSigner from "../../helpers/signer";
 import localStorageService from "../../storage/LocalStorageService.ts";
 import HomeAuthen from "./Home";
+import { Text } from "@chakra-ui/react";
+import * as process from "node:process";
 
 interface IReqAgentSecretKey {
   chainId: string;
@@ -194,6 +196,9 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
          {renderContent()}
          <ForgotPass />
          <Loggers />
+         <Text>
+            ELECTRON_UPDATER
+         </Text>
       </AuthContext.Provider>
    );
 };
