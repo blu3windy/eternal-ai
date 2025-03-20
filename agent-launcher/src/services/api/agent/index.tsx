@@ -1,4 +1,5 @@
 import { AgentInfo, ChatCompletionPayload, ChatCompletionStreamHandler } from "./types.ts";
+import { RequestPromptPayload } from 'agent-server-definition'
 import { IMAGINE_URL } from "../../../config.ts";
 import { THINK_TAG_REGEX } from "@components/CustomMarkdown/constants.ts";
 import { parseStreamAIResponse } from "@utils/api.ts";
@@ -84,14 +85,16 @@ const AgentAPI = {
       }
       throw 'API error';
    },
-   chatAgentUtility: async ({ agent, prvKey, messages }: { agent: IAgentToken, prvKey?: string, messages: any[]}): Promise<any> => {
+   chatAgentUtility: async ({ id, agent, prvKey, messages }: { id?: string; agent: IAgentToken, prvKey?: string, messages: any[]}): Promise<any> => {
       try {
+         const payload = {
+            id,
+            "messages": messages,
+            "privateKey": prvKey,
+            "chainId": agent?.network_id as any
+         } satisfies RequestPromptPayload;
          const res: AgentInfo = await (new CApiClient()).api.post(
-            `http://localhost:33030/${agent?.network_id}-${agent?.agent_name?.toLowerCase()}/prompt`, {
-               "messages": messages,
-               "privateKey": prvKey,
-               "chainId": agent?.network_id
-            }
+            `http://localhost:33030/${agent?.network_id}-${agent?.agent_name?.toLowerCase()}/prompt`, payload
          );
          console.log('res>>>AgentInfo', res);
 

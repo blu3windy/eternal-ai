@@ -288,6 +288,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
          if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
             const res: string = await AgentAPI.chatAgentUtility({
+               id: messageId,
                agent: selectedAgent!, prvKey: agentWallet?.privateKey, messages: [ {
                   role: 'user',
                   content: sendTxt && attachments?.length 
