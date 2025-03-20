@@ -60,4 +60,5 @@ export interface IAgentContext {
     isStopping?: boolean;
     isInstalled?: boolean;
   }) => void;
+  liveViewUrl?: string;
 }

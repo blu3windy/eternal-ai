@@ -55,7 +55,8 @@ const initialValue: IAgentContext = {
    isCustomUI: false,
    customUIPort: '',
    agentStates: {},
-   updateAgentState: () => {}
+   updateAgentState: () => {},
+   liveViewUrl: '',
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -79,7 +80,7 @@ const AgentProvider: React.FC<
    const [availableModelAgents, setAvailableModelAgents] = useState<IAgentToken[]>([]);
    const [installedSocialAgents, setInstalledSocialAgents] = useState<number[]>([]);
    const [customUIPort, setCustomUIPort] = useState<string>('');
-
+   const [liveViewUrl, setLiveViewUrl] = useState<string>('');
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
 
    const [agentStates, setAgentStates] = useState<Record<number, {
@@ -298,6 +299,8 @@ const AgentProvider: React.FC<
          if(agent) {
             if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
                const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+
+               setLiveViewUrl(res?.live_view_url || '');
 
                updateAgentState(agent.id, {
                   data: agent,
@@ -953,6 +956,7 @@ const AgentProvider: React.FC<
          customUIPort,
          agentStates,
          updateAgentState,
+         liveViewUrl,
       };
    }, [
       loading,
@@ -988,7 +992,8 @@ const AgentProvider: React.FC<
       installedSocialAgents,
       customUIPort,
       agentStates,
-      updateAgentState
+      updateAgentState,
+      liveViewUrl,
    ]);
 
    return (
