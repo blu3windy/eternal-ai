@@ -10,17 +10,17 @@ import CustomLink from "./Link";
 import ContentReplay from "./Content";
 
 const preprocessMarkdown = (content: string) => {
-  try {
-    const result = content?.replace?.(
-      THINK_TAG_REGEX,
-      (_, innerText) =>
-        `<think>${innerText.trim().replace(/\n/g, "<br />")}</think>`
-    );
+   try {
+      const result = content?.replace?.(
+         THINK_TAG_REGEX,
+         (_, innerText) =>
+            `<think>${innerText.trim().replace(/\n/g, "<br />")}</think>`
+      );
 
-    return result;
-  } catch (error) {
-    return "";
-  }
+      return result;
+   } catch (error) {
+      return "";
+   }
 };
 
 type ComponentExtended = {
@@ -29,50 +29,50 @@ type ComponentExtended = {
 };
 
 function CustomMarkdown({
-  content,
-  components = {},
-  isLight = true,
-  removeThink = false,
+   content,
+   components = {},
+   isLight = true,
+   removeThink = false,
 }: {
   content: string;
   components?: ComponentExtended;
   isLight?: boolean;
   removeThink?: boolean;
 }) {
-  const customComponents = useMemo(() => {
-    return {
-      code: (props: any) => {
-        return <GeneralCode {...props} />;
-      },
-      think: (props: any) => {
-        return (
-          <DeepThinking
-            {...props}
-            isLight={isLight}
-            removeThink={removeThink}
-          />
-        );
-      },
-      a: (props) => {
-        return <CustomLink {...props} />;
-      },
-      p: (props) => {
-        return <ContentReplay {...props} />;
-      },
-      ...components,
-    } satisfies any;
-  }, [components, isLight, removeThink]);
+   const customComponents = useMemo(() => {
+      return {
+         code: (props: any) => {
+            return <GeneralCode {...props} />;
+         },
+         think: (props: any) => {
+            return (
+               <DeepThinking
+                  {...props}
+                  isLight={isLight}
+                  removeThink={removeThink}
+               />
+            );
+         },
+         a: (props) => {
+            return <CustomLink {...props} />;
+         },
+         p: (props) => {
+            return <ContentReplay {...props} />;
+         },
+         ...components,
+      } satisfies any;
+   }, [components, isLight, removeThink]);
 
-  const children = useMemo(() => preprocessMarkdown(content), [content]);
+   const children = useMemo(() => preprocessMarkdown(content), [content]);
 
-  return (
-    <Markdown
-      remarkPlugins={[remarkGfm]} // Enables GitHub Flavored Markdown
-      rehypePlugins={[rehypeRaw]} // Enables raw HTML parsing
-      children={children}
-      components={customComponents as Components}
-    />
-  );
+   return (
+      <Markdown
+         remarkPlugins={[remarkGfm]} // Enables GitHub Flavored Markdown
+         rehypePlugins={[rehypeRaw]} // Enables raw HTML parsing
+         children={children}
+         components={customComponents as Components}
+      />
+   );
 }
 
 export default CustomMarkdown;
