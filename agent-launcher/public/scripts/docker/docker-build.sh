@@ -18,6 +18,7 @@ log_error() {
 FOLDER_PATH=""
 DOCKER_CONTAINERS=()
 
+export PATH="/opt/homebrew/bin/:$PATH"
 export PATH="$HOME/homebrew/bin:$PATH"
 
 while [[ $# -gt 0 ]]; do

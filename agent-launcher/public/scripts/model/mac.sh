@@ -31,13 +31,17 @@ handle_error() {
     exit $exit_code
 }
 
+export PATH="/opt/homebrew/bin/:$PATH"
+export PATH="$HOME/homebrew/bin:$PATH"
+
 command_exists() {
     command -v "$1" &> /dev/null
 }
 
 # Step 1: Check and install Homebrew if not present
 if ! command_exists brew; then
-    export PATH="$HOME/homebrew/bin:$PATH"
+    echo "Homebrew is not available! Exiting..."
+    exit 1
 fi
 
 # Step 2: Install or Update Python

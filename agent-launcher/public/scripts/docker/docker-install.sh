@@ -17,12 +17,15 @@ command_exists() {
     command -v "$1" &> /dev/null
 }
 
+export PATH="/opt/homebrew/bin/:$PATH"
+export PATH="$HOME/homebrew/bin:$PATH"
+
 # Step 1: Check and install Homebrew if not present
 if ! command_exists brew; then
     log_message "Homebrew not found. Installing Homebrew in $HOME/homebrew..."
     mkdir -p "$HOME/homebrew" && curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C "$HOME/homebrew"
     export PATH="$HOME/homebrew/bin:$PATH"
-    echo 'export PATH="$HOME/homebrew/bin:$PATH"' >> $HOME/.zshrc
+
     log_message "Homebrew installed successfully"
 else
     log_message "Homebrew is already installed at $(which brew)"

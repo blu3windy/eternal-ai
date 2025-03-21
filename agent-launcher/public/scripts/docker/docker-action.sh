@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export PATH="/opt/homebrew/bin/:$PATH"
 export PATH="$HOME/homebrew/bin:$PATH"
 
 # Check if Docker is installed
