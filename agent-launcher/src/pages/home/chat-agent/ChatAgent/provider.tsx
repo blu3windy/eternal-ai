@@ -93,7 +93,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          setMessages([]);
          chatAgentDatabase.loadChatItems(threadId).then((items) => {
             if (items?.length === 0) {
-               publishEvent(INIT_WELCOME_MESSAGE);
+              //  publishEvent(INIT_WELCOME_MESSAGE);
             } else {
                const filterMessages = items
                   ?.filter((item) => item.status !== 'failed')
