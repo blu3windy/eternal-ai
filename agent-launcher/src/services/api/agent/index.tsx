@@ -100,7 +100,7 @@ const AgentAPI = {
 
          return res;
       } catch (e) {
-         return undefined;
+         throw e;
       }
    },
    chatStreamCompletions: async ({
