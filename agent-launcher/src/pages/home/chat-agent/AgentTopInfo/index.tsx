@@ -33,6 +33,7 @@ import cx from 'clsx';
 import { useContext, useEffect, useMemo, useState } from "react";
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import s from "./styles.module.scss";
+import ProcessingTasks from "./ProcessingTasks";
 
 const AgentTopInfo = () => {
    const {
@@ -151,116 +152,209 @@ const AgentTopInfo = () => {
                }
             </Flex>
             <Flex
-               gap={"6px"} justifyContent={"center"} alignItems={"center"}
+               gap={"6px"}
+               justifyContent={"space-between"}
+               alignItems={"center"}
                className={cx(s.contentContainer, showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : "")}
-               w="clamp(300px, 60%, 800px)" mx={"auto"}
+               w="clamp(300px, 60%, 800px)"
+               mx={"auto"}
             >
-               <Flex gap={"6px"} alignItems={"center"} className={s.content}>
-                  <InfoTooltip iconSize="sm" label={
-                     <Flex direction={"column"} p={"8px"}>
-   
-                        <Flex direction={"column"} gap={"8px"}>
-                           <Flex alignItems={"center"} gap={"8px"} justifyContent={"space-between"}>
+               {isCanChat &&
+                  [AgentType.CustomPrompt].includes(
+                     selectedAgent?.agent_type as AgentType
+                  ) && (
+                     <ProcessingTasks />
+                  )}
+
+               <Flex gap={"6px"} justifyContent={"space-between"} alignItems={"center"}>
+                  <Flex gap={"6px"} alignItems={"center"} className={s.content}>
+                     <InfoTooltip
+                        iconSize="sm"
+                        label={
+                           <Flex direction={"column"} p={"8px"}>
                               <Flex direction={"column"} gap={"8px"}>
-                                 <Text fontSize={"16px"} fontWeight={500}>{selectedAgent?.agent_name}</Text>
                                  <Flex
-                                    alignItems="center"
-                                    gap="4px"
-                                    onClick={handleClickCreator}
+                                    alignItems={"center"}
+                                    gap={"8px"}
+                                    justifyContent={"space-between"}
                                  >
-                                    <Text color="#000000" fontSize="12px" fontWeight="400" opacity={0.7}>
-                                 by
-                                    </Text>
-                                    {selectedAgent?.tmp_twitter_info?.twitter_avatar ? (
-                                       <Avatar
-                                          url={selectedAgent?.tmp_twitter_info?.twitter_avatar}
-                                          width={16}
-                                       />
-                                    ) : (
-                                       <Jazzicon
-                                          diameter={16}
-                                          seed={jsNumberForAddress(selectedAgent?.creator || '')}
-                                       />
-                                    )}
-                                    <Text color="#000000" fontSize="12px" fontWeight="400" opacity={0.7}>
-                                       {selectedAgent?.tmp_twitter_info?.twitter_username
-                                          ? `@${selectedAgent?.tmp_twitter_info?.twitter_username}`
-                                          : addressFormater(selectedAgent?.creator)}
-                                    </Text>
+                                    <Flex direction={"column"} gap={"8px"}>
+                                       <Text fontSize={"16px"} fontWeight={500}>
+                                          {selectedAgent?.agent_name}
+                                       </Text>
+                                       <Flex
+                                          alignItems="center"
+                                          gap="4px"
+                                          onClick={handleClickCreator}
+                                       >
+                                          <Text
+                                             color="#000000"
+                                             fontSize="12px"
+                                             fontWeight="400"
+                                             opacity={0.7}
+                                          >
+                                             by
+                                          </Text>
+                                          {selectedAgent?.tmp_twitter_info
+                                             ?.twitter_avatar ? (
+                                             <Avatar
+                                                url={
+                                                   selectedAgent
+                                                      ?.tmp_twitter_info
+                                                      ?.twitter_avatar
+                                                }
+                                                width={16}
+                                             />
+                                          ) : (
+                                             <Jazzicon
+                                                diameter={16}
+                                                seed={jsNumberForAddress(
+                                                   selectedAgent?.creator || ""
+                                                )}
+                                             />
+                                          )}
+                                          <Text
+                                             color="#000000"
+                                             fontSize="12px"
+                                             fontWeight="400"
+                                             opacity={0.7}
+                                          >
+                                             {selectedAgent?.tmp_twitter_info
+                                                ?.twitter_username
+                                                ? `@${selectedAgent?.tmp_twitter_info?.twitter_username}`
+                                                : addressFormater(
+                                                     selectedAgent?.creator
+                                                  )}
+                                          </Text>
+                                       </Flex>
+                                    </Flex>
+                                    <Image
+                                       src={`icons/${
+                                          isLiked
+                                             ? "ic-liked.svg"
+                                             : "ic-like.svg"
+                                       }`}
+                                       width={"40px"}
+                                       height={"40px"}
+                                       onClick={handleLikeAgent}
+                                       cursor={
+                                          isLiked ? "not-allowed" : "pointer"
+                                       }
+                                    />
                                  </Flex>
+
+                                 <Text
+                                    fontSize={"14px"}
+                                    fontWeight={400}
+                                    opacity={0.7}
+                                 >
+                                    {description}
+                                 </Text>
                               </Flex>
-                              <Image src={`icons/${isLiked ? 'ic-liked.svg' : 'ic-like.svg'}`}
-                                 width={"40px"}
-                                 height={"40px"}
-                                 onClick={handleLikeAgent}
-                                 cursor={isLiked ? 'not-allowed' : 'pointer'}
-                              />
+                              <Divider color={"#E2E4E8"} my={"16px"} />
+                              <AgentOnChainInfo />
+                              {allowStopAgent &&
+                                 requireInstall &&
+                                 isRunning && (
+                                    <>
+                                       <Divider color={"#E2E4E8"} my={"16px"} />
+                                       <Button
+                                          className={s.btnStop}
+                                          onClick={handleStopAgent}
+                                          isLoading={isStopping}
+                                          isDisabled={isStopping}
+                                          loadingText={"Stopping..."}
+                                       >
+                                          <svg
+                                             width="24"
+                                             height="24"
+                                             viewBox="0 0 24 24"
+                                             fill="none"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                          >
+                                             <rect
+                                                x="0.5"
+                                                y="0.5"
+                                                width="23"
+                                                height="23"
+                                                rx="11.5"
+                                                stroke="black"
+                                             />
+                                             <path
+                                                d="M6 18V6H18V18H6Z"
+                                                fill="black"
+                                             />
+                                          </svg>
+                                          Stop running{" "}
+                                          {selectedAgent?.agent_name}
+                                       </Button>
+                                    </>
+                                 )}
+                              {hasNewVersionCode && (
+                                 <>
+                                    <Divider
+                                       color={"#E2E4E8"}
+                                       mt={"16px"}
+                                       mb={"8px"}
+                                    />
+                                    <Button
+                                       className={s.btnUpdateCode}
+                                       onClick={handleUpdateCode}
+                                       isLoading={isStopping || isStarting}
+                                       isDisabled={isStopping || isStarting}
+                                       loadingText={
+                                          isStarting
+                                             ? "Starting..."
+                                             : "Updating..."
+                                       }
+                                    >
+                                       A new code version is available. Update
+                                       now?
+                                    </Button>
+                                 </>
+                              )}
                            </Flex>
-                           
-                           <Text fontSize={"14px"} fontWeight={400} opacity={0.7}>{description}</Text>
-                        </Flex>
-                        <Divider color={"#E2E4E8"} my={"16px"}/>
-                        <AgentOnChainInfo/>
-                        {
-                           allowStopAgent && requireInstall && isRunning && (
-                              <>
-                                 <Divider color={"#E2E4E8"} my={"16px"}/>
-                                 <Button
-                                    className={s.btnStop}
-                                    onClick={handleStopAgent}
-                                    isLoading={!isClickUpdateCode && isStopping}
-                                    isDisabled={isStopping}
-                                    loadingText={"Stopping..."}
-                                 >
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                       <rect x="0.5" y="0.5" width="23" height="23" rx="11.5" stroke="black"/>
-                                       <path d="M6 18V6H18V18H6Z" fill="black"/>
-                                    </svg>
-                                    Stop running {selectedAgent?.agent_name}
-                                 </Button>
-                              </>
-                           )
                         }
-                        {
-                           hasNewVersionCode && (
-                              <>
-                                 <Divider color={"#E2E4E8"} mt={"16px"} mb={'8px'}/>
-                                 <Button
-                                    className={s.btnUpdateCode}
-                                    onClick={handleUpdateCode}
-                                    isLoading={isClickUpdateCode && (isStopping || isStarting)}
-                                    isDisabled={isStopping || isStarting}
-                                    loadingText={isStarting ? "Starting..." : "Updating..."}
-                                 >
-                                    A new code version is available. Update now?
-                                 </Button>
-                              </>
-                           )
-                        }
-                     </Flex>
-                  } placement="top" iconColor={color}/>
-                  <Text className={s.text}>{selectedAgent?.agent_name}</Text>
-                  <Text className={s.text} opacity={0.7}>${selectedAgent?.token_symbol}</Text>
-                  <Divider orientation={'vertical'} borderColor={'#FFFFFF1A'} h={"32px"} m={'auto 0'}/>
-                  <Text className={s.text}>${formatCurrency(selectedAgent?.meme?.price_usd, 0, 6)}</Text>
-                  <Percent24h
-                     clsName={s.percent}
-                     percent={selectedAgent?.meme?.percent || 0}
-                  />
+                        placement="top"
+                        iconColor={color}
+                     />
+                     <Text className={s.text}>{selectedAgent?.agent_name}</Text>
+                     <Text className={s.text} opacity={0.7}>
+                        ${selectedAgent?.token_symbol}
+                     </Text>
+                     <Divider
+                        orientation={"vertical"}
+                        borderColor={"#FFFFFF1A"}
+                        h={"32px"}
+                        m={"auto 0"}
+                     />
+                     <Text className={s.text}>
+                        ${formatCurrency(selectedAgent?.meme?.price_usd, 0, 6)}
+                     </Text>
+                     <Percent24h
+                        clsName={s.percent}
+                        percent={selectedAgent?.meme?.percent || 0}
+                     />
+                  </Flex>
+                  {selectedAgent?.required_wallet &&
+                     !!agentWallet &&
+                     isBackupedPrvKey && (
+                        <Button
+                           className={s.btnExport}
+                           onClick={handleExportPrvKey}
+                        >
+                           <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 576 512"
+                           >
+                              <path d="M0 64C0 28.7 28.7 0 64 0L224 0l0 128c0 17.7 14.3 32 32 32l128 0 0 128-168 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l168 0 0 112c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 64zM384 336l0-48 110.1 0-39-39c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l80 80c9.4 9.4 9.4 24.6 0 33.9l-80 80c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l39-39L384 336zm0-208l-128 0L256 0 384 128z" />
+                           </svg>
+                        </Button>
+                     )}
+                  <Button className={s.btnBuy} onClick={onOpenDrawer}>
+                     Buy
+                  </Button>
                </Flex>
-               {
-                  selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey && (
-                     <Button className={s.btnExport} onClick={handleExportPrvKey}>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
-                           <path
-                              d="M0 64C0 28.7 28.7 0 64 0L224 0l0 128c0 17.7 14.3 32 32 32l128 0 0 128-168 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l168 0 0 112c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 64zM384 336l0-48 110.1 0-39-39c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l80 80c9.4 9.4 9.4 24.6 0 33.9l-80 80c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l39-39L384 336zm0-208l-128 0L256 0 384 128z"/>
-                        </svg>
-                     </Button>
-                  )
-               }
-               <Button className={s.btnBuy} onClick={onOpenDrawer}>
-                  Buy
-               </Button>
             </Flex>
             <Flex justifyContent={"flex-end"} position={"absolute"} right={"16px"}>
                <HeaderWallet color={color}/>

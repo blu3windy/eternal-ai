@@ -1,0 +1,1 @@
+export const CHAT_AGENT_TASKS_STATE_STORAGE_KEY = 'chat-agent-tasks';
