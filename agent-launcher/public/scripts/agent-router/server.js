@@ -110,6 +110,14 @@ const writeRequestEndLogger = async (id,data,status, agentName) => {
 
 // ... keep your existing helper functions ...
 
+const tryToParseStringJson = (data) => { 
+    try {
+        return JSON.parse(data);
+    } catch (error) { 
+        return data;
+    }
+}
+
 app.post('/:agentName/prompt', async (req, res) => {
     const { agentName } = req.params;
     console.log("agentName:", agentName);
@@ -149,10 +157,10 @@ app.post('/:agentName/prompt', async (req, res) => {
                 return;
             }
             if (existedLog?.status === 500) {
-                res.status(500).json(existedLog.data);
+                res.status(500).json(tryToParseStringJson(existedLog.data));
                 return;
             }
-            res.status(200).json(existedLog.data);
+            res.status(200).json(tryToParseStringJson(existedLog.data));
             return;
         }
         
@@ -166,11 +174,12 @@ app.post('/:agentName/prompt', async (req, res) => {
             proxyResponse.on('end', () => {
                 let result;
                 try {
-                    if (typeof responseData === 'string') { 
-                        result = responseData;
-                    } else {
-                        result = JSON.parse(responseData);
-                    }
+                    // if (typeof responseData === 'string') { 
+                    //     result = responseData;
+                    // } else {
+                    //     result = tryToParseStringJson(responseData);
+                    // }
+                    result = tryToParseStringJson(responseData);
                 } catch (e) {
                     console.error('Error parsing response:', e);
                     result = responseData;
@@ -204,11 +213,12 @@ app.post('/:agentName/prompt', async (req, res) => {
             proxyResponse.on('end', () => {
                 let result;
                 try {
-                    if (typeof responseData === 'string') { 
-                        result = responseData;
-                    } else {
-                        result = JSON.parse(responseData);
-                    }
+                    // if (typeof responseData === 'string') { 
+                    //     result = responseData;
+                    // } else {
+                    //     result = tryToParseStringJson(responseData);
+                    // }
+                    result = tryToParseStringJson(responseData);
                 } catch (e) {
                     console.error('Error parsing response:', e);
                     result = responseData;

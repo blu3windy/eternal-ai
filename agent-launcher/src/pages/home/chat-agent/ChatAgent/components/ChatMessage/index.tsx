@@ -104,7 +104,7 @@ const ChatMessage = ({
                   [s.markdown__failed]: message.status === "failed",
                })}
             >
-               <span>Something went wrong!</span>
+               <span>{message.msg || "Something went wrong!"}</span>
                {!isSending && (
                   <span
                      className={s.retry}

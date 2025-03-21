@@ -73,13 +73,14 @@ class CApiClient {
             return Promise.resolve(result);
          },
          (error: any) => {
-            if (!error.response) {
-               return Promise.reject(error);
-            } else {
-               const response = error?.response?.data || error;
-               const errorMessage = response?.error || error?.Message || JSON.stringify(error);
-               return Promise.reject(errorMessage);
-            }
+            // if (!error.response) {
+            //    return Promise.reject(error);
+            // } else {
+            //    const response = error?.response?.data || error;
+            //    const errorMessage = response?.error || error?.Message || JSON.stringify(error);
+            //    return Promise.reject(errorMessage);
+            // }
+            return Promise.reject(error);
          },
       );
    }

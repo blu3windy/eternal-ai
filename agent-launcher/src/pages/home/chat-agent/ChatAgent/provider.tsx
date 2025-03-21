@@ -396,9 +396,11 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             });
          }
       } catch (e) {
+         const errorMessage = (e as any)?.response?.data?.error || 'Something went wrong!'
+         console.log('>>>> e', e, (e as any).message, (e as any).response?.data);
          updateMessage(messageId, {
             status: 'failed',
-            msg: (e as any).message || 'Something went wrong!',
+            msg: errorMessage
          });
       } finally {
          setIsLoading(false);
@@ -410,13 +412,19 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       try {
          setMessages((prev) => {
             const matchedMessageIndex = prev.findLastIndex((i) => i.id === id);
+            
             if (matchedMessageIndex !== -1) {
+               
                if (data.status === 'failed') {
                   if (prev[matchedMessageIndex].msg) {
                      prev[matchedMessageIndex].status = 'received';
                   } else {
                      prev[matchedMessageIndex].status = 'failed';
+                     if (prev[matchedMessageIndex] && data.msg && data.msg !== prev[matchedMessageIndex].msg) {
+                        prev[matchedMessageIndex].msg = data.msg;
+                     }
                   }
+                  
                   return [...prev];
                } else if (
                   prev[matchedMessageIndex].status === 'waiting'
