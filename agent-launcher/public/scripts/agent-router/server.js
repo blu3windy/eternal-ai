@@ -24,19 +24,27 @@ app.options('*', cors()); // Enable preflight for all routes
 
 const logDir = path.join(process.cwd(), "data", "requests");
 
-const checkLogDir = async () => {
+const getRequestFilePath = (agentName) => {
+    return `${logDir}/${agentName}`
+}
+
+const checkLogDir = async (agentName) => {
     try {
         // Create log directory if it doesn't exist
-        await fs.mkdir(logDir, { recursive: true });
+        await fs.mkdir(getRequestFilePath(agentName), { recursive: true });
     } catch (e) {
         //
     }
 };
 
+const getFileName = (id) => { 
+    return `${id}.json`;
+}
+
 const readLogFile = async (id, agentName) => {
     try {
-        const filename = `request-${agentName}-${id}.json`;
-        const filepath = path.join(logDir, filename);
+        const filename = getFileName(id);
+        const filepath = path.join(getRequestFilePath(agentName), filename);
         const fileContent = await fs.readFile(filepath, "utf-8");
         return JSON.parse(fileContent);
     } catch (error) {
@@ -50,7 +58,7 @@ const writeRequestStartLogger = async (id, payload, agentName) => {
         if (!id) {
             return null;
         }
-        await checkLogDir();
+        await checkLogDir(agentName);
         const existedLog = await readLogFile(id, agentName);
         if (existedLog) {
             return existedLog;
@@ -62,8 +70,8 @@ const writeRequestStartLogger = async (id, payload, agentName) => {
         };
 
         // Create filename with timestamp
-        const filename = `request-${agentName}-${id}.json`;
-        const filepath = path.join(logDir, filename);
+        const filename = getFileName(id);
+        const filepath = path.join(getRequestFilePath(agentName), filename);
 
         // Write log to file
         await fs.writeFile(filepath, JSON.stringify(log, null, 2), "utf-8");
@@ -78,7 +86,7 @@ const writeRequestEndLogger = async (id,data,status, agentName) => {
         if (!id) {
             return null;
         }
-        await checkLogDir();
+        await checkLogDir(agentName);
         const existingLog = await readLogFile(id, agentName);
         if (!existingLog) {
             return;
@@ -91,8 +99,8 @@ const writeRequestEndLogger = async (id,data,status, agentName) => {
             data: data
         };
 
-        const filename = `request-${agentName}-${id}.json`;
-        const filepath = path.join(logDir, filename);
+        const filename = getFileName(id, agentName);
+        const filepath = path.join(getRequestFilePath(agentName), filename);
         await fs.writeFile(filepath, JSON.stringify(updatedLog, null, 2), "utf-8");
     } catch (error) {
         console.error("Error logging request:", error);
