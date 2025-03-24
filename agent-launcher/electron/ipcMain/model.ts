@@ -2,7 +2,7 @@ import { ipcMain } from "electron";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 import command from "../share/command-tool.ts";
 import { SCRIPTS_NAME } from "../share/utils.ts";
-import { ACTIVE_PATH, deleteModel, downloadedModels, getFolderPath } from "../share/model.ts";
+import { deleteModel, downloadedModels, getFolderPath } from "../share/model.ts";
 import { dialogCheckDist } from "../share/file-size.ts";
 
 const ipcMainModel = () => {
@@ -14,7 +14,7 @@ const ipcMainModel = () => {
    const _sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
    const _onRunModel = async (hash: string) => {
-      await command.killProcessUsingPort(8080);
+      // await command.killProcessUsingPort(8080);
       await command.execAsyncStream( `${cd} && ${source} && ${llms} start --hash ${hash}`);
    };
 
@@ -66,7 +66,7 @@ const ipcMainModel = () => {
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_STOP, async (_event, hash: string) => {
       const cmd =`${cd} && ${source} && ${llms} stop`
       await command.execAsyncStream(cmd);
-      await command.killProcessUsingPort(8080);
+      // await command.killProcessUsingPort(8080);
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_INSTALL_BASE_MODEL, async (_event, hash: string) => {
