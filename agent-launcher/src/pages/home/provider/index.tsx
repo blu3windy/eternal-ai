@@ -236,7 +236,7 @@ const AgentProvider: React.FC<
             const agentsHasWallet = JSON.parse(walletData || '[]'); // Default to an empty array if null
 
             if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id)) {
-               createAgentWallet();
+               createAgentWallet(selectedAgent);
             } else {
                setAgentWallet(undefined);
             }
@@ -346,18 +346,18 @@ const AgentProvider: React.FC<
       }
    }
 
-   const createAgentWallet = async () => {
+   const createAgentWallet = async (agent: IAgentToken) => {
       try {
-         if (!selectedAgent) return;
+         if (!agent) return;
 
-         const prvKey = await genAgentSecretKey({ chainId: selectedAgent?.network_id.toString(), agentName: selectedAgent?.agent_name });
+         const prvKey = await genAgentSecretKey({ chainId: agent?.network_id.toString(), agentName: agent?.agent_name });
          setAgentWallet(new Wallet(prvKey));
 
          // Await the result of the asynchronous getItem call
          const walletData = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
          const agentsHasWallet = JSON.parse(walletData || '[]'); // Default to an empty array if null
 
-         await localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, selectedAgent?.id]) : [selectedAgent?.id]));
+         await localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, agent?.id]) : [agent?.id]));
       } catch (err) {
          console.log("Create agent wallet error:", err);
       } finally {
