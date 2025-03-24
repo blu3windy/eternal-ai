@@ -226,6 +226,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                taskItem: task
             }));
          }, 5000);
+      }
    }
 
    const sendMessageToServer = async (
