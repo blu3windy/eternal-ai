@@ -907,7 +907,7 @@ const AgentProvider: React.FC<
       }
    }
 
-   const setSelectedAgent = (newAgent: IAgentToken) => {
+   const setSelectedAgent = useCallback((newAgent: IAgentToken) => {
       _setSelectedAgent(newAgent);
 
       const isInstalled = agentStates[newAgent.id]?.isInstalled || false;
@@ -916,7 +916,7 @@ const AgentProvider: React.FC<
       if (isInstalled && !isRunning) {
          startAgent(newAgent);
       }
-   }
+   }, [agentStates]);
 
    const contextValues: any = useMemo(() => {
       return {
