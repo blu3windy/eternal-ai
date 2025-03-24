@@ -17,6 +17,7 @@ import { AgentContext } from "@pages/home/provider";
 import CAgentTokenAPI from "../../../../../services/api/agents-token";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
+import Loading from '@components/Loading';
 
 export const RenameModels: any = {
    'NousResearch/Hermes-3-Llama-3.1-70B-FP8': 'Hermes 3 70B',
@@ -56,6 +57,12 @@ const ItemToken = ({
   models: any;
   isSelected: boolean;
 }) => {
+   const { agentStates } = useContext(AgentContext);
+
+   const isStarting = useMemo(() => {
+      return agentStates[agent.id]?.isStarting;
+   }, [agentStates, agent]);
+
    const avatarUrl
       = agent?.thumbnail
       || agent?.token_image_url
@@ -124,10 +131,14 @@ const ItemToken = ({
                </Flex>
             </Flex>
             {
-               isSelected && (
+               isSelected ? (
                   <Circle size={'24px'} className={s.itemDot}>
                      <Circle size={'16px'} />
                   </Circle>
+               ) : isStarting ? (
+                  <Loading />
+               ) : (
+                  <Box />
                )
             }
          </Flex>
