@@ -142,10 +142,20 @@ stop_container() {
 }
 
 get_port() {
-  # make sure container is running
+  # Set a timeout of 30 seconds
+  local timeout=5
+  local counter=0
+  
+  # Check for container with timeout
   while ! docker ps | grep "$CONTAINER_NAME" > /dev/null; do
     sleep 1
+    counter=$((counter + 1))
+    if [ $counter -ge $timeout ]; then
+      echo "Error: Container $CONTAINER_NAME not found after $timeout seconds" >&2
+      exit 1
+    fi
   done
+  
   # get the assigned port
   PORT=$(docker port "$CONTAINER_NAME" 8080/tcp | cut -d ':' -f2)
   echo "$PORT"
@@ -179,6 +189,12 @@ case "$action" in
       log_error "Missing Container Name"
     fi
     get_port
+    ;;
+  remove)
+    if [ -z "$CONTAINER_NAME" ]; then
+      log_error "Missing Container Name"
+    fi
+    docker rmi "$IMAGE_NAME" 2>/dev/null || true
     ;;
   *)
     log_error "Invalid action: $action"
