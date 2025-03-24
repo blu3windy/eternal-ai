@@ -59,6 +59,7 @@ func (s *Service) UpdateScanBlockError(ctx context.Context, chainID uint, lastBl
 	mapError := map[string]any{}
 	if lastBlockError != nil {
 		mapError["last_block_error"] = lastBlockError.Error()
+		mapError["updated_at"] = time.Now()
 	}
 	err := daos.GetDBMainCtx(ctx).
 		Model(&models.BlockScanInfo{}).
@@ -75,6 +76,7 @@ func (s *Service) UpdateScanBlockNumber(ctx context.Context, chainID uint, lastB
 	if lastBlockEvent > 0 {
 		mapError["last_block_number"] = lastBlockEvent
 		mapError["last_block_error"] = "OK"
+		mapError["updated_at"] = time.Now()
 	}
 	err := daos.GetDBMainCtx(ctx).
 		Model(&models.BlockScanInfo{}).
@@ -1305,6 +1307,7 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 					return nil
 				}(networkID)
 				if err != nil {
+					_ = s.UpdateScanBlockError(ctx, uint(networkID), err)
 					return errs.NewError(err)
 				}
 			}

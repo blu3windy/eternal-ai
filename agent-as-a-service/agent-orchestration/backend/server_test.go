@@ -12,7 +12,6 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/databases"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services"
 )
 
@@ -106,9 +105,11 @@ func Test_OpenAI(t *testing.T) {
 
 func Test_SRV(t *testing.T) {
 
-	fmt.Println(ts.DeployProxyAdminAddress(context.Background(), models.BASE_CHAIN_ID))
+	// fmt.Println(ts.DeployProxyAdminAddress(context.Background(), models.BASE_CHAIN_ID))
 	// ts.JobExecuteInfraTwitterAppRequest(context.Background())
 	// ts.CreateAgentVideoByPostID(context.Background(), 34947)
+
+	ts.ScanEventsByChain(context.Background(), 1)
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
