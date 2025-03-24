@@ -157,7 +157,10 @@ func (s *Service) RunJobs(ctx context.Context) error {
 
 	// scan events by chain
 	for networkIDStr := range s.conf.Networks {
-		networkID, _ := strconv.ParseUint(networkIDStr, 10, 64)
+		networkID, err := strconv.ParseUint(networkIDStr, 10, 64)
+		if err != nil {
+			panic(err)
+		}
 		gocron.Every(30).Second().Do(func() {
 			s.ScanEventsByChain(context.Background(), networkID)
 		})
