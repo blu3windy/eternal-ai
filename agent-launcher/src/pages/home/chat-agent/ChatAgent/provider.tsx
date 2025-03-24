@@ -20,6 +20,13 @@ import { AgentContext } from "@pages/home/provider";
 import chatAgentDatabase, { PersistedMessageType } from "../../../../database/chatAgentDatabase.ts";
 import { AgentType } from "@pages/home/list-agent";
 import CAgentTokenAPI from "@services/api/agents-token";
+import { TaskItem } from '@stores/states/agent-chat/type.ts';
+import { useDispatch, useSelector } from 'react-redux';
+import { addOrUpdateTaskItem, initTaskItems, removeTaskItem } from '@stores/states/agent-chat/reducer.ts';
+import { RootState } from '@stores/index.ts';
+import localStorageService from '@storage/LocalStorageService.ts';
+import { CHAT_AGENT_TASKS_STATE_STORAGE_KEY } from '@stores/states/agent-chat/constants.ts';
+import { tryToParseJsonString } from '@utils/string.ts';
 
 type IChatAgentProviderContext = {
   isStopReceiving?: boolean;
@@ -38,7 +45,8 @@ type IChatAgentProviderContext = {
   chatInputRef: any;
   isFocusChatInput: boolean;
   setIsFocusChatInput: (_: boolean) => void;
-  isAllowChat: boolean;
+   isAllowChat: boolean;
+   taskItems: TaskItem[];
 };
 
 const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
@@ -55,9 +63,11 @@ const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
    setIsFocusChatInput: () => {},
    isAllowChat: false,
    scrollRef: undefined,
+   taskItems: [],
 });
 
 export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
+   const dispatch = useDispatch();
    const scrollableRef = useRef<ScrollableFeed | null>(null);
    const scrollRef = useRef<any>(null);
 
@@ -79,6 +89,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
    const cPumpAPI = new CAgentTokenAPI();
 
+   const agentTasks = useSelector((state: RootState) => state.agentChat.agentTasks || {});
+
+   const taskItems = useMemo(() => { 
+      return agentTasks[threadId] || [];
+   }, [agentTasks, threadId])
+
    const isAllowChat = useMemo(() => {
       return true;
       // if(selectedAgent) {
@@ -88,12 +104,33 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       // return false;
    }, []);
 
+
+   useEffect(() => { 
+      const loadInitProcessingTasks = () => {
+         localStorageService.getItem(CHAT_AGENT_TASKS_STATE_STORAGE_KEY).then((str) => {
+            const storageAgentTasks = tryToParseJsonString(str, {});
+
+            const data = Object.keys(storageAgentTasks).reduce((acc, key) => ({
+               ...acc,
+               [key]: (storageAgentTasks || []).filter(item => item.status === 'processing').filter(item => !!item.id)
+            }), {})
+   
+            dispatch(initTaskItems({
+               data: data,
+            }));
+         })
+      }
+
+      loadInitProcessingTasks();
+   }, [])
+
    useEffect(() => {
       if (threadId) {
          setMessages([]);
+
          chatAgentDatabase.loadChatItems(threadId).then((items) => {
             if (items?.length === 0) {
-              //  publishEvent(INIT_WELCOME_MESSAGE);
+               //  publishEvent(INIT_WELCOME_MESSAGE);
             } else {
                const filterMessages = items
                   ?.filter((item) => item.status !== 'failed')
@@ -175,6 +212,13 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          cPumpAPI.saveAgentPromptCount(Number(id));
       }
    };
+
+   const updateTaskItem = (task: TaskItem) => {
+      dispatch(addOrUpdateTaskItem({
+         id: threadId,
+         taskItem: task
+      }));
+   }
 
    const sendMessageToServer = async (
       messageId: string,
@@ -284,31 +328,55 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          }
 
          if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
+            const content = sendTxt && attachments?.length
+               ? [
+                  { type: 'text', text: sendTxt },
+                  ...attachments.map(attachment => ({
+                     type: 'image_url',
+                     image_url: {
+                        url: attachment.url,
+                        detail: ''
+                     }
+                  }))
+               ]
+               : sendTxt;
+            
+            updateTaskItem({
+               id: messageId,
+               status: 'processing',
+               message: content as any,
+               title: selectedAgent?.agent_name || 'Agent',
+               createdAt: new Date().toISOString(),
+               agent: selectedAgent!,
+               agentType: selectedAgent?.agent_type
+            });
             const res: string = await AgentAPI.chatAgentUtility({
                id: messageId,
                agent: selectedAgent!, prvKey: agentWallet?.privateKey, messages: [ {
                   role: 'user',
-                  content: sendTxt && attachments?.length 
-                     ? [
-                        { type: 'text', text: sendTxt },
-                        ...attachments.map(attachment => ({
-                           type: 'image_url',
-                           image_url: {
-                              url: attachment.url,
-                              detail: ''
-                           }
-                        }))
-                     ]
-                     : sendTxt
+                  content: content
                }] 
             });
             console.log('res>>>>>', res);
-            
             updateMessage(messageId, {
                msg: res,
                status: 'received',
             });
+            updateTaskItem({
+               id: messageId,
+               status: 'done',
+               updatedAt: new Date().toISOString(),
+            } as TaskItem);
          } else if (selectedAgent?.agent_type === AgentType.Model) {
+            updateTaskItem({
+               id: messageId,
+               status: 'processing',
+               message: sendTxt,
+               title: selectedAgent?.agent_name || 'Agent',
+               createdAt: new Date().toISOString(),
+               agent: selectedAgent!,
+               agentType: selectedAgent?.agent_type
+            });
             let isGeneratedDone = false;
             await AgentAPI.chatAgentModelStreamCompletions({
                payload: {
@@ -342,16 +410,35 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                         queryMessageState: options?.message,
                         onchain_data: options.onchain_data,
                      });
+                     updateTaskItem({
+                        id: messageId,
+                        status: 'done',
+                        updatedAt: new Date().toISOString(),
+                     } as TaskItem);
                   },
                   onFail: (err: any) => {
                      // updateMessage(messageId, {
                      //   status: 'failed',
                      //   msg: (err as any)?.message || 'Something went wrong!',
                      // });
+                     updateTaskItem({
+                        id: messageId,
+                        status: 'failed',
+                        updatedAt: new Date().toISOString(),
+                     } as TaskItem);
                   },
                },
             });
          } else {
+            updateTaskItem({
+               id: messageId,
+               status: 'processing',
+               message: sendTxt,
+               title: selectedAgent?.agent_name || 'Agent',
+               createdAt: new Date().toISOString(),
+               agent: selectedAgent!,
+               agentType: selectedAgent?.agent_type
+            });
             let isGeneratedDone = false;
             await AgentAPI.chatStreamCompletions({
                payload: {
@@ -385,16 +472,27 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                         queryMessageState: options?.message,
                         onchain_data: options.onchain_data,
                      });
+                     updateTaskItem({
+                        id: messageId,
+                        status: 'done',
+                        updatedAt: new Date().toISOString(),
+                     } as TaskItem);
                   },
                   onFail: (err: any) => {
                      // updateMessage(messageId, {
                      //   status: 'failed',
                      //   msg: (err as any)?.message || 'Something went wrong!',
                      // });
+                     updateTaskItem({
+                        id: messageId,
+                        status: 'failed',
+                        updatedAt: new Date().toISOString(),
+                     } as TaskItem);
                   },
                },
             });
          }
+         
       } catch (e) {
          const errorMessage = (e as any)?.response?.data?.error || 'Something went wrong!'
          console.log('>>>> e', e, (e as any).message, (e as any).response?.data);
@@ -402,9 +500,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             status: 'failed',
             msg: errorMessage
          });
+         updateTaskItem({
+            id: messageId,
+            status: 'failed',
+            updatedAt: new Date().toISOString(),
+         } as TaskItem);
       } finally {
          setIsLoading(false);
          scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+         
       }
    };
 
@@ -412,17 +516,11 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       try {
          setMessages((prev) => {
             const matchedMessageIndex = prev.findLastIndex((i) => i.id === id);
-            
             if (matchedMessageIndex !== -1) {
-               
                if (data.status === 'failed') {
-                  if (prev[matchedMessageIndex].msg) {
-                     prev[matchedMessageIndex].status = 'received';
-                  } else {
-                     prev[matchedMessageIndex].status = 'failed';
-                     if (prev[matchedMessageIndex] && data.msg && data.msg !== prev[matchedMessageIndex].msg) {
-                        prev[matchedMessageIndex].msg = data.msg;
-                     }
+                  prev[matchedMessageIndex].status = 'failed';
+                  if (data.msg && data.msg !== prev[matchedMessageIndex].msg) {
+                     prev[matchedMessageIndex].msg = data.msg;
                   }
                   
                   return [...prev];
@@ -544,6 +642,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isStopReceiving,
          isAllowChat,
          scrollRef,
+         taskItems
       };
    }, [
       messages,
@@ -560,7 +659,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       onRetryErrorMessage,
       isStopReceiving,
       isAllowChat,
-      scrollRef
+      scrollRef,
+      taskItems
    ]);
 
    return (

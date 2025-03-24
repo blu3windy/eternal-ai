@@ -8,6 +8,7 @@ import AgentTopInfo from "./chat-agent/AgentTopInfo";
 import AgentsList, { AgentType } from "./list-agent";
 import AgentProvider, { AgentContext } from "./provider";
 import s from "./styles.module.scss";
+import { ChatAgentProvider } from "./chat-agent/ChatAgent/provider";
 
 type Props = {
    // some props
@@ -33,18 +34,20 @@ const HandleHome = () => {
          <Box flex={1} maxW={"460px"}>
             <AgentsList />
          </Box>
-         <Box
-            className={cx(
-               s.detailContainer,
-               showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : "",
-            )}
-            flex={2}
-         >
-            <AgentTopInfo />
-            <Flex w={"clamp(300px, 60%, 800px)"} mx={"auto"} maxW={"800px"}>
-               <ChatAgent />
-            </Flex>
-         </Box>
+         <ChatAgentProvider>
+            <Box
+               className={cx(
+                  s.detailContainer,
+                  showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : "",
+               )}
+               flex={2}
+            >
+               <AgentTopInfo />
+               <Flex w={"clamp(300px, 60%, 800px)"} mx={"auto"}>
+                  <ChatAgent />
+               </Flex>
+            </Box>
+         </ChatAgentProvider>
       </Flex>
    );
 };
