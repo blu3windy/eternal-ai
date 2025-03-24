@@ -23,6 +23,7 @@ export interface IAgentContext {
   isTrade: boolean;
   setIsTrade: (v: any) => void;
   agentWallet?: Wallet;
+  setAgentWallet: (v: any) => void;
   isRunning: boolean;
   tradePlatform: ETradePlatform;
   coinPrices: any[];

@@ -96,17 +96,17 @@ const AgentProvider: React.FC<
 
    const cPumpAPI = new CAgentTokenAPI();
 
+   const checkBackup = throttle(async () => {
+      const values = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
+      if (!values) {
+         setIsBackupedPrvKey(false);
+         return;
+      }
+      const agentIdsHasBackup = JSON.parse(values);
+      setIsBackupedPrvKey(agentWallet && selectedAgent && agentIdsHasBackup && agentIdsHasBackup?.some?.(id => id === selectedAgent?.id));
+   }, 1000);
+
    useEffect(() => {
-      const checkBackup = throttle(async () => {
-         const values = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
-         if (!values) {
-            setIsBackupedPrvKey(false);
-            return;
-         }
-         const agentIdsHasBackup = JSON.parse(values);
-         setIsBackupedPrvKey(agentWallet && selectedAgent && agentIdsHasBackup && agentIdsHasBackup?.some?.(id => id === selectedAgent?.id));
-      }, 1000);
-      
       checkBackup();
    }, [selectedAgent, agentWallet]);
 
@@ -170,7 +170,7 @@ const AgentProvider: React.FC<
 
    const isCanChat = useMemo(() => {
       return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
-   }, [requireInstall, selectedAgent, agentWallet, isInstalled, isBackupedPrvKey]);
+   }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
 
    console.log("stephen: selectedAgent", selectedAgent);
    // console.log("stephen: currentModel", currentModel);
@@ -190,7 +190,7 @@ const AgentProvider: React.FC<
       fetchAvailableModelAgents();
       fetchInstalledUtilityAgents();
       loadAgentStates();
-   });
+   }, []);
 
    useEffect(() => {
       fetchInstalledModelAgents();
@@ -236,7 +236,7 @@ const AgentProvider: React.FC<
             const agentsHasWallet = JSON.parse(walletData || '[]'); // Default to an empty array if null
 
             if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id)) {
-               createAgentWallet(selectedAgent);
+               createAgentWallet();
             } else {
                setAgentWallet(undefined);
             }
@@ -246,7 +246,7 @@ const AgentProvider: React.FC<
       };
 
       fetchWalletData(); // Call the async function
-   }, [selectedAgent]);
+   }, [selectedAgent?.id]);
 
    const intervalCheckAgentRunning = (agent: IAgentToken) => {
       if (refInterval.current) {
@@ -270,7 +270,7 @@ const AgentProvider: React.FC<
             checkModelAgentInstalled(selectedAgent);
          }
       }
-   }, [selectedAgent, installedUtilityAgents, installedModelAgents, installedSocialAgents]);
+   }, [selectedAgent?.id, installedUtilityAgents, installedModelAgents, installedSocialAgents]);
 
    const getUtilityAgentCodeLanguage = (agent: IAgentToken) => {
       if ([AgentType.CustomUI].includes(agent.agent_type)) {
@@ -346,24 +346,24 @@ const AgentProvider: React.FC<
       }
    }
 
-   const createAgentWallet = async (agent: IAgentToken) => {
+   const createAgentWallet = async () => {
       try {
-         if (!agent) return;
+         if (!selectedAgent) return;
 
-         const prvKey = await genAgentSecretKey({ chainId: agent?.network_id.toString(), agentName: agent?.agent_name });
+         const prvKey = await genAgentSecretKey({ chainId: selectedAgent?.network_id.toString(), agentName: selectedAgent?.agent_name });
          setAgentWallet(new Wallet(prvKey));
 
          // Await the result of the asynchronous getItem call
          const walletData = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
          const agentsHasWallet = JSON.parse(walletData || '[]'); // Default to an empty array if null
 
-         await localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, agent?.id]) : [agent?.id]));
+         await localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, selectedAgent?.id]) : [selectedAgent?.id]));
       } catch (err) {
          console.log("Create agent wallet error:", err);
       } finally {
 
       }
-   }
+   };
 
    const getTradePlatform = (_pumpToken: IAgentToken | undefined) => {
       if (SUPPORT_TRADE_CHAIN.includes((_pumpToken?.meme?.network_id || "") as any)) {
@@ -384,7 +384,7 @@ const AgentProvider: React.FC<
 
    const tradePlatform = useMemo(() => {
       return getTradePlatform(selectedAgent as any);
-   }, [selectedAgent]);
+   }, [selectedAgent?.id]);
 
    const fetchAvailableModelAgents = async () => {
       try {
@@ -941,6 +941,7 @@ const AgentProvider: React.FC<
          isTrade,
          setIsTrade,
          agentWallet,
+         setAgentWallet,
          isRunning,
          tradePlatform,
          coinPrices,
@@ -977,6 +978,7 @@ const AgentProvider: React.FC<
       isTrade,
       setIsTrade,
       agentWallet,
+      setAgentWallet,
       isRunning,
       tradePlatform,
       coinPrices,
