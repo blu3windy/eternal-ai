@@ -124,6 +124,7 @@ type AgentInfoResp struct {
 	EstimateTwinDoneTimestamp *time.Time                `json:"estimate_twin_done_timestamp"`
 	TokenDesc                 string                    `json:"token_desc"`
 	ExternalChartUrl          string                    `json:"external_chart_url"`
+	InferFee                  numeric.BigFloat          `json:"infer_fee"`
 	MissionTopics             string                    `json:"mission_topics"`
 	GraphData                 string                    `json:"graph_data"`
 	AgentType                 models.AgentInfoAgentType `json:"agent_type"`
@@ -292,6 +293,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		TotalMintTwinFee:     m.TotalMintTwinFee,
 		TokenDesc:            m.TokenDesc,
 		ExternalChartUrl:     m.ExternalChartUrl,
+		InferFee:             m.InferFee,
 		MissionTopics:        m.MissionTopics,
 		GraphData:            m.GraphData,
 		AgentType:            m.AgentType,
