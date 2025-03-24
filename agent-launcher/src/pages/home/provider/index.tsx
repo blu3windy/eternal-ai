@@ -96,17 +96,17 @@ const AgentProvider: React.FC<
 
    const cPumpAPI = new CAgentTokenAPI();
 
+   const checkBackup = throttle(async () => {
+      const values = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
+      if (!values) {
+         setIsBackupedPrvKey(false);
+         return;
+      }
+      const agentIdsHasBackup = JSON.parse(values);
+      setIsBackupedPrvKey(agentWallet && selectedAgent && agentIdsHasBackup && agentIdsHasBackup?.some?.(id => id === selectedAgent?.id));
+   }, 1000);
+
    useEffect(() => {
-      const checkBackup = throttle(async () => {
-         const values = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
-         if (!values) {
-            setIsBackupedPrvKey(false);
-            return;
-         }
-         const agentIdsHasBackup = JSON.parse(values);
-         setIsBackupedPrvKey(agentWallet && selectedAgent && agentIdsHasBackup && agentIdsHasBackup?.some?.(id => id === selectedAgent?.id));
-      }, 1000);
-      
       checkBackup();
    }, [selectedAgent, agentWallet]);
 
@@ -170,7 +170,7 @@ const AgentProvider: React.FC<
 
    const isCanChat = useMemo(() => {
       return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
-   }, [requireInstall, selectedAgent, agentWallet, isInstalled, isBackupedPrvKey]);
+   }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
 
    console.log("stephen: selectedAgent", selectedAgent);
    // console.log("stephen: currentModel", currentModel);
@@ -190,7 +190,7 @@ const AgentProvider: React.FC<
       fetchAvailableModelAgents();
       fetchInstalledUtilityAgents();
       loadAgentStates();
-   });
+   }, []);
 
    useEffect(() => {
       fetchInstalledModelAgents();
@@ -246,7 +246,7 @@ const AgentProvider: React.FC<
       };
 
       fetchWalletData(); // Call the async function
-   }, [selectedAgent]);
+   }, [selectedAgent?.id]);
 
    const intervalCheckAgentRunning = (agent: IAgentToken) => {
       if (refInterval.current) {
@@ -270,7 +270,7 @@ const AgentProvider: React.FC<
             checkModelAgentInstalled(selectedAgent);
          }
       }
-   }, [selectedAgent, installedUtilityAgents, installedModelAgents, installedSocialAgents]);
+   }, [selectedAgent?.id, installedUtilityAgents, installedModelAgents, installedSocialAgents]);
 
    const getUtilityAgentCodeLanguage = (agent: IAgentToken) => {
       if ([AgentType.CustomUI].includes(agent.agent_type)) {
@@ -346,7 +346,7 @@ const AgentProvider: React.FC<
       }
    }
 
-   const createAgentWallet = useCallback(async () => {
+   const createAgentWallet = async () => {
       try {
          if (!selectedAgent) return;
 
@@ -363,7 +363,7 @@ const AgentProvider: React.FC<
       } finally {
 
       }
-   }, [selectedAgent, genAgentSecretKey, setAgentWallet]);
+   };
 
    const getTradePlatform = (_pumpToken: IAgentToken | undefined) => {
       if (SUPPORT_TRADE_CHAIN.includes((_pumpToken?.meme?.network_id || "") as any)) {
@@ -384,7 +384,7 @@ const AgentProvider: React.FC<
 
    const tradePlatform = useMemo(() => {
       return getTradePlatform(selectedAgent as any);
-   }, [selectedAgent]);
+   }, [selectedAgent?.id]);
 
    const fetchAvailableModelAgents = async () => {
       try {
