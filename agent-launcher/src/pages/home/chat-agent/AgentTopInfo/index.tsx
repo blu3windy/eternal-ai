@@ -98,8 +98,8 @@ const AgentTopInfo = () => {
          });
          const codeVersion = await cAgent.getCurrentVersion();
          const values = await localStorageService.getItem(selectedAgent.agent_contract_address);
-         const oldCodeVersion = values ? Number(values) : 0;
-         if (oldCodeVersion > 0 && codeVersion > oldCodeVersion) {
+         const oldCodeVersion = values ? Number(values) : 1;
+         if (codeVersion > oldCodeVersion) {
             setHaveNewVersionCode(true);
          }
       }
