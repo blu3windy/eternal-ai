@@ -1232,7 +1232,6 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 								return nil
 							}()
 							if err != nil {
-								_ = s.UpdateScanBlockError(ctx, chain.ID, err)
 								return errs.NewError(err)
 							}
 							if lastBlockNumber > 0 {
@@ -1244,6 +1243,7 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 							return nil
 						}(networkID)
 						if err != nil {
+							_ = s.UpdateScanBlockErrorForNetwork(ctx, networkID, err)
 							return errs.NewError(err)
 						}
 					}
