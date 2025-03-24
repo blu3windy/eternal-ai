@@ -10,7 +10,7 @@ const CreateAgentWallet = () => {
    } = useContext(AgentContext);
 
    const handleCreateWallet = () => {
-      createAgentWallet();
+      createAgentWallet(selectedAgent);
    }
 
    return (
