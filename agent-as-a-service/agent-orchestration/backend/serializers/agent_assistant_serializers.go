@@ -72,10 +72,11 @@ type AssistantsReq struct {
 	MinFeeToUse numeric.BigFloat `json:"min_fee_to_use"`
 	Worker      string           `json:"worker"`
 
-	DependAgents   string `json:"depend_agents"`
-	RequiredWallet *bool  `json:"required_wallet"`
-	IsOnchain      *bool  `json:"is_onchain"`
-	IsCustomUi     *bool  `json:"is_custom_ui"`
+	DependAgents   string  `json:"depend_agents"`
+	RequiredWallet *bool   `json:"required_wallet"`
+	IsOnchain      *bool   `json:"is_onchain"`
+	IsCustomUi     *bool   `json:"is_custom_ui"`
+	RequiredInfo   *string `json:"required_info"`
 }
 
 func (m *AssistantsReq) GetAssistantCharacter(character interface{}) string {

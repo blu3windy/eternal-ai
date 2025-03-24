@@ -101,6 +101,9 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	if req.IsCustomUi != nil {
 		agent.IsCustomUi = *req.IsCustomUi
 	}
+	if req.RequiredInfo != nil {
+		agent.RequiredInfo = *req.RequiredInfo
+	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
 
@@ -484,6 +487,9 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				}
 				if req.IsCustomUi != nil {
 					agent.IsCustomUi = *req.IsCustomUi
+				}
+				if req.RequiredInfo != nil {
+					agent.RequiredInfo = *req.RequiredInfo
 				}
 				if req.MinFeeToUse.Cmp(big.NewFloat(0)) > 0 {
 					agent.MinFeeToUse = req.MinFeeToUse
