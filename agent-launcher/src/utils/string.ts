@@ -38,11 +38,11 @@ const addressFormater = (address?: string, sliceLength?: number) => {
    }
 };
 
-const tryToParseJsonString = (str: string): Record<string, unknown> & any => {
+const tryToParseJsonString = (str: string, defaultValue = {}): Record<string, unknown> & any => {
    try {
       return JSON.parse(str);
    } catch (error) {
-      return {};
+      return defaultValue;
    }
 };
 
