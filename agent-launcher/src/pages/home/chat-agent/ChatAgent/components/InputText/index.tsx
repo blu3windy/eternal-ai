@@ -217,15 +217,6 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
                   multiple
                   onChange={handleFileChange}
                />
-               <IconButton
-                  aria-label="Attach image"
-                  icon={<span>📎</span>}
-                  onClick={handleAttachImage}
-                  variant="ghost"
-                  _hover={{
-                     backgroundColor: 'transparent'
-                  }}
-               />
                <AutosizeTextarea
                   type="text"
                   ref={chatInputRef}
@@ -264,6 +255,20 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
                   onPointerEnterCapture={undefined}
                   onPointerLeaveCapture={undefined}
                   autoFocus={true}
+               />
+               <IconButton
+                  marginRight={"10px"}
+                  aria-label="Attach image"
+                  icon={
+                     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20.9365 10.9368L12.6365 19.2368C10.1365 21.7368 5.93652 21.7368 3.43652 19.2368C0.936523 16.7368 0.936523 12.5368 3.43652 10.0368L10.8665 2.60684C12.6665 0.806836 15.4665 0.806836 17.2665 2.60684C19.0665 4.40684 19.0665 7.20684 17.2665 9.00684L10.4365 15.7368C9.43652 16.7368 7.83652 16.7368 6.93652 15.7368C5.93652 14.7368 5.93652 13.1368 6.93652 12.2368L12.4365 6.73684" stroke="#5B5B5B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                     </svg>
+                  }
+                  onClick={handleAttachImage}
+                  variant="ghost"
+                  _hover={{
+                     backgroundColor: 'transparent'
+                  }}
                />
                <Flex
                   display={"none"}
