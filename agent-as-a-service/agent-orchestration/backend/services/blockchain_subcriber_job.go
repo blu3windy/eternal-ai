@@ -1279,13 +1279,11 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 						endBlocks := (chain.LastBlockNumber + chain.NumBlocks - 1)
 						eventResp, err := ethClient.ScanEvents(addrs, startBlocks, endBlocks)
 						if err != nil {
-							_ = s.UpdateScanBlockError(ctx, chain.ID, err)
 							return errs.NewError(err)
 						}
 						if eventResp != nil {
 							err = s.MemeEventsByTransactionEventResp(ctx, chain.NetworkID, eventResp, true)
 							if err != nil {
-								_ = s.UpdateScanBlockError(ctx, chain.ID, err)
 								return errs.NewError(err)
 							} else {
 								lastBlockNumber := endBlocks
