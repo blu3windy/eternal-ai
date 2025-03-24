@@ -475,10 +475,10 @@ const AgentsList = () => {
             >
                {renderSearch()}
             </Flex>
-            {/* <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
+            <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
                {renderFilterOptions()}
             </Flex>
-            <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
+            {/* <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
                {renderCategoryMenu()}
                <Divider orientation={'vertical'} borderColor={'#000'} opacity={0.2} h={"20px"} m={'auto 0'}/>
                {renderSortMenu()}
