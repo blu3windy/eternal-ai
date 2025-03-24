@@ -5,7 +5,7 @@ import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.
 import ChatList from "@pages/home/chat-agent/ChatAgent/components/ChatList";
 import InputText from "@pages/home/chat-agent/ChatAgent/components/InputText";
 import { AgentContext } from "@pages/home/provider";
-import { Box, Button, Flex, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Text, Image } from "@chakra-ui/react";
 import WebView from "@components/WebView";
 
 const ChatBox = () => {
@@ -30,6 +30,11 @@ const ChatBox = () => {
    const innerMaxHeight = useMemo(() => {
       return `calc(100vh - 72px - 120px)`;
    }, [requireInstall, isRunning]);
+
+   const avatarUrl
+    = selectedAgent?.thumbnail
+    || selectedAgent?.token_image_url
+    || selectedAgent?.twitter_info?.twitter_avatar;
 
    return (
       <motion.div
@@ -63,15 +68,16 @@ const ChatBox = () => {
                         // minHeight: innerMaxHeight,
                      }}
                   >
-                     <Text fontSize={"28px"} fontWeight={500} color={"#FFF"}>You're all set!</Text>
-                     <Text fontSize={"18px"} fontWeight={400} opacity={0.7} color={"#FFF"}>Your agent is installed{agentWallet ? ', and your wallet is ready.' : '.' }</Text>
+                     <Image src={avatarUrl} alt={selectedAgent?.agent_name} width={"280px"} height={"280px"} borderRadius={"50%"} />
+                     <Text fontSize={"24px"} fontWeight={500} color={"#FFF"} mt={"16px"}>{selectedAgent?.agent_name}</Text>
+                     <Text fontSize={"16px"} fontWeight={400} opacity={0.8} color={"#FFF"}>You're all set! Your agent is installed{agentWallet ? ', and your wallet is ready.' : '.' }</Text>
                      <Button
                         className={s.btnStart}
                         onClick={handleStartAgent}
                         isLoading={isStarting}
                         isDisabled={isStarting}
                         loadingText={"Starting..."}
-                        mt={"24px"}
+                        mt={"16px"}
                      >
                         {/*                <svg
                   width="20"
