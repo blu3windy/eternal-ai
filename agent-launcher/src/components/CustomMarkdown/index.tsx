@@ -48,6 +48,7 @@ interface WebviewModalProps {
 }
 
 const WebviewModal: React.FC<WebviewModalProps> = ({ url, isOpen, onClose }) => {
+   console.log('WebviewModal url', url);
    return (
       <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
          <ModalOverlay />
@@ -124,23 +125,25 @@ function CustomMarkdown({
    const { isOpen, onOpen, onClose } = useDisclosure();
    const [currentUrl, setCurrentUrl] = useState('');
 
-   const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+   const handleLinkClick = (e: any) => {
       e.preventDefault();
-      const url = e.currentTarget.href;
-      setCurrentUrl(url);
-      onOpen();
+      const url = e.currentTarget.href || e.target.href;
+      if (url) {
+         setCurrentUrl(url);
+         onOpen();
+      }
    };
 
    return (
       <>
          <div
-            onClick={(e) => {
-               const target = e.target as HTMLElement;
-               if (target.tagName === 'A') {
-                  e.preventDefault();
-                  handleLinkClick(e as unknown as React.MouseEvent<HTMLAnchorElement>);
-               }
-            }}
+            // onClick={(e) => {
+            //    const target = e.target as HTMLElement;
+            //    if (target.tagName === 'A') {
+            //       e.preventDefault();
+            //       handleLinkClick(e as unknown as React.MouseEvent<HTMLAnchorElement>);
+            //    }
+            // }}
          >
             <Markdown
                remarkPlugins={[remarkGfm]} // Enables GitHub Flavored Markdown
