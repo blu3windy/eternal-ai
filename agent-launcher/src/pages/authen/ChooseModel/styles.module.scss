@@ -1,0 +1,17 @@
+.item {
+  border-radius: 12px;
+  border-width: 1.5px;
+  border-style: solid;
+  border-color: transparent;
+  transition: border-color 0.1s, background-color 0.1s ease-in-out;
+  cursor: pointer;
+
+  &_selected {
+    border-color: #5400FB;
+    background-color: #F0E8FF;
+  }
+  &:hover {
+    border-color: #5400FB;
+    background-color: #F0E8FF;
+  }
+}

@@ -66,12 +66,12 @@ const Starter = (props: IProps) => {
          // await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
 
-         console.time("MODEL_BASE");
-         await tryExecFunction(2, async () => {
-            await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
-         });
-         // await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
-         console.timeEnd("MODEL_BASE");
+         // console.time("MODEL_BASE");
+         // await tryExecFunction(2, async () => {
+         //    await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
+         // });
+         // // await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
+         // console.timeEnd("MODEL_BASE");
 
          setChecking(false);
       } catch (error: any) {
