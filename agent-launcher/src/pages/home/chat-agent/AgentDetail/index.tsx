@@ -131,7 +131,7 @@ const AgentDetail = () => {
                onClick={handleInstall}
                isLoading={isInstalling}
                isDisabled={isInstalling || isInstalled}
-               loadingText={totalStep > 0 ? `${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : '0%'}
+               loadingText={totalStep > 0 ? `${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : 'Downloading...'}
                cursor={isInstalled ? 'not-allowed' : 'pointer'}
             >
                {isInstalled ? 'Downloaded' : 'Get'}
