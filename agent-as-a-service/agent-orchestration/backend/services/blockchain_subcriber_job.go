@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"math/rand/v2"
 	"strconv"
 	"strings"
 	"time"
@@ -1319,8 +1320,16 @@ func (s *Service) JobScanEventsByChain(ctx context.Context) error {
 		ctx, "JobScanEventsByChain",
 		func() error {
 			var retErr error
+			var networkIDs []uint64
 			for networkIDStr := range s.conf.Networks {
 				networkID, _ := strconv.ParseUint(networkIDStr, 10, 64)
+				networkIDs = append(networkIDs, networkID)
+			}
+			// random networkIDs
+			rand.Shuffle(len(networkIDs), func(i, j int) {
+				networkIDs[i], networkIDs[j] = networkIDs[j], networkIDs[i]
+			})
+			for _, networkID := range networkIDs {
 				err := s.ScanEventsByChain(ctx, networkID)
 				if err != nil {
 					retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, networkID))
