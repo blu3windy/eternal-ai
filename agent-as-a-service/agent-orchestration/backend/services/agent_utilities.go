@@ -202,7 +202,11 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 								FileName:        strings.TrimPrefix(fileName, "ipfs_"),
 							})
 						} else {
-							return errs.NewError(errs.ErrBadRequest)
+							storageInfos = append(storageInfos, agentupgradeable.IAgentCodePointer{
+								RetrieveAddress: helpers.HexToAddress(models.ETH_ZERO_ADDRESS),
+								FileType:        0,
+								FileName:        fileName,
+							})
 						}
 					}
 					dependAgentAddrs := []common.Address{}
