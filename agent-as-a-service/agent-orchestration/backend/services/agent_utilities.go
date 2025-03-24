@@ -98,6 +98,7 @@ func (s *Service) UpgradeAgentUpgradeable(ctx context.Context, agentInfoID uint)
 		return "", errs.NewError(err)
 	}
 	if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
+		agentInfo.AgentType != models.AgentInfoAgentTypeModelOnline &&
 		agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
 		agentInfo.AgentType != models.AgentInfoAgentTypeInfa &&
 		agentInfo.AgentType != models.AgentInfoAgentTypePython &&
@@ -144,6 +145,7 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 	}
 	if agentInfo != nil {
 		if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
+			agentInfo.AgentType != models.AgentInfoAgentTypeModelOnline &&
 			agentInfo.AgentType != models.AgentInfoAgentTypeInfa &&
 			agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
 			agentInfo.AgentType != models.AgentInfoAgentTypePython &&
@@ -231,6 +233,10 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 					case models.AgentInfoAgentTypeModel:
 						{
 							codeLanguage = "model"
+						}
+					case models.AgentInfoAgentTypeModelOnline:
+						{
+							codeLanguage = "model_online"
 						}
 					case models.AgentInfoAgentTypeCustomUi:
 						{

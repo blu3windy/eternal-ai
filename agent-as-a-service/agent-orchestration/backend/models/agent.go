@@ -66,6 +66,7 @@ const (
 	AgentInfoAgentTypeVideo         AgentInfoAgentType = 9
 	AgentInfoAgentTypeCustomUi      AgentInfoAgentType = 10
 	AgentInfoAgentTypeCustomPrompt  AgentInfoAgentType = 11
+	AgentInfoAgentTypeModelOnline   AgentInfoAgentType = 12
 )
 
 type (

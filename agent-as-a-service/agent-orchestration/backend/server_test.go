@@ -109,12 +109,12 @@ func Test_SRV(t *testing.T) {
 	// ts.JobExecuteInfraTwitterAppRequest(context.Background())
 	// ts.CreateAgentVideoByPostID(context.Background(), 34947)
 
-	ts.ScanEventsByChain(context.Background(), 56)
+	ts.ScanEventsByChain(context.Background(), 999)
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
 	// ts.CreateGenerateVideoByTweetID(daos.GetDBMainCtx(context.Background()), "1895369759690219863")
-	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 33139)
+	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 1338)
 }
 
 func Test_IPFS(t *testing.T) {

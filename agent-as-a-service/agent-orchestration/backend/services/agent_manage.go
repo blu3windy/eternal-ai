@@ -216,6 +216,7 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	if req.AgentType > 0 {
 		agent.AgentType = req.AgentType
 		if req.AgentType == models.AgentInfoAgentTypeModel ||
+			req.AgentType == models.AgentInfoAgentTypeModelOnline ||
 			req.AgentType == models.AgentInfoAgentTypeJs ||
 			req.AgentType == models.AgentInfoAgentTypePython ||
 			req.AgentType == models.AgentInfoAgentTypeCustomUi ||
