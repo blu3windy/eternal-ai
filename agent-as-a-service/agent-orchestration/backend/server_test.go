@@ -109,7 +109,7 @@ func Test_SRV(t *testing.T) {
 	// ts.JobExecuteInfraTwitterAppRequest(context.Background())
 	// ts.CreateAgentVideoByPostID(context.Background(), 34947)
 
-	ts.ScanEventsByChain(context.Background(), 1)
+	ts.ScanEventsByChain(context.Background(), 56)
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
