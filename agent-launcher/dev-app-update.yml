@@ -1,0 +1,4 @@
+provider: generic
+url: https://github.com/0x0603/electron-update-server/releases/download/0.0.5
+allowDowngrade: true
+forceDevUpdateConfig: true 

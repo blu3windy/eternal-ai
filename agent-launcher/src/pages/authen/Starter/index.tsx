@@ -119,6 +119,17 @@ const Starter = (props: IProps) => {
          showSlider={true}
       >
          {renderContent()}
+         {/* <Text
+            position="absolute"
+            bottom="0"
+            left="0"
+            right="0"
+            textAlign="center"
+            color="red"
+            fontSize="12px"
+         >
+            TESTTTTTT
+         </Text> */}
       </BackgroundWrapper>
    )
 };

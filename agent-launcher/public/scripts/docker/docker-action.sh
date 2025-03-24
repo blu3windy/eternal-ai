@@ -102,6 +102,7 @@ run_container_custom_prompt() {
     cd_docker_build_source_path
     docker build -t "$IMAGE_NAME" .;
     if [ -n "$PORT" ]; then
+    
     docker run -d ${PORT} --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
     else
         docker run -d --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"

@@ -7,6 +7,8 @@
     "dev": "vite",
     "postinstall": "electron-builder install-app-deps",
     "build": "tsc && vite build && electron-builder --mac --universal -- -p always",
+    "build:dev": "cross-env NODE_ENV=development tsc && vite build && electron-builder --mac --universal -- -p always",
+    "build:prod": "cross-env NODE_ENV=production tsc && vite build && electron-builder --mac --universal -- -p always",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
@@ -104,6 +106,7 @@
     "appId": "com.eternalai.agent-launcher",
     "productName": "Vibe",
     "asar": true,
+    "forceCodeSigning": false,
     "asarUnpack": [
       "node_modules/keytar/**",
       "public/**"
@@ -111,7 +114,7 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "https://electron-update-server-production.up.railway.app/updates/"
+        "url": "https://github.com/0x0603/electron-update-server/releases/latest/download"
       }
     ],
     "files": [
@@ -125,12 +128,15 @@
     },
     "mac": {
       "target": [
-        "dmg",
         "zip"
       ],
       "icon": "public/icons/app-logo.png",
-      "artifactName": "${productName}-Mac-${version}.${ext}",
-      "minimumSystemVersion": "13.0.1"
+      "artifactName": "${productName}-${version}-mac.${ext}",
+      "minimumSystemVersion": "13.0.1",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "extraResources": [
       {

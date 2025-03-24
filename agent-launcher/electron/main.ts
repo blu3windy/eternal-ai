@@ -1,88 +1,162 @@
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow, screen, dialog } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 import command from "./share/command-tool.ts";
+import axios from "axios";
 
-if (process.env.NODE_ENV === "development") {
-   autoUpdater.autoDownload = false;
-   autoUpdater.allowDowngrade = true;
-   autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
+// Disable code signing
+process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false";
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
+process.env.ELECTRON_SKIP_BINARY_DOWNLOAD = "true";
+
+// Configure auto updater
+autoUpdater.autoDownload = false;
+autoUpdater.logger = console;
+
+// GitHub repository information
+const GITHUB_OWNER = "0x0603";
+const GITHUB_REPO = "electron-update-server";
+
+// Function to get latest release from GitHub
+async function getLatestRelease() {
+   try {
+      const response = await axios.get(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`);
+      return response.data;
+   } catch (error) {
+      console.error("Failed to fetch latest release:", error);
+      throw error;
+   }
 }
 
-autoUpdater.setFeedURL({
-   provider: "generic",
-   url: "https://electron-update-server-production.up.railway.app/updates/",
+async function setupUpdateURL() {
+   try {
+      const latestRelease = await getLatestRelease();
+
+      // Get direct links to `latest-mac.yml`
+      const latestMacYml = latestRelease.assets.find((asset) =>
+         asset.name === "latest-mac.yml"
+      );
+
+      if (!latestMacYml) throw new Error("latest-mac.yml not found in release");
+
+      const updateUrl = latestMacYml.browser_download_url; // Direct URL to `latest-mac.yml`
+
+      console.log("Latest version:", latestRelease.tag_name);
+      console.log("Update URL:", updateUrl);
+
+      autoUpdater.setFeedURL({ url: updateUrl });
+      return updateUrl;
+   } catch (error) {
+      console.error("Failed to setup update URL:", error);
+      throw error;
+   }
+}
+
+// Initialize update URL and check for updates
+setupUpdateURL().then(updateUrl => {
+   // Force update check on startup
+   autoUpdater.checkForUpdates().catch((err) => {
+      console.error("Update check failed:", err);
+      dialog.showMessageBox({
+         type: "error",
+         title: "Update Error",
+         message: `Error: ${err.message || err}`,
+         detail: `Current version: ${app.getVersion()}\nUpdate URL: ${updateUrl}`
+      });
+   });
+}).catch(error => {
+   console.error("Failed to initialize update URL:", error);
+   dialog.showMessageBox({
+      type: "error",
+      title: "Update Error",
+      message: "Failed to initialize update URL",
+      detail: error.message
+   });
 });
 
-// autoUpdater.on("update-available", (info) => {
-//   dialog
-//     .showMessageBox({
-//       type: "info",
-//       title: "Update Available",
-//       message: `A new version (v${info.version}) is available. Download now?`,
-//       buttons: ["Update", "Later"],
-//     })
-//     .then(({ response }) => {
-//       if (response === 0) {
-//         // User clicked "Update"
-//         autoUpdater.downloadUpdate().catch((err) => {
-//           console.error("Download failed:", err);
-//           dialog.showMessageBox({
-//             type: "info",
-//             title: "Update Ready",
-//             message: `Download failed: ${JSON.stringify(err)}`,
-//           });
-//         });
-//       }
-//     });
-// });
+// Handle update events
+autoUpdater.on("error", (error) => {
+   console.error("Auto Updater Error:", error);
+   dialog.showMessageBox({
+      type: "error",
+      title: "Update Error",
+      message: `Error: ${error.message || error}`,
+      detail: `Current version: ${app.getVersion()}\nError details: ${error.stack || "No stack trace available"}\nConfig Path: ${autoUpdater.updateConfigPath}\nDevelopment Mode: ${process.env.NODE_ENV === "development"}`
+   });
+});
 
-// autoUpdater.on("update-not-available", () => {
-//   dialog.showMessageBox({
-//     message: "No update available.",
-//   });
-// });
+autoUpdater.on("checking-for-update", () => {
+   console.log("Checking for updates...");
+   dialog.showMessageBox({
+      type: "info",
+      title: "Checking Updates",
+      message: "Checking for updates...",
+      detail: `Current version: ${app.getVersion()}`
+   });
+});
 
-// autoUpdater.on("error", (err) => {
-//   console.error("Update error:", err);
-// });
+autoUpdater.on("update-available", (info) => {
+   console.log("Update available:", info);
+   dialog.showMessageBox({
+      type: "info",
+      title: "Update Available",
+      message: `Version ${info.version} is available. Would you like to download it?`,
+      detail: `Release Date: ${info.releaseDate}\nCurrent Version: ${app.getVersion()}\nNew Version: ${info.version}`,
+      buttons: ["Download", "Later"]
+   }).then((result) => {
+      if (result.response === 0) {
+         autoUpdater.downloadUpdate().catch((err) => {
+            dialog.showMessageBox({
+               type: "error",
+               title: "Download Error",
+               message: `Failed to start download: ${err.message || err}`
+            });
+         });
+      }
+   });
+});
 
-// 🔹 Event: When update is downloaded
-// autoUpdater.on("update-downloaded", (info) => {
-//   console.log(`Update downloaded: v${info.version}`);
-//   dialog
-//     .showMessageBox({
-//       type: "info",
-//       title: "Update Ready",
-//       message: `Version ${info.version} is downloaded. Restart to apply?`,
-//       buttons: ["Restart", "Later"],
-//     })
-//     .then(({ response }) => {
-//       if (response === 0) {
-//         // User clicked "Restart"
-//         // Delay to ensure update applies correctly
-//         setTimeout(() => {
-//           autoUpdater.quitAndInstall();
-//         }, 3000);
-//       }
-//     });
-// });
+autoUpdater.on("update-not-available", (info) => {
+   console.log("No updates available");
+   dialog.showMessageBox({
+      type: "info",
+      title: "No Updates",
+      message: "You are running the latest version.",
+      detail: `Current Version: ${app.getVersion()}\nLatest Version: ${info ? info.version : 'unknown'}`
+   });
+});
 
-// // 🔹 Track download progress
-// autoUpdater.on("download-progress", (progress) => {
-// //   let percentage = Math.round(progress.percent);
-//   //   dialog.showMessageBox({
-//   //     type: "info",
-//   //     title: "Processing",
-//   //     message: `Downloading... ${percentage}% (${(
-//   //       progress.transferred /
-//   //       1024 /
-//   //       1024
-//   //     ).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB)`,
-//   //   });
-// });
+autoUpdater.on("download-progress", (progress) => {
+   const percentage = Math.round(progress.percent);
+   console.log(`Download progress: ${percentage}%`);
+   
+   // Show progress every 20%
+   if (percentage % 20 === 0) {
+      dialog.showMessageBox({
+         type: "info",
+         title: "Downloading Update",
+         message: `Downloading: ${percentage}%`,
+         detail: `Speed: ${(progress.bytesPerSecond / 1024 / 1024).toFixed(2)} MB/s\nDownloaded: ${(progress.transferred / 1024 / 1024).toFixed(2)} MB\nTotal: ${(progress.total / 1024 / 1024).toFixed(2)} MB`
+      });
+   }
+});
+
+autoUpdater.on("update-downloaded", (info) => {
+   console.log("update-downloaded:", info);
+   dialog.showMessageBox({
+      type: "info",
+      title: "Update Ready",
+      message: `Version ${info.version} has been downloaded. Would you like to install it now?`,
+      detail: `Release Date: ${info.releaseDate}\nCurrent Version: ${app.getVersion()}\nNew Version: ${info.version}`,
+      buttons: ["Install and Restart", "Later"]
+   }).then((result) => {
+      if (result.response === 0) {
+         autoUpdater.quitAndInstall(false);
+      }
+   });
+});
 
 // const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -114,11 +188,24 @@ runIpcMain();
 function createWindow() {
    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
-   setTimeout(() => {
+   // Check for updates immediately
+   console.log("Starting update check...");
+   console.log("Current version:", app.getVersion());
+   
+   // Force update check in development
+   if (process.env.NODE_ENV === "development") {
+      console.log("Development mode: Forcing update check");
       autoUpdater.checkForUpdates().catch((err) => {
          console.error("Update check failed:", err);
+         dialog.showMessageBox({
+            type: "error",
+            title: "Update Error",
+            message: `Error: ${err.message || err}`,
+            detail: `Current version: ${app.getVersion()}`
+         });
       });
-   }, 5000);
+   }
+
    win = new BrowserWindow({
       icon: path.join(process.env.VITE_PUBLIC as any, "app-logo.png"),
       // icon: path.join(__dirname, "../public/icon.png"), // Use icon from public
@@ -140,26 +227,6 @@ function createWindow() {
    win.once("ready-to-show", () => {
       win?.show();
       win?.focus(); // Ensure the app is focused before running AppleScript
-   });
-
-   // Test active push message to Renderer-process.
-   win.webContents.on("did-finish-load", () => {
-      win?.webContents.send("main-process-message", new Date().toLocaleString());
-   });
-
-   autoUpdater.on("update-available", (info) => {
-      console.log("Update available:", info);
-      win?.webContents.send("update-available", info);
-   });
-
-   autoUpdater.on("download-progress", (info) => {
-      console.log("Update available:", info);
-      win?.webContents.send("download-progress", info);
-   });
-
-   autoUpdater.on("update-downloaded", (info) => {
-      console.log("update-downloaded:", info);
-      win?.webContents.send("update-downloaded", info);
    });
 
    if (VITE_DEV_SERVER_URL) {
