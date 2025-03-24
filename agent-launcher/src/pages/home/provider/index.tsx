@@ -236,7 +236,7 @@ const AgentProvider: React.FC<
             const agentsHasWallet = JSON.parse(walletData || '[]'); // Default to an empty array if null
 
             if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id)) {
-               createAgentWallet(selectedAgent);
+               createAgentWallet();
             } else {
                setAgentWallet(undefined);
             }
@@ -346,24 +346,24 @@ const AgentProvider: React.FC<
       }
    }
 
-   const createAgentWallet = async (agent: IAgentToken) => {
+   const createAgentWallet = useCallback(async () => {
       try {
-         if (!agent) return;
+         if (!selectedAgent) return;
 
-         const prvKey = await genAgentSecretKey({ chainId: agent?.network_id.toString(), agentName: agent?.agent_name });
+         const prvKey = await genAgentSecretKey({ chainId: selectedAgent?.network_id.toString(), agentName: selectedAgent?.agent_name });
          setAgentWallet(new Wallet(prvKey));
 
          // Await the result of the asynchronous getItem call
          const walletData = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
          const agentsHasWallet = JSON.parse(walletData || '[]'); // Default to an empty array if null
 
-         await localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, agent?.id]) : [agent?.id]));
+         await localStorageService.setItem(STORAGE_KEYS.AGENTS_HAS_WALLET, JSON.stringify(agentsHasWallet ? uniq([...agentsHasWallet, selectedAgent?.id]) : [selectedAgent?.id]));
       } catch (err) {
          console.log("Create agent wallet error:", err);
       } finally {
 
       }
-   }
+   }, [selectedAgent, genAgentSecretKey, setAgentWallet]);
 
    const getTradePlatform = (_pumpToken: IAgentToken | undefined) => {
       if (SUPPORT_TRADE_CHAIN.includes((_pumpToken?.meme?.network_id || "") as any)) {
@@ -934,6 +934,7 @@ const AgentProvider: React.FC<
          isTrade,
          setIsTrade,
          agentWallet,
+         setAgentWallet,
          isRunning,
          tradePlatform,
          coinPrices,
@@ -970,6 +971,7 @@ const AgentProvider: React.FC<
       isTrade,
       setIsTrade,
       agentWallet,
+      setAgentWallet,
       isRunning,
       tradePlatform,
       coinPrices,
