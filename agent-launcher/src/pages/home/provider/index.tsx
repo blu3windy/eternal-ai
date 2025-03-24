@@ -55,7 +55,6 @@ const initialValue: IAgentContext = {
    isCustomUI: false,
    customUIPort: '',
    agentStates: {},
-   updateAgentState: () => {},
    liveViewUrl: '',
 };
 
@@ -955,7 +954,6 @@ const AgentProvider: React.FC<
          isCustomUI: selectedAgent?.agent_type === AgentType.CustomUI,
          customUIPort,
          agentStates,
-         updateAgentState,
          liveViewUrl,
       };
    }, [
@@ -992,7 +990,6 @@ const AgentProvider: React.FC<
       installedSocialAgents,
       customUIPort,
       agentStates,
-      updateAgentState,
       liveViewUrl,
    ]);
 

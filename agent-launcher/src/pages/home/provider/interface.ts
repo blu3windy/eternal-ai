@@ -51,14 +51,5 @@ export interface IAgentContext {
     isStopping: boolean;
     isInstalled: boolean;
   }>;
-  updateAgentState: (agentId: number, state: {
-    data?: IAgentToken;
-    isRunning?: boolean;
-    isInstalling?: boolean;
-    isUnInstalling?: boolean;
-    isStarting?: boolean;
-    isStopping?: boolean;
-    isInstalled?: boolean;
-  }) => void;
   liveViewUrl?: string;
 }
