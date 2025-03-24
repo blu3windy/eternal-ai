@@ -141,6 +141,25 @@ const SelectModel = ({
    showDescription = true,
 }: Props) => {
    const { installedModelAgents, currentModel, startAgent, unInstallAgent } = useContext(AgentContext);
+   const {
+      selectedAgent,
+      isCanChat,
+      agentWallet,
+      isBackupedPrvKey,
+      requireInstall,
+      isRunning,
+   } = useContext(AgentContext);
+
+   const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
+
+   const showSetup = useMemo(() => {
+      return requireInstall && !isRunning;
+   }, [requireInstall, isRunning]);
+
+   const color = useMemo(() => {
+      return showSetup || (!isCanChat && !showBackupPrvKey) ? 'white' : 'black';
+   }, [isCanChat, showBackupPrvKey, showSetup]);
+
    const [models, setModels] = useState<any>();
 
    const { isOpen, onOpen, onClose } = useDisclosure();
@@ -178,16 +197,16 @@ const SelectModel = ({
                      cursor={isDisabled ? 'not-allowed' : 'pointer'}
                   >
                      <Box flex={1}>
-                        <Text className={s.title}>
+                        <Text className={s.title} color={color}>
                            {currentModel?.agent_name}
                         </Text>
                         {showDescription && (
-                           <Text className={s.amount}>
+                           <Text className={s.amount} color={color}>
                               {currentModel?.personality}
                            </Text>
                         )}
                      </Box>
-                     <Image src="icons/ic-angle-down.svg" />
+                     <Image src={`icons/ic-angle-down${color === 'white' ? '-white' : ''}.svg`} />
                   </Flex>
                </PopoverTrigger>
                <PopoverContent
