@@ -104,6 +104,10 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	if req.RequiredInfo != nil {
 		agent.RequiredInfo = *req.RequiredInfo
 	}
+	if req.InferFee != nil {
+		inferFee := numeric.NewBigFloatFromString(*req.InferFee)
+		agent.InferFee = inferFee
+	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
 
@@ -490,6 +494,10 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				}
 				if req.RequiredInfo != nil {
 					agent.RequiredInfo = *req.RequiredInfo
+				}
+				if req.InferFee != nil {
+					inferFee := numeric.NewBigFloatFromString(*req.InferFee)
+					agent.InferFee = inferFee
 				}
 				if req.MinFeeToUse.Cmp(big.NewFloat(0)) > 0 {
 					agent.MinFeeToUse = req.MinFeeToUse

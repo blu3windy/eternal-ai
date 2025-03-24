@@ -77,6 +77,7 @@ type AssistantsReq struct {
 	IsOnchain      *bool   `json:"is_onchain"`
 	IsCustomUi     *bool   `json:"is_custom_ui"`
 	RequiredInfo   *string `json:"required_info"`
+	InferFee       *string `json:"infer_fee"`
 }
 
 func (m *AssistantsReq) GetAssistantCharacter(character interface{}) string {
