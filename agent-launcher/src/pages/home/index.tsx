@@ -34,20 +34,18 @@ const HandleHome = () => {
          <Box flex={1} maxW={"460px"}>
             <AgentsList />
          </Box>
-         <ChatAgentProvider>
-            <Box
-               className={cx(
-                  s.detailContainer,
-                  showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : "",
-               )}
-               flex={2}
-            >
-               <AgentTopInfo />
-               <Flex w={"clamp(300px, 60%, 800px)"} mx={"auto"}>
-                  <ChatAgent />
-               </Flex>
-            </Box>
-         </ChatAgentProvider>
+         <Box
+            className={cx(
+               s.detailContainer,
+               showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : "",
+            )}
+            flex={2}
+         >
+            <AgentTopInfo />
+            <Flex w={"clamp(300px, 60%, 800px)"} mx={"auto"}>
+               <ChatAgent />
+            </Flex>
+         </Box>
       </Flex>
    );
 };

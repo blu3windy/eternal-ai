@@ -29,7 +29,9 @@ function ChatAgent() {
       <Box className={s.container}>
          {/* <AgentTopInfo /> */}
          {isCanChat ? (
-            <ChatBox />
+            <ChatAgentProvider>
+               <ChatBox />
+            </ChatAgentProvider>
          ) : (
             <>
                {
