@@ -83,6 +83,8 @@ export interface IAgentToken {
   ipfsHash?: string;
   sizeGb?: number;
   docker_port: string;
+  infer_fee: string;
+  required_info: string;
 }
 
 export interface Meme {

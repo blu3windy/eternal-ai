@@ -115,9 +115,6 @@ run_container_custom_ui() {
     cd_docker_build_source_path
     docker build -t "$IMAGE_NAME" .;
     docker run -d -p 0:8080 -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --name "$CONTAINER_NAME" "$IMAGE_NAME"
-    # Get the assigned port
-    ASSIGNED_PORT=$(docker port "$CONTAINER_NAME" 8080/tcp | cut -d ':' -f2)
-    log_message "Container $CONTAINER_NAME is running on port: $ASSIGNED_PORT"
 }
 
 run_container() {

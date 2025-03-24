@@ -73,7 +73,7 @@ const ipcMainModel = () => {
       const isDownloaded = await _isDownloaded(hash);
 
       if (isDownloaded) {
-         await command.killProcessUsingPort(8080);
+         // await command.killProcessUsingPort(8080);
          const _runningHash = await _getRunningHash();
          if (!_runningHash) {
             await _onRunModel(hash);
@@ -82,7 +82,7 @@ const ipcMainModel = () => {
       }
 
       await dialogCheckDist(hash);
-      await command.killProcessUsingPort(8080);
+      // await command.killProcessUsingPort(8080);
       await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_STARTER}`);
 
       let count = 0;
