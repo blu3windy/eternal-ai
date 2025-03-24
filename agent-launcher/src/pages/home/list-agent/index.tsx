@@ -86,6 +86,7 @@ export enum AgentType {
   Infra = 8,
   CustomUI = 10,
   CustomPrompt = 11,
+  ModelOnline = 12,
 }
 
 export const AgentTypeName = {
@@ -153,7 +154,7 @@ const AgentsList = () => {
          if ([CategoryOption.Character].includes(refParams.current.category)) {
             params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
          } else if ([CategoryOption.Model].includes(refParams.current.category)) {
-            params.agent_types = [AgentType.Model].join(',');
+            params.agent_types = [AgentType.Model, AgentType.ModelOnline].join(',');
          } else if ([CategoryOption.Utility].includes(refParams.current.category)) {
             params.agent_types = [AgentType.CustomUI, AgentType.CustomPrompt].join(',');
          } else if ([CategoryOption.Infra].includes(refParams.current.category)) {
@@ -459,7 +460,7 @@ const AgentsList = () => {
    };
 
    return (
-      <Box className={s.container}>
+      <Box className={s.container} position={'relative'}>
          <Flex
             direction={"column"}
             w="100%"
