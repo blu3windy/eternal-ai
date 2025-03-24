@@ -74,6 +74,7 @@ const AgentTopInfo = () => {
    }, [isCanChat, showBackupPrvKey, showSetup]);
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
+   const [isClickUpdateCode, setIsClickUpdate] = useState(false);
 
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
@@ -82,11 +83,11 @@ const AgentTopInfo = () => {
    }, [selectedAgent])
 
    useEffect(() => {
-      if (selectedAgent) {
+      if (selectedAgent || !isRunning) {
          checkVersionCode();
          checkIsLiked();
       }
-   }, [selectedAgent])
+   }, [selectedAgent, isRunning])
 
    const checkVersionCode = async () => {
       setHaveNewVersionCode(false);
@@ -118,8 +119,10 @@ const AgentTopInfo = () => {
    }
 
    const handleUpdateCode = async () => {
+      setIsClickUpdate(true);
       await stopAgent(selectedAgent);
       await startAgent(selectedAgent, true);
+      setIsClickUpdate(false);
    }
 
    const handleExportPrvKey = () => {
@@ -205,7 +208,7 @@ const AgentTopInfo = () => {
                                  <Button
                                     className={s.btnStop}
                                     onClick={handleStopAgent}
-                                    isLoading={isStopping}
+                                    isLoading={!isClickUpdateCode && isStopping}
                                     isDisabled={isStopping}
                                     loadingText={"Stopping..."}
                                  >
@@ -225,7 +228,7 @@ const AgentTopInfo = () => {
                                  <Button
                                     className={s.btnUpdateCode}
                                     onClick={handleUpdateCode}
-                                    isLoading={isStopping || isStarting}
+                                    isLoading={isClickUpdateCode && (isStopping || isStarting)}
                                     isDisabled={isStopping || isStarting}
                                     loadingText={isStarting ? "Starting..." : "Updating..."}
                                  >

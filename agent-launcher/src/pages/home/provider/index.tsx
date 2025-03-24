@@ -535,6 +535,13 @@ const AgentProvider: React.FC<
 
             await handleRunModelAgent(ipfsHash);
             setCurrentModel(agent);
+         } else if (agent.agent_type === AgentType.ModelOnline) {
+            await handleInstallModelAgentRequirement();
+
+            const httpLink = await getModelAgentHash(agent);
+            console.log('startAgent ====httpLink', httpLink);
+
+            
          } else {
 
          }
