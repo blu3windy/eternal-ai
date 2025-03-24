@@ -151,17 +151,19 @@ const AgentsList = () => {
             chain: '',
          };
 
-         if ([CategoryOption.Character].includes(refParams.current.category)) {
-            params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
-         } else if ([CategoryOption.Model].includes(refParams.current.category)) {
-            params.agent_types = [AgentType.Model, AgentType.ModelOnline].join(',');
-         } else if ([CategoryOption.Utility].includes(refParams.current.category)) {
-            params.agent_types = [AgentType.CustomUI, AgentType.CustomPrompt].join(',');
-         } else if ([CategoryOption.Infra].includes(refParams.current.category)) {
-            params.agent_types = [AgentType.Infra].join(',');
-         } else {
-            params.agent_type = AgentType.All;
-         }
+         // if ([CategoryOption.Character].includes(refParams.current.category)) {
+         //    params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
+         // } else if ([CategoryOption.Model].includes(refParams.current.category)) {
+         //    params.agent_types = [AgentType.Model, AgentType.ModelOnline].join(',');
+         // } else if ([CategoryOption.Utility].includes(refParams.current.category)) {
+         //    params.agent_types = [AgentType.CustomUI, AgentType.CustomPrompt].join(',');
+         // } else if ([CategoryOption.Infra].includes(refParams.current.category)) {
+         //    params.agent_types = [AgentType.Infra].join(',');
+         // } else {
+         //    params.agent_type = AgentType.All;
+         // }
+
+         params.agent_types = [AgentType.Model,AgentType.CustomUI, AgentType.CustomPrompt].join(',');
 
          if (FilterOption.Installed === refParams.current.filter) {
             params.installed = true;
@@ -473,15 +475,14 @@ const AgentsList = () => {
             >
                {renderSearch()}
             </Flex>
-            <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
-               {/*{renderFilterMenu()}*/}
+            {/* <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
                {renderFilterOptions()}
             </Flex>
             <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
                {renderCategoryMenu()}
                <Divider orientation={'vertical'} borderColor={'#000'} opacity={0.2} h={"20px"} m={'auto 0'}/>
                {renderSortMenu()}
-            </Flex>
+            </Flex> */}
          </Flex>
          <Box h={'8px'} />
 
