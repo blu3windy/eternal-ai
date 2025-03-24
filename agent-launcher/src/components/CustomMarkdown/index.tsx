@@ -48,7 +48,6 @@ interface WebviewModalProps {
 }
 
 const WebviewModal: React.FC<WebviewModalProps> = ({ url, isOpen, onClose }) => {
-   console.log('WebviewModal url', url);
    return (
       <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
          <ModalOverlay />
