@@ -218,6 +218,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          id: threadId,
          taskItem: task
       }));
+
+      if (task.status === 'done' || task.status === 'failed') {
+         setTimeout(() => {
+            dispatch(removeTaskItem({
+               id: threadId,
+               taskItem: task
+            }));
+         }, 5000);
    }
 
    const sendMessageToServer = async (
