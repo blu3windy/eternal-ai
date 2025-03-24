@@ -9,71 +9,71 @@ import { Box, Button, Flex, Text } from "@chakra-ui/react";
 import WebView from "@components/WebView";
 
 const ChatBox = () => {
-  const { loading, onRetryErrorMessage } = useChatAgentProvider();
+   const { loading, onRetryErrorMessage } = useChatAgentProvider();
 
-  const { isRunning, requireInstall, selectedAgent, isStarting, startAgent, agentWallet, isCustomUI, customUIPort } = useContext(AgentContext);
+   const { isRunning, requireInstall, selectedAgent, isStarting, startAgent, agentWallet, isCustomUI, customUIPort } = useContext(AgentContext);
 
-  const handleStartAgent = () => {
-    startAgent(selectedAgent);
-  };
+   const handleStartAgent = () => {
+      startAgent(selectedAgent);
+   };
 
-  const containerMaxHeight = useMemo(() => {
-    const element = document.getElementById("detailContainer");
-    if (element) {
-      const weight = requireInstall ? (isRunning ? 0.91 : 0.96) : 0.96;
-      const base = Math.floor(element.clientHeight * weight);
-      return `calc(${base}px - env(safe-area-inset-bottom) - env(safe-area-inset-top))`;
-    }
-    return `calc(70vh - env(safe-area-inset-bottom) - env(safe-area-inset-top))`;
-  }, [requireInstall, isRunning]);
-
-  const innerMaxHeight = useMemo(() => {
-    return `calc(100vh - 72px - 120px)`;
-  }, [requireInstall, isRunning]);
-
-  return (
-    <motion.div
-      className={s.container}
-      style={
-        {
-          // maxHeight: containerMaxHeight,
-        }
+   const containerMaxHeight = useMemo(() => {
+      const element = document.getElementById("detailContainer");
+      if (element) {
+         const weight = requireInstall ? (isRunning ? 0.91 : 0.96) : 0.96;
+         const base = Math.floor(element.clientHeight * weight);
+         return `calc(${base}px - env(safe-area-inset-bottom) - env(safe-area-inset-top))`;
       }
-    >
-      <div
-        // className={s.chatList}
-        // style={
-        //   {
-        //     // maxHeight: innerMaxHeight,
-        //     // minHeight: innerMaxHeight,
-        //   }
-        // }
+      return `calc(70vh - env(safe-area-inset-bottom) - env(safe-area-inset-top))`;
+   }, [requireInstall, isRunning]);
+
+   const innerMaxHeight = useMemo(() => {
+      return `calc(100vh - 72px - 120px)`;
+   }, [requireInstall, isRunning]);
+
+   return (
+      <motion.div
+         className={s.container}
+         style={
+            {
+               // maxHeight: containerMaxHeight,
+            }
+         }
       >
-        {
-          requireInstall && !isRunning ? (
-            <Flex
-              direction={"column"}
-              justifyContent={"center"}
-              alignItems={"center"}
-              gap={"16px"}
-              className={s.chatList}
-              style={{
-                height: innerMaxHeight,
-                overflow: "auto",
-                // minHeight: innerMaxHeight,
-              }}
-            >
-              <Text fontSize={"28px"} fontWeight={500}>You're all set!</Text>
-              <Text fontSize={"18px"} fontWeight={400} opacity={0.7}>Your agent is installed{agentWallet ? ', and your wallet is ready.' : '.' }</Text>
-              <Button
-                className={s.btnStart}
-                onClick={handleStartAgent}
-                isLoading={isStarting}
-                isDisabled={isStarting}
-                loadingText={"Starting..."}
-                mt={"24px"}
-              >
-                {/*                <svg
+         <div
+            // className={s.chatList}
+            // style={
+            //   {
+            //     // maxHeight: innerMaxHeight,
+            //     // minHeight: innerMaxHeight,
+            //   }
+            // }
+         >
+            {
+               requireInstall && !isRunning ? (
+                  <Flex
+                     direction={"column"}
+                     justifyContent={"center"}
+                     alignItems={"center"}
+                     gap={"16px"}
+                     className={s.chatList}
+                     style={{
+                        height: innerMaxHeight,
+                        overflow: "auto",
+                        // minHeight: innerMaxHeight,
+                     }}
+                  >
+                     <Text fontSize={"28px"} fontWeight={500} color={"#FFF"}>You're all set!</Text>
+                     <Text fontSize={"18px"} fontWeight={400} opacity={0.7} color={"#FFF"}>Your agent is installed{agentWallet ? ', and your wallet is ready.' : '.' }</Text>
+                     <Button
+                        className={s.btnStart}
+                        onClick={handleStartAgent}
+                        isLoading={isStarting}
+                        isDisabled={isStarting}
+                        loadingText={"Starting..."}
+                        mt={"24px"}
+                     >
+                        {/*                <svg
                   width="20"
                   height="20"
                   viewBox="0 0 20 20"
@@ -86,44 +86,44 @@ const ChatBox = () => {
                   />
                 </svg>*/}
                 Start running {selectedAgent?.agent_name}
-              </Button>
-            </Flex>
-          ) : (
-            <>
-            {
-               isCustomUI ? (
-                  <Box width="100%">
-                     <WebView 
-                        url={`http://localhost:${customUIPort}`}
-                        height="calc(100vh - 100px)"
-                        width="100%"
-                        />
-                  </Box>
+                     </Button>
+                  </Flex>
                ) : (
                   <>
-                    <div
-                      className={s.chatList}
-                      style={{
-                        height: innerMaxHeight,
-                        overflow: "auto",
-                        // minHeight: innerMaxHeight,
-                      }}
-                    >
-                      <ChatList
-                        onRetryErrorMessage={onRetryErrorMessage}
-                        isSending={loading}
-                      />
-                    </div>
-                    <InputText isSending={loading} />
+                     {
+                        isCustomUI ? (
+                           <Box width="100%">
+                              <WebView 
+                                 url={`http://localhost:${customUIPort}`}
+                                 height="calc(100vh - 100px)"
+                                 width="100%"
+                              />
+                           </Box>
+                        ) : (
+                           <>
+                              <div
+                                 className={s.chatList}
+                                 style={{
+                                    height: innerMaxHeight,
+                                    overflow: "auto",
+                                    // minHeight: innerMaxHeight,
+                                 }}
+                              >
+                                 <ChatList
+                                    onRetryErrorMessage={onRetryErrorMessage}
+                                    isSending={loading}
+                                 />
+                              </div>
+                              <InputText isSending={loading} />
+                           </>
+                        )
+                     }
                   </>
                )
             }
-            </>
-          )
-        }
-      </div>
-    </motion.div>
-  );
+         </div>
+      </motion.div>
+   );
 };
 
 export default ChatBox;

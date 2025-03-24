@@ -65,9 +65,13 @@ const AgentTopInfo = () => {
 
    const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
+   const showSetup = useMemo(() => {
+      return requireInstall && !isRunning;
+   }, [requireInstall, isRunning]);
+
    const color = useMemo(() => {
-      return isCanChat || showBackupPrvKey ? 'black' : 'white';
-   }, [isCanChat, showBackupPrvKey]);
+      return showSetup || (!isCanChat && !showBackupPrvKey) ? 'white' : 'black';
+   }, [isCanChat, showBackupPrvKey, showSetup]);
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
 
@@ -145,7 +149,7 @@ const AgentTopInfo = () => {
             </Flex>
             <Flex
                gap={"6px"} justifyContent={"center"} alignItems={"center"}
-               className={cx(s.contentContainer, isCanChat || showBackupPrvKey ? '' : s.isSetup)}
+               className={cx(s.contentContainer, showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : "")}
                w="clamp(300px, 60%, 800px)" mx={"auto"}
             >
                <Flex gap={"6px"} alignItems={"center"} className={s.content}>

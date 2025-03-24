@@ -14,7 +14,7 @@ type Props = {
 };
 
 const HandleHome = () => {
-   const { isCanChat, isBackupedPrvKey, selectedAgent, agentWallet } =
+   const { isCanChat, isBackupedPrvKey, selectedAgent, agentWallet, requireInstall, isRunning } =
       useContext(AgentContext);
 
    const showBackupPrvKey =
@@ -24,6 +24,10 @@ const HandleHome = () => {
    //    return ![AgentType.Model].includes(selectedAgent?.agent_type);
    // }, [selectedAgent]);
 
+   const showSetup = useMemo(() => {
+      return requireInstall && !isRunning;
+   }, [requireInstall, isRunning]);
+
    return (
       <Flex height={"100%"}>
          <Box flex={1} maxW={"460px"}>
@@ -32,7 +36,7 @@ const HandleHome = () => {
          <Box
             className={cx(
                s.detailContainer,
-               isCanChat || showBackupPrvKey ? "" : s.isSetup
+               showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : "",
             )}
             flex={2}
          >
