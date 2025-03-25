@@ -1221,11 +1221,14 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		logger.Info("stream_retrieve_knowledge", "analyze result", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("analyzed Result", analysedResult))
 		analysedResultChanel <- analysedResult
 	}()
-
-	toolCallData, err := s.GetResultFromToolCall(*retrieveQuery)
-	if err != nil {
-		errChan <- err
-		return
+	toolCallData := ""
+	if knowledgeBases[0].ID != 211 { //eth denver agent
+		var err error
+		toolCallData, err = s.GetResultFromToolCall(*retrieveQuery)
+		if err != nil {
+			errChan <- err
+			return
+		}
 	}
 	logger.Info("stream_retrieve_knowledge", "tool call data", zap.Any("id_request", idRequest), zap.Any("query", retrieveQuery), zap.Any("tool call data", toolCallData))
 	// wait finish get analysedResult
