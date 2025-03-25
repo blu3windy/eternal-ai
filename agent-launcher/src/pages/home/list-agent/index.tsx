@@ -1,6 +1,7 @@
 import {
    Box,
    Button,
+   Center,
    Divider,
    Flex,
    Grid,
@@ -9,22 +10,26 @@ import {
    Popover,
    PopoverContent,
    PopoverTrigger,
+   SimpleGrid,
    Text,
    useDisclosure
 } from '@chakra-ui/react';
-import s from './styles.module.scss';
-import InfiniteScroll from 'react-infinite-scroll-component';
-import AgentItem from './AgentItem';
-import AppLoading from "../../../components/AppLoading";
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import throttle from 'lodash.throttle';
-import { IAgentToken } from "../../../services/api/agents-token/interface.ts";
-import debounce from 'lodash.debounce';
-import { AgentContext } from "../provider";
-import uniqBy from 'lodash.uniqby';
-import CAgentTokenAPI from "../../../services/api/agents-token";
 import cx from 'clsx';
+import debounce from 'lodash.debounce';
+import throttle from 'lodash.throttle';
+import uniqBy from 'lodash.uniqby';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import AppLoading from "../../../components/AppLoading";
+import CAgentTokenAPI from "../../../services/api/agents-token";
+import { IAgentToken } from "../../../services/api/agents-token/interface.ts";
+import { AgentContext } from "../provider";
+import AgentItem from './AgentItem';
 import AgentNotification from './AgentNotification/index.tsx';
+import BaseModal from '@components/BaseModal/index.tsx';
+import AddTestAgent from './AddTestAgent/index.tsx';
+import { compareString } from '@utils/string.ts';
+import s from './styles.module.scss';
 
 export enum SortOption {
   MarketCap = 'meme_market_cap',
@@ -100,33 +105,118 @@ export const AgentTypeName = {
    [AgentType.Infra]: 'Infra',
 }
 
+const CATEGORIES = [
+   // {
+   //    id: CategoryOption.Character,
+   //    name: 'Character',
+   //    description: 'Social and chat agents',
+   //    gradient: 'linear-gradient(270deg, #F38F1A 0%, #8D530F 100%)',
+   //    icon: 'icons/ic-category-character.svg'
+   // },
+   {
+      id: CategoryOption.Model,
+      name: 'Model',
+      description: 'AI model agents',
+      gradient: 'linear-gradient(270deg, #EF3B2F 0%, #89221B 100%)',
+      icon: 'icons/ic-category-model.svg'
+   },
+   {
+      id: CategoryOption.Utility,
+      name: 'Utility',
+      description: 'Tool and utility agents',
+      gradient: 'linear-gradient(270deg, #A94FD4 0%, #58296E 100%)',
+      icon: 'icons/ic-category-utility.svg'
+   },
+   {
+      id: CategoryOption.Infra,
+      name: 'Infra',
+      description: 'Infrastructure agents',
+      gradient: 'linear-gradient(270deg, #3FBF5A 0%, #1D592A 100%)',
+      icon: 'icons/ic-category-infra.svg'
+   }
+];
+
 const AgentsList = () => {
    const refInput = useRef<HTMLInputElement | null>(null);
+
+   const {
+      isOpen,
+      onOpen,
+      onClose
+   } = useDisclosure();
 
    const [sort, setSort] = useState<SortOption>(SortOption.CreatedAt);
    const [filter, setFilter] = useState<FilterOption>(FilterOption.All);
    const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
    const [loaded, setLoaded] = useState(false);
    const refLoading = useRef(false);
+   const [showCategoryList, setShowCategoryList] = useState(true);
 
    const [agents, setAgents] = useState<IAgentToken[]>([]);
+   const [latestAgent, setLatestAgent] = useState<IAgentToken | null>(null);
+   const refLatestInterval = useRef<any>(null);
 
-   const { setSelectedAgent, selectedAgent } = useContext(AgentContext);
+   const { setSelectedAgent, selectedAgent, isSearchMode, setIsSearchMode } = useContext(AgentContext);
 
    const refParams = useRef({
       page: 1,
-      limit: 30,
+      limit: 50,
       sort,
       category,
       filter,
       // order: OrderOption.Desc,
       search: '',
    });
+   const refAddAgentTestCA = useRef('')
 
    const { isOpen: isOpenFilter, onClose: onCloseFilter, onToggle: onToggleFilter } = useDisclosure();
    const { isOpen: isOpenSort, onClose: onCloseSort, onToggle: onToggleSort } = useDisclosure();
 
    const cPumpAPI = new CAgentTokenAPI();
+
+   useEffect(() => {
+      getLatestAgent();
+      refLatestInterval.current = setInterval(() => {
+         getLatestAgent();
+      }, 30000);
+
+      return () => {
+         if (refLatestInterval.current) {
+            clearInterval(refLatestInterval.current);
+         }
+      };
+   }, []);
+
+   const getLatestAgent = async () => {
+      try {
+         const params: any = {
+            page: 1,
+            limit: 1,
+            sort_col: SortOption.CreatedAt,
+            sort_type: 'desc',
+            chain: '',
+            agent_types: [
+               AgentType.Model,
+               AgentType.ModelOnline,
+               AgentType.UtilityJS,
+               AgentType.UtilityPython,
+               AgentType.CustomUI,
+               AgentType.CustomPrompt,
+               AgentType.Infra
+            ].join(','),
+         };
+
+         const { agents } = await cPumpAPI.getAgentTokenList(params);
+         if (agents && agents.length > 0) {
+            const agent = agents[0];
+            if (!latestAgent || agent.id !== latestAgent.id) {
+               setLatestAgent(agent);
+            }
+         }
+      } catch (error) {
+         console.error('Error fetching latest agent:', error);
+      }
+   };
 
    const getTokens = async (isNew: boolean) => {
       if (refLoading.current) return;
@@ -147,23 +237,20 @@ const AgentsList = () => {
             limit: refParams.current.limit,
             sort_col: refParams.current.sort,
             search: refParams.current.search,
-            // filter_col: refParams.current.filter,
             chain: '',
          };
 
-         // if ([CategoryOption.Character].includes(refParams.current.category)) {
-         //    params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
-         // } else if ([CategoryOption.Model].includes(refParams.current.category)) {
-         //    params.agent_types = [AgentType.Model, AgentType.ModelOnline].join(',');
-         // } else if ([CategoryOption.Utility].includes(refParams.current.category)) {
-         //    params.agent_types = [AgentType.CustomUI, AgentType.CustomPrompt].join(',');
-         // } else if ([CategoryOption.Infra].includes(refParams.current.category)) {
-         //    params.agent_types = [AgentType.Infra].join(',');
-         // } else {
-         //    params.agent_type = AgentType.All;
-         // }
-
-         params.agent_types = [AgentType.Model,AgentType.CustomUI, AgentType.CustomPrompt].join(',');
+         if (refParams.current.category === CategoryOption.Character) {
+            params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
+         } else if (refParams.current.category === CategoryOption.Model) {
+            params.agent_types = [AgentType.Model, AgentType.ModelOnline].join(',');
+         } else if (refParams.current.category === CategoryOption.Utility) {
+            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].join(',');
+         } else if (refParams.current.category === CategoryOption.Infra) {
+            params.agent_types = [AgentType.Infra].join(',');
+         } else {
+            params.agent_types = [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(','); 
+         }
 
          if (FilterOption.Installed === refParams.current.filter) {
             params.installed = true;
@@ -173,9 +260,14 @@ const AgentsList = () => {
 
          if (isNew) {
             setAgents(newTokens);
-
-            if (!selectedAgent) {
-               setSelectedAgent(newTokens[0]);
+            if ((!selectedAgent && newTokens.length > 0) || refAddAgentTestCA.current) {
+               const testAgent = newTokens.find((token) => compareString(refAddAgentTestCA.current, token.agent_contract_address));
+               if (testAgent) {
+                  setSelectedAgent(testAgent);
+                  refAddAgentTestCA.current = '';
+               } else {
+                  setSelectedAgent(newTokens[0]);
+               }
             }
          } else {
             setAgents((prevTokens) =>
@@ -183,6 +275,7 @@ const AgentsList = () => {
             );
          }
       } catch (error) {
+         console.error('Error fetching tokens:', error);
       } finally {
          refLoading.current = false;
          setLoaded(true);
@@ -197,12 +290,84 @@ const AgentsList = () => {
          ...refParams.current,
          search: searchText,
       };
+      if (searchText) {
+         setShowCategoryList(false);
+      } else {
+         setShowCategoryList(true);
+      }
       debounceGetTokens(true);
    };
 
    useEffect(() => {
       throttleGetTokens(true);
    }, []);
+
+   const handleCategorySelect = (categoryOption: CategoryOption) => {
+      setShowCategoryList(false);
+      refParams.current = {
+         ...refParams.current,
+         category: categoryOption,
+      };
+      throttleGetTokens(true);
+   };
+
+   const handleBackToCategories = () => {
+      setShowCategoryList(true);
+      refParams.current = {
+         ...refParams.current,
+         category: CategoryOption.All,
+      };
+      // if (!refParams.current.search) {
+      //    setIsSearchMode(false);
+      // }
+   };
+
+   const renderSearchMode = () => {
+      if (!isSearchMode) return null;
+
+      if (!showCategoryList) {
+         return renderSearchResults();
+      }
+
+      return (
+         <Box p="24px">
+            {latestAgent && (
+               <Box mb="32px">
+                  <Text fontSize="24px" fontWeight="600" mb="16px">New & Updates</Text>
+                  <Box bg={'white'}  borderRadius={"8px"} overflow={"hidden"}>
+                     <AgentItem token={latestAgent} isLatest={true} />
+                  </Box>
+               </Box>
+            )}
+
+            <Box>
+               <Text fontSize="24px" fontWeight="600" mb="16px">Categories</Text>
+               <SimpleGrid columns={1} spacing="16px">
+                  {CATEGORIES.map((category) => (
+                     <Flex
+                        key={category.id}
+                        className={s.categoryItem}
+                        bg={category.gradient}
+                        onClick={() => {
+                           refParams.current.category = category.id;
+                           setShowCategoryList(false);
+                           debounceGetTokens(true);
+                        }}
+                     >
+                        <Text fontSize="20px" fontWeight="500" color="#fff">
+                           {category.name}
+                        </Text>
+                        <Image
+                           src={category.icon}
+                           className={s.categoryImage}
+                        />
+                     </Flex>
+                  ))}
+               </SimpleGrid>
+            </Box>
+         </Box>
+      );
+   };
 
    const renderSearch = () => {
       return (
@@ -221,7 +386,17 @@ const AgentsList = () => {
             <input
                placeholder={'Search agents'}
                ref={refInput as any}
-               autoFocus
+               autoFocus={false}
+               // autoFocus
+               onFocus={() => setIsSearchMode(true)}
+               // onBlur={() => {
+               //    // Delay hiding search mode to allow clicking category
+               //    setTimeout(() => {
+               //       if (!refParams.current.search) {
+               //          setIsSearchMode(false);
+               //       }
+               //    }, 200);
+               // }}
                onChange={(event) => {
                   onSearch(event.target.value);
                }}
@@ -237,19 +412,24 @@ const AgentsList = () => {
                justifyContent="center"
                alignItems="center"
             >
-               {!!refParams.current?.search && (
+               {isSearchMode && (
                   <Image
-                     width="12px"
+                     width="20px"
                      src="icons/ic_search_close.svg"
-                     onClick={() => {
-                        if (refInput?.current?.value) {
+                     onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (refInput?.current) {
                            refInput.current.value = '';
+                           refInput.current.blur();
                            refParams.current = {
                               ...refParams.current,
                               search: '',
+                              category: CategoryOption.All,
                            };
+                           setShowCategoryList(true);
+                           setIsSearchMode(false);
                            debounceGetTokens(true);
-                           refInput?.current?.focus();
                         }
                      }}
                   />
@@ -354,12 +534,7 @@ const AgentsList = () => {
                            cursor="pointer"
                            onClick={(e) => {
                               const _category = option.value as CategoryOption;
-                              setCategory(_category);
-                              refParams.current = {
-                                 ...refParams.current,
-                                 category: _category,
-                              };
-                              throttleGetTokens(true);
+                              handleCategorySelect(_category);
                               onCloseFilter();
                            }}
                         >
@@ -461,6 +636,49 @@ const AgentsList = () => {
       )
    };
 
+   const renderSearchResults = () => {
+      return (
+         <Box>
+            <Flex align="center" mb="20px" px="24px">
+               <Button 
+                  leftIcon={<Image src="icons/ic-arrow-left.svg" w="16px" h="16px" />}
+                  variant="ghost"
+                  onClick={handleBackToCategories}
+                  fontSize={'20px'}
+                  fontWeight={'500'}
+                  p="0"
+                  _hover={{
+                     bg: 'transparent',
+                  }}
+               >
+                  {refParams.current.category !== CategoryOption.All ? (
+                     <>{Category.find(c => c.value === refParams.current.category)?.label}</>
+                  ) : 'Back'}
+               </Button>
+            </Flex>
+
+            <Grid
+               w="100%"
+               templateColumns={"1fr"}
+               gridRowGap={"8px"}
+               overflow={'hidden !important'}
+            >
+               {!loaded && <AppLoading />}
+               {agents?.map((item: IAgentToken) => (
+                  <GridItem key={item.id}>
+                     <AgentItem token={item} />
+                  </GridItem>
+               ))}
+               {loaded && agents.length === 0 && (
+                  <Text textAlign="center" color="gray.500" mt="40px">
+                     No agents found
+                  </Text>
+               )}
+            </Grid>
+         </Box>
+      );
+   };
+
    return (
       <Box className={s.container} position={'relative'}>
          <Flex
@@ -475,41 +693,73 @@ const AgentsList = () => {
             >
                {renderSearch()}
             </Flex>
-            <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
-               {renderFilterOptions()}
-            </Flex>
-            {/* <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
-               {renderCategoryMenu()}
-               <Divider orientation={'vertical'} borderColor={'#000'} opacity={0.2} h={"20px"} m={'auto 0'}/>
-               {renderSortMenu()}
-            </Flex> */}
+            {!isSearchMode && (
+               <>
+                  <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
+                     {renderFilterOptions()}
+                  </Flex>
+               </>
+            )}
          </Flex>
-         <Box h={'8px'} />
 
-         <InfiniteScroll
-            className={s.listContainer}
-            key={agents?.length}
-            dataLength={agents?.length}
-            next={() => {
-               debounceGetTokens(false);
+         {isSearchMode ? (
+            renderSearchMode()
+         ) : (
+            <>
+               <Box h={'8px'} />
+               <InfiniteScroll
+                  className={s.listContainer}
+                  key={agents?.length}
+                  dataLength={agents?.length}
+                  next={() => {
+                     debounceGetTokens(false);
+                  }}
+                  hasMore
+                  loader={<></>}
+               >
+                  {!loaded && <AppLoading />}
+                  <Grid
+                     w="100%"
+                     templateColumns={"1fr"}
+                     gridRowGap={"8px"}
+                     overflow={'hidden !important'}
+                  >
+                     {agents?.map((item: IAgentToken, i) => (
+                        <GridItem key={item.id}>
+                           <AgentItem token={item} />
+                        </GridItem>
+                     ))}
+                  </Grid>
+               </InfiniteScroll>
+            </>
+         )}
+
+         <Flex className={s.addTestBtn} onClick={onOpen}>
+            <Center w={'100%'}>
+               <Text textAlign={'center'}>+ Add agent</Text>
+            </Center>
+         </Flex>
+
+         <BaseModal
+            isShow={isOpen}
+            onHide={() => {
+               onClose();
+               setIsSearchMode(false);
             }}
-            hasMore
-            loader={<></>}
+            size="small"
          >
-            {!loaded && <AppLoading />}
-            <Grid
-               w="100%"
-               templateColumns={"1fr"}
-               gridRowGap={"8px"}
-               overflow={'hidden !important'}
-            >
-               {agents?.map((item: IAgentToken, i) => (
-                  <GridItem key={item.id}>
-                     <AgentItem token={item} />
-                  </GridItem>
-               ))}
-            </Grid>
-         </InfiniteScroll>
+            <AddTestAgent onAddAgentSuccess={(address: string) => {
+               refAddAgentTestCA.current = address;
+               onClose();
+               setFilter(FilterOption.Installed);
+               refParams.current = {
+                  ...refParams.current,
+                  filter: FilterOption.Installed,
+               };
+               throttleGetTokens(true);
+               setIsSearchMode(false);
+            }} />
+         </BaseModal>
       </Box>
    );
 };

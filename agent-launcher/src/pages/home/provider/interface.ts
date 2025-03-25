@@ -52,4 +52,6 @@ export interface IAgentContext {
     isInstalled: boolean;
   }>;
   liveViewUrl?: string;
+  isSearchMode: boolean;
+  setIsSearchMode: (value: boolean) => void;
 }

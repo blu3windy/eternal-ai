@@ -6,13 +6,13 @@
   color: #000;
 
   .nameText {
-    font-size: 14px;
-    font-weight: 400;
+    font-size: 15px;
+    font-weight: 500;
     color: inherit;
   }
 
   .descriptionText {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 400;
     color: inherit;
 
@@ -123,4 +123,13 @@
   line-break: auto !important;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+.testingStatus {
+  padding: 4px 10px;
+  border-radius: 16px;
+  background-color: rgb(0, 0, 0, 0.05);
+  font-size: 12px;
+  font-weight: 500;
+  color: #4d4d4d;
 }

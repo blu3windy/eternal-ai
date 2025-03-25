@@ -80,7 +80,7 @@ const AgentTopInfo = () => {
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
    const allowStopAgent = useMemo(() => {
-      return [AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(selectedAgent?.agent_type);
+      return [AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(selectedAgent?.agent_type);
    }, [selectedAgent])
 
    useEffect(() => {
@@ -92,7 +92,7 @@ const AgentTopInfo = () => {
 
    const checkVersionCode = async () => {
       setHaveNewVersionCode(false);
-      if ([AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(selectedAgent?.agent_type)) {
+      if ([AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(selectedAgent?.agent_type)) {
          const chainId = selectedAgent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({
             contractAddress: selectedAgent.agent_contract_address,

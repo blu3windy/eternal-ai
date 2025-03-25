@@ -11,9 +11,10 @@ import { AgentContext } from "@pages/home/provider";
 
 interface IProps {
   token: IAgentToken;
+  isLatest?: boolean;
 }
 
-const AgentItem = ({ token }: IProps) => {
+const AgentItem = ({ token, isLatest }: IProps) => {
    const { selectedAgent, setSelectedAgent, installedUtilityAgents } = useContext(AgentContext);
 
    const description = useMemo(() => {
@@ -50,6 +51,8 @@ const AgentItem = ({ token }: IProps) => {
       }
    };
 
+   const iconSize = isLatest ? '68px' : '40px';
+
    return (
       <Flex
          key={token.id}
@@ -60,26 +63,31 @@ const AgentItem = ({ token }: IProps) => {
             handleGoToChat(e, token?.id || token?.token_address || token?.agent_id)
          }
       >
+         {!token.is_public && 
+            <Flex position={"absolute"} top={"8px"} right={"24px"} className={s.testingStatus}>
+               <Text>Testing</Text>
+            </Flex>
+         }
          <Grid
             className={s.content}
-            templateColumns={'40px 1fr'}
+            templateColumns={`${iconSize} 1fr`}
             gap="12px"
             w={'100%'}
          >
             <Flex position={"relative"}>
                {avatarUrl ? (
                   <Image
-                     w={'40px'}
+                     w={iconSize}
                      objectFit={'cover'}
                      src={avatarUrl}
-                     maxHeight={'40px'}
-                     maxWidth={'40px'}
+                     maxHeight={iconSize}
+                     maxWidth={iconSize}
                      borderRadius={'50%'}
                   />
                ) : (
                   <DefaultAvatar
-                     width={'40px'}
-                     height={'40px'}
+                     width={iconSize}
+                     height={iconSize}
                      name={token?.agent_name}
                      fontSize={14}
                   />
