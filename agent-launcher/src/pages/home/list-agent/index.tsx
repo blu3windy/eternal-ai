@@ -255,6 +255,8 @@ const AgentsList = () => {
 
          if (FilterOption.Installed === refParams.current.filter) {
             params.installed = true;
+         } else if (isSearchMode) {
+            params.installed = false;
          }
 
          const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
@@ -283,8 +285,8 @@ const AgentsList = () => {
       }
    };
 
-   const throttleGetTokens = useCallback(throttle(getTokens, 500), []);
-   const debounceGetTokens = useCallback(debounce(getTokens, 500), []);
+   const throttleGetTokens = useCallback(throttle(getTokens, 500), [isSearchMode]);
+   const debounceGetTokens = useCallback(debounce(getTokens, 500), [isSearchMode]);
 
    const onSearch = (searchText: string) => {
       refParams.current = {
