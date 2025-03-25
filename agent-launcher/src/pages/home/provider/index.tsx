@@ -173,6 +173,7 @@ const AgentProvider: React.FC<
    }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
 
    console.log("stephen: selectedAgent", selectedAgent);
+   console.log("stephen: availableModelAgents", availableModelAgents);
    // console.log("stephen: currentModel", currentModel);
    // console.log("stephen: agentWallet", agentWallet);
    // console.log("stephen: installedAgents", installedAgents);
@@ -181,9 +182,10 @@ const AgentProvider: React.FC<
    // console.log("stephen: requireInstall", requireInstall);
    // console.log("stephen: isInstalled", isInstalled);
    // console.log('stephen availableModelAgents', availableModelAgents);
-   // console.log('stephen installedModelAgents', installedModelAgents);
-   // console.log('stephen: isCustomUI', isCustomUI);
-   console.log("================================");
+   console.log("stephen: installedUtilityAgents", installedUtilityAgents);
+   console.log('stephen installedModelAgents', installedModelAgents);
+   console.log('stephen agentStates', agentStates);// console.log('stephen: isCustomUI', isCustomUI);
+   console.log("==============================");
 
    useEffect(() => {
       fetchCoinPrices();
@@ -930,6 +932,8 @@ const AgentProvider: React.FC<
 
       const isInstalled = agentStates[newAgent.id]?.isInstalled || false;
       const isRunning = agentStates[newAgent.id]?.isRunning || false;
+      console.log("stephen: setSelectedAgent", { newAgent, isInstalled, isRunning });
+      console.log("stephen: setSelectedAgent agentStates", { agentStates });
 
       if (isInstalled && !isRunning) {
          startAgent(newAgent);
