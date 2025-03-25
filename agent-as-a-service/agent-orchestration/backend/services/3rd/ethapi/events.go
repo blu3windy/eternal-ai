@@ -278,6 +278,10 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 	if err != nil {
 		return err
 	}
+	chainId, err := c.ChainID()
+	if err != nil {
+		return err
+	}
 	blockTime := uint64(time.Now().Unix())
 	erc20, err := erc20.NewErc20(log.Address, client)
 	if err != nil {
@@ -290,7 +294,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			resp.Transfer = append(
 				resp.Transfer,
 				&Erc20TokenTransferEventResp{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: c.ConvertAddressForOut(logParsed.Raw.Address.Hex()),
 					Timestamp:       blockTime,
@@ -311,7 +315,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			resp.Transfer = append(
 				resp.Transfer,
 				&Erc20TokenTransferEventResp{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -331,7 +335,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			resp.Transfer = append(
 				resp.Transfer,
 				&Erc20TokenTransferEventResp{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -356,7 +360,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			resp.NftTransfer = append(
 				resp.NftTransfer,
 				&NftTransferEventResp{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -382,7 +386,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 				resp.ERC1155Transfer = append(
 					resp.ERC1155Transfer,
 					&ERC1155ransferEventResp{
-						NetworkID:       c.ChainID(),
+						NetworkID:       chainId,
 						TxHash:          log.TxHash.Hex(),
 						ContractAddress: logParsed.Raw.Address.Hex(),
 						Timestamp:       blockTime,
@@ -403,7 +407,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			resp.ERC1155Transfer = append(
 				resp.ERC1155Transfer,
 				&ERC1155ransferEventResp{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -474,7 +478,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			resp.ImageHubImageTipTransferred = append(
 				resp.ImageHubImageTipTransferred,
 				&ImageHubImageTipTransferred{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -496,7 +500,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			resp.ImageHubSubscriptionPriceUpdated = append(
 				resp.ImageHubSubscriptionPriceUpdated,
 				&ImageHubSubscriptionPriceUpdated{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -516,7 +520,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			resp.ImageHubSubscriptionRegistered = append(
 				resp.ImageHubSubscriptionRegistered,
 				&ImageHubSubscriptionRegistered{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -537,7 +541,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			resp.ImageHubSubscriptionCharged = append(
 				resp.ImageHubSubscriptionCharged,
 				&ImageHubSubscriptionCharged{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -565,7 +569,7 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			resp.WorkerHubNewInference = append(
 				resp.WorkerHubNewInference,
 				&WorkerHubNewInference{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -936,7 +940,12 @@ func (c *Client) NewErc20TokenEventResp() *Erc20TokenEventResp {
 }
 
 func (c *Client) Erc20TokenEventResp(resp *Erc20TokenEventResp, log *types.Log) error {
+
 	client, err := c.getClient()
+	if err != nil {
+		return err
+	}
+	chainId, err := c.ChainID()
 	if err != nil {
 		return err
 	}
@@ -952,7 +961,7 @@ func (c *Client) Erc20TokenEventResp(resp *Erc20TokenEventResp, log *types.Log) 
 			resp.Transfer = append(
 				resp.Transfer,
 				&Erc20TokenTransferEventResp{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -977,7 +986,7 @@ func (c *Client) Erc20TokenEventResp(resp *Erc20TokenEventResp, log *types.Log) 
 			resp.Transfer = append(
 				resp.Transfer,
 				&Erc20TokenTransferEventResp{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -997,7 +1006,7 @@ func (c *Client) Erc20TokenEventResp(resp *Erc20TokenEventResp, log *types.Log) 
 			resp.Transfer = append(
 				resp.Transfer,
 				&Erc20TokenTransferEventResp{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -1022,7 +1031,7 @@ func (c *Client) Erc20TokenEventResp(resp *Erc20TokenEventResp, log *types.Log) 
 			resp.NftTransfer = append(
 				resp.NftTransfer,
 				&NftTransferEventResp{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
@@ -1048,7 +1057,7 @@ func (c *Client) Erc20TokenEventResp(resp *Erc20TokenEventResp, log *types.Log) 
 				resp.ERC1155Transfer = append(
 					resp.ERC1155Transfer,
 					&ERC1155ransferEventResp{
-						NetworkID:       c.ChainID(),
+						NetworkID:       chainId,
 						TxHash:          log.TxHash.Hex(),
 						ContractAddress: logParsed.Raw.Address.Hex(),
 						Timestamp:       blockTime,
@@ -1067,7 +1076,7 @@ func (c *Client) Erc20TokenEventResp(resp *Erc20TokenEventResp, log *types.Log) 
 			resp.ERC1155Transfer = append(
 				resp.ERC1155Transfer,
 				&ERC1155ransferEventResp{
-					NetworkID:       c.ChainID(),
+					NetworkID:       chainId,
 					TxHash:          log.TxHash.Hex(),
 					ContractAddress: logParsed.Raw.Address.Hex(),
 					Timestamp:       blockTime,
