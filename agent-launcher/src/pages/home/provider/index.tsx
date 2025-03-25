@@ -397,7 +397,7 @@ const AgentProvider: React.FC<
             page: 1,
             limit: 100,
             sort_col: SortOption.CreatedAt,
-            agent_types: [AgentType.Model].join(','),
+            agent_types: [AgentType.Model, AgentType.ModelOnline].join(','),
             chain: '',
          };
          const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
