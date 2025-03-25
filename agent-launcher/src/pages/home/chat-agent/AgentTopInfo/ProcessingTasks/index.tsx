@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import s from "./styles.module.scss";
 import cs from "classnames";
-import { useEffect, useMemo } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import { useChatAgentProvider } from "../../ChatAgent/provider";
 import { motion } from "framer-motion";
 import { TaskItem } from "@stores/states/agent-chat/type";
@@ -20,7 +20,9 @@ import { throttle } from "lodash";
 import { removeTaskItem } from "@stores/states/agent-chat/reducer";
 import { AgentType } from "@pages/home/list-agent";
 import AgentAPI from "@services/api/agent";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@stores/index";
+import { AgentContext } from "@pages/home/provider";
 
 type Props = {
    className?: string;
@@ -160,7 +162,17 @@ function ProcessingItem({ data, onClose }: { data: TaskItem, onClose: () => void
 
 
 function ProcessingTasks({ className }: Props) {
-   const { taskItems } = useChatAgentProvider();
+   const {
+      selectedAgent,
+   } = useContext(AgentContext);
+   const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
+
+   const agentTasks = useSelector((state: RootState) => state.agentChat.agentTasks || {});
+
+   const taskItems = useMemo(() => { 
+      return agentTasks[threadId] || [];
+   }, [agentTasks, threadId])
+
    const { isOpen, onOpen, onClose } = useDisclosure();
 
    const isDisabled = useMemo(() => {
