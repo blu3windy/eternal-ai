@@ -146,6 +146,28 @@ const ItemToken = ({
    );
 };
 
+const AddMoreRow = ({ onClose }: { onClose: () => void }) => {
+   const {  setIsSearchMode } = useContext(AgentContext);
+
+   return (
+      <Flex
+         onClick={() => {
+            setIsSearchMode(true);
+            onClose();
+         }}
+         alignItems="center"
+         gap="12px"
+         cursor="pointer"
+         p="16px 24px"
+      >
+         <Image src="icons/ic-plus.svg" w="20px" h="20px" />
+         <Text fontSize="16px" fontWeight="400">
+        Add more
+         </Text>
+      </Flex>
+   );
+};
+
 const SelectModel = ({
    disabled,
    className,
@@ -244,11 +266,11 @@ const SelectModel = ({
                               unInstallAgent(agent);
                            }}
                         />
-                        {i < installedModelAgents.length - 1 && (
-                           <Divider color={'#E2E4E8'} my={'0px'} />
-                        )}
+                        <Divider color={'#E2E4E8'} my={'0px'} />
                      </>
                   ))}
+                  
+                  <AddMoreRow onClose={onClose} />
                </PopoverContent>
             </Popover>
          </Box>

@@ -150,17 +150,13 @@ const AgentsList = () => {
    const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
    const [loaded, setLoaded] = useState(false);
    const refLoading = useRef(false);
-   const [isSearchMode, setIsSearchMode] = useState(false);
    const [showCategoryList, setShowCategoryList] = useState(true);
-
-   console.log('isSearchMode', isSearchMode);
-   console.log('showCategoryList', showCategoryList);
 
    const [agents, setAgents] = useState<IAgentToken[]>([]);
    const [latestAgent, setLatestAgent] = useState<IAgentToken | null>(null);
    const refLatestInterval = useRef<any>(null);
 
-   const { setSelectedAgent, selectedAgent } = useContext(AgentContext);
+   const { setSelectedAgent, selectedAgent, isSearchMode, setIsSearchMode } = useContext(AgentContext);
 
    const refParams = useRef({
       page: 1,
@@ -338,7 +334,7 @@ const AgentsList = () => {
             {latestAgent && (
                <Box mb="32px">
                   <Text fontSize="24px" fontWeight="600" mb="16px">New & Updates</Text>
-                  <Box borderRadius={"8px"} overflow={"hidden"}>
+                  <Box bg={'white'}  borderRadius={"8px"} overflow={"hidden"}>
                      <AgentItem token={latestAgent} isLatest={true} />
                   </Box>
                </Box>

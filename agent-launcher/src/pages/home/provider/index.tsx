@@ -56,6 +56,8 @@ const initialValue: IAgentContext = {
    customUIPort: '',
    agentStates: {},
    liveViewUrl: '',
+   isSearchMode: false,
+   setIsSearchMode: () => {},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -81,6 +83,7 @@ const AgentProvider: React.FC<
    const [customUIPort, setCustomUIPort] = useState<string>('');
    const [liveViewUrl, setLiveViewUrl] = useState<string>('');
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
+   const [isSearchMode, setIsSearchMode] = useState(false);
 
    const [agentStates, setAgentStates] = useState<Record<number, {
       data: IAgentToken;
@@ -1100,6 +1103,8 @@ const AgentProvider: React.FC<
          customUIPort,
          agentStates,
          liveViewUrl,
+         isSearchMode,
+         setIsSearchMode,
       };
    }, [
       loading,
@@ -1136,6 +1141,8 @@ const AgentProvider: React.FC<
       customUIPort,
       agentStates,
       liveViewUrl,
+      isSearchMode,
+      setIsSearchMode,
    ]);
 
    return (
