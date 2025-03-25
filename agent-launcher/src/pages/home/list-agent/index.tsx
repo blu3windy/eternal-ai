@@ -12,7 +12,8 @@ import {
    PopoverTrigger,
    SimpleGrid,
    Text,
-   useDisclosure
+   useDisclosure,
+   VStack
 } from '@chakra-ui/react';
 import cx from 'clsx';
 import debounce from 'lodash.debounce';
@@ -73,8 +74,8 @@ export const Category = [
 ];
 
 export const AgentOptions = [
-   { value: FilterOption.All, label: 'Store Agent', description: 'All available agents.', icon: 'icons/ic-store-agent.svg' },
    { value: FilterOption.Installed, label: 'Your Agent', description: 'Agents currently installed.', icon: undefined },
+   { value: FilterOption.All, label: 'Store Agent', description: 'All available agents.', icon: 'icons/ic-store-agent.svg' },
    // { value: FilterOption.NonInstalled, label: 'Recommend', description: 'Recommend', icon: undefined },
 ]
 
@@ -146,7 +147,7 @@ const AgentsList = () => {
    } = useDisclosure();
 
    const [sort, setSort] = useState<SortOption>(SortOption.CreatedAt);
-   const [filter, setFilter] = useState<FilterOption>(FilterOption.All);
+   const [filter, setFilter] = useState<FilterOption>(FilterOption.Installed);
    const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
    const [loaded, setLoaded] = useState(false);
    const refLoading = useRef(false);
@@ -718,18 +719,35 @@ const AgentsList = () => {
                   loader={<></>}
                >
                   {!loaded && <AppLoading />}
-                  <Grid
-                     w="100%"
-                     templateColumns={"1fr"}
-                     gridRowGap={"8px"}
-                     overflow={'hidden !important'}
-                  >
-                     {agents?.map((item: IAgentToken, i) => (
-                        <GridItem key={item.id}>
-                           <AgentItem token={item} />
-                        </GridItem>
-                     ))}
-                  </Grid>
+                  {loaded && agents.length === 0 ? (
+                     <VStack 
+                        height="full" 
+                        justify="center" 
+                        spacing={3} 
+                        p={4} 
+                        textAlign="center"
+                     >
+                        <Text fontSize="lg" fontWeight="bold">
+      No agents installed?
+                        </Text>
+                        <Text>
+                           Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
+                        </Text>
+                     </VStack>
+                  ) : (
+                     <Grid
+                        w="100%"
+                        templateColumns={"1fr"}
+                        gridRowGap={"8px"}
+                        overflow={'hidden !important'}
+                     >
+                        {agents?.map((item: IAgentToken, i) => (
+                           <GridItem key={item.id}>
+                              <AgentItem token={item} />
+                           </GridItem>
+                        ))}
+                     </Grid>
+                  )}
                </InfiniteScroll>
             </>
          )}
