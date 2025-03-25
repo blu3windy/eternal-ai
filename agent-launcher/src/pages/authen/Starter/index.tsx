@@ -72,6 +72,7 @@ const Starter = (props: IProps) => {
          console.timeEnd("DOCKER_BUILD");
 
          const activeModel = await storageModel.getActiveModel();
+         console.log("activeModel: ", activeModel)
          if (!activeModel) {
             const {
                agents

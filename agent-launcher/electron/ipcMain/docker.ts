@@ -6,7 +6,7 @@ import {
    USER_DATA_FOLDER_NAME
 } from "../share/utils.ts";
 import command from "../share/command-tool.ts";
-import { CodeLanguage } from "../types.ts";
+import { CodeLanguage, DockerInfoAction } from "../types.ts";
 import { copyFiles, copyPublicToUserData } from "../share/scripts.ts";
 
 const DOCKER_NAME = 'agent';
@@ -230,6 +230,15 @@ const ipcMainDocker = () => {
          throw new Error(`Port is not a number: ${port}`);
       }
       return port;
+   });
+
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INFO, async (_event, action: DockerInfoAction) => {
+      const userDataPath = app.getPath("userData");
+      const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
+      const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_INFO_SCRIPT);
+
+      const stdout = await command.execAsync(`bash "${scriptPath}" ${action}`);
+      return stdout;
    });
 }
 

@@ -161,6 +161,11 @@ get_port() {
   echo "$PORT"
 }
 
+delete() {
+  docker stop "$CONTAINER_NAME" 2>/dev/null || true
+  docker rm "$CONTAINER_NAME" 2>/dev/null || true
+  docker rmi "$IMAGE_NAME" 2>/dev/null || true
+}
 
 case "$action" in
   run)
@@ -190,11 +195,14 @@ case "$action" in
     fi
     get_port
     ;;
-  remove)
+  delete)
     if [ -z "$CONTAINER_NAME" ]; then
       log_error "Missing Container Name"
     fi
-    docker rmi "$IMAGE_NAME" 2>/dev/null || true
+    if [ -z "$IMAGE_NAME" ]; then
+      log_error "Missing Image Name"
+    fi
+    delete
     ;;
   *)
     log_error "Invalid action: $action"

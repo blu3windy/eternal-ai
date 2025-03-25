@@ -1,5 +1,6 @@
 import { ipcRenderer, contextBridge, shell } from "electron";
 import { EMIT_EVENT_NAME } from "./share/event-name.ts";
+import { DockerInfoAction } from "./types.ts";
 // import Store from 'electron-store';
 // const store = new Store();
 
@@ -55,6 +56,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
    // options: language, privateKey, port
    dockerRunAgent: (agentName: string, chainId: string, options: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, agentName, chainId, options),
    dockerStopAgent: (agentName: string, chainId: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_STOP_AGENT, agentName, chainId),
+   dockerInfo: (action: DockerInfoAction) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_INFO, action),
 
    modelStarter: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_STARTER),
    modelInstall: (hash: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_INSTALL, hash),
