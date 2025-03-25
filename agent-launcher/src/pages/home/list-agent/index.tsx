@@ -249,7 +249,7 @@ const AgentsList = () => {
          } else if (refParams.current.category === CategoryOption.Infra) {
             params.agent_types = [AgentType.Infra].join(',');
          } else {
-            params.agent_types = [AgentType.Model,AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(','); 
+            params.agent_types = [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(','); 
          }
 
          if (FilterOption.Installed === refParams.current.filter) {
