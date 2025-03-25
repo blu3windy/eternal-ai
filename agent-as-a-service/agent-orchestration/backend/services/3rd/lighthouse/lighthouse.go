@@ -180,7 +180,7 @@ type FileInfo struct {
 	Cid             string `json:"cid"`
 	Encryption      bool   `json:"encryption"`
 	FileName        string `json:"fileName"`
-	MimeType        bool   `json:"mimeType"`
+	MimeType        string `json:"mimeType"`
 	TxHash          string `json:"txHash"`
 	Error           struct {
 		Code    int    `json:"code"`
