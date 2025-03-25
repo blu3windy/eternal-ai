@@ -322,7 +322,7 @@ const AgentsList = () => {
                <Box mb="32px">
                   <Text fontSize="24px" fontWeight="600" mb="16px">New & Updates</Text>
                   <Box borderRadius={"8px"} overflow={"hidden"}>
-                     <AgentItem token={latestAgent} />
+                     <AgentItem token={latestAgent} isLatest={true} />
                   </Box>
                </Box>
             )}
