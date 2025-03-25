@@ -105,12 +105,13 @@ func Test_OpenAI(t *testing.T) {
 
 func Test_SRV(t *testing.T) {
 	// ts.JobExecuteInfraTwitterAppRequest(context.Background())
-	ts.CreateAgentVideoByPostID(context.Background(), 34947)
+	ts.CreateClankerTokenForVideoByPostID(context.Background(), 35398)
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
-	// ts.CreateGenerateVideoByTweetID(daos.GetDBMainCtx(context.Background()), "1895369759690219863")
-	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 34584)
+	// nonce := helpers.RandomStringWithLength(32)
+	// fmt.Println(nonce)
+	// ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 34584)
 }
 
 func Test_IPFS(t *testing.T) {

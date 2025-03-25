@@ -65,7 +65,7 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 								TokenStatus:        "pending",
 								VideoUrl:           twitterPost.ImageUrl,
 								RequestorAddress:   s.conf.Clanker.RequestorAddress,
-								RequestKey:         helpers.RandomBigInt(12).Text(32),
+								RequestKey:         helpers.RandomStringWithLength(32),
 							}
 
 							user, _ := s.dao.FirstUser(
@@ -94,6 +94,7 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 								}
 							}
 
+							fmt.Println(inst.RequestKey)
 							//call api clanker
 							tokenResp, err := s.clanker.DeployToken(&clanker.DeployTokenReq{
 								Name:                     inst.TokenName,
@@ -147,8 +148,8 @@ func (s *Service) GenerateTokenInfoFromVideoPrompt(ctx context.Context, sysPromp
 						I want to generate my token base on this info
 						'%s'
 
-						token-name (generate if not provided, make sure it not empty)
-						token-symbol (generate if not provided, make sure it not empty)
+						token-name (generate if not provided, make sure it not empty, limit with 15 characters)
+						token-symbol (generate if not provided, make sure it not empty, limit with 5 characters)
 
 						Please return in string in json format including token-name, token-symbol, just only json without explanation  and token name limit with 15 characters
 					`, sysPrompt)

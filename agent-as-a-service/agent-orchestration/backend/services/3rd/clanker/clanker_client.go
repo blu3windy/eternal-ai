@@ -90,9 +90,7 @@ type DeployTokenResp struct {
 }
 
 func (c *Client) DeployToken(req *DeployTokenReq) (*DeployTokenResp, error) {
-	resp := struct {
-		Data *DeployTokenResp `json:"data"`
-	}{}
+	resp := &DeployTokenResp{}
 	err := c.methodJSON(
 		http.MethodPost,
 		c.buildUrl("tokens/deploy"),
@@ -102,5 +100,5 @@ func (c *Client) DeployToken(req *DeployTokenReq) (*DeployTokenResp, error) {
 	if err != nil {
 		return nil, err
 	}
-	return resp.Data, nil
+	return resp, nil
 }
