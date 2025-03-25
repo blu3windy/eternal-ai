@@ -4,10 +4,9 @@ import useStarter from "@pages/authen/hooks/useStarter.ts";
 import BackgroundWrapper from "@components/BackgroundWrapper";
 import LoadingText from "@components/LoadingText";
 import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
-import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
+// import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import BaseButton from "@components/BaseButton";
 import storageModel from "@storage/StorageModel.ts";
-import { get } from "axios";
 import CAgentTokenAPI from "@services/api/agents-token";
 import { AgentType } from "@pages/home/list-agent";
 import { getSetupAgents } from "@pages/authen/ChooseModel/utils.ts";
@@ -74,6 +73,7 @@ const Starter = (props: IProps) => {
          console.timeEnd("DOCKER_BUILD");
 
          const activeModel = await storageModel.getActiveModel();
+         console.log("activeModel: ", activeModel)
          if (!activeModel) {
             const {
                agents

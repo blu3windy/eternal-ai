@@ -1,6 +1,7 @@
 /// <reference types="vite-plugin-electron/electron-env" />
 
 import { ModelInfo } from "./share/model.ts";
+import { DockerInfoAction } from "./types.ts";
 
 declare namespace NodeJS {
   interface ProcessEnv {
@@ -49,6 +50,7 @@ export interface IElectronAPI {
   dockerStopAgent: (agentName: string, chainId: string) => Promise<void>
   dockerCheckRunning: (agentName: string, chainId: string) => Promise<string>
   dockerRunningPort: (agentName: string, chainId: string) => Promise<string>
+  dockerInfo: (action: DockerInfoAction) => Promise<string>
 
   modelStarter: () => Promise<void>
   modelInstall: (hash: string) => Promise<void>

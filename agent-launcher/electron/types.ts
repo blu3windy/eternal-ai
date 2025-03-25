@@ -7,3 +7,5 @@ export type OsContext = {
         used: number;
    },
 }
+
+export type DockerInfoAction = "images" | "containers"

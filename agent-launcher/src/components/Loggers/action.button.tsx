@@ -86,6 +86,24 @@ const ActionButtons = () => {
          >
             MODEL STOP
          </Button>
+         <Button
+            onClick={() => {
+               globalThis.electronAPI.dockerInfo("images").then((data) => {
+                  console.log(JSON.parse(data));
+               });
+            }}
+         >
+            DOCKER IMAGES
+         </Button>
+         <Button
+            onClick={() => {
+               globalThis.electronAPI.dockerInfo("containers").then((data) => {
+                  console.log(JSON.parse(data));
+               });
+            }}
+         >  
+            DOCKER CONTAINERS
+         </Button>
       </Flex>
    )
 };
