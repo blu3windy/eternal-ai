@@ -1165,7 +1165,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	}
 	logger.Info("stream_retrieve_knowledge", "generate query", zap.Any("id_request", idRequest), zap.Any("retrieveQuery", retrieveQuery), zap.Any("input", messages))
 	if retrieveQuery == nil {
-		str := openai.LastUserPrompt(messages)
+		str := ""
 		retrieveQuery = &str
 	}
 
@@ -1441,7 +1441,7 @@ func (s *Service) AnalyseSearchResults(baseModel string, systemPrompt string, qu
 
 func (s *Service) GetResultFromToolCall(query string) (string, error) {
 	if len(query) == 0 {
-		return "", fmt.Errorf("empty query")
+		return "", nil
 	}
 	url := fmt.Sprintf("%v?question=%v", s.conf.KnowledgeBaseConfig.ToolCallServiceUrl, query)
 	for i := 0; i < 10; i++ {
