@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
@@ -154,10 +155,16 @@ func (s *Service) RunJobs(ctx context.Context) error {
 		s.KnowledgeUsecase.ScanKnowledgeBaseStatusPaymentReceipt(context.Background())
 	})
 
-	gocron.Every(30).Second().Do(func() {
-		s.JobScanEventsByChain(context.Background())
-	})
-	//
+	// scan events by chain
+	for networkIDStr := range s.conf.Networks {
+		networkID, err := strconv.ParseUint(networkIDStr, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		gocron.Every(30).Second().Do(func() {
+			s.ScanEventsByChain(context.Background(), networkID)
+		})
+	}
 
 	gocron.Every(1).Minute().Do(
 		func() error {

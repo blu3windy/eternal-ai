@@ -98,6 +98,7 @@ func (s *Service) UpgradeAgentUpgradeable(ctx context.Context, agentInfoID uint)
 		return "", errs.NewError(err)
 	}
 	if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
+		agentInfo.AgentType != models.AgentInfoAgentTypeModelOnline &&
 		agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
 		agentInfo.AgentType != models.AgentInfoAgentTypeInfa &&
 		agentInfo.AgentType != models.AgentInfoAgentTypePython &&
@@ -144,6 +145,7 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 	}
 	if agentInfo != nil {
 		if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
+			agentInfo.AgentType != models.AgentInfoAgentTypeModelOnline &&
 			agentInfo.AgentType != models.AgentInfoAgentTypeInfa &&
 			agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
 			agentInfo.AgentType != models.AgentInfoAgentTypePython &&
@@ -200,7 +202,11 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 								FileName:        strings.TrimPrefix(fileName, "ipfs_"),
 							})
 						} else {
-							return errs.NewError(errs.ErrBadRequest)
+							storageInfos = append(storageInfos, agentupgradeable.IAgentCodePointer{
+								RetrieveAddress: helpers.HexToAddress(models.ETH_ZERO_ADDRESS),
+								FileType:        0,
+								FileName:        fileName,
+							})
 						}
 					}
 					dependAgentAddrs := []common.Address{}
@@ -231,6 +237,10 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 					case models.AgentInfoAgentTypeModel:
 						{
 							codeLanguage = "model"
+						}
+					case models.AgentInfoAgentTypeModelOnline:
+						{
+							codeLanguage = "model_online"
 						}
 					case models.AgentInfoAgentTypeCustomUi:
 						{

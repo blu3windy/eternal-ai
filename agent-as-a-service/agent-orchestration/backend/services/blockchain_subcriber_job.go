@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"strconv"
 	"strings"
 	"time"
 
@@ -59,10 +58,27 @@ func (s *Service) UpdateScanBlockError(ctx context.Context, chainID uint, lastBl
 	mapError := map[string]any{}
 	if lastBlockError != nil {
 		mapError["last_block_error"] = lastBlockError.Error()
+		mapError["updated_at"] = time.Now()
 	}
 	err := daos.GetDBMainCtx(ctx).
 		Model(&models.BlockScanInfo{}).
 		Where("id = ?", chainID).
+		Updates(mapError).Error
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
+
+func (s *Service) UpdateScanBlockErrorForNetwork(ctx context.Context, networkID uint64, lastBlockError error) error {
+	mapError := map[string]any{}
+	if lastBlockError != nil {
+		mapError["last_block_error"] = lastBlockError.Error()
+		mapError["updated_at"] = time.Now()
+	}
+	err := daos.GetDBMainCtx(ctx).
+		Model(&models.BlockScanInfo{}).
+		Where("network_id = ?", networkID).
 		Updates(mapError).Error
 	if err != nil {
 		return errs.NewError(err)
@@ -75,6 +91,7 @@ func (s *Service) UpdateScanBlockNumber(ctx context.Context, chainID uint, lastB
 	if lastBlockEvent > 0 {
 		mapError["last_block_number"] = lastBlockEvent
 		mapError["last_block_error"] = "OK"
+		mapError["updated_at"] = time.Now()
 	}
 	err := daos.GetDBMainCtx(ctx).
 		Model(&models.BlockScanInfo{}).
@@ -531,7 +548,11 @@ func (s *Service) CreateErc20TransferEvent(ctx context.Context, networkID uint64
 					fmt.Println(err.Error())
 				}
 			} else {
-				if ethClient.ChainID() == models.TRON_CHAIN_ID {
+				chainId, err := ethClient.ChainID()
+				if err != nil {
+					return err
+				}
+				if chainId == models.TRON_CHAIN_ID {
 					balance, err = s.trxApi.Trc20Balance(conAddress, userAddress)
 					if err != nil {
 						fmt.Println(err.Error())
@@ -1150,182 +1171,170 @@ func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]strin
 }
 
 func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error {
-	if networkID > 0 {
-		switch networkID {
-		case models.SOLANA_CHAIN_ID:
-			{
-				err := func(networkID uint64) error {
-					chain, err := s.dao.FirstBlockScanInfo(
-						daos.GetDBMainCtx(ctx),
-						map[string][]any{
-							"type = ?":              {"solana"},
-							"network_id = ?":        {networkID},
-							"last_block_number > 0": {},
-						},
-						map[string][]any{},
-						[]string{},
-					)
-					if err != nil {
-						return errs.NewError(err)
-					}
-					if chain == nil {
-						chain = &models.BlockScanInfo{
-							Type:      "solana",
-							NetworkID: networkID,
-							NumBlocks: 100,
-						}
-						lastBlockNumber, err := s.blockchainUtils.SolanaBlockheight()
-						if err != nil {
-							return errs.NewError(err)
-						}
-						if lastBlockNumber <= 0 {
-							lastBlockNumber = 1
-						}
-						chain.LastBlockNumber = lastBlockNumber
-						err = s.dao.Create(
-							daos.GetDBMainCtx(ctx),
-							chain,
-						)
-						if err != nil {
-							return errs.NewError(err)
-						}
-					}
-					if !chain.Enabled || chain.LastBlockNumber == 0 {
-						return nil
-					}
-					lastBlockNumber := chain.LastBlockNumber
-					err = func() error {
-						txs, err := s.bridgeAPI.GetSolanaEAITxs(uint64(chain.LastBlockNumber))
-						if err != nil {
-							return errs.NewError(err)
-						}
-						for _, tx := range txs {
-							err = s.CreateSolanaTokenTransferEvent(ctx, chain.NetworkID, tx)
-							if err != nil {
-								return errs.NewError(err)
-							}
-							if tx.Block > int(lastBlockNumber) {
-								lastBlockNumber = int64(tx.Block)
-							}
-						}
-						return nil
-					}()
-					if err != nil {
-						_ = s.UpdateScanBlockError(ctx, chain.ID, err)
-						return errs.NewError(err)
-					}
-					if lastBlockNumber > 0 {
-						err = s.UpdateScanBlockNumber(ctx, chain.ID, lastBlockNumber)
-						if err != nil {
-							return errs.NewError(err)
-						}
-					}
-					return nil
-				}(networkID)
-				if err != nil {
-					return errs.NewError(err)
-				}
-			}
-		default:
-			{
-				err := func(networkID uint64) error {
-					for {
-						chain, err := s.dao.FirstBlockScanInfo(
-							daos.GetDBMainCtx(ctx),
-							map[string][]any{
-								"type = ?":              {"evm"},
-								"network_id = ?":        {networkID},
-								"last_block_number > 0": {},
-							},
-							map[string][]any{},
-							[]string{},
-						)
-						if err != nil {
-							return errs.NewError(err)
-						}
-						ethClient := s.GetEthereumClient(ctx, networkID)
-						if chain == nil {
-							chain = &models.BlockScanInfo{
-								Type:      "evm",
-								NetworkID: networkID,
-								NumBlocks: 100,
-							}
-							lastBlockNumber, err := ethClient.GetLastBlockNumber()
-							if err != nil {
-								return errs.NewError(err)
-							}
-							if lastBlockNumber <= 0 {
-								lastBlockNumber = 1
-							}
-							chain.LastBlockNumber = lastBlockNumber
-							err = s.dao.Create(
+	err := s.JobRunCheck(
+		ctx,
+		fmt.Sprintf("ScanEventsByChain_%d", networkID),
+		func() error {
+			if networkID > 0 {
+				switch networkID {
+				case models.SOLANA_CHAIN_ID:
+					{
+						err := func(networkID uint64) error {
+							chain, err := s.dao.FirstBlockScanInfo(
 								daos.GetDBMainCtx(ctx),
-								chain,
+								map[string][]any{
+									"type = ?":              {"solana"},
+									"network_id = ?":        {networkID},
+									"last_block_number > 0": {},
+								},
+								map[string][]any{},
+								[]string{},
 							)
 							if err != nil {
 								return errs.NewError(err)
 							}
-						}
-						if !chain.Enabled || chain.LastBlockNumber == 0 {
-							break
-						}
-						addrs, err := s.GetFilterAddrs(ctx, chain.NetworkID)
-						if err != nil {
-							return errs.NewError(err)
-						}
-						startBlocks := chain.LastBlockNumber + 1
-						endBlocks := (chain.LastBlockNumber + chain.NumBlocks - 1)
-						eventResp, err := ethClient.ScanEvents(addrs, startBlocks, endBlocks)
-						if err != nil {
-							_ = s.UpdateScanBlockError(ctx, chain.ID, err)
-							return errs.NewError(err)
-						}
-						if eventResp != nil {
-							err = s.MemeEventsByTransactionEventResp(ctx, chain.NetworkID, eventResp, true)
-							if err != nil {
-								_ = s.UpdateScanBlockError(ctx, chain.ID, err)
-								return errs.NewError(err)
-							} else {
-								lastBlockNumber := endBlocks
-								if endBlocks > eventResp.LastBlockNumber {
-									lastBlockNumber = eventResp.LastBlockNumber
+							if chain == nil {
+								chain = &models.BlockScanInfo{
+									Type:      "solana",
+									NetworkID: networkID,
+									NumBlocks: 100,
 								}
+								lastBlockNumber, err := s.blockchainUtils.SolanaBlockheight()
+								if err != nil {
+									return errs.NewError(err)
+								}
+								if lastBlockNumber <= 0 {
+									lastBlockNumber = 1
+								}
+								chain.LastBlockNumber = lastBlockNumber
+								err = s.dao.Create(
+									daos.GetDBMainCtx(ctx),
+									chain,
+								)
+								if err != nil {
+									return errs.NewError(err)
+								}
+							}
+							if !chain.Enabled || chain.LastBlockNumber == 0 {
+								return nil
+							}
+							lastBlockNumber := chain.LastBlockNumber
+							err = func() error {
+								txs, err := s.bridgeAPI.GetSolanaEAITxs(uint64(chain.LastBlockNumber))
+								if err != nil {
+									return errs.NewError(err)
+								}
+								for _, tx := range txs {
+									err = s.CreateSolanaTokenTransferEvent(ctx, chain.NetworkID, tx)
+									if err != nil {
+										return errs.NewError(err)
+									}
+									if tx.Block > int(lastBlockNumber) {
+										lastBlockNumber = int64(tx.Block)
+									}
+								}
+								return nil
+							}()
+							if err != nil {
+								return errs.NewError(err)
+							}
+							if lastBlockNumber > 0 {
 								err = s.UpdateScanBlockNumber(ctx, chain.ID, lastBlockNumber)
 								if err != nil {
 									return errs.NewError(err)
 								}
-								if endBlocks >= eventResp.LastBlockNumber {
+							}
+							return nil
+						}(networkID)
+						if err != nil {
+							_ = s.UpdateScanBlockErrorForNetwork(ctx, networkID, err)
+							return errs.NewError(err)
+						}
+					}
+				default:
+					{
+						err := func(networkID uint64) error {
+							for {
+								chain, err := s.dao.FirstBlockScanInfo(
+									daos.GetDBMainCtx(ctx),
+									map[string][]any{
+										"type = ?":              {"evm"},
+										"network_id = ?":        {networkID},
+										"last_block_number > 0": {},
+									},
+									map[string][]any{},
+									[]string{},
+								)
+								if err != nil {
+									return errs.NewError(err)
+								}
+								ethClient := s.GetEthereumClient(ctx, networkID)
+								if chain == nil {
+									chain = &models.BlockScanInfo{
+										Type:      "evm",
+										NetworkID: networkID,
+										NumBlocks: 100,
+									}
+									lastBlockNumber, err := ethClient.GetLastBlockNumber()
+									if err != nil {
+										return errs.NewError(err)
+									}
+									if lastBlockNumber <= 0 {
+										lastBlockNumber = 1
+									}
+									chain.LastBlockNumber = lastBlockNumber
+									err = s.dao.Create(
+										daos.GetDBMainCtx(ctx),
+										chain,
+									)
+									if err != nil {
+										return errs.NewError(err)
+									}
+								}
+								if !chain.Enabled || chain.LastBlockNumber == 0 {
+									break
+								}
+								addrs, err := s.GetFilterAddrs(ctx, chain.NetworkID)
+								if err != nil {
+									return errs.NewError(err)
+								}
+								startBlocks := chain.LastBlockNumber + 1
+								endBlocks := (chain.LastBlockNumber + chain.NumBlocks - 1)
+								eventResp, err := ethClient.ScanEvents(addrs, startBlocks, endBlocks)
+								if err != nil {
+									return errs.NewError(err)
+								}
+								if eventResp != nil {
+									err = s.MemeEventsByTransactionEventResp(ctx, chain.NetworkID, eventResp, true)
+									if err != nil {
+										return errs.NewError(err)
+									} else {
+										lastBlockNumber := endBlocks
+										if endBlocks > eventResp.LastBlockNumber {
+											lastBlockNumber = eventResp.LastBlockNumber
+										}
+										err = s.UpdateScanBlockNumber(ctx, chain.ID, lastBlockNumber)
+										if err != nil {
+											return errs.NewError(err)
+										}
+										if endBlocks >= eventResp.LastBlockNumber {
+											break
+										}
+									}
+								} else {
 									break
 								}
 							}
-						} else {
-							break
+							return nil
+						}(networkID)
+						if err != nil {
+							_ = s.UpdateScanBlockErrorForNetwork(ctx, networkID, err)
+							return errs.NewError(err)
 						}
 					}
-					return nil
-				}(networkID)
-				if err != nil {
-					return errs.NewError(err)
 				}
 			}
-		}
-	}
-	return nil
-}
-
-func (s *Service) JobScanEventsByChain(ctx context.Context) error {
-	err := s.JobRunCheck(
-		ctx, "JobScanEventsByChain",
-		func() error {
-			var retErr error
-			for networkIDStr := range s.conf.Networks {
-				networkID, _ := strconv.ParseUint(networkIDStr, 10, 64)
-				err := s.ScanEventsByChain(ctx, networkID)
-				if err != nil {
-					retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, networkID))
-				}
-			}
-			return retErr
+			return nil
 		},
 	)
 	if err != nil {
@@ -1333,3 +1342,32 @@ func (s *Service) JobScanEventsByChain(ctx context.Context) error {
 	}
 	return nil
 }
+
+// func (s *Service) JobScanEventsByChain(ctx context.Context) error {
+// 	err := s.JobRunCheck(
+// 		ctx, "JobScanEventsByChain",
+// 		func() error {
+// 			var retErr error
+// 			var networkIDs []uint64
+// 			for networkIDStr := range s.conf.Networks {
+// 				networkID, _ := strconv.ParseUint(networkIDStr, 10, 64)
+// 				networkIDs = append(networkIDs, networkID)
+// 			}
+// 			// random networkIDs
+// 			rand.Shuffle(len(networkIDs), func(i, j int) {
+// 				networkIDs[i], networkIDs[j] = networkIDs[j], networkIDs[i]
+// 			})
+// 			for _, networkID := range networkIDs {
+// 				err := s.ScanEventsByChain(ctx, networkID)
+// 				if err != nil {
+// 					retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, networkID))
+// 				}
+// 			}
+// 			return retErr
+// 		},
+// 	)
+// 	if err != nil {
+// 		return errs.NewError(err)
+// 	}
+// 	return nil
+// }

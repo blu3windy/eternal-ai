@@ -125,12 +125,12 @@ func (c *Client) GetClient() (*ethclient.Client, error) {
 	return c.client, nil
 }
 
-func (c *Client) ChainID() uint64 {
+func (c *Client) ChainID() (uint64, error) {
 	_, err := c.GetChainID()
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
-	return c.chainID
+	return c.chainID, nil
 }
 
 func (c *Client) Address() (string, string, error) {

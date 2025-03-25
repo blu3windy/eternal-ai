@@ -101,6 +101,13 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	if req.IsCustomUi != nil {
 		agent.IsCustomUi = *req.IsCustomUi
 	}
+	if req.RequiredInfo != nil {
+		agent.RequiredInfo = *req.RequiredInfo
+	}
+	if req.InferFee != nil {
+		inferFee := numeric.NewBigFloatFromString(*req.InferFee)
+		agent.InferFee = inferFee
+	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
 
@@ -216,6 +223,7 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	if req.AgentType > 0 {
 		agent.AgentType = req.AgentType
 		if req.AgentType == models.AgentInfoAgentTypeModel ||
+			req.AgentType == models.AgentInfoAgentTypeModelOnline ||
 			req.AgentType == models.AgentInfoAgentTypeJs ||
 			req.AgentType == models.AgentInfoAgentTypePython ||
 			req.AgentType == models.AgentInfoAgentTypeCustomUi ||
@@ -483,6 +491,13 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				}
 				if req.IsCustomUi != nil {
 					agent.IsCustomUi = *req.IsCustomUi
+				}
+				if req.RequiredInfo != nil {
+					agent.RequiredInfo = *req.RequiredInfo
+				}
+				if req.InferFee != nil {
+					inferFee := numeric.NewBigFloatFromString(*req.InferFee)
+					agent.InferFee = inferFee
 				}
 				if req.MinFeeToUse.Cmp(big.NewFloat(0)) > 0 {
 					agent.MinFeeToUse = req.MinFeeToUse

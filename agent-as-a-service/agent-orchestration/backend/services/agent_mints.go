@@ -125,6 +125,7 @@ func (s *Service) JobAgentMintNft(ctx context.Context) error {
 						)`: {
 							[]models.AgentInfoAgentType{
 								models.AgentInfoAgentTypeModel,
+								models.AgentInfoAgentTypeModelOnline,
 								models.AgentInfoAgentTypeJs,
 								models.AgentInfoAgentTypePython,
 								models.AgentInfoAgentTypeInfa,
@@ -227,6 +228,7 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 							checkFee = &agentChainFee.MintFee.Float
 						}
 					case models.AgentInfoAgentTypeModel,
+						models.AgentInfoAgentTypeModelOnline,
 						models.AgentInfoAgentTypeJs,
 						models.AgentInfoAgentTypePython,
 						models.AgentInfoAgentTypeInfa,
@@ -276,6 +278,7 @@ func (s *Service) AgentMintNft(ctx context.Context, agentInfoID uint) error {
 							}
 						}
 					case models.AgentInfoAgentTypeModel,
+						models.AgentInfoAgentTypeModelOnline,
 						models.AgentInfoAgentTypeJs,
 						models.AgentInfoAgentTypePython,
 						models.AgentInfoAgentTypeInfa,

@@ -124,6 +124,7 @@ type AgentInfoResp struct {
 	EstimateTwinDoneTimestamp *time.Time                `json:"estimate_twin_done_timestamp"`
 	TokenDesc                 string                    `json:"token_desc"`
 	ExternalChartUrl          string                    `json:"external_chart_url"`
+	InferFee                  numeric.BigFloat          `json:"infer_fee"`
 	MissionTopics             string                    `json:"mission_topics"`
 	GraphData                 string                    `json:"graph_data"`
 	AgentType                 models.AgentInfoAgentType `json:"agent_type"`
@@ -138,6 +139,7 @@ type AgentInfoResp struct {
 	Likes                     int64                     `json:"likes"`
 	IsPublic                  bool                      `json:"is_public"`
 	DockerPort                string                    `json:"docker_port"`
+	RequiredInfo              string                    `json:"required_info"`
 }
 
 type AgentTwitterPostResp struct {
@@ -292,6 +294,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		TotalMintTwinFee:     m.TotalMintTwinFee,
 		TokenDesc:            m.TokenDesc,
 		ExternalChartUrl:     m.ExternalChartUrl,
+		InferFee:             m.InferFee,
 		MissionTopics:        m.MissionTopics,
 		GraphData:            m.GraphData,
 		AgentType:            m.AgentType,
@@ -305,6 +308,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		Likes:                m.Likes,
 		IsPublic:             m.IsPublic,
 		DockerPort:           m.DockerPort,
+		RequiredInfo:         m.RequiredInfo,
 	}
 
 	if m.NftTokenImage != "" {

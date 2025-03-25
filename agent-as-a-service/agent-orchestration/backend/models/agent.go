@@ -66,6 +66,7 @@ const (
 	AgentInfoAgentTypeVideo         AgentInfoAgentType = 9
 	AgentInfoAgentTypeCustomUi      AgentInfoAgentType = 10
 	AgentInfoAgentTypeCustomPrompt  AgentInfoAgentType = 11
+	AgentInfoAgentTypeModelOnline   AgentInfoAgentType = 12
 )
 
 type (
@@ -219,6 +220,7 @@ type AgentInfo struct {
 	Likes          int64  `gorm:"default:0"`
 	IsPublic       bool   `gorm:"default:1"`
 	DockerPort     string
+	RequiredInfo   string `gorm:"type:longtext"`
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string
