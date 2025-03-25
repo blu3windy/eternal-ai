@@ -1222,7 +1222,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 		analysedResultChanel <- analysedResult
 	}()
 	toolCallData := ""
-	if knowledgeBases[0].ID != 211 { //eth denver agent
+	if knowledgeBases[0].ID == 211 { //eth denver agent
 		var err error
 		toolCallData, err = s.GetResultFromToolCall(*retrieveQuery)
 		if err != nil {
