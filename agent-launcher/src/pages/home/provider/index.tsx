@@ -189,7 +189,6 @@ const AgentProvider: React.FC<
       fetchCoinPrices();
       fetchAvailableModelAgents();
       fetchInstalledUtilityAgents();
-      loadAgentStates();
       // loadAgentStates();
    }, []);
 
@@ -228,7 +227,7 @@ const AgentProvider: React.FC<
          }
       }));
    };
-
+  
    useEffect(() => {
       const fetchWalletData = async () => {
          if (selectedAgent) {
