@@ -9,28 +9,23 @@ import {
    Popover,
    PopoverContent,
    PopoverTrigger,
+   SimpleGrid,
    Text,
-   useDisclosure,
-   Card,
-   CardBody,
-   Avatar,
-   Tag,
-   TagLabel,
-   SimpleGrid
+   useDisclosure
 } from '@chakra-ui/react';
-import s from './styles.module.scss';
-import InfiniteScroll from 'react-infinite-scroll-component';
-import AgentItem from './AgentItem';
-import AppLoading from "../../../components/AppLoading";
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import throttle from 'lodash.throttle';
-import { IAgentToken } from "../../../services/api/agents-token/interface.ts";
-import debounce from 'lodash.debounce';
-import { AgentContext } from "../provider";
-import uniqBy from 'lodash.uniqby';
-import CAgentTokenAPI from "../../../services/api/agents-token";
 import cx from 'clsx';
+import debounce from 'lodash.debounce';
+import throttle from 'lodash.throttle';
+import uniqBy from 'lodash.uniqby';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import AppLoading from "../../../components/AppLoading";
+import CAgentTokenAPI from "../../../services/api/agents-token";
+import { IAgentToken } from "../../../services/api/agents-token/interface.ts";
+import { AgentContext } from "../provider";
+import AgentItem from './AgentItem';
 import AgentNotification from './AgentNotification/index.tsx';
+import s from './styles.module.scss';
 
 export enum SortOption {
   MarketCap = 'meme_market_cap',
@@ -106,6 +101,37 @@ export const AgentTypeName = {
    [AgentType.Infra]: 'Infra',
 }
 
+const CATEGORIES = [
+   // {
+   //    id: CategoryOption.Character,
+   //    name: 'Character',
+   //    description: 'Social and chat agents',
+   //    gradient: 'linear-gradient(270deg, #F38F1A 0%, #8D530F 100%)',
+   //    icon: 'icons/ic-category-character.svg'
+   // },
+   {
+      id: CategoryOption.Model,
+      name: 'Model',
+      description: 'AI model agents',
+      gradient: 'linear-gradient(270deg, #EF3B2F 0%, #89221B 100%)',
+      icon: 'icons/ic-category-model.svg'
+   },
+   {
+      id: CategoryOption.Utility,
+      name: 'Utility',
+      description: 'Tool and utility agents',
+      gradient: 'linear-gradient(270deg, #A94FD4 0%, #58296E 100%)',
+      icon: 'icons/ic-category-utility.svg'
+   },
+   {
+      id: CategoryOption.Infra,
+      name: 'Infra',
+      description: 'Infrastructure agents',
+      gradient: 'linear-gradient(270deg, #3FBF5A 0%, #1D592A 100%)',
+      icon: 'icons/ic-category-infra.svg'
+   }
+];
+
 const AgentsList = () => {
    const refInput = useRef<HTMLInputElement | null>(null);
 
@@ -117,7 +143,12 @@ const AgentsList = () => {
    const [isSearchMode, setIsSearchMode] = useState(false);
    const [showCategoryList, setShowCategoryList] = useState(true);
 
+   console.log('isSearchMode', isSearchMode);
+   console.log('showCategoryList', showCategoryList);
+
    const [agents, setAgents] = useState<IAgentToken[]>([]);
+   const [latestAgent, setLatestAgent] = useState<IAgentToken | null>(null);
+   const refLatestInterval = useRef<any>(null);
 
    const { setSelectedAgent, selectedAgent } = useContext(AgentContext);
 
@@ -135,6 +166,50 @@ const AgentsList = () => {
    const { isOpen: isOpenSort, onClose: onCloseSort, onToggle: onToggleSort } = useDisclosure();
 
    const cPumpAPI = new CAgentTokenAPI();
+
+   useEffect(() => {
+      getLatestAgent();
+      refLatestInterval.current = setInterval(() => {
+         getLatestAgent();
+      }, 30000);
+
+      return () => {
+         if (refLatestInterval.current) {
+            clearInterval(refLatestInterval.current);
+         }
+      };
+   }, []);
+
+   const getLatestAgent = async () => {
+      try {
+         const params: any = {
+            page: 1,
+            limit: 1,
+            sort_col: SortOption.CreatedAt,
+            sort_type: 'desc',
+            chain: '',
+            agent_types: [
+               AgentType.Model,
+               AgentType.ModelOnline,
+               AgentType.UtilityJS,
+               AgentType.UtilityPython,
+               AgentType.CustomUI,
+               AgentType.CustomPrompt,
+               AgentType.Infra
+            ].join(','),
+         };
+
+         const { agents } = await cPumpAPI.getAgentTokenList(params);
+         if (agents && agents.length > 0) {
+            const agent = agents[0];
+            if (!latestAgent || agent.id !== latestAgent.id) {
+               setLatestAgent(agent);
+            }
+         }
+      } catch (error) {
+         console.error('Error fetching latest agent:', error);
+      }
+   };
 
    const getTokens = async (isNew: boolean) => {
       if (refLoading.current) return;
@@ -229,117 +304,52 @@ const AgentsList = () => {
          ...refParams.current,
          category: CategoryOption.All,
       };
-      if (!refParams.current.search) {
-         setIsSearchMode(false);
-      }
+      // if (!refParams.current.search) {
+      //    setIsSearchMode(false);
+      // }
    };
 
    const renderSearchMode = () => {
       if (!isSearchMode) return null;
 
-      // Show search results when not showing category list
       if (!showCategoryList) {
          return renderSearchResults();
       }
 
       return (
          <Box p="24px">
-            <Box mb="32px">
-               <Text fontSize="22px" fontWeight="500" mb="16px">New & Updates</Text>
-               <Card>
-                  <CardBody>
-                     <Flex gap="16px">
-                        <Avatar 
-                           size="lg"
-                           src="/images/sirach-avatar.png"
-                           name="SirACH"
-                        />
-                        <Box flex="1">
-                           <Flex align="center" gap="8px" mb="8px">
-                              <Text fontSize="18px" fontWeight="600">SirACH</Text>
-                              <Text color="gray.500">$HSK</Text>
-                              <Tag size="sm" bg="gray.100" ml="auto">
-                                 <TagLabel>New</TagLabel>
-                              </Tag>
-                           </Flex>
-                           <Text color="gray.600" fontSize="14px" mb="12px">
-                              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.
-                           </Text>
-                           <Flex gap="12px">
-                              <Tag size="md" variant="subtle" bg="gray.100">
-                                 <TagLabel>$43k MC</TagLabel>
-                              </Tag>
-                              <Tag size="md" variant="subtle" bg="gray.100">
-                                 <TagLabel>3k prompts</TagLabel>
-                              </Tag>
-                              <Tag size="md" variant="subtle" bg="gray.100">
-                                 <TagLabel>Balance 324 EAI</TagLabel>
-                              </Tag>
-                           </Flex>
-                        </Box>
-                     </Flex>
-                  </CardBody>
-               </Card>
-            </Box>
+            {latestAgent && (
+               <Box mb="32px">
+                  <Text fontSize="24px" fontWeight="600" mb="16px">New & Updates</Text>
+                  <Box borderRadius={"8px"} overflow={"hidden"}>
+                     <AgentItem token={latestAgent} />
+                  </Box>
+               </Box>
+            )}
 
             <Box>
-               <Text fontSize="22px" fontWeight="500" mb="16px">Categories</Text>
-               <SimpleGrid columns={{base: 1, md: 1}} spacing="20px">
-                  {/* <Flex
-                     className={s.categoryItem}
-                     bg="linear-gradient(270deg, #F38F1A 0%, #8D530F 100%)"
-                     onClick={() => {
-                        handleCategorySelect(CategoryOption.Character);
-                     }}
-                  >
-                     <Text color="white" fontSize="20px" fontWeight="500">Character</Text>
-                     <Image 
-                        src="icons/ic-category-character.svg" 
-                        className={s.categoryImage}
-                     />
-                  </Flex> */}
-
-                  <Flex
-                     className={s.categoryItem}
-                     bg="linear-gradient(270deg, #EF3B2F 0%, #89221B 100%)"
-                     onClick={() => {
-                        handleCategorySelect(CategoryOption.Model);
-                     }}
-                  >
-                     <Text color="white" fontSize="20px" fontWeight="500">Model</Text>
-                     <Image 
-                        src="icons/ic-category-model.svg"
-                        className={s.categoryImage}
-                     />
-                  </Flex>
-
-                  <Flex
-                     className={s.categoryItem}
-                     bg="linear-gradient(270deg, #A94FD4 0%, #58296E 100%)"
-                     onClick={() => {
-                        handleCategorySelect(CategoryOption.Utility);
-                     }}
-                  >
-                     <Text color="white" fontSize="20px" fontWeight="500">Utility</Text>
-                     <Image 
-                        src="icons/ic-category-utility.svg"
-                        className={s.categoryImage}
-                     />
-                  </Flex>
-
-                  <Flex
-                     className={s.categoryItem}
-                     bg="linear-gradient(270deg, #3FBF5A 0%, #1D592A 100%)"
-                     onClick={() => {
-                        handleCategorySelect(CategoryOption.Infra);
-                     }}
-                  >
-                     <Text color="white" fontSize="20px" fontWeight="500">Infra</Text>
-                     <Image 
-                        src="icons/ic-category-infra.svg"
-                        className={s.categoryImage}
-                     />
-                  </Flex>
+               <Text fontSize="24px" fontWeight="600" mb="16px">Categories</Text>
+               <SimpleGrid columns={1} spacing="16px">
+                  {CATEGORIES.map((category) => (
+                     <Flex
+                        key={category.id}
+                        className={s.categoryItem}
+                        bg={category.gradient}
+                        onClick={() => {
+                           refParams.current.category = category.id;
+                           setShowCategoryList(false);
+                           debounceGetTokens(true);
+                        }}
+                     >
+                        <Text fontSize="20px" fontWeight="500" color="#fff">
+                           {category.name}
+                        </Text>
+                        <Image
+                           src={category.icon}
+                           className={s.categoryImage}
+                        />
+                     </Flex>
+                  ))}
                </SimpleGrid>
             </Box>
          </Box>
@@ -365,14 +375,14 @@ const AgentsList = () => {
                ref={refInput as any}
                // autoFocus
                onFocus={() => setIsSearchMode(true)}
-               onBlur={() => {
-                  // Delay hiding search mode to allow clicking category
-                  setTimeout(() => {
-                     if (!refParams.current.search) {
-                        setIsSearchMode(false);
-                     }
-                  }, 200);
-               }}
+               // onBlur={() => {
+               //    // Delay hiding search mode to allow clicking category
+               //    setTimeout(() => {
+               //       if (!refParams.current.search) {
+               //          setIsSearchMode(false);
+               //       }
+               //    }, 200);
+               // }}
                onChange={(event) => {
                   onSearch(event.target.value);
                }}
