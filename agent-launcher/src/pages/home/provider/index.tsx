@@ -189,19 +189,19 @@ const AgentProvider: React.FC<
       fetchCoinPrices();
       fetchAvailableModelAgents();
       fetchInstalledUtilityAgents();
-      loadAgentStates();
+      // loadAgentStates();
    }, []);
 
    useEffect(() => {
       fetchInstalledModelAgents();
    }, [availableModelAgents]);
 
-   const loadAgentStates = async () => {
-      const savedStates = await localStorageService.getItem(STORAGE_KEYS.AGENT_STATES);
-      if (savedStates) {
-         setAgentStates(JSON.parse(savedStates));
-      }
-   };
+   // const loadAgentStates = async () => {
+   //    const savedStates = await localStorageService.getItem(STORAGE_KEYS.AGENT_STATES);
+   //    if (savedStates) {
+   //       setAgentStates(JSON.parse(savedStates));
+   //    }
+   // };
 
    useEffect(() => {
       const saveAgentStates = async () => {
@@ -227,7 +227,7 @@ const AgentProvider: React.FC<
          }
       }));
    };
-
+  
    useEffect(() => {
       const fetchWalletData = async () => {
          if (selectedAgent) {
@@ -451,6 +451,7 @@ const AgentProvider: React.FC<
 
 
    const setAgentInstalled = (agent: IAgentToken) => {
+      console.log("stephen: setAgentInstalled", agent);
       updateAgentState(agent.id, {
          data: agent,
          isInstalled: true,
@@ -460,6 +461,7 @@ const AgentProvider: React.FC<
    }
 
    const setAgentUnInstalled = (agent: IAgentToken) => {
+      console.log("stephen: setAgentUnInstalled", agent);
       updateAgentState(agent.id, {
          data: agent,
          isInstalled: false,
@@ -516,6 +518,7 @@ const AgentProvider: React.FC<
    }
 
    const startAgent = async (agent: IAgentToken, needUpdateCode?: boolean) => {
+      console.log("stephen: startAgent", agent);
       try {
          updateAgentState(agent.id, {
             data: agent,
@@ -523,25 +526,33 @@ const AgentProvider: React.FC<
          });
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
+            console.log('stephen: startAgent Utility install', new Date().toLocaleTimeString());
             await installUtilityAgent(agent, needUpdateCode);
             await startDependAgents(agent);
+            console.log('stephen: startAgent Utility start docker', new Date().toLocaleTimeString());
 
             await handleRunDockerAgent(agent);
+            console.log('stephen: startAgent Utility finish docker', new Date().toLocaleTimeString());
          } else if (agent.agent_type === AgentType.Model) {
+            console.log('stephen: startAgent Model install', new Date().toLocaleTimeString());
             await handleInstallModelAgentRequirement();
-
+            
+            console.log('stephen: startAgent Model get hash', new Date().toLocaleTimeString());
             const ipfsHash = await getModelAgentHash(agent);
             console.log('startAgent ====ipfsHash', ipfsHash);
 
+            console.log('stephen: startAgent Model run', new Date().toLocaleTimeString());
             await handleRunModelAgent(ipfsHash);
             setCurrentModel(agent);
+            console.log('stephen: startAgent Model finish run', new Date().toLocaleTimeString());
          } else if (agent.agent_type === AgentType.ModelOnline) {
+            console.log('stephen: startAgent ModelOnline install', new Date().toLocaleTimeString());
             await handleInstallModelAgentRequirement();
 
+            console.log('stephen: startAgent ModelOnline get hash', new Date().toLocaleTimeString());
             const httpLink = await getModelAgentHash(agent);
             console.log('startAgent ====httpLink', httpLink);
-
-            
+            console.log('stephen: startAgent ModelOnline finish', new Date().toLocaleTimeString());
          } else {
 
          }
@@ -924,6 +935,105 @@ const AgentProvider: React.FC<
          startAgent(newAgent);
       }
    }, [agentStates]);
+
+   const checkAllInstalledAgentsRunning = async () => {
+      try {
+         // Check utility agents
+         for (const folderName of installedUtilityAgents) {
+            const [networkId, agentName] = folderName.split('-');
+            if (!networkId || !agentName) continue;
+
+            const agent = availableModelAgents.find(a => 
+               a.network_id.toString() === networkId 
+               && a.agent_name?.toLowerCase() === agentName
+            );
+            
+            if (agent) {
+               if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
+                  try {
+                     const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: true
+                     });
+                  } catch (err) {
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: false
+                     });
+                  }
+               } 
+               else if (agent.agent_type === AgentType.CustomUI) {
+                  try {
+                     const port = await globalThis.electronAPI.dockerRunningPort(agentName, networkId);
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: !!port
+                     });
+                  } catch (err) {
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: false
+                     });
+                  }
+               }
+            }
+         }
+
+         // Check all installed model agents
+         const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
+         for (const agent of installedModelAgents) {
+            const ipfsHash = await getModelAgentHash(agent);
+            updateAgentState(agent.id, {
+               data: agent,
+               isInstalled: true,
+               isRunning: ipfsHash === runningModelHash
+            });
+         }
+
+         // Check all installed social agents
+         // Social agents are considered always running after installation
+         for (const agentId of installedSocialAgents) {
+            const agent = installedSocialAgents.find(a => a.id === agentId);
+            if (agent) {
+               updateAgentState(agent.id, {
+                  data: agent,
+                  isInstalled: true,
+                  isRunning: true // Social agents are always running after installed
+               });
+            }
+         }
+      } catch (err) {
+         console.log("checkAllInstalledAgentsRunning error:", err);
+      }
+   };
+
+   const intervalCheckAllAgents = () => {
+      checkAllInstalledAgentsRunning();
+      
+      if (refInterval.current) {
+         clearInterval(refInterval.current);
+      }
+      
+      refInterval.current = setInterval(() => {
+         checkAllInstalledAgentsRunning();
+      }, 30000);
+   };
+
+   // Start checking when installed agents list changes
+   useEffect(() => {
+      intervalCheckAllAgents();
+      
+      return () => {
+         if (refInterval.current) {
+            clearInterval(refInterval.current);
+         }
+      };
+   }, [installedUtilityAgents, installedModelAgents, installedSocialAgents]);
 
    const contextValues: any = useMemo(() => {
       return {
