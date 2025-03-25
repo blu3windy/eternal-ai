@@ -1,17 +1,60 @@
 import { Center, Flex, Text } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import CAgentTokenAPI from "@services/api/agents-token";
 import { AgentType } from "@pages/home/list-agent";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import Item from "@pages/authen/ChooseModel/Item.tsx";
 import Loading from "@components/Loading";
 import BaseButton from "@components/BaseButton";
+import throttle from "lodash/throttle";
+import storageModel from "@storage/StorageModel.ts";
+import { BASE_CHAIN_ID } from "@constants/chains.ts";
+import CAgentContract from "@contract/agent";
 
-const ChooseModel = () => {
+interface IProps {
+    onNext?: (agent: IAgentToken) => Promise<void>;
+}
+
+const ChooseModel = ({ onNext }: IProps) => {
    const agentAPI = useRef(new CAgentTokenAPI());
    const [agents, setAgents] = useState<IAgentToken[]>([]);
    const [loading, setLoading] = useState<boolean>(false);
    const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
+   const [submitting, setSubmitting] = useState<boolean>(false);
+
+   const getModelAgentHash = async (agent: IAgentToken) => {
+      if (agent && !!agent.agent_contract_address) {
+         const chainId = agent?.network_id || BASE_CHAIN_ID;
+         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
+         const codeVersion = await cAgent.getCurrentVersion();
+         const ipfsHash = await cAgent.getAgentCode(codeVersion);
+         return ipfsHash?.replaceAll('\n', '');
+      }
+   }
+
+   const _onNext = throttle(useCallback(async () => {
+      if (!selectedAgent) return;
+      try {
+         setSubmitting(true);
+         // await storage.setItem("CURRENT", JSON.stringify())
+
+         const hash = await getModelAgentHash(selectedAgent);
+
+         const electronAPI = window?.electronAPI;
+         if (selectedAgent.agent_type === AgentType.Model) {
+         }
+         // await electronAPI?.modelInstall
+         await storageModel.setActiveModel(selectedAgent);
+         if (onNext) {
+            await onNext(selectedAgent);
+         }
+      } catch (error) {
+         console.error(error);
+      } finally {
+         setSubmitting(false);
+      }
+
+   }, [selectedAgent]), 2000);
 
    const fetchData = async () => {
       try {
@@ -90,7 +133,13 @@ const ChooseModel = () => {
                />
             ))}
          </Flex>
-         <BaseButton maxW="304px" alignSelf="center">
+         <BaseButton
+            onClick={_onNext}
+            maxW="304px"
+            alignSelf="center"
+            isDisabled={!selectedAgent || submitting}
+            isLoading={submitting}
+         >
             Next
          </BaseButton>
       </Flex>

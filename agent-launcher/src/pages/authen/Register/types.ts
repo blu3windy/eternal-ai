@@ -7,7 +7,8 @@ enum RegisterType {
 enum CreateNewStep {
     backup = "backup",
     confirmKey = "confirmKey",
-    confirmPass = "confirmPass"
+    confirmPass = "confirmPass",
+    setupModel = "setupModel",
 }
 
 export {
