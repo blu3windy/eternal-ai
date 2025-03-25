@@ -936,6 +936,105 @@ const AgentProvider: React.FC<
       }
    }, [agentStates]);
 
+   const checkAllInstalledAgentsRunning = async () => {
+      try {
+         // Check utility agents
+         for (const folderName of installedUtilityAgents) {
+            const [networkId, agentName] = folderName.split('-');
+            if (!networkId || !agentName) continue;
+
+            const agent = availableModelAgents.find(a => 
+               a.network_id.toString() === networkId 
+               && a.agent_name?.toLowerCase() === agentName
+            );
+            
+            if (agent) {
+               if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
+                  try {
+                     const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: true
+                     });
+                  } catch (err) {
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: false
+                     });
+                  }
+               } 
+               else if (agent.agent_type === AgentType.CustomUI) {
+                  try {
+                     const port = await globalThis.electronAPI.dockerRunningPort(agentName, networkId);
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: !!port
+                     });
+                  } catch (err) {
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: false
+                     });
+                  }
+               }
+            }
+         }
+
+         // Check all installed model agents
+         const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
+         for (const agent of installedModelAgents) {
+            const ipfsHash = await getModelAgentHash(agent);
+            updateAgentState(agent.id, {
+               data: agent,
+               isInstalled: true,
+               isRunning: ipfsHash === runningModelHash
+            });
+         }
+
+         // Check all installed social agents
+         // Social agents are considered always running after installation
+         for (const agentId of installedSocialAgents) {
+            const agent = installedSocialAgents.find(a => a.id === agentId);
+            if (agent) {
+               updateAgentState(agent.id, {
+                  data: agent,
+                  isInstalled: true,
+                  isRunning: true // Social agents are always running after installed
+               });
+            }
+         }
+      } catch (err) {
+         console.log("checkAllInstalledAgentsRunning error:", err);
+      }
+   };
+
+   const intervalCheckAllAgents = () => {
+      checkAllInstalledAgentsRunning();
+      
+      if (refInterval.current) {
+         clearInterval(refInterval.current);
+      }
+      
+      refInterval.current = setInterval(() => {
+         checkAllInstalledAgentsRunning();
+      }, 30000);
+   };
+
+   // Start checking when installed agents list changes
+   useEffect(() => {
+      intervalCheckAllAgents();
+      
+      return () => {
+         if (refInterval.current) {
+            clearInterval(refInterval.current);
+         }
+      };
+   }, [installedUtilityAgents, installedModelAgents, installedSocialAgents]);
+
    const contextValues: any = useMemo(() => {
       return {
          loading,
