@@ -190,18 +190,19 @@ const AgentProvider: React.FC<
       fetchAvailableModelAgents();
       fetchInstalledUtilityAgents();
       loadAgentStates();
+      // loadAgentStates();
    }, []);
 
    useEffect(() => {
       fetchInstalledModelAgents();
    }, [availableModelAgents]);
 
-   const loadAgentStates = async () => {
-      const savedStates = await localStorageService.getItem(STORAGE_KEYS.AGENT_STATES);
-      if (savedStates) {
-         setAgentStates(JSON.parse(savedStates));
-      }
-   };
+   // const loadAgentStates = async () => {
+   //    const savedStates = await localStorageService.getItem(STORAGE_KEYS.AGENT_STATES);
+   //    if (savedStates) {
+   //       setAgentStates(JSON.parse(savedStates));
+   //    }
+   // };
 
    useEffect(() => {
       const saveAgentStates = async () => {
