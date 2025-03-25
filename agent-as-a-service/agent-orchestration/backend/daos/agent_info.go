@@ -156,28 +156,8 @@ select concat('post num : ', (
 	return msg, nil
 }
 
-// //
-func (d *DAO) FirstAgentVideo(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string) (*models.AgentVideo, error) {
-	var m models.AgentVideo
-	if err := d.first(tx, &m, filters, preloads, orders, false); err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &m, nil
-}
-
-func (d *DAO) FindAgentVideo(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string, offset int, limit int) ([]*models.AgentVideo, error) {
-	var ms []*models.AgentVideo
-	if err := d.find(tx, &ms, filters, preloads, orders, offset, limit, false); err != nil {
-		return nil, err
-	}
-	return ms, nil
-}
-
-func (d *DAO) FirstAgentVideoRecipient(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string) (*models.AgentVideoRecipient, error) {
-	var m models.AgentVideoRecipient
+func (d *DAO) FirstPrivyWallet(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string) (*models.PrivyWallet, error) {
+	var m models.PrivyWallet
 	if err := d.first(tx, &m, filters, preloads, orders, false); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil

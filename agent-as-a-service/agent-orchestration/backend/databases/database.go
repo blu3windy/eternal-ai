@@ -130,6 +130,7 @@ func MigrateDBMain(db *gorm.DB) error {
 		(*models.AgentUtilityRecentChat)(nil),
 		(*models.ClankerVideoToken)(nil),
 		(*models.AgentReactionHistory)(nil),
+		(*models.PrivyWallet)(nil),
 	}
 
 	if err := db.AutoMigrate(allTables...).Error; err != nil {

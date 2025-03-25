@@ -280,6 +280,10 @@ type Config struct {
 		ApiUrl                   string  `json:"api_url"`
 		CreatorRewardsPercentage float64 `json:"creator_rewards_percentage"`
 	} `json:"clanker"`
+	Privy struct {
+		AppID     string `json:"app_id"`
+		AppSecret string `json:"app_secret"`
+	} `json:"privy"`
 }
 
 func (cf *Config) ExistsedConfigKey(networkID uint64, name string) bool {

@@ -107,14 +107,13 @@ func Test_SRV(t *testing.T) {
 
 	// fmt.Println(ts.DeployProxyAdminAddress(context.Background(), models.BASE_CHAIN_ID))
 	// ts.JobExecuteInfraTwitterAppRequest(context.Background())
-	// ts.CreateAgentVideoByPostID(context.Background(), 34947)
-
-	ts.AgentMintNft(context.Background(), 14736)
+	ts.CreateClankerTokenForVideoByPostID(context.Background(), 34949)
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
-	// ts.CreateGenerateVideoByTweetID(daos.GetDBMainCtx(context.Background()), "1895369759690219863")
-	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 1338)
+	// nonce := helpers.RandomStringWithLength(32)
+	// fmt.Println(nonce)
+	// ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 34584)
 }
 
 func Test_IPFS(t *testing.T) {

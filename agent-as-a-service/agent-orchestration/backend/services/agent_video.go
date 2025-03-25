@@ -10,6 +10,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/clanker"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/privy"
 	"github.com/jinzhu/gorm"
 )
 
@@ -35,6 +36,54 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 					}
 
 					if twitterPost != nil && twitterPost.Status == models.AgentTwitterPostStatusReplied {
+						// check if privy wallet already exists
+						privyWallet, err := s.dao.FirstPrivyWallet(tx,
+							map[string][]interface{}{
+								"twitter_id = ?": {twitterPost.TwitterID},
+							}, map[string][]interface{}{}, []string{})
+						if err != nil {
+							return errs.NewError(err)
+						}
+
+						if privyWallet == nil {
+							//call api privy
+							privyResp, err := s.privyClient.CreateUser(&privy.CreateUserReq{
+								CreateEthereumWallet: true,
+								LinkedAccounts: []privy.LinkedAccountReq{
+									{
+										Type:     "twitter_oauth",
+										Subject:  twitterPost.TwitterID,
+										Name:     twitterPost.TwitterName,
+										Username: twitterPost.TwitterUsername,
+									},
+								},
+							})
+
+							if err != nil {
+								return errs.NewError(err)
+							}
+
+							if privyResp != nil {
+								walletAddress := ""
+								for _, wallet := range privyResp.LinkedAccounts {
+									if wallet.Type == "wallet" {
+										walletAddress = wallet.Address
+										break
+									}
+								}
+								//create privy wallet
+								privyWallet = &models.PrivyWallet{
+									TwitterID: twitterPost.TwitterID,
+									Address:   walletAddress,
+									PrivyID:   privyResp.ID,
+								}
+								err = s.dao.Create(tx, privyWallet)
+								if err != nil {
+									return errs.NewError(err)
+								}
+							}
+						}
+
 						inst, err := s.dao.FirstClankerVideoToken(
 							tx,
 							map[string][]interface{}{
@@ -47,16 +96,7 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 							return errs.NewError(err)
 						}
 
-						if inst == nil {
-							// coinDesc := strings.TrimSpace(fmt.Sprintf(`
-							// 	%s
-
-							// 	@%s tweet https://x.com/%s/status/%s`,
-							// 	twitterPost.ExtractContent,
-							// 	twitterPost.TwitterUsername, twitterPost.TwitterUsername,
-							// 	twitterPost.TwitterPostID,
-							// ))
-
+						if inst == nil && privyWallet != nil {
 							inst := &models.ClankerVideoToken{
 								TokenImageUrl:      twitterPost.ExtractMediaContent,
 								OwnerTwitterID:     twitterPost.TwitterID,
@@ -64,23 +104,10 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 								TokenDesc:          twitterPost.ExtractContent,
 								TokenStatus:        "pending",
 								VideoUrl:           twitterPost.ImageUrl,
-								RequestorAddress:   s.conf.Clanker.RequestorAddress,
-								RequestKey:         helpers.RandomBigInt(12).Text(32),
+								RequestorAddress:   privyWallet.Address,
+								RequestKey:         helpers.RandomStringWithLength(32),
 							}
 
-							user, _ := s.dao.FirstUser(
-								tx,
-								map[string][]interface{}{
-									"network_id = ?": {models.GENERTAL_NETWORK_ID},
-									"twitter_id = ?": {twitterPost.GetOwnerTwitterID()},
-								},
-								map[string][]interface{}{},
-								false,
-							)
-
-							if user != nil {
-								inst.UserAddress = strings.ToLower(user.Address)
-							}
 							isGenImage := false
 							if twitterPost.ExtractMediaContent == "" {
 								isGenImage = true
@@ -94,30 +121,39 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 								}
 							}
 
-							//call api clanker
-							tokenResp, err := s.clanker.DeployToken(&clanker.DeployTokenReq{
-								Name:                     inst.TokenName,
-								Symbol:                   inst.TokenSymbol,
-								Description:              inst.TokenDesc,
-								Image:                    inst.TokenImageUrl,
-								RequestKey:               inst.RequestKey,
-								RequestorAddress:         inst.RequestorAddress,
-								SocialMediaUrls:          []string{fmt.Sprintf("https://x.com/%s/status/%s", twitterPost.TwitterUsername, twitterPost.TwitterPostID)},
-								Platform:                 "Eternal AI",
-								CreatorRewardsPercentage: s.conf.Clanker.CreatorRewardsPercentage,
-							})
+							if inst.TokenName != "" && inst.TokenSymbol != "" {
+								//call api clanker
+								tokenResp, err := s.clanker.DeployToken(&clanker.DeployTokenReq{
+									Name:                     inst.TokenName,
+									Symbol:                   inst.TokenSymbol,
+									Description:              inst.TokenDesc,
+									Image:                    inst.TokenImageUrl,
+									RequestKey:               inst.RequestKey,
+									RequestorAddress:         inst.RequestorAddress,
+									SocialMediaUrls:          []string{fmt.Sprintf("https://x.com/%s/status/%s", twitterPost.TwitterUsername, twitterPost.TwitterPostID)},
+									Platform:                 "Eternal AI",
+									CreatorRewardsPercentage: s.conf.Clanker.CreatorRewardsPercentage,
+								})
 
-							if err != nil {
-								inst.Error = err.Error()
-							} else if tokenResp != nil {
-								inst.TokenAddress = tokenResp.ContractAddress
-								inst.TxHash = tokenResp.TxHash
-								inst.TokenStatus = "done"
-								inst.Error = ""
-							}
-							err = s.dao.Create(tx, inst)
-							if err != nil {
-								return errs.NewError(err)
+								if err != nil {
+									inst.Error = err.Error()
+								} else if tokenResp != nil {
+									inst.TokenAddress = tokenResp.ContractAddress
+									inst.TxHash = tokenResp.TxHash
+									inst.TokenStatus = "done"
+									inst.Error = ""
+								}
+								err = s.dao.Create(tx, inst)
+								if err != nil {
+									return errs.NewError(err)
+								}
+
+								//update status twitter post
+								twitterPost.Status = models.AgentTwitterPostStatusDone
+								err = s.dao.Save(tx, twitterPost)
+								if err != nil {
+									return errs.NewError(err)
+								}
 							}
 						}
 					}
@@ -147,8 +183,8 @@ func (s *Service) GenerateTokenInfoFromVideoPrompt(ctx context.Context, sysPromp
 						I want to generate my token base on this info
 						'%s'
 
-						token-name (generate if not provided, make sure it not empty)
-						token-symbol (generate if not provided, make sure it not empty)
+						token-name (generate if not provided, make sure it not empty, limit with 15 characters)
+						token-symbol (generate if not provided, make sure it not empty, limit with 5 characters)
 
 						Please return in string in json format including token-name, token-symbol, just only json without explanation  and token name limit with 15 characters
 					`, sysPrompt)
@@ -186,35 +222,35 @@ func (s *Service) GenerateTokenInfoFromVideoPrompt(ctx context.Context, sysPromp
 	return info, nil
 }
 
-func (s *Service) GetListUserVideo(ctx context.Context, userAddres, search string) ([]*models.AgentVideo, error) {
-	filters := map[string][]interface{}{
-		"user_address = ? ": {strings.ToLower(userAddres)},
-	}
+// func (s *Service) GetListUserVideo(ctx context.Context, userAddres, search string) ([]*models.AgentVideo, error) {
+// 	filters := map[string][]interface{}{
+// 		"user_address = ? ": {strings.ToLower(userAddres)},
+// 	}
 
-	if search != "" {
-		search = fmt.Sprintf("%%%s%%", strings.ToLower(search))
-		filters[`
-			LOWER(token_name) like ?
-			or LOWER(token_symbol) like ?
-			or LOWER(token_address) like ?
-		`] = []any{search, search, search}
-	}
+// 	if search != "" {
+// 		search = fmt.Sprintf("%%%s%%", strings.ToLower(search))
+// 		filters[`
+// 			LOWER(token_name) like ?
+// 			or LOWER(token_symbol) like ?
+// 			or LOWER(token_address) like ?
+// 		`] = []any{search, search, search}
+// 	}
 
-	res, err := s.dao.FindAgentVideo(
-		daos.GetDBMainCtx(ctx),
-		filters,
-		map[string][]interface{}{
-			"AgentTwitterPost": {},
-		},
-		[]string{"id desc"},
-		0,
-		1000,
-	)
-	if err != nil {
-		return nil, errs.NewError(err)
-	}
-	return res, nil
-}
+// 	res, err := s.dao.FindAgentVideo(
+// 		daos.GetDBMainCtx(ctx),
+// 		filters,
+// 		map[string][]interface{}{
+// 			"AgentTwitterPost": {},
+// 		},
+// 		[]string{"id desc"},
+// 		0,
+// 		1000,
+// 	)
+// 	if err != nil {
+// 		return nil, errs.NewError(err)
+// 	}
+// 	return res, nil
+// }
 
 // package services
 

@@ -37,6 +37,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/googlestorage"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/openai"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/opensea"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/privy"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/pumfun"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/rapid"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/taapi"
@@ -77,6 +78,7 @@ type Service struct {
 	openseaService  *opensea.OpenseaService
 	taapi           *taapi.TaApi
 	clanker         *clanker.Client
+	privyClient     *privy.Client
 	// daos
 	dao *daos.DAO
 
@@ -150,6 +152,7 @@ func NewService(conf *configs.Config) *Service {
 		openseaService: opensea.NewOpensea(conf.OpenseaAPIKey),
 		taapi:          taapi.NewTaApi(conf.TaApiKey),
 		clanker:        clanker.NewClankerClient(conf.Clanker.ApiKey, conf.Clanker.ApiUrl),
+		privyClient:    privy.NewPrivyClient(conf.Privy.AppID, conf.Privy.AppSecret),
 	}
 
 	gormDB := mysql.NewDefaultMysqlGormConn(nil, s.conf.DbURL, s.conf.Debug)

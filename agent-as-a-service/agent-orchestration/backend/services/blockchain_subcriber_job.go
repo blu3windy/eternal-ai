@@ -548,7 +548,11 @@ func (s *Service) CreateErc20TransferEvent(ctx context.Context, networkID uint64
 					fmt.Println(err.Error())
 				}
 			} else {
-				if ethClient.ChainID() == models.TRON_CHAIN_ID {
+				chainId, err := ethClient.ChainID()
+				if err != nil {
+					return err
+				}
+				if chainId == models.TRON_CHAIN_ID {
 					balance, err = s.trxApi.Trc20Balance(conAddress, userAddress)
 					if err != nil {
 						fmt.Println(err.Error())
