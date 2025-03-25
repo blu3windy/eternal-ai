@@ -1,17 +1,15 @@
-import { Center, Image, Text } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
-import useStarter from "@pages/authen/hooks/useStarter.ts";
+import { Center, Image } from "@chakra-ui/react";
 import BackgroundWrapper from "@components/BackgroundWrapper";
-import LoadingText from "@components/LoadingText";
-import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
-import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import BaseButton from "@components/BaseButton";
-import storageModel from "@storage/StorageModel.ts";
-import { get } from "axios";
-import CAgentTokenAPI from "@services/api/agents-token";
-import { AgentType } from "@pages/home/list-agent";
-import { getSetupAgents } from "@pages/authen/ChooseModel/utils.ts";
+import LoadingText from "@components/LoadingText";
 import { getModelAgentHash } from "@pages/authen/ChooseModel";
+import { getSetupAgents } from "@pages/authen/ChooseModel/utils.ts";
+import useStarter from "@pages/authen/hooks/useStarter.ts";
+import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
+import { AgentType } from "@pages/home/list-agent";
+import CAgentTokenAPI from "@services/api/agents-token";
+import storageModel from "@storage/StorageModel.ts";
+import { useEffect, useRef, useState } from "react";
 
 interface IProps {
    loadingUser: boolean;
