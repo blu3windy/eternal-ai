@@ -939,13 +939,30 @@ const AgentProvider: React.FC<
    const checkAllInstalledAgentsRunning = async () => {
       try {
          // Check utility agents
+         const utilityParams: any = {
+            page: 1,
+            limit: 100,
+            sort_col: SortOption.CreatedAt,
+            agent_types: [
+               AgentType.UtilityJS, 
+               AgentType.UtilityPython, 
+               AgentType.Infra, 
+               AgentType.CustomUI, 
+               AgentType.CustomPrompt
+            ].join(','),
+            chain: '',
+         };
+         const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
+
+         // Check running status for each installed utility agent
          for (const folderName of installedUtilityAgents) {
             const [networkId, agentName] = folderName.split('-');
             if (!networkId || !agentName) continue;
 
-            const agent = availableModelAgents.find(a => 
-               a.network_id.toString() === networkId 
-               && a.agent_name?.toLowerCase() === agentName
+            // Find agent info from API result
+            const agent = utilityAgents.find(a => 
+               a.network_id.toString() === networkId && 
+               a.agent_name?.toLowerCase() === agentName?.toLowerCase()
             );
             
             if (agent) {
@@ -984,7 +1001,7 @@ const AgentProvider: React.FC<
             }
          }
 
-         // Check all installed model agents
+         // Check model agents
          const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
          for (const agent of installedModelAgents) {
             const ipfsHash = await getModelAgentHash(agent);
@@ -995,10 +1012,25 @@ const AgentProvider: React.FC<
             });
          }
 
-         // Check all installed social agents
-         // Social agents are considered always running after installation
+         // Check social agents
+         const socialParams: any = {
+            page: 1,
+            limit: 100,
+            sort_col: SortOption.CreatedAt,
+            agent_types: [
+               AgentType.Normal,
+               AgentType.Reasoning,
+               AgentType.KnowledgeBase,
+               AgentType.Eliza,
+               AgentType.Zerepy
+            ].join(','),
+            chain: '',
+         };
+         const { agents: socialAgents } = await cPumpAPI.getAgentTokenList(socialParams);
+
+         // Check running status for each installed social agent
          for (const agentId of installedSocialAgents) {
-            const agent = installedSocialAgents.find(a => a.id === agentId);
+            const agent = socialAgents.find(a => a.id === agentId);
             if (agent) {
                updateAgentState(agent.id, {
                   data: agent,
