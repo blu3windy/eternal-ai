@@ -1,6 +1,9 @@
 export const MIN_DECIMAL = 2;
 export const MAX_DECIMAL = 6;
 
+export const ETH_CHAIN_ID = 1;
+export const ETH_RPC = "https://eth.rpc.blxrbdn.com";
+
 export const BASE_CHAIN_ID = 8453;
 export const BASE_RPC = "https://mainnet.base.org";
 
@@ -26,6 +29,16 @@ export const SYMBIOSIS_CHAIN_ID = 45762;
 export const SYMBIOSIS_RPC = "https://rpc.hermeschain.eternalai.org";
 
 export const CHAIN_CONFIG = {
+  [ETH_CHAIN_ID]: {
+    id: ETH_CHAIN_ID,
+    name: "Ethereum",
+    network: "Ethereum",
+    nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+    rpcUrls: {
+      default: { http: [ETH_RPC] },
+      public: { http: [ETH_RPC] },
+    },
+  } as any,
   [BASE_CHAIN_ID]: {
     id: BASE_CHAIN_ID,
     name: "Base",

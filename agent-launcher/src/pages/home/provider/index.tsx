@@ -264,7 +264,7 @@ const AgentProvider: React.FC<
       if (selectedAgent) {
          if ([AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].includes(selectedAgent.agent_type)) {
             checkSocialAgentInstalled(selectedAgent);
-         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(selectedAgent.agent_type)) {
+         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(selectedAgent.agent_type)) {
             checkUtilityAgentInstalled(selectedAgent);
          } else if ([AgentType.Model].includes(selectedAgent.agent_type)) {
             checkModelAgentInstalled(selectedAgent);
@@ -486,7 +486,7 @@ const AgentProvider: React.FC<
             fetchInstalledSocialAgents(); //fetch then check agent installed in useEffect
 
             // setAgentInstalled(agent);
-         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
+         } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
 
             await startAgent(agent);
@@ -525,7 +525,7 @@ const AgentProvider: React.FC<
             isStarting: true,
          });
 
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             console.log('stephen: startAgent Utility install', new Date().toLocaleTimeString());
             await installUtilityAgent(agent, needUpdateCode);
             await startDependAgents(agent);
@@ -545,14 +545,6 @@ const AgentProvider: React.FC<
             await handleRunModelAgent(ipfsHash);
             setCurrentModel(agent);
             console.log('stephen: startAgent Model finish run', new Date().toLocaleTimeString());
-         } else if (agent.agent_type === AgentType.ModelOnline) {
-            console.log('stephen: startAgent ModelOnline install', new Date().toLocaleTimeString());
-            await handleInstallModelAgentRequirement();
-
-            console.log('stephen: startAgent ModelOnline get hash', new Date().toLocaleTimeString());
-            const httpLink = await getModelAgentHash(agent);
-            console.log('startAgent ====httpLink', httpLink);
-            console.log('stephen: startAgent ModelOnline finish', new Date().toLocaleTimeString());
          } else {
 
          }
@@ -577,7 +569,7 @@ const AgentProvider: React.FC<
             isStopping: true,
          });
 
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await handleStopDockerAgent(agent);
             await stopDependAgents(agent);
          } else if (agent.agent_type === AgentType.Model) {
@@ -607,7 +599,7 @@ const AgentProvider: React.FC<
             isUnInstalling: true,
          });
 
-         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
+         if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await stopAgent(agent);
 
             await removeUtilityAgent(agent);
