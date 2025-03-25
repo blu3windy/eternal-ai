@@ -80,4 +80,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
    storeGetItem: (key: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_GET_ITEM, key),
    storeRemoveItem: (key: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_REMOVE_ITEM, key),
    storeClear: () => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_CLEAR),
+
+   osContext: () => ipcRenderer.invoke(EMIT_EVENT_NAME.OS_CONTEXT),
 });

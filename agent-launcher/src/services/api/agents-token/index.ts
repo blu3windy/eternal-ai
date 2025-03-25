@@ -29,7 +29,15 @@ class CAgentTokenAPI extends CApiClient {
       const response = (await this.api.get("/agent/dashboard", {
          params,
       })) as any;
-      return { agents: response?.rows };
+
+      const agents = (response?.rows || []).map((agent: any) => {
+         if (agent?.required_info && typeof agent?.required_info === "string") {
+            agent.required_info = JSON.parse(agent?.required_info);
+         }
+         return agent;
+      });
+
+      return { agents };
    };
 
    public getAgentTokenDetail = async (

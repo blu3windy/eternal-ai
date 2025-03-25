@@ -6,6 +6,7 @@ import ipcMainModel from "./model.ts";
 import ipcMainOpenExtraLink from "./openExtraLink.ts";
 import checkAndUpdateApps from "./checkAndUpdateApps.ts";
 import ipcStore from "./store.ts";
+import ipcOs from "./os.ts";
 
 const runIpcMain = () => {
    ipcMainDocker();
@@ -16,6 +17,7 @@ const runIpcMain = () => {
    ipcMainModel();
    ipcStore();
    checkAndUpdateApps();
+   ipcOs();
 }
 
 export default runIpcMain;

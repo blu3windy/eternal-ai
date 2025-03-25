@@ -10,10 +10,22 @@ import throttle from "lodash/throttle";
 import storageModel from "@storage/StorageModel.ts";
 import { BASE_CHAIN_ID } from "@constants/chains.ts";
 import CAgentContract from "@contract/agent";
+import { getSetupAgents } from "@pages/authen/ChooseModel/utils.ts";
 
 interface IProps {
     onNext?: (agent: IAgentToken) => Promise<void>;
 }
+
+export const getModelAgentHash = async (agent: IAgentToken) => {
+   if (agent && !!agent.agent_contract_address) {
+      const chainId = agent?.network_id || BASE_CHAIN_ID;
+      const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
+      const codeVersion = await cAgent.getCurrentVersion();
+      const ipfsHash = await cAgent.getAgentCode(codeVersion);
+      return ipfsHash?.replaceAll('\n', '');
+   }
+}
+
 
 const ChooseModel = ({ onNext }: IProps) => {
    const agentAPI = useRef(new CAgentTokenAPI());
@@ -21,30 +33,26 @@ const ChooseModel = ({ onNext }: IProps) => {
    const [loading, setLoading] = useState<boolean>(false);
    const [selectedAgent, setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
    const [submitting, setSubmitting] = useState<boolean>(false);
-
-   const getModelAgentHash = async (agent: IAgentToken) => {
-      if (agent && !!agent.agent_contract_address) {
-         const chainId = agent?.network_id || BASE_CHAIN_ID;
-         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
-         const codeVersion = await cAgent.getCurrentVersion();
-         const ipfsHash = await cAgent.getAgentCode(codeVersion);
-         return ipfsHash?.replaceAll('\n', '');
-      }
-   }
-
    const _onNext = throttle(useCallback(async () => {
       if (!selectedAgent) return;
       try {
-         setSubmitting(true);
-         // await storage.setItem("CURRENT", JSON.stringify())
-
          const hash = await getModelAgentHash(selectedAgent);
+         setSubmitting(true);
+         if (!hash) {
+            throw new Error('Model hash not found');
+         }
+         await storageModel.setActiveModel({
+            id: selectedAgent.id,
+            agent_id: selectedAgent.agent_id,
+            agent_type: selectedAgent.agent_type,
+            hash: hash,
+         })
 
          const electronAPI = window?.electronAPI;
          if (selectedAgent.agent_type === AgentType.Model) {
+            await electronAPI?.modelInstallBaseModel(hash)
          }
          // await electronAPI?.modelInstall
-         await storageModel.setActiveModel(selectedAgent);
          if (onNext) {
             await onNext(selectedAgent);
          }
@@ -54,7 +62,7 @@ const ChooseModel = ({ onNext }: IProps) => {
          setSubmitting(false);
       }
 
-   }, [selectedAgent]), 2000);
+   }, [onNext, selectedAgent]), 2000);
 
    const fetchData = async () => {
       try {
@@ -64,9 +72,9 @@ const ChooseModel = ({ onNext }: IProps) => {
          } = await agentAPI.current.getAgentTokenList({
             agent_types: [AgentType.ModelOnline, AgentType.Model].join(','),
          });
-         console.log('agents', agents);
-         setAgents(agents);
-         setSelectedAgent(agents[0]);
+         const _agents = await getSetupAgents(agents);
+         setAgents(_agents);
+         setSelectedAgent(_agents[0]);
       } catch (error) {
          console.log('agents error', error);
          console.error(error);

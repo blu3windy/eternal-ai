@@ -84,7 +84,11 @@ export interface IAgentToken {
   sizeGb?: number;
   docker_port: string;
   infer_fee: string;
-  required_info: string;
+  required_info: {
+    ram: number;
+    disk: number;
+    arch: string;
+  };
 }
 
 export interface Meme {

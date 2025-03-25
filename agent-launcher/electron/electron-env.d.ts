@@ -70,6 +70,9 @@ export interface IElectronAPI {
   storeGetItem: (key: string) => Promise<string | null>
   storeRemoveItem: (key: string) => Promise<void>
   storeClear: () => Promise<void>
+
+  // OS
+  osContext: () => Promise<any>
 }
 
 declare global {

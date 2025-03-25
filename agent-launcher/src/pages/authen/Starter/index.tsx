@@ -6,6 +6,12 @@ import LoadingText from "@components/LoadingText";
 import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import BaseButton from "@components/BaseButton";
+import storageModel from "@storage/StorageModel.ts";
+import { get } from "axios";
+import CAgentTokenAPI from "@services/api/agents-token";
+import { AgentType } from "@pages/home/list-agent";
+import { getSetupAgents } from "@pages/authen/ChooseModel/utils.ts";
+import { getModelAgentHash } from "@pages/authen/ChooseModel";
 
 interface IProps {
    loadingUser: boolean;
@@ -41,6 +47,7 @@ const Starter = (props: IProps) => {
    const { onCheckHasUser } = props;
    const { setChecking } = useStarter();
    const initRef = useRef(false);
+   const agentAPI = useRef(new CAgentTokenAPI());
 
    const [step] = useState<Step>("INITIALIZING");
 
@@ -65,6 +72,37 @@ const Starter = (props: IProps) => {
          await tryExecFunction(2, globalThis.electronAPI.dockerBuild);
          // await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
+
+         const activeModel = await storageModel.getActiveModel();
+         if (!activeModel) {
+            const {
+               agents
+            } = await agentAPI.current.getAgentTokenList({
+               agent_types: [AgentType.ModelOnline, AgentType.Model].join(','),
+            });
+            const _agents = (await getSetupAgents(agents)).filter((agent) => agent.agent_type === AgentType.ModelOnline);
+            if (!_agents?.length) {
+               alert("No model only found");
+               throw new Error("No model only found");
+            }
+            const newAgent = _agents[0];
+            const hash = await getModelAgentHash(newAgent);
+            if (!hash) {
+               alert("Model hash not found");
+               throw new Error("Model hash not found");
+            }
+
+            await storageModel.setActiveModel({
+               id: newAgent.id,
+               agent_id: newAgent.agent_id,
+               agent_type: newAgent.agent_type,
+               hash: hash,
+            })
+         } else {
+            if (activeModel.agent_type === AgentType.Model) {
+               await globalThis.electronAPI.modelInstallBaseModel(activeModel.hash);
+            }
+         }
 
          // console.time("MODEL_BASE");
          // await tryExecFunction(2, async () => {
