@@ -5,6 +5,7 @@ export interface IProps extends InputProps{
     header: {
         label: string | ReactNode | undefined;
         value?: string | ReactNode | undefined;
+        fontSize?: string | undefined;
     }
 }
 
@@ -19,7 +20,7 @@ const InputText = (props: IProps) => {
       >
          <Text
             as="label"
-            fontSize="12px"
+            fontSize={header.fontSize || "12px"}
             fontWeight="500"
             color="#2E2E2E"
          >

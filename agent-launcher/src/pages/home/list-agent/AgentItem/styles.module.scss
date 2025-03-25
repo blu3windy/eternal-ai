@@ -124,3 +124,12 @@
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
+
+.testingStatus {
+  padding: 4px 10px;
+  border-radius: 16px;
+  background-color: rgb(0, 0, 0, 0.05);
+  font-size: 12px;
+  font-weight: 500;
+  color: #4d4d4d;
+}

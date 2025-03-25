@@ -63,6 +63,11 @@ const AgentItem = ({ token, isLatest }: IProps) => {
             handleGoToChat(e, token?.id || token?.token_address || token?.agent_id)
          }
       >
+         {!token.is_public && 
+            <Flex position={"absolute"} top={"8px"} right={"24px"} className={s.testingStatus}>
+               <Text>Testing</Text>
+            </Flex>
+         }
          <Grid
             className={s.content}
             templateColumns={`${iconSize} 1fr`}

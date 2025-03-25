@@ -1,6 +1,7 @@
 import {
    Box,
    Button,
+   Center,
    Divider,
    Flex,
    Grid,
@@ -25,6 +26,9 @@ import { IAgentToken } from "../../../services/api/agents-token/interface.ts";
 import { AgentContext } from "../provider";
 import AgentItem from './AgentItem';
 import AgentNotification from './AgentNotification/index.tsx';
+import BaseModal from '@components/BaseModal/index.tsx';
+import AddTestAgent from './AddTestAgent/index.tsx';
+import { compareString } from '@utils/string.ts';
 import s from './styles.module.scss';
 
 export enum SortOption {
@@ -135,6 +139,12 @@ const CATEGORIES = [
 const AgentsList = () => {
    const refInput = useRef<HTMLInputElement | null>(null);
 
+   const {
+      isOpen,
+      onOpen,
+      onClose
+   } = useDisclosure();
+
    const [sort, setSort] = useState<SortOption>(SortOption.CreatedAt);
    const [filter, setFilter] = useState<FilterOption>(FilterOption.All);
    const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
@@ -154,13 +164,14 @@ const AgentsList = () => {
 
    const refParams = useRef({
       page: 1,
-      limit: 30,
+      limit: 50,
       sort,
       category,
       filter,
       // order: OrderOption.Desc,
       search: '',
    });
+   const refAddAgentTestCA = useRef('')
 
    const { isOpen: isOpenFilter, onClose: onCloseFilter, onToggle: onToggleFilter } = useDisclosure();
    const { isOpen: isOpenSort, onClose: onCloseSort, onToggle: onToggleSort } = useDisclosure();
@@ -253,8 +264,14 @@ const AgentsList = () => {
 
          if (isNew) {
             setAgents(newTokens);
-            if (!selectedAgent && newTokens.length > 0) {
-               setSelectedAgent(newTokens[0]);
+            if ((!selectedAgent && newTokens.length > 0) || refAddAgentTestCA.current) {
+               const testAgent = newTokens.find((token) => compareString(refAddAgentTestCA.current, token.agent_contract_address));
+               if (testAgent) {
+                  setSelectedAgent(testAgent);
+                  refAddAgentTestCA.current = '';
+               } else {
+                  setSelectedAgent(newTokens[0]);
+               }
             }
          } else {
             setAgents((prevTokens) =>
@@ -373,6 +390,7 @@ const AgentsList = () => {
             <input
                placeholder={'Search agents'}
                ref={refInput as any}
+               autoFocus={false}
                // autoFocus
                onFocus={() => setIsSearchMode(true)}
                // onBlur={() => {
@@ -719,6 +737,33 @@ const AgentsList = () => {
                </InfiniteScroll>
             </>
          )}
+
+         <Flex className={s.addTestBtn} onClick={onOpen}>
+            <Center w={'100%'}>
+               <Text textAlign={'center'}>+ Add agent</Text>
+            </Center>
+         </Flex>
+
+         <BaseModal
+            isShow={isOpen}
+            onHide={() => {
+               onClose();
+               setIsSearchMode(false);
+            }}
+            size="small"
+         >
+            <AddTestAgent onAddAgentSuccess={(address: string) => {
+               refAddAgentTestCA.current = address;
+               onClose();
+               setFilter(FilterOption.Installed);
+               refParams.current = {
+                  ...refParams.current,
+                  filter: FilterOption.Installed,
+               };
+               throttleGetTokens(true);
+               setIsSearchMode(false);
+            }} />
+         </BaseModal>
       </Box>
    );
 };

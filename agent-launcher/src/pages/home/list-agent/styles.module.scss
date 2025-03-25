@@ -262,3 +262,17 @@
   max-width: 600px !important;
   margin: 20px !important;
 }
+
+.addTestBtn {
+  position: absolute;
+  width: 140px;
+  bottom: 16px;
+  height: 40px;
+  left: calc(50% - 78px);
+  border-radius: 100px;
+  background: #000;
+  cursor: pointer;
+  box-shadow: 0 10px 15px -5px rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 14px;
+}

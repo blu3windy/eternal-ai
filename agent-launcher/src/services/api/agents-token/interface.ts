@@ -89,6 +89,7 @@ export interface IAgentToken {
     disk: number;
     arch: string;
   };
+  is_public?: boolean;
 }
 
 export interface Meme {
