@@ -18,19 +18,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-resty/resty/v2"
-	"github.com/ipfs/go-cid"
-	"github.com/ipfs/go-datastore"
-
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/ipfs/boxo/blockservice"
-	blockstore "github.com/ipfs/boxo/blockstore"
-	chunker "github.com/ipfs/boxo/chunker"
-	offline "github.com/ipfs/boxo/exchange/offline"
-	"github.com/ipfs/boxo/ipld/merkledag"
-	"github.com/ipfs/boxo/ipld/unixfs/importer/balanced"
-	uih "github.com/ipfs/boxo/ipld/unixfs/importer/helpers"
-	dsync "github.com/ipfs/go-datastore/sync"
+	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 )
 
@@ -287,6 +276,7 @@ func getCurrentDir() string {
 	return exPath
 }
 
+/*
 func Cid(data []byte) string {
 	ds := dsync.MutexWrap(datastore.NewNullDatastore())
 	bs := blockstore.NewBlockstore(ds)
@@ -325,7 +315,7 @@ func fileExistOnNetwork(data []byte) (string, bool, error) {
 	}
 
 	return cid, true, nil
-}
+}*/
 
 func UploadFile(apikey, fileName string, filePath string) (string, error) {
 	data, err := os.ReadFile(filePath)
@@ -333,14 +323,14 @@ func UploadFile(apikey, fileName string, filePath string) (string, error) {
 		return "", err
 	}
 
-	cid, exist, err := fileExistOnNetwork(data)
+	/*cid, exist, err := fileExistOnNetwork(data)
 	if err != nil {
 		return "", err
 	}
 
 	if exist {
 		return cid, nil
-	}
+	}*/
 
 	urlLink := "https://node.lighthouse.storage/api/v0/add"
 
