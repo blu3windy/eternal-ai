@@ -1437,22 +1437,57 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 	err := daos.WithTransaction(
 		daos.GetDBMainCtx(ctx),
 		func(tx *gorm.DB) error {
-			if req.Action == "uninstall" {
-				for _, agentID := range req.Ids {
-					err := tx.Where("agent_info_id = ? and address = ?", agentID, strings.ToLower(address)).
-						Unscoped().
-						Delete(&models.AgentUtilityInstall{}).Error
+			if len(req.ContractAddress) > 0 {
+				for _, contractAddress := range req.ContractAddress {
+					agentInfo, err := s.dao.FirstAgentInfo(
+						tx,
+						map[string][]any{
+							"agent_contract_address = ?": []any{contractAddress},
+						},
+						map[string][]any{},
+						[]string{"id desc"},
+					)
 					if err != nil {
 						return errs.NewError(err)
 					}
+					if agentInfo == nil {
+						return errs.NewError(errs.ErrAgentNotFound)
+					}
+
+					if req.Action == "uninstall" {
+						err := tx.Where("agent_info_id = ? and address = ?", agentInfo.ID, strings.ToLower(address)).
+							Unscoped().
+							Delete(&models.AgentUtilityInstall{}).Error
+						if err != nil {
+							return errs.NewError(err)
+						}
+					} else {
+						inst := &models.AgentUtilityInstall{
+							Address:     strings.ToLower(address),
+							AgentInfoID: agentInfo.ID,
+						}
+						_ = s.dao.Create(tx, inst)
+					}
+
 				}
 			} else {
-				for _, agentID := range req.Ids {
-					inst := &models.AgentUtilityInstall{
-						Address:     strings.ToLower(address),
-						AgentInfoID: agentID,
+				if req.Action == "uninstall" {
+					for _, agentID := range req.Ids {
+						err := tx.Where("agent_info_id = ? and address = ?", agentID, strings.ToLower(address)).
+							Unscoped().
+							Delete(&models.AgentUtilityInstall{}).Error
+						if err != nil {
+							return errs.NewError(err)
+						}
 					}
-					_ = s.dao.Create(tx, inst)
+				} else {
+					for _, agentID := range req.Ids {
+						inst := &models.AgentUtilityInstall{
+							Address:     strings.ToLower(address),
+							AgentInfoID: agentID,
+						}
+						_ = s.dao.Create(tx, inst)
+					}
 				}
 			}
 			return nil

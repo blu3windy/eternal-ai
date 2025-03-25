@@ -261,6 +261,7 @@ type StudioReq struct {
 }
 
 type AgentActionReq struct {
-	Action string `json:"action"`
-	Ids    []uint `json:"ids"`
+	Action          string   `json:"action"`
+	Ids             []uint   `json:"ids"`
+	ContractAddress []string `json:"contract_address"`
 }

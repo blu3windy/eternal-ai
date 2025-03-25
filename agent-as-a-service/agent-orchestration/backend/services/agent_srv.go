@@ -121,8 +121,6 @@ func (s *Service) TwitterOauthCallbackV1(ctx context.Context, callbackUrl, addre
 		return s.TwitterOauthCallbackForApiSubscription(ctx, callbackUrl, address, code, clientID)
 	} else if agentID == "1" {
 		return s.TwitterOauthCallbackForCreateAgent(ctx, callbackUrl, address, code, clientID)
-	} else if agentID == "2" {
-		return s.TwitterOauthCallbackForClaimVideoReward(ctx, callbackUrl, address, code, clientID)
 	}
 
 	agentInfo, err := s.SyncAgentInfoDetailByAgentID(ctx, agentID)
@@ -624,109 +622,109 @@ func (s *Service) TwitterOauthCallbackForCreateAgent(ctx context.Context, callba
 	return nil
 }
 
-func (s *Service) TwitterOauthCallbackForClaimVideoReward(ctx context.Context, callbackUrl, address, code, clientID string) error {
-	oauthClientId := s.conf.Twitter.OauthClientId
-	oauthClientSecret := s.conf.Twitter.OauthClientSecret
+// func (s *Service) TwitterOauthCallbackForClaimVideoReward(ctx context.Context, callbackUrl, address, code, clientID string) error {
+// 	oauthClientId := s.conf.Twitter.OauthClientId
+// 	oauthClientSecret := s.conf.Twitter.OauthClientSecret
 
-	respOauth, err := s.twitterAPI.GetTwitterOAuthTokenWithKeyForVideoReward(
-		oauthClientId, oauthClientSecret,
-		code, callbackUrl, address)
-	if err != nil {
-		return errs.NewError(err)
-	}
+// 	respOauth, err := s.twitterAPI.GetTwitterOAuthTokenWithKeyForVideoReward(
+// 		oauthClientId, oauthClientSecret,
+// 		code, callbackUrl, address)
+// 	if err != nil {
+// 		return errs.NewError(err)
+// 	}
 
-	if respOauth != nil && respOauth.AccessToken != "" {
-		twitterUser, err := s.twitterAPI.GetTwitterMe(respOauth.AccessToken)
-		if err != nil {
-			return errs.NewError(err)
-		}
+// 	if respOauth != nil && respOauth.AccessToken != "" {
+// 		twitterUser, err := s.twitterAPI.GetTwitterMe(respOauth.AccessToken)
+// 		if err != nil {
+// 			return errs.NewError(err)
+// 		}
 
-		if twitterUser != nil {
-			twitterInfo, err := s.dao.FirstTwitterInfo(daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
-					"twitter_id = ?": {twitterUser.ID},
-				},
-				map[string][]interface{}{}, false,
-			)
-			if err != nil {
-				return errs.NewError(err)
-			}
+// 		if twitterUser != nil {
+// 			twitterInfo, err := s.dao.FirstTwitterInfo(daos.GetDBMainCtx(ctx),
+// 				map[string][]interface{}{
+// 					"twitter_id = ?": {twitterUser.ID},
+// 				},
+// 				map[string][]interface{}{}, false,
+// 			)
+// 			if err != nil {
+// 				return errs.NewError(err)
+// 			}
 
-			if twitterInfo == nil {
-				twitterInfo = &models.TwitterInfo{
-					TwitterID: twitterUser.ID,
-				}
-			}
-			twitterInfo.TwitterAvatar = twitterUser.ProfileImageURL
-			twitterInfo.TwitterName = twitterUser.Name
-			twitterInfo.TwitterUsername = twitterUser.UserName
-			twitterInfo.AccessToken = respOauth.AccessToken
-			twitterInfo.RefreshToken = respOauth.RefreshToken
-			twitterInfo.ExpiresIn = respOauth.ExpiresIn
-			twitterInfo.Scope = respOauth.Scope
-			twitterInfo.TokenType = respOauth.TokenType
-			twitterInfo.OauthClientId = oauthClientId
-			twitterInfo.OauthClientSecret = oauthClientSecret
-			twitterInfo.Description = twitterUser.Description
-			twitterInfo.RefreshError = "OK"
+// 			if twitterInfo == nil {
+// 				twitterInfo = &models.TwitterInfo{
+// 					TwitterID: twitterUser.ID,
+// 				}
+// 			}
+// 			twitterInfo.TwitterAvatar = twitterUser.ProfileImageURL
+// 			twitterInfo.TwitterName = twitterUser.Name
+// 			twitterInfo.TwitterUsername = twitterUser.UserName
+// 			twitterInfo.AccessToken = respOauth.AccessToken
+// 			twitterInfo.RefreshToken = respOauth.RefreshToken
+// 			twitterInfo.ExpiresIn = respOauth.ExpiresIn
+// 			twitterInfo.Scope = respOauth.Scope
+// 			twitterInfo.TokenType = respOauth.TokenType
+// 			twitterInfo.OauthClientId = oauthClientId
+// 			twitterInfo.OauthClientSecret = oauthClientSecret
+// 			twitterInfo.Description = twitterUser.Description
+// 			twitterInfo.RefreshError = "OK"
 
-			expiredAt := time.Now().Add(time.Second * time.Duration(respOauth.ExpiresIn-(60*20)))
-			twitterInfo.ExpiredAt = &expiredAt
-			err = s.dao.Save(daos.GetDBMainCtx(ctx), twitterInfo)
-			if err != nil {
-				return errs.NewError(err)
-			}
+// 			expiredAt := time.Now().Add(time.Second * time.Duration(respOauth.ExpiresIn-(60*20)))
+// 			twitterInfo.ExpiredAt = &expiredAt
+// 			err = s.dao.Save(daos.GetDBMainCtx(ctx), twitterInfo)
+// 			if err != nil {
+// 				return errs.NewError(err)
+// 			}
 
-			insts, err := s.dao.FindAgentVideo(daos.GetDBMainCtx(ctx),
-				map[string][]interface{}{
-					`owner_twitter_id = ?`: {twitterUser.ID},
-				},
-				map[string][]interface{}{},
-				[]string{},
-				0, 9999,
-			)
+// 			insts, err := s.dao.FindAgentVideo(daos.GetDBMainCtx(ctx),
+// 				map[string][]interface{}{
+// 					`owner_twitter_id = ?`: {twitterUser.ID},
+// 				},
+// 				map[string][]interface{}{},
+// 				[]string{},
+// 				0, 9999,
+// 			)
 
-			if err != nil {
-				return errs.NewError(err)
-			}
+// 			if err != nil {
+// 				return errs.NewError(err)
+// 			}
 
-			if insts != nil && len(insts) > 0 {
-				user, err := s.GetUser(daos.GetDBMainCtx(ctx), models.GENERTAL_NETWORK_ID, strings.ToLower(address), false)
-				if err != nil {
-					return errs.NewError(err)
-				}
+// 			if insts != nil && len(insts) > 0 {
+// 				user, err := s.GetUser(daos.GetDBMainCtx(ctx), models.GENERTAL_NETWORK_ID, strings.ToLower(address), false)
+// 				if err != nil {
+// 					return errs.NewError(err)
+// 				}
 
-				if user != nil {
-					user.TwitterID = twitterInfo.TwitterID
-					user.TwitterName = twitterInfo.TwitterName
-					user.TwitterUsername = twitterInfo.TwitterUsername
-					user.TwitterAvatar = twitterInfo.TwitterAvatar
-					err = s.dao.Save(daos.GetDBMainCtx(ctx), user)
-					if err != nil {
-						return errs.NewError(err)
-					}
-				}
+// 				if user != nil {
+// 					user.TwitterID = twitterInfo.TwitterID
+// 					user.TwitterName = twitterInfo.TwitterName
+// 					user.TwitterUsername = twitterInfo.TwitterUsername
+// 					user.TwitterAvatar = twitterInfo.TwitterAvatar
+// 					err = s.dao.Save(daos.GetDBMainCtx(ctx), user)
+// 					if err != nil {
+// 						return errs.NewError(err)
+// 					}
+// 				}
 
-				for _, inst := range insts {
-					updateFields := map[string]interface{}{
-						"user_address": strings.ToLower(address),
-					}
+// 				for _, inst := range insts {
+// 					updateFields := map[string]interface{}{
+// 						"user_address": strings.ToLower(address),
+// 					}
 
-					err := daos.GetDBMainCtx(ctx).Model(inst).Updates(
-						updateFields,
-					).Error
-					if err != nil {
-						return errs.NewError(err)
-					}
-				}
-			}
+// 					err := daos.GetDBMainCtx(ctx).Model(inst).Updates(
+// 						updateFields,
+// 					).Error
+// 					if err != nil {
+// 						return errs.NewError(err)
+// 					}
+// 				}
+// 			}
 
-		}
+// 		}
 
-	}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func (s *Service) CreateUpdateUserTwitter(tx *gorm.DB, userTwitterID string) (*models.TwitterUser, error) {
 	tweetUser, err := s.dao.FirstTwitterUser(tx,

@@ -704,33 +704,11 @@ type AgentUtilityRecentChat struct {
 	AgentInfoID uint   `gorm:"unique_index:agent_utility_recent_chat_main_idx"`
 }
 
-type AgentVideo struct {
+type PrivyWallet struct {
 	gorm.Model
-	TokenName             string
-	TokenSymbol           string
-	TokenAddress          string
-	TokenStatus           string
-	TokenImageUrl         string
-	TokenDesc             string `gorm:"type:longtext"`
-	TokenNetworkID        uint64
-	UserAddress           string       `gorm:"index"`
-	OwnerTwitterID        string       `gorm:"index"`
-	OwnerTwitterInfo      *TwitterUser `gorm:"foreignKey:twitter_id;AssociationForeignKey:owner_twitter_id"`
-	AgentTwitterPostID    uint         `gorm:"unique_index"`
-	AgentTwitterPost      *AgentTwitterPost
-	TotalReward           numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	ClaimedReward         numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
-	Uri                   string
-	RecipientAddress      string `gorm:"index"`
-	TxHash                string
-	Error                 string
-	AgentVideoRecipientID uint
-}
-
-type AgentVideoRecipient struct {
-	gorm.Model
-	OwnerTwitterID   string `gorm:"unique_index"`
-	RecipientAddress string `gorm:"index"`
+	PrivyID   string `gorm:"unique_index"`
+	TwitterID string `gorm:"unique_index"`
+	Address   string `gorm:"index"`
 }
 
 type ClankerVideoToken struct {
@@ -742,6 +720,7 @@ type ClankerVideoToken struct {
 	TokenImageUrl      string
 	VideoUrl           string
 	TokenDesc          string       `gorm:"type:longtext"`
+	PairAddress        string       `gorm:"index"`
 	UserAddress        string       `gorm:"index"`
 	OwnerTwitterID     string       `gorm:"index"`
 	OwnerTwitterInfo   *TwitterUser `gorm:"foreignKey:twitter_id;AssociationForeignKey:owner_twitter_id"`

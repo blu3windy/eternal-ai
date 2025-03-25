@@ -107,7 +107,7 @@ func Test_SRV(t *testing.T) {
 
 	// fmt.Println(ts.DeployProxyAdminAddress(context.Background(), models.BASE_CHAIN_ID))
 	// ts.JobExecuteInfraTwitterAppRequest(context.Background())
-	ts.CreateClankerTokenForVideoByPostID(context.Background(), 35398)
+	ts.CreateClankerTokenForVideoByPostID(context.Background(), 34949)
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
