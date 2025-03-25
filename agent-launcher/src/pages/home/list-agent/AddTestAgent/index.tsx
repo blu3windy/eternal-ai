@@ -42,11 +42,11 @@ const AddTestAgent = (props: IAddTestAgent) => {
          flexDirection="column"
          alignItems="center"
          justifyContent="center"
-         w={'100%'}
-         px={'12px'}
+         w={'100%'}      
+         mt={'-16px'}   
       >
          <Text
-            fontSize="24px"
+            fontSize="22px"
             fontWeight="600"
             color="#000"
             whiteSpace="pre-wrap"
@@ -54,7 +54,7 @@ const AddTestAgent = (props: IAddTestAgent) => {
             mt={'-20px'}
             w={'100%'}
          >
-            Add your test agent
+            Add your agent for preview
          </Text>
          <Box w={'100%'}>
             <Formik
@@ -69,7 +69,7 @@ const AddTestAgent = (props: IAddTestAgent) => {
                            name="contractAddress"
                            autoFocus={true}
                            header={{
-                              label: "Agent contract address",
+                              label: "Paste the contract address of your agent below",
                               fontSize: '13px',
                            }}
                            placeholder="0x1d3d...a1ca"

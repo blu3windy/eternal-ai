@@ -11,7 +11,13 @@ import {
    PopoverContent,
    PopoverTrigger,
    Text,
-   useDisclosure
+   useDisclosure,
+   Card,
+   CardBody,
+   Avatar,
+   Tag,
+   TagLabel,
+   SimpleGrid
 } from '@chakra-ui/react';
 import s from './styles.module.scss';
 import InfiniteScroll from 'react-infinite-scroll-component';
@@ -28,7 +34,6 @@ import cx from 'clsx';
 import AgentNotification from './AgentNotification/index.tsx';
 import BaseModal from '@components/BaseModal/index.tsx';
 import AddTestAgent from './AddTestAgent/index.tsx';
-import AgentMonitor from './AgentMonitor/index.tsx';
 import { compareString } from '@utils/string.ts';
 
 export enum SortOption {
@@ -119,6 +124,8 @@ const AgentsList = () => {
    const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
    const [loaded, setLoaded] = useState(false);
    const refLoading = useRef(false);
+   const [isSearchMode, setIsSearchMode] = useState(false);
+   const [showCategoryList, setShowCategoryList] = useState(true);
 
    const [agents, setAgents] = useState<IAgentToken[]>([]);
 
@@ -159,23 +166,20 @@ const AgentsList = () => {
             limit: refParams.current.limit,
             sort_col: refParams.current.sort,
             search: refParams.current.search,
-            // filter_col: refParams.current.filter,
             chain: '',
          };
 
-         // if ([CategoryOption.Character].includes(refParams.current.category)) {
-         //    params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
-         // } else if ([CategoryOption.Model].includes(refParams.current.category)) {
-         //    params.agent_types = [AgentType.Model, AgentType.ModelOnline].join(',');
-         // } else if ([CategoryOption.Utility].includes(refParams.current.category)) {
-         //    params.agent_types = [AgentType.CustomUI, AgentType.CustomPrompt].join(',');
-         // } else if ([CategoryOption.Infra].includes(refParams.current.category)) {
-         //    params.agent_types = [AgentType.Infra].join(',');
-         // } else {
-         //    params.agent_type = AgentType.All;
-         // }
-
-         params.agent_types = [AgentType.Model,AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline, AgentType.Infra].join(',');
+         if (refParams.current.category === CategoryOption.Character) {
+            params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
+         } else if (refParams.current.category === CategoryOption.Model) {
+            params.agent_types = [AgentType.Model, AgentType.ModelOnline].join(',');
+         } else if (refParams.current.category === CategoryOption.Utility) {
+            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].join(',');
+         } else if (refParams.current.category === CategoryOption.Infra) {
+            params.agent_types = [AgentType.Infra].join(',');
+         } else {
+            params.agent_types = [AgentType.Model,AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(','); 
+         }
 
          if (FilterOption.Installed === refParams.current.filter) {
             params.installed = true;
@@ -185,7 +189,7 @@ const AgentsList = () => {
 
          if (isNew) {
             setAgents(newTokens);
-            if (!selectedAgent || refAddAgentTestCA.current) {
+            if ((!selectedAgent && newTokens.length > 0) || refAddAgentTestCA.current) {
                const testAgent = newTokens.find((token) => compareString(refAddAgentTestCA.current, token.agent_contract_address));
                if (testAgent) {
                   setSelectedAgent(testAgent);
@@ -200,6 +204,7 @@ const AgentsList = () => {
             );
          }
       } catch (error) {
+         console.error('Error fetching tokens:', error);
       } finally {
          refLoading.current = false;
          setLoaded(true);
@@ -214,12 +219,149 @@ const AgentsList = () => {
          ...refParams.current,
          search: searchText,
       };
+      if (searchText) {
+         setShowCategoryList(false);
+      } else {
+         setShowCategoryList(true);
+      }
       debounceGetTokens(true);
    };
 
    useEffect(() => {
       throttleGetTokens(true);
    }, []);
+
+   const handleCategorySelect = (categoryOption: CategoryOption) => {
+      setShowCategoryList(false);
+      refParams.current = {
+         ...refParams.current,
+         category: categoryOption,
+      };
+      throttleGetTokens(true);
+   };
+
+   const handleBackToCategories = () => {
+      setShowCategoryList(true);
+      refParams.current = {
+         ...refParams.current,
+         category: CategoryOption.All,
+      };
+      if (!refParams.current.search) {
+         setIsSearchMode(false);
+      }
+   };
+
+   const renderSearchMode = () => {
+      if (!isSearchMode) return null;
+
+      // Show search results when not showing category list
+      if (!showCategoryList) {
+         return renderSearchResults();
+      }
+
+      return (
+         <Box p="24px">
+            <Box mb="32px">
+               <Text fontSize="22px" fontWeight="500" mb="16px">New & Updates</Text>
+               <Card>
+                  <CardBody>
+                     <Flex gap="16px">
+                        <Avatar 
+                           size="lg"
+                           src="/images/sirach-avatar.png"
+                           name="SirACH"
+                        />
+                        <Box flex="1">
+                           <Flex align="center" gap="8px" mb="8px">
+                              <Text fontSize="18px" fontWeight="600">SirACH</Text>
+                              <Text color="gray.500">$HSK</Text>
+                              <Tag size="sm" bg="gray.100" ml="auto">
+                                 <TagLabel>New</TagLabel>
+                              </Tag>
+                           </Flex>
+                           <Text color="gray.600" fontSize="14px" mb="12px">
+                              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.
+                           </Text>
+                           <Flex gap="12px">
+                              <Tag size="md" variant="subtle" bg="gray.100">
+                                 <TagLabel>$43k MC</TagLabel>
+                              </Tag>
+                              <Tag size="md" variant="subtle" bg="gray.100">
+                                 <TagLabel>3k prompts</TagLabel>
+                              </Tag>
+                              <Tag size="md" variant="subtle" bg="gray.100">
+                                 <TagLabel>Balance 324 EAI</TagLabel>
+                              </Tag>
+                           </Flex>
+                        </Box>
+                     </Flex>
+                  </CardBody>
+               </Card>
+            </Box>
+
+            <Box>
+               <Text fontSize="22px" fontWeight="500" mb="16px">Categories</Text>
+               <SimpleGrid columns={{base: 1, md: 1}} spacing="20px">
+                  {/* <Flex
+                     className={s.categoryItem}
+                     bg="linear-gradient(270deg, #F38F1A 0%, #8D530F 100%)"
+                     onClick={() => {
+                        handleCategorySelect(CategoryOption.Character);
+                     }}
+                  >
+                     <Text color="white" fontSize="20px" fontWeight="500">Character</Text>
+                     <Image 
+                        src="icons/ic-category-character.svg" 
+                        className={s.categoryImage}
+                     />
+                  </Flex> */}
+
+                  <Flex
+                     className={s.categoryItem}
+                     bg="linear-gradient(270deg, #EF3B2F 0%, #89221B 100%)"
+                     onClick={() => {
+                        handleCategorySelect(CategoryOption.Model);
+                     }}
+                  >
+                     <Text color="white" fontSize="20px" fontWeight="500">Model</Text>
+                     <Image 
+                        src="icons/ic-category-model.svg"
+                        className={s.categoryImage}
+                     />
+                  </Flex>
+
+                  <Flex
+                     className={s.categoryItem}
+                     bg="linear-gradient(270deg, #A94FD4 0%, #58296E 100%)"
+                     onClick={() => {
+                        handleCategorySelect(CategoryOption.Utility);
+                     }}
+                  >
+                     <Text color="white" fontSize="20px" fontWeight="500">Utility</Text>
+                     <Image 
+                        src="icons/ic-category-utility.svg"
+                        className={s.categoryImage}
+                     />
+                  </Flex>
+
+                  <Flex
+                     className={s.categoryItem}
+                     bg="linear-gradient(270deg, #3FBF5A 0%, #1D592A 100%)"
+                     onClick={() => {
+                        handleCategorySelect(CategoryOption.Infra);
+                     }}
+                  >
+                     <Text color="white" fontSize="20px" fontWeight="500">Infra</Text>
+                     <Image 
+                        src="icons/ic-category-infra.svg"
+                        className={s.categoryImage}
+                     />
+                  </Flex>
+               </SimpleGrid>
+            </Box>
+         </Box>
+      );
+   };
 
    const renderSearch = () => {
       return (
@@ -238,7 +380,16 @@ const AgentsList = () => {
             <input
                placeholder={'Search agents'}
                ref={refInput as any}
-               autoFocus
+               // autoFocus
+               onFocus={() => setIsSearchMode(true)}
+               onBlur={() => {
+                  // Delay hiding search mode to allow clicking category
+                  setTimeout(() => {
+                     if (!refParams.current.search) {
+                        setIsSearchMode(false);
+                     }
+                  }, 200);
+               }}
                onChange={(event) => {
                   onSearch(event.target.value);
                }}
@@ -254,19 +405,24 @@ const AgentsList = () => {
                justifyContent="center"
                alignItems="center"
             >
-               {!!refParams.current?.search && (
+               {isSearchMode && (
                   <Image
-                     width="12px"
+                     width="20px"
                      src="icons/ic_search_close.svg"
-                     onClick={() => {
-                        if (refInput?.current?.value) {
+                     onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (refInput?.current) {
                            refInput.current.value = '';
+                           refInput.current.blur();
                            refParams.current = {
                               ...refParams.current,
                               search: '',
+                              category: CategoryOption.All,
                            };
+                           setShowCategoryList(true);
+                           setIsSearchMode(false);
                            debounceGetTokens(true);
-                           refInput?.current?.focus();
                         }
                      }}
                   />
@@ -371,12 +527,7 @@ const AgentsList = () => {
                            cursor="pointer"
                            onClick={(e) => {
                               const _category = option.value as CategoryOption;
-                              setCategory(_category);
-                              refParams.current = {
-                                 ...refParams.current,
-                                 category: _category,
-                              };
-                              throttleGetTokens(true);
+                              handleCategorySelect(_category);
                               onCloseFilter();
                            }}
                         >
@@ -478,6 +629,49 @@ const AgentsList = () => {
       )
    };
 
+   const renderSearchResults = () => {
+      return (
+         <Box>
+            <Flex align="center" mb="20px" px="24px">
+               <Button 
+                  leftIcon={<Image src="icons/ic-arrow-left.svg" w="16px" h="16px" />}
+                  variant="ghost"
+                  onClick={handleBackToCategories}
+                  fontSize={'20px'}
+                  fontWeight={'500'}
+                  p="0"
+                  _hover={{
+                     bg: 'transparent',
+                  }}
+               >
+                  {refParams.current.category !== CategoryOption.All ? (
+                     <>{Category.find(c => c.value === refParams.current.category)?.label}</>
+                  ) : 'Back'}
+               </Button>
+            </Flex>
+
+            <Grid
+               w="100%"
+               templateColumns={"1fr"}
+               gridRowGap={"8px"}
+               overflow={'hidden !important'}
+            >
+               {!loaded && <AppLoading />}
+               {agents?.map((item: IAgentToken) => (
+                  <GridItem key={item.id}>
+                     <AgentItem token={item} />
+                  </GridItem>
+               ))}
+               {loaded && agents.length === 0 && (
+                  <Text textAlign="center" color="gray.500" mt="40px">
+                     No agents found
+                  </Text>
+               )}
+            </Grid>
+         </Box>
+      );
+   };
+
    return (
       <Box className={s.container} position={'relative'}>
          <Flex
@@ -492,45 +686,50 @@ const AgentsList = () => {
             >
                {renderSearch()}
             </Flex>
-            <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
-               {renderFilterOptions()}
-            </Flex>
-            {/* <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
-               {renderCategoryMenu()}
-               <Divider orientation={'vertical'} borderColor={'#000'} opacity={0.2} h={"20px"} m={'auto 0'}/>
-               {renderSortMenu()}
-            </Flex> */}
+            {!isSearchMode && (
+               <>
+                  <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
+                     {renderFilterOptions()}
+                  </Flex>
+               </>
+            )}
          </Flex>
-         <Box h={'8px'} />
 
-         <InfiniteScroll
-            className={s.listContainer}
-            key={agents?.length}
-            dataLength={agents?.length}
-            next={() => {
-               debounceGetTokens(false);
-            }}
-            hasMore
-            loader={<></>}
-         >
-            {!loaded && <AppLoading />}
-            <Grid
-               w="100%"
-               templateColumns={"1fr"}
-               gridRowGap={"8px"}
-               overflow={'hidden !important'}
-            >
-               {agents?.map((item: IAgentToken, i) => (
-                  <GridItem key={item.id}>
-                     <AgentItem token={item} />
-                  </GridItem>
-               ))}
-            </Grid>
-         </InfiniteScroll>
+         {isSearchMode ? (
+            renderSearchMode()
+         ) : (
+            <>
+               <Box h={'8px'} />
+               <InfiniteScroll
+                  className={s.listContainer}
+                  key={agents?.length}
+                  dataLength={agents?.length}
+                  next={() => {
+                     debounceGetTokens(false);
+                  }}
+                  hasMore
+                  loader={<></>}
+               >
+                  {!loaded && <AppLoading />}
+                  <Grid
+                     w="100%"
+                     templateColumns={"1fr"}
+                     gridRowGap={"8px"}
+                     overflow={'hidden !important'}
+                  >
+                     {agents?.map((item: IAgentToken, i) => (
+                        <GridItem key={item.id}>
+                           <AgentItem token={item} />
+                        </GridItem>
+                     ))}
+                  </Grid>
+               </InfiniteScroll>
+            </>
+         )}
 
          <Flex className={s.addTestBtn} onClick={onOpen}>
             <Center w={'100%'}>
-               <Text textAlign={'center'}>+ Add test agent</Text>
+               <Text textAlign={'center'}>+ Add agent</Text>
             </Center>
          </Flex>
 
