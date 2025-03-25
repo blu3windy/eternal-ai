@@ -8,6 +8,7 @@ import { compareString } from "@utils/string.ts";
 import { useAuth } from "@pages/authen/provider.tsx";
 import Stepper from "@components/Stepper";
 import { Box } from "@chakra-ui/react";
+import ChooseModel from "@pages/authen/ChooseModel";
 
 interface IProps {
    onBack: () => void;
@@ -18,6 +19,7 @@ const CreateNew = (props: IProps) => {
    const [prvKey, setPrvKey] = useState<string>("");
    const [step, setStep]
        = useState<CreateNewStep>(CreateNewStep.backup);
+   const [password, setPassword] = useState<string>("");
    const { onLogin } = useAuth();
 
    const [loading, setLoading] = useState<boolean>(false);
@@ -25,7 +27,7 @@ const CreateNew = (props: IProps) => {
    const onCreateSigner = async (password: string) => {
       try {
          setLoading(true);
-
+         setPassword(password);
          await EaiSigner.storageNewKey({
             prvKey,
             pass: password
@@ -37,7 +39,6 @@ const CreateNew = (props: IProps) => {
             throw new Error("Private key not match");
          }
 
-         await onLogin(password);
       } catch (e) {
          console.log(e);
       } finally {
@@ -70,6 +71,12 @@ const CreateNew = (props: IProps) => {
          );
       case CreateNewStep.confirmPass:
          return <ConfirmPass onNext={onCreateSigner} loading={loading} />;
+      case CreateNewStep.setupModel:
+         return (
+            <ChooseModel
+
+            />
+         );
       default:
          return null;
       }
@@ -82,7 +89,8 @@ const CreateNew = (props: IProps) => {
                [
                   { title: "Backup private key", key: CreateNewStep.backup },
                   { title: "Confirm private key", key: CreateNewStep.confirmKey },
-                  { title: "Create a password", key: CreateNewStep.confirmPass }
+                  { title: "Create a password", key: CreateNewStep.confirmPass },
+                  { title: "Setup model", key: CreateNewStep.initModel },
                ]
             }
             activeStep={step.toString()}

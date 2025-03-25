@@ -1,5 +1,5 @@
 
-class LocalStorageService {
+export class LocalStorageService {
 
    private readonly electronAPI = window.electronAPI
 
