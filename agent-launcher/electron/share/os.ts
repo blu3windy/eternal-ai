@@ -25,6 +25,18 @@ const getOsContext = async () => {
          free: freeDisk,
          used: totalDisk - freeDisk,
       },
+      cpu: {
+         cores: os.cpus().length,
+         model: os.cpus()[0].model,
+         speed: os.cpus()[0].speed,
+      },
+      os: {
+         platform: os.platform(),
+         release: os.release(),
+         arch: os.arch(),
+         hostname: os.hostname(),
+         uptime: os.uptime(),
+      }
    };
 }
 

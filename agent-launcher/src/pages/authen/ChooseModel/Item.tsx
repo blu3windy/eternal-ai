@@ -15,11 +15,22 @@ export interface IProps {
 
 const Item = ({ agent, selectedAgent, onSelectAgent }: IProps) => {
 
-   console.log("Item agent", agent, selectedAgent);
    const isOnline = useMemo(() => agent?.agent_type === AgentType.ModelOnline, [agent?.agent_type]);
    const isSelected = useMemo(() => {
       return selectedAgent?.id === agent?.id;
    }, [selectedAgent, agent]);
+
+   const requirements = useMemo(() => {
+      let _str = "";
+      if (isOnline) {
+         _str = `No need install. Cost ${agent.infer_fee}EAI/prompt`;
+      } else {
+         const requirements = agent.required_info;
+         _str = `Required ${[`Ram: ${requirements.ram || 4}GB`, `Disk: ${requirements.disk || 32}GB`, `Arch: ${requirements.arch || "arm"}`].join(" • ")} `;
+      }
+
+      return _str;
+   }, [isOnline, agent.infer_fee, agent.required_info]);
 
    return (
       <Flex
@@ -62,9 +73,7 @@ const Item = ({ agent, selectedAgent, onSelectAgent }: IProps) => {
                fontWeight="400"
                color="rgba(0, 0, 0, 0.7)"
             >
-               {
-                  isOnline ? `No need install. Cost ${agent.infer_fee} EAI/prompt` : `Required ${agent.required_info || "RAM: 4GB"}`
-               }
+               {requirements}
             </Flex>
          </Flex>
          <Flex
