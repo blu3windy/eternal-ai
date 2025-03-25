@@ -218,14 +218,14 @@ func GetFileInfo(hash string) (*FileInfo, error) {
 }
 
 func UploadData(apikey, fileName string, data []byte) (string, error) {
-	cid, exist, err := fileExistOnNetwork(data)
-	if err != nil {
-		return "", err
-	}
+	// cid, exist, err := fileExistOnNetwork(data)
+	// if err != nil {
+	// 	return "", err
+	// }
 
-	if exist {
-		return cid, nil
-	}
+	// if exist {
+	// 	return cid, nil
+	// }
 
 	urlLink := "https://node.lighthouse.storage/api/v0/add"
 
