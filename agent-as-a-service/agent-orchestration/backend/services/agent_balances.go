@@ -814,6 +814,7 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 		}
 	} else {
 		filters["agent_infos.is_public = 1"] = []any{}
+	}
 
 	agents, err := s.dao.FindAgentInfoJoinSelect(
 		daos.GetDBMainCtx(ctx),

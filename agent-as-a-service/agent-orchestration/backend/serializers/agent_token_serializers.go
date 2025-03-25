@@ -467,3 +467,44 @@ type TransferCatReq struct {
 	SenderAddress   string `json:"sender_address"`
 	WifPrivateKey   string `json:"wif_private_key"`
 }
+
+type UserVideoResp struct {
+	ID                 uint                  `json:"id"`
+	CreatedAt          time.Time             `json:"created_at"`
+	TokenName          string                `json:"token_name"`
+	TokenSymbol        string                `json:"token_symbol"`
+	TokenAddress       string                `json:"token_address"`
+	TokenImageUrl      string                `json:"token_image_url"`
+	TokenDesc          string                `json:"token_desc"`
+	RequestorAddress   string                `json:"requestor_address"`
+	OwnerTwitterID     string                `json:"owner_twitter_id"`
+	AgentTwitterPostID uint                  `json:"agent_twitter_post_id"`
+	AgentTwitterPost   *AgentTwitterPostResp `json:"agent_twitter_post"`
+}
+
+func NewUserVideoResp(m *models.ClankerVideoToken) *UserVideoResp {
+	if m == nil {
+		return nil
+	}
+	return &UserVideoResp{
+		ID:                 m.ID,
+		CreatedAt:          m.CreatedAt,
+		TokenName:          m.TokenName,
+		TokenSymbol:        m.TokenSymbol,
+		TokenAddress:       m.TokenAddress,
+		TokenImageUrl:      m.TokenImageUrl,
+		TokenDesc:          m.TokenDesc,
+		RequestorAddress:   m.RequestorAddress,
+		OwnerTwitterID:     m.OwnerTwitterID,
+		AgentTwitterPostID: m.AgentTwitterPostID,
+		AgentTwitterPost:   NewAgentTwitterPostResp(m.AgentTwitterPost),
+	}
+}
+
+func NewUserVideoRespArray(arr []*models.ClankerVideoToken) []*UserVideoResp {
+	resps := []*UserVideoResp{}
+	for _, r := range arr {
+		resps = append(resps, NewUserVideoResp(r))
+	}
+	return resps
+}
