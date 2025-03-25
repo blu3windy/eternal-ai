@@ -451,6 +451,7 @@ const AgentProvider: React.FC<
 
 
    const setAgentInstalled = (agent: IAgentToken) => {
+      console.log("stephen: setAgentInstalled", agent);
       updateAgentState(agent.id, {
          data: agent,
          isInstalled: true,
@@ -460,6 +461,7 @@ const AgentProvider: React.FC<
    }
 
    const setAgentUnInstalled = (agent: IAgentToken) => {
+      console.log("stephen: setAgentUnInstalled", agent);
       updateAgentState(agent.id, {
          data: agent,
          isInstalled: false,
@@ -516,6 +518,7 @@ const AgentProvider: React.FC<
    }
 
    const startAgent = async (agent: IAgentToken, needUpdateCode?: boolean) => {
+      console.log("stephen: startAgent", agent);
       try {
          updateAgentState(agent.id, {
             data: agent,
@@ -523,25 +526,33 @@ const AgentProvider: React.FC<
          });
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
+            console.log('stephen: startAgent Utility install', new Date().toLocaleTimeString());
             await installUtilityAgent(agent, needUpdateCode);
             await startDependAgents(agent);
+            console.log('stephen: startAgent Utility start docker', new Date().toLocaleTimeString());
 
             await handleRunDockerAgent(agent);
+            console.log('stephen: startAgent Utility finish docker', new Date().toLocaleTimeString());
          } else if (agent.agent_type === AgentType.Model) {
+            console.log('stephen: startAgent Model install', new Date().toLocaleTimeString());
             await handleInstallModelAgentRequirement();
-
+            
+            console.log('stephen: startAgent Model get hash', new Date().toLocaleTimeString());
             const ipfsHash = await getModelAgentHash(agent);
             console.log('startAgent ====ipfsHash', ipfsHash);
 
+            console.log('stephen: startAgent Model run', new Date().toLocaleTimeString());
             await handleRunModelAgent(ipfsHash);
             setCurrentModel(agent);
+            console.log('stephen: startAgent Model finish run', new Date().toLocaleTimeString());
          } else if (agent.agent_type === AgentType.ModelOnline) {
+            console.log('stephen: startAgent ModelOnline install', new Date().toLocaleTimeString());
             await handleInstallModelAgentRequirement();
 
+            console.log('stephen: startAgent ModelOnline get hash', new Date().toLocaleTimeString());
             const httpLink = await getModelAgentHash(agent);
             console.log('startAgent ====httpLink', httpLink);
-
-            
+            console.log('stephen: startAgent ModelOnline finish', new Date().toLocaleTimeString());
          } else {
 
          }
