@@ -7,11 +7,13 @@ import Mine from "./pages/mine";
 
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
+import SyncTaskFromStorage from "@providers/SyncTaskFromStorage/index.tsx";
 
 function App() {
    return (
       <Provider store={store}>
          <PersistGate loading={null} persistor={persistor}>
+            <SyncTaskFromStorage />
             <AuthProvider>
                <Router basename="/">
                   <Routes>

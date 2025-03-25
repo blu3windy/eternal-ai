@@ -21,9 +21,8 @@ import chatAgentDatabase, { PersistedMessageType } from "../../../../database/ch
 import { AgentType } from "@pages/home/list-agent";
 import CAgentTokenAPI from "@services/api/agents-token";
 import { TaskItem } from '@stores/states/agent-chat/type.ts';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { addOrUpdateTaskItem, initTaskItems, removeTaskItem } from '@stores/states/agent-chat/reducer.ts';
-import { RootState } from '@stores/index.ts';
 import localStorageService from '@storage/LocalStorageService.ts';
 import { CHAT_AGENT_TASKS_STATE_STORAGE_KEY } from '@stores/states/agent-chat/constants.ts';
 import { tryToParseJsonString } from '@utils/string.ts';
@@ -46,7 +45,6 @@ type IChatAgentProviderContext = {
   isFocusChatInput: boolean;
   setIsFocusChatInput: (_: boolean) => void;
    isAllowChat: boolean;
-   taskItems: TaskItem[];
 };
 
 const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
@@ -63,7 +61,6 @@ const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
    setIsFocusChatInput: () => {},
    isAllowChat: false,
    scrollRef: undefined,
-   taskItems: [],
 });
 
 export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
@@ -89,12 +86,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
    const cPumpAPI = new CAgentTokenAPI();
 
-   const agentTasks = useSelector((state: RootState) => state.agentChat.agentTasks || {});
-
-   const taskItems = useMemo(() => { 
-      return agentTasks[threadId] || [];
-   }, [agentTasks, threadId])
-
    const isAllowChat = useMemo(() => {
       return true;
       // if(selectedAgent) {
@@ -104,25 +95,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       // return false;
    }, []);
 
-
-   useEffect(() => { 
-      const loadInitProcessingTasks = () => {
-         localStorageService.getItem(CHAT_AGENT_TASKS_STATE_STORAGE_KEY).then((str) => {
-            const storageAgentTasks = tryToParseJsonString(str, {});
-
-            const data = Object.keys(storageAgentTasks).reduce((acc, key) => ({
-               ...acc,
-               [key]: (storageAgentTasks || []).filter(item => item.status === 'processing').filter(item => !!item.id)
-            }), {})
-   
-            dispatch(initTaskItems({
-               data: data,
-            }));
-         })
-      }
-
-      loadInitProcessingTasks();
-   }, [])
 
    useEffect(() => {
       if (threadId) {
@@ -651,7 +623,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isStopReceiving,
          isAllowChat,
          scrollRef,
-         taskItems
       };
    }, [
       messages,
@@ -669,7 +640,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       isStopReceiving,
       isAllowChat,
       scrollRef,
-      taskItems
    ]);
 
    return (
