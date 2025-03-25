@@ -8,4 +8,4 @@ export type OsContext = {
    },
 }
 
-export type DockerInfoAction = "images" | "containers"
+export type DockerInfoAction = "images" | "containers" | "memory" | "cpus"

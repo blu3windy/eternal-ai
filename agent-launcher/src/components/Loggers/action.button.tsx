@@ -97,7 +97,7 @@ const ActionButtons = () => {
          </Button>
          <Button
             onClick={() => {
-               globalThis.electronAPI.dockerInfo("containers").then((data) => {
+               globalThis.electronAPI.dockerInfo("container-memory").then((data) => {
                   console.log(JSON.parse(data));
                });
             }}

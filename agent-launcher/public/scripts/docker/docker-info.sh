@@ -32,6 +32,24 @@ get_containers() {
   echo "]"
 }
 
+get_memory() {
+  echo "["
+  first=true
+    docker stats --no-stream --format "{{json .}}" | while read -r container; do
+    if [ "$first" = true ]; then
+      first=false
+    else
+      echo ","
+    fi
+    echo "    $container"
+  done
+  echo "]"
+}
+
+get_cpu() {
+  docker info --format '{{.NCPU}}'
+}
+
 # Parse command line arguments
 case "$1" in
   "images")
@@ -40,10 +58,17 @@ case "$1" in
   "containers")
     get_containers
     ;;
+  "memory")
+    get_memory
+    ;;
+  "cpus")
+    get_cpu
+    ;;
   *)
     echo "Usage: $0 {images|containers}" >&2
     echo "  images      - List all Docker images with usage status" >&2
     echo "  containers  - List all Docker containers with state info" >&2
+    echo "  container-memory - List all Docker containers with memory usage info" >&2
     exit 1
     ;;
 esac
