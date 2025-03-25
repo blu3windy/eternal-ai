@@ -390,6 +390,7 @@ const AgentsList = () => {
             <input
                placeholder={'Search agents'}
                ref={refInput as any}
+               autoFocus={false}
                // autoFocus
                onFocus={() => setIsSearchMode(true)}
                // onBlur={() => {

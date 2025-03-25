@@ -64,13 +64,13 @@ const AddTestAgent = (props: IAddTestAgent) => {
             >
                {({ dirty, setFieldValue, isSubmitting }) => (
                   <Form>
-                     <Flex flexDirection="column" w={'100%'} marginTop="24px">
+                     <Flex flexDirection="column" w={'100%'} marginTop="20px">
                         <InputText
                            name="contractAddress"
-                           autoFocus={true}
+                           autoFocus={false}
                            header={{
                               label: "Paste the contract address of your agent below",
-                              fontSize: '13px',
+                              fontSize: '14px',
                            }}
                            placeholder="0x1d3d...a1ca"
                            onChange={(e) =>
