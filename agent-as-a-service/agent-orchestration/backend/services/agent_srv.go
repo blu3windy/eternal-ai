@@ -1165,7 +1165,7 @@ func (s *Service) StreamRetrieveKnowledge(ctx context.Context, agentModel string
 	}
 	logger.Info("stream_retrieve_knowledge", "generate query", zap.Any("id_request", idRequest), zap.Any("retrieveQuery", retrieveQuery), zap.Any("input", messages))
 	if retrieveQuery == nil {
-		str := ""
+		str := openai.LastUserPrompt(messages)
 		retrieveQuery = &str
 	}
 
