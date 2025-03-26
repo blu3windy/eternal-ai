@@ -18,6 +18,7 @@ import cs from 'classnames';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import CAgentTokenAPI from "../../../../../services/api/agents-token";
 import s from './styles.module.scss';
+import storageModel from '@storage/StorageModel';
 
 export const RenameModels: any = {
    'NousResearch/Hermes-3-Llama-3.1-70B-FP8': 'Hermes 3 70B',
@@ -176,7 +177,7 @@ const SelectModel = ({
    className,
    showDescription = true,
 }: Props) => {
-   const { installedModelAgents, currentModel, startAgent, unInstallAgent } = useContext(AgentContext);
+   const { installedModelAgents, startAgent, unInstallAgent } = useContext(AgentContext);
    const {
       selectedAgent,
       isCanChat,
@@ -185,6 +186,25 @@ const SelectModel = ({
       requireInstall,
       isRunning,
    } = useContext(AgentContext);
+
+   const [activeModel, setActiveModel] = useState<any>(null);
+
+   const checkActiveModel = async () => {
+      const model = await storageModel.getActiveModel();
+      if (model?.id !== activeModel?.id) {
+         setActiveModel(model);
+      }
+   };
+
+   useEffect(() => {
+      checkActiveModel();
+
+      const intervalId = setInterval(checkActiveModel, 2000);
+
+      return () => {
+         clearInterval(intervalId);
+      };
+   }, []);
 
    const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
@@ -234,11 +254,11 @@ const SelectModel = ({
                   >
                      <Box flex={1}>
                         <Text className={s.title} color={color}>
-                           {currentModel?.agent_name}
+                           {activeModel?.agent_name}
                         </Text>
                         {showDescription && (
                            <Text className={s.amount} color={color}>
-                              {currentModel?.personality}
+                              {activeModel?.personality}
                            </Text>
                         )}
                      </Box>
@@ -264,7 +284,7 @@ const SelectModel = ({
                            }}
                            onClose={onClose}
                            models={models}
-                           isSelected={currentModel?.id === t.id}
+                           isSelected={activeModel?.id === t.id}
                            onDelete={(agent: IAgentToken) => {
                               unInstallAgent(agent);
                            }}

@@ -193,11 +193,19 @@ const AgentMonitor: React.FC = () => {
          });
 
          // Filter based on showRunningOnly and searchTerm
-         const filteredData = transformedData.filter(container => {
-            const matchesSearch = container.name.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesRunning = !showRunningOnly || container.state === 'running';
-            return matchesSearch && matchesRunning;
-         });
+         const filteredData = transformedData
+            .filter(container => {
+               const matchesSearch = container.name.toLowerCase().includes(searchTerm.toLowerCase());
+               const matchesRunning = !showRunningOnly || container.state === 'running';
+               return matchesSearch && matchesRunning;
+            })
+            .sort((a, b) => {
+               // Sort running containers first
+               if (a.state === 'running' && b.state !== 'running') return -1;
+               if (a.state !== 'running' && b.state === 'running') return 1;
+               // If both have same state, sort by name
+               return a.name.localeCompare(b.name);
+            });
 
          // Update states
          setContainers(filteredData);
@@ -227,7 +235,7 @@ const AgentMonitor: React.FC = () => {
             clearInterval(intervalRef.current);
          }
       };
-   }, [searchTerm, showRunningOnly, agents, stateActions]); // Empty dependency array means this effect runs once on mount
+   }, [isOpen, searchTerm, showRunningOnly, agents, stateActions]); // Empty dependency array means this effect runs once on mount
 
    // Additional effect to handle popover open/close
    useEffect(() => {

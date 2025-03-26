@@ -12,8 +12,6 @@ export interface IAgentContext {
   loading: boolean;
   selectedAgent?: IAgentToken & any;
   setSelectedAgent: any;
-  currentModel: any;
-  setCurrentModel: any;
   installAgent: any;
   startAgent: any;
   stopAgent: any;
