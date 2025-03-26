@@ -80,15 +80,17 @@ const AgentMonitor: React.FC = () => {
    const onGetData = async () => {
       try {
          // Fetch both container and memory data concurrently
-         const [containerData, memoryData] = await Promise.all([
+         const [containerData, memoryData, cpuCores] = await Promise.all([
             globalThis.electronAPI.dockerInfo("containers").then(data => JSON.parse(data)),
-            globalThis.electronAPI.dockerInfo("memory").then(data => JSON.parse(data))
+            globalThis.electronAPI.dockerInfo("memory").then(data => JSON.parse(data)),
+            globalThis.electronAPI.dockerInfo("cpus").then(data => parseInt(data))
          ]);
 
          // Calculate total memory and CPU usage
          let totalMemUsed = 0;
          let totalMemMax = 0;
          let totalCPUUsed = 0;
+         let totalCPUMax = cpuCores * 100; // Each core can use 100% CPU
 
          // Create a map of memory data for quick lookup
          const memoryMap = new Map(
@@ -150,7 +152,7 @@ const AgentMonitor: React.FC = () => {
          });
          setTotalCPU({
             used: `${totalCPUUsed.toFixed(2)}%`,
-            total: '800%'
+            total: `${totalCPUMax}%`
          });
 
       } catch (error) {
@@ -297,7 +299,7 @@ const AgentMonitor: React.FC = () => {
                                        {!compareString(container.name, 'agent-router') && (
                                          <>
                                            {container.state === 'running' ? <Tooltip 
-                                              label={container.state === 'running' ? 'Stop Container' : 'Start Container'}
+                                              label={container.state === 'running' ? 'Stop' : 'Start Container'}
                                               hasArrow
                                               placement="top"
                                               bg="gray.700"
@@ -330,7 +332,7 @@ const AgentMonitor: React.FC = () => {
                                            />
                                            }
                                            <Tooltip 
-                                              label="Delete Container"
+                                              label="Delete"
                                               hasArrow
                                               placement="top"
                                               bg="gray.700"

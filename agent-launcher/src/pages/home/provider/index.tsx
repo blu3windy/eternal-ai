@@ -13,7 +13,7 @@ import localStorageService from "../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 import uniq from "lodash.uniq";
 import CAgentContract from "@contract/agent/index.ts";
-import { AgentType, SortOption } from "@pages/home/list-agent";
+import { AgentType, CategoryOption, SortOption } from "@pages/home/list-agent/constants.ts";
 import { ModelInfo } from "../../../../electron/share/model.ts";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import sleep from "@utils/sleep.ts";
@@ -58,6 +58,8 @@ const initialValue: IAgentContext = {
    liveViewUrl: '',
    isSearchMode: false,
    setIsSearchMode: () => {},
+   category: CategoryOption.All,
+   setCategory: () => {},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -84,6 +86,7 @@ const AgentProvider: React.FC<
    const [liveViewUrl, setLiveViewUrl] = useState<string>('');
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
    const [isSearchMode, setIsSearchMode] = useState(false);
+   const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
 
    const [agentStates, setAgentStates] = useState<Record<number, {
       data: IAgentToken;
@@ -764,36 +767,89 @@ const AgentProvider: React.FC<
 
          installedAgents.add(agentContractAddr);
 
-         const cAgent = new CAgentContract({ contractAddress: agentContractAddr, chainId });
-         const codeLanguage = await cAgent.getCodeLanguage();
-         let codeLang = 'js';
-         if (codeLanguage === 'python') {
-            codeLang = 'py';
-         }
+         const cAgent = new CAgentContract({
+            contractAddress: agentContractAddr,
+            chainId: chainId
+         });
          const codeVersion = await cAgent.getCurrentVersion();
-         const agentName = await cAgent.getAgentName();
+
          const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+         const agentName = await cAgent.getAgentName();
+         const codeLanguage = await cAgent.getCodeLanguage();
+
+         let agent_type = AgentType.CustomPrompt;
+         switch (codeLanguage) {
+            case 'custom_ui':
+               agent_type = AgentType.CustomUI
+               break;
+            case 'custom_prompt':
+               agent_type = AgentType.CustomPrompt
+               break;
+            case 'model_online':
+               agent_type = AgentType.ModelOnline
+               break;
+            case 'model':
+               agent_type = AgentType.Model
+               break;
+            case 'python':
+               agent_type = AgentType.UtilityPython
+               break;
+            case 'javascript':
+               agent_type = AgentType.Infra
+               break;
+            default:
+               break;
+         }
 
          let dependAgents: any[] = [];
          if (depsAgentStrs.length > 0) {
             dependAgents = await installDependAgents(depsAgentStrs, chainId);
          }
 
+         let fileNameOnLocal = 'prompt.js';
+         if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent_type)) {
+            fileNameOnLocal = 'app.zip';
+         }
+
+
          const values = await localStorageService.getItem(agentContractAddr);
          const oldCodeVersion = values ? Number(values) : 0;
 
-         const fileNameOnLocal = `prompt.${codeLang}`;
-         const folderNameOnLocal = `${chainId}-${agentName?.toLowerCase()}`;
+         const folderNameOnLocal = `${chainId}-${agentName}`;
 
-         const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderNameOnLocal);
-         if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
-            await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+         let filePath: string | undefined = "";
+         const isExisted = await checkFileExistsOnLocal(
+            fileNameOnLocal,
+            folderNameOnLocal
+         );
+
+         if (!isExisted || oldCodeVersion <= 0) {
+            const rawCode = await cAgent.getAgentCode(codeVersion);
+            if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent_type)) {
+               filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode, agent_type === AgentType.UtilityPython ? 'app' : undefined);
+               await localStorageService.setItem(agentContractAddr, codeVersion.toString());
+               console.log('filePath New', filePath);
+
+               if (agent_type === AgentType.UtilityPython) {
+                  await globalThis.electronAPI.copyRequireRunPython(folderNameOnLocal);
+               }
+               if (filePath) {
+                  globalThis.electronAPI.unzipFile(filePath, filePath.replaceAll(`/${fileNameOnLocal}`, ''));
+               }
+            } else {
+               const base64Array = splitBase64(rawCode);
+               const code = base64Array.reverse().map(item => isBase64(item) ? atob(item) : item).join('\n');
+
+               filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
+               await localStorageService.setItem(agentContractAddr, codeVersion.toString());
+               console.log('filePath New', filePath);
+            }
          } else {
-            const codeBase64 = await cAgent.getAgentCode(codeVersion);
-            const base64Array = splitBase64(codeBase64);
-            const code =base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
-            await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
+            filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+            console.log('filePath isExisted', filePath)
          }
+         
+
          return [
             ...dependAgents,
             {
@@ -1111,6 +1167,8 @@ const AgentProvider: React.FC<
          liveViewUrl,
          isSearchMode,
          setIsSearchMode,
+         category,
+         setCategory,
       };
    }, [
       loading,
@@ -1149,6 +1207,8 @@ const AgentProvider: React.FC<
       liveViewUrl,
       isSearchMode,
       setIsSearchMode,
+      category,
+      setCategory,
    ]);
 
    return (

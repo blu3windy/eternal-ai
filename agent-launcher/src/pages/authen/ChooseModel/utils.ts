@@ -1,4 +1,4 @@
-import { AgentType } from "@pages/home/list-agent";
+import { AgentType } from "@pages/home/list-agent/constants";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import orderBy from "lodash/orderBy";
 

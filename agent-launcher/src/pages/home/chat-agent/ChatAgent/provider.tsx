@@ -1,6 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
+import { AgentType } from "@pages/home/list-agent/constants";
+import { AgentContext } from "@pages/home/provider";
+import CAgentTokenAPI from "@services/api/agents-token";
+import { addOrUpdateTaskItem, removeTaskItem } from '@stores/states/agent-chat/reducer.ts';
+import { TaskItem } from '@stores/states/agent-chat/type.ts';
 import React, {
    createContext,
    PropsWithChildren,
@@ -11,21 +16,13 @@ import React, {
    useRef,
    useState,
 } from 'react';
+import { useDispatch } from 'react-redux';
 import ScrollableFeed from 'react-scrollable-feed';
 import { v4 } from 'uuid';
-import { INIT_WELCOME_MESSAGE } from './constants';
-import { ChatCompletionPayload, IChatMessage } from "../../../../services/api/agent/types.ts";
-import AgentAPI from "../../../../services/api/agent";
-import { AgentContext } from "@pages/home/provider";
 import chatAgentDatabase, { PersistedMessageType } from "../../../../database/chatAgentDatabase.ts";
-import { AgentType } from "@pages/home/list-agent";
-import CAgentTokenAPI from "@services/api/agents-token";
-import { TaskItem } from '@stores/states/agent-chat/type.ts';
-import { useDispatch } from 'react-redux';
-import { addOrUpdateTaskItem, initTaskItems, removeTaskItem } from '@stores/states/agent-chat/reducer.ts';
-import localStorageService from '@storage/LocalStorageService.ts';
-import { CHAT_AGENT_TASKS_STATE_STORAGE_KEY } from '@stores/states/agent-chat/constants.ts';
-import { tryToParseJsonString } from '@utils/string.ts';
+import AgentAPI from "../../../../services/api/agent";
+import { ChatCompletionPayload, IChatMessage } from "../../../../services/api/agent/types.ts";
+import { INIT_WELCOME_MESSAGE } from './constants';
 
 type IChatAgentProviderContext = {
   isStopReceiving?: boolean;

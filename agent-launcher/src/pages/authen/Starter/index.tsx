@@ -5,7 +5,7 @@ import LoadingText from "@components/LoadingText";
 import { getSetupAgents } from "@pages/authen/ChooseModel/utils.ts";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
 import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
-import { AgentType } from "@pages/home/list-agent";
+import { AgentType } from "@pages/home/list-agent/constants";
 import CAgentTokenAPI from "@services/api/agents-token";
 import storageModel from "@storage/StorageModel.ts";
 import { useContext, useEffect, useRef, useState } from "react";

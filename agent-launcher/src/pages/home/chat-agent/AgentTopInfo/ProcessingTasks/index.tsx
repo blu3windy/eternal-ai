@@ -18,7 +18,7 @@ import { motion } from "framer-motion";
 import { TaskItem } from "@stores/states/agent-chat/type";
 import { throttle } from "lodash";
 import { removeTaskItem } from "@stores/states/agent-chat/reducer";
-import { AgentType } from "@pages/home/list-agent";
+import { AgentType } from "@pages/home/list-agent/constants";
 import AgentAPI from "@services/api/agent";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@stores/index";

@@ -1,7 +1,7 @@
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import { motion } from "framer-motion";
 import { Flex, Image } from "@chakra-ui/react";
-import { AgentType } from "@pages/home/list-agent";
+import { AgentType } from "@pages/home/list-agent/constants";
 import { useMemo } from "react";
 import styles from "./styles.module.scss";
 import cs from "classnames";

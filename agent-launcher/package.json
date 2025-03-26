@@ -8,7 +8,9 @@
     "postinstall": "electron-builder install-app-deps",
     "build": "tsc && vite build && electron-builder --mac --universal -- -p always",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sign": "electron-builder --mac --universal",
+    "xcode": "tsc && vite build && electron-builder --mac --universal --x64 --config.mac.target=dir"
   },
   "resolutions": {
     "react": "^18",
@@ -102,7 +104,7 @@
   },
   "main": "dist-electron/main.js",
   "build": {
-    "appId": "com.eternalai.agent-launcher",
+    "appId": "eternalai.org.vibe",
     "productName": "Vibe",
     "asar": true,
     "asarUnpack": [
@@ -131,7 +133,16 @@
       ],
       "icon": "public/icons/app-logo.png",
       "artifactName": "${productName}-Mac-${version}.${ext}",
-      "minimumSystemVersion": "13.0.1"
+      "minimumSystemVersion": "13.0.1",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "identity": "Eternal AI Limited (9M75XA82CZ)",
+      "notarize": {
+        "teamId": "9M75XA82CZ"
+      },
+      "appId": "eternalai.org.vibe"
     },
     "extraResources": [
       {
