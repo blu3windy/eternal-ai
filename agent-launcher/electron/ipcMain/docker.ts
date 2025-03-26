@@ -13,14 +13,15 @@ const DOCKER_NAME = 'agent';
 const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
 const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
 
+export const getDnsHost = (chainId: string, agentName: string) => {
+   return `${chainId}-${agentName}`.toLowerCase();
+}
+
 const ipcMainDocker = () => {
    const userDataPath = app.getPath("userData");
    const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
    const actionScriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
 
-   const getDnsHost = (chainId: string, agentName: string) => {
-      return `${chainId}-${agentName}`.toLowerCase();
-   }
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_COPY_BUILD, async (_event) => {
       try {
