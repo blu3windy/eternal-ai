@@ -130,7 +130,7 @@ const ActionButtons = () => {
          </Button>
          <Button
             onClick={() => {
-               window.electronAPI.modelDelete("", "openai", "84532")
+               window.electronAPI.modelDelete("bafkreideybeu6dpfurmbhqhs2ylscys2gkimfgghg2fjg6ngrmo3wyk2uu", "openai", "84532")
                   .then(() => {
                      alert("Model deleted");
                   }).catch((error) => {

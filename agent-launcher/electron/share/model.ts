@@ -104,5 +104,4 @@ export {
    downloadedModels,
    deleteModel,
    deleteAgentFolder,
-
 }
