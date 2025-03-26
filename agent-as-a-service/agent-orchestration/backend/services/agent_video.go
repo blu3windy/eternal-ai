@@ -144,6 +144,7 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 									inst.TokenAddress = tokenResp.ContractAddress
 									inst.TxHash = tokenResp.TxHash
 									inst.TokenStatus = "done"
+									inst.PairAddress = tokenResp.Pair
 									inst.Error = ""
 
 									//update status twitter post

@@ -881,13 +881,13 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 								for i := 0; i < 5; i++ {
 									time.Sleep(time.Duration(i*5) * time.Second)
 
-									contentReply := fmt.Sprintf("Hey @%v, here is your decentralized video.\n\nOnchain Prompt: https://basescan.org/tx/%v\nOnchain Video: https://basescan.org/tx/%v",
+									contentReply := fmt.Sprintf("Hey @%v, here is your decentralized video.\n\nOnchain Prompt: basescan.org/tx/%v\nOnchain Video: basescan.org/tx/%v",
 										twitterPost.TwitterUsername, twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash)
 
 									if s.conf.Clanker.IsCreateToken && twitterPost.TokenAddress != "" &&
 										twitterPost.TokenName != "" && twitterPost.TokenSymbol != "" {
-										contentReply = fmt.Sprintf("Hey @%v, here is your decentralized video.\n\nOnchain Video: basescan.org/tx/%v\n\nTicker $%s has been deployed. \n Contract address: %s\n\n Trade here: www.clanker.world/clanker/%s",
-											twitterPost.TwitterUsername, twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash, twitterPost.TokenSymbol, twitterPost.TokenAddress, twitterPost.TokenAddress)
+										contentReply = fmt.Sprintf("Hey @%v, here is your decentralized video.\n\nOnchain Video: basescan.org/tx/%v\n\nTicker $%s has been deployed.\n\n Contract address: %s\n\n Trade here: www.clanker.world/clanker/%s",
+											twitterPost.TwitterUsername, twitterPost.SubmitSolutionTxHash, twitterPost.TokenSymbol, twitterPost.TokenAddress, twitterPost.TokenAddress)
 									}
 
 									refId, _err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)

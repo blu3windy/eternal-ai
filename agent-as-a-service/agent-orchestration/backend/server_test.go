@@ -105,9 +105,9 @@ func Test_OpenAI(t *testing.T) {
 
 func Test_SRV(t *testing.T) {
 
-	// fmt.Println(ts.DeployProxyAdminAddress(context.Background(), models.BASE_CHAIN_ID))
-	// ts.JobExecuteInfraTwitterAppRequest(context.Background())
-	ts.CreateClankerTokenForVideoByPostID(context.Background(), 34949)
+	// ts.CreateClankerTokenForVideoByPostID(context.Background(), 34669)
+
+	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 34669)
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
