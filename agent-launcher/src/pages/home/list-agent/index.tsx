@@ -94,6 +94,11 @@ const AgentsList = () => {
       };
    }, []);
 
+   useEffect(() => {
+      refParams.current.category = category;
+      debounceGetTokens(true);
+   }, [category]);
+
    const getLatestAgent = async () => {
       try {
          const params: any = {
@@ -159,10 +164,10 @@ const AgentsList = () => {
             params.agent_types = [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(','); 
          }
 
-         if (FilterOption.Installed === refParams.current.filter) {
-            params.installed = true;
-         } else if (isSearchMode) {
-            params.installed = false;
+         if (!isSearchMode) {
+            if (FilterOption.Installed === refParams.current.filter) {
+               params.installed = true;
+            }
          }
 
          const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
@@ -214,16 +219,6 @@ const AgentsList = () => {
       throttleGetTokens(true);
    };
 
-   const handleBackToCategories = () => {
-      refParams.current = {
-         ...refParams.current,
-         category: CategoryOption.All,
-      };
-      // if (!refParams.current.search) {
-      //    setIsSearchMode(false);
-      // }
-   };
-
    const renderSearchMode = () => {
       if (!isSearchMode) return null;
 
@@ -245,8 +240,8 @@ const AgentsList = () => {
                onChange={(index) => {
                   const selectedCategory = CATEGORIES[index];
                   setCategory(selectedCategory.id);
-                  refParams.current.category = selectedCategory.id;
-                  debounceGetTokens(true);
+                  // refParams.current.category = selectedCategory.id;
+                  // debounceGetTokens(true);
                }}
             >
                <TabList>
@@ -308,7 +303,15 @@ const AgentsList = () => {
                ref={refInput as any}
                autoFocus={false}
                // autoFocus
-               onFocus={() => setIsSearchMode(true)}
+               onFocus={() => {
+                  if (category === CategoryOption.All) {
+                     setCategory(CategoryOption.Model);
+                     // refParams.current.category = category;
+                  }
+                  
+                  setIsSearchMode(true);
+                  // debounceGetTokens(true);
+               }}
                // onBlur={() => {
                //    // Delay hiding search mode to allow clicking category
                //    setTimeout(() => {
@@ -345,10 +348,12 @@ const AgentsList = () => {
                            refParams.current = {
                               ...refParams.current,
                               search: '',
-                              category: CategoryOption.All,
+                              // category: CategoryOption.All,
                            };
+                           setCategory(CategoryOption.All);
+                  
                            setIsSearchMode(false);
-                           debounceGetTokens(true);
+                           // debounceGetTokens(true);
                         }
                      }}
                   />
@@ -558,7 +563,7 @@ const AgentsList = () => {
 
    const renderSearchResults = () => {
       return (
-         <Box>
+         <>
             {/* <Flex align="center" mb="20px" px="24px">
                <Button 
                   leftIcon={<Image src="icons/ic-arrow-left.svg" w="16px" h="16px" />}
@@ -576,20 +581,31 @@ const AgentsList = () => {
                   ) : 'Back'}
                </Button>
             </Flex> */}
-            <Grid
-               w="100%"
-               templateColumns={"1fr"}
-               gridRowGap={"8px"}
-               overflow={'hidden !important'}
+            <InfiniteScroll
+               className={s.listContainer}
+               key={agents?.length}
+               dataLength={agents?.length}
+               next={() => {
+                  debounceGetTokens(false);
+               }}
+               hasMore
+               loader={<></>}
             >
-               {!loaded && <AppLoading />}
-               {agents?.map((item: IAgentToken) => (
-                  <GridItem key={item.id}>
-                     <AgentItem token={item} />
-                  </GridItem>
-               ))}
-            </Grid>
-         </Box>
+               <Grid
+                  w="100%"
+                  templateColumns={"1fr"}
+                  gridRowGap={"8px"}
+                  overflow={'hidden !important'}
+               >
+                  {!loaded && <AppLoading />}
+                  {agents?.map((item: IAgentToken) => (
+                     <GridItem key={item.id}>
+                        <AgentItem token={item} />
+                     </GridItem>
+                  ))}
+               </Grid>
+            </InfiniteScroll>
+         </>
       );
    };
 

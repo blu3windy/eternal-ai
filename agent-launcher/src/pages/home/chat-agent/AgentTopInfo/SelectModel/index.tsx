@@ -11,7 +11,7 @@ import {
    useDisclosure
 } from '@chakra-ui/react';
 import Loading from '@components/Loading';
-import { AgentType } from '@pages/home/list-agent/constants';
+import { AgentType, CategoryOption } from '@pages/home/list-agent/constants';
 import { AgentContext } from "@pages/home/provider";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import cs from 'classnames';
@@ -147,11 +147,12 @@ const ItemToken = ({
 };
 
 const AddMoreRow = ({ onClose }: { onClose: () => void }) => {
-   const {  setIsSearchMode } = useContext(AgentContext);
+   const {  setIsSearchMode, setCategory } = useContext(AgentContext);
 
    return (
       <Flex
          onClick={() => {
+            setCategory(CategoryOption.Model);
             setIsSearchMode(true);
             onClose();
          }}
