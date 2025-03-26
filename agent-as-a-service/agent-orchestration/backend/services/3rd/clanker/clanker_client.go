@@ -71,6 +71,7 @@ type DeployTokenReq struct {
 	SocialMediaUrls          []string `json:"socialMediaUrls"`
 	Platform                 string   `json:"platform"`
 	CreatorRewardsPercentage float64  `json:"creatorRewardsPercentage"`
+	CreatorRewardsAdmin      string   `json:"creatorRewardsAdmin"`
 }
 
 type DeployTokenResp struct {

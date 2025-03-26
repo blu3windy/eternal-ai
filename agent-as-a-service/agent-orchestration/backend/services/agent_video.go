@@ -133,6 +133,7 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 									SocialMediaUrls:          []string{fmt.Sprintf("https://x.com/%s/status/%s", twitterPost.TwitterUsername, twitterPost.TwitterPostID)},
 									Platform:                 "Eternal AI",
 									CreatorRewardsPercentage: s.conf.Clanker.CreatorRewardsPercentage,
+									CreatorRewardsAdmin:      s.conf.Clanker.CreatorRewardsAdmin,
 								})
 
 								if err != nil {
