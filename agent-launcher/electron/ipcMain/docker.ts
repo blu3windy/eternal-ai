@@ -206,6 +206,24 @@ const ipcMainDocker = () => {
       }
    });
 
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_STOP_CONTAINER, async (_event, containerId: string) => {
+      try {
+         await command.execAsyncStream(`docker stop ${containerId}`);
+      } catch (error) {
+         console.log(error);
+         throw error;
+      }
+   });
+
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_DELETE_CONTAINER, async (_event, containerId: string) => {
+      try {
+         await command.execAsyncStream(`docker rm -f ${containerId}`);
+      } catch (error) {
+         console.log(error);
+         throw error;
+      }
+   });
+
    ipcMain.handle(EMIT_EVENT_NAME.COPY_REQUIRE_RUN_PYTHON, async (_, folderName) => {
       await copyPublicToUserData({
          names: ["Dockerfile", "requirements.txt", "server.py"],
