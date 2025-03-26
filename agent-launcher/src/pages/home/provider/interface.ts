@@ -1,5 +1,6 @@
 import { IAgentToken, } from "../../../services/api/agents-token/interface.ts";
 import { Wallet } from "ethers";
+import { CategoryOption } from '../list-agent/constants';
 
 export enum ETradePlatform {
   eternal = "eternal",
@@ -54,4 +55,6 @@ export interface IAgentContext {
   liveViewUrl?: string;
   isSearchMode: boolean;
   setIsSearchMode: (value: boolean) => void;
+  category: CategoryOption;
+  setCategory: (category: CategoryOption) => void;
 }

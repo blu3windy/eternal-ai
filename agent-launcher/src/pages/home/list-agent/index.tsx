@@ -6,12 +6,10 @@ import {
    Flex,
    Grid,
    GridItem,
-   HStack,
    Image,
    Popover,
    PopoverContent,
    PopoverTrigger,
-   SimpleGrid,
    Tab,
    TabList,
    Tabs,
@@ -19,6 +17,8 @@ import {
    useDisclosure,
    VStack
 } from '@chakra-ui/react';
+import BaseModal from '@components/BaseModal/index.tsx';
+import { compareString } from '@utils/string.ts';
 import cx from 'clsx';
 import debounce from 'lodash.debounce';
 import throttle from 'lodash.throttle';
@@ -29,118 +29,21 @@ import AppLoading from "../../../components/AppLoading";
 import CAgentTokenAPI from "../../../services/api/agents-token";
 import { IAgentToken } from "../../../services/api/agents-token/interface.ts";
 import { AgentContext } from "../provider";
-import AgentItem from './AgentItem';
-import AgentNotification from './AgentNotification/index.tsx';
-import BaseModal from '@components/BaseModal/index.tsx';
 import AddTestAgent from './AddTestAgent/index.tsx';
-import { compareString } from '@utils/string.ts';
-import s from './styles.module.scss';
+import AgentItem from './AgentItem';
 import AgentMonitor from './AgentMonitor/index.tsx';
+import {
+   AgentOptions,
+   AgentType,
+   CATEGORIES,
+   Category,
+   CategoryOption,
+   FilterOption,
+   SortBy,
+   SortOption
+} from './constants';
+import s from './styles.module.scss';
 
-export enum SortOption {
-  MarketCap = 'meme_market_cap',
-  Percent = 'meme_percent',
-  LastReply = 'reply_latest_time',
-  Price = 'meme_price',
-  Volume24h = 'meme_volume_last24h',
-  CreatedAt = 'created_at',
-  Popuplar = 'prompt_calls',
-}
-
-export const SortBy = [
-   { value: SortOption.MarketCap, label: 'Market cap' },
-   { value: SortOption.Percent, label: '24h%' },
-   { value: SortOption.CreatedAt, label: 'Creation time' },
-   { value: SortOption.Volume24h, label: '24h volume' },
-   { value: SortOption.Popuplar, label: 'Popular' },
-];
-
-export enum CategoryOption {
-   All = 'all',
-  Model = 'model',
-  Utility = 'non-model',
-  Infra = 'infra',
-  Character = 'character',
-}
-
-export enum FilterOption {
-   All = 'all',
-   Installed = 'installed',
-}
-
-export const Category = [
-   { value: FilterOption.All, label: 'All', description: 'All available agents.' },
-   { value: CategoryOption.Character, label: 'Character', description: 'Agents with unique personalities, offering engaging chat experiences and interactions.' },
-   { value: CategoryOption.Model, label: 'Model', description: 'Agents providing direct access to specific AI models (LLaMA, DeepSeek, Hermes,…).' },
-   { value: CategoryOption.Utility, label: 'Utility', description: 'Task-focused agents built with Python or JavaScript.' },
-   { value: CategoryOption.Infra, label: 'Infra', description: 'Agents providing APIs or services to customize and manage other agents.' },
-   // { value: FilterOption.Installed, label: 'Installed', description: 'Agents currently installed.' },
-   // { value: FilterOption.NonInstalled, label: 'Available', description: 'Agents available for installation.' },
-];
-
-export const AgentOptions = [
-   { value: FilterOption.Installed, label: 'Your Agent', description: 'Agents currently installed.', icon: undefined },
-   { value: FilterOption.All, label: 'Store Agent', description: 'All available agents.', icon: 'icons/ic-store-agent.svg' },
-   // { value: FilterOption.NonInstalled, label: 'Recommend', description: 'Recommend', icon: undefined },
-]
-
-export enum AgentType {
-   All = -1,
-  Normal = 0,
-  Reasoning = 1,
-  KnowledgeBase = 2,
-  Eliza = 3,
-  Zerepy = 4,
-  UtilityJS = 6,
-  UtilityPython = 7,
-  Model = 5,
-  Infra = 8,
-  CustomUI = 10,
-  CustomPrompt = 11,
-  ModelOnline = 12,
-}
-
-export const AgentTypeName = {
-   [AgentType.Normal]: 'Normal',
-   [AgentType.Reasoning]: 'Reasoning',
-   [AgentType.KnowledgeBase]: 'Knowledge',
-   [AgentType.Eliza]: 'Eliza',
-   [AgentType.Zerepy]: 'Zerepy',
-   [AgentType.UtilityJS]: 'Utility JS',
-   [AgentType.UtilityPython]: 'Utility Python',
-   [AgentType.Infra]: 'Infra',
-}
-
-const CATEGORIES = [
-   // {
-   //    id: CategoryOption.Character,
-   //    name: 'Character',
-   //    description: 'Social and chat agents',
-   //    gradient: 'linear-gradient(270deg, #F38F1A 0%, #8D530F 100%)',
-   //    icon: 'icons/ic-category-character.svg'
-   // },
-   {
-      id: CategoryOption.Model,
-      name: 'Model',
-      description: 'AI model agents',
-      gradient: 'linear-gradient(270deg, #EF3B2F 0%, #89221B 100%)',
-      icon: 'icons/ic-category-model.svg'
-   },
-   {
-      id: CategoryOption.Utility,
-      name: 'Utility',
-      description: 'Tool and utility agents',
-      gradient: 'linear-gradient(270deg, #A94FD4 0%, #58296E 100%)',
-      icon: 'icons/ic-category-utility.svg'
-   },
-   {
-      id: CategoryOption.Infra,
-      name: 'Infra',
-      description: 'Infrastructure agents',
-      gradient: 'linear-gradient(270deg, #3FBF5A 0%, #1D592A 100%)',
-      icon: 'icons/ic-category-infra.svg'
-   }
-];
 
 const AgentsList = () => {
    const refInput = useRef<HTMLInputElement | null>(null);
@@ -153,7 +56,6 @@ const AgentsList = () => {
 
    const [sort, setSort] = useState<SortOption>(SortOption.CreatedAt);
    const [filter, setFilter] = useState<FilterOption>(FilterOption.Installed);
-   const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
    const [loaded, setLoaded] = useState(false);
    const refLoading = useRef(false);
 
@@ -161,7 +63,7 @@ const AgentsList = () => {
    const [latestAgent, setLatestAgent] = useState<IAgentToken | null>(null);
    const refLatestInterval = useRef<any>(null);
 
-   const { setSelectedAgent, selectedAgent, isSearchMode, setIsSearchMode } = useContext(AgentContext);
+   const { setSelectedAgent, selectedAgent, isSearchMode, setIsSearchMode, category, setCategory } = useContext(AgentContext);
 
    const refParams = useRef({
       page: 1,
@@ -336,17 +238,23 @@ const AgentsList = () => {
                </Box>
             )} */}
 
-            <Tabs className={s.tabContainer} isFitted>
+            <Tabs 
+               className={s.tabContainer} 
+               isFitted
+               index={CATEGORIES.findIndex(c => c.id === category)}
+               onChange={(index) => {
+                  const selectedCategory = CATEGORIES[index];
+                  setCategory(selectedCategory.id);
+                  refParams.current.category = selectedCategory.id;
+                  debounceGetTokens(true);
+               }}
+            >
                <TabList>
-                  {CATEGORIES.map((category) => (
+                  {CATEGORIES.map((cat) => (
                      <Tab 
-                        key={category.id}
-                        onClick={() => {
-                           refParams.current.category = category.id;
-                           debounceGetTokens(true);
-                        }}
+                        key={cat.id}
                      >
-                        <Text>{category.name}</Text>
+                        <Text>{cat.name}</Text>
                      </Tab>
                   ))}
                </TabList>

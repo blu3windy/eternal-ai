@@ -10,15 +10,14 @@ import {
    Text,
    useDisclosure
 } from '@chakra-ui/react';
-import cs from 'classnames';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import s from './styles.module.scss';
-import { AgentContext } from "@pages/home/provider";
-import CAgentTokenAPI from "../../../../../services/api/agents-token";
-import { IAgentToken } from "@services/api/agents-token/interface.ts";
-import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import Loading from '@components/Loading';
-import { AgentType } from '@pages/home/list-agent';
+import { AgentType } from '@pages/home/list-agent/constants';
+import { AgentContext } from "@pages/home/provider";
+import { IAgentToken } from "@services/api/agents-token/interface.ts";
+import cs from 'classnames';
+import { useContext, useEffect, useMemo, useState } from 'react';
+import CAgentTokenAPI from "../../../../../services/api/agents-token";
+import s from './styles.module.scss';
 
 export const RenameModels: any = {
    'NousResearch/Hermes-3-Llama-3.1-70B-FP8': 'Hermes 3 70B',

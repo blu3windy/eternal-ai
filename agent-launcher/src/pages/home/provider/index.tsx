@@ -13,7 +13,7 @@ import localStorageService from "../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 import uniq from "lodash.uniq";
 import CAgentContract from "@contract/agent/index.ts";
-import { AgentType, SortOption } from "@pages/home/list-agent";
+import { AgentType, CategoryOption, SortOption } from "@pages/home/list-agent/constants.ts";
 import { ModelInfo } from "../../../../electron/share/model.ts";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import sleep from "@utils/sleep.ts";
@@ -58,6 +58,8 @@ const initialValue: IAgentContext = {
    liveViewUrl: '',
    isSearchMode: false,
    setIsSearchMode: () => {},
+   category: CategoryOption.All,
+   setCategory: () => {},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -84,6 +86,7 @@ const AgentProvider: React.FC<
    const [liveViewUrl, setLiveViewUrl] = useState<string>('');
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
    const [isSearchMode, setIsSearchMode] = useState(false);
+   const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
 
    const [agentStates, setAgentStates] = useState<Record<number, {
       data: IAgentToken;
@@ -754,7 +757,7 @@ const AgentProvider: React.FC<
       return [];
    };
 
-   const installDependAgents = async (agents: string[], chainId: number, agent_type: AgentType = AgentType.CustomPrompt) => {
+   const installDependAgents = async (agents: string[], chainId: number) => {
       const installedAgents = new Set<string>();
 
       const agentsData = await Promise.all(agents.map(async (agentContractAddr) => {
@@ -772,10 +775,35 @@ const AgentProvider: React.FC<
 
          const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
          const agentName = await cAgent.getAgentName();
+         const codeLanguage = await cAgent.getCodeLanguage();
+
+         let agent_type = AgentType.CustomPrompt;
+         switch (codeLanguage) {
+            case 'custom_ui':
+               agent_type = AgentType.CustomUI
+               break;
+            case 'custom_prompt':
+               agent_type = AgentType.CustomPrompt
+               break;
+            case 'model_online':
+               agent_type = AgentType.ModelOnline
+               break;
+            case 'model':
+               agent_type = AgentType.Model
+               break;
+            case 'python':
+               agent_type = AgentType.UtilityPython
+               break;
+            case 'javascript':
+               agent_type = AgentType.Infra
+               break;
+            default:
+               break;
+         }
 
          let dependAgents: any[] = [];
          if (depsAgentStrs.length > 0) {
-            dependAgents = await installDependAgents(depsAgentStrs, chainId, agent_type);
+            dependAgents = await installDependAgents(depsAgentStrs, chainId);
          }
 
          let fileNameOnLocal = 'prompt.js';
@@ -1139,6 +1167,8 @@ const AgentProvider: React.FC<
          liveViewUrl,
          isSearchMode,
          setIsSearchMode,
+         category,
+         setCategory,
       };
    }, [
       loading,
@@ -1177,6 +1207,8 @@ const AgentProvider: React.FC<
       liveViewUrl,
       isSearchMode,
       setIsSearchMode,
+      category,
+      setCategory,
    ]);
 
    return (
