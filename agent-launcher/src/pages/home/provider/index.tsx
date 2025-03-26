@@ -556,7 +556,7 @@ const AgentProvider: React.FC<
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await handleStopDockerAgent(agent);
-            await stopDependAgents(agent);
+            // await stopDependAgents(agent);
          } else if (agent.agent_type === AgentType.Model) {
 
          } else {
