@@ -97,7 +97,7 @@ const ActionButtons = () => {
          </Button>
          <Button
             onClick={() => {
-               globalThis.electronAPI.dockerInfo("container-memory").then((data) => {
+               globalThis.electronAPI.dockerInfo("containers").then((data) => {
                   console.log(JSON.parse(data));
                });
             }}
@@ -126,7 +126,20 @@ const ActionButtons = () => {
                });
             }}
          >
-            DOCKET SET READY PORT
+            DOCKER SET READY PORT
+         </Button>
+         <Button
+            onClick={() => {
+               window.electronAPI.modelDelete("", "openai", "84532")
+                  .then(() => {
+                     alert("Model deleted");
+                  }).catch((error) => {
+                     alert("Error: " + error?.message);
+                     console.log("Error: ", error);
+                  });
+            }}
+         >
+            MODEL DELETE
          </Button>
       </Flex>
    )

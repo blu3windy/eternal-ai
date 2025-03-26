@@ -13,16 +13,29 @@ const DOCKER_NAME = 'agent';
 const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
 const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
 
+const userDataPath = app.getPath("userData");
+const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
+const infoScriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_INFO_SCRIPT);
+const actionScriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
+
 export const getDnsHost = (chainId: string, agentName: string) => {
    return `${chainId}-${agentName}`.toLowerCase();
 }
 
+export const deleteContainer = async (containerId: string) => {
+   const params = [
+      `--container-id "${containerId}"`,
+   ]
+   const paramsStr = params.join(' ');
+   await command.execAsyncStream(`bash "${actionScriptPath}" remove_container_id ${paramsStr}`);
+}
+
+export const dockerInfoAction = async (action: string) => {
+   const stdout = await command.execAsync(`bash "${infoScriptPath}" ${action}`);
+   return stdout;
+}
+
 const ipcMainDocker = () => {
-   const userDataPath = app.getPath("userData");
-   const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
-   const actionScriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
-
-
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_COPY_BUILD, async (_event) => {
       try {
          await copyFiles();
@@ -35,8 +48,6 @@ const ipcMainDocker = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_BUILD, async (_event) => {
       try {
-         const userDataPath = app.getPath("userData");
-         const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
          const folderPathDocker = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER);
 
          const containers = [

@@ -2,9 +2,9 @@ import { ipcMain } from "electron";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 import command from "../share/command-tool.ts";
 import { SCRIPTS_NAME } from "../share/utils.ts";
-import { deleteModel, downloadedModels, getFolderPath } from "../share/model.ts";
+import { deleteAgentFolder, deleteModel, downloadedModels, getFolderPath } from "../share/model.ts";
 import { dialogCheckDist } from "../share/file-size.ts";
-import { getDnsHost } from "./docker.ts";
+import { deleteContainer, dockerInfoAction, getDnsHost } from "./docker.ts";
 
 const PORT = 65534;
 
@@ -72,11 +72,14 @@ const ipcMainModel = () => {
          await deleteModel(hash);
       } else if (agent_name && chain_id) {
          const dnsHost = getDnsHost(chain_id, agent_name);
-         const dockerContainerId = await command.execAsync(`docker ps -q --filter "name=${dnsHost}"`);
-         if (dockerContainerId) {
-            await command.execAsyncStream(`docker stop ${dockerContainerId}`);
-            await command.execAsyncStream(`docker rm ${dockerContainerId}`);
+         try {
+            await deleteAgentFolder(dnsHost);
+         } catch (error) {
+            console.log(error);
          }
+         const containerId = await dockerInfoAction(`container-id --container-name ${dnsHost}`);
+         await deleteContainer(containerId);
+         console.log("agent_name", agent_name);
       }
    });
 

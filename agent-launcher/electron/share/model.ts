@@ -16,6 +16,11 @@ const getFolderPath = () => {
    return path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.MODEL);
 }
 
+const getFolderAgentPath = () => {
+   const userDataPath = app.getPath("userData");
+   return path.join(`${userDataPath}/${USER_DATA_FOLDER_NAME.AGENT_DATA}`, USER_DATA_FOLDER_NAME.AGENTS);
+}
+
 // Function to get file details including size, type, and hash
 function getFileDetails(directoryPath: string, file: string) {
    const filePath = path.join(directoryPath, file);
@@ -87,9 +92,17 @@ const deleteModel = async (hash: string) => {
    }
 }
 
+const deleteAgentFolder = async (folderName: string) => {
+   const folderPath = getFolderAgentPath();
+   const agentPath = path.join(folderPath, folderName);
+   fs.rmSync(agentPath, { recursive: true, force: true });
+}
+
 export {
    getFolderPath,
    ACTIVE_PATH,
    downloadedModels,
-   deleteModel
+   deleteModel,
+   deleteAgentFolder,
+
 }
