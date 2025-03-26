@@ -182,6 +182,10 @@ stop_container_id() {
   docker stop "$CONTAINER_ID" 2>/dev/null || true
 }
 
+start_container_id() {
+  docker start "$CONTAINER_ID" 2>/dev/null || true
+}
+
 set_ready_port() {
     local port="$1"
     log_message "Checking for containers using port $port..."
@@ -246,6 +250,9 @@ case "$action" in
     ;;
   stop-container-id)
     stop_container_id
+    ;;
+  start-container-id)
+    start_container_id
     ;;
   set-ready-port)
     set_ready_port "$DEFAULT_PORT"

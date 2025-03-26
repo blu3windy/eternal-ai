@@ -26,6 +26,7 @@ const EMIT_EVENT_NAME = {
    DOCKER_INFO: "safe-docker-info",
    DOCKET_SET_READY_PORT: "safe-docker-set-ready-port",
    DOCKER_STOP_CONTAINER: "safe-docker-stop-container",
+   DOCKER_START_CONTAINER: "safe-docker-start-container",
    DOCKER_DELETE_CONTAINER: "safe-docker-delete-container",
 
 
