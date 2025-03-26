@@ -105,9 +105,9 @@ func Test_OpenAI(t *testing.T) {
 
 func Test_SRV(t *testing.T) {
 
-	// ts.CreateClankerTokenForVideoByPostID(context.Background(), 34669)
+	// ts.CreateClankerTokenForVideoByPostID(context.Background(), 35409)
 
-	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 34669)
+	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 35409)
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
