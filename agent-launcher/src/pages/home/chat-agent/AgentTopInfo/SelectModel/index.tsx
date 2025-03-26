@@ -109,11 +109,13 @@ const ItemToken = ({
 
                <Flex direction="column" gap="4px">
                   <Text className={s.itemTitle}>
-                     {agent?.personality}
+                     {agent?.agent_name}
                   </Text>
                   <Flex gap={"4px"} alignItems={"center"}>
                      <Text className={s.itemAmount}>
-                        {agent?.agent_name} <>{agent.agent_type !== AgentType.ModelOnline && `(${modelSize} GB)`}</>
+                        {
+                           agent?.agent_type === AgentType.ModelOnline ? "Online" : `${modelSize} GB`
+                        }
                      </Text>
                      {
                         agent.agent_type !== AgentType.ModelOnline && (
