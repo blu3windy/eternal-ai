@@ -336,17 +336,23 @@ const AgentsList = () => {
                </Box>
             )} */}
 
-            <Tabs className={s.tabContainer} isFitted>
+            <Tabs 
+               className={s.tabContainer} 
+               isFitted
+               index={CATEGORIES.findIndex(c => c.id === category)}
+               onChange={(index) => {
+                  const selectedCategory = CATEGORIES[index];
+                  setCategory(selectedCategory.id);
+                  refParams.current.category = selectedCategory.id;
+                  debounceGetTokens(true);
+               }}
+            >
                <TabList>
-                  {CATEGORIES.map((category) => (
+                  {CATEGORIES.map((cat) => (
                      <Tab 
-                        key={category.id}
-                        onClick={() => {
-                           refParams.current.category = category.id;
-                           debounceGetTokens(true);
-                        }}
+                        key={cat.id}
                      >
-                        <Text>{category.name}</Text>
+                        <Text>{cat.name}</Text>
                      </Tab>
                   ))}
                </TabList>
