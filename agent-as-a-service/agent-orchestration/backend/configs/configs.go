@@ -279,6 +279,7 @@ type Config struct {
 		ApiKey                   string  `json:"api_key"`
 		ApiUrl                   string  `json:"api_url"`
 		CreatorRewardsPercentage float64 `json:"creator_rewards_percentage"`
+		CreatorRewardsAdmin      string  `json:"creator_rewards_admin"`
 	} `json:"clanker"`
 	Privy struct {
 		AppID     string `json:"app_id"`
