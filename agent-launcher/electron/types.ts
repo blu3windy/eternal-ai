@@ -1,11 +1,3 @@
-export type CodeLanguage = "js" | "py" | "custom-prompt" | "custom-ui"
-
-export type OsContext = {
-   memory: {
-        total: number;
-        free: number;
-        used: number;
-   },
-}
+export type CodeLanguage = "custom-prompt" | "custom-ui" | "open-ai"
 
 export type DockerInfoAction = "images" | "containers" | "memory" | "cpus"

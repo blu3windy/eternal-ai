@@ -24,6 +24,7 @@ const EMIT_EVENT_NAME = {
    DOCKER_RUNNING_PORT: "safe-docker-running-port",
    DOCKER_CHECK_RUNNING: "safe-docker-check-running",
    DOCKER_INFO: "safe-docker-info",
+   DOCKET_SET_READY_PORT: "safe-docker-set-ready-port",
 
 
    MODEL_STARTER: "safe-model-starter",

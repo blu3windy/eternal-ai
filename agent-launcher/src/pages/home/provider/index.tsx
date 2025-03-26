@@ -286,6 +286,8 @@ const AgentProvider: React.FC<
          return 'py';
       } else if ([AgentType.UtilityJS].includes(agent.agent_type)) {
          return 'js';
+      } else if ([AgentType.ModelOnline].includes(agent.agent_type)) {
+         return 'open-ai';
       }
 
       return '';
@@ -556,8 +558,6 @@ const AgentProvider: React.FC<
             await handleRunModelAgent(ipfsHash);
             setCurrentModel(agent);
             console.log('stephen: startAgent Model finish run', new Date().toLocaleTimeString());
-         } else {
-
          }
 
          await sleep(2000);
@@ -660,7 +660,7 @@ const AgentProvider: React.FC<
          });
 
          let fileNameOnLocal = 'prompt.js';
-         if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
+         if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             fileNameOnLocal = 'app.zip';
          }
 
@@ -679,7 +679,7 @@ const AgentProvider: React.FC<
 
          if (!isExisted || needUpdateCode || oldCodeVersion <= 0) {
             const rawCode = await cAgent.getAgentCode(codeVersion);
-            if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].includes(agent.agent_type)) {
+            if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
                filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode, agent.agent_type === AgentType.UtilityPython ? 'app' : undefined);
                await localStorageService.setItem(agent.agent_contract_address, codeVersion.toString());
                console.log('filePath New', filePath);
@@ -966,8 +966,8 @@ const AgentProvider: React.FC<
 
             // Find agent info from API result
             const agent = utilityAgents.find(a => 
-               a.network_id.toString() === networkId && 
-               a.agent_name?.toLowerCase() === agentName?.toLowerCase()
+               a.network_id.toString() === networkId 
+               && a.agent_name?.toLowerCase() === agentName?.toLowerCase()
             );
             
             if (agent) {

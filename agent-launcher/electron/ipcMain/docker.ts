@@ -160,11 +160,12 @@ const ipcMainDocker = () => {
                   return `-p ${p}:${p}`;
                }).join(' ');
             }
-
-            console.log('leon tetststststst', port);
             break;
          case 'custom-ui':
             imageName = `${DOCKER_NAME}-cu-${dnsHost}`;
+            break;
+         case 'open-ai':
+            imageName = `${DOCKER_NAME}-oai-${dnsHost}`;
             break;
          default:
             imageName = DOCKER_SERVER_JS;
@@ -240,6 +241,14 @@ const ipcMainDocker = () => {
       const stdout = await command.execAsync(`bash "${scriptPath}" ${action}`);
       return stdout;
    });
+
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKET_SET_READY_PORT, async () => {
+      const userDataPath = app.getPath("userData");
+      const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
+      const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
+
+      await command.execAsync(`bash "${scriptPath}" set-ready-port`);
+   })
 }
 
 export default ipcMainDocker;

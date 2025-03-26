@@ -3,6 +3,8 @@
 export PATH="/opt/homebrew/bin/:$PATH"
 export PATH="$HOME/homebrew/bin:$PATH"
 
+DEFAULT_PORT=65534
+
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
   echo "Docker is not installed. Please install Docker and try again."
@@ -103,18 +105,22 @@ run_container_custom_prompt() {
     cd_docker_build_source_path
     docker build -t "$IMAGE_NAME" .;
     if [ -n "$PORT" ]; then
-    docker run -d ${PORT} --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    docker run -d "${PORT}" --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
     else
         docker run -d --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
     fi
-
 }
 
+run_container_open_ai() {
+    cd_docker_build_source_path
+    docker build -t "$IMAGE_NAME" .;
+    docker run -d -p $DEFAULT_PORT:$DEFAULT_PORT --network network-agent-external --name "$CONTAINER_NAME" "$IMAGE_NAME"
+}
 
 run_container_custom_ui() {
     cd_docker_build_source_path
     docker build -t "$IMAGE_NAME" .;
-    docker run -d -p 0:8080 -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    docker run -d -p 0:8080 --network network-agent-external -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --name "$CONTAINER_NAME" "$IMAGE_NAME"
 }
 
 run_container() {
@@ -126,6 +132,9 @@ run_container() {
       ;;
     custom-prompt)
       run_container_custom_prompt
+      ;;
+    open-ai)
+      run_container_open_ai
       ;;
     *)
       log_error "Unsupported code this type: $TYPE"
@@ -167,6 +176,33 @@ delete() {
   docker rmi "$IMAGE_NAME" 2>/dev/null || true
 }
 
+set_ready_port() {
+    local port="$1"
+    log_message "Checking for containers using port $port..."
+    
+    # Find containers using port DEFAULT_PORT
+    local containers=$(docker ps -q --filter "publish=$port")
+    
+    if [ -n "$containers" ]; then
+        log_message "Found containers using port $port. Stopping them..."
+        for container in $containers; do
+            local container_name=$(docker inspect --format '{{.Name}}' "$container" | sed 's/\///')
+            log_message "Stopping container: $container_name"
+            docker stop "$container" || {
+                log_error "Failed to stop container: $container_name"
+                return 1
+            }
+            docker rm "$container" || {
+                log_error "Failed to remove container: $container_name"
+                return 1
+            }
+        done
+        log_message "Successfully stopped all containers using port $port"
+    else
+        log_message "No containers found using port $port"
+    fi
+}
+
 case "$action" in
   run)
     if [ -z "$CONTAINER_NAME" ]; then
@@ -203,6 +239,9 @@ case "$action" in
       log_error "Missing Image Name"
     fi
     delete
+    ;;
+  set-ready-port)
+    set_ready_port "$DEFAULT_PORT"
     ;;
   *)
     log_error "Invalid action: $action"
