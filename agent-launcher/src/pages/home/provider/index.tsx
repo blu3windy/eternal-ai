@@ -747,14 +747,14 @@ const AgentProvider: React.FC<
 
          const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
          if (depsAgentStrs.length > 0) {
-            const dependAgents = await installDependAgents(depsAgentStrs, chainId, agent.agent_type);
+            const dependAgents = await installDependAgents(depsAgentStrs, chainId);
             return dependAgents;
          }
       }
       return [];
    };
 
-   const installDependAgents = async (agents: string[], chainId: number, agent_type: AgentType) => {
+   const installDependAgents = async (agents: string[], chainId: number, agent_type: AgentType = AgentType.CustomPrompt) => {
       const installedAgents = new Set<string>();
 
       const agentsData = await Promise.all(agents.map(async (agentContractAddr) => {
