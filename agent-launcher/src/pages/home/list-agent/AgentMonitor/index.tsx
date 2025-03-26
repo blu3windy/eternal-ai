@@ -77,15 +77,26 @@ const AgentMonitor: React.FC = () => {
    const [totalCPU, setTotalCPU] = useState({ used: '0%', total: '800%' });
    const intervalRef = useRef<NodeJS.Timeout>();
    const cPumpAPI = new CAgentTokenAPI();
+   const [agents, setAgents] = useState<any[]>([]);
+
+   const onGetDataAgents = async () => {
+      try {
+         const [{ agents }, { agents: agentsAll }] = await Promise.all([
+            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, installed: true, agent_types: '5,12,10,11,8' }),
+            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types: '5,12,10,11,8' }),
+         ]);
+         setAgents([...agents, ...agentsAll]);
+      }  catch {
+      }
+   }
 
    const onGetData = async () => {
       try {
          // Fetch both container and memory data concurrently
-         const [containerData, memoryData, cpuCores, { agents }] = await Promise.all([
+         const [containerData, memoryData, cpuCores] = await Promise.all([
             globalThis.electronAPI.dockerInfo("containers").then(data => JSON.parse(data)),
             globalThis.electronAPI.dockerInfo("memory").then(data => JSON.parse(data)),
             globalThis.electronAPI.dockerInfo("cpus").then(data => parseInt(data)),
-            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, installed: true, agent_types: '5,12,10,11,8' }),
          ]);
 
          // Calculate total memory and CPU usage
@@ -193,20 +204,21 @@ const AgentMonitor: React.FC = () => {
       // Initial fetch
       onGetData();
       // Set up the interval
-      intervalRef.current = setInterval(onGetData, 3000);
+      intervalRef.current = setInterval(onGetData, 2000);
       // Cleanup function
       return () => {
          if (intervalRef.current) {
             clearInterval(intervalRef.current);
          }
       };
-   }, [searchTerm, showRunningOnly]); // Empty dependency array means this effect runs once on mount
+   }, [searchTerm, showRunningOnly, agents]); // Empty dependency array means this effect runs once on mount
 
    // Additional effect to handle popover open/close
    useEffect(() => {
       if (isOpen) {
          // Fetch data immediately when popover opens
          onGetData();
+         onGetDataAgents();
       } else {
          // Clear interval when popover closes
          if (intervalRef.current) {
@@ -300,7 +312,7 @@ const AgentMonitor: React.FC = () => {
                            </Tr>
                         </Thead>
                         <Tbody>
-                           {containers.map((container, idx) => (
+                           {agents.length > 0 && containers.map((container, idx) => (
                               <Tr key={idx}>
                                  <Td>
                                     <Flex align="center" gap="2">
