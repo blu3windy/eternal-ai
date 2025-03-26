@@ -215,6 +215,19 @@ const ipcMainDocker = () => {
       }
    });
 
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_START_CONTAINER, async (_event, containerId: string) => {
+      try {
+         const params = [
+            `--container-id "${containerId}"`,
+         ]
+         const paramsStr = params.join(' ');
+         await command.execAsyncStream(`bash "${actionScriptPath}" start-container-id ${paramsStr}`);
+      } catch (error) {
+         console.log(error);
+         throw error;
+      }
+   });
+
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_DELETE_CONTAINER, async (_event, containerId: string) => {
       try {
          const params = [
