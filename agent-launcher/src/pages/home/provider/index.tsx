@@ -747,14 +747,14 @@ const AgentProvider: React.FC<
 
          const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
          if (depsAgentStrs.length > 0) {
-            const dependAgents = await installDependAgents(depsAgentStrs, chainId);
+            const dependAgents = await installDependAgents(depsAgentStrs, chainId, agent.agent_type);
             return dependAgents;
          }
       }
       return [];
    };
 
-   const installDependAgents = async (agents: string[], chainId: number) => {
+   const installDependAgents = async (agents: string[], chainId: number, agent_type: AgentType) => {
       const installedAgents = new Set<string>();
 
       const agentsData = await Promise.all(agents.map(async (agentContractAddr) => {
@@ -764,36 +764,64 @@ const AgentProvider: React.FC<
 
          installedAgents.add(agentContractAddr);
 
-         const cAgent = new CAgentContract({ contractAddress: agentContractAddr, chainId });
-         const codeLanguage = await cAgent.getCodeLanguage();
-         let codeLang = 'js';
-         if (codeLanguage === 'python') {
-            codeLang = 'py';
-         }
+         const cAgent = new CAgentContract({
+            contractAddress: agentContractAddr,
+            chainId: chainId
+         });
          const codeVersion = await cAgent.getCurrentVersion();
-         const agentName = await cAgent.getAgentName();
+
          const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+         const agentName = await cAgent.getAgentName();
 
          let dependAgents: any[] = [];
          if (depsAgentStrs.length > 0) {
-            dependAgents = await installDependAgents(depsAgentStrs, chainId);
+            dependAgents = await installDependAgents(depsAgentStrs, chainId, agent_type);
          }
+
+         let fileNameOnLocal = 'prompt.js';
+         if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent_type)) {
+            fileNameOnLocal = 'app.zip';
+         }
+
 
          const values = await localStorageService.getItem(agentContractAddr);
          const oldCodeVersion = values ? Number(values) : 0;
 
-         const fileNameOnLocal = `prompt.${codeLang}`;
-         const folderNameOnLocal = `${chainId}-${agentName?.toLowerCase()}`;
+         const folderNameOnLocal = `${chainId}-${agentName}`;
 
-         const isExisted = await checkFileExistsOnLocal(fileNameOnLocal, folderNameOnLocal);
-         if (isExisted && (oldCodeVersion && oldCodeVersion === codeVersion)) {
-            await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+         let filePath: string | undefined = "";
+         const isExisted = await checkFileExistsOnLocal(
+            fileNameOnLocal,
+            folderNameOnLocal
+         );
+
+         if (!isExisted || oldCodeVersion <= 0) {
+            const rawCode = await cAgent.getAgentCode(codeVersion);
+            if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent_type)) {
+               filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode, agent_type === AgentType.UtilityPython ? 'app' : undefined);
+               await localStorageService.setItem(agentContractAddr, codeVersion.toString());
+               console.log('filePath New', filePath);
+
+               if (agent_type === AgentType.UtilityPython) {
+                  await globalThis.electronAPI.copyRequireRunPython(folderNameOnLocal);
+               }
+               if (filePath) {
+                  globalThis.electronAPI.unzipFile(filePath, filePath.replaceAll(`/${fileNameOnLocal}`, ''));
+               }
+            } else {
+               const base64Array = splitBase64(rawCode);
+               const code = base64Array.reverse().map(item => isBase64(item) ? atob(item) : item).join('\n');
+
+               filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
+               await localStorageService.setItem(agentContractAddr, codeVersion.toString());
+               console.log('filePath New', filePath);
+            }
          } else {
-            const codeBase64 = await cAgent.getAgentCode(codeVersion);
-            const base64Array = splitBase64(codeBase64);
-            const code =base64Array.map(item => isBase64(item) ? atob(item) : item).join('\n');
-            await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
+            filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+            console.log('filePath isExisted', filePath)
          }
+         
+
          return [
             ...dependAgents,
             {

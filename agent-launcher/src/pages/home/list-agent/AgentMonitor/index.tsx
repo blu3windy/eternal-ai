@@ -297,7 +297,7 @@ const AgentMonitor: React.FC = () => {
                                        {!compareString(container.name, 'agent-router') && (
                                          <>
                                            {container.state === 'running' ? <Tooltip 
-                                              label={container.state === 'running' ? 'Stop Container' : 'Start Container'}
+                                              label={container.state === 'running' ? 'Stop' : 'Start Container'}
                                               hasArrow
                                               placement="top"
                                               bg="gray.700"
@@ -330,7 +330,7 @@ const AgentMonitor: React.FC = () => {
                                            />
                                            }
                                            <Tooltip 
-                                              label="Delete Container"
+                                              label="Delete"
                                               hasArrow
                                               placement="top"
                                               bg="gray.700"
