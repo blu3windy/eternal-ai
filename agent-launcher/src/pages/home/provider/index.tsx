@@ -556,7 +556,7 @@ const AgentProvider: React.FC<
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await handleStopDockerAgent(agent);
-            await stopDependAgents(agent);
+            // await stopDependAgents(agent);
          } else if (agent.agent_type === AgentType.Model) {
 
          } else {
@@ -587,7 +587,11 @@ const AgentProvider: React.FC<
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await stopAgent(agent);
 
-            await removeUtilityAgent(agent);
+            if (agent.agent_type === AgentType.ModelOnline) {
+               await globalThis.electronAPI.modelDelete('', agent.agent_name?.toLowerCase(), agent.network_id?.toString());
+            } else {
+               await removeUtilityAgent(agent);
+            }
 
             fetchInstalledUtilityAgents();
          } else if (agent.agent_type === AgentType.Model) {
@@ -985,6 +989,7 @@ const AgentProvider: React.FC<
                AgentType.CustomPrompt
             ].join(','),
             chain: '',
+            installed: true
          };
          const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
 
@@ -1059,6 +1064,7 @@ const AgentProvider: React.FC<
                AgentType.Zerepy
             ].join(','),
             chain: '',
+            installed: true
          };
          const { agents: socialAgents } = await cPumpAPI.getAgentTokenList(socialParams);
 
