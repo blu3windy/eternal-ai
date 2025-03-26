@@ -754,7 +754,7 @@ const AgentProvider: React.FC<
       return [];
    };
 
-   const installDependAgents = async (agents: string[], chainId: number, agent_type: AgentType = AgentType.CustomPrompt) => {
+   const installDependAgents = async (agents: string[], chainId: number) => {
       const installedAgents = new Set<string>();
 
       const agentsData = await Promise.all(agents.map(async (agentContractAddr) => {
@@ -772,10 +772,35 @@ const AgentProvider: React.FC<
 
          const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
          const agentName = await cAgent.getAgentName();
+         const codeLanguage = await cAgent.getCodeLanguage();
+
+         let agent_type = AgentType.CustomPrompt;
+         switch (codeLanguage) {
+            case 'custom_ui':
+               agent_type = AgentType.CustomUI
+               break;
+            case 'custom_prompt':
+               agent_type = AgentType.CustomPrompt
+               break;
+            case 'model_online':
+               agent_type = AgentType.ModelOnline
+               break;
+            case 'model':
+               agent_type = AgentType.Model
+               break;
+            case 'python':
+               agent_type = AgentType.UtilityPython
+               break;
+            case 'javascript':
+               agent_type = AgentType.Infra
+               break;
+            default:
+               break;
+         }
 
          let dependAgents: any[] = [];
          if (depsAgentStrs.length > 0) {
-            dependAgents = await installDependAgents(depsAgentStrs, chainId, agent_type);
+            dependAgents = await installDependAgents(depsAgentStrs, chainId);
          }
 
          let fileNameOnLocal = 'prompt.js';
