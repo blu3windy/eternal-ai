@@ -587,7 +587,11 @@ const AgentProvider: React.FC<
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await stopAgent(agent);
 
-            await removeUtilityAgent(agent);
+            if (agent.agent_type === AgentType.ModelOnline) {
+               await globalThis.electronAPI.modelDelete('', agent.agent_name?.toLowerCase(), agent.network_id?.toString());
+            } else {
+               await removeUtilityAgent(agent);
+            }
 
             fetchInstalledUtilityAgents();
          } else if (agent.agent_type === AgentType.Model) {
