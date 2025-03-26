@@ -175,9 +175,9 @@ const ipcMainDocker = () => {
             `--container-name "${dnsHost}"`,
             `--image-name "${imageName}"`,
             `--type "${type}"`,
-            `--private-key "${_options?.privateKey}"`,
-            `--wallet-address "${_options?.address}"`,
-            `--port "${port}"`,
+            `--private-key "${_options?.privateKey || ""}"`,
+            `--wallet-address "${_options?.address || ""}"`,
+            `--port "${port || ""}"`,
          ]
 
          const paramsStr = params.join(' ');
