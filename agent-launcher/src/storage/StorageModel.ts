@@ -1,6 +1,5 @@
 import { LocalStorageService } from "@storage/LocalStorageService.ts";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
-import { AgentType } from "@pages/home/list-agent";
 
 
 const VERSION = "0.0.1";
