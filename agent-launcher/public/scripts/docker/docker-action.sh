@@ -84,16 +84,16 @@ cd "$FOLDER_PATH" || {
     exit 1
 }
 
-log_message "Current working directory: $FOLDER_PATH"
+# log_message "Current working directory: $FOLDER_PATH"
 
-echo "Container Name: $CONTAINER_NAME"
-echo "Image Name: $IMAGE_NAME"
-echo "Folder Path: $FOLDER_PATH"
-echo "Type: $TYPE"
+# echo "Container Name: $CONTAINER_NAME"
+# echo "Image Name: $IMAGE_NAME"
+# echo "Folder Path: $FOLDER_PATH"
+# echo "Type: $TYPE"
 
 
 DOCKER_BUILD_SOURCE_PATH="$FOLDER_PATH/agents/$CONTAINER_NAME"
-echo "Build source path: $DOCKER_BUILD_SOURCE_PATH"
+# echo "Build source path: $DOCKER_BUILD_SOURCE_PATH"
 
 # Function to run a Docker container
 
@@ -209,6 +209,10 @@ set_ready_port() {
     fi
 }
 
+get_container_id() {
+  docker ps -q --filter "name=$CONTAINER_NAME"
+}
+
 case "$action" in
   run)
     if [ -z "$CONTAINER_NAME" ]; then
@@ -245,6 +249,9 @@ case "$action" in
     ;;
   set-ready-port)
     set_ready_port "$DEFAULT_PORT"
+    ;;
+  get_container_id)
+    get_container_id
     ;;
   *)
     log_error "Invalid action: $action"

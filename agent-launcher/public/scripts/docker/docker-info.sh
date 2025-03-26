@@ -52,6 +52,35 @@ get_cpu() {
   docker info --format '{{.NCPU}}'
 }
 
+get_container_id() {
+  local CONTAINER_NAME=""
+  
+  # Parse arguments
+  while [[ "$#" -gt 1 ]]; do
+    case "$2" in
+      --container-name)
+        CONTAINER_NAME="$3"
+        shift 2
+        ;;
+      *)
+        shift
+        ;;
+    esac
+  done
+
+  if [ -z "$CONTAINER_NAME" ]; then
+    echo "null"
+    exit 1
+  fi
+
+  local container_id=$(docker ps -aqf "name=^/${CONTAINER_NAME}$")
+  
+  if [ -z "$container_id" ]; then
+    echo ""
+  else
+    echo "$container_id"
+  fi
+}
 # Parse command line arguments
 case "$1" in
   "images")
@@ -65,6 +94,9 @@ case "$1" in
     ;;
   "cpus")
     get_cpu
+    ;;
+  "container-id")
+    get_container_id "$@"
     ;;
   *)
     echo "Usage: $0 {images|containers}" >&2

@@ -101,6 +101,7 @@ const Starter = (props: IProps) => {
             await setDefaultAgent();
          } else {
             try {
+               await setReadyPort();
                switch (activeModel.agent_type) {
                case AgentType.ModelOnline: {
                   await agentCtx.startAgent(activeModel, true);

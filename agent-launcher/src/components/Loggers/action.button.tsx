@@ -106,15 +106,27 @@ const ActionButtons = () => {
          </Button>
          <Button
             onClick={() => {
-               globalThis.electronAPI.dockerRunningPort("qwen25-coder-artifacts", "84532").then((port) => {
-                  alert(port);
+               globalThis.electronAPI.dockerRunningPort("openai", "84532").then((port) => {
+                  alert("Container stopped");
+               });
+            }}
+         >
+            DOCKER GET PORT
+         </Button>
+         <Button
+            onClick={() => {
+               // alert("Setting ready port");
+               console.log(globalThis.electronAPI.dockerSetReadyPort);
+               
+               globalThis.electronAPI.dockerSetReadyPort().then(() => {
+                  alert("Container stopped");
                }).catch((error) => {
                   alert("Error: " + error?.message);
                   console.log("Error: ", error);
                });
             }}
          >
-            DOCKER GET PORT
+            DOCKET SET READY PORT
          </Button>
       </Flex>
    )

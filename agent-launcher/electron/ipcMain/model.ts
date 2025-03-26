@@ -4,6 +4,7 @@ import command from "../share/command-tool.ts";
 import { SCRIPTS_NAME } from "../share/utils.ts";
 import { deleteModel, downloadedModels, getFolderPath } from "../share/model.ts";
 import { dialogCheckDist } from "../share/file-size.ts";
+import { getDnsHost } from "./docker.ts";
 
 const PORT = 65534;
 
@@ -61,8 +62,22 @@ const ipcMainModel = () => {
       return hash;
    });
 
-   ipcMain.handle(EMIT_EVENT_NAME.MODEL_DELETE, async (_event, hash: string) => {
-      await deleteModel(hash);
+   ipcMain.handle(EMIT_EVENT_NAME.MODEL_DELETE, async (_event, hash: string, agent_name: string, chain_id: string) => {
+      if (hash) {
+         try {
+            await command.execAsyncStream(`${cd} && ${source} && ${llms} stop`);
+         } catch (error) {
+            console.log(error);
+         }
+         await deleteModel(hash);
+      } else if (agent_name && chain_id) {
+         const dnsHost = getDnsHost(chain_id, agent_name);
+         const dockerContainerId = await command.execAsync(`docker ps -q --filter "name=${dnsHost}"`);
+         if (dockerContainerId) {
+            await command.execAsyncStream(`docker stop ${dockerContainerId}`);
+            await command.execAsyncStream(`docker rm ${dockerContainerId}`);
+         }
+      }
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.MODEL_STOP, async (_event) => {
@@ -120,6 +135,7 @@ const ipcMainModel = () => {
          }
       }
    });
+ 
 }
 
 export default ipcMainModel;
