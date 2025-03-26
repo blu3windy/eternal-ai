@@ -220,7 +220,7 @@ const AgentMonitor: React.FC = () => {
       // Initial fetch
       onGetData();
       // Set up the interval
-      intervalRef.current = setInterval(onGetData, 8000);
+      intervalRef.current = setInterval(onGetData, 5000);
       // Cleanup function
       return () => {
          if (intervalRef.current) {
@@ -285,14 +285,14 @@ const AgentMonitor: React.FC = () => {
          >
             <PopoverBody p="20px">
                <Box className={s.containerOverview}>
-                  <Text fontSize="22px" fontWeight="600" mb="4" color="white">Container Overview</Text>
+                  <Text fontSize="22px" fontWeight="600" mb="4" color="white">Overview</Text>
                   
                   <Flex gap="4" mb="6">
                      <Box className={s.statsCard}>
-                        <Flex gap="2">
+                        <Flex gap="12px">
                            <Image src="icons/cpu.svg" alt="CPU" boxSize="32px" />
                            <Box gap="6px">
-                              <Text fontSize="18px" fontWeight="600" color="white">Container CPU usage</Text>
+                              <Text fontSize="18px" fontWeight="600" color="white">CPU usage</Text>
                               <Text fontSize="15px" fontWeight="500" color={"lightgray"}>
                                  <Text as={'span'} color="#4ADE80">{totalCPU.used}</Text> / {totalCPU.total}
                               </Text>
@@ -301,10 +301,10 @@ const AgentMonitor: React.FC = () => {
                      </Box>
                      
                      <Box className={s.statsCard}>
-                        <Flex gap="2">
+                        <Flex gap="12px">
                            <Image src="icons/ram.svg" alt="Memory" boxSize="32px" />
                            <Box gap="6px">
-                              <Text fontSize="18px" fontWeight="600" color="white">Container memory usage</Text>
+                              <Text fontSize="18px" fontWeight="600" color="white">Memory usage</Text>
                               <Text fontSize="15px" fontWeight="500" color={"lightgray"}>
                                  <Text as={'span'} color="#4ADE80">{totalMemory.used}</Text> / {totalMemory.total}
                               </Text>
