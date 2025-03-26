@@ -588,6 +588,14 @@ const AgentProvider: React.FC<
             await stopAgent(agent);
 
             if (agent.agent_type === AgentType.ModelOnline) {
+               const activeModel = await storageModel.getActiveModel();
+               if (activeModel?.id === agent.id) {
+                  const newAgent = installedModelAgents.filter(a => a.id !== agent.id)[0];
+                  if (newAgent) {
+                     await startAgent(newAgent);
+                  }
+               }
+
                await globalThis.electronAPI.modelDelete('', agent.agent_name?.toLowerCase(), agent.network_id?.toString());
             } else {
                await removeUtilityAgent(agent);
@@ -595,10 +603,12 @@ const AgentProvider: React.FC<
 
             fetchInstalledUtilityAgents();
          } else if (agent.agent_type === AgentType.Model) {
-            const newAgent = installedModelAgents.filter(a => a.id !== agent.id)[0];
-
-            if (newAgent) {
-               await startAgent(newAgent);
+            const activeModel = await storageModel.getActiveModel();
+            if (activeModel?.id === agent.id) {
+               const newAgent = installedModelAgents.filter(a => a.id !== agent.id)[0];
+               if (newAgent) {
+                  await startAgent(newAgent);
+               }
             }
 
             const ipfsHash = await getModelAgentHash(agent);
@@ -1024,6 +1034,7 @@ const AgentProvider: React.FC<
                else if (agent.agent_type === AgentType.CustomUI) {
                   try {
                      const port = await globalThis.electronAPI.dockerRunningPort(agentName, networkId);
+                     setCustomUIPort(port);
                      updateAgentState(agent.id, {
                         data: agent,
                         isInstalled: true,
