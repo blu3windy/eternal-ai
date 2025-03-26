@@ -819,6 +819,13 @@ func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 					return errs.NewError(err)
 				}
 				for _, twitterPost := range twitterPosts {
+					if s.conf.Clanker.IsCreateToken {
+						err = s.CreateClankerTokenForVideoByPostID(ctx, twitterPost.ID)
+						if err != nil {
+							retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
+						}
+					}
+
 					err = s.AgentTwitterPostGenerateVideoByUserTweetId(ctx, twitterPost.ID)
 					if err != nil {
 						retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
@@ -839,7 +846,6 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 		ctx,
 		fmt.Sprintf("AgentTwitterPostGenerateVideoByUserTweetId_%d", twitterPostID),
 		func() error {
-			isCreateAgentVideo := false
 			err := daos.WithTransaction(
 				daos.GetDBMainCtx(ctx),
 				func(tx *gorm.DB) error {
@@ -878,11 +884,9 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 									contentReply := fmt.Sprintf("Hey @%v, here is your decentralized video.\n\nOnchain Prompt: https://basescan.org/tx/%v\nOnchain Video: https://basescan.org/tx/%v",
 										twitterPost.TwitterUsername, twitterPost.InferTxHash, twitterPost.SubmitSolutionTxHash)
 
-									//if twitterPost.TwitterID == "1576893241127219200" {
-									//	if twitterPost.TokenName != "" && twitterPost.TokenSymbol != "" {
-									//		contentReply += fmt.Sprintf("\n\n@bankrbot create a token from the prompt. Name: %v. Ticker: %v.", twitterPost.TokenName, twitterPost.TokenSymbol)
-									//	}
-									//}
+									if s.conf.Clanker.IsCreateToken && twitterPost.TokenAddress != "" {
+										contentReply += fmt.Sprintf("\n\nToken: https://www.clanker.world/clanker/%s", twitterPost.TokenAddress)
+									}
 
 									refId, _err := helpers.ReplyTweetByToken(twitterPost.AgentInfo.TwitterInfo.AccessToken, contentReply, twitterPost.TwitterPostID, mediaID)
 									if _err == nil {
@@ -920,8 +924,6 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 							s.SendTeleVideoActivitiesAlert(fmt.Sprintf("success gen video reply twitter id=%v,\n, Prompt:%v \n https://x.com/%v/status/%v \n process time :%v",
 								twitterPost.ID, twitterPost.ExtractContent, twitterPost.TwitterUsername, twitterPost.TwitterPostID, time.Since(twitterPost.CreatedAt)))
 
-							//create agent and token
-							isCreateAgentVideo = true
 						}
 					}
 
@@ -932,10 +934,6 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 				return errs.NewError(err)
 			}
 
-			if isCreateAgentVideo {
-				fmt.Println(1)
-				// go s.CreateClankerTokenForVideoByPostID(ctx, twitterPostID)
-			}
 			return nil
 		},
 	)

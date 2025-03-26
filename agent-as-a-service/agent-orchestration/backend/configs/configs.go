@@ -275,6 +275,7 @@ type Config struct {
 		Fee               uint   `json:"fee"`
 	} `json:"infra_twitter_app"`
 	Clanker struct {
+		IsCreateToken            bool    `json:"is_create_token"`
 		RequestorAddress         string  `json:"requestor_address"`
 		ApiKey                   string  `json:"api_key"`
 		ApiUrl                   string  `json:"api_url"`

@@ -25,17 +25,19 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 					twitterPost, err := s.dao.FirstAgentTwitterPostByID(
 						tx,
 						twitterPostID,
-						map[string][]interface{}{
-							"AgentInfo":             {},
-							"AgentInfo.TwitterInfo": {},
-						},
+						map[string][]interface{}{},
 						true,
 					)
 					if err != nil {
 						return errs.NewError(err)
 					}
 
-					if twitterPost != nil && twitterPost.Status == models.AgentTwitterPostStatusReplied {
+					if twitterPost == nil {
+						return errs.NewError(errs.ErrRecordNotFound)
+					}
+
+					if twitterPost != nil && twitterPost.Status == models.AgentTwitterPostStatusNew &&
+						twitterPost.PostType == models.AgentSnapshotPostActionTypeGenerateVideo {
 						// check if privy wallet already exists
 						privyWallet, err := s.dao.FirstPrivyWallet(tx,
 							map[string][]interface{}{
@@ -143,15 +145,17 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 									inst.TxHash = tokenResp.TxHash
 									inst.TokenStatus = "done"
 									inst.Error = ""
+
+									//update status twitter post
+									twitterPost.TokenName = inst.TokenName
+									twitterPost.TokenSymbol = inst.TokenSymbol
+									twitterPost.TokenAddress = tokenResp.ContractAddress
+									err = s.dao.Save(tx, twitterPost)
+									if err != nil {
+										return errs.NewError(err)
+									}
 								}
 								err = s.dao.Create(tx, inst)
-								if err != nil {
-									return errs.NewError(err)
-								}
-
-								//update status twitter post
-								twitterPost.Status = models.AgentTwitterPostStatusDone
-								err = s.dao.Save(tx, twitterPost)
 								if err != nil {
 									return errs.NewError(err)
 								}
