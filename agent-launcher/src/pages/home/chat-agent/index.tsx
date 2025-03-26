@@ -1,13 +1,12 @@
 import { Box } from "@chakra-ui/react";
+import AgentDetail from "@pages/home/chat-agent/AgentDetail";
+import BackupPrivateKey from "@pages/home/chat-agent/BackupPrivateKey";
 import ChatBox from "@pages/home/chat-agent/ChatAgent/components/ChatBox";
 import { ChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
-import s from "./styles.module.scss";
-import React, { useContext, useMemo } from "react";
-import { AgentContext } from "@pages/home/provider";
-import BackupPrivateKey from "@pages/home/chat-agent/BackupPrivateKey";
 import CreateAgentWallet from "@pages/home/chat-agent/CreateAgentWallet";
-import AgentDetail from "@pages/home/chat-agent/AgentDetail";
-import { AgentType } from "@pages/home/list-agent";
+import { AgentContext } from "@pages/home/provider";
+import { useContext } from "react";
+import s from "./styles.module.scss";
 
 function ChatAgent() {
    const {

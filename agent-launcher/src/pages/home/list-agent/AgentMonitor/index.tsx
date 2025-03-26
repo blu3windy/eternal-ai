@@ -68,6 +68,13 @@ interface ContainerData {
    agentType?: string;
 }
 
+interface ContainerActionState {
+   isStopping: boolean;
+   isDeleting: boolean;
+}
+
+type StateActions = Record<string, ContainerActionState>;
+
 const AgentMonitor: React.FC = () => {
    const { isOpen, onToggle, onClose } = useDisclosure();
    const [searchTerm, setSearchTerm] = useState('');
@@ -78,6 +85,7 @@ const AgentMonitor: React.FC = () => {
    const intervalRef = useRef<NodeJS.Timeout>();
    const cPumpAPI = new CAgentTokenAPI();
    const [agents, setAgents] = useState<any[]>([]);
+   const [stateActions, setStateActions] = useState<StateActions>({});
 
    const onGetDataAgents = async () => {
       try {
@@ -195,7 +203,7 @@ const AgentMonitor: React.FC = () => {
          setContainers(filteredData);
          setTotalMemory({
             used: convertMemoryToGB(totalMemUsed.toString()),
-            total: `${(totalMemMax / 1024).toFixed(2)}GB`
+            total: `${(totalMemMax).toFixed(2)}GB`
          });
          setTotalCPU({
             used: `${totalCPUUsed.toFixed(2)}%`,
@@ -212,14 +220,14 @@ const AgentMonitor: React.FC = () => {
       // Initial fetch
       onGetData();
       // Set up the interval
-      intervalRef.current = setInterval(onGetData, 2000);
+      intervalRef.current = setInterval(onGetData, 5000);
       // Cleanup function
       return () => {
          if (intervalRef.current) {
             clearInterval(intervalRef.current);
          }
       };
-   }, [searchTerm, showRunningOnly, agents]); // Empty dependency array means this effect runs once on mount
+   }, [searchTerm, showRunningOnly, agents, stateActions]); // Empty dependency array means this effect runs once on mount
 
    // Additional effect to handle popover open/close
    useEffect(() => {
@@ -235,6 +243,28 @@ const AgentMonitor: React.FC = () => {
          }
       }
    }, [isOpen]);
+
+   const handleStopContainer = async (containerId: string) => {
+      try {
+         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isStopping: true } }));
+         await globalThis.electronAPI.dockerStopContainer(containerId);
+      } catch (error) {
+         console.error('Error stopping container:', error);
+      } finally {
+         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isStopping: false } }));
+      }
+   };
+
+   const handleDeleteContainer = async (containerId: string) => {
+      try {
+         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isDeleting: true } }));
+         await globalThis.electronAPI.dockerDeleteContainer(containerId);
+      } catch (error) {
+         console.error('Error deleting container:', error);
+      } finally {
+         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isDeleting: false } }));
+      }
+   };
 
    return (
       <Popover
@@ -255,14 +285,14 @@ const AgentMonitor: React.FC = () => {
          >
             <PopoverBody p="20px">
                <Box className={s.containerOverview}>
-                  <Text fontSize="22px" fontWeight="600" mb="4" color="white">Container Overview</Text>
+                  <Text fontSize="22px" fontWeight="600" mb="4" color="white">Overview</Text>
                   
                   <Flex gap="4" mb="6">
                      <Box className={s.statsCard}>
-                        <Flex gap="2">
+                        <Flex gap="12px">
                            <Image src="icons/cpu.svg" alt="CPU" boxSize="32px" />
                            <Box gap="6px">
-                              <Text fontSize="18px" fontWeight="600" color="white">Container CPU usage</Text>
+                              <Text fontSize="18px" fontWeight="600" color="white">CPU usage</Text>
                               <Text fontSize="15px" fontWeight="500" color={"lightgray"}>
                                  <Text as={'span'} color="#4ADE80">{totalCPU.used}</Text> / {totalCPU.total}
                               </Text>
@@ -271,10 +301,10 @@ const AgentMonitor: React.FC = () => {
                      </Box>
                      
                      <Box className={s.statsCard}>
-                        <Flex gap="2">
+                        <Flex gap="12px">
                            <Image src="icons/ram.svg" alt="Memory" boxSize="32px" />
                            <Box gap="6px">
-                              <Text fontSize="18px" fontWeight="600" color="white">Container memory usage</Text>
+                              <Text fontSize="18px" fontWeight="600" color="white">Memory usage</Text>
                               <Text fontSize="15px" fontWeight="500" color={"lightgray"}>
                                  <Text as={'span'} color="#4ADE80">{totalMemory.used}</Text> / {totalMemory.total}
                               </Text>
@@ -361,9 +391,10 @@ const AgentMonitor: React.FC = () => {
                                                  variant="ghost"
                                                  color="white"
                                                  _hover={{ bg: 'whiteAlpha.200' }}
-                                                 onClick={() => {
+                                                 isLoading={stateActions[container.containerId]?.isStopping ?? false}
+                                                 onClick={ () => {
                                                    if (container.state === 'running') {
-                                                      
+                                                      handleStopContainer(container.containerId);
                                                    }
                                                  }}
                                               />
@@ -371,11 +402,11 @@ const AgentMonitor: React.FC = () => {
                                            <IconButton
                                               aria-label="Container action"
                                               disabled
-                                              icon={<Image src="icons/stop.svg" alt="Stop" />}
+                                              icon={<Image opacity="0" src="icons/stop.svg" alt="Stop" />}
                                               size="sm"
                                               variant="ghost"
                                               color="white"
-                                              opacity="0.5"
+                                              opacity="0"
                                               cursor="not-allowed"
                                               _hover={{ bg: 'transparent' }}
                                            />
@@ -394,8 +425,9 @@ const AgentMonitor: React.FC = () => {
                                                  variant="ghost"
                                                  color="white"
                                                  _hover={{ bg: 'whiteAlpha.200' }}
+                                                 isLoading={stateActions[container.containerId]?.isDeleting ?? false}
                                                  onClick={() => {
-                                                   
+                                                   handleDeleteContainer(container.containerId);
                                                  }}
                                               />
                                            </Tooltip>

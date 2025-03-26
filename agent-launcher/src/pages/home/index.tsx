@@ -5,10 +5,9 @@ import MainLayout from "../../components/layout";
 import FundAgentProvider from "../../providers/FundAgent";
 import ChatAgent from "./chat-agent";
 import AgentTopInfo from "./chat-agent/AgentTopInfo";
-import AgentsList, { AgentType } from "./list-agent";
+import AgentsList from "./list-agent";
 import AgentProvider, { AgentContext } from "./provider";
 import s from "./styles.module.scss";
-import { ChatAgentProvider } from "./chat-agent/ChatAgent/provider";
 
 type Props = {
    // some props

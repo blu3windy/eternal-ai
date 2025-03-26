@@ -68,7 +68,7 @@ const AgentAPI = {
          ...item,
          content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
       }));
-      const response = await fetch(`http://localhost:8080/v1/chat/completions`, {
+      const response = await fetch(`http://localhost:65534/v1/chat/completions`, {
          method: 'POST',
          headers: {
             ...headers,

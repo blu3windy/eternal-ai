@@ -46,7 +46,7 @@ const ChooseModel = ({ onNext }: IProps) => {
             agent_id: selectedAgent.agent_id,
             agent_type: selectedAgent.agent_type,
             hash: hash,
-         })
+         } as any)
 
          const electronAPI = window?.electronAPI;
          if (selectedAgent.agent_type === AgentType.Model) {
