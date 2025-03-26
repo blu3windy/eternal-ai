@@ -69,7 +69,7 @@ interface ContainerData {
 }
 
 interface ContainerActionState {
-   isStopping: boolean;
+   isLoading: boolean;
    isDeleting: boolean;
 }
 
@@ -254,12 +254,23 @@ const AgentMonitor: React.FC = () => {
 
    const handleStopContainer = async (containerId: string) => {
       try {
-         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isStopping: true } }));
+         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isLoading: true } }));
          await globalThis.electronAPI.dockerStopContainer(containerId);
       } catch (error) {
          console.error('Error stopping container:', error);
       } finally {
-         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isStopping: false } }));
+         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isLoading: false } }));
+      }
+   };
+
+   const handleStartContainer = async (containerId: string) => {
+      try {
+         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isLoading: true } }));
+         await globalThis.electronAPI.dockerStartContainer(containerId);
+      } catch (error) {
+         console.error('Error stopping container:', error);
+      } finally {
+         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isLoading: false } }));
       }
    };
 
@@ -281,7 +292,7 @@ const AgentMonitor: React.FC = () => {
          placement="bottom-end"
       >
          <PopoverTrigger>
-            <Flex position="relative" cursor="pointer" onClick={onToggle} borderRadius={"100px"} p="6px 10px" gap="4px">
+            <Flex position="relative" cursor="pointer" onClick={onToggle} borderRadius={"100px"} w={'22px'} ml={'6px'} gap="4px">
                <Image src={'icons/ic-monitor.svg'} alt='monitor' />
             </Flex>
          </PopoverTrigger>
@@ -385,8 +396,8 @@ const AgentMonitor: React.FC = () => {
                                     <Flex gap="2">
                                        {!(compareString(container.name, 'agent-router') || compareString(container.agentName, 'OpenAI') || compareString(container.agentName, 'Proxy')) && (
                                          <>
-                                           {container.state === 'running' ? <Tooltip 
-                                              label={container.state === 'running' ? 'Stop' : 'Start Container'}
+                                           <Tooltip 
+                                              label={container.state === 'running' ? 'Stop' : 'Start'}
                                               hasArrow
                                               placement="top"
                                               bg="gray.700"
@@ -399,26 +410,16 @@ const AgentMonitor: React.FC = () => {
                                                  variant="ghost"
                                                  color="white"
                                                  _hover={{ bg: 'whiteAlpha.200' }}
-                                                 isLoading={stateActions[container.containerId]?.isStopping ?? false}
+                                                 isLoading={stateActions[container.containerId]?.isLoading ?? false}
                                                  onClick={ () => {
                                                    if (container.state === 'running') {
                                                       handleStopContainer(container.containerId);
+                                                   } else {
+                                                      handleStartContainer(container.containerId);
                                                    }
                                                  }}
                                               />
-                                           </Tooltip> : 
-                                           <IconButton
-                                              aria-label="Container action"
-                                              disabled
-                                              icon={<Image opacity="0" src="icons/stop.svg" alt="Stop" />}
-                                              size="sm"
-                                              variant="ghost"
-                                              color="white"
-                                              opacity="0"
-                                              cursor="not-allowed"
-                                              _hover={{ bg: 'transparent' }}
-                                           />
-                                           }
+                                           </Tooltip>
                                            <Tooltip 
                                               label="Delete"
                                               hasArrow
