@@ -90,6 +90,14 @@ const AgentMonitor: React.FC = () => {
       }
    }
 
+   const convertMemoryToGB = (memoryValue: string) => {
+      const numericValue = parseFloat(memoryValue);
+      if (numericValue >= 1024) {
+         return `${(numericValue / 1024).toFixed(2)}GB`;
+      }
+      return `${numericValue.toFixed(2)}MB`;
+   };
+
    const onGetData = async () => {
       try {
          // Fetch both container and memory data concurrently
@@ -155,7 +163,7 @@ const AgentMonitor: React.FC = () => {
                   ports: container.Ports || '-',
                   cpu: memInfo.CPUPerc,
                   lastStarted: container.RunningFor,
-                  memoryUsage: memUsage[0],
+                  memoryUsage: convertMemoryToGB(memUsage[0]),
                   memoryPercentage: memInfo.MemPerc,
                   state: container.State,
                   agentName: matchingAgent?.agent_name,
@@ -186,8 +194,8 @@ const AgentMonitor: React.FC = () => {
          // Update states
          setContainers(filteredData);
          setTotalMemory({
-            used: `${totalMemUsed.toFixed(2)}MB`,
-            total: `${(totalMemMax).toFixed(2)}GB`
+            used: convertMemoryToGB(totalMemUsed.toString()),
+            total: `${(totalMemMax / 1024).toFixed(2)}GB`
          });
          setTotalCPU({
             used: `${totalCPUUsed.toFixed(2)}%`,
