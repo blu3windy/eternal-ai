@@ -104,6 +104,18 @@ const ActionButtons = () => {
          >  
             DOCKER CONTAINERS
          </Button>
+         <Button
+            onClick={() => {
+               globalThis.electronAPI.dockerRunningPort("qwen25-coder-artifacts", "84532").then((port) => {
+                  alert(port);
+               }).catch((error) => {
+                  alert("Error: " + error?.message);
+                  console.log("Error: ", error);
+               });
+            }}
+         >
+            DOCKER GET PORT
+         </Button>
       </Flex>
    )
 };
