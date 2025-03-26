@@ -87,6 +87,8 @@ const AgentProvider: React.FC<
    const [isSearchMode, setIsSearchMode] = useState(false);
    const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
 
+   console.log("LEONNNN customUIPort", customUIPort)
+
    const [agentStates, setAgentStates] = useState<Record<number, {
       data: IAgentToken;
       isRunning: boolean;
@@ -469,7 +471,7 @@ const AgentProvider: React.FC<
             console.log("Throttled check error:", err);
          }
       }, 1000),
-      []
+      [installedUtilityAgents, installedModelAgents, installedSocialAgents, selectedAgent?.id]
    );
 
    useEffect(() => {
@@ -986,6 +988,7 @@ const AgentProvider: React.FC<
 
    const checkAllInstalledAgentsRunning = async () => {
       try {
+         console.log("LEONNNN 11111");
          // Check utility agents
          const utilityParams: any = {
             page: 1,
@@ -1002,7 +1005,7 @@ const AgentProvider: React.FC<
             installed: true
          };
          const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
-
+         console.log("LEONNNN 11111 installedUtilityAgents", installedUtilityAgents);
          // Check running status for each installed utility agent
          for (const folderName of installedUtilityAgents) {
             const [networkId, agentName] = folderName.split('-');
@@ -1034,6 +1037,7 @@ const AgentProvider: React.FC<
                else if (agent.agent_type === AgentType.CustomUI) {
                   try {
                      const port = await globalThis.electronAPI.dockerRunningPort(agentName, networkId);
+                     console.log("LEONNNN portportportportport", { port, agentName, networkId });
                      setCustomUIPort(port);
                      updateAgentState(agent.id, {
                         data: agent,
