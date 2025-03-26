@@ -486,22 +486,17 @@ const AgentProvider: React.FC<
             isStarting: true,
          });
 
-         if ([AgentType.Model, AgentType.ModelOnline].includes(agent.agent_type)) {
-            const activeModel = await storageModel.getActiveModel();
-            if (!activeModel) {
-               await setReadyPort();
-            }
-
-            console.log('stephen: startAgent activeModel', activeModel);
-         }
-
-
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             console.log('stephen: startAgent Utility install', new Date().toLocaleTimeString());
             await installUtilityAgent(agent, needUpdateCode);
             await startDependAgents(agent);
-            console.log('stephen: startAgent Utility start docker', new Date().toLocaleTimeString());
 
+            if ([AgentType.ModelOnline].includes(agent.agent_type)) {
+               console.log('stephen: startAgent Model set ready port', new Date().toLocaleTimeString());
+               await setReadyPort();
+            }
+
+            console.log('stephen: startAgent Utility start docker', new Date().toLocaleTimeString());
             await handleRunDockerAgent(agent);
             console.log('stephen: startAgent Utility finish docker', new Date().toLocaleTimeString());
 
@@ -519,16 +514,17 @@ const AgentProvider: React.FC<
             const ipfsHash = await getModelAgentHash(agent);
             console.log('startAgent ====ipfsHash', ipfsHash);
 
+            console.log('stephen: startAgent Model set ready port', new Date().toLocaleTimeString());
+            await setReadyPort();
+
             console.log('stephen: startAgent Model run', new Date().toLocaleTimeString());
             await handleRunModelAgent(ipfsHash);
+            console.log('stephen: startAgent Model finish run', new Date().toLocaleTimeString());
 
             await storageModel.setActiveModel({
                ...agent,
                hash: ipfsHash
             });
-            console.log('stephen: startAgent Model finish run', new Date().toLocaleTimeString());
-
-
          }
 
          await sleep(2000);
