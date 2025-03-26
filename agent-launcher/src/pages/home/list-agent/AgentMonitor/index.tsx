@@ -17,15 +17,13 @@ import {
    Th,
    Td,
    IconButton,
-   Menu,
-   MenuButton,
-   MenuList,
-   MenuItem,
    Tooltip,
 } from '@chakra-ui/react';
 import React, { useState, useEffect, useRef } from 'react';
 import s from './styles.module.scss';
 import { compareString } from '@utils/string';
+import CAgentTokenAPI from '@services/api/agents-token';
+import { AgentType } from '../constants';
 
 interface DockerContainer {
    Command: string;
@@ -66,6 +64,8 @@ interface ContainerData {
    memoryUsage?: string;
    memoryPercentage?: string;
    state?: string;
+   agentName?: string;
+   agentType?: string;
 }
 
 const AgentMonitor: React.FC = () => {
@@ -76,14 +76,16 @@ const AgentMonitor: React.FC = () => {
    const [totalMemory, setTotalMemory] = useState({ used: '0MB', total: '0GB' });
    const [totalCPU, setTotalCPU] = useState({ used: '0%', total: '800%' });
    const intervalRef = useRef<NodeJS.Timeout>();
+   const cPumpAPI = new CAgentTokenAPI();
 
    const onGetData = async () => {
       try {
          // Fetch both container and memory data concurrently
-         const [containerData, memoryData, cpuCores] = await Promise.all([
+         const [containerData, memoryData, cpuCores, { agents }] = await Promise.all([
             globalThis.electronAPI.dockerInfo("containers").then(data => JSON.parse(data)),
             globalThis.electronAPI.dockerInfo("memory").then(data => JSON.parse(data)),
-            globalThis.electronAPI.dockerInfo("cpus").then(data => parseInt(data))
+            globalThis.electronAPI.dockerInfo("cpus").then(data => parseInt(data)),
+            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, installed: true, agent_types: '5,12,10,11,8' }),
          ]);
 
          // Calculate total memory and CPU usage
@@ -100,6 +102,28 @@ const AgentMonitor: React.FC = () => {
          // Transform and combine the data
          const transformedData: ContainerData[] = containerData.map((container: DockerContainer) => {
             const memInfo: any = memoryMap.get(container.ID);
+            
+            // Find matching agent by container name
+            const matchingAgent = agents?.find(agent => 
+               container.Names.toLowerCase().includes(agent.agent_name?.toLowerCase() || '')
+            );
+
+            let agentType = '-';
+            switch (matchingAgent?.agent_type) {
+               case AgentType.Model:
+               case AgentType.ModelOnline:
+                  agentType = 'Model'
+                  break;
+               case AgentType.CustomPrompt:
+               case AgentType.CustomUI:
+                  agentType = 'Utility'
+                  break;
+               case AgentType.Infra:
+                  agentType = 'Infra'
+                  break;
+               default:
+                  break;
+            }
             
             if (memInfo) {
                // Parse memory values for totals
@@ -120,9 +144,11 @@ const AgentMonitor: React.FC = () => {
                   ports: container.Ports || '-',
                   cpu: memInfo.CPUPerc,
                   lastStarted: container.RunningFor,
-                  memoryUsage: memInfo.MemUsage,
+                  memoryUsage: memUsage[0],
                   memoryPercentage: memInfo.MemPerc,
-                  state: container.State
+                  state: container.State,
+                  agentName: matchingAgent?.agent_name,
+                  agentType,
                };
             }
 
@@ -133,7 +159,9 @@ const AgentMonitor: React.FC = () => {
                ports: container.Ports || '-',
                cpu: '0%',
                lastStarted: container.RunningFor,
-               state: container.State
+               state: container.State,
+               agentName: matchingAgent?.agent_name,
+               agentType,
             };
          });
 
@@ -165,7 +193,7 @@ const AgentMonitor: React.FC = () => {
       // Initial fetch
       onGetData();
       // Set up the interval
-      intervalRef.current = setInterval(onGetData, 5000);
+      intervalRef.current = setInterval(onGetData, 3000);
       // Cleanup function
       return () => {
          if (intervalRef.current) {
@@ -200,7 +228,7 @@ const AgentMonitor: React.FC = () => {
             </Flex>
          </PopoverTrigger>
          <PopoverContent 
-            width="1000px"
+            width="900px"
             border="none" 
             boxShadow="0 4px 6px rgba(0, 0, 0, 0.1)"
             className={s.popoverContent}
@@ -262,11 +290,11 @@ const AgentMonitor: React.FC = () => {
                      <Table variant="unstyled" className={s.containerTable}>
                         <Thead>
                            <Tr>
-                              <Th color="whiteAlpha.600">Agent Name</Th>
+                              <Th color="whiteAlpha.600">Name</Th>
+                              <Th color="whiteAlpha.600">Agent type</Th>
                               <Th color="whiteAlpha.600">Container ID</Th>
-                              <Th color="whiteAlpha.600">Image</Th>
                               <Th color="whiteAlpha.600">CPU</Th>
-                              <Th color="whiteAlpha.600">Memory Percentage</Th>
+                              <Th color="whiteAlpha.600">Memory</Th>
                               <Th color="whiteAlpha.600">Last started</Th>
                               <Th color="whiteAlpha.600">Actions</Th>
                            </Tr>
@@ -282,17 +310,18 @@ const AgentMonitor: React.FC = () => {
                                           borderRadius="full"
                                           bg={container.state === 'running' ? '#4ADE80' : 'lightgray'}
                                        />
-                                       <Text color="white">{container.name}</Text>
+                                       <Text color="white">{container.agentName || container.name}</Text>
                                     </Flex>
                                  </Td>
-                                 <Td color="white">{container.containerId}</Td>
                                  <Td>
-                                    <Text color="#AFC7FF" textDecoration="underline" cursor="pointer">
-                                       {container.image}
+                                    {/* <Text color="#AFC7FF" textDecoration="underline" cursor="pointer"> */}
+                                    <Text color="white">
+                                       {container.agentType}
                                     </Text>
                                  </Td>
+                                 <Td color="white">{container.containerId}</Td>
                                  <Td color="white">{container.cpu}</Td>
-                                 <Td color="white">{container.memoryPercentage || '-'}</Td>
+                                 <Td color="white">{container.memoryUsage || '-'}</Td>
                                  <Td color="white">{container.lastStarted}</Td>
                                  <Td>
                                     <Flex gap="2">

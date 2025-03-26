@@ -51,6 +51,7 @@ export interface IElectronAPI {
   dockerCheckRunning: (agentName: string, chainId: string) => Promise<string>
   dockerRunningPort: (agentName: string, chainId: string) => Promise<string>
   dockerInfo: (action: DockerInfoAction) => Promise<string>
+  dockerSetReadyPort: () => Promise<void>
 
   modelStarter: () => Promise<void>
   modelInstall: (hash: string) => Promise<void>
