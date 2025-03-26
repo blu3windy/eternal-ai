@@ -1019,7 +1019,7 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 									!strings.Contains(twitterPost.Content, "create video :") {
 									videoMagicPrompt, err := s.GetVideoMagicPromptFromImage(ctx, twitterPost.ExtractContent, twitterPost.ExtractMediaContent)
 									if err != nil {
-										return err
+										videoMagicPrompt = prompt
 									}
 									prompt = videoMagicPrompt
 								}

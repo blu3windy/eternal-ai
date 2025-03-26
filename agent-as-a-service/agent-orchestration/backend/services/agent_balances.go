@@ -733,7 +733,7 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 		`: {},
 		`agent_infos.token_address != "" and ifnull(memes.status, "") not in ("created", "pending")`: {},
 		`agent_infos.agent_type != ?`: {models.AgentInfoAgentTypeVideo},
-		`is_public = 1`:               {},
+		// `is_public = 1`:               {},
 	}
 
 	if search != "" {
@@ -810,7 +810,10 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 			filters["agent_infos.id in (select agent_info_id from agent_utility_installs where address = ?)"] = []any{strings.ToLower(userAddress)}
 		} else {
 			filters["agent_infos.id not in (select agent_info_id from agent_utility_installs where address = ?)"] = []any{strings.ToLower(userAddress)}
+			filters["agent_infos.is_public = 1"] = []any{}
 		}
+	} else {
+		filters["agent_infos.is_public = 1"] = []any{}
 	}
 
 	agents, err := s.dao.FindAgentInfoJoinSelect(

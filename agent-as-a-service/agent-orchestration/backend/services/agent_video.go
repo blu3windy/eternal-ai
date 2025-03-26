@@ -222,35 +222,36 @@ func (s *Service) GenerateTokenInfoFromVideoPrompt(ctx context.Context, sysPromp
 	return info, nil
 }
 
-// func (s *Service) GetListUserVideo(ctx context.Context, userAddres, search string) ([]*models.AgentVideo, error) {
-// 	filters := map[string][]interface{}{
-// 		"user_address = ? ": {strings.ToLower(userAddres)},
-// 	}
+func (s *Service) GetListUserVideo(ctx context.Context, userAddres, search string) ([]*models.ClankerVideoToken, error) {
+	filters := map[string][]interface{}{
+		"lower(requestor_address) = ? ": {strings.ToLower(userAddres)},
+	}
 
-// 	if search != "" {
-// 		search = fmt.Sprintf("%%%s%%", strings.ToLower(search))
-// 		filters[`
-// 			LOWER(token_name) like ?
-// 			or LOWER(token_symbol) like ?
-// 			or LOWER(token_address) like ?
-// 		`] = []any{search, search, search}
-// 	}
+	if search != "" {
+		search = fmt.Sprintf("%%%s%%", strings.ToLower(search))
+		filters[`
+			LOWER(token_name) like ?
+			or LOWER(token_symbol) like ?
+			or LOWER(token_address) like ?
+		`] = []any{search, search, search}
+	}
 
-// 	res, err := s.dao.FindAgentVideo(
-// 		daos.GetDBMainCtx(ctx),
-// 		filters,
-// 		map[string][]interface{}{
-// 			"AgentTwitterPost": {},
-// 		},
-// 		[]string{"id desc"},
-// 		0,
-// 		1000,
-// 	)
-// 	if err != nil {
-// 		return nil, errs.NewError(err)
-// 	}
-// 	return res, nil
-// }
+	res, err := s.dao.FindClankerVideoToken(
+		daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{},
+		filters,
+		map[string][]interface{}{
+			"AgentTwitterPost": {},
+		},
+		[]string{"id desc"},
+		0,
+		1000,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return res, nil
+}
 
 // package services
 

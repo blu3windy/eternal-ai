@@ -177,3 +177,13 @@ func (d *DAO) FirstClankerVideoToken(tx *gorm.DB, filters map[string][]interface
 	}
 	return &m, nil
 }
+
+func (d *DAO) FindClankerVideoToken(tx *gorm.DB, joins map[string][]interface{}, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string, page int, limit int) ([]*models.ClankerVideoToken, error) {
+	offset := (page - 1) * limit
+	var ms []*models.ClankerVideoToken
+	err := d.findJoin(tx, &ms, joins, filters, preloads, orders, offset, limit, false)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return ms, nil
+}

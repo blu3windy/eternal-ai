@@ -679,18 +679,19 @@ func (s *Server) CheckNameExist(c *gin.Context) {
 // 	return
 // }
 
-// func (s *Server) GetListUserVideo(c *gin.Context) {
-// 	ctx := s.requestContext(c)
-// 	search := s.stringFromContextQuery(c, "search")
-// 	userAddress, err := s.getUserAddressFromTK1Token(c)
-// 	if err != nil || userAddress == "" {
-// 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
-// 		return
-// 	}
-// 	insts, err := s.nls.GetListUserVideo(ctx, userAddress, search)
-// 	if err != nil {
-// 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
-// 		return
-// 	}
-// 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewUserVideoRespArray(insts)})
-// }
+func (s *Server) GetListUserVideo(c *gin.Context) {
+	ctx := s.requestContext(c)
+	search := s.stringFromContextQuery(c, "search")
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+	creator := s.stringFromContextQuery(c, "creator")
+	insts, err := s.nls.GetListUserVideo(ctx, creator, search)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewUserVideoRespArray(insts)})
+}
