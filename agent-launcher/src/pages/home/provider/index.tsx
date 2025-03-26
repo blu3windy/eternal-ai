@@ -989,6 +989,7 @@ const AgentProvider: React.FC<
                AgentType.CustomPrompt
             ].join(','),
             chain: '',
+            installed: true
          };
          const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
 
@@ -1063,6 +1064,7 @@ const AgentProvider: React.FC<
                AgentType.Zerepy
             ].join(','),
             chain: '',
+            installed: true
          };
          const { agents: socialAgents } = await cPumpAPI.getAgentTokenList(socialParams);
 
