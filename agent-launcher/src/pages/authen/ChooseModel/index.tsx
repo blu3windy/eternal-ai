@@ -1,7 +1,7 @@
 import { Center, Flex, Text } from "@chakra-ui/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CAgentTokenAPI from "@services/api/agents-token";
-import { AgentType } from "@pages/home/list-agent";
+import { AgentType } from "@pages/home/list-agent/constants";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import Item from "@pages/authen/ChooseModel/Item.tsx";
 import Loading from "@components/Loading";

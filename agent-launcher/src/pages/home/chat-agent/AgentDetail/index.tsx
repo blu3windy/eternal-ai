@@ -1,14 +1,14 @@
-import s from "./styles.module.scss";
 import { Button, Flex, Image, Text } from "@chakra-ui/react";
-import { formatCurrency, labelAmountOrNumberAdds } from "@utils/format.ts";
-import cs from "classnames";
 import CustomMarkdown from "@components/CustomMarkdown";
-import React, { useContext, useMemo } from "react";
-import { AgentType } from "@pages/home/list-agent";
-import { AgentContext } from "@pages/home/provider";
-import useParseLogs from "@hooks/useParseLogs.ts";
 import { LLM_MODELS } from "@constants/models.ts";
+import useParseLogs from "@hooks/useParseLogs.ts";
+import { AgentType } from "@pages/home/list-agent/constants";
+import { AgentContext } from "@pages/home/provider";
+import { formatCurrency, labelAmountOrNumberAdds } from "@utils/format.ts";
 import { compareString } from "@utils/string.ts";
+import cs from "classnames";
+import { useContext, useMemo } from "react";
+import s from "./styles.module.scss";
 
 const AgentDetail = () => {
    const {

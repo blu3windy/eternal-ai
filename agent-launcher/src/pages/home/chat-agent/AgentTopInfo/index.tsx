@@ -20,7 +20,7 @@ import { BASE_CHAIN_ID } from "@constants/chains";
 import CAgentContract from "@contract/agent";
 import SelectModel from "@pages/home/chat-agent/AgentTopInfo/SelectModel";
 import ExportPrivateKey from "@pages/home/chat-agent/ExportPrivateKey";
-import { AgentType } from "@pages/home/list-agent";
+import { AgentType } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider";
 import TradeAgent from "@pages/home/trade-agent";
 import AgentOnChainInfo from "@pages/home/trade-agent/onchain-info";

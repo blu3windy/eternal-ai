@@ -13,7 +13,7 @@ import localStorageService from "../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 import uniq from "lodash.uniq";
 import CAgentContract from "@contract/agent/index.ts";
-import { AgentType, SortOption } from "@pages/home/list-agent";
+import { AgentType, CategoryOption, SortOption } from "@pages/home/list-agent/constants.ts";
 import { ModelInfo } from "../../../../electron/share/model.ts";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import sleep from "@utils/sleep.ts";
@@ -58,6 +58,8 @@ const initialValue: IAgentContext = {
    liveViewUrl: '',
    isSearchMode: false,
    setIsSearchMode: () => {},
+   category: CategoryOption.All,
+   setCategory: () => {},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -84,6 +86,7 @@ const AgentProvider: React.FC<
    const [liveViewUrl, setLiveViewUrl] = useState<string>('');
    const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
    const [isSearchMode, setIsSearchMode] = useState(false);
+   const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
 
    const [agentStates, setAgentStates] = useState<Record<number, {
       data: IAgentToken;
@@ -1139,6 +1142,8 @@ const AgentProvider: React.FC<
          liveViewUrl,
          isSearchMode,
          setIsSearchMode,
+         category,
+         setCategory,
       };
    }, [
       loading,
@@ -1177,6 +1182,8 @@ const AgentProvider: React.FC<
       liveViewUrl,
       isSearchMode,
       setIsSearchMode,
+      category,
+      setCategory,
    ]);
 
    return (

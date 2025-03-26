@@ -288,3 +288,98 @@ export const Models = [
       value: 'NousResearch/DeepHermes-3-Llama-3-8B-Preview',
    },
 ];
+
+export enum SortOption {
+   MarketCap = 'meme_market_cap',
+   Percent = 'meme_percent',
+   LastReply = 'reply_latest_time',
+   Price = 'meme_price',
+   Volume24h = 'meme_volume_last24h',
+   CreatedAt = 'created_at',
+   Popuplar = 'prompt_calls',
+}
+
+export const SortBy = [
+   { value: SortOption.MarketCap, label: 'Market cap' },
+   { value: SortOption.Percent, label: '24h%' },
+   { value: SortOption.CreatedAt, label: 'Creation time' },
+   { value: SortOption.Volume24h, label: '24h volume' },
+   { value: SortOption.Popuplar, label: 'Popular' },
+];
+
+export enum CategoryOption {
+   All = 'all',
+   Model = 'model',
+   Utility = 'non-model',
+   Infra = 'infra',
+   Character = 'character',
+}
+
+export enum FilterOption {
+   All = 'all',
+   Installed = 'installed',
+}
+
+export const Category = [
+   { value: FilterOption.All, label: 'All', description: 'All available agents.' },
+   { value: CategoryOption.Character, label: 'Character', description: 'Agents with unique personalities, offering engaging chat experiences and interactions.' },
+   { value: CategoryOption.Model, label: 'Model', description: 'Agents providing direct access to specific AI models (LLaMA, DeepSeek, Hermes,…).' },
+   { value: CategoryOption.Utility, label: 'Utility', description: 'Task-focused agents built with Python or JavaScript.' },
+   { value: CategoryOption.Infra, label: 'Infra', description: 'Agents providing APIs or services to customize and manage other agents.' },
+];
+
+export const AgentOptions = [
+   { value: FilterOption.Installed, label: 'Your Agent', description: 'Agents currently installed.', icon: undefined },
+   { value: FilterOption.All, label: 'Store Agent', description: 'All available agents.', icon: 'icons/ic-store-agent.svg' },
+];
+
+export enum AgentType {
+   All = -1,
+   Normal = 0,
+   Reasoning = 1,
+   KnowledgeBase = 2,
+   Eliza = 3,
+   Zerepy = 4,
+   UtilityJS = 6,
+   UtilityPython = 7,
+   Model = 5,
+   Infra = 8,
+   CustomUI = 10,
+   CustomPrompt = 11,
+   ModelOnline = 12,
+}
+
+export const AgentTypeName = {
+   [AgentType.Normal]: 'Normal',
+   [AgentType.Reasoning]: 'Reasoning',
+   [AgentType.KnowledgeBase]: 'Knowledge',
+   [AgentType.Eliza]: 'Eliza',
+   [AgentType.Zerepy]: 'Zerepy',
+   [AgentType.UtilityJS]: 'Utility JS',
+   [AgentType.UtilityPython]: 'Utility Python',
+   [AgentType.Infra]: 'Infra',
+}
+
+export const CATEGORIES = [
+   {
+      id: CategoryOption.Model,
+      name: 'Model',
+      description: 'AI model agents',
+      gradient: 'linear-gradient(270deg, #EF3B2F 0%, #89221B 100%)',
+      icon: 'icons/ic-category-model.svg'
+   },
+   {
+      id: CategoryOption.Utility,
+      name: 'Utility',
+      description: 'Tool and utility agents',
+      gradient: 'linear-gradient(270deg, #A94FD4 0%, #58296E 100%)',
+      icon: 'icons/ic-category-utility.svg'
+   },
+   {
+      id: CategoryOption.Infra,
+      name: 'Infra',
+      description: 'Infrastructure agents',
+      gradient: 'linear-gradient(270deg, #3FBF5A 0%, #1D592A 100%)',
+      icon: 'icons/ic-category-infra.svg'
+   }
+];
