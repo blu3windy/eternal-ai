@@ -228,7 +228,7 @@ const AgentMonitor: React.FC = () => {
             </Flex>
          </PopoverTrigger>
          <PopoverContent 
-            width="1000px"
+            width="920px"
             border="none" 
             boxShadow="0 4px 6px rgba(0, 0, 0, 0.1)"
             className={s.popoverContent}
