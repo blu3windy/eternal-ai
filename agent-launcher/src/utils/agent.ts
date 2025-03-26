@@ -7,7 +7,7 @@ const setReadyPort = async () => {
    }
 
    try {
-      await electronAPI.modelStop("");
+      await electronAPI.modelStop();
    } catch (error) {
       console.error("Error killProcessUsingPort:", error);
    }

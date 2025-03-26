@@ -345,7 +345,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                status: 'done',
                updatedAt: new Date().toISOString(),
             } as TaskItem);
-         } else if ([AgentType.Model, AgentType.ModelOnline].includes(selectedAgent?.agent_type)) {
+         } else if ([AgentType.Model].includes(selectedAgent?.agent_type)) {
             updateTaskItem({
                id: messageId,
                status: 'processing',
@@ -407,6 +407,31 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   },
                },
             });
+         } else if (selectedAgent?.agent_type === AgentType.ModelOnline) {
+            updateTaskItem({
+               id: messageId,
+               status: 'processing',
+               message: sendTxt,
+               title: selectedAgent?.agent_name || 'Agent',
+               createdAt: new Date().toISOString(),
+               agent: selectedAgent!,
+               agentType: selectedAgent?.agent_type
+            });
+
+            const res = await AgentAPI.chatAgentModel({
+               payload: params,
+            });
+            console.log('res>>>>>', res);
+            
+            updateMessage(messageId, {
+               msg: res.choices[0].message.content,
+               status: 'received',
+            });
+            updateTaskItem({
+               id: messageId,
+               status: 'done',
+               updatedAt: new Date().toISOString(),
+            } as TaskItem);
          } else {
             updateTaskItem({
                id: messageId,

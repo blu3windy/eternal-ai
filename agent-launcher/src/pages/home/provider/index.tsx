@@ -579,7 +579,7 @@ const AgentProvider: React.FC<
 
             console.log('stephen: startAgent Model run', new Date().toLocaleTimeString());
             await handleRunModelAgent(ipfsHash);
-            
+
             await storageModel.setActiveModel({
                ...agent,
                hash: ipfsHash

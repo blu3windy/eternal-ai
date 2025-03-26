@@ -383,7 +383,7 @@ const AgentMonitor: React.FC = () => {
                                  <Td color="white">{container.lastStarted}</Td>
                                  <Td>
                                     <Flex gap="2">
-                                       {!compareString(container.name, 'agent-router') && (
+                                       {!(compareString(container.name, 'agent-router') || compareString(container.agentName, 'OpenAI') || compareString(container.agentName, 'Proxy')) && (
                                          <>
                                            {container.state === 'running' ? <Tooltip 
                                               label={container.state === 'running' ? 'Stop' : 'Start Container'}
