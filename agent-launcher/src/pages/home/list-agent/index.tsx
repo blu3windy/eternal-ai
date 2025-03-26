@@ -31,6 +31,7 @@ import BaseModal from '@components/BaseModal/index.tsx';
 import AddTestAgent from './AddTestAgent/index.tsx';
 import { compareString } from '@utils/string.ts';
 import s from './styles.module.scss';
+import AgentMonitor from './AgentMonitor/index.tsx';
 
 export enum SortOption {
   MarketCap = 'meme_market_cap',
@@ -479,7 +480,8 @@ const AgentsList = () => {
                   </Flex>
                );
             })}
-            <AgentNotification />
+            <AgentMonitor />
+            {/* <AgentNotification /> */}
          </Flex>
       )
    }
@@ -756,7 +758,7 @@ const AgentsList = () => {
 
          <Flex className={s.addTestBtn} onClick={onOpen}>
             <Center w={'100%'}>
-               <Text textAlign={'center'}>+ Add agent</Text>
+               <Text textAlign={'center'}>+ Add test agent</Text>
             </Center>
          </Flex>
 
