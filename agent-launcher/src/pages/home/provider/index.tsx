@@ -1036,13 +1036,13 @@ const AgentProvider: React.FC<
          }
 
          // Check model agents
-         const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
+         const activeModel = await storageModel.getActiveModel();
+
          for (const agent of installedModelAgents) {
-            const ipfsHash = await getModelAgentHash(agent);
             updateAgentState(agent.id, {
                data: agent,
                isInstalled: true,
-               isRunning: ipfsHash === runningModelHash
+               isRunning: agent.id === activeModel?.id
             });
          }
 
