@@ -659,7 +659,6 @@ const AgentsList = () => {
                   ) : 'Back'}
                </Button>
             </Flex>
-
             <Grid
                w="100%"
                templateColumns={"1fr"}
@@ -673,9 +672,20 @@ const AgentsList = () => {
                   </GridItem>
                ))}
                {loaded && agents.length === 0 && (
-                  <Text textAlign="center" color="gray.500" mt="40px">
-                     No agents found
-                  </Text>
+                  <VStack 
+                     height="full" 
+                     justify="center" 
+                     spacing={3} 
+                     p={4} 
+                     textAlign="center"
+                  >
+                     <Text fontSize="lg" fontWeight="bold">
+No agents installed?
+                     </Text>
+                     <Text>
+                     Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
+                     </Text>
+                  </VStack>
                )}
             </Grid>
          </Box>
@@ -721,35 +731,18 @@ const AgentsList = () => {
                   loader={<></>}
                >
                   {!loaded && <AppLoading />}
-                  {loaded && agents.length === 0 ? (
-                     <VStack 
-                        height="full" 
-                        justify="center" 
-                        spacing={3} 
-                        p={4} 
-                        textAlign="center"
-                     >
-                        <Text fontSize="lg" fontWeight="bold">
-      No agents installed?
-                        </Text>
-                        <Text>
-                           Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
-                        </Text>
-                     </VStack>
-                  ) : (
-                     <Grid
-                        w="100%"
-                        templateColumns={"1fr"}
-                        gridRowGap={"8px"}
-                        overflow={'hidden !important'}
-                     >
-                        {agents?.map((item: IAgentToken, i) => (
-                           <GridItem key={item.id}>
-                              <AgentItem token={item} />
-                           </GridItem>
-                        ))}
-                     </Grid>
-                  )}
+                  <Grid
+                     w="100%"
+                     templateColumns={"1fr"}
+                     gridRowGap={"8px"}
+                     overflow={'hidden !important'}
+                  >
+                     {agents?.map((item: IAgentToken, i) => (
+                        <GridItem key={item.id}>
+                           <AgentItem token={item} />
+                        </GridItem>
+                     ))}
+                  </Grid>
                </InfiniteScroll>
             </>
          )}
