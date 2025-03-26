@@ -17,17 +17,13 @@ import {
    Th,
    Td,
    IconButton,
-   Menu,
-   MenuButton,
-   MenuList,
-   MenuItem,
    Tooltip,
 } from '@chakra-ui/react';
 import React, { useState, useEffect, useRef } from 'react';
 import s from './styles.module.scss';
 import { compareString } from '@utils/string';
 import CAgentTokenAPI from '@services/api/agents-token';
-import { AgentType } from '..';
+import { AgentType } from '../constants';
 
 interface DockerContainer {
    Command: string;
