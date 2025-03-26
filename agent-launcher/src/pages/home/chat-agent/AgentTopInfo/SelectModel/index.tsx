@@ -18,6 +18,7 @@ import CAgentTokenAPI from "../../../../../services/api/agents-token";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import Loading from '@components/Loading';
+import { AgentType } from '@pages/home/list-agent';
 
 export const RenameModels: any = {
    'NousResearch/Hermes-3-Llama-3.1-70B-FP8': 'Hermes 3 70B',
@@ -113,10 +114,10 @@ const ItemToken = ({
                   </Text>
                   <Flex gap={"4px"} alignItems={"center"}>
                      <Text className={s.itemAmount}>
-                        {agent?.agent_name} ({modelSize} GB)
+                        {agent?.agent_name} <>{agent.agent_type !== AgentType.ModelOnline && `(${modelSize} GB)`}</>
                      </Text>
                      {
-                        agent.ipfsHash !== MODEL_HASH && (
+                        agent.agent_type !== AgentType.ModelOnline && (
                            <>
                               <svg width="6" height="6" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
                                  <path opacity="0.7" d="M2.9375 5.13068C2.53646 5.13068 2.17022 5.03291 1.83878 4.83736C1.50734 4.63849 1.24219 4.37334 1.04332 4.0419C0.847775 3.71046 0.75 3.34422 0.75 2.94318C0.75 2.53883 0.847775 2.17259 1.04332 1.84446C1.24219 1.51302 1.50734 1.24953 1.83878 1.05398C2.17022 0.855113 2.53646 0.755682 2.9375 0.755682C3.34186 0.755682 3.7081 0.855113 4.03622 1.05398C4.36766 1.24953 4.63116 1.51302 4.8267 1.84446C5.02557 2.17259 5.125 2.53883 5.125 2.94318C5.125 3.34422 5.02557 3.71046 4.8267 4.0419C4.63116 4.37334 4.36766 4.63849 4.03622 4.83736C3.7081 5.03291 3.34186 5.13068 2.9375 5.13068Z" fill="black"/>
@@ -212,7 +213,7 @@ const SelectModel = ({
 
    const isDisabled = useMemo(() => {
       return disabled; // || Object.keys(supportModelObj || {}).length <= 1;
-   }, [disabled, installedModelAgents]);
+   }, [disabled]);
 
    if (!installedModelAgents || installedModelAgents.length === 0) {
       return null;

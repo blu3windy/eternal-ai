@@ -421,8 +421,14 @@ const AgentProvider: React.FC<
       const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
       const installedHashes = [...installedModels.map(r => r.hash)];
 
-      let installedAgents: IAgentToken[] = availableModelAgents?.filter((t, index) => installedHashes.includes(t.ipfsHash as string));
+      let installedAgents: IAgentToken[] = availableModelAgents?.filter((t, index) => installedHashes.includes(t.ipfsHash as string) || t.agent_type === AgentType.ModelOnline);
 
+      installedAgents = installedAgents?.sort((a, b) => {
+         if (a.agent_type === AgentType.ModelOnline) return -1;
+         if (b.agent_type === AgentType.ModelOnline) return 1;
+         return 0;
+      });
+      
       installedAgents = installedAgents?.map(agent => {
          return {
             ...agent,
