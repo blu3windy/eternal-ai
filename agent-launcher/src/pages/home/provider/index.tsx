@@ -1034,6 +1034,7 @@ const AgentProvider: React.FC<
                else if (agent.agent_type === AgentType.CustomUI) {
                   try {
                      const port = await globalThis.electronAPI.dockerRunningPort(agentName, networkId);
+                     setCustomUIPort(port);
                      updateAgentState(agent.id, {
                         data: agent,
                         isInstalled: true,
