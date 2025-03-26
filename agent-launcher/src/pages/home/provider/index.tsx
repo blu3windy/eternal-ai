@@ -18,13 +18,13 @@ import { ModelInfo } from "../../../../electron/share/model.ts";
 import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
 import sleep from "@utils/sleep.ts";
 import throttle from "lodash/throttle";
+import storageModel from "@storage/StorageModel.ts";
+import { setReadyPort } from "@utils/agent.ts";
 
 const initialValue: IAgentContext = {
    loading: false,
    selectedAgent: undefined,
    setSelectedAgent: () => {},
-   currentModel: undefined,
-   setCurrentModel: () => {},
    installAgent: () => {},
    startAgent: () => {},
    stopAgent: () => {},
@@ -84,7 +84,6 @@ const AgentProvider: React.FC<
    const [installedSocialAgents, setInstalledSocialAgents] = useState<number[]>([]);
    const [customUIPort, setCustomUIPort] = useState<string>('');
    const [liveViewUrl, setLiveViewUrl] = useState<string>('');
-   const [currentModel, setCurrentModel] = useState<IAgentToken | null>(null);
    const [isSearchMode, setIsSearchMode] = useState(false);
    const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
 
@@ -178,8 +177,8 @@ const AgentProvider: React.FC<
       return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
    }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
 
-   console.log("stephen: selectedAgent", selectedAgent);
-   console.log("stephen: availableModelAgents", availableModelAgents);
+   // console.log("stephen: selectedAgent", selectedAgent);
+   // console.log("stephen: availableModelAgents", availableModelAgents);
    // console.log("stephen: currentModel", currentModel);
    // console.log("stephen: agentWallet", agentWallet);
    // console.log("stephen: installedAgents", installedAgents);
@@ -188,10 +187,10 @@ const AgentProvider: React.FC<
    // console.log("stephen: requireInstall", requireInstall);
    // console.log("stephen: isInstalled", isInstalled);
    // console.log('stephen availableModelAgents', availableModelAgents);
-   console.log("stephen: installedUtilityAgents", installedUtilityAgents);
-   console.log('stephen installedModelAgents', installedModelAgents);
-   console.log('stephen agentStates', agentStates);// console.log('stephen: isCustomUI', isCustomUI);
-   console.log("==============================");
+   // console.log("stephen: installedUtilityAgents", installedUtilityAgents);
+   // console.log('stephen installedModelAgents', installedModelAgents);
+   // console.log('stephen agentStates', agentStates);
+   // console.log("==============================");
 
    useEffect(() => {
       fetchCoinPrices();
@@ -423,7 +422,7 @@ const AgentProvider: React.FC<
 
    const fetchInstalledModelAgents = async () => {
       const installedModels: ModelInfo[] = await globalThis.electronAPI.modelDownloadedList();
-      const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
+      // const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
       const installedHashes = [...installedModels.map(r => r.hash)];
 
       let installedAgents: IAgentToken[] = availableModelAgents?.filter((t, index) => installedHashes.includes(t.ipfsHash as string) || t.agent_type === AgentType.ModelOnline);
@@ -443,19 +442,19 @@ const AgentProvider: React.FC<
 
       setInstalledModelAgents(installedAgents);
 
-      if (!runningModelHash) {
-         const defaultModelAgent = installedAgents.find((t, index) => compareString(t.ipfsHash, MODEL_HASH)) || installedAgents[0];
+      // if (!runningModelHash) {
+      //    const defaultModelAgent = installedAgents.find((t, index) => compareString(t.ipfsHash, MODEL_HASH)) || installedAgents[0];
 
-         if (defaultModelAgent) {
-            await startAgent(defaultModelAgent);
-         }
-      } else {
-         const runningModelAgent = installedAgents?.find(t => compareString(t.ipfsHash, runningModelHash?.trim()));
+      //    if (defaultModelAgent) {
+      //       await startAgent(defaultModelAgent);
+      //    }
+      // } else {
+      //    const runningModelAgent = installedAgents?.find(t => compareString(t.ipfsHash, runningModelHash?.trim()));
 
-         if(runningModelAgent) {
-            setCurrentModel(runningModelAgent);
-         }
-      }
+      //    if(runningModelAgent) {
+      //       setCurrentModel(runningModelAgent);
+      //    }
+      // }
    }
 
    const fetchCoinPrices = async () => {
@@ -509,6 +508,10 @@ const AgentProvider: React.FC<
 
             fetchInstalledUtilityAgents(); //fetch then check agent installed in useEffect
 
+            if (agent.agent_type === AgentType.ModelOnline) {
+               fetchInstalledModelAgents();
+            }
+
             // setAgentInstalled(agent);
          } else if (agent.agent_type === AgentType.Model) {
             await handleInstallModelAgentRequirement();
@@ -541,6 +544,16 @@ const AgentProvider: React.FC<
             isStarting: true,
          });
 
+         if ([AgentType.Model, AgentType.ModelOnline].includes(agent.agent_type)) {
+            const activeModel = await storageModel.getActiveModel();
+            if (!activeModel) {
+               await setReadyPort();
+            }
+
+            console.log('stephen: startAgent activeModel', activeModel);
+         }
+
+
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             console.log('stephen: startAgent Utility install', new Date().toLocaleTimeString());
             await installUtilityAgent(agent, needUpdateCode);
@@ -549,6 +562,13 @@ const AgentProvider: React.FC<
 
             await handleRunDockerAgent(agent);
             console.log('stephen: startAgent Utility finish docker', new Date().toLocaleTimeString());
+
+            if (agent.agent_type === AgentType.ModelOnline) {
+               await storageModel.setActiveModel({
+                  ...agent,
+                  hash: ""
+               });
+            }
          } else if (agent.agent_type === AgentType.Model) {
             console.log('stephen: startAgent Model install', new Date().toLocaleTimeString());
             await handleInstallModelAgentRequirement();
@@ -559,13 +579,26 @@ const AgentProvider: React.FC<
 
             console.log('stephen: startAgent Model run', new Date().toLocaleTimeString());
             await handleRunModelAgent(ipfsHash);
-            setCurrentModel(agent);
+            
+            await storageModel.setActiveModel({
+               ...agent,
+               hash: ipfsHash
+            });
             console.log('stephen: startAgent Model finish run', new Date().toLocaleTimeString());
+
+
          }
 
          await sleep(2000);
       } catch (e) {
          console.log('startAgent e', e);
+
+         if ([AgentType.Model, AgentType.ModelOnline].includes(agent.agent_type)) {
+            const activeModel = await storageModel.getActiveModel();
+            if (activeModel) {
+               await setReadyPort();
+            }
+         }
       } finally {
          updateAgentState(agent.id, {
             data: agent,
@@ -779,26 +812,26 @@ const AgentProvider: React.FC<
 
          let agent_type = AgentType.CustomPrompt;
          switch (codeLanguage) {
-            case 'custom_ui':
-               agent_type = AgentType.CustomUI
-               break;
-            case 'custom_prompt':
-               agent_type = AgentType.CustomPrompt
-               break;
-            case 'model_online':
-               agent_type = AgentType.ModelOnline
-               break;
-            case 'model':
-               agent_type = AgentType.Model
-               break;
-            case 'python':
-               agent_type = AgentType.UtilityPython
-               break;
-            case 'javascript':
-               agent_type = AgentType.Infra
-               break;
-            default:
-               break;
+         case 'custom_ui':
+            agent_type = AgentType.CustomUI
+            break;
+         case 'custom_prompt':
+            agent_type = AgentType.CustomPrompt
+            break;
+         case 'model_online':
+            agent_type = AgentType.ModelOnline
+            break;
+         case 'model':
+            agent_type = AgentType.Model
+            break;
+         case 'python':
+            agent_type = AgentType.UtilityPython
+            break;
+         case 'javascript':
+            agent_type = AgentType.Infra
+            break;
+         default:
+            break;
          }
 
          let dependAgents: any[] = [];
@@ -1133,8 +1166,6 @@ const AgentProvider: React.FC<
          loading,
          selectedAgent,
          setSelectedAgent,
-         currentModel,
-         setCurrentModel,
          installAgent,
          startAgent,
          stopAgent,
@@ -1174,8 +1205,6 @@ const AgentProvider: React.FC<
       loading,
       selectedAgent,
       setSelectedAgent,
-      currentModel,
-      setCurrentModel,
       installAgent,
       startAgent,
       stopAgent,
