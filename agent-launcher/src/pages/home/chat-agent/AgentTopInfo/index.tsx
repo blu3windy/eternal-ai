@@ -46,7 +46,10 @@ const AgentTopInfo = () => {
       requireInstall,
       isRunning,
       startAgent,
-      isStarting
+      isStarting,
+      isInstalled,
+      unInstallAgent,
+      isUnInstalling,
    } = useContext(AgentContext);
 
    const {
@@ -132,6 +135,10 @@ const AgentTopInfo = () => {
 
    const handleStopAgent = () => {
       stopAgent(selectedAgent);
+   };
+
+   const handleDeleteAgent = () => {
+      unInstallAgent(selectedAgent);
    };
 
    const handleClickCreator = (e: any) => {
@@ -286,6 +293,34 @@ const AgentTopInfo = () => {
                                           />
                                        </svg>
                                           Stop running{" "}
+                                       {selectedAgent?.agent_name}
+                                    </Button>
+                                 </>
+                              )}
+                              {allowStopAgent &&
+                                 requireInstall &&
+                                 isInstalled && (
+                                 <>
+                                    <Divider color={"#E2E4E8"} my={"16px"} />
+                                    <Button
+                                       className={s.btnStop}
+                                       onClick={handleDeleteAgent}
+                                       isLoading={isUnInstalling}
+                                       isDisabled={isUnInstalling}
+                                       loadingText={"Deleting..."}
+                                    >
+                                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g opacity="0.7">
+<path d="M4.625 8.375L5.46185 20.3C5.55375 21.6096 6.6429 22.625 7.9557 22.625H16.2943C17.6071 22.625 18.6963 21.6096 18.7882 20.3L19.625 8.375" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9.125 4.625V2.875C9.125 2.18464 9.68465 1.625 10.375 1.625H13.875C14.5653 1.625 15.125 2.18464 15.125 2.875V4.625" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.625 4.625H4.625C3.52043 4.625 2.625 5.52045 2.625 6.625V8.125H21.625V6.625C21.625 5.52045 20.7296 4.625 19.625 4.625Z" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12.125 11.125V19.625" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8.375 11.125L8.875 19.625" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.875 11.125L15.375 19.625" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>
+
+                                          Delete{" "}
                                        {selectedAgent?.agent_name}
                                     </Button>
                                  </>
