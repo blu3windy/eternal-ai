@@ -2,14 +2,16 @@ import { Center, Image } from "@chakra-ui/react";
 import BackgroundWrapper from "@components/BackgroundWrapper";
 import BaseButton from "@components/BaseButton";
 import LoadingText from "@components/LoadingText";
-import { getModelAgentHash } from "@pages/authen/ChooseModel";
 import { getSetupAgents } from "@pages/authen/ChooseModel/utils.ts";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
 import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
 import { AgentType } from "@pages/home/list-agent/constants";
 import CAgentTokenAPI from "@services/api/agents-token";
 import storageModel from "@storage/StorageModel.ts";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
+import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
+import AgentProvider, { AgentContext } from "@pages/home/provider";
+import { setReadyPort } from "@utils/agent.ts";
 
 interface IProps {
    loadingUser: boolean;
@@ -50,6 +52,27 @@ const Starter = (props: IProps) => {
    const [step] = useState<Step>("INITIALIZING");
 
    const [hasError, setHasError] = useState(false);
+   const agentCtx = useContext(AgentContext);
+
+   const setDefaultAgent = async () => {
+      const {
+         agents
+      } = await agentAPI.current.getAgentTokenList({
+         agent_types: [AgentType.ModelOnline].join(','),
+      });
+      const _agents = (await getSetupAgents(agents)).filter((agent) => agent.agent_type === AgentType.ModelOnline);
+      if (!_agents?.length) {
+         alert("No model only found");
+         throw new Error("No model only found");
+      }
+      const newAgent = _agents[0];
+      await agentCtx.startAgent(newAgent, true);
+      await storageModel.setActiveModel({
+         ...newAgent,
+         hash: ""
+      })
+   }
+
 
    const onInit = async (ignoreCopy?: boolean) => {
       try {
@@ -71,35 +94,25 @@ const Starter = (props: IProps) => {
          // await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
 
-         const activeModel = await storageModel.getActiveModel();
-         console.log("activeModel: ", activeModel)
-         if (!activeModel) {
-            const {
-               agents
-            } = await agentAPI.current.getAgentTokenList({
-               agent_types: [AgentType.ModelOnline, AgentType.Model].join(','),
-            });
-            const _agents = (await getSetupAgents(agents)).filter((agent) => agent.agent_type === AgentType.ModelOnline);
-            if (!_agents?.length) {
-               alert("No model only found");
-               throw new Error("No model only found");
-            }
-            const newAgent = _agents[0];
-            const hash = await getModelAgentHash(newAgent);
-            if (!hash) {
-               alert("Model hash not found");
-               throw new Error("Model hash not found");
-            }
 
-            await storageModel.setActiveModel({
-               id: newAgent.id,
-               agent_id: newAgent.agent_id,
-               agent_type: newAgent.agent_type,
-               hash: hash,
-            })
+         const activeModel = await storageModel.getActiveModel();
+         if (!activeModel) {
+            await setReadyPort();
+            await setDefaultAgent();
          } else {
-            if (activeModel.agent_type === AgentType.Model) {
-               await globalThis.electronAPI.modelInstallBaseModel(activeModel.hash);
+            try {
+               switch (activeModel.agent_type) {
+               case AgentType.ModelOnline: {
+                  await agentCtx.startAgent(activeModel, true);
+                  break;
+               }
+               case AgentType.Model:
+                  await globalThis.electronAPI.modelInstallBaseModel(activeModel.hash);
+                  break;
+               }
+            } catch (error) {
+               await setReadyPort();
+               await setDefaultAgent();
             }
          }
 
@@ -160,4 +173,13 @@ const Starter = (props: IProps) => {
    )
 };
 
-export default Starter;
+
+const Container = (props: IProps) => {
+   return(
+      <AgentProvider>
+         <Starter loadingUser={props.loadingUser} onCheckHasUser={props.onCheckHasUser}/>
+      </AgentProvider>
+   )
+}
+
+export default Container;

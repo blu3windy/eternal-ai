@@ -5,6 +5,8 @@ import { SCRIPTS_NAME } from "../share/utils.ts";
 import { deleteModel, downloadedModels, getFolderPath } from "../share/model.ts";
 import { dialogCheckDist } from "../share/file-size.ts";
 
+const PORT = 65534;
+
 const ipcMainModel = () => {
    const path = getFolderPath();
    const cd = `cd "${path}"`;
@@ -15,7 +17,7 @@ const ipcMainModel = () => {
 
    const _onRunModel = async (hash: string) => {
       // await command.killProcessUsingPort(8080);
-      await command.execAsyncStream( `${cd} && ${source} && ${llms} start --hash ${hash}`);
+      await command.execAsyncStream( `${cd} && ${source} && ${llms} start --hash ${hash} --port ${PORT}`);
    };
 
    const _compareString = (str1: string, str2: string) => {
@@ -63,7 +65,7 @@ const ipcMainModel = () => {
       await deleteModel(hash);
    });
 
-   ipcMain.handle(EMIT_EVENT_NAME.MODEL_STOP, async (_event, hash: string) => {
+   ipcMain.handle(EMIT_EVENT_NAME.MODEL_STOP, async (_event) => {
       const cmd =`${cd} && ${source} && ${llms} stop`
       await command.execAsyncStream(cmd);
       // await command.killProcessUsingPort(8080);
