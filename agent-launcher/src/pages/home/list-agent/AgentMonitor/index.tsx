@@ -144,7 +144,7 @@ const AgentMonitor: React.FC = () => {
                   ports: container.Ports || '-',
                   cpu: memInfo.CPUPerc,
                   lastStarted: container.RunningFor,
-                  memoryUsage: memInfo.MemUsage,
+                  memoryUsage: memUsage[0],
                   memoryPercentage: memInfo.MemPerc,
                   state: container.State,
                   agentName: matchingAgent?.agent_name,
@@ -193,7 +193,7 @@ const AgentMonitor: React.FC = () => {
       // Initial fetch
       onGetData();
       // Set up the interval
-      intervalRef.current = setInterval(onGetData, 4000);
+      intervalRef.current = setInterval(onGetData, 3000);
       // Cleanup function
       return () => {
          if (intervalRef.current) {
@@ -294,7 +294,7 @@ const AgentMonitor: React.FC = () => {
                               <Th color="whiteAlpha.600">Agent type</Th>
                               <Th color="whiteAlpha.600">Container ID</Th>
                               <Th color="whiteAlpha.600">CPU</Th>
-                              <Th color="whiteAlpha.600">Memory percentage</Th>
+                              <Th color="whiteAlpha.600">Memory</Th>
                               <Th color="whiteAlpha.600">Last started</Th>
                               <Th color="whiteAlpha.600">Actions</Th>
                            </Tr>
@@ -321,7 +321,7 @@ const AgentMonitor: React.FC = () => {
                                  </Td>
                                  <Td color="white">{container.containerId}</Td>
                                  <Td color="white">{container.cpu}</Td>
-                                 <Td color="white">{container.memoryPercentage || '-'}</Td>
+                                 <Td color="white">{container.memoryUsage || '-'}</Td>
                                  <Td color="white">{container.lastStarted}</Td>
                                  <Td>
                                     <Flex gap="2">
