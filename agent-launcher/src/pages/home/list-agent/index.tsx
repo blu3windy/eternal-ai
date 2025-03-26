@@ -6,11 +6,15 @@ import {
    Flex,
    Grid,
    GridItem,
+   HStack,
    Image,
    Popover,
    PopoverContent,
    PopoverTrigger,
    SimpleGrid,
+   Tab,
+   TabList,
+   Tabs,
    Text,
    useDisclosure,
    VStack
@@ -151,7 +155,6 @@ const AgentsList = () => {
    const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
    const [loaded, setLoaded] = useState(false);
    const refLoading = useRef(false);
-   const [showCategoryList, setShowCategoryList] = useState(true);
 
    const [agents, setAgents] = useState<IAgentToken[]>([]);
    const [latestAgent, setLatestAgent] = useState<IAgentToken | null>(null);
@@ -293,11 +296,6 @@ const AgentsList = () => {
          ...refParams.current,
          search: searchText,
       };
-      if (searchText) {
-         setShowCategoryList(false);
-      } else {
-         setShowCategoryList(true);
-      }
       debounceGetTokens(true);
    };
 
@@ -306,7 +304,6 @@ const AgentsList = () => {
    }, []);
 
    const handleCategorySelect = (categoryOption: CategoryOption) => {
-      setShowCategoryList(false);
       refParams.current = {
          ...refParams.current,
          category: categoryOption,
@@ -315,7 +312,6 @@ const AgentsList = () => {
    };
 
    const handleBackToCategories = () => {
-      setShowCategoryList(true);
       refParams.current = {
          ...refParams.current,
          category: CategoryOption.All,
@@ -328,22 +324,34 @@ const AgentsList = () => {
    const renderSearchMode = () => {
       if (!isSearchMode) return null;
 
-      if (!showCategoryList) {
-         return renderSearchResults();
-      }
-
       return (
-         <Box p="24px">
-            {latestAgent && (
+         <Box>
+            {/* {latestAgent && (
                <Box mb="32px">
                   <Text fontSize="24px" fontWeight="600" mb="16px">New & Updates</Text>
                   <Box bg={'white'}  borderRadius={"8px"} overflow={"hidden"}>
                      <AgentItem token={latestAgent} isLatest={true} />
                   </Box>
                </Box>
-            )}
+            )} */}
 
-            <Box>
+            <Tabs className={s.tabContainer} isFitted>
+               <TabList>
+                  {CATEGORIES.map((category) => (
+                     <Tab 
+                        key={category.id}
+                        onClick={() => {
+                           refParams.current.category = category.id;
+                           debounceGetTokens(true);
+                        }}
+                     >
+                        <Text>{category.name}</Text>
+                     </Tab>
+                  ))}
+               </TabList>
+            </Tabs>
+            {renderSearchResults()}
+            {/* <Box>
                <Text fontSize="24px" fontWeight="600" mb="16px">Categories</Text>
                <SimpleGrid columns={1} spacing="16px">
                   {CATEGORIES.map((category) => (
@@ -367,7 +375,7 @@ const AgentsList = () => {
                      </Flex>
                   ))}
                </SimpleGrid>
-            </Box>
+            </Box> */}
          </Box>
       );
    };
@@ -430,7 +438,6 @@ const AgentsList = () => {
                               search: '',
                               category: CategoryOption.All,
                            };
-                           setShowCategoryList(true);
                            setIsSearchMode(false);
                            debounceGetTokens(true);
                         }
@@ -642,7 +649,7 @@ const AgentsList = () => {
    const renderSearchResults = () => {
       return (
          <Box>
-            <Flex align="center" mb="20px" px="24px">
+            {/* <Flex align="center" mb="20px" px="24px">
                <Button 
                   leftIcon={<Image src="icons/ic-arrow-left.svg" w="16px" h="16px" />}
                   variant="ghost"
@@ -658,7 +665,7 @@ const AgentsList = () => {
                      <>{Category.find(c => c.value === refParams.current.category)?.label}</>
                   ) : 'Back'}
                </Button>
-            </Flex>
+            </Flex> */}
             <Grid
                w="100%"
                templateColumns={"1fr"}
@@ -671,22 +678,6 @@ const AgentsList = () => {
                      <AgentItem token={item} />
                   </GridItem>
                ))}
-               {loaded && agents.length === 0 && (
-                  <VStack 
-                     height="full" 
-                     justify="center" 
-                     spacing={3} 
-                     p={4} 
-                     textAlign="center"
-                  >
-                     <Text fontSize="lg" fontWeight="bold">
-No agents installed?
-                     </Text>
-                     <Text>
-                     Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
-                     </Text>
-                  </VStack>
-               )}
             </Grid>
          </Box>
       );
@@ -730,18 +721,34 @@ No agents installed?
                   hasMore
                   loader={<></>}
                >
-                  {!loaded && <AppLoading />}
                   <Grid
                      w="100%"
                      templateColumns={"1fr"}
                      gridRowGap={"8px"}
                      overflow={'hidden !important'}
                   >
+                     {!loaded && <AppLoading />}
                      {agents?.map((item: IAgentToken, i) => (
                         <GridItem key={item.id}>
                            <AgentItem token={item} />
                         </GridItem>
                      ))}
+                     {filter === FilterOption.Installed && loaded && agents.length === 0 && (
+                        <VStack 
+                           height="full" 
+                           justify="center" 
+                           spacing={3} 
+                           p={4} 
+                           textAlign="center"
+                        >
+                           <Text fontSize="lg" fontWeight="bold">
+No agents installed?
+                           </Text>
+                           <Text>
+                     Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
+                           </Text>
+                        </VStack>
+                     )}
                   </Grid>
                </InfiniteScroll>
             </>

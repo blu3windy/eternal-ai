@@ -163,8 +163,8 @@ const AgentTopInfo = () => {
                   [AgentType.CustomPrompt].includes(
                      selectedAgent?.agent_type as AgentType
                   ) && (
-                     <ProcessingTasks />
-                  )}
+                  <ProcessingTasks />
+               )}
 
                <Flex gap={"6px"} justifyContent={"space-between"} alignItems={"center"}>
                   <Flex gap={"6px"} alignItems={"center"} className={s.content}>
@@ -197,22 +197,22 @@ const AgentTopInfo = () => {
                                           </Text>
                                           {selectedAgent?.tmp_twitter_info
                                              ?.twitter_avatar ? (
-                                             <Avatar
-                                                url={
-                                                   selectedAgent
-                                                      ?.tmp_twitter_info
-                                                      ?.twitter_avatar
-                                                }
-                                                width={16}
-                                             />
-                                          ) : (
-                                             <Jazzicon
-                                                diameter={16}
-                                                seed={jsNumberForAddress(
-                                                   selectedAgent?.creator || ""
-                                                )}
-                                             />
-                                          )}
+                                                <Avatar
+                                                   url={
+                                                      selectedAgent
+                                                         ?.tmp_twitter_info
+                                                         ?.twitter_avatar
+                                                   }
+                                                   width={16}
+                                                />
+                                             ) : (
+                                                <Jazzicon
+                                                   diameter={16}
+                                                   seed={jsNumberForAddress(
+                                                      selectedAgent?.creator || ""
+                                                   )}
+                                                />
+                                             )}
                                           <Text
                                              color="#000000"
                                              fontSize="12px"
@@ -223,8 +223,8 @@ const AgentTopInfo = () => {
                                                 ?.twitter_username
                                                 ? `@${selectedAgent?.tmp_twitter_info?.twitter_username}`
                                                 : addressFormater(
-                                                     selectedAgent?.creator
-                                                  )}
+                                                   selectedAgent?.creator
+                                                )}
                                           </Text>
                                        </Flex>
                                     </Flex>
@@ -234,8 +234,8 @@ const AgentTopInfo = () => {
                                              ? "ic-liked.svg"
                                              : "ic-like.svg"
                                        }`}
-                                       width={"40px"}
-                                       height={"40px"}
+                                       width={"28px"}
+                                       height={"28px"}
                                        onClick={handleLikeAgent}
                                        cursor={
                                           isLiked ? "not-allowed" : "pointer"
@@ -256,40 +256,40 @@ const AgentTopInfo = () => {
                               {allowStopAgent &&
                                  requireInstall &&
                                  isRunning && (
-                                    <>
-                                       <Divider color={"#E2E4E8"} my={"16px"} />
-                                       <Button
-                                          className={s.btnStop}
-                                          onClick={handleStopAgent}
-                                          isLoading={isStopping}
-                                          isDisabled={isStopping}
-                                          loadingText={"Stopping..."}
+                                 <>
+                                    <Divider color={"#E2E4E8"} my={"16px"} />
+                                    <Button
+                                       className={s.btnStop}
+                                       onClick={handleStopAgent}
+                                       isLoading={isStopping}
+                                       isDisabled={isStopping}
+                                       loadingText={"Stopping..."}
+                                    >
+                                       <svg
+                                          width="24"
+                                          height="24"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          xmlns="http://www.w3.org/2000/svg"
                                        >
-                                          <svg
-                                             width="24"
-                                             height="24"
-                                             viewBox="0 0 24 24"
-                                             fill="none"
-                                             xmlns="http://www.w3.org/2000/svg"
-                                          >
-                                             <rect
-                                                x="0.5"
-                                                y="0.5"
-                                                width="23"
-                                                height="23"
-                                                rx="11.5"
-                                                stroke="black"
-                                             />
-                                             <path
-                                                d="M6 18V6H18V18H6Z"
-                                                fill="black"
-                                             />
-                                          </svg>
+                                          <rect
+                                             x="0.5"
+                                             y="0.5"
+                                             width="23"
+                                             height="23"
+                                             rx="11.5"
+                                             stroke="black"
+                                          />
+                                          <path
+                                             d="M6 18V6H18V18H6Z"
+                                             fill="black"
+                                          />
+                                       </svg>
                                           Stop running{" "}
-                                          {selectedAgent?.agent_name}
-                                       </Button>
-                                    </>
-                                 )}
+                                       {selectedAgent?.agent_name}
+                                    </Button>
+                                 </>
+                              )}
                               {hasNewVersionCode && (
                                  <>
                                     <Divider
@@ -339,18 +339,18 @@ const AgentTopInfo = () => {
                   {selectedAgent?.required_wallet &&
                      !!agentWallet &&
                      isBackupedPrvKey && (
-                        <Button
-                           className={s.btnExport}
-                           onClick={handleExportPrvKey}
+                     <Button
+                        className={s.btnExport}
+                        onClick={handleExportPrvKey}
+                     >
+                        <svg
+                           xmlns="http://www.w3.org/2000/svg"
+                           viewBox="0 0 576 512"
                         >
-                           <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 576 512"
-                           >
-                              <path d="M0 64C0 28.7 28.7 0 64 0L224 0l0 128c0 17.7 14.3 32 32 32l128 0 0 128-168 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l168 0 0 112c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 64zM384 336l0-48 110.1 0-39-39c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l80 80c9.4 9.4 9.4 24.6 0 33.9l-80 80c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l39-39L384 336zm0-208l-128 0L256 0 384 128z" />
-                           </svg>
-                        </Button>
-                     )}
+                           <path d="M0 64C0 28.7 28.7 0 64 0L224 0l0 128c0 17.7 14.3 32 32 32l128 0 0 128-168 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l168 0 0 112c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 64zM384 336l0-48 110.1 0-39-39c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l80 80c9.4 9.4 9.4 24.6 0 33.9l-80 80c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l39-39L384 336zm0-208l-128 0L256 0 384 128z" />
+                        </svg>
+                     </Button>
+                  )}
                   <Button className={s.btnBuy} onClick={onOpenDrawer}>
                      Buy
                   </Button>
