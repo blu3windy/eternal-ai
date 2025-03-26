@@ -193,7 +193,7 @@ const AgentMonitor: React.FC = () => {
       // Initial fetch
       onGetData();
       // Set up the interval
-      intervalRef.current = setInterval(onGetData, 5000);
+      intervalRef.current = setInterval(onGetData, 4000);
       // Cleanup function
       return () => {
          if (intervalRef.current) {
@@ -228,7 +228,7 @@ const AgentMonitor: React.FC = () => {
             </Flex>
          </PopoverTrigger>
          <PopoverContent 
-            width="920px"
+            width="950px"
             border="none" 
             boxShadow="0 4px 6px rgba(0, 0, 0, 0.1)"
             className={s.popoverContent}
