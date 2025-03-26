@@ -300,8 +300,8 @@ const AgentTopInfo = () => {
                                     <Button
                                        className={s.btnUpdateCode}
                                        onClick={handleUpdateCode}
-                                       isLoading={isStopping || isStarting}
-                                       isDisabled={isStopping || isStarting}
+                                       isLoading={(isStopping || isStarting) && isClickUpdateCode}
+                                       isDisabled={(isStopping || isStarting) && isClickUpdateCode}
                                        loadingText={
                                           isStarting
                                              ? "Starting..."
