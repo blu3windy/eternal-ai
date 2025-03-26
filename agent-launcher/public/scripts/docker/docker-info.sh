@@ -1,4 +1,6 @@
 #!/bin/bash
+export PATH="/opt/homebrew/bin/:$PATH"
+export PATH="$HOME/homebrew/bin:$PATH"
 
 # Get all images in JSON format
 get_images() {

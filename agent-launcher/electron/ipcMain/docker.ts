@@ -36,7 +36,7 @@ const ipcMainDocker = () => {
          const folderPathDocker = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER);
 
          const containers = [
-            `agent-js:${DOCKER_SERVER_JS}:`,
+            // `agent-js:${DOCKER_SERVER_JS}:`,
             `agent-router:${DOCKER_ROUTER_NAME}:33030`,
          ];
          const containerArgs = containers.map(c => `--container "${c}"`).join(' ');
