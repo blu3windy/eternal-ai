@@ -14,6 +14,9 @@ const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
 const DOCKER_ROUTER_NAME = `${DOCKER_NAME}-router`;
 
 const ipcMainDocker = () => {
+   const userDataPath = app.getPath("userData");
+   const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
+   const actionScriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
 
    const getDnsHost = (chainId: string, agentName: string) => {
       return `${chainId}-${agentName}`.toLowerCase();
@@ -137,11 +140,7 @@ const ipcMainDocker = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, async (_event, agentName: string, chainId: string, options) => {
       try {
-         const userDataPath = app.getPath("userData");
-         const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
          const dnsHost = getDnsHost(chainId, agentName);
-         const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
-
          const _options = typeof options === 'string' ? JSON.parse(options) : options;
          const type = (_options?.type || 'custom-prompt') as CodeLanguage;
 
@@ -182,7 +181,7 @@ const ipcMainDocker = () => {
          ]
 
          const paramsStr = params.join(' ');
-         await command.execAsyncStream(`bash "${scriptPath}" run ${paramsStr}`);
+         await command.execAsyncStream(`bash "${actionScriptPath}" run ${paramsStr}`);
       } catch (error) {
          throw error;
       }
@@ -190,16 +189,12 @@ const ipcMainDocker = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_STOP_AGENT, async (_event, agentName: string, chainId: string) => {
       try {
-         const userDataPath = app.getPath("userData");
-         const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
          const dnsHost = getDnsHost(chainId, agentName);
-         const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
-
          const params = [
             `--container-name "${dnsHost}"`,
          ]
          const paramsStr = params.join(' ');
-         await command.execAsyncStream(`bash "${scriptPath}" stop ${paramsStr}`);
+         await command.execAsyncStream(`bash "${actionScriptPath}" stop ${paramsStr}`);
       } catch (error) {
          console.log(error);
          throw error;
@@ -208,7 +203,11 @@ const ipcMainDocker = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_STOP_CONTAINER, async (_event, containerId: string) => {
       try {
-         await command.execAsyncStream(`docker stop ${containerId}`);
+         const params = [
+            `--container-id "${containerId}"`,
+         ]
+         const paramsStr = params.join(' ');
+         await command.execAsyncStream(`bash "${actionScriptPath}" stop-container-id ${paramsStr}`);
       } catch (error) {
          console.log(error);
          throw error;
@@ -217,7 +216,11 @@ const ipcMainDocker = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_DELETE_CONTAINER, async (_event, containerId: string) => {
       try {
-         await command.execAsyncStream(`docker rm -f ${containerId}`);
+         const params = [
+            `--container-id "${containerId}"`,
+         ]
+         const paramsStr = params.join(' ');
+         await command.execAsyncStream(`bash "${actionScriptPath}" remove_container_id ${paramsStr}`);
       } catch (error) {
          console.log(error);
          throw error;
@@ -233,16 +236,12 @@ const ipcMainDocker = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUNNING_PORT, async (_event, agentName: string, chainId: string, ) => {
-      const userDataPath = app.getPath("userData");
-      const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
-      const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
-
       const dnsHost = getDnsHost(chainId, agentName);
       const params = [
          `--container-name "${dnsHost}"`,
       ]
       const paramsStr = params.join(' ');
-      const stdout = await command.execAsync(`bash "${scriptPath}" get-port ${paramsStr}`);
+      const stdout = await command.execAsync(`bash "${actionScriptPath}" get-port ${paramsStr}`);
       const messages = stdout.split('\n');
       const port = messages[messages.length - 2].trim();
       if (Number.isNaN(Number(port))) {
@@ -252,20 +251,14 @@ const ipcMainDocker = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INFO, async (_event, action: DockerInfoAction) => {
-      const userDataPath = app.getPath("userData");
-      const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
-      const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_INFO_SCRIPT);
+      const infoScriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_INFO_SCRIPT);
 
-      const stdout = await command.execAsync(`bash "${scriptPath}" ${action}`);
+      const stdout = await command.execAsync(`bash "${infoScriptPath}" ${action}`);
       return stdout;
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKET_SET_READY_PORT, async () => {
-      const userDataPath = app.getPath("userData");
-      const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
-      const scriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
-
-      await command.execAsync(`bash "${scriptPath}" set-ready-port`);
+      await command.execAsync(`bash "${actionScriptPath}" set-ready-port`);
    })
 }
 

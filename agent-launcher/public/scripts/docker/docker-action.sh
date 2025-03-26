@@ -67,6 +67,10 @@ while [[ "$#" -gt 0 ]]; do
       PORT="$2"
       shift 2
       ;;
+    --container-id)
+      CONTAINER_ID="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown option: $1"
       usage
@@ -170,10 +174,12 @@ get_port() {
   echo "$PORT"
 }
 
-delete() {
-  docker stop "$CONTAINER_NAME" 2>/dev/null || true
-  docker rm "$CONTAINER_NAME" 2>/dev/null || true
-  docker rmi "$IMAGE_NAME" 2>/dev/null || true
+remove_container_id() {
+  docker rm -f "$CONTAINER_ID" 2>/dev/null || true
+}
+
+stop_container_id() {
+  docker stop "$CONTAINER_ID" 2>/dev/null || true
 }
 
 set_ready_port() {
@@ -231,14 +237,11 @@ case "$action" in
     fi
     get_port
     ;;
-  delete)
-    if [ -z "$CONTAINER_NAME" ]; then
-      log_error "Missing Container Name"
-    fi
-    if [ -z "$IMAGE_NAME" ]; then
-      log_error "Missing Image Name"
-    fi
-    delete
+  remove_container_id)
+    remove_container_id
+    ;;
+  stop-container-id)
+    stop_container_id
     ;;
   set-ready-port)
     set_ready_port "$DEFAULT_PORT"
