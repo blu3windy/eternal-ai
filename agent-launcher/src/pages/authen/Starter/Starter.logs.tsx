@@ -12,7 +12,7 @@ const StarterLogs = () => {
    const [userScrolled, setUserScrolled] = useState(false);
    
    const { parsedLogs } = useParseLogs({
-      functionNames: ["INITIALIZE", "MODEL_INSTALL", "DOCKER_BUILD", "MODEL_INSTALL_LLAMA"],
+      functionNames: ["INITIALIZE", "MODEL_INSTALL", "DOCKER_BUILD", "MODEL_INSTALL_LLAMA", "DOCKER_ACTION"],
       keys: ["name", "message", "error", "step"]
    });
 

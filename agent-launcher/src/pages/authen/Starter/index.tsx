@@ -9,7 +9,6 @@ import { AgentType } from "@pages/home/list-agent/constants";
 import CAgentTokenAPI from "@services/api/agents-token";
 import storageModel from "@storage/StorageModel.ts";
 import { useContext, useEffect, useRef, useState } from "react";
-import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import AgentProvider, { AgentContext } from "@pages/home/provider";
 import { setReadyPort } from "@utils/agent.ts";
 
@@ -84,13 +83,14 @@ const Starter = (props: IProps) => {
 
          console.time("DOCKER_INSTALL");
 
-         await tryExecFunction(2, globalThis.electronAPI.dockerInstall);
+         await globalThis.electronAPI.dockerInstall();
+         // await tryExecFunction(2, globalThis.electronAPI.dockerInstall);
          // await globalThis.electronAPI.dockerInstall();
          console.timeEnd("DOCKER_INSTALL");
 
          console.time("DOCKER_BUILD");
-
-         await tryExecFunction(2, globalThis.electronAPI.dockerBuild);
+         await globalThis.electronAPI.dockerBuild();
+         // await tryExecFunction(2, globalThis.electronAPI.dockerBuild);
          // await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
 

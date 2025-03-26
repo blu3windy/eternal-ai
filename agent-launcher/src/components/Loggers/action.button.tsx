@@ -106,8 +106,8 @@ const ActionButtons = () => {
          </Button>
          <Button
             onClick={() => {
-               globalThis.electronAPI.dockerRunningPort("openai", "84532").then((port) => {
-                  alert("Container stopped");
+               globalThis.electronAPI.dockerRunningPort("markdownify", "84532").then((port) => {
+                  alert(port);
                });
             }}
          >

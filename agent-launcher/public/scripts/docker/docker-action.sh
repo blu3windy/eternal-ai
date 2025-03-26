@@ -26,9 +26,9 @@ log_error() {
     fi
 }
 
-if [ "$#" -lt 2 ]; then
-  log_error "Missing required parameters"
-fi
+#if [ "$#" -lt 2 ]; then
+#  log_error "Missing required parameters"
+#fi
 
 action="$1"
 shift
@@ -117,8 +117,12 @@ run_container_custom_prompt() {
 
 run_container_open_ai() {
     cd_docker_build_source_path
+    log_message "Building Docker image ${IMAGE_NAME}..."
     docker build -t "$IMAGE_NAME" .;
+    log_message "Docker image ${IMAGE_NAME} built successfully."
+    log_message "Running Docker container ${CONTAINER_NAME} with port ${DEFAULT_PORT}..."
     docker run -d -p $DEFAULT_PORT:$DEFAULT_PORT --network network-agent-external --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    log_message "Docker container ${CONTAINER_NAME} with port ${DEFAULT_PORT} is running."
 }
 
 run_container_custom_ui() {
@@ -187,29 +191,13 @@ start_container_id() {
 }
 
 set_ready_port() {
-    local port="$1"
-    log_message "Checking for containers using port $port..."
-    
-    # Find containers using port DEFAULT_PORT
+    local port="${1:-8080}"
     local containers=$(docker ps -q --filter "publish=$port")
     
     if [ -n "$containers" ]; then
-        log_message "Found containers using port $port. Stopping them..."
-        for container in $containers; do
-            local container_name=$(docker inspect --format '{{.Name}}' "$container" | sed 's/\///')
-            log_message "Stopping container: $container_name"
-            docker stop "$container" || {
-                log_error "Failed to stop container: $container_name"
-                return 1
-            }
-            docker rm "$container" || {
-                log_error "Failed to remove container: $container_name"
-                return 1
-            }
-        done
-        log_message "Successfully stopped all containers using port $port"
-    else
-        log_message "No containers found using port $port"
+        log_message "Clearing port $port..."
+        docker stop $containers 2>/dev/null || true
+        docker rm $containers 2>/dev/null || true
     fi
 }
 
