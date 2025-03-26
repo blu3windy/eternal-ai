@@ -238,34 +238,19 @@ const AgentProvider: React.FC<
    useEffect(() => {
       const fetchWalletData = async () => {
          if (selectedAgent) {
-            // Await the result of the asynchronous getItem call
             const walletData = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_WALLET);
-            const agentsHasWallet = JSON.parse(walletData || '[]'); // Default to an empty array if null
+            const agentsHasWallet = JSON.parse(walletData || '[]');
 
             if (agentsHasWallet && agentsHasWallet.includes(selectedAgent?.id)) {
                createAgentWallet(selectedAgent);
             } else {
                setAgentWallet(undefined);
             }
-
-            intervalCheckAgentRunning(selectedAgent);
          }
       };
 
-      fetchWalletData(); // Call the async function
+      fetchWalletData();
    }, [selectedAgent?.id]);
-
-   const intervalCheckAgentRunning = (agent: IAgentToken) => {
-      if (refInterval.current) {
-         clearInterval(refInterval.current);
-      }
-
-      checkAgentRunning(agent);
-      
-      refInterval.current = setInterval(() => {
-         checkAgentRunning(agent, 0, false);
-      }, 30000);
-   }
 
    useEffect(() => {
       if (selectedAgent) {
@@ -293,66 +278,6 @@ const AgentProvider: React.FC<
       }
 
       return '';
-   }
-
-   const checkAgentRunning = async (agent: IAgentToken, retryCount = 0, isRetry = false) => {
-      // If this is a retry attempt and we're already checking, don't proceed
-      if (isRetry && refInterval.current) {
-         console.log("Skipping retry as interval check is already running");
-         return;
-      }
-
-      try {
-         console.log("checkAgentRunning: agent", agent);
-         if(agent) {
-            if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
-               const res = await cPumpAPI.checkAgentServiceRunning({ agent });
-
-               setLiveViewUrl(res?.live_view_url || '');
-
-               updateAgentState(agent.id, {
-                  data: agent,
-                  isRunning: true,
-               });
-            } else if ([AgentType.CustomUI].includes(agent.agent_type)) {
-               const port = await globalThis.electronAPI.dockerRunningPort(agent.agent_name?.toLowerCase(), agent.network_id.toString());
-               setCustomUIPort(port);
-
-               updateAgentState(agent.id, {
-                  data: agent,
-                  isRunning: true,
-               });
-            } else if ([AgentType.Model].includes(agent.agent_type)) {
-               const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
-               const ipfsHash = await getModelAgentHash(agent);
-
-               updateAgentState(agent.id, {
-                  data: agent,
-                  isRunning: ipfsHash === runningModelHash,
-               });
-            } else {
-               updateAgentState(agent.id, {
-                  data: agent,
-                  isRunning: true,
-               });
-            }
-         }
-      } catch (err) {
-         console.log("checkAgentRunning error:", err);
-         updateAgentState(agent.id, {
-            data: agent,
-            isRunning: false,
-         });
-         setCustomUIPort('');
-
-         // Retry check running
-         if (retryCount < 3) {
-            console.log(`Retrying checkAgentRunning (attempt ${retryCount + 1}/3)...`);
-            // Wait for 2 seconds before retrying
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            return checkAgentRunning(agent, retryCount + 1, true);
-         }
-      }
    }
 
    const createAgentWallet = async (agent: IAgentToken) => {
@@ -536,6 +461,23 @@ const AgentProvider: React.FC<
       }
    }
 
+   const throttledCheckAll = useMemo(
+      () => throttle(async () => {
+         try {
+            await checkAllInstalledAgentsRunning();
+         } catch (err) {
+            console.log("Throttled check error:", err);
+         }
+      }, 1000),
+      []
+   );
+
+   useEffect(() => {
+      return () => {
+         throttledCheckAll.cancel();
+      };
+   }, []);
+
    const startAgent = async (agent: IAgentToken, needUpdateCode?: boolean) => {
       console.log("stephen: startAgent", agent);
       try {
@@ -604,8 +546,8 @@ const AgentProvider: React.FC<
             data: agent,
             isStarting: false,
          });
-
-         intervalCheckAgentRunning(agent);
+         
+         throttledCheckAll();
       }
    };
 
@@ -633,8 +575,8 @@ const AgentProvider: React.FC<
             data: agent,
             isStopping: false,
          });
-
-         intervalCheckAgentRunning(agent);
+         
+         throttledCheckAll();
       }
    };
 
@@ -674,6 +616,8 @@ const AgentProvider: React.FC<
             data: agent,
             isUnInstalling: false,
          });
+
+         throttledCheckAll();
       }
    }
 
@@ -1146,7 +1090,7 @@ const AgentProvider: React.FC<
       }
       
       refInterval.current = setInterval(() => {
-         checkAllInstalledAgentsRunning();
+         throttledCheckAll();
       }, 30000);
    };
 
@@ -1159,7 +1103,7 @@ const AgentProvider: React.FC<
             clearInterval(refInterval.current);
          }
       };
-   }, [installedUtilityAgents, installedModelAgents, installedSocialAgents]);
+   }, [installedUtilityAgents, installedModelAgents, installedSocialAgents, selectedAgent?.id]);
 
    const contextValues: any = useMemo(() => {
       return {
