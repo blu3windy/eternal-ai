@@ -345,7 +345,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                status: 'done',
                updatedAt: new Date().toISOString(),
             } as TaskItem);
-         } else if (selectedAgent?.agent_type === AgentType.Model) {
+         } else if ([AgentType.Model, AgentType.ModelOnline].includes(selectedAgent?.agent_type)) {
             updateTaskItem({
                id: messageId,
                status: 'processing',
