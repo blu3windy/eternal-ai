@@ -85,16 +85,15 @@ const AgentTopInfo = () => {
    const deleteAble = useMemo(() => {
       return !(compareString(selectedAgent?.agent_name, currentActiveModel?.agent?.agent_name) || 
          currentActiveModel?.dependAgents?.find((address) => compareString(address, selectedAgent?.agent_contract_address)) ||
-         compareString(selectedAgent.agent_name, 'agent-router'))
+         compareString(selectedAgent?.agent_name, 'agent-router'))
    }, [selectedAgent, currentActiveModel]);
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
    const [isClickUpdateCode, setIsClickUpdate] = useState(false);
 
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
-
    const allowStopAgent = useMemo(() => {
-      return [AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(selectedAgent?.agent_type);
+      return selectedAgent?.agent_type !== undefined && [AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(selectedAgent.agent_type);
    }, [selectedAgent])
 
    useEffect(() => {
@@ -108,10 +107,10 @@ const AgentTopInfo = () => {
 
    const checkVersionCode = async () => {
       setHaveNewVersionCode(false);
-      if ([AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(selectedAgent?.agent_type)) {
+      if (selectedAgent?.agent_type && [AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(selectedAgent.agent_type)) {
          const chainId = selectedAgent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({
-            contractAddress: selectedAgent.agent_contract_address,
+            contractAddress: selectedAgent?.agent_contract_address || '',
             chainId: chainId
          });
          const codeVersion = await cAgent.getCurrentVersion();
@@ -124,19 +123,21 @@ const AgentTopInfo = () => {
    };
 
    const checkIsLiked = async () => {
+      if (!selectedAgent?.id) return;
       const res = await cAgentTokenAPI.checkAgentIsLiked(selectedAgent?.id);
       setIsLiked(res);
    }
 
    const handleLikeAgent = async () => {
-      if (isLiked) return;
+      if (isLiked || !selectedAgent?.id) return;
 
-      await cAgentTokenAPI.likeAgent(selectedAgent?.id);
+      await cAgentTokenAPI.likeAgent(selectedAgent.id);
       setIsLiked(true);
    }
 
    const handleUpdateCode = async () => {
       setIsClickUpdate(true);
+      if (!selectedAgent) return;
       await stopAgent(selectedAgent);
       await startAgent(selectedAgent, true);
       setIsClickUpdate(false);
@@ -147,10 +148,12 @@ const AgentTopInfo = () => {
    }
 
    const handleStopAgent = () => {
+      if (!selectedAgent) return;
       stopAgent(selectedAgent);
    };
 
    const handleDeleteAgent = () => {
+      if (!selectedAgent) return;
       unInstallAgent(selectedAgent);
    };
 
