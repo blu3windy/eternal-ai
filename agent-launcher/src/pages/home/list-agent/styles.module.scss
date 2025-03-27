@@ -217,10 +217,10 @@
     }
 
     &.isSelected {
-      background-color: #000;
+      border: 1px solid #000;
 
       p {
-        color: #FFF;
+        color: #000;
         opacity: 1;
       }
     }
