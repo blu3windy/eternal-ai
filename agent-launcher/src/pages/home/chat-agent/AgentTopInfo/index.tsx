@@ -277,7 +277,8 @@ const AgentTopInfo = () => {
                               <AgentOnChainInfo />
                               {allowStopAgent &&
                                  requireInstall &&
-                                 isRunning && (
+                                 isRunning &&
+                                 deleteAble && (
                                     <>
                                        <Divider color={"#E2E4E8"} my={"16px"} />
                                        <Button
