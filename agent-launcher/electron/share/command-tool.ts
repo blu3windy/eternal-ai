@@ -93,7 +93,9 @@ const formatProcessInfo = (processes: Set<{ process: any, cmd: string }>) => {
 
 // Function to show confirmation dialog
 const showCloseConfirmation = async (win: BrowserWindow): Promise<boolean> => {
-   if (runningProcesses.size === 0) return true;
+   if (runningProcesses.size === 0) {
+      return true;
+   }
 
    const processCount = runningProcesses.size;
    const formattedProcesses = formatProcessInfo(runningProcesses);
@@ -154,7 +156,9 @@ const cleanupAllProcesses = () => {
          buttons: ['OK']
       });
    }
-
+   execAsync("docker system prune -f").then(() => {
+      console.log("Docker system prune completed");
+   })
    runningProcesses.clear();
 };
 
@@ -165,7 +169,7 @@ app.on('before-quit', (event) => {
       showCloseConfirmation(window).then(shouldQuit => {
          if (shouldQuit) {
             cleanupAllProcesses();
-            app.quit();
+            app.quit(); // Use app.quit() to ensure all processes are cleaned up
          }
       });
    }
