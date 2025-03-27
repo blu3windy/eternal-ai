@@ -106,7 +106,7 @@ const ActionButtons = () => {
          </Button>
          <Button
             onClick={() => {
-               globalThis.electronAPI.dockerRunningPort("markdownify", "84532").then((port) => {
+               globalThis.electronAPI.dockerRunningPort("qwen25-coder-artifacts", "84532").then((port) => {
                   alert(port);
                });
             }}

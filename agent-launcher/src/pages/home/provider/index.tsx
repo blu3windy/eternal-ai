@@ -1008,7 +1008,8 @@ const AgentProvider: React.FC<
          console.log("LEONNNN 11111 installedUtilityAgents", installedUtilityAgents);
          // Check running status for each installed utility agent
          for (const folderName of installedUtilityAgents) {
-            const [networkId, agentName] = folderName.split('-');
+            const [networkId, ...agentNameParts] = folderName.split('-');
+            const agentName = agentNameParts.join('-');
             if (!networkId || !agentName) continue;
 
             // Find agent info from API result
@@ -1017,6 +1018,7 @@ const AgentProvider: React.FC<
                && a.agent_name?.toLowerCase() === agentName?.toLowerCase()
             );
             
+            console.log("LEONNNN 22222", { agent });
             if (agent) {
                if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
                   try {
