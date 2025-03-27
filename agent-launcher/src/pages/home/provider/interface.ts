@@ -49,6 +49,7 @@ export interface IAgentContext {
     isStarting: boolean;
     isStopping: boolean;
     isInstalled: boolean;
+    customUIPort?: string;
   }>;
   liveViewUrl?: string;
   isSearchMode: boolean;

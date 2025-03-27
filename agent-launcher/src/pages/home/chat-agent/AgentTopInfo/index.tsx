@@ -163,7 +163,7 @@ const AgentTopInfo = () => {
                justifyContent={"space-between"}
                alignItems={"center"}
                className={cx(s.contentContainer, showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : "")}
-               w="clamp(300px, 60%, 800px)"
+               w="clamp(600px, 60%, 1200px)"
                mx={"auto"}
             >
                {isCanChat &&
