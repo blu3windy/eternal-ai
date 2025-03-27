@@ -293,7 +293,7 @@ const AgentMonitor: React.FC = () => {
             .filter(container => {
                const matchesSearch = container.name.toLowerCase().includes(searchTerm.toLowerCase());
                const matchesRunning = !showRunningOnly || container.state === 'running';
-               return matchesSearch && matchesRunning && !!container.name && container?.agent;
+               return matchesSearch && matchesRunning && !!container.name && (container?.agent || container.name === 'agent-router');
             })
             .sort((a, b) => {
                // Sort running containers first
