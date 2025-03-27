@@ -21,9 +21,6 @@ command_exists() {
     command -v "$1" &> /dev/null
 }
 
-export PATH="/opt/homebrew/bin/:$PATH"
-export PATH="$HOME/homebrew/bin:$PATH"
-
 # Step 1: Check and install Homebrew if not present
 if ! command_exists brew; then
     log_message "Homebrew not found. Installing Homebrew in $HOME/homebrew..."
