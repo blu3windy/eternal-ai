@@ -182,7 +182,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                ...responseMsg,
                threadId: threadId,
             });
-         }, 1000);
+         }, 10);
 
          await sendMessageToServer(messageId, Number(id), message, attachments);
 
