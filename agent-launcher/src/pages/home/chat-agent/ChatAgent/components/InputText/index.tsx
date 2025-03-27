@@ -3,7 +3,7 @@ import React, { useCallback, useContext, useRef, useState } from "react";
 import AutosizeTextarea from "react-autosize-textarea";
 import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import useFundAgent from "@providers/FundAgent/useFundAgent.ts";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import s from "./styles.module.scss";
 import localStorageService from "@storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";

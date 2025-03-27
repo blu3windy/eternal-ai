@@ -3,7 +3,7 @@ import AgentAPI from '@services/api/agent';
 import { IChatMessage } from '@services/api/agent/types';
 import { useContext, useEffect, useMemo } from 'react';
 import { useChatAgentProvider } from './provider';
-import { AgentContext } from '@pages/home/provider';
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from '@services/api/agents-token/interface';
 
 function HandleProcessingMessage({

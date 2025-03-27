@@ -9,7 +9,8 @@ import { AgentType } from "@pages/home/list-agent/constants";
 import CAgentTokenAPI from "@services/api/agents-token";
 import storageModel from "@storage/StorageModel.ts";
 import { useContext, useEffect, useRef, useState } from "react";
-import AgentProvider, { AgentContext } from "@pages/home/provider";
+import AgentProvider from "@pages/home/provider/AgentProvider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { setReadyPort } from "@utils/agent.ts";
 
 interface IProps {

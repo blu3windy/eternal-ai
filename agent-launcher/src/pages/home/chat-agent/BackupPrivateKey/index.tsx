@@ -1,7 +1,7 @@
 import { Box, Button, Flex, Text } from "@chakra-ui/react";
 import s from './styles.module.scss';
 import React, { useContext } from "react";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext.tsx";
 import copy from "copy-to-clipboard";
 import toast from "react-hot-toast";
 import localStorageService from "../../../../storage/LocalStorageService.ts";

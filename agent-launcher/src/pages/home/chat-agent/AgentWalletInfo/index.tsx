@@ -1,6 +1,6 @@
 import { Box, Flex, Image, Text } from "@chakra-ui/react";
 import React, { useContext } from "react";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext.tsx";
 import s from './styles.module.scss';
 import copy from "copy-to-clipboard";
 import toast from "react-hot-toast";

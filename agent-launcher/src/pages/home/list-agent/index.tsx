@@ -29,7 +29,7 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 import AppLoading from "../../../components/AppLoading";
 import CAgentTokenAPI from "../../../services/api/agents-token";
 import { IAgentToken } from "../../../services/api/agents-token/interface.ts";
-import { AgentContext } from "../provider";
+import { AgentContext } from "../provider/AgentContext.tsx";
 import AddTestAgent from './AddTestAgent/index.tsx';
 import AgentItem from './AgentItem';
 import AgentMonitor from './AgentMonitor/index.tsx';

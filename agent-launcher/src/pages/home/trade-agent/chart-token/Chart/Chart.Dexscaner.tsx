@@ -1,5 +1,5 @@
 import { compareString } from "@utils/string";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { useContext, useMemo } from "react";
 import s from "./styles.module.scss";
 

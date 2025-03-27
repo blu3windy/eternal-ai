@@ -12,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 import Loading from '@components/Loading';
 import { AgentType, CategoryOption } from '@pages/home/list-agent/constants';
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import cs from 'classnames';
 import { useContext, useEffect, useMemo, useState } from 'react';

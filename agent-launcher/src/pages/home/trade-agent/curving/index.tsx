@@ -1,5 +1,5 @@
 import { Flex, Progress, Text } from "@chakra-ui/react";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { ETradePlatform } from "@pages/home/provider/interface";
 import { formatCurrency } from "@utils/format";
 import BigNumber from "bignumber.js";

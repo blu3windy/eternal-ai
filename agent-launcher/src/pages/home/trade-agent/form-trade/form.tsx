@@ -4,7 +4,7 @@ import FieldAmountFormik from "@components/Form/Field.AmountFormik";
 import InputWrapper from "@components/Form/inputWrapper";
 import CAgentTradeContract from "@contract/agent-trade";
 import { IToken } from "@interfaces/token";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { ETradePlatform } from "@pages/home/provider/interface";
 import { agentsTradeSelector } from "@stores/states/agent-trade/selector";
 import { commonSelector } from "@stores/states/common/selector";

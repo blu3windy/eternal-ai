@@ -9,7 +9,7 @@ import { formatLongAddress } from "@utils/format";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import { IChatMessage } from "src/services/api/agent/types.ts";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import CustomMarkdown from "@components/CustomMarkdown";
 import { compareString } from "@utils/string.ts";
 import { getExplorerByChain } from "@utils/helpers.ts";

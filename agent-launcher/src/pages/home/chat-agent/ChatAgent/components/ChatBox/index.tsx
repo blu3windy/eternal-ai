@@ -4,7 +4,7 @@ import s from "./styles.module.scss";
 import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import ChatList from "@pages/home/chat-agent/ChatAgent/components/ChatList";
 import InputText from "@pages/home/chat-agent/ChatAgent/components/InputText";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { Box, Button, Flex, Text, Image } from "@chakra-ui/react";
 import WebView from "@components/WebView";
 

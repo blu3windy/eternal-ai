@@ -6,7 +6,8 @@ import FundAgentProvider from "../../providers/FundAgent";
 import ChatAgent from "./chat-agent";
 import AgentTopInfo from "./chat-agent/AgentTopInfo";
 import AgentsList from "./list-agent";
-import AgentProvider, { AgentContext } from "./provider";
+import AgentProvider from "./provider/AgentProvider";
+import { AgentContext } from "./provider/AgentContext";
 import s from "./styles.module.scss";
 
 type Props = {
