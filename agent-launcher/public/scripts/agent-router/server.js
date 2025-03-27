@@ -8,6 +8,8 @@ const path = require('path');
 const app = express();
 
 const REQUEST_TIMEOUT = 30; // 30 minutes
+const FILE_RETENTION_HOURS = 72; // 72 hours
+
 // Enable CORS for all origins
 app.use(
    cors({
@@ -305,7 +307,47 @@ app.post('/:agentName/prompt', async (req, res) => {
    }
 });
 
+const cleanupOldFiles = async () => {
+   try {
+      const now = new Date();
+      const files = await fs.readdir(logDir);
+
+      const readLogFileFromPath = async (pathOfFile) => {
+         try {
+            const fileContent = await fs.readFile(pathOfFile, 'utf-8');
+            return JSON.parse(fileContent);
+         } catch (error) {
+            return null;
+         }
+      };
+
+      for (const agentDir of files) {
+         const agentPath = path.join(logDir, agentDir);
+         const agentFiles = await fs.readdir(agentPath);
+
+         for (const file of agentFiles) {
+            const filePath = path.join(agentPath, file);
+            const stats = await fs.stat(filePath);
+            const hoursOld = (now - stats.mtime) / (1000 * 60 * 60);
+
+            if (hoursOld > FILE_RETENTION_HOURS) {
+               const existedLog = await readLogFileFromPath(filePath);
+               if (existedLog && existedLog.status !== 102) {
+                  await fs.unlink(filePath);
+                  console.log(`Deleted old file: ${filePath}`);
+               }
+            }
+         }
+      }
+   } catch (error) {
+      console.error('Error cleaning up old files:', error);
+   }
+};
+
 const PORT = 80;
 app.listen(PORT, '0.0.0.0', () => {
    console.log(`Proxy server running on http://localhost:${PORT}`);
+
+   // Run initial cleanup
+   cleanupOldFiles();
 });
