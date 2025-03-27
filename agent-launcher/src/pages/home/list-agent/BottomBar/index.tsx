@@ -60,7 +60,7 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                 </Box>
 
             </Flex>
-            <Popover placement="top-start">
+            <Popover placement="top-start" >
                 <PopoverTrigger>
                     <Box cursor={'pointer'} className={s.settingsContainer}>
                         <Box className={s.settingsIcon}>
@@ -70,8 +70,8 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                         </Box>
                     </Box>
                 </PopoverTrigger>
-                <PopoverContent className={s.menuList1}>
-                    <PopoverBody padding={0}>
+                <PopoverContent bg={'rgba(12, 0, 99, 0.90) !important'}>
+                    <PopoverBody padding={0} className={s.menuList1}>
                         <AgentMonitor />
                         <Button
                             width="100%"
