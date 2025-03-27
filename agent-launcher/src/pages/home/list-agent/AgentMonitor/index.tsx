@@ -309,10 +309,12 @@ const AgentMonitor: React.FC = () => {
    };
 
    useEffect(() => {
-      // Initial fetch
-      onGetData();
-      // Set up the interval
-      intervalRef.current = setInterval(onGetData, 5000);
+      if (isOpen) {
+         // Initial fetch
+         onGetData();
+         // Set up the interval
+         intervalRef.current = setInterval(onGetData, 5000);
+      }
       // Cleanup function
       return () => {
          if (intervalRef.current) {
