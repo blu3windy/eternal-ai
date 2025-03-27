@@ -102,7 +102,10 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                 }}
                 size="small"
             >
-                <AddTestAgent onAddAgentSuccess={onAddAgentSuccess} />
+                <AddTestAgent onAddAgentSuccess={(address: string) => {
+                    onAddAgentSuccess(address);
+                    setIsOpen(false);
+                }} />
             </BaseModal>
         </Box>
     );

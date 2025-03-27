@@ -212,7 +212,7 @@ const AgentMonitor: React.FC = () => {
 
             // Find matching agent by container name
             const matchingAgent = agents?.find(agent => 
-               (container?.Names || image?.Repository).toLowerCase().includes(agent.agent_name?.toLowerCase() || '')
+               (container?.Names || image?.Repository).toLowerCase() === (agent.agent_name?.toLowerCase() || '')
             );
 
             let agentType = '-';
