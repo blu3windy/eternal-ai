@@ -7,6 +7,11 @@ import path from "path";
 // Increase the buffer size for large outputs
 const MAX_BUFFER = 1024 * 1024 * 100; // 100MB buffer
 
+const customEnv = {
+   ...process.env,
+   PATH: `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin:/bin:/usr/bin`,
+}
+
 // Track all running processes
 const runningProcesses: Set<{ process: any, cmd: string }> = new Set();
 
@@ -168,7 +173,10 @@ app.on('before-quit', (event) => {
 
 const execAsync = async (cmd: string) => {
    try {
-      const { stdout, stderr } = await promisify(exec)(cmd, { maxBuffer: MAX_BUFFER });
+      const { stdout, stderr } = await promisify(exec)(cmd, {
+         maxBuffer: MAX_BUFFER,
+         env: customEnv
+      });
       if (stderr) {
          sendEvent({ type: "error", message: stderr, cmd });
       }
@@ -314,7 +322,7 @@ const execAsyncStream = (_cmd: string, isZSH = true) => {
       const childProcess = spawn(shell, args, {
          stdio: ['pipe', 'pipe', 'pipe'],
          env: {
-            ...process.env,
+            ...customEnv,
             FORCE_COLOR: '1', // Enable colored output
          },
       });
