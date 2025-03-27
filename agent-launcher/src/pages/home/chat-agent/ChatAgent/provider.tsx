@@ -177,10 +177,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
          setMessages((prev) => [...prev, responseMsg]);
 
-         chatAgentDatabase.addChatItem({
-            ...responseMsg,
-            threadId: threadId,
-         });
+         setTimeout(() => {
+            chatAgentDatabase.addChatItem({
+               ...responseMsg,
+               threadId: threadId,
+            });
+         }, 1000);
 
          await sendMessageToServer(messageId, Number(id), message, attachments);
 
