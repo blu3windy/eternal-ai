@@ -177,7 +177,7 @@ const AgentsList = () => {
          if (!isSearchMode) {
             if (FilterOption.Installed === refParams.current.filter) {
                params.installed = true;
-               
+
                const allInstalledIds = [
                   ...installedAgentIds.utility,
                   ...installedAgentIds.model,
@@ -215,8 +215,8 @@ const AgentsList = () => {
       }
    };
 
-   const throttleGetTokens = useCallback(throttle(getTokens, 500), [isSearchMode]);
-   const debounceGetTokens = useCallback(debounce(getTokens, 500), [isSearchMode]);
+   const throttleGetTokens = useCallback(throttle(getTokens, 500), [isSearchMode, installedAgentIds]);
+   const debounceGetTokens = useCallback(debounce(getTokens, 500), [isSearchMode, installedAgentIds]);
 
    const onSearch = (searchText: string) => {
       refParams.current = {
