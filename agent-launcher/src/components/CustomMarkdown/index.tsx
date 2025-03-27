@@ -1,13 +1,13 @@
-import { useMemo, useState } from "react";
-import Markdown, { Components } from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import remarkGfm from "remark-gfm";
-import GeneralCode from "./GenerateCode";
-import DeepThinking from "./DeepThinking";
-import { CustomComponentProps } from "./types";
-import { THINK_TAG_REGEX } from "./constants";
-import CustomLink from "./Link";
-import ContentReplay from "./Content";
+import { useMemo, useState } from 'react';
+import Markdown, { Components } from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
+import GeneralCode from './GenerateCode';
+import DeepThinking from './DeepThinking';
+import { CustomComponentProps } from './types';
+import { THINK_TAG_REGEX } from './constants';
+import CustomLink from './Link';
+import ContentReplay from './Content';
 import {
    Modal,
    ModalOverlay,
@@ -19,32 +19,31 @@ import {
    Flex,
    IconButton,
    Box,
-   useDisclosure
+   useDisclosure,
 } from '@chakra-ui/react';
 
 const preprocessMarkdown = (content: string) => {
    try {
       const result = content?.replace?.(
          THINK_TAG_REGEX,
-         (_, innerText) =>
-            `<think>${innerText.trim().replace(/\n/g, "<br />")}</think>`
+         (_, innerText) => `<think>${innerText.trim().replace(/\n/g, '<br />')}</think>`
       );
 
       return result;
    } catch (error) {
-      return "";
+      return '';
    }
 };
 
 type ComponentExtended = {
-  code?: (props: CustomComponentProps) => JSX.Element;
-  think?: (props: CustomComponentProps) => JSX.Element;
+   code?: (props: CustomComponentProps) => JSX.Element;
+   think?: (props: CustomComponentProps) => JSX.Element;
 };
 
 interface WebviewModalProps {
-  url: string;
-  isOpen: boolean;
-  onClose: () => void;
+   url: string;
+   isOpen: boolean;
+   onClose: () => void;
 }
 
 const WebviewModal: React.FC<WebviewModalProps> = ({ url, isOpen, onClose }) => {
@@ -54,14 +53,10 @@ const WebviewModal: React.FC<WebviewModalProps> = ({ url, isOpen, onClose }) => 
          <ModalContent maxW="80%" h="80vh">
             <ModalHeader p={2} bg="gray.50">
                <Flex alignItems="center" gap={2}>
-                  <Box as="span" color="gray.500">🔍</Box>
-                  <Input 
-                     value={url}
-                     readOnly
-                     variant="filled"
-                     size="sm"
-                     flex={1}
-                  />
+                  <Box as="span" color="gray.500">
+                     🔍
+                  </Box>
+                  <Input value={url} readOnly variant="filled" size="sm" flex={1} />
                   <IconButton
                      aria-label="Fullscreen"
                      icon={<Box as="span">⛶</Box>}
@@ -73,12 +68,7 @@ const WebviewModal: React.FC<WebviewModalProps> = ({ url, isOpen, onClose }) => 
                </Flex>
             </ModalHeader>
             <ModalBody p={0}>
-               <Box as="webview" 
-                  src={url}
-                  w="100%"
-                  h="100%"
-                  border="none"
-               />
+               <Box as="webview" src={url} w="100%" h="100%" border="none" />
             </ModalBody>
          </ModalContent>
       </Modal>
@@ -91,10 +81,10 @@ function CustomMarkdown({
    isLight = true,
    removeThink = false,
 }: {
-  content: string;
-  components?: ComponentExtended;
-  isLight?: boolean;
-  removeThink?: boolean;
+   content: string;
+   components?: ComponentExtended;
+   isLight?: boolean;
+   removeThink?: boolean;
 }) {
    const customComponents = useMemo(() => {
       return {
@@ -102,13 +92,7 @@ function CustomMarkdown({
             return <GeneralCode {...props} />;
          },
          think: (props: any) => {
-            return (
-               <DeepThinking
-                  {...props}
-                  isLight={isLight}
-                  removeThink={removeThink}
-               />
-            );
+            return <DeepThinking {...props} isLight={isLight} removeThink={removeThink} />;
          },
          a: (props) => {
             return <CustomLink {...props} />;
@@ -136,27 +120,24 @@ function CustomMarkdown({
    return (
       <>
          <div
-            // onClick={(e) => {
-            //    const target = e.target as HTMLElement;
-            //    if (target.tagName === 'A') {
-            //       e.preventDefault();
-            //       handleLinkClick(e as unknown as React.MouseEvent<HTMLAnchorElement>);
-            //    }
-            // }}
+         // onClick={(e) => {
+         //    const target = e.target as HTMLElement;
+         //    if (target.tagName === 'A') {
+         //       e.preventDefault();
+         //       handleLinkClick(e as unknown as React.MouseEvent<HTMLAnchorElement>);
+         //    }
+         // }}
          >
             <Markdown
                remarkPlugins={[remarkGfm]} // Enables GitHub Flavored Markdown
                rehypePlugins={[rehypeRaw]} // Enables raw HTML parsing
                children={children}
                components={customComponents as Components}
+               urlTransform={(value: string) => value}
             />
          </div>
 
-         <WebviewModal
-            url={currentUrl}
-            isOpen={isOpen}
-            onClose={onClose}
-         />
+         <WebviewModal url={currentUrl} isOpen={isOpen} onClose={onClose} />
       </>
    );
 }
