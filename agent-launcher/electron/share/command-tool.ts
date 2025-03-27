@@ -158,6 +158,8 @@ const cleanupAllProcesses = () => {
    }
    execAsync("docker system prune -f").then(() => {
       console.log("Docker system prune completed");
+   }).catch(error => {
+      console.error("Error during Docker system prune:", error);
    })
    runningProcesses.clear();
 };
