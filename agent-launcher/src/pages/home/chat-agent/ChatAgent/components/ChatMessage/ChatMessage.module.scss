@@ -16,12 +16,12 @@
     &.question {
       //margin-bottom: 0;
       border-radius: 16px 16px 0 16px;
-      background: linear-gradient(180deg, #2E2E2E -8.04%, #000000 100%);
+      background: #F4F4F4;
 
       :global {
         .markdown {
           p {
-            color: #FFF;
+            color: #000;
           }
         }
       }
@@ -29,8 +29,9 @@
 
     &.reply {
       //margin-bottom: 0;
-      border-radius: 16px 16px 16px 0;
-      background: #F3F3F3;
+      border-radius: 16px 16px 16px 16px;
+      // background: #F3F3F3;
+      border: 1px solid #EFEFEF
     }
 
     &.failed {
