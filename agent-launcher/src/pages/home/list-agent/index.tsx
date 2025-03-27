@@ -176,7 +176,7 @@ const AgentsList = () => {
 
          if (!isSearchMode) {
             if (FilterOption.Installed === refParams.current.filter) {
-               params.installed = true;
+               // params.installed = true;
 
                const allInstalledIds = [
                   ...installedAgentIds.utility,
