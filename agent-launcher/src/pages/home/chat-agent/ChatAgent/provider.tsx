@@ -554,9 +554,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                         data?.queryMessageState || prev[matchedMessageIndex]?.queryMessageState,
                      tx_hash: data?.onchain_data?.propose_tx || prev[matchedMessageIndex]?.tx_hash,
                   };
-                  prev[matchedMessageIndex] = updatedMessage;
+                  prev[matchedMessageIndex] = updatedMessage as any;
 
-                  chatAgentDatabase.updateChatItem(updatedMessage as PersistedMessageType);
+                  chatAgentDatabase.updateChatItem(updatedMessage as any);
                }
 
                const replyToMessageId = prev[matchedMessageIndex].replyTo;
