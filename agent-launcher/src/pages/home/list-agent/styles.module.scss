@@ -1,25 +1,87 @@
 .container {
+  width: 100%;
   height: 100%;
-  border-right: 1px solid #EFEFEF;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
   background-color: #EDEDF2;
-  
-  .categoryItem {
-    min-height: 120px;
-    padding: 24px;
-    border-radius: 12px;
-    justify-content: space-between;
-    align-items: flex-end;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
+}
 
-    .categoryImage {
-      position: absolute;
-      right: 24px;
-      width: 168px;
-      height: 168px;
-      top: -24px;
+.agentList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  align-items: start;
+
+  /* Custom scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+
+  /* For Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.tabContainer {
+  background: white;
+  border-radius: 12px;
+  padding: 8px;
+  margin-bottom: 16px;
+  gap: 8px;
+
+  :global {
+    .chakra-tabs__tablist {
+      gap: 8px;
+      border: none;
     }
+
+    .chakra-tabs__tab {
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      height: 36px;
+      color: #666;
+      background: transparent;
+      border: none;
+
+      &[aria-selected="true"] {
+        color: #000;
+        background: #F5F5F5;
+      }
+
+      &:hover:not([aria-selected="true"]) {
+        background: #F5F5F5;
+        opacity: 0.7;
+      }
+    }
+  }
+}
+
+/* Grid item styling */
+:global(.grid-item) {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -275,27 +337,4 @@
   box-shadow: 0 10px 15px -5px rgba(0, 0, 0, 0.3);
   color: #fff;
   font-size: 14px;
-}
-
-.tabContainer {
-  padding-top: 8px;
-  padding-bottom: 20px;
-  :global {
-    .chakra-tabs__tablist {
-      padding: 0 24px;
-      
-      .chakra-tabs__tab  {
-         display: flex;
-         align-items: center;
-         gap: 8px;
-         font-size: 18px;
-         font-weight: 400;
-         color: #000 !important;
-  
-         &.chakra-tabs__tab--selected {
-            color: #5400FB !important;
-         }
-      }
-   }
-  }
 }

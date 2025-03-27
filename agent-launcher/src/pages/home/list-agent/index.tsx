@@ -44,6 +44,7 @@ import {
    SortOption
 } from './constants';
 import s from './styles.module.scss';
+import BottomBar from './BottomBar/index.tsx';
 
 
 const AgentsList = () => {
@@ -468,7 +469,7 @@ const AgentsList = () => {
                   </Flex>
                );
             })}
-            <AgentMonitor />
+            {/* <AgentMonitor /> */}
             {/* <AgentNotification /> */}
          </Flex>
       )
@@ -748,21 +749,7 @@ No agents installed?
             </>
          )}
 
-         <Flex className={s.addTestBtn} onClick={onOpen}>
-            <Center w={'100%'}>
-               <Text textAlign={'center'}>+ Add test agent</Text>
-            </Center>
-         </Flex>
-
-         <BaseModal
-            isShow={isOpen}
-            onHide={() => {
-               onClose();
-               setIsSearchMode(false);
-            }}
-            size="small"
-         >
-            <AddTestAgent onAddAgentSuccess={(address: string) => {
+         <BottomBar  onAddAgentSuccess={(address: string) => {
                refAddAgentTestCA.current = address;
                onClose();
                setFilter(FilterOption.Installed);
@@ -772,8 +759,13 @@ No agents installed?
                };
                throttleGetTokens(true);
                setIsSearchMode(false);
-            }} />
-         </BaseModal>
+            }}  />
+
+         {/* <Flex className={s.addTestBtn} onClick={onOpen}>
+            <Center w={'100%'}>
+               <Text textAlign={'center'}>+ Add test agent</Text>
+            </Center>
+         </Flex> */}
       </Box>
    );
 };

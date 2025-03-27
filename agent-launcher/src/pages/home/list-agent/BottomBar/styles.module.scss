@@ -1,0 +1,177 @@
+.bottomBar {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  gap: 8px;
+  position: absolute;
+  width: 460px;
+  height: 56px;
+  left: 0px;
+  bottom: 0px;
+  background: linear-gradient(180deg, rgba(228, 229, 216, 0.6) 0%, rgba(203, 214, 232, 0.6) 100%);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  flex: none;
+  order: 2;
+  flex-grow: 0;
+  z-index: 2;
+
+  /* Button styles */
+  :global {
+    .chakra-button {
+      background: transparent !important;
+      font-size: 14px;
+      font-weight: 500;
+      height: 32px;
+      padding: 0 12px;
+      color: rgba(0, 0, 0, 0.8);
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.05) !important;
+      }
+
+      img {
+        opacity: 0.7;
+      }
+    }
+  }
+}
+
+.addressContainer {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0px;
+  gap: 4px;
+  width: 110px;
+  height: 22px;
+  border-radius: 1000px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+.addressText {
+  width: 90px;
+  height: 22px;
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 160%;
+  text-align: center;
+  color: #5B5B5B;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+.copyIcon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+  cursor: pointer;
+}
+
+.settingsContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 4px;
+  gap: 10px;
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 100px;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.4);
+  }
+}
+
+.settingsIcon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+:global {
+  .chakra-popover__content {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 0px;
+    // width: 400px;
+    // height: 204px;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.30) !important;
+    background: rgba(12, 0, 99, 0.70) !important;
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.30) !important;
+    backdrop-filter: blur(30px) !important;
+    border-radius: 8px;
+    flex: none;
+    order: 6;
+    flex-grow: 0;
+    z-index: 6;
+    margin-right: 15px;
+    margin-bottom: 15px;
+
+    .chakra-popover__body {
+      width: 100%;
+
+      button {
+        width: 100%;
+        height: 45px;
+        justify-content: flex-start;
+        font-weight: 500;
+        font-size: 17.5px;
+        line-height: 25px;
+        /* identical to box height, or 143% */
+
+        color: #FFFFFF;
+
+
+        /* Inside auto layout */
+        flex: none;
+        order: 0;
+        align-self: stretch;
+        flex-grow: 0;
+
+      }
+    }
+  }
+}
+
+.menuItem {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 17.5px;
+  line-height: 25px;
+  color: #FFFFFF;
+  background: transparent !important;
+  // justify-content: flex-start;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
