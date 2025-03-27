@@ -1,4 +1,10 @@
 #!/bin/bash
+
+set -x 
+export PATH="/opt/homebrew/bin/:$PATH"
+export PATH="$HOME/homebrew/bin:$PATH"
+export PATH="/usr/local/bin:$PATH"
+
 # Logging functions
 log_message() {
     local message="$1"
@@ -17,9 +23,6 @@ log_error() {
 # Parse command line arguments
 FOLDER_PATH=""
 DOCKER_CONTAINERS=()
-
-export PATH="/opt/homebrew/bin/:$PATH"
-export PATH="$HOME/homebrew/bin:$PATH"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
