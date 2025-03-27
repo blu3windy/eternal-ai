@@ -155,6 +155,13 @@
     }
   }
 }
+.menuList1 {
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.30) !important;
+  background: rgba(12, 0, 99, 0.70) !important;
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.30) !important;
+  backdrop-filter: blur(30px) !important;
+}
 
 .menuItem {
   font-family: 'Inter';

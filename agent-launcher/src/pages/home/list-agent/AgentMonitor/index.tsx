@@ -92,42 +92,16 @@ const AgentMonitor: React.FC = () => {
    const [deleteAgent, setDeleteAgent] = useState<IAgentToken | undefined>();
    const [deleteContainer, setDeleteConntainer] = useState<ContainerData | undefined>();
 
-   const [currentActiveModel, setCurrentActiveModel] = useState<{
-      agent: IAgentToken | undefined,
-      dependAgents: string[];
-   }>();
    const [containers, setContainers] = useState<ContainerData[]>([]);
    const [totalMemory, setTotalMemory] = useState({ used: '0MB', total: '0GB' });
    const [totalCPU, setTotalCPU] = useState({ used: '0%', total: '800%' });
    const intervalRef = useRef<NodeJS.Timeout>();
    const cPumpAPI = new CAgentTokenAPI();
    const [agents, setAgents] = useState<any[]>([]);
-   const { agentStates, startAgent, stopAgent, unInstallAgent } = useContext(AgentContext);
+   const { agentStates, startAgent, stopAgent, unInstallAgent, currentActiveModel } = useContext(AgentContext);
 
    const [stateActions, setStateActions] = useState<StateActions>({});
 
-   
-   const onGetCurrentModel = async () => {
-      try {
-         const model = await storageModel.getActiveModel();
-         if (model?.agent_type === AgentType.ModelOnline) {
-            setCurrentActiveModel({
-               agent: model,
-               dependAgents: [],
-            });
-            const chainId = model?.network_id || BASE_CHAIN_ID;
-            const cAgent = new CAgentContract({ contractAddress: model.agent_contract_address, chainId: chainId });
-            const codeVersion = await cAgent.getCurrentVersion();
-            const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
-
-            setCurrentActiveModel({
-               agent: model,
-               dependAgents: depsAgentStrs,
-            });
-         }
-      } catch (error) {
-      }
-   }
 
    const onGetDataAgents = async () => {
       try {
@@ -329,10 +303,8 @@ const AgentMonitor: React.FC = () => {
 
    // Additional effect to handle popover open/close
    useEffect(() => {
-      onGetCurrentModel();
       onGetDataAgents();
    }, [isOpen]);
-
 
    return (
       <>
@@ -369,6 +341,7 @@ const AgentMonitor: React.FC = () => {
                onClose();
             }}
             className={s.popoverContent}
+            size="extra"
          >
             <Box className={s.containerOverview}>
                <Text fontSize="22px" fontWeight="600" mb="4" color="white">Overview</Text>
@@ -461,73 +434,74 @@ const AgentMonitor: React.FC = () => {
                               <Td color="white">{container.lastStarted}</Td>
                               <Td>
                                  <Flex gap="2">
-                                    {!!container.agent &&
-                                       !(compareString(container.agent?.agent_name, currentActiveModel?.agent?.agent_name) || currentActiveModel?.dependAgents?.find((address) => compareString(address, container?.agent?.agent_contract_address)))
-                                       ? (
-                                          <>
-                                             <Tooltip
-                                                label={container.state === 'running' ? 'Stop' : 'Start'}
-                                                hasArrow
-                                                placement="top"
-                                                bg="gray.700"
-                                                color="white"
-                                             >
-                                                <IconButton
-                                                   aria-label={container.state === 'running' ? 'Stop container' : 'Start container'}
-                                                   icon={<Image src={container.state === 'running' ? "icons/stop.svg" : "icons/play.svg"} alt={container.state === 'running' ? "Stop" : "Start"} />}
-                                                   size="sm"
-                                                   variant="ghost"
-                                                   color="white"
-                                                   _hover={{ bg: 'whiteAlpha.200' }}
-                                                   isLoading={(agentStates[container.agent?.id]?.isStarting || agentStates[container.agent?.id]?.isStopping) ?? false}
-                                                   onClick={() => {
-                                                      if (container.state === 'running') {
-                                                         stopAgent(container.agent);
-                                                      } else {
-                                                         startAgent(container.agent);
-                                                      }
-                                                   }}
-                                                />
-                                             </Tooltip>
-                                             <Tooltip
-                                                label="Delete"
-                                                hasArrow
-                                                placement="top"
-                                                bg="gray.700"
-                                                color="white"
-                                             >
-                                                <IconButton
-                                                   aria-label="Delete container"
-                                                   icon={<Image src="icons/delete.svg" alt="Delete" />}
-                                                   size="sm"
-                                                   variant="ghost"
-                                                   color="white"
-                                                   _hover={{ bg: 'whiteAlpha.200' }}
-                                                   isLoading={agentStates[container.agent?.id]?.isUnInstalling ?? false}
-                                                   onClick={() => {
-                                                      setDeleteAgent(container.agent);
-                                                   }}
-                                                />
-                                             </Tooltip>
-                                          </>
-                                       )
-                                       :
-                                       (
-                                          <Tooltip
-                                             label={'This agent is required for the system to work properly. You can’t remove it.'}
+                                    {!(compareString(container.agent?.agent_name, currentActiveModel?.agent?.agent_name) || 
+                                    currentActiveModel?.dependAgents?.find((address) => compareString(address, container?.agent?.agent_contract_address)) ||
+                                    compareString(container.name, 'agent-router')) 
+                                    ? (
+                                       <>
+                                          <Tooltip 
+                                             label={container.state === 'running' ? 'Stop' : 'Start'}
                                              hasArrow
                                              placement="top"
                                              bg="gray.700"
                                              color="white"
                                           >
                                              <IconButton
-                                                aria-label={'container'}
-                                                icon={<Image src={"icons/warning.svg"} w={'16px'} alt={"Warning"} />}
+                                                aria-label={container.state === 'running' ? 'Stop container' : 'Start container'}
+                                                icon={<Image src={container.state === 'running' ? "icons/stop.svg" : "icons/play.svg"} alt={container.state === 'running' ? "Stop" : "Start"} />}
                                                 size="sm"
                                                 variant="ghost"
                                                 color="white"
                                                 _hover={{ bg: 'whiteAlpha.200' }}
+                                                isLoading={container?.agent ? (agentStates[container?.agent?.id]?.isStarting || agentStates[container?.agent?.id]?.isStopping) : stateActions[container.name]?.isLoading ?? false}
+                                                onClick={ () => {
+                                                if (container.state === 'running') {
+                                                   container.agent ? stopAgent(container.agent) : handleStopContainer(container);
+                                                } else {
+                                                   container.agent ? startAgent(container.agent) : handleStartContainer(container);
+                                                }
+                                                }}
                                              />
+                                          </Tooltip>
+                                          <Tooltip 
+                                             label="Delete"
+                                             hasArrow
+                                             placement="top"
+                                             bg="gray.700"
+                                             color="white"
+                                          >
+                                             <IconButton
+                                                aria-label="Delete container"
+                                                icon={<Image src="icons/delete.svg" alt="Delete" />}
+                                                size="sm"
+                                                variant="ghost"
+                                                color="white"
+                                                _hover={{ bg: 'whiteAlpha.200' }}
+                                                isLoading={container?.agent ? agentStates[container.agent?.id]?.isUnInstalling : stateActions[container.name]?.isDeleting ?? false}
+                                                onClick={() => {
+                                                container.agent ? setDeleteAgent(container.agent) : setDeleteConntainer(container);
+                                                }}
+                                             />
+                                          </Tooltip>
+                                       </>
+                                    )
+                                    :
+                                    (
+                                       <Tooltip 
+                                             label={'This agent is required for the system to work properly. You can’t remove it.'}
+                                             hasArrow
+                                             placement="top"
+                                             bg="gray.700"
+                                             color="white"
+                                          >
+                                          <IconButton
+                                             aria-label={'container'}
+                                             icon={<Image src={"icons/warning.svg"} w={'16px'} alt={"Warning"} />}
+                                             size="sm"
+                                             variant="ghost"
+                                             color="white"
+                                             _hover={{ bg: 'whiteAlpha.200' }}
+                                          />
                                           </Tooltip>
                                        )}
                                  </Flex>
@@ -539,14 +513,24 @@ const AgentMonitor: React.FC = () => {
                </Box>
             </Box>
          </BaseModal>
-         <DeleteAgentModal agentName={deleteAgent?.agent_name || ''} isOpen={!!deleteAgent} onClose={() => setDeleteAgent(undefined)} onDelete={() => {
-            if (deleteAgent) {
-               unInstallAgent(deleteAgent);
+         <DeleteAgentModal 
+            agentName={deleteAgent?.agent_name || deleteContainer?.name || ''} 
+            isOpen={!!deleteAgent || !!deleteContainer} 
+            onClose={() => {
                setDeleteAgent(undefined);
-            }
-         }} />
-
-
+               setDeleteConntainer(undefined);
+            }} 
+            onDelete={() => {
+               if (deleteAgent) {
+                  unInstallAgent(deleteAgent);
+                  setDeleteAgent(undefined);
+               }
+               if (deleteContainer) {
+                  handleDeleteContainer(deleteContainer);
+                  setDeleteConntainer(undefined);
+               }
+            }}
+         />
       </>
 
    )
@@ -583,202 +567,10 @@ const AgentMonitor: React.FC = () => {
    //          className={s.popoverContent}
    //       >
    //          <PopoverBody p="20px">
-   //             <Box className={s.containerOverview}>
-   //                <Text fontSize="22px" fontWeight="600" mb="4" color="white">Overview</Text>
-
-   //                <Flex gap="4" mb="6">
-   //                   <Box className={s.statsCard}>
-   //                      <Flex gap="12px">
-   //                         <Image src="icons/cpu.svg" alt="CPU" boxSize="32px" />
-   //                         <Box gap="6px">
-   //                            <Text fontSize="18px" fontWeight="600" color="white">CPU usage</Text>
-   //                            <Text fontSize="15px" fontWeight="500" color={"lightgray"}>
-   //                               <Text as={'span'} color="#4ADE80">{totalCPU.used}</Text> / {totalCPU.total}
-   //                            </Text>
-   //                         </Box>
-   //                      </Flex>
-   //                   </Box>
-
-   //                   <Box className={s.statsCard}>
-   //                      <Flex gap="12px">
-   //                         <Image src="icons/ram.svg" alt="Memory" boxSize="32px" />
-   //                         <Box gap="6px">
-   //                            <Text fontSize="18px" fontWeight="600" color="white">Memory usage</Text>
-   //                            <Text fontSize="15px" fontWeight="500" color={"lightgray"}>
-   //                               <Text as={'span'} color="#4ADE80">{totalMemory.used}</Text> / {totalMemory.total}
-   //                            </Text>
-   //                         </Box>
-   //                      </Flex>
-   //                   </Box>
-   //                </Flex>
-
-   //                <Box className={s.statsCard} maxH="500px" overflowY="auto">
-   //                   <Flex justify="space-between" align="center" mb="4">
-   //                      <Input
-   //                         placeholder="Search agent"
-   //                         value={searchTerm}
-   //                         onChange={(e) => setSearchTerm(e.target.value)}
-   //                         width="200px"
-   //                         size="sm"
-   //                         borderRadius="8px"
-   //                         bg="rgba(255, 255, 255, 0.10)"
-   //                         border="none"
-   //                         color="white"
-   //                         _placeholder={{ color: 'whiteAlpha.600' }}
-   //                      />
-   //                      <Flex align="center" gap="2">
-   //                         <Text fontSize="sm" color="white">Only show running agents</Text>
-   //                         <Switch
-   //                            isChecked={showRunningOnly}
-   //                            onChange={(e) => setShowRunningOnly(e.target.checked)}
-   //                            colorScheme="blue"
-   //                         />
-   //                      </Flex>
-   //                   </Flex>
-
-   //                   <Table variant="unstyled" className={s.containerTable}>
-   //                      <Thead>
-   //                         <Tr>
-   //                            <Th color="whiteAlpha.600">Name</Th>
-   //                            <Th color="whiteAlpha.600">Type</Th>
-   //                            <Th color="whiteAlpha.600">Container ID</Th>
-   //                            <Th color="whiteAlpha.600">CPU</Th>
-   //                            <Th color="whiteAlpha.600">Memory</Th>
-   //                            <Th color="whiteAlpha.600">Last started</Th>
-   //                            <Th color="whiteAlpha.600">Actions</Th>
-   //                         </Tr>
-   //                      </Thead>
-   //                      <Tbody>
-   //                         {agents.length > 0 && containers.map((container, idx) => (
-   //                            <Tr key={idx}>
-   //                               <Td>
-   //                                  <Flex align="center" gap="2">
-   //                                     <Box
-   //                                        w="8px"
-   //                                        h="8px"
-   //                                        borderRadius="full"
-   //                                        bg={container.state === 'running' ? '#4ADE80' : 'lightgray'}
-   //                                     />
-   //                                     <Text color="white">{container.agent?.agent_name || container.name}</Text>
-   //                                  </Flex>
-   //                               </Td>
-   //                               <Td>
-   //                                  {/* <Text color="#AFC7FF" textDecoration="underline" cursor="pointer"> */}
-   //                                  <Text color="white">
-   //                                     {container.agentType}
-   //                                  </Text>
-   //                               </Td>
-   //                               <Td color="white">{container.containerId}</Td>
-   //                               <Td color="white">{container.cpu}</Td>
-   //                               <Td color="white">{container.memoryUsage || '-'}</Td>
-   //                               <Td color="white">{container.lastStarted}</Td>
-   //                               <Td>
-   //                                  <Flex gap="2">
-   //                                     {!(compareString(container.agent?.agent_name, currentActiveModel?.agent?.agent_name) || 
-   //                                     currentActiveModel?.dependAgents?.find((address) => compareString(address, container?.agent?.agent_contract_address)) ||
-   //                                     compareString(container.name, 'agent-router')) 
-   //                                     ? (
-   //                                       <>
-   //                                         <Tooltip 
-   //                                            label={container.state === 'running' ? 'Stop' : 'Start'}
-   //                                            hasArrow
-   //                                            placement="top"
-   //                                            bg="gray.700"
-   //                                            color="white"
-   //                                         >
-   //                                            <IconButton
-   //                                               aria-label={container.state === 'running' ? 'Stop container' : 'Start container'}
-   //                                               icon={<Image src={container.state === 'running' ? "icons/stop.svg" : "icons/play.svg"} alt={container.state === 'running' ? "Stop" : "Start"} />}
-   //                                               size="sm"
-   //                                               variant="ghost"
-   //                                               color="white"
-   //                                               _hover={{ bg: 'whiteAlpha.200' }}
-   //                                               isLoading={container?.agent ? (agentStates[container?.agent?.id]?.isStarting || agentStates[container?.agent?.id]?.isStopping) : stateActions[container.name]?.isLoading ?? false}
-   //                                               onClick={ () => {
-   //                                                 if (container.state === 'running') {
-   //                                                    container.agent ? stopAgent(container.agent) : handleStopContainer(container);
-   //                                                 } else {
-   //                                                    container.agent ? startAgent(container.agent) : handleStartContainer(container);
-   //                                                 }
-   //                                               }}
-   //                                            />
-   //                                         </Tooltip>
-   //                                         <Tooltip 
-   //                                            label="Delete"
-   //                                            hasArrow
-   //                                            placement="top"
-   //                                            bg="gray.700"
-   //                                            color="white"
-   //                                         >
-   //                                            <IconButton
-   //                                               aria-label="Delete container"
-   //                                               icon={<Image src="icons/delete.svg" alt="Delete" />}
-   //                                               size="sm"
-   //                                               variant="ghost"
-   //                                               color="white"
-   //                                               _hover={{ bg: 'whiteAlpha.200' }}
-   //                                               isLoading={container?.agent ? agentStates[container.agent?.id]?.isUnInstalling : stateActions[container.name]?.isDeleting ?? false}
-   //                                               onClick={() => {
-   //                                                 container.agent ? setDeleteAgent(container.agent) : setDeleteConntainer(container);
-   //                                               }}
-   //                                            />
-   //                                         </Tooltip>
-   //                                       </>
-   //                                     )
-   //                                     :
-   //                                     (
-   //                                        <Tooltip 
-   //                                            label={'This agent is required for the system to work properly. You can’t remove it.'}
-   //                                            hasArrow
-   //                                            placement="top"
-   //                                            bg="gray.700"
-   //                                            color="white"
-   //                                         >
-   //                                           <IconButton
-   //                                              aria-label={'container'}
-   //                                              icon={<Image src={"icons/warning.svg"} w={'16px'} alt={"Warning"} />}
-   //                                              size="sm"
-   //                                              variant="ghost"
-   //                                              color="white"
-   //                                           >
-   //                                              <IconButton
-   //                                                 aria-label={'container'}
-   //                                                 icon={<Image src={"icons/warning.svg"} w={'16px'} alt={"Warning"} />}
-   //                                                 size="sm"
-   //                                                 variant="ghost"
-   //                                                 color="white"
-   //                                                 _hover={{ bg: 'whiteAlpha.200' }}
-   //                                              />
-   //                                           </Tooltip>
-   //                                        )}
-   //                                  </Flex>
-   //                               </Td>
-   //                            </Tr>
-   //                         ))}
-   //                      </Tbody>
-   //                   </Table>
-   //                </Box>
-   //             </Box>
+   
    //          </PopoverBody>
    //       </PopoverContent>
-   //       <DeleteAgentModal 
-   //          agentName={deleteAgent?.agent_name || deleteContainer?.name || ''} 
-   //          isOpen={!!deleteAgent || !!deleteContainer} 
-   //          onClose={() => {
-   //             setDeleteAgent(undefined);
-   //             setDeleteConntainer(undefined);
-   //          }} 
-   //          onDelete={() => {
-   //             if (deleteAgent) {
-   //                unInstallAgent(deleteAgent);
-   //                setDeleteAgent(undefined);
-   //             }
-   //             if (deleteContainer) {
-   //                handleDeleteContainer(deleteContainer);
-   //                setDeleteConntainer(undefined);
-   //             }
-   //          }}
-   //       />
+   
    //    </Popover>
    // );
 };

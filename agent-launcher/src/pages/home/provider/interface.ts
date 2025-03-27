@@ -62,4 +62,8 @@ export interface IAgentContext {
     social: number[];
   };
   getDependAgents: any;
+  currentActiveModel: {
+    agent: IAgentToken | undefined,
+    dependAgents: string[];
+  };
 }
