@@ -551,7 +551,7 @@ const AgentProvider: React.FC<
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             console.log('stephen: startAgent Utility install', new Date().toLocaleTimeString());
             await installUtilityAgent(agent, needUpdateCode);
-            await startDependAgents(agent);
+            await startDependAgents(agent, needUpdateCode);
 
             if ([AgentType.ModelOnline].includes(agent.agent_type)) {
                console.log('stephen: startAgent Model set ready port', new Date().toLocaleTimeString());
@@ -775,8 +775,8 @@ const AgentProvider: React.FC<
       }
    };
 
-   const startDependAgents = async (agent: IAgentToken) => {
-      const dependAgents = await getDependAgents(agent);
+   const startDependAgents = async (agent: IAgentToken, needUpdateCode?: boolean) => {
+      const dependAgents = await getDependAgents(agent, needUpdateCode);
       if (dependAgents.length > 0) {
          await Promise.all(dependAgents.map(async (agent) => {
             try {
@@ -799,7 +799,7 @@ const AgentProvider: React.FC<
       }
    };
 
-   const getDependAgents = async (agent: IAgentToken) => {
+   const getDependAgents = async (agent: IAgentToken, needUpdateCode?: boolean) => {
       if (agent && !!agent.agent_contract_address) {
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
@@ -807,14 +807,14 @@ const AgentProvider: React.FC<
 
          const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
          if (depsAgentStrs.length > 0) {
-            const dependAgents = await installDependAgents(depsAgentStrs, chainId);
+            const dependAgents = await installDependAgents(depsAgentStrs, chainId, needUpdateCode);
             return dependAgents;
          }
       }
       return [];
    };
 
-   const installDependAgents = async (agents: string[], chainId: number) => {
+   const installDependAgents = async (agents: string[], chainId: number, needUpdateCode?: boolean) => {
       const installedAgents = new Set<string>();
 
       const agentsData = await Promise.all(agents.map(async (agentContractAddr) => {
@@ -880,7 +880,7 @@ const AgentProvider: React.FC<
             folderNameOnLocal
          );
 
-         if (!isExisted || oldCodeVersion <= 0) {
+         if (!isExisted || needUpdateCode || oldCodeVersion <= 0) {
             const rawCode = await cAgent.getAgentCode(codeVersion);
             if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent_type)) {
                filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode, agent_type === AgentType.UtilityPython ? 'app' : undefined);
