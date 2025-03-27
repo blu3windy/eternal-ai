@@ -18,6 +18,8 @@ import {
    Td,
    IconButton,
    Tooltip,
+   MenuItem,
+   Button,
 } from '@chakra-ui/react';
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import s from './styles.module.scss';
@@ -30,6 +32,7 @@ import storageModel from '@storage/StorageModel';
 import { BASE_CHAIN_ID } from '@constants/chains';
 import CAgentContract from '@contract/agent';
 import DeleteAgentModal from './DeleteAgentModal';
+import BaseModal from '@components/BaseModal';
 
 interface DockerContainer {
    Command: string;
@@ -74,7 +77,9 @@ interface ContainerData {
    agentType?: string;
 }
 
-const AgentMonitor: React.FC = () => {
+const AgentMonitor: React.FC<{
+   className?: string;
+}> = ({ className }) => {
    const { isOpen, onToggle, onClose } = useDisclosure();
    const [searchTerm, setSearchTerm] = useState('');
    const [showRunningOnly, setShowRunningOnly] = useState(false);
@@ -90,8 +95,8 @@ const AgentMonitor: React.FC = () => {
    const intervalRef = useRef<NodeJS.Timeout>();
    const cPumpAPI = new CAgentTokenAPI();
    const [agents, setAgents] = useState<any[]>([]);
-   const { agentStates, startAgent, stopAgent, unInstallAgent  } = useContext(AgentContext);
-   
+   const { agentStates, startAgent, stopAgent, unInstallAgent } = useContext(AgentContext);
+
    const onGetCurrentModel = async () => {
       try {
          const model = await storageModel.getActiveModel();
@@ -121,7 +126,7 @@ const AgentMonitor: React.FC = () => {
             cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types: '5,12,10,11,8' }),
          ]);
          setAgents([...agents, ...agentsAll]);
-      }  catch {
+      } catch {
       }
    }
 
@@ -156,9 +161,9 @@ const AgentMonitor: React.FC = () => {
          // Transform and combine the data
          const transformedData: ContainerData[] = containerData.map((container: DockerContainer) => {
             const memInfo: any = memoryMap.get(container.ID);
-            
+
             // Find matching agent by container name
-            const matchingAgent = agents?.find(agent => 
+            const matchingAgent = agents?.find(agent =>
                container.Names.toLowerCase().includes(agent.agent_name?.toLowerCase() || '')
             );
 
@@ -178,7 +183,7 @@ const AgentMonitor: React.FC = () => {
                default:
                   break;
             }
-            
+
             if (memInfo) {
                // Parse memory values for totals
                const memUsage = memInfo.MemUsage.split('/');
@@ -186,7 +191,7 @@ const AgentMonitor: React.FC = () => {
                const memTotal = parseFloat(memUsage[1]);
                totalMemUsed += memUsed || 0;
                totalMemMax = Math.max(totalMemMax, memTotal || 0);
-               
+
                // Parse CPU percentage
                const cpuPerc = parseFloat(memInfo.CPUPerc) || 0;
                totalCPUUsed += cpuPerc;
@@ -270,27 +275,260 @@ const AgentMonitor: React.FC = () => {
       onGetDataAgents();
    }, [isOpen]);
 
+
+   return (
+      <>
+         <Button
+            width="100%"
+            height="45px"
+            display="flex"
+            alignItems="center"
+            padding="10px 20px"
+            gap="10px"
+            onClick={onToggle}
+            className={className}
+         >
+            <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+               <g clip-path="url(#clip0_54260_9784)">
+                  <path d="M17.7501 9.75L17.75 10.65C17.75 10.7052 17.7948 10.75 17.85 10.75H19.65C19.7052 10.75 19.75 10.7052 19.75 10.65L19.7501 9.75" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M10.25 16.75V20.75" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M5.25 20.75H10.25" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M10.25 16.75H3.25C2.14543 16.75 1.25 15.8546 1.25 14.75V5.75C1.25 4.64543 2.14543 3.75 3.25 3.75H17.25C18.3546 3.75 19.25 4.64543 19.25 5.75" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M21.25 9.75H16.25C15.1454 9.75 14.25 10.6454 14.25 11.75V20.75C14.25 21.8546 15.1454 22.75 16.25 22.75H21.25C22.3546 22.75 23.25 21.8546 23.25 20.75V11.75C23.25 10.6454 22.3546 9.75 21.25 9.75Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+               </g>
+               <defs>
+                  <clipPath id="clip0_54260_9784">
+                     <rect width="24" height="24" fill="white" transform="translate(0 0.5)" />
+                  </clipPath>
+               </defs>
+            </svg>
+            Monitor
+         </Button>
+
+
+         <BaseModal
+            isShow={isOpen}
+            onHide={() => {
+               onClose();
+            }}
+            className={s.popoverContent}
+         >
+            <Box className={s.containerOverview}>
+               <Text fontSize="22px" fontWeight="600" mb="4" color="white">Overview</Text>
+
+               <Flex gap="4" mb="6">
+                  <Box className={s.statsCard}>
+                     <Flex gap="12px">
+                        <Image src="icons/cpu.svg" alt="CPU" boxSize="32px" />
+                        <Box gap="6px">
+                           <Text fontSize="18px" fontWeight="600" color="white">CPU usage</Text>
+                           <Text fontSize="15px" fontWeight="500" color={"lightgray"}>
+                              <Text as={'span'} color="#4ADE80">{totalCPU.used}</Text> / {totalCPU.total}
+                           </Text>
+                        </Box>
+                     </Flex>
+                  </Box>
+
+                  <Box className={s.statsCard}>
+                     <Flex gap="12px">
+                        <Image src="icons/ram.svg" alt="Memory" boxSize="32px" />
+                        <Box gap="6px">
+                           <Text fontSize="18px" fontWeight="600" color="white">Memory usage</Text>
+                           <Text fontSize="15px" fontWeight="500" color={"lightgray"}>
+                              <Text as={'span'} color="#4ADE80">{totalMemory.used}</Text> / {totalMemory.total}
+                           </Text>
+                        </Box>
+                     </Flex>
+                  </Box>
+               </Flex>
+
+               <Box className={s.statsCard} maxH="500px" overflowY="auto">
+                  <Flex justify="space-between" align="center" mb="4">
+                     <Input
+                        placeholder="Search agent"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        width="200px"
+                        size="sm"
+                        borderRadius="8px"
+                        bg="rgba(255, 255, 255, 0.10)"
+                        border="none"
+                        color="white"
+                        _placeholder={{ color: 'whiteAlpha.600' }}
+                     />
+                     <Flex align="center" gap="2">
+                        <Text fontSize="sm" color="white">Only show running agents</Text>
+                        <Switch
+                           isChecked={showRunningOnly}
+                           onChange={(e) => setShowRunningOnly(e.target.checked)}
+                           colorScheme="blue"
+                        />
+                     </Flex>
+                  </Flex>
+
+                  <Table variant="unstyled" className={s.containerTable}>
+                     <Thead>
+                        <Tr>
+                           <Th color="whiteAlpha.600">Name</Th>
+                           <Th color="whiteAlpha.600">Type</Th>
+                           <Th color="whiteAlpha.600">Container ID</Th>
+                           <Th color="whiteAlpha.600">CPU</Th>
+                           <Th color="whiteAlpha.600">Memory</Th>
+                           <Th color="whiteAlpha.600">Last started</Th>
+                           <Th color="whiteAlpha.600">Actions</Th>
+                        </Tr>
+                     </Thead>
+                     <Tbody>
+                        {agents.length > 0 && containers.map((container, idx) => (
+                           <Tr key={idx}>
+                              <Td>
+                                 <Flex align="center" gap="2">
+                                    <Box
+                                       w="8px"
+                                       h="8px"
+                                       borderRadius="full"
+                                       bg={container.state === 'running' ? '#4ADE80' : 'lightgray'}
+                                    />
+                                    <Text color="white">{container.agent?.agent_name || container.name}</Text>
+                                 </Flex>
+                              </Td>
+                              <Td>
+                                 {/* <Text color="#AFC7FF" textDecoration="underline" cursor="pointer"> */}
+                                 <Text color="white">
+                                    {container.agentType}
+                                 </Text>
+                              </Td>
+                              <Td color="white">{container.containerId}</Td>
+                              <Td color="white">{container.cpu}</Td>
+                              <Td color="white">{container.memoryUsage || '-'}</Td>
+                              <Td color="white">{container.lastStarted}</Td>
+                              <Td>
+                                 <Flex gap="2">
+                                    {!!container.agent &&
+                                       !(compareString(container.agent?.agent_name, currentActiveModel?.agent?.agent_name) || currentActiveModel?.dependAgents?.find((address) => compareString(address, container?.agent?.agent_contract_address)))
+                                       ? (
+                                          <>
+                                             <Tooltip
+                                                label={container.state === 'running' ? 'Stop' : 'Start'}
+                                                hasArrow
+                                                placement="top"
+                                                bg="gray.700"
+                                                color="white"
+                                             >
+                                                <IconButton
+                                                   aria-label={container.state === 'running' ? 'Stop container' : 'Start container'}
+                                                   icon={<Image src={container.state === 'running' ? "icons/stop.svg" : "icons/play.svg"} alt={container.state === 'running' ? "Stop" : "Start"} />}
+                                                   size="sm"
+                                                   variant="ghost"
+                                                   color="white"
+                                                   _hover={{ bg: 'whiteAlpha.200' }}
+                                                   isLoading={(agentStates[container.agent?.id]?.isStarting || agentStates[container.agent?.id]?.isStopping) ?? false}
+                                                   onClick={() => {
+                                                      if (container.state === 'running') {
+                                                         stopAgent(container.agent);
+                                                      } else {
+                                                         startAgent(container.agent);
+                                                      }
+                                                   }}
+                                                />
+                                             </Tooltip>
+                                             <Tooltip
+                                                label="Delete"
+                                                hasArrow
+                                                placement="top"
+                                                bg="gray.700"
+                                                color="white"
+                                             >
+                                                <IconButton
+                                                   aria-label="Delete container"
+                                                   icon={<Image src="icons/delete.svg" alt="Delete" />}
+                                                   size="sm"
+                                                   variant="ghost"
+                                                   color="white"
+                                                   _hover={{ bg: 'whiteAlpha.200' }}
+                                                   isLoading={agentStates[container.agent?.id]?.isUnInstalling ?? false}
+                                                   onClick={() => {
+                                                      setDeleteAgent(container.agent);
+                                                   }}
+                                                />
+                                             </Tooltip>
+                                          </>
+                                       )
+                                       :
+                                       (
+                                          <Tooltip
+                                             label={'This agent is required for the system to work properly. You can’t remove it.'}
+                                             hasArrow
+                                             placement="top"
+                                             bg="gray.700"
+                                             color="white"
+                                          >
+                                             <IconButton
+                                                aria-label={'container'}
+                                                icon={<Image src={"icons/warning.svg"} w={'16px'} alt={"Warning"} />}
+                                                size="sm"
+                                                variant="ghost"
+                                                color="white"
+                                                _hover={{ bg: 'whiteAlpha.200' }}
+                                             />
+                                          </Tooltip>
+                                       )}
+                                 </Flex>
+                              </Td>
+                           </Tr>
+                        ))}
+                     </Tbody>
+                  </Table>
+               </Box>
+            </Box>
+         </BaseModal>
+         <DeleteAgentModal agentName={deleteAgent?.agent_name || ''} isOpen={!!deleteAgent} onClose={() => setDeleteAgent(undefined)} onDelete={() => {
+            if (deleteAgent) {
+               unInstallAgent(deleteAgent);
+               setDeleteAgent(undefined);
+            }
+         }} />
+
+
+      </>
+
+   )
    return (
       <Popover
          isOpen={isOpen}
          onClose={onClose}
-         placement="bottom-end"
+         placement="top-end"
       >
          <PopoverTrigger>
-            <Flex position="relative" cursor="pointer" onClick={onToggle} borderRadius={"100px"} w={'22px'} ml={'6px'} gap="4px">
-               <Image src={'icons/ic-monitor.svg'} alt='monitor' />
-            </Flex>
+            <MenuItem onClick={onToggle} icon={<svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+               <g clip-path="url(#clip0_54260_9784)">
+                  <path d="M17.7501 9.75L17.75 10.65C17.75 10.7052 17.7948 10.75 17.85 10.75H19.65C19.7052 10.75 19.75 10.7052 19.75 10.65L19.7501 9.75" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M10.25 16.75V20.75" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M5.25 20.75H10.25" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M10.25 16.75H3.25C2.14543 16.75 1.25 15.8546 1.25 14.75V5.75C1.25 4.64543 2.14543 3.75 3.25 3.75H17.25C18.3546 3.75 19.25 4.64543 19.25 5.75" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M21.25 9.75H16.25C15.1454 9.75 14.25 10.6454 14.25 11.75V20.75C14.25 21.8546 15.1454 22.75 16.25 22.75H21.25C22.3546 22.75 23.25 21.8546 23.25 20.75V11.75C23.25 10.6454 22.3546 9.75 21.25 9.75Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+               </g>
+               <defs>
+                  <clipPath id="clip0_54260_9784">
+                     <rect width="24" height="24" fill="white" transform="translate(0 0.5)" />
+                  </clipPath>
+               </defs>
+            </svg>}
+            >
+               Monitor
+            </MenuItem>
+
          </PopoverTrigger>
-         <PopoverContent 
+         <PopoverContent
             width="900px"
-            border="none" 
+            border="none"
             boxShadow="0 4px 6px rgba(0, 0, 0, 0.1)"
             className={s.popoverContent}
          >
             <PopoverBody p="20px">
                <Box className={s.containerOverview}>
                   <Text fontSize="22px" fontWeight="600" mb="4" color="white">Overview</Text>
-                  
+
                   <Flex gap="4" mb="6">
                      <Box className={s.statsCard}>
                         <Flex gap="12px">
@@ -303,7 +541,7 @@ const AgentMonitor: React.FC = () => {
                            </Box>
                         </Flex>
                      </Box>
-                     
+
                      <Box className={s.statsCard}>
                         <Flex gap="12px">
                            <Image src="icons/ram.svg" alt="Memory" boxSize="32px" />
@@ -379,75 +617,75 @@ const AgentMonitor: React.FC = () => {
                                  <Td color="white">{container.lastStarted}</Td>
                                  <Td>
                                     <Flex gap="2">
-                                       {!!container.agent && 
-                                       !(compareString(container.agent?.agent_name, currentActiveModel?.agent?.agent_name) || currentActiveModel?.dependAgents?.find((address) => compareString(address, container?.agent?.agent_contract_address))) 
-                                       ? (
-                                         <>
-                                           <Tooltip 
-                                              label={container.state === 'running' ? 'Stop' : 'Start'}
-                                              hasArrow
-                                              placement="top"
-                                              bg="gray.700"
-                                              color="white"
-                                           >
-                                              <IconButton
-                                                 aria-label={container.state === 'running' ? 'Stop container' : 'Start container'}
-                                                 icon={<Image src={container.state === 'running' ? "icons/stop.svg" : "icons/play.svg"} alt={container.state === 'running' ? "Stop" : "Start"} />}
-                                                 size="sm"
-                                                 variant="ghost"
-                                                 color="white"
-                                                 _hover={{ bg: 'whiteAlpha.200' }}
-                                                 isLoading={(agentStates[container.agent?.id]?.isStarting || agentStates[container.agent?.id]?.isStopping) ?? false}
-                                                 onClick={ () => {
-                                                   if (container.state === 'running') {
-                                                      stopAgent(container.agent);
-                                                   } else {
-                                                      startAgent(container.agent);
-                                                   }
-                                                 }}
-                                              />
-                                           </Tooltip>
-                                           <Tooltip 
-                                              label="Delete"
-                                              hasArrow
-                                              placement="top"
-                                              bg="gray.700"
-                                              color="white"
-                                           >
-                                              <IconButton
-                                                 aria-label="Delete container"
-                                                 icon={<Image src="icons/delete.svg" alt="Delete" />}
-                                                 size="sm"
-                                                 variant="ghost"
-                                                 color="white"
-                                                 _hover={{ bg: 'whiteAlpha.200' }}
-                                                 isLoading={agentStates[container.agent?.id]?.isUnInstalling ?? false}
-                                                 onClick={() => {
-                                                   setDeleteAgent(container.agent);
-                                                 }}
-                                              />
-                                           </Tooltip>
-                                         </>
-                                       )
-                                       :
-                                       (
-                                          <Tooltip 
-                                              label={'This agent is required for the system to work properly. You can’t remove it.'}
-                                              hasArrow
-                                              placement="top"
-                                              bg="gray.700"
-                                              color="white"
-                                           >
-                                             <IconButton
-                                                aria-label={'container'}
-                                                icon={<Image src={"icons/warning.svg"} w={'16px'} alt={"Warning"} />}
-                                                size="sm"
-                                                variant="ghost"
+                                       {!!container.agent &&
+                                          !(compareString(container.agent?.agent_name, currentActiveModel?.agent?.agent_name) || currentActiveModel?.dependAgents?.find((address) => compareString(address, container?.agent?.agent_contract_address)))
+                                          ? (
+                                             <>
+                                                <Tooltip
+                                                   label={container.state === 'running' ? 'Stop' : 'Start'}
+                                                   hasArrow
+                                                   placement="top"
+                                                   bg="gray.700"
+                                                   color="white"
+                                                >
+                                                   <IconButton
+                                                      aria-label={container.state === 'running' ? 'Stop container' : 'Start container'}
+                                                      icon={<Image src={container.state === 'running' ? "icons/stop.svg" : "icons/play.svg"} alt={container.state === 'running' ? "Stop" : "Start"} />}
+                                                      size="sm"
+                                                      variant="ghost"
+                                                      color="white"
+                                                      _hover={{ bg: 'whiteAlpha.200' }}
+                                                      isLoading={(agentStates[container.agent?.id]?.isStarting || agentStates[container.agent?.id]?.isStopping) ?? false}
+                                                      onClick={() => {
+                                                         if (container.state === 'running') {
+                                                            stopAgent(container.agent);
+                                                         } else {
+                                                            startAgent(container.agent);
+                                                         }
+                                                      }}
+                                                   />
+                                                </Tooltip>
+                                                <Tooltip
+                                                   label="Delete"
+                                                   hasArrow
+                                                   placement="top"
+                                                   bg="gray.700"
+                                                   color="white"
+                                                >
+                                                   <IconButton
+                                                      aria-label="Delete container"
+                                                      icon={<Image src="icons/delete.svg" alt="Delete" />}
+                                                      size="sm"
+                                                      variant="ghost"
+                                                      color="white"
+                                                      _hover={{ bg: 'whiteAlpha.200' }}
+                                                      isLoading={agentStates[container.agent?.id]?.isUnInstalling ?? false}
+                                                      onClick={() => {
+                                                         setDeleteAgent(container.agent);
+                                                      }}
+                                                   />
+                                                </Tooltip>
+                                             </>
+                                          )
+                                          :
+                                          (
+                                             <Tooltip
+                                                label={'This agent is required for the system to work properly. You can’t remove it.'}
+                                                hasArrow
+                                                placement="top"
+                                                bg="gray.700"
                                                 color="white"
-                                                _hover={{ bg: 'whiteAlpha.200' }}
-                                             />
-                                          </Tooltip>
-                                       )}
+                                             >
+                                                <IconButton
+                                                   aria-label={'container'}
+                                                   icon={<Image src={"icons/warning.svg"} w={'16px'} alt={"Warning"} />}
+                                                   size="sm"
+                                                   variant="ghost"
+                                                   color="white"
+                                                   _hover={{ bg: 'whiteAlpha.200' }}
+                                                />
+                                             </Tooltip>
+                                          )}
                                     </Flex>
                                  </Td>
                               </Tr>
