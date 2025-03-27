@@ -28,6 +28,7 @@ const EMIT_EVENT_NAME = {
    DOCKER_STOP_CONTAINER: "safe-docker-stop-container",
    DOCKER_START_CONTAINER: "safe-docker-start-container",
    DOCKER_DELETE_CONTAINER: "safe-docker-delete-container",
+   DOCKER_DELETE_IMAGE: "safe-docker-delete-image",
 
 
    MODEL_STARTER: "safe-model-starter",

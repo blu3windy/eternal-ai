@@ -65,10 +65,6 @@ while [[ "$#" -gt 0 ]]; do
       WALLET_ADDRESS="$2"
       shift 2
       ;;
-    --port)
-      PORT="$2"
-      shift 2
-      ;;
     --container-id)
       CONTAINER_ID="$2"
       shift 2
@@ -111,9 +107,9 @@ run_container_custom_prompt() {
     cd_docker_build_source_path
     docker build -t "$IMAGE_NAME" .;
     if [ -n "$PORT" ]; then
-    docker run -d "${PORT}" --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    docker run -d -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" "${PORT}" --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
     else
-        docker run -d --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+        docker run -d -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
     fi
 }
 
@@ -192,6 +188,10 @@ start_container_id() {
   docker start "$CONTAINER_ID" 2>/dev/null || true
 }
 
+remove_image_name() {
+  docker rmi -f "$CONTAINER_ID" 2>/dev/null || true
+}
+
 set_ready_port() {
     local port="${1:-8080}"
     local containers=$(docker ps -q --filter "publish=$port")
@@ -243,6 +243,9 @@ case "$action" in
     ;;
   start-container-id)
     start_container_id
+    ;;
+  remove_image_name)
+    remove_image_name
     ;;
   set-ready-port)
     set_ready_port "$DEFAULT_PORT"
