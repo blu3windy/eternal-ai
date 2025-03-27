@@ -79,7 +79,7 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                             display="flex"
                             alignItems="center"
                             padding="10px 20px"
-                            gap="10px"
+                            gap="12px"
                             onClick={() => setIsOpen(true)}
                             className={s.menuItem}
                         >
