@@ -549,14 +549,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   const updatedMessage = {
                      ...prev[matchedMessageIndex],
                      ...data,
-                     updatedAt: new Date().toISOString(),
+                     updatedAt: new Date().getTime(),
                      queryMessageState:
                         data?.queryMessageState || prev[matchedMessageIndex]?.queryMessageState,
                      tx_hash: data?.onchain_data?.propose_tx || prev[matchedMessageIndex]?.tx_hash,
                   };
-                  prev[matchedMessageIndex] = updatedMessage as any;
+                  prev[matchedMessageIndex] = updatedMessage;
 
-                  chatAgentDatabase.updateChatItem(updatedMessage as any);
+                  chatAgentDatabase.updateChatItem(updatedMessage as PersistedMessageType);
                }
 
                const replyToMessageId = prev[matchedMessageIndex].replyTo;
