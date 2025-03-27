@@ -224,7 +224,7 @@ const AgentMonitor: React.FC = () => {
             .filter(container => {
                const matchesSearch = container.name.toLowerCase().includes(searchTerm.toLowerCase());
                const matchesRunning = !showRunningOnly || container.state === 'running';
-               return matchesSearch && matchesRunning && (container?.agent || container?.name === 'agent-router');
+               return matchesSearch && matchesRunning;
             })
             .sort((a, b) => {
                // Sort running containers first
@@ -379,8 +379,9 @@ const AgentMonitor: React.FC = () => {
                                  <Td color="white">{container.lastStarted}</Td>
                                  <Td>
                                     <Flex gap="2">
-                                       {!!container.agent && 
-                                       !(compareString(container.agent?.agent_name, currentActiveModel?.agent?.agent_name) || currentActiveModel?.dependAgents?.find((address) => compareString(address, container?.agent?.agent_contract_address))) 
+                                       {!(compareString(container.agent?.agent_name, currentActiveModel?.agent?.agent_name) || 
+                                       currentActiveModel?.dependAgents?.find((address) => compareString(address, container?.agent?.agent_contract_address)) ||
+                                       compareString(container.name, 'agent-router')) 
                                        ? (
                                          <>
                                            <Tooltip 
@@ -397,7 +398,7 @@ const AgentMonitor: React.FC = () => {
                                                  variant="ghost"
                                                  color="white"
                                                  _hover={{ bg: 'whiteAlpha.200' }}
-                                                 isLoading={(agentStates[container.agent?.id]?.isStarting || agentStates[container.agent?.id]?.isStopping) ?? false}
+                                                 isLoading={container?.agent ? (agentStates[container?.agent?.id]?.isStarting || agentStates[container?.agent?.id]?.isStopping) : false}
                                                  onClick={ () => {
                                                    if (container.state === 'running') {
                                                       stopAgent(container.agent);
@@ -421,7 +422,7 @@ const AgentMonitor: React.FC = () => {
                                                  variant="ghost"
                                                  color="white"
                                                  _hover={{ bg: 'whiteAlpha.200' }}
-                                                 isLoading={agentStates[container.agent?.id]?.isUnInstalling ?? false}
+                                                 isLoading={container?.agent ? agentStates[container.agent?.id]?.isUnInstalling : false}
                                                  onClick={() => {
                                                    setDeleteAgent(container.agent);
                                                  }}
