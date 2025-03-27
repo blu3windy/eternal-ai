@@ -19,6 +19,7 @@ import localStorageService from "../../../storage/LocalStorageService.ts";
 import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
 import { ETradePlatform } from "./interface.ts";
 import { AgentContext } from "./AgentContext.tsx";
+import { useDebounce } from '@hooks/useDebounce';
 
 const AgentProvider: React.FC<
     PropsWithChildren & { tokenAddress?: string }
@@ -43,6 +44,12 @@ const AgentProvider: React.FC<
    const refInstalledModelAgents = useRef<IAgentToken[]>([]);
    const refAvailableModelAgents = useRef<IAgentToken[]>([]);
    const refInstalledSocialAgents = useRef<number[]>([]);
+
+   const debouncedUtilityAgents = useDebounce(refInstalledUtilityAgents.current, 300);
+   const debouncedUtilityAgentIds = useDebounce(refInstalledUtilityAgentIds.current, 300);
+   const debouncedModelAgents = useDebounce(refInstalledModelAgents.current, 300);
+   const debouncedAvailableModelAgents = useDebounce(refAvailableModelAgents.current, 300);
+   const debouncedSocialAgents = useDebounce(refInstalledSocialAgents.current, 300);
 
    const [agentStates, setAgentStates] = useState<Record<number, {
       data: IAgentToken;
@@ -150,7 +157,7 @@ const AgentProvider: React.FC<
             };
             const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
 
-            const utilityAgentIds = refInstalledUtilityAgents.current.map(folderName => {
+            const utilityAgentIds = debouncedUtilityAgents.map(folderName => {
                const [networkId, ...agentNameParts] = folderName.split('-');
                const agentName = agentNameParts.join('-');
                const agent = utilityAgents.find(a => 
@@ -168,15 +175,15 @@ const AgentProvider: React.FC<
       };
 
       fetchUtilityAgentIds();
-   }, [refInstalledUtilityAgents.current]);
+   }, [debouncedUtilityAgents]);
 
    const installedAgentIds = useMemo(() => {
       return {
-         utility: refInstalledUtilityAgentIds.current,
-         model: refInstalledModelAgents.current.map(agent => agent.id),
-         social: refInstalledSocialAgents.current
+         utility: debouncedUtilityAgentIds,
+         model: debouncedModelAgents.map(agent => agent.id),
+         social: debouncedSocialAgents
       };
-   }, [refInstalledUtilityAgentIds.current, refInstalledModelAgents.current, refInstalledSocialAgents.current]);
+   }, [debouncedUtilityAgentIds, debouncedModelAgents, debouncedSocialAgents]);
 
    const customUIPort = useMemo(() => {
       if (selectedAgent) {
@@ -214,7 +221,7 @@ const AgentProvider: React.FC<
 
    useEffect(() => {
       fetchInstalledModelAgents();
-   }, [refAvailableModelAgents.current]);
+   }, [debouncedAvailableModelAgents]);
 
    // const loadAgentStates = async () => {
    //    const savedStates = await localStorageService.getItem(STORAGE_KEYS.AGENT_STATES);
@@ -276,7 +283,7 @@ const AgentProvider: React.FC<
             checkModelAgentInstalled(selectedAgent);
          }
       }
-   }, [selectedAgent?.id, refInstalledUtilityAgents.current, refInstalledModelAgents.current, refInstalledSocialAgents.current]);
+   }, [selectedAgent?.id, debouncedUtilityAgents, debouncedModelAgents, debouncedSocialAgents]);
 
    const getUtilityAgentCodeLanguage = (agent: IAgentToken) => {
       if ([AgentType.CustomUI].includes(agent.agent_type)) {
@@ -483,7 +490,7 @@ const AgentProvider: React.FC<
             console.log("Throttled check error:", err);
          }
       }, 1000),
-      [refInstalledUtilityAgents.current, refInstalledModelAgents.current, refInstalledSocialAgents.current, selectedAgent?.id]
+      [debouncedUtilityAgents, debouncedModelAgents, debouncedSocialAgents, selectedAgent?.id]
    );
 
    useEffect(() => {
@@ -1140,7 +1147,7 @@ const AgentProvider: React.FC<
             clearInterval(refInterval.current);
          }
       };
-   }, [refInstalledUtilityAgents.current, refInstalledModelAgents.current, refInstalledSocialAgents.current, selectedAgent?.id]);
+   }, [debouncedUtilityAgents, debouncedModelAgents, debouncedSocialAgents, selectedAgent?.id]);
 
    const [currentActiveModel, setCurrentActiveModel] = useState<{
       agent: IAgentToken | undefined,
