@@ -2,7 +2,7 @@
 'use client';
 
 import { AgentType } from '@pages/home/list-agent/constants';
-import { AgentContext } from "@pages/home/provider/AgentContext.tsx";
+import { AgentContext } from '@pages/home/provider/AgentContext.tsx';
 import CAgentTokenAPI from '@services/api/agents-token';
 import { addOrUpdateTaskItem, removeTaskItem } from '@stores/states/agent-chat/reducer.ts';
 import { TaskItem } from '@stores/states/agent-chat/type.ts';
@@ -99,15 +99,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             if (items?.length === 0) {
                //  publishEvent(INIT_WELCOME_MESSAGE);
             } else {
-               // const filterMessages = items
-               //    ?.filter((item) => item.status !== 'failed')
-               //    // .filter((item) => item.status !== 'waiting')
-               //    .filter((item) => !!item.msg)
-               //    .map((item) => ({
-               //       ...item,
-               //       status: 'received',
-               //    }));
-               const filterMessages = items;
+               const filterMessages = items
+                  ?.filter((item) => item.status !== 'failed')
+                  // .filter((item) => item.status !== 'waiting')
+                  .filter((item) => !!item.msg)
+                  .map((item) => ({
+                     ...item,
+                     status: 'received',
+                  }));
+               // const filterMessages = items;
                setMessages(filterMessages as any);
             }
          });
@@ -271,15 +271,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                content:
                   sendTxt && attachments?.length
                      ? [
-                        { type: 'text', text: sendTxt },
-                        ...attachments.map((attachment) => ({
-                           type: 'image_url',
-                           image_url: {
-                              url: attachment.url,
-                              detail: '',
-                           },
-                        })),
-                     ]
+                          { type: 'text', text: sendTxt },
+                          ...attachments.map((attachment) => ({
+                             type: 'image_url',
+                             image_url: {
+                                url: attachment.url,
+                                detail: '',
+                             },
+                          })),
+                       ]
                      : sendTxt,
             },
          ];
@@ -295,18 +295,18 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          }
 
          if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-            const content
-               = sendTxt && attachments?.length
+            const content =
+               sendTxt && attachments?.length
                   ? [
-                     { type: 'text', text: sendTxt },
-                     ...attachments.map((attachment) => ({
-                        type: 'image_url',
-                        image_url: {
-                           url: attachment.url,
-                           detail: '',
-                        },
-                     })),
-                  ]
+                       { type: 'text', text: sendTxt },
+                       ...attachments.map((attachment) => ({
+                          type: 'image_url',
+                          image_url: {
+                             url: attachment.url,
+                             detail: '',
+                          },
+                       })),
+                    ]
                   : sendTxt;
 
             updateTaskItem({
@@ -316,7 +316,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                title: selectedAgent?.agent_name || 'Agent',
                createdAt: new Date().toISOString(),
                agent: selectedAgent!,
-               agentType: selectedAgent?.agent_type || AgentType.Normal
+               agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
             const res: string = await AgentAPI.chatAgentUtility({
                id: messageId,
@@ -347,7 +347,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                title: selectedAgent?.agent_name || 'Agent',
                createdAt: new Date().toISOString(),
                agent: selectedAgent!,
-               agentType: selectedAgent?.agent_type || AgentType.Normal
+               agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
             let isGeneratedDone = false;
             await AgentAPI.chatAgentModelStreamCompletions({
@@ -434,7 +434,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                title: selectedAgent?.agent_name || 'Agent',
                createdAt: new Date().toISOString(),
                agent: selectedAgent!,
-               agentType: selectedAgent?.agent_type || AgentType.Normal
+               agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
             let isGeneratedDone = false;
             await AgentAPI.chatStreamCompletions({
@@ -523,9 +523,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   );
                   return [...prev];
                } else if (
-                  prev[matchedMessageIndex].status === 'waiting'
-                  || prev[matchedMessageIndex].status === 'receiving'
-                  || prev[matchedMessageIndex].status === 'pre-done'
+                  prev[matchedMessageIndex].status === 'waiting' ||
+                  prev[matchedMessageIndex].status === 'receiving' ||
+                  prev[matchedMessageIndex].status === 'pre-done'
                ) {
                   const updatedMessage = {
                      ...prev[matchedMessageIndex],
