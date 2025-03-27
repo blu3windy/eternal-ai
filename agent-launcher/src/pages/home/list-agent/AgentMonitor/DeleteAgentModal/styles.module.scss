@@ -1,0 +1,18 @@
+.modalContent {
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.cancelButton {
+  background-color: #e2e8f0;
+  color: #1a202c;
+}
+
+.deleteButton {
+  background-color: #e53e3e;
+  color: white;
+
+  &:hover {
+    background-color: #c53030;
+  }
+}

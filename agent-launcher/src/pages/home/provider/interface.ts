@@ -55,4 +55,5 @@ export interface IAgentContext {
   setIsSearchMode: (value: boolean) => void;
   category: CategoryOption;
   setCategory: (category: CategoryOption) => void;
+  getDependAgents: any;
 }

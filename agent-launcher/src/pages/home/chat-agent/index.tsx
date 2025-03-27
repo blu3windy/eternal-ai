@@ -15,7 +15,7 @@ function ChatAgent() {
       isInstalled,
       isCanChat,
       isBackupedPrvKey,
-      isCustomUI,
+      isRunning,
    } = useContext(AgentContext);
 
    const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
@@ -27,7 +27,7 @@ function ChatAgent() {
    return (
       <Box className={s.container}>
          {/* <AgentTopInfo /> */}
-         {isCanChat ? (
+         {isCanChat && isRunning ? (
             <ChatAgentProvider>
                <ChatBox />
             </ChatAgentProvider>

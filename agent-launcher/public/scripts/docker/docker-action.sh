@@ -192,6 +192,10 @@ start_container_id() {
   docker start "$CONTAINER_ID" 2>/dev/null || true
 }
 
+remove_image_name() {
+  docker rmi -f "$CONTAINER_ID" 2>/dev/null || true
+}
+
 set_ready_port() {
     local port="${1:-8080}"
     local containers=$(docker ps -q --filter "publish=$port")
@@ -243,6 +247,9 @@ case "$action" in
     ;;
   start-container-id)
     start_container_id
+    ;;
+  remove_image_name)
+    remove_image_name
     ;;
   set-ready-port)
     set_ready_port "$DEFAULT_PORT"

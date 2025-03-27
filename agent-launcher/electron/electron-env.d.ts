@@ -55,6 +55,7 @@ export interface IElectronAPI {
   dockerStopContainer: (containerId: string) => Promise<void>
   dockerStartContainer: (containerId: string) => Promise<void>
   dockerDeleteContainer: (containerId: string) => Promise<void>
+  dockerDeleteImage: (agentName: string, chainId: strin, type: CodeLanguage) => Promise<void>
 
 
   modelStarter: () => Promise<void>
