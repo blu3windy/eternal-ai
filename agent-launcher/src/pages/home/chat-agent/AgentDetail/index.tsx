@@ -68,11 +68,13 @@ const AgentDetail = () => {
 
    const handleInstall = () => {
       if (isInstalled) return;
+      if (!selectedAgent) return;
 
       installAgent(selectedAgent);
    };
 
    const handleStartAgent = () => {
+      if (!selectedAgent) return;
       startAgent(selectedAgent);
    };
 
