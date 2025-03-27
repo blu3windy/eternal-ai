@@ -362,23 +362,23 @@ export const AgentTypeName = {
 
 export const CATEGORIES = [
    {
-      id: CategoryOption.Model,
-      name: 'Model',
-      description: 'AI model agents',
-      gradient: 'linear-gradient(270deg, #EF3B2F 0%, #89221B 100%)',
-      icon: 'icons/ic-category-model.svg'
-   },
-   {
       id: CategoryOption.Utility,
       name: 'Utility',
-      description: 'Tool and utility agents',
+      description: 'Agents designed to help with everyday tasks and boost productivity.',
       gradient: 'linear-gradient(270deg, #A94FD4 0%, #58296E 100%)',
       icon: 'icons/ic-category-utility.svg'
    },
    {
+      id: CategoryOption.Model,
+      name: 'Model',
+      description: 'Agents that provide direct access to specific AI models (e.g., GPT, LLaMA, DeepSeek, and more).',
+      gradient: 'linear-gradient(270deg, #EF3B2F 0%, #89221B 100%)',
+      icon: 'icons/ic-category-model.svg'
+   },
+   {
       id: CategoryOption.Infra,
       name: 'Infra',
-      description: 'Infrastructure agents',
+      description: 'Agents that offer APIs or services to build and manage other agents.',
       gradient: 'linear-gradient(270deg, #3FBF5A 0%, #1D592A 100%)',
       icon: 'icons/ic-category-infra.svg'
    }

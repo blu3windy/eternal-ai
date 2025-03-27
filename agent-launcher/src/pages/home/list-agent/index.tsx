@@ -305,7 +305,7 @@ const AgentsList = () => {
                // autoFocus
                onFocus={() => {
                   if (category === CategoryOption.All) {
-                     setCategory(CategoryOption.Model);
+                     setCategory(CategoryOption.Utility);
                      // refParams.current.category = category;
                   }
                   

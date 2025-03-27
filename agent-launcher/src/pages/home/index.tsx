@@ -30,7 +30,7 @@ const HandleHome = () => {
 
    return (
       <Flex height={"100%"}>
-         <Box flex={1} maxW={"460px"}>
+         <Box flex={1} maxW={"460px"} minW={"460px"}>
             <AgentsList />
          </Box>
          <Box
