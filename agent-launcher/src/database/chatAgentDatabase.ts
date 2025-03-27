@@ -1,9 +1,9 @@
 import Dexie, { type EntityTable } from 'dexie';
-import { IChatMessage } from "../services/api/agent/types.ts";
+import { IChatMessage } from '../services/api/agent/types.ts';
 
 export type PersistedMessageType = {
-  threadId: string;
-  // status: 'sending' | 'done' | 'thinking' | 'error';
+   threadId: string;
+   // status: 'sending' | 'done' | 'thinking' | 'error';
 } & IChatMessage;
 
 class ChatAgentDatabase {
@@ -12,42 +12,42 @@ class ChatAgentDatabase {
    constructor() {
       try {
          this.db = new Dexie(this.databaseName) as Dexie & {
-        messages: EntityTable<PersistedMessageType, 'id'>;
-      };
+            messages: EntityTable<PersistedMessageType, 'id'>;
+         };
 
          // for version 1
          this.db.version(1).stores({
             messages: 'id, threadId, is_reply, msg, name, createdAt',
          });
 
-      // // https://dexie.org/docs/Version/Version.upgrade()
-      // // for version n
-      // this.db
-      //     .version(n)
-      //     .stores({
-      //         // add new stores
-      //     })
-      //     .upgrade((trans) => {
-      //         var YEAR = 365 * 24 * 60 * 60 * 1000;
-      //         return trans
-      //             .table('friends')
-      //             .toCollection()
-      //             .modify((friend) => {
-      //                 friend.birthdate = new Date(Date.now() - friend.age * YEAR);
-      //                 delete friend.age;
-      //             });
-      //     });
+         // // https://dexie.org/docs/Version/Version.upgrade()
+         // // for version n
+         // this.db
+         //     .version(n)
+         //     .stores({
+         //         // add new stores
+         //     })
+         //     .upgrade((trans) => {
+         //         var YEAR = 365 * 24 * 60 * 60 * 1000;
+         //         return trans
+         //             .table('friends')
+         //             .toCollection()
+         //             .modify((friend) => {
+         //                 friend.birthdate = new Date(Date.now() - friend.age * YEAR);
+         //                 delete friend.age;
+         //             });
+         //     });
       } catch (e) {
-      //
+         //
       }
    }
 
    async loadChatItems(
       threadId: string,
-      pagination?: { offset: number; limit: number },
-   ) {
+      pagination?: { offset: number; limit: number }
+   ): Promise<IChatMessage[]> {
       try {
-      // this.db.messages.where('age').above(25).reverse().sortBy('name');
+         // this.db.messages.where('age').above(25).reverse().sortBy('name');
 
          // if (pagination) {
          //   return await this.db?.messages
@@ -58,10 +58,7 @@ class ChatAgentDatabase {
          //     .limit(pagination.limit)
          //     .toArray();
          // }
-         return await this.db?.messages
-            .where('threadId')
-            .equals(threadId)
-            .sortBy('createdAt');
+         return await this.db?.messages.where('threadId').equals(threadId).sortBy('createdAt');
       } catch (error) {
          return [];
       }
@@ -74,7 +71,7 @@ class ChatAgentDatabase {
          });
          return newItem;
       } catch (e) {
-      //
+         //
       }
    }
 
@@ -83,7 +80,7 @@ class ChatAgentDatabase {
          await this.db?.messages.update(updatedItem.id, updatedItem);
          return updatedItem;
       } catch (e) {
-      //
+         //
       }
    }
 
@@ -91,7 +88,7 @@ class ChatAgentDatabase {
       try {
          await this.db?.messages.delete(id);
       } catch (e) {
-      //
+         //
       }
    }
 
@@ -99,7 +96,7 @@ class ChatAgentDatabase {
       try {
          return await this.db?.messages.get(id);
       } catch (e) {
-      //
+         //
       }
    }
 }

@@ -99,15 +99,32 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             if (items?.length === 0) {
                //  publishEvent(INIT_WELCOME_MESSAGE);
             } else {
+               // const filterMessages = items
+               //    ?.filter((item) => item.status !== 'failed')
+               //    // .filter((item) => item.status !== 'waiting')
+               //    .filter((item) => !!item.msg)
+               //    .map((item) => ({
+               //       ...item,
+               //       status: 'received',
+               //    }));
                const filterMessages = items
-                  ?.filter((item) => item.status !== 'failed')
-                  // .filter((item) => item.status !== 'waiting')
-                  .filter((item) => !!item.msg)
-                  .map((item) => ({
-                     ...item,
-                     status: 'received',
-                  }));
-               // const filterMessages = items;
+                  .filter((item) => item.createdAt)
+                  .map((item) => {
+                     if (item.status === 'waiting') {
+                        const now = new Date();
+                        const createdAt = new Date(item.createdAt || '');
+                        const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+
+                        if (diffMinutes >= 30) {
+                           return {
+                              ...item,
+                              status: 'failed',
+                           };
+                        }
+                     }
+                     return item;
+                  });
+
                setMessages(filterMessages as any);
             }
          });
