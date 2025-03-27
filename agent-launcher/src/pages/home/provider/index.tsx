@@ -39,7 +39,6 @@ const initialValue: IAgentContext = {
    coinPrices: [],
    createAgentWallet: () => {},
    isInstalled: false,
-   installedUtilityAgents: [],
    isCanChat: false,
    isBackupedPrvKey: false,
    setIsBackupedPrvKey: () => {},
@@ -80,17 +79,18 @@ const AgentProvider: React.FC<
    const [isTrade, setIsTrade] = useState(false);
    const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
    const [coinPrices, setCoinPrices] = useState([]);
-   const [installedUtilityAgents, setInstalledUtilityAgents] = useState<string[]>([]);
    const refInterval = useRef<any>();
    const [isBackupedPrvKey, setIsBackupedPrvKey] = useState(false);
    const [isModelRequirementSetup, setIsModelRequirementSetup] = useState(false);
-   const [installedModelAgents, setInstalledModelAgents] = useState<IAgentToken[]>([]);
-   const [availableModelAgents, setAvailableModelAgents] = useState<IAgentToken[]>([]);
-   const [installedSocialAgents, setInstalledSocialAgents] = useState<number[]>([]);
    const [liveViewUrl, setLiveViewUrl] = useState<string>('');
    const [isSearchMode, setIsSearchMode] = useState(false);
    const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
-   const [installedUtilityAgentIds, setInstalledUtilityAgentIds] = useState<number[]>([]);
+
+   const refInstalledUtilityAgents = useRef<string[]>([]);
+   const refInstalledUtilityAgentIds = useRef<number[]>([]);
+   const refInstalledModelAgents = useRef<IAgentToken[]>([]);
+   const refAvailableModelAgents = useRef<IAgentToken[]>([]);
+   const refInstalledSocialAgents = useRef<number[]>([]);
 
    const [agentStates, setAgentStates] = useState<Record<number, {
       data: IAgentToken;
@@ -198,7 +198,7 @@ const AgentProvider: React.FC<
             };
             const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
 
-            const utilityAgentIds = installedUtilityAgents.map(folderName => {
+            const utilityAgentIds = refInstalledUtilityAgents.current.map(folderName => {
                const [networkId, ...agentNameParts] = folderName.split('-');
                const agentName = agentNameParts.join('-');
                const agent = utilityAgents.find(a => 
@@ -208,23 +208,23 @@ const AgentProvider: React.FC<
                return agent?.id;
             }).filter(Boolean) as number[];
 
-            setInstalledUtilityAgentIds(utilityAgentIds);
+            refInstalledUtilityAgentIds.current = utilityAgentIds;
          } catch (err) {
             console.log("fetchUtilityAgentIds error:", err);
-            setInstalledUtilityAgentIds([]);
+            refInstalledUtilityAgentIds.current = [];
          }
       };
 
       fetchUtilityAgentIds();
-   }, [installedUtilityAgents]);
+   }, [refInstalledUtilityAgents.current]);
 
    const installedAgentIds = useMemo(() => {
       return {
-         utility: installedUtilityAgentIds,
-         model: installedModelAgents.map(agent => agent.id),
-         social: installedSocialAgents
+         utility: refInstalledUtilityAgentIds.current,
+         model: refInstalledModelAgents.current.map(agent => agent.id),
+         social: refInstalledSocialAgents.current
       };
-   }, [installedUtilityAgentIds, installedModelAgents, installedSocialAgents]);
+   }, [refInstalledUtilityAgentIds.current, refInstalledModelAgents.current, refInstalledSocialAgents.current]);
 
    const customUIPort = useMemo(() => {
       if (selectedAgent) {
@@ -262,7 +262,7 @@ const AgentProvider: React.FC<
 
    useEffect(() => {
       fetchInstalledModelAgents();
-   }, [availableModelAgents]);
+   }, [refAvailableModelAgents.current]);
 
    // const loadAgentStates = async () => {
    //    const savedStates = await localStorageService.getItem(STORAGE_KEYS.AGENT_STATES);
@@ -324,7 +324,7 @@ const AgentProvider: React.FC<
             checkModelAgentInstalled(selectedAgent);
          }
       }
-   }, [selectedAgent?.id, installedUtilityAgents, installedModelAgents, installedSocialAgents]);
+   }, [selectedAgent?.id, refInstalledUtilityAgents.current, refInstalledModelAgents.current, refInstalledSocialAgents.current]);
 
    const getUtilityAgentCodeLanguage = (agent: IAgentToken) => {
       if ([AgentType.CustomUI].includes(agent.agent_type)) {
@@ -399,7 +399,7 @@ const AgentProvider: React.FC<
 
          const res = newTokens.map((t, index) => ({ ...t, ipfsHash: agentHashes[index] }));
 
-         setAvailableModelAgents(res);
+         refAvailableModelAgents.current = res;
       } catch (e) {
 
       } finally {
@@ -412,7 +412,7 @@ const AgentProvider: React.FC<
       // const runningModelHash = await globalThis.electronAPI.modelCheckRunning();
       const installedHashes = [...installedModels.map(r => r.hash)];
 
-      let installedAgents: IAgentToken[] = availableModelAgents?.filter((t, index) => installedHashes.includes(t.ipfsHash as string) || t.agent_type === AgentType.ModelOnline);
+      let installedAgents: IAgentToken[] = refAvailableModelAgents.current?.filter((t, index) => installedHashes.includes(t.ipfsHash as string) || t.agent_type === AgentType.ModelOnline);
 
       installedAgents = installedAgents?.sort((a, b) => {
          if (a.agent_type === AgentType.ModelOnline) return -1;
@@ -427,7 +427,7 @@ const AgentProvider: React.FC<
          }
       }) as IAgentToken[] || [];
 
-      setInstalledModelAgents(installedAgents);
+      refInstalledModelAgents.current = installedAgents;
 
       // if (!runningModelHash) {
       //    const defaultModelAgent = installedAgents.find((t, index) => compareString(t.ipfsHash, MODEL_HASH)) || installedAgents[0];
@@ -531,7 +531,7 @@ const AgentProvider: React.FC<
             console.log("Throttled check error:", err);
          }
       }, 1000),
-      [installedUtilityAgents, installedModelAgents, installedSocialAgents, selectedAgent?.id]
+      [refInstalledUtilityAgents.current, refInstalledModelAgents.current, refInstalledSocialAgents.current, selectedAgent?.id]
    );
 
    useEffect(() => {
@@ -655,7 +655,7 @@ const AgentProvider: React.FC<
             if (agent.agent_type === AgentType.ModelOnline) {
                const activeModel = await storageModel.getActiveModel();
                if (activeModel?.id === agent.id) {
-                  const newAgent = installedModelAgents.filter(a => a.id !== agent.id)[0];
+                  const newAgent = refInstalledModelAgents.current.filter(a => a.id !== agent.id)[0];
                   if (newAgent) {
                      await startAgent(newAgent);
                   }
@@ -670,7 +670,7 @@ const AgentProvider: React.FC<
          } else if (agent.agent_type === AgentType.Model) {
             const activeModel = await storageModel.getActiveModel();
             if (activeModel?.id === agent.id) {
-               const newAgent = installedModelAgents.filter(a => a.id !== agent.id)[0];
+               const newAgent = refInstalledModelAgents.current.filter(a => a.id !== agent.id)[0];
                if (newAgent) {
                   await startAgent(newAgent);
                }
@@ -955,23 +955,22 @@ const AgentProvider: React.FC<
    const fetchInstalledUtilityAgents = async () => {
       try {
          const folders = await globalThis.electronAPI.getExistAgentFolders();
-         setInstalledUtilityAgents(folders || [])
+         refInstalledUtilityAgents.current = folders || [];
       } catch (error) {
-        
+         console.error('Error fetching installed utility agents:', error);
+         refInstalledUtilityAgents.current = [];
       }
    }
 
    const checkUtilityAgentInstalled = async (agent: IAgentToken) => {
       try {
-         if (installedUtilityAgents?.some?.(key => key === `${agent.network_id}-${agent.agent_name?.toLowerCase()}`)) {
+         if (refInstalledUtilityAgents.current?.some?.(key => key === `${agent.network_id}-${agent.agent_name?.toLowerCase()}`)) {
             setAgentInstalled(agent);
          } else {
             setAgentUnInstalled(agent);
          }
       } catch (e) {
          console.log('checkUtilityAgentInstalled e', e);
-      } finally {
-
       }
    }
 
@@ -1018,9 +1017,10 @@ const AgentProvider: React.FC<
          const values = await localStorageService.getItem(STORAGE_KEYS.INSTALLED_SOCIAL_AGENTS);
          const agentIds = values ? JSON.parse(values) : [];
 
-         setInstalledSocialAgents(agentIds || [])
+         refInstalledSocialAgents.current = agentIds || [];
       } catch (error) {
-
+         console.error('Error fetching installed social agents:', error);
+         refInstalledSocialAgents.current = [];
       }
    }
 
@@ -1074,7 +1074,7 @@ const AgentProvider: React.FC<
          const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
 
          // Check running status for each installed utility agent
-         for (const folderName of installedUtilityAgents) {
+         for (const folderName of refInstalledUtilityAgents.current) {
             const [networkId, ...agentNameParts] = folderName.split('-');
             const agentName = agentNameParts.join('-');
             if (!networkId || !agentName) continue;
@@ -1126,7 +1126,7 @@ const AgentProvider: React.FC<
          // Check model agents
          const activeModel = await storageModel.getActiveModel();
 
-         for (const agent of installedModelAgents) {
+         for (const agent of refInstalledModelAgents.current) {
             updateAgentState(agent.id, {
                data: agent,
                isInstalled: true,
@@ -1152,7 +1152,7 @@ const AgentProvider: React.FC<
          const { agents: socialAgents } = await cPumpAPI.getAgentTokenList(socialParams);
 
          // Check running status for each installed social agent
-         for (const agentId of installedSocialAgents) {
+         for (const agentId of refInstalledSocialAgents.current) {
             const agent = socialAgents.find(a => a.id === agentId);
             if (agent) {
                updateAgentState(agent.id, {
@@ -1188,7 +1188,7 @@ const AgentProvider: React.FC<
             clearInterval(refInterval.current);
          }
       };
-   }, [installedUtilityAgents, installedModelAgents, installedSocialAgents, selectedAgent?.id]);
+   }, [refInstalledUtilityAgents.current, refInstalledModelAgents.current, refInstalledSocialAgents.current, selectedAgent?.id]);
 
    const [currentActiveModel, setCurrentActiveModel] = useState<{
       agent: IAgentToken | undefined,
@@ -1243,17 +1243,16 @@ const AgentProvider: React.FC<
          coinPrices,
          createAgentWallet,
          isInstalled,
-         installedUtilityAgents,
          isCanChat,
          isBackupedPrvKey,
          setIsBackupedPrvKey,
          requireInstall,
          isModelRequirementSetup,
-         installedModelAgents,
-         availableModelAgents,
+         installedModelAgents: refInstalledModelAgents.current,
+         availableModelAgents: refAvailableModelAgents.current,
          unInstallAgent,
          isUnInstalling,
-         installedSocialAgents,
+         installedSocialAgents: refInstalledSocialAgents.current,
          isCustomUI: selectedAgent?.agent_type === AgentType.CustomUI,
          customUIPort,
          agentStates,
@@ -1284,17 +1283,16 @@ const AgentProvider: React.FC<
       coinPrices,
       createAgentWallet,
       isInstalled,
-      installedUtilityAgents,
       isCanChat,
       isBackupedPrvKey,
       setIsBackupedPrvKey,
       requireInstall,
       isModelRequirementSetup,
-      installedModelAgents,
-      availableModelAgents,
+      refInstalledModelAgents.current,
+      refAvailableModelAgents.current,
       unInstallAgent,
       isUnInstalling,
-      installedSocialAgents,
+      refInstalledSocialAgents.current,
       customUIPort,
       agentStates,
       liveViewUrl,

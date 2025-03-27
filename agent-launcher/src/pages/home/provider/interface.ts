@@ -28,7 +28,6 @@ export interface IAgentContext {
   coinPrices: any[];
   createAgentWallet: any;
   isInstalled: boolean;
-  installedUtilityAgents: string[];
   isCanChat: boolean;
   isBackupedPrvKey: boolean;
   setIsBackupedPrvKey: any;
