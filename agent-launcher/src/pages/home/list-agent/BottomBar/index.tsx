@@ -72,8 +72,7 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                 </PopoverTrigger>
                 <PopoverContent className={s.menuList}>
                     <PopoverBody padding={0}>
-                        <AgentMonitor
-                            className={s.menuItem} />
+                        <AgentMonitor />
                         <Button
                             width="100%"
                             height="45px"
