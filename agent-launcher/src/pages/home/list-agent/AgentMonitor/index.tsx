@@ -51,6 +51,12 @@ interface DockerContainer {
    Status: string;
 }
 
+interface DockerImage {
+   ID: string;
+   Repository: string;
+   Size: string;
+}
+
 interface DockerMemory {
    BlockIO: string;
    CPUPerc: string;
@@ -76,6 +82,7 @@ interface ContainerData {
    state?: string;
    agent?: IAgentToken;
    agentType?: string;
+   imageSize?: string;
 }
 
 interface ContainerActionState {
@@ -168,10 +175,16 @@ const AgentMonitor: React.FC = () => {
       }
    };
 
+   const extractImageName = (repository: string): string => {
+      const match = repository.match(/^agent-\w+-(.+)$/);
+      return match ? match[1] : "";
+   };
+
    const onGetData = async () => {
       try {
          // Fetch both container and memory data concurrently
-         const [containerData, memoryData, cpuCores] = await Promise.all([
+         const [imageData, containerData, memoryData, cpuCores] = await Promise.all([
+            globalThis.electronAPI.dockerInfo("images").then(data => JSON.parse(data)),
             globalThis.electronAPI.dockerInfo("containers").then(data => JSON.parse(data)),
             globalThis.electronAPI.dockerInfo("memory").then(data => JSON.parse(data)),
             globalThis.electronAPI.dockerInfo("cpus").then(data => parseInt(data)),
@@ -189,12 +202,13 @@ const AgentMonitor: React.FC = () => {
          );
 
          // Transform and combine the data
-         const transformedData: ContainerData[] = containerData.map((container: DockerContainer) => {
-            const memInfo: any = memoryMap.get(container.ID);
+         const transformedData: ContainerData[] = imageData.map((image: DockerImage) => {
+
+            const container: DockerContainer = containerData.find((_container: DockerContainer) => compareString(_container.Image, image.Repository));
 
             // Find matching agent by container name
-            const matchingAgent = agents?.find(agent =>
-               container.Names.toLowerCase().includes(agent.agent_name?.toLowerCase() || '')
+            const matchingAgent = agents?.find(agent => 
+               (container?.Names || image?.Repository).toLowerCase().includes(agent.agent_name?.toLowerCase() || '')
             );
 
             let agentType = '-';
@@ -214,6 +228,23 @@ const AgentMonitor: React.FC = () => {
                   break;
             }
 
+            if (!container) {
+               return {
+                  name: extractImageName(image.Repository),
+                  image: image.Repository,
+                  ports: '-',
+                  cpu: '0.00%',
+                  lastStarted: '',
+                  memoryUsage: '',
+                  memoryPercentage: '',
+                  state: '',
+                  agent: matchingAgent,
+                  agentType,
+                  imageSize: image.Size,
+               }
+            }
+
+            const memInfo: any = memoryMap.get(container.ID);
             if (memInfo) {
                // Parse memory values for totals
                const memUsage = memInfo.MemUsage.split('/');
@@ -238,6 +269,8 @@ const AgentMonitor: React.FC = () => {
                   state: container.State,
                   agent: matchingAgent,
                   agentType,
+                  imageSize: image.Size,
+
                };
             }
 
@@ -251,6 +284,7 @@ const AgentMonitor: React.FC = () => {
                state: container.State,
                agent: matchingAgent,
                agentType,
+               imageSize: image.Size,
             };
          });
 
@@ -259,7 +293,7 @@ const AgentMonitor: React.FC = () => {
             .filter(container => {
                const matchesSearch = container.name.toLowerCase().includes(searchTerm.toLowerCase());
                const matchesRunning = !showRunningOnly || container.state === 'running';
-               return matchesSearch && matchesRunning;
+               return matchesSearch && matchesRunning && !!container.name && container?.agent;
             })
             .sort((a, b) => {
                // Sort running containers first
@@ -402,9 +436,10 @@ const AgentMonitor: React.FC = () => {
                         <Tr>
                            <Th color="whiteAlpha.600">Name</Th>
                            <Th color="whiteAlpha.600">Type</Th>
-                           <Th color="whiteAlpha.600">Container ID</Th>
+                           {/* <Th color="whiteAlpha.600">Container ID</Th> */}
                            <Th color="whiteAlpha.600">CPU</Th>
                            <Th color="whiteAlpha.600">Memory</Th>
+                           <Th color="whiteAlpha.600">Size</Th>
                            <Th color="whiteAlpha.600">Last started</Th>
                            <Th color="whiteAlpha.600">Actions</Th>
                         </Tr>
@@ -429,9 +464,10 @@ const AgentMonitor: React.FC = () => {
                                     {container.agentType}
                                  </Text>
                               </Td>
-                              <Td color="white">{container.containerId}</Td>
+                              {/* <Td color="white">{container.containerId}</Td> */}
                               <Td color="white">{container.cpu}</Td>
                               <Td color="white">{container.memoryUsage || '-'}</Td>
+                              <Td color="white">{container.imageSize || '-'}</Td>
                               <Td color="white">{container.lastStarted}</Td>
                               <Td>
                                  <Flex gap="2">
