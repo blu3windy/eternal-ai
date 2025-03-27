@@ -50,7 +50,7 @@ const FormTradeAgent = () => {
   const is_need_approve = values.is_need_approve;
   const current_token = values.current_token;
 
-  const amountDebounced: any = useDebounce(amount);
+  const amountDebounced: any = useDebounce(amount, 300);
 
   const tokenList: IToken[] = useMemo(() => {
     return pairs;
