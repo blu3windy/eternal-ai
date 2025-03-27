@@ -9,10 +9,12 @@ import command from "./share/command-tool.ts";
 if (process.env.NODE_ENV === "development") {
    process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false";
    process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
+   process.env.ELECTRON_SKIP_BINARY_DOWNLOAD = "true";
    autoUpdater.autoDownload = false;
    autoUpdater.allowDowngrade = true;
    autoUpdater.forceDevUpdateConfig = true;
    autoUpdater.logger = console;
+   autoUpdater.updateConfigPath = path.join(process.cwd(), "dev-app-update.yml");
    console.log("🔧 Development mode: Auto-update settings configured");
 }
 

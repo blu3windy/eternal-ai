@@ -1,0 +1,6 @@
+provider: generic
+url: https://github.com/0x0603/electron-update-server/releases/download/0.0.5
+updaterCacheDirName: vibe-updater
+allowDowngrade: true
+forceDevUpdateConfig: true
+channel: latest 
