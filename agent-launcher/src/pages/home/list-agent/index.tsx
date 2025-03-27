@@ -18,6 +18,7 @@ import {
    VStack
 } from '@chakra-ui/react';
 import BaseModal from '@components/BaseModal/index.tsx';
+import IcHelp from '@components/InfoTooltip/IcHelp.tsx';
 import { compareString } from '@utils/string.ts';
 import cx from 'clsx';
 import debounce from 'lodash.debounce';
@@ -43,7 +44,6 @@ import {
    SortOption
 } from './constants';
 import s from './styles.module.scss';
-import InfoTooltip from '@components/InfoTooltip/index.tsx';
 
 
 const AgentsList = () => {
@@ -251,11 +251,29 @@ const AgentsList = () => {
                         key={cat.id}
                      >
                         <Text>{cat.name}</Text>
-                        <InfoTooltip
-                           iconSize="16px"
-                           label={cat.description}
-                           placement="bottom"
-                        />
+                        <Popover trigger="hover" placement="bottom">
+                           <PopoverTrigger>
+                              <Box 
+                                 onClick={(e) => e.stopPropagation()}
+                                 onMouseDown={(e) => e.stopPropagation()}
+                              >
+                                 <IcHelp color={'black'}/>
+                              </Box>
+                           </PopoverTrigger>
+                           <PopoverContent 
+                              width="300px" 
+                              bg="white" 
+                              border="1px solid #E5E7EB"
+                              boxShadow="0px 4px 6px -2px rgba(16, 24, 40, 0.03), 0px 12px 16px -4px rgba(16, 24, 40, 0.08)"
+                              borderRadius="8px"
+                           >
+                              <Box p="12px">
+                                 <Text fontSize="14px" color="#1F2937">
+                                    {cat.description}
+                                 </Text>
+                              </Box>
+                           </PopoverContent>
+                        </Popover>
                      </Tab>
                   ))}
                </TabList>

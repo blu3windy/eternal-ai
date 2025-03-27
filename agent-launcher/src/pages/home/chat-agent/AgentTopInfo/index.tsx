@@ -176,7 +176,7 @@ const AgentTopInfo = () => {
                <Flex gap={"6px"} justifyContent={"space-between"} alignItems={"center"}>
                   <Flex gap={"6px"} alignItems={"center"} className={s.content}>
                      <InfoTooltip
-                        iconSize="sm"
+                        iconSize="20px"
                         label={
                            <Flex direction={"column"} p={"8px"}>
                               <Flex direction={"column"} gap={"8px"}>
@@ -359,8 +359,8 @@ const AgentTopInfo = () => {
                      </Text>
                      <Divider
                         orientation={"vertical"}
-                        borderColor={"#FFFFFF1A"}
-                        h={"32px"}
+                        borderColor={"#0000001F"}
+                        h={"28px"}
                         m={"auto 0"}
                      />
                      <Text className={s.text}>
