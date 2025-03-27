@@ -10,33 +10,33 @@ export enum ETradePlatform {
 
 export interface IAgentContext {
   loading: boolean;
-  selectedAgent?: IAgentToken & any;
-  setSelectedAgent: any;
-  installAgent: any;
-  startAgent: any;
-  stopAgent: any;
+  selectedAgent: IAgentToken | undefined;
+  setSelectedAgent: (agent: IAgentToken) => void;
+  installAgent: (agent: IAgentToken) => void;
+  startAgent: (agent: IAgentToken, needUpdateCode?: boolean) => void;
+  stopAgent: (agent: IAgentToken) => void;
   isInstalling: boolean;
   isStarting: boolean;
   isStopping: boolean;
-  runningAgents: number[];
+  runningAgents: IAgentToken[];
   isTrade: boolean;
-  setIsTrade: (v: any) => void;
-  agentWallet?: Wallet;
-  setAgentWallet: (v: any) => void;
+  setIsTrade: (value: boolean) => void;
+  agentWallet: Wallet | undefined;
+  setAgentWallet: (wallet: Wallet) => void;
   isRunning: boolean;
   tradePlatform: ETradePlatform;
   coinPrices: any[];
-  createAgentWallet: any;
+  createAgentWallet: (agent: IAgentToken) => void;
   isInstalled: boolean;
   installedUtilityAgents: string[];
   isCanChat: boolean;
   isBackupedPrvKey: boolean;
-  setIsBackupedPrvKey: any;
+  setIsBackupedPrvKey: (value: boolean) => void;
   requireInstall: boolean;
   isModelRequirementSetup: boolean;
   installedModelAgents: IAgentToken[];
   availableModelAgents: IAgentToken[];
-  unInstallAgent: any;
+  unInstallAgent: (agent: IAgentToken) => void;
   isUnInstalling: boolean;
   installedSocialAgents: number[];
   isCustomUI: boolean;
@@ -51,11 +51,16 @@ export interface IAgentContext {
     isInstalled: boolean;
     customUIPort?: string;
   }>;
-  liveViewUrl?: string;
+  liveViewUrl: string;
   isSearchMode: boolean;
   setIsSearchMode: (value: boolean) => void;
   category: CategoryOption;
-  setCategory: (category: CategoryOption) => void;
+  setCategory: (value: CategoryOption) => void;
+  installedAgentIds: {
+    utility: number[];
+    model: number[];
+    social: number[];
+  };
   getDependAgents: any;
   currentActiveModel: {
     agent: IAgentToken | undefined,

@@ -60,6 +60,11 @@ const initialValue: IAgentContext = {
    setCategory: () => {},
    getDependAgents: () => {},
    currentActiveModel: { agent: undefined, dependAgents: []},
+   installedAgentIds: {
+      utility: [],
+      model: [],
+      social: []
+   },
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -85,6 +90,7 @@ const AgentProvider: React.FC<
    const [liveViewUrl, setLiveViewUrl] = useState<string>('');
    const [isSearchMode, setIsSearchMode] = useState(false);
    const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
+   const [installedUtilityAgentIds, setInstalledUtilityAgentIds] = useState<number[]>([]);
 
    const [agentStates, setAgentStates] = useState<Record<number, {
       data: IAgentToken;
@@ -172,6 +178,53 @@ const AgentProvider: React.FC<
 
       return false;
    }, [selectedAgent, agentStates]);
+
+   useEffect(() => {
+      const fetchUtilityAgentIds = async () => {
+         try {
+            const utilityParams: any = {
+               page: 1,
+               limit: 100,
+               sort_col: SortOption.CreatedAt,
+               agent_types: [
+                  AgentType.UtilityJS, 
+                  AgentType.UtilityPython, 
+                  AgentType.Infra, 
+                  AgentType.CustomUI, 
+                  AgentType.CustomPrompt
+               ].join(','),
+               chain: '',
+               installed: true
+            };
+            const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
+
+            const utilityAgentIds = installedUtilityAgents.map(folderName => {
+               const [networkId, ...agentNameParts] = folderName.split('-');
+               const agentName = agentNameParts.join('-');
+               const agent = utilityAgents.find(a => 
+                  a.network_id.toString() === networkId 
+                  && a.agent_name?.toLowerCase() === agentName?.toLowerCase()
+               );
+               return agent?.id;
+            }).filter(Boolean) as number[];
+
+            setInstalledUtilityAgentIds(utilityAgentIds);
+         } catch (err) {
+            console.log("fetchUtilityAgentIds error:", err);
+            setInstalledUtilityAgentIds([]);
+         }
+      };
+
+      fetchUtilityAgentIds();
+   }, [installedUtilityAgents]);
+
+   const installedAgentIds = useMemo(() => {
+      return {
+         utility: installedUtilityAgentIds,
+         model: installedModelAgents.map(agent => agent.id),
+         social: installedSocialAgents
+      };
+   }, [installedUtilityAgentIds, installedModelAgents, installedSocialAgents]);
 
    const customUIPort = useMemo(() => {
       if (selectedAgent) {
@@ -1209,7 +1262,8 @@ const AgentProvider: React.FC<
          setIsSearchMode,
          category,
          setCategory,
-         currentActiveModel
+         currentActiveModel,
+         installedAgentIds,
       };
    }, [
       loading,
@@ -1249,6 +1303,7 @@ const AgentProvider: React.FC<
       category,
       setCategory,
       currentActiveModel,
+      installedAgentIds,
    ]);
 
    return (
