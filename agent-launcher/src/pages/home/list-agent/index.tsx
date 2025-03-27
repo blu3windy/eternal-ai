@@ -43,6 +43,7 @@ import {
    SortOption
 } from './constants';
 import s from './styles.module.scss';
+import InfoTooltip from '@components/InfoTooltip/index.tsx';
 
 
 const AgentsList = () => {
@@ -250,6 +251,11 @@ const AgentsList = () => {
                         key={cat.id}
                      >
                         <Text>{cat.name}</Text>
+                        <InfoTooltip
+                           iconSize="16px"
+                           label={cat.description}
+                           placement="bottom"
+                        />
                      </Tab>
                   ))}
                </TabList>

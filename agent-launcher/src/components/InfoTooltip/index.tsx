@@ -35,7 +35,8 @@ const InfoTooltip = (props: InfoTooltipProps) => {
       setIsOpen,
       isStyleConfig = true,
       placement,
-      iconColor
+      iconColor,
+      iconSize = "20px",
    } = props;
    const { isOpen, onToggle, onClose, onOpen } = useDisclosure();
 
@@ -84,6 +85,8 @@ const InfoTooltip = (props: InfoTooltipProps) => {
                }}
                onMouseEnter={onOpen}
                cursor={"pointer"}
+               width={iconSize}
+               height={iconSize}
             >
                {renderChild()}
             </Box>
