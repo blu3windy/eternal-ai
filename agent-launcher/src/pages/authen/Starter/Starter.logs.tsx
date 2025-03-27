@@ -16,11 +16,24 @@ const StarterLogs = () => {
       keys: ["name", "message", "error", "step"]
    });
 
+   // Deduplicate logs using useMemo
+   const uniqueLogs = useMemo(() => {
+      const seen = new Set();
+      return parsedLogs.filter(log => {
+         const logKey = `${log.values.message}${log.values.error}${log.values.step}`;
+         if (seen.has(logKey)) return false;
+         seen.add(logKey);
+         return true;
+      });
+   }, [parsedLogs]);
+
    useEffect(() => {
       if (scrollRef.current && !userScrolled) {
          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-   }, [parsedLogs]);
+   }, [
+      JSON.stringify(uniqueLogs)
+   ]);
 
    const handleScroll = (e: any) => {
       const element = e.currentTarget;
@@ -66,7 +79,7 @@ const StarterLogs = () => {
          // boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
       >
          {/* Top gradient */}
-         {parsedLogs?.length > 1 && (
+         {uniqueLogs?.length > 1 && (
             <Box
                position="absolute"
                top={0}
@@ -105,9 +118,9 @@ const StarterLogs = () => {
             }}
             onScroll={handleScroll}
          >
-            {parsedLogs.map((log, index) => (
+            {uniqueLogs.map((log, index) => (
                <motion.div
-                  key={index}
+                  key={`${log.values.message}${log.values.error}${log.values.step}-${index}`}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}

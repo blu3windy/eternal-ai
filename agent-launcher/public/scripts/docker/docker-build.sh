@@ -1,6 +1,4 @@
 #!/bin/bash
-
-set -x 
 export PATH="/opt/homebrew/bin/:$PATH"
 export PATH="$HOME/homebrew/bin:$PATH"
 export PATH="/usr/local/bin:$PATH"
@@ -49,7 +47,6 @@ fi
 
 if [ ${#DOCKER_CONTAINERS[@]} -eq 0 ]; then
     DOCKER_CONTAINERS=(
-        "agent-js:agent-js:"
         "agent-router:agent-router:33030"
     )
 fi
@@ -124,7 +121,6 @@ if [ "$build_success" = true ]; then
     log_message "All containers ready"
     
     # Show running containers status
-    log_message "Container Status:"
     for container in "${running_containers[@]}"; do
         IFS=':' read -r name port <<< "$container"
         if [ "$port" = "none" ]; then
