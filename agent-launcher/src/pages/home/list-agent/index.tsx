@@ -310,59 +310,14 @@ const AgentsList = () => {
 
    const renderSearch = () => {
       return (
-         <Flex
-            flex={1}
-            position="relative"
-            className={s.searchInput}
-            onClick={() => refInput?.current?.focus()}
-         >
-            <Image
-               ml={'16px'}
-               width="20px"
-               src="icons/ic-search.svg"
-               onClick={() => refInput?.current?.focus()}
-            />
-            <input
-               placeholder={'Search agents'}
-               ref={refInput as any}
-               autoFocus={false}
-               // autoFocus
-               onFocus={() => {
-                  if (category === CategoryOption.All) {
-                     setCategory(CategoryOption.Utility);
-                     // refParams.current.category = category;
-                  }
-                  
-                  setIsSearchMode(true);
-                  // debounceGetTokens(true);
-               }}
-               // onBlur={() => {
-               //    // Delay hiding search mode to allow clicking category
-               //    setTimeout(() => {
-               //       if (!refParams.current.search) {
-               //          setIsSearchMode(false);
-               //       }
-               //    }, 200);
-               // }}
-               onChange={(event) => {
-                  onSearch(event.target.value);
-               }}
-            />
-            <Flex
-               cursor="pointer"
-               position="absolute"
-               top="0"
-               bottom="0"
-               right="16px"
-               marginTop="auto"
-               marginBottom="auto"
-               justifyContent="center"
-               alignItems="center"
-            >
-               {isSearchMode && (
-                  <Image
-                     width="20px"
-                     src="icons/ic_search_close.svg"
+         <Flex flex={1} gap={'24px'} alignItems={'center'}>
+            {
+               isSearchMode && (
+                  <Image 
+                     src="icons/ic-arrow-left.svg" 
+                     w="16px" 
+                     h="16px" 
+                     cursor={'pointer'}
                      onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -372,16 +327,88 @@ const AgentsList = () => {
                            refParams.current = {
                               ...refParams.current,
                               search: '',
-                              // category: CategoryOption.All,
                            };
                            setCategory(CategoryOption.All);
-                  
+               
                            setIsSearchMode(false);
-                           // debounceGetTokens(true);
                         }
                      }}
                   />
-               )}
+               )
+            }
+            <Flex
+               flex={1}
+               position="relative"
+               className={s.searchInput}
+               onClick={() => refInput?.current?.focus()}
+            >
+               <Image
+                  ml={'16px'}
+                  width="20px"
+                  src="icons/ic-search.svg"
+                  onClick={() => refInput?.current?.focus()}
+               />
+               <input
+                  placeholder={'Search agents'}
+                  ref={refInput as any}
+                  autoFocus={false}
+                  // autoFocus
+                  onFocus={() => {
+                     if (category === CategoryOption.All) {
+                        setCategory(CategoryOption.Utility);
+                     // refParams.current.category = category;
+                     }
+                  
+                     setIsSearchMode(true);
+                  // debounceGetTokens(true);
+                  }}
+                  // onBlur={() => {
+                  //    // Delay hiding search mode to allow clicking category
+                  //    setTimeout(() => {
+                  //       if (!refParams.current.search) {
+                  //          setIsSearchMode(false);
+                  //       }
+                  //    }, 200);
+                  // }}
+                  onChange={(event) => {
+                     onSearch(event.target.value);
+                  }}
+               />
+               <Flex
+                  cursor="pointer"
+                  position="absolute"
+                  top="0"
+                  bottom="0"
+                  right="16px"
+                  marginTop="auto"
+                  marginBottom="auto"
+                  justifyContent="center"
+                  alignItems="center"
+               >
+                  {isSearchMode && (
+                     <Image
+                        width="20px"
+                        src="icons/ic_search_close.svg"
+                        onClick={(e) => {
+                           e.preventDefault();
+                           e.stopPropagation();
+                           if (refInput?.current) {
+                              refInput.current.value = '';
+                              // refInput.current.blur();
+                              refParams.current = {
+                                 ...refParams.current,
+                                 search: '',
+                              // category: CategoryOption.All,
+                              };
+                              // setCategory(CategoryOption.All);
+                  
+                              // setIsSearchMode(false);
+                              debounceGetTokens(true);
+                           }
+                        }}
+                     />
+                  )}
+               </Flex>
             </Flex>
          </Flex>
       );

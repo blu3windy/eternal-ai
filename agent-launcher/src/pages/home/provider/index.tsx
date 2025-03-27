@@ -530,7 +530,7 @@ const AgentProvider: React.FC<
             });
          }
 
-         await sleep(2000);
+         // await sleep(2000);
       } catch (e) {
          console.log('startAgent e', e);
 
@@ -546,7 +546,7 @@ const AgentProvider: React.FC<
                data: agent,
                isStarting: false,
             });
-         }, 1000);
+         }, 2000);
          
          throttledCheckAll();
       }
@@ -568,7 +568,7 @@ const AgentProvider: React.FC<
 
          }
 
-         await sleep(2000);
+         // await sleep(2000);
       } catch (e) {
          console.log('stopAgent e', e);
       } finally {
@@ -577,7 +577,7 @@ const AgentProvider: React.FC<
                data: agent,
                isStopping: false,
             });
-         }, 1000);
+         }, 2000);
          throttledCheckAll();
       }
    };
@@ -636,7 +636,7 @@ const AgentProvider: React.FC<
                data: agent,
                isUnInstalling: false,
             });
-         }, 1000);
+         }, 2000);
          
          throttledCheckAll();
       }

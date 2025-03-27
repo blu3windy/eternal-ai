@@ -62,7 +62,8 @@ interface DockerMemory {
 
 interface ContainerData {
    name: string;
-   containerId: string;
+   containerId?: string;
+   imageId: string;
    image: string;
    ports: string;
    cpu: string;
@@ -74,11 +75,19 @@ interface ContainerData {
    agentType?: string;
 }
 
+interface ContainerActionState {
+   isLoading: boolean;
+   isDeleting: boolean;
+}
+
+type StateActions = Record<string, ContainerActionState>;
+
 const AgentMonitor: React.FC = () => {
    const { isOpen, onToggle, onClose } = useDisclosure();
    const [searchTerm, setSearchTerm] = useState('');
    const [showRunningOnly, setShowRunningOnly] = useState(false);
    const [deleteAgent, setDeleteAgent] = useState<IAgentToken | undefined>();
+   const [deleteContainer, setDeleteConntainer] = useState<ContainerData | undefined>();
 
    const [currentActiveModel, setCurrentActiveModel] = useState<{
       agent: IAgentToken | undefined,
@@ -90,6 +99,8 @@ const AgentMonitor: React.FC = () => {
    const intervalRef = useRef<NodeJS.Timeout>();
    const cPumpAPI = new CAgentTokenAPI();
    const [agents, setAgents] = useState<any[]>([]);
+   const [stateActions, setStateActions] = useState<StateActions>({});
+
    const { agentStates, startAgent, stopAgent, unInstallAgent  } = useContext(AgentContext);
    
    const onGetCurrentModel = async () => {
@@ -131,6 +142,52 @@ const AgentMonitor: React.FC = () => {
          return `${(numericValue / 1024).toFixed(2)}GB`;
       }
       return `${numericValue.toFixed(2)}MB`;
+   };
+
+   const handleStopContainer = async (container: ContainerData) => {
+      try {
+         setStateActions(prev => ({ ...prev, [container.name]: { ...prev[container.name], isLoading: true } }));
+         if (container?.containerId) {
+            await globalThis.electronAPI.dockerStopContainer(container?.containerId);
+         }
+      } catch (error) {
+         console.error('Error stopping container:', error);
+      } finally {
+         setTimeout(() => {
+            setStateActions(prev => ({ ...prev, [container.name]: { ...prev[container.name], isLoading: false } }));
+         }, 5000);
+      }
+   };
+
+   const handleStartContainer = async (container: ContainerData) => {
+      try {
+         setStateActions(prev => ({ ...prev, [container.name]: { ...prev[container.name], isLoading: true } }));
+         if (container?.containerId) {
+            await globalThis.electronAPI.dockerStartContainer(container?.containerId);
+         }
+      } catch (error) {
+         console.error('Error stopping container:', error);
+      } finally {
+         setTimeout(() => {
+            setStateActions(prev => ({ ...prev, [container.name]: { ...prev[container.name], isLoading: false } }));
+         }, 5000);
+      }
+   };
+
+   const handleDeleteContainer = async (container: ContainerData) => {
+      try {
+         setStateActions(prev => ({ ...prev, [container.name]: { ...prev[container.name], isDeleting: true } }));
+          if (container?.containerId) {
+            await globalThis.electronAPI.dockerDeleteContainer(container?.containerId);
+         }
+         
+      } catch (error) {
+         console.error('Error deleting container:', error);
+      } finally {
+         setTimeout(() => {
+            setStateActions(prev => ({ ...prev, [container.name]: { ...prev[container.name], isDeleting: false } }));
+         }, 5000);
+      }
    };
 
    const onGetData = async () => {
@@ -252,10 +309,12 @@ const AgentMonitor: React.FC = () => {
    };
 
    useEffect(() => {
-      // Initial fetch
-      onGetData();
-      // Set up the interval
-      intervalRef.current = setInterval(onGetData, 5000);
+      if (isOpen) {
+         // Initial fetch
+         onGetData();
+         // Set up the interval
+         intervalRef.current = setInterval(onGetData, 5000);
+      }
       // Cleanup function
       return () => {
          if (intervalRef.current) {
@@ -379,8 +438,9 @@ const AgentMonitor: React.FC = () => {
                                  <Td color="white">{container.lastStarted}</Td>
                                  <Td>
                                     <Flex gap="2">
-                                       {!!container.agent && 
-                                       !(compareString(container.agent?.agent_name, currentActiveModel?.agent?.agent_name) || currentActiveModel?.dependAgents?.find((address) => compareString(address, container?.agent?.agent_contract_address))) 
+                                       {!(compareString(container.agent?.agent_name, currentActiveModel?.agent?.agent_name) || 
+                                       currentActiveModel?.dependAgents?.find((address) => compareString(address, container?.agent?.agent_contract_address)) ||
+                                       compareString(container.name, 'agent-router')) 
                                        ? (
                                          <>
                                            <Tooltip 
@@ -397,12 +457,12 @@ const AgentMonitor: React.FC = () => {
                                                  variant="ghost"
                                                  color="white"
                                                  _hover={{ bg: 'whiteAlpha.200' }}
-                                                 isLoading={(agentStates[container.agent?.id]?.isStarting || agentStates[container.agent?.id]?.isStopping) ?? false}
+                                                 isLoading={container?.agent ? (agentStates[container?.agent?.id]?.isStarting || agentStates[container?.agent?.id]?.isStopping) : stateActions[container.name]?.isLoading ?? false}
                                                  onClick={ () => {
                                                    if (container.state === 'running') {
-                                                      stopAgent(container.agent);
+                                                      container.agent ? stopAgent(container.agent) : handleStopContainer(container);
                                                    } else {
-                                                      startAgent(container.agent);
+                                                      container.agent ? startAgent(container.agent) : handleStartContainer(container);
                                                    }
                                                  }}
                                               />
@@ -421,9 +481,9 @@ const AgentMonitor: React.FC = () => {
                                                  variant="ghost"
                                                  color="white"
                                                  _hover={{ bg: 'whiteAlpha.200' }}
-                                                 isLoading={agentStates[container.agent?.id]?.isUnInstalling ?? false}
+                                                 isLoading={container?.agent ? agentStates[container.agent?.id]?.isUnInstalling : stateActions[container.name]?.isDeleting ?? false}
                                                  onClick={() => {
-                                                   setDeleteAgent(container.agent);
+                                                   container.agent ? setDeleteAgent(container.agent) : setDeleteConntainer(container);
                                                  }}
                                               />
                                            </Tooltip>
@@ -432,7 +492,7 @@ const AgentMonitor: React.FC = () => {
                                        :
                                        (
                                           <Tooltip 
-                                              label={'This is the system needed to operate.'}
+                                              label={'This agent is required for the system to work properly. You can’t remove it.'}
                                               hasArrow
                                               placement="top"
                                               bg="gray.700"
@@ -458,12 +518,24 @@ const AgentMonitor: React.FC = () => {
                </Box>
             </PopoverBody>
          </PopoverContent>
-         <DeleteAgentModal agentName={deleteAgent?.agent_name || ''} isOpen={!!deleteAgent} onClose={() => setDeleteAgent(undefined)} onDelete={() => {
-            if (deleteAgent) {
-               unInstallAgent(deleteAgent);
+         <DeleteAgentModal 
+            agentName={deleteAgent?.agent_name || deleteContainer?.name || ''} 
+            isOpen={!!deleteAgent || !!deleteContainer} 
+            onClose={() => {
                setDeleteAgent(undefined);
-            }
-         }} />
+               setDeleteConntainer(undefined);
+            }} 
+            onDelete={() => {
+               if (deleteAgent) {
+                  unInstallAgent(deleteAgent);
+                  setDeleteAgent(undefined);
+               }
+               if (deleteContainer) {
+                  handleDeleteContainer(deleteContainer);
+                  setDeleteConntainer(undefined);
+               }
+            }}
+         />
       </Popover>
    );
 };
