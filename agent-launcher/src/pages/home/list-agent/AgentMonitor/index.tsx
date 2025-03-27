@@ -374,7 +374,7 @@ const AgentMonitor: React.FC = () => {
                   </Box>
                </Flex>
 
-               <Box className={s.statsCard} maxH="500px" overflowY="auto">
+               <Box className={s.statsCard} minH={'300px'} maxH="500px" overflowY="auto">
                   <Flex justify="space-between" align="center" mb="4">
                      <Input
                         placeholder="Search agent"
