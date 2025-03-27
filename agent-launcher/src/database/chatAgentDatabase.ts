@@ -90,8 +90,8 @@ class ChatAgentDatabase {
       try {
          await this.db?.messages.update(updatedItem.id, {
             ...updatedItem,
-            createdAt: updatedItem.createdAt
-               ? new Date(updatedItem.createdAt).getTime()
+            updatedAt: updatedItem.updatedAt
+               ? new Date(updatedItem.updatedAt).getTime()
                : new Date().getTime(),
          });
          return updatedItem;
