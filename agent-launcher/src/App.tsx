@@ -4,6 +4,7 @@ import ROUTERS from "./constants/route-path";
 import { AuthProvider } from "./pages/authen/provider.tsx";
 import Home from "./pages/home";
 import Mine from "./pages/mine";
+import { Version } from "@components/Version";
 
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
@@ -24,6 +25,7 @@ function App() {
                   </Routes>
                </Router>
             </AuthProvider>
+            <Version />
          </PersistGate>
       </Provider>
    );

@@ -89,4 +89,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
    storeClear: () => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_CLEAR),
 
    osContext: () => ipcRenderer.invoke(EMIT_EVENT_NAME.OS_CONTEXT),
+   getVersion: () => ipcRenderer.invoke(EMIT_EVENT_NAME.GET_VERSION),
 });

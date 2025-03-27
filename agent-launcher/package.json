@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@chakra-ui/react": "2",
+    "@electron/notarize": "^3.0.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@enzoferey/ethers-error-parser": "^0.2.3",
@@ -114,7 +115,7 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "https://electron-update-server-production.up.railway.app/updates/"
+        "url": "https://github.com/0x0603/electron-update-server/releases/download/0.0.5"
       }
     ],
     "files": [
@@ -127,14 +128,17 @@
       "output": "release/${version}"
     },
     "mac": {
+      "identity": null,
       "icon": "public/icons/app-logo.png",
       "artifactName": "${productName}-Mac-${version}.${ext}",
-      "target": ["mas"],
-      "type": "distribution",
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "hardenedRuntime": true,
+      "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
-      "provisioningProfile": "build/vibeApps.provisionprofile"
+      "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "extraResources": [
       {

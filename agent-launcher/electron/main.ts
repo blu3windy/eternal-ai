@@ -1,88 +1,97 @@
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow, screen, dialog } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 import command from "./share/command-tool.ts";
 
+// Disable code signing verification in development
 if (process.env.NODE_ENV === "development") {
+   process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false";
+   process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
    autoUpdater.autoDownload = false;
    autoUpdater.allowDowngrade = true;
-   autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
+   autoUpdater.forceDevUpdateConfig = true;
+   autoUpdater.logger = console;
+   console.log("🔧 Development mode: Auto-update settings configured");
 }
 
+// Configure update URL
 autoUpdater.setFeedURL({
    provider: "generic",
-   url: "https://electron-update-server-production.up.railway.app/updates/",
+   url: "https://github.com/0x0603/electron-update-server/releases/download/0.0.5",
+});
+console.log("📡 Update URL configured");
+
+// Update event handlers
+autoUpdater.on("checking-for-update", () => {
+   console.log("🔍 Checking for updates...");
+   dialog.showMessageBox({
+      type: "info",
+      title: "Update Check",
+      message: "Checking for updates...",
+   });
 });
 
-// autoUpdater.on("update-available", (info) => {
-//   dialog
-//     .showMessageBox({
-//       type: "info",
-//       title: "Update Available",
-//       message: `A new version (v${info.version}) is available. Download now?`,
-//       buttons: ["Update", "Later"],
-//     })
-//     .then(({ response }) => {
-//       if (response === 0) {
-//         // User clicked "Update"
-//         autoUpdater.downloadUpdate().catch((err) => {
-//           console.error("Download failed:", err);
-//           dialog.showMessageBox({
-//             type: "info",
-//             title: "Update Ready",
-//             message: `Download failed: ${JSON.stringify(err)}`,
-//           });
-//         });
-//       }
-//     });
-// });
+autoUpdater.on("update-available", (info) => {
+   console.log("✨ Update available:", info);
+   dialog.showMessageBox({
+      type: "info",
+      title: "Update Available",
+      message: `Version ${info.version} is available. Download now?`,
+      buttons: ["Update", "Later"],
+   }).then(({ response }) => {
+      if (response === 0) {
+         console.log("📥 Starting update download...");
+         autoUpdater.downloadUpdate();
+      }
+   });
+});
 
-// autoUpdater.on("update-not-available", () => {
-//   dialog.showMessageBox({
-//     message: "No update available.",
-//   });
-// });
+autoUpdater.on("update-not-available", (info) => {
+   console.log("✅ No updates available:", info);
+   dialog.showMessageBox({
+      type: "info",
+      title: "No Updates",
+      message: "You're running the latest version.",
+   });
+});
 
-// autoUpdater.on("error", (err) => {
-//   console.error("Update error:", err);
-// });
+autoUpdater.on("download-progress", (progress) => {
+   const percentage = Math.round(progress.percent);
+   console.log(`📊 Download progress: ${percentage}%`);
+   dialog.showMessageBox({
+      type: "info",
+      title: "Download Progress",
+      message: `Downloading... ${percentage}%\n${(progress.transferred / 1024 / 1024).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB`,
+   });
+});
 
-// 🔹 Event: When update is downloaded
-// autoUpdater.on("update-downloaded", (info) => {
-//   console.log(`Update downloaded: v${info.version}`);
-//   dialog
-//     .showMessageBox({
-//       type: "info",
-//       title: "Update Ready",
-//       message: `Version ${info.version} is downloaded. Restart to apply?`,
-//       buttons: ["Restart", "Later"],
-//     })
-//     .then(({ response }) => {
-//       if (response === 0) {
-//         // User clicked "Restart"
-//         // Delay to ensure update applies correctly
-//         setTimeout(() => {
-//           autoUpdater.quitAndInstall();
-//         }, 3000);
-//       }
-//     });
-// });
+autoUpdater.on("update-downloaded", (info) => {
+   console.log("🎉 Update downloaded:", info);
+   dialog.showMessageBox({
+      type: "info",
+      title: "Update Ready",
+      message: `Version ${info.version} is downloaded. Restart to apply?`,
+      buttons: ["Restart", "Later"],
+   }).then(({ response }) => {
+      if (response === 0) {
+         console.log("🔄 Restarting application...");
+         setTimeout(() => {
+            autoUpdater.quitAndInstall();
+         }, 3000);
+      }
+   });
+});
 
-// // 🔹 Track download progress
-// autoUpdater.on("download-progress", (progress) => {
-// //   let percentage = Math.round(progress.percent);
-//   //   dialog.showMessageBox({
-//   //     type: "info",
-//   //     title: "Processing",
-//   //     message: `Downloading... ${percentage}% (${(
-//   //       progress.transferred /
-//   //       1024 /
-//   //       1024
-//   //     ).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB)`,
-//   //   });
-// });
+autoUpdater.on("error", (err) => {
+   console.error("❌ Update error:", err);
+   dialog.showMessageBox({
+      type: "error",
+      title: "Update Error",
+      message: `Error: ${err.message}`,
+   });
+});
 
 // const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -114,9 +123,16 @@ runIpcMain();
 function createWindow() {
    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
+   // Check for updates after 5 seconds
    setTimeout(() => {
+      console.log("🔄 Initiating update check...");
       autoUpdater.checkForUpdates().catch((err) => {
-         console.error("Update check failed:", err);
+         console.error("❌ Update check failed:", err);
+         dialog.showMessageBox({
+            type: "error",
+            title: "Update Check Failed",
+            message: `Failed to check for updates: ${err.message}`,
+         });
       });
    }, 5000);
    win = new BrowserWindow({

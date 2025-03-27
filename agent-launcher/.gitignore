@@ -26,3 +26,7 @@ release/*
 *.sw?
 
 **/data/requests/
+
+certificate.p12
+certificate.pem
+private.key
