@@ -3,13 +3,13 @@ import styles from "./styles.module.scss";
 
 const DeleteAgentModal = ({ agentName, isOpen, onClose, onDelete }: any) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
+    <Modal isOpen={isOpen} onClose={onClose} isCentered autoFocus={false}>
       <ModalOverlay />
       <ModalContent className={styles.modalContent}>
         <ModalHeader>Delete {agentName}</ModalHeader>
         <ModalCloseButton />
         <ModalBody mt={'-12px'} mb={'8px'}>
-          <Text>Are you sure you want to delete this agent? This action cannot be undone.</Text>
+          <Text>Deleting this agent will remove all your chats and interactions with it.</Text>
         </ModalBody>
         <ModalFooter>
           <Button onClick={onClose} className={styles.cancelButton}>

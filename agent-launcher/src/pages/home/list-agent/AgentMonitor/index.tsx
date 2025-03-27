@@ -224,7 +224,7 @@ const AgentMonitor: React.FC = () => {
             .filter(container => {
                const matchesSearch = container.name.toLowerCase().includes(searchTerm.toLowerCase());
                const matchesRunning = !showRunningOnly || container.state === 'running';
-               return matchesSearch && matchesRunning;
+               return matchesSearch && matchesRunning && (container?.agent || container?.name === 'agent-router');
             })
             .sort((a, b) => {
                // Sort running containers first
@@ -432,7 +432,7 @@ const AgentMonitor: React.FC = () => {
                                        :
                                        (
                                           <Tooltip 
-                                              label={'This is the system needed to operate.'}
+                                              label={'This agent is required for the system to work properly. You can’t remove it.'}
                                               hasArrow
                                               placement="top"
                                               bg="gray.700"
