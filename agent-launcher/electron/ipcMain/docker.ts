@@ -252,6 +252,34 @@ const ipcMainDocker = () => {
       }
    });
 
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_DELETE_IMAGE, async (_event, agentName: string, chainId: string, type: CodeLanguage) => {
+      try {
+         let dnsHost = getDnsHost(chainId, agentName);
+         let imageName = '';
+         switch (type) {
+         case 'custom-prompt':
+            imageName = `${DOCKER_NAME}-cp-${dnsHost}`;
+            break;
+         case 'custom-ui':
+            imageName = `${DOCKER_NAME}-cu-${dnsHost}`;
+            break;
+         case 'open-ai':
+            imageName = `${DOCKER_NAME}-oai-${dnsHost}`;
+            break;
+         default:
+            imageName = DOCKER_SERVER_JS;
+         }
+         
+         const params = [
+            `--container-id "${imageName}"`,
+         ]
+         const paramsStr = params.join(' ');
+         await command.execAsyncStream(`bash "${actionScriptPath}" remove_image_name ${paramsStr}`);
+      } catch (error) {
+         return undefined;
+      }
+   });
+
    ipcMain.handle(EMIT_EVENT_NAME.COPY_REQUIRE_RUN_PYTHON, async (_, folderName) => {
       await copyPublicToUserData({
          names: ["Dockerfile", "requirements.txt", "server.py"],

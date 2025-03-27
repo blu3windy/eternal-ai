@@ -19,11 +19,17 @@ import {
    IconButton,
    Tooltip,
 } from '@chakra-ui/react';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import s from './styles.module.scss';
 import { compareString } from '@utils/string';
 import CAgentTokenAPI from '@services/api/agents-token';
 import { AgentType } from '../constants';
+import { AgentContext } from '@pages/home/provider';
+import { IAgentToken } from '@services/api/agents-token/interface';
+import storageModel from '@storage/StorageModel';
+import { BASE_CHAIN_ID } from '@constants/chains';
+import CAgentContract from '@contract/agent';
+import DeleteAgentModal from './DeleteAgentModal';
 
 interface DockerContainer {
    Command: string;
@@ -64,28 +70,49 @@ interface ContainerData {
    memoryUsage?: string;
    memoryPercentage?: string;
    state?: string;
-   agentName?: string;
+   agent?: IAgentToken;
    agentType?: string;
 }
-
-interface ContainerActionState {
-   isLoading: boolean;
-   isDeleting: boolean;
-}
-
-type StateActions = Record<string, ContainerActionState>;
 
 const AgentMonitor: React.FC = () => {
    const { isOpen, onToggle, onClose } = useDisclosure();
    const [searchTerm, setSearchTerm] = useState('');
    const [showRunningOnly, setShowRunningOnly] = useState(false);
+   const [deleteAgent, setDeleteAgent] = useState<IAgentToken | undefined>();
+
+   const [currentActiveModel, setCurrentActiveModel] = useState<{
+      agent: IAgentToken | undefined,
+      dependAgents: string[];
+   }>();
    const [containers, setContainers] = useState<ContainerData[]>([]);
    const [totalMemory, setTotalMemory] = useState({ used: '0MB', total: '0GB' });
    const [totalCPU, setTotalCPU] = useState({ used: '0%', total: '800%' });
    const intervalRef = useRef<NodeJS.Timeout>();
    const cPumpAPI = new CAgentTokenAPI();
    const [agents, setAgents] = useState<any[]>([]);
-   const [stateActions, setStateActions] = useState<StateActions>({});
+   const { agentStates, startAgent, stopAgent, unInstallAgent  } = useContext(AgentContext);
+   
+   const onGetCurrentModel = async () => {
+      try {
+         const model = await storageModel.getActiveModel();
+         if (model?.agent_type === AgentType.ModelOnline) {
+            setCurrentActiveModel({
+               agent: model,
+               dependAgents: [],
+            });
+            const chainId = model?.network_id || BASE_CHAIN_ID;
+            const cAgent = new CAgentContract({ contractAddress: model.agent_contract_address, chainId: chainId });
+            const codeVersion = await cAgent.getCurrentVersion();
+            const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+
+            setCurrentActiveModel({
+               agent: model,
+               dependAgents: depsAgentStrs,
+            });
+         }
+      } catch (error) {
+      }
+   }
 
    const onGetDataAgents = async () => {
       try {
@@ -174,7 +201,7 @@ const AgentMonitor: React.FC = () => {
                   memoryUsage: convertMemoryToGB(memUsage[0]),
                   memoryPercentage: memInfo.MemPerc,
                   state: container.State,
-                  agentName: matchingAgent?.agent_name,
+                  agent: matchingAgent,
                   agentType,
                };
             }
@@ -187,7 +214,7 @@ const AgentMonitor: React.FC = () => {
                cpu: '0%',
                lastStarted: container.RunningFor,
                state: container.State,
-               agentName: matchingAgent?.agent_name,
+               agent: matchingAgent,
                agentType,
             };
          });
@@ -235,55 +262,13 @@ const AgentMonitor: React.FC = () => {
             clearInterval(intervalRef.current);
          }
       };
-   }, [isOpen, searchTerm, showRunningOnly, agents, stateActions]); // Empty dependency array means this effect runs once on mount
+   }, [isOpen, searchTerm, showRunningOnly, agents]); // Empty dependency array means this effect runs once on mount
 
    // Additional effect to handle popover open/close
    useEffect(() => {
-      if (isOpen) {
-         // Fetch data immediately when popover opens
-         onGetData();
-         onGetDataAgents();
-      } else {
-         // Clear interval when popover closes
-         if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = undefined;
-         }
-      }
+      onGetCurrentModel();
+      onGetDataAgents();
    }, [isOpen]);
-
-   const handleStopContainer = async (containerId: string) => {
-      try {
-         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isLoading: true } }));
-         await globalThis.electronAPI.dockerStopContainer(containerId);
-      } catch (error) {
-         console.error('Error stopping container:', error);
-      } finally {
-         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isLoading: false } }));
-      }
-   };
-
-   const handleStartContainer = async (containerId: string) => {
-      try {
-         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isLoading: true } }));
-         await globalThis.electronAPI.dockerStartContainer(containerId);
-      } catch (error) {
-         console.error('Error stopping container:', error);
-      } finally {
-         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isLoading: false } }));
-      }
-   };
-
-   const handleDeleteContainer = async (containerId: string) => {
-      try {
-         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isDeleting: true } }));
-         await globalThis.electronAPI.dockerDeleteContainer(containerId);
-      } catch (error) {
-         console.error('Error deleting container:', error);
-      } finally {
-         setStateActions(prev => ({ ...prev, [containerId]: { ...prev[containerId], isDeleting: false } }));
-      }
-   };
 
    return (
       <Popover
@@ -347,7 +332,7 @@ const AgentMonitor: React.FC = () => {
                            _placeholder={{ color: 'whiteAlpha.600' }}
                         />
                         <Flex align="center" gap="2">
-                           <Text fontSize="sm" color="white">Only show running containers</Text>
+                           <Text fontSize="sm" color="white">Only show running agents</Text>
                            <Switch
                               isChecked={showRunningOnly}
                               onChange={(e) => setShowRunningOnly(e.target.checked)}
@@ -360,7 +345,7 @@ const AgentMonitor: React.FC = () => {
                         <Thead>
                            <Tr>
                               <Th color="whiteAlpha.600">Name</Th>
-                              <Th color="whiteAlpha.600">Agent type</Th>
+                              <Th color="whiteAlpha.600">Type</Th>
                               <Th color="whiteAlpha.600">Container ID</Th>
                               <Th color="whiteAlpha.600">CPU</Th>
                               <Th color="whiteAlpha.600">Memory</Th>
@@ -379,7 +364,7 @@ const AgentMonitor: React.FC = () => {
                                           borderRadius="full"
                                           bg={container.state === 'running' ? '#4ADE80' : 'lightgray'}
                                        />
-                                       <Text color="white">{container.agentName || container.name}</Text>
+                                       <Text color="white">{container.agent?.agent_name || container.name}</Text>
                                     </Flex>
                                  </Td>
                                  <Td>
@@ -394,7 +379,9 @@ const AgentMonitor: React.FC = () => {
                                  <Td color="white">{container.lastStarted}</Td>
                                  <Td>
                                     <Flex gap="2">
-                                       {!(compareString(container.name, 'agent-router') || compareString(container.agentName, 'OpenAI') || compareString(container.agentName, 'Proxy')) && (
+                                       {!!container.agent && 
+                                       !(compareString(container.agent?.agent_name, currentActiveModel?.agent?.agent_name) || currentActiveModel?.dependAgents?.find((address) => compareString(address, container?.agent?.agent_contract_address))) 
+                                       ? (
                                          <>
                                            <Tooltip 
                                               label={container.state === 'running' ? 'Stop' : 'Start'}
@@ -410,12 +397,12 @@ const AgentMonitor: React.FC = () => {
                                                  variant="ghost"
                                                  color="white"
                                                  _hover={{ bg: 'whiteAlpha.200' }}
-                                                 isLoading={stateActions[container.containerId]?.isLoading ?? false}
+                                                 isLoading={(agentStates[container.agent?.id]?.isStarting || agentStates[container.agent?.id]?.isStopping) ?? false}
                                                  onClick={ () => {
                                                    if (container.state === 'running') {
-                                                      handleStopContainer(container.containerId);
+                                                      stopAgent(container.agent);
                                                    } else {
-                                                      handleStartContainer(container.containerId);
+                                                      startAgent(container.agent);
                                                    }
                                                  }}
                                               />
@@ -434,13 +421,32 @@ const AgentMonitor: React.FC = () => {
                                                  variant="ghost"
                                                  color="white"
                                                  _hover={{ bg: 'whiteAlpha.200' }}
-                                                 isLoading={stateActions[container.containerId]?.isDeleting ?? false}
+                                                 isLoading={agentStates[container.agent?.id]?.isUnInstalling ?? false}
                                                  onClick={() => {
-                                                   handleDeleteContainer(container.containerId);
+                                                   setDeleteAgent(container.agent);
                                                  }}
                                               />
                                            </Tooltip>
                                          </>
+                                       )
+                                       :
+                                       (
+                                          <Tooltip 
+                                              label={'This is the system needed to operate.'}
+                                              hasArrow
+                                              placement="top"
+                                              bg="gray.700"
+                                              color="white"
+                                           >
+                                             <IconButton
+                                                aria-label={'container'}
+                                                icon={<Image src={"icons/warning.svg"} w={'16px'} alt={"Warning"} />}
+                                                size="sm"
+                                                variant="ghost"
+                                                color="white"
+                                                _hover={{ bg: 'whiteAlpha.200' }}
+                                             />
+                                          </Tooltip>
                                        )}
                                     </Flex>
                                  </Td>
@@ -452,6 +458,12 @@ const AgentMonitor: React.FC = () => {
                </Box>
             </PopoverBody>
          </PopoverContent>
+         <DeleteAgentModal agentName={deleteAgent?.agent_name || ''} isOpen={!!deleteAgent} onClose={() => setDeleteAgent(undefined)} onDelete={() => {
+            if (deleteAgent) {
+               unInstallAgent(deleteAgent);
+               setDeleteAgent(undefined);
+            }
+         }} />
       </Popover>
    );
 };

@@ -60,6 +60,7 @@ const initialValue: IAgentContext = {
    setIsSearchMode: () => {},
    category: CategoryOption.All,
    setCategory: () => {},
+   getDependAgents: () => {},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -540,10 +541,12 @@ const AgentProvider: React.FC<
             }
          }
       } finally {
-         updateAgentState(agent.id, {
-            data: agent,
-            isStarting: false,
-         });
+         setTimeout(() => {
+            updateAgentState(agent.id, {
+               data: agent,
+               isStarting: false,
+            });
+         }, 1000);
          
          throttledCheckAll();
       }
@@ -569,11 +572,12 @@ const AgentProvider: React.FC<
       } catch (e) {
          console.log('stopAgent e', e);
       } finally {
-         updateAgentState(agent.id, {
-            data: agent,
-            isStopping: false,
-         });
-         
+         setTimeout(() => {
+            updateAgentState(agent.id, {
+               data: agent,
+               isStopping: false,
+            });
+         }, 1000);
          throttledCheckAll();
       }
    };
@@ -621,14 +625,19 @@ const AgentProvider: React.FC<
          } else {
 
          }
+
+         const lang = getUtilityAgentCodeLanguage(agent);
+         await globalThis.electronAPI.dockerDeleteImage(agent.agent_name?.toLowerCase(), agent.network_id?.toString(), lang)
       } catch (e) {
          console.log('unInstallAgent e', e);
       } finally {
-         updateAgentState(agent.id, {
-            data: agent,
-            isUnInstalling: false,
-         });
-
+         setTimeout(() => {
+            updateAgentState(agent.id, {
+               data: agent,
+               isUnInstalling: false,
+            });
+         }, 1000);
+         
          throttledCheckAll();
       }
    }
@@ -1201,6 +1210,7 @@ const AgentProvider: React.FC<
       setIsSearchMode,
       category,
       setCategory,
+      getDependAgents,
    ]);
 
    return (
