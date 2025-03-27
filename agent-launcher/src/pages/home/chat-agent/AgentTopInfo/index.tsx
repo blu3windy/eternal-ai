@@ -116,7 +116,7 @@ const AgentTopInfo = () => {
          const codeVersion = await cAgent.getCurrentVersion();
          const values = await localStorageService.getItem(selectedAgent.agent_contract_address);
          const oldCodeVersion = values ? Number(values) : 1;
-         if (codeVersion > oldCodeVersion) {
+         if (codeVersion > 1 && codeVersion > oldCodeVersion) {
             setHaveNewVersionCode(true);
          }
       }
@@ -283,7 +283,7 @@ const AgentTopInfo = () => {
                                        <Button
                                           className={s.btnStop}
                                           onClick={handleStopAgent}
-                                          isLoading={isStopping}
+                                          isLoading={isStopping && !isClickUpdateCode}
                                           isDisabled={isStopping}
                                           loadingText={"Stopping..."}
                                        >

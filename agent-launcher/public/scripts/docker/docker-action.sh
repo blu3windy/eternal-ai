@@ -5,12 +5,6 @@ export PATH="/usr/local/bin:$PATH"
 
 DEFAULT_PORT=65534
 
-# Check if Docker is installed
-if ! command -v docker &> /dev/null; then
-  echo "Docker is not installed. Please install Docker and try again."
-  exit 1
-fi
-
 # Logging functions
 log_message() {
     local message="$1"
@@ -98,7 +92,6 @@ cd_docker_build_source_path() {
         log_error "Failed to access directory: $DOCKER_BUILD_SOURCE_PATH"
         exit 1
     }
-    log_message "Current working directory: $DOCKER_BUILD_SOURCE_PATH"
 }
 
 run_container_custom_prompt() {
