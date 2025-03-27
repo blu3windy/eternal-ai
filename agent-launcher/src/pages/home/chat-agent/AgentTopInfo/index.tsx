@@ -28,12 +28,15 @@ import AgentTradeProvider from "@pages/home/trade-agent/provider";
 import CAgentTokenAPI from "@services/api/agents-token";
 import localStorageService from "@storage/LocalStorageService";
 import { formatCurrency } from "@utils/format.ts";
-import { addressFormater } from "@utils/string";
+import { addressFormater, compareString } from "@utils/string";
 import cx from 'clsx';
 import { useContext, useEffect, useMemo, useState } from "react";
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import s from "./styles.module.scss";
 import ProcessingTasks from "./ProcessingTasks";
+import { IAgentToken } from "@services/api/agents-token/interface";
+import DeleteAgentModal from "@pages/home/list-agent/AgentMonitor/DeleteAgentModal";
+import storageModel from "@storage/StorageModel";
 
 const AgentTopInfo = () => {
    const {
@@ -50,6 +53,7 @@ const AgentTopInfo = () => {
       isInstalled,
       unInstallAgent,
       isUnInstalling,
+      currentActiveModel,
    } = useContext(AgentContext);
 
    const {
@@ -64,6 +68,7 @@ const AgentTopInfo = () => {
    } = useDisclosure();
 
    const [isLiked, setIsLiked] = useState(false);
+   const [deleteAgent, setDeleteAgent] = useState<IAgentToken | undefined>();
 
    const cAgentTokenAPI = new CAgentTokenAPI();
 
@@ -76,6 +81,12 @@ const AgentTopInfo = () => {
    const color = useMemo(() => {
       return showSetup || (!isCanChat && !showBackupPrvKey) ? 'white' : 'black';
    }, [isCanChat, showBackupPrvKey, showSetup]);
+
+   const deleteAble = useMemo(() => {
+      return !(compareString(selectedAgent?.agent_name, currentActiveModel?.agent?.agent_name) || 
+         currentActiveModel?.dependAgents?.find((address) => compareString(address, selectedAgent?.agent_contract_address)) ||
+         compareString(selectedAgent.agent_name, 'agent-router'))
+   }, [selectedAgent, currentActiveModel]);
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
    const [isClickUpdateCode, setIsClickUpdate] = useState(false);
@@ -92,6 +103,8 @@ const AgentTopInfo = () => {
          checkIsLiked();
       }
    }, [selectedAgent, isRunning])
+
+    
 
    const checkVersionCode = async () => {
       setHaveNewVersionCode(false);
@@ -298,7 +311,8 @@ const AgentTopInfo = () => {
                                  )}
                               {allowStopAgent &&
                                  requireInstall &&
-                                 isInstalled && (
+                                 isInstalled &&
+                                 deleteAble && (
                                     <>
                                        <Divider color={"#E2E4E8"} my={"16px"} />
                                        <Button
@@ -417,6 +431,19 @@ const AgentTopInfo = () => {
                </DrawerBody>
             </DrawerContent>
          </Drawer>
+         <DeleteAgentModal 
+            agentName={deleteAgent?.agent_name} 
+            isOpen={!!deleteAgent} 
+            onClose={() => {
+               setDeleteAgent(undefined);
+            }} 
+            onDelete={() => {
+               if (deleteAgent) {
+                  unInstallAgent(deleteAgent);
+                  setDeleteAgent(undefined);
+               }
+            }}
+         />
       </>
    );
 };

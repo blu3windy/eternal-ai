@@ -57,4 +57,8 @@ export interface IAgentContext {
   category: CategoryOption;
   setCategory: (category: CategoryOption) => void;
   getDependAgents: any;
+  currentActiveModel: {
+    agent: IAgentToken | undefined,
+    dependAgents: string[];
+  };
 }

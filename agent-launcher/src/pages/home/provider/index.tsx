@@ -59,6 +59,7 @@ const initialValue: IAgentContext = {
    category: CategoryOption.All,
    setCategory: () => {},
    getDependAgents: () => {},
+   currentActiveModel: { agent: undefined, dependAgents: []},
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -1136,6 +1137,39 @@ const AgentProvider: React.FC<
       };
    }, [installedUtilityAgents, installedModelAgents, installedSocialAgents, selectedAgent?.id]);
 
+   const [currentActiveModel, setCurrentActiveModel] = useState<{
+      agent: IAgentToken | undefined,
+      dependAgents: string[];
+   }>();
+
+   useEffect(() => {
+      if (selectedAgent) {
+         onGetCurrentModel();
+      }
+   }, [selectedAgent])
+
+   const onGetCurrentModel = async () => {
+      try {
+         const model = await storageModel.getActiveModel();
+         if (model?.agent_type === AgentType.ModelOnline) {
+            setCurrentActiveModel({
+               agent: model,
+               dependAgents: [],
+            });
+            const chainId = model?.network_id || BASE_CHAIN_ID;
+            const cAgent = new CAgentContract({ contractAddress: model.agent_contract_address, chainId: chainId });
+            const codeVersion = await cAgent.getCurrentVersion();
+            const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+
+            setCurrentActiveModel({
+               agent: model,
+               dependAgents: depsAgentStrs,
+            });
+         }
+      } catch (error) {
+      }
+   }
+
    const contextValues: any = useMemo(() => {
       return {
          loading,
@@ -1175,6 +1209,7 @@ const AgentProvider: React.FC<
          setIsSearchMode,
          category,
          setCategory,
+         currentActiveModel
       };
    }, [
       loading,
@@ -1213,6 +1248,7 @@ const AgentProvider: React.FC<
       setIsSearchMode,
       category,
       setCategory,
+      currentActiveModel,
    ]);
 
    return (
