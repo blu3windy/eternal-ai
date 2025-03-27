@@ -2,6 +2,7 @@ import { Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, 
 import styles from "./styles.module.scss";
 
 const DeleteAgentModal = ({ agentName, isOpen, onClose, onDelete }: any) => {
+  
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered autoFocus={false}>
       <ModalOverlay />

@@ -127,10 +127,15 @@
       "output": "release/${version}"
     },
     "mac": {
+      "target": [
+        "zip",
+        "dmg"
+      ],
       "icon": "public/icons/app-logo.png",
       "artifactName": "${productName}-Mac-${version}.${ext}",
-      "target": ["zip", "dmg"],
-      "hardenedRuntime": true
+      "minimumSystemVersion": "13.0.1",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
     },
     "extraResources": [
       {
