@@ -8,7 +8,7 @@ import { IFundAgent } from "../types.ts";
 import Loading from "@components/Loading";
 import useFundAgent from '../useFundAgent.ts';
 import AgentAPI from "../../../services/api/agent";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext.tsx";
 
 interface IExplorer {
   name: string;

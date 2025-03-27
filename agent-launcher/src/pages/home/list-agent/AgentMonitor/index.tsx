@@ -27,7 +27,7 @@ import s from './styles.module.scss';
 import { compareString } from '@utils/string';
 import CAgentTokenAPI from '@services/api/agents-token';
 import { AgentType } from '../constants';
-import { AgentContext } from '@pages/home/provider';
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from '@services/api/agents-token/interface';
 import storageModel from '@storage/StorageModel';
 import { BASE_CHAIN_ID } from '@constants/chains';

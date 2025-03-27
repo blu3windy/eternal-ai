@@ -1,6 +1,6 @@
 import { Box, Divider, Flex, Text, Image } from "@chakra-ui/react";
 import { useContext, useState } from "react";
-import { AgentContext } from "../provider";
+import { AgentContext } from "../provider/AgentContext";
 import TokenChart from "./chart-token";
 import Curving from "./curving";
 import FormTradeAgentContainer from "./form-trade";

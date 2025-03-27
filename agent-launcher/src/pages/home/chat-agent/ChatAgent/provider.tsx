@@ -2,7 +2,7 @@
 'use client';
 
 import { AgentType } from '@pages/home/list-agent/constants';
-import { AgentContext } from '@pages/home/provider';
+import { AgentContext } from "@pages/home/provider/AgentContext.tsx";
 import CAgentTokenAPI from '@services/api/agents-token';
 import { addOrUpdateTaskItem, removeTaskItem } from '@stores/states/agent-chat/reducer.ts';
 import { TaskItem } from '@stores/states/agent-chat/type.ts';

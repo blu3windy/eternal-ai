@@ -2,7 +2,7 @@ import { Flex, Grid, Image, Text } from '@chakra-ui/react';
 import CustomMarkdown from "@components/CustomMarkdown";
 import { DefaultAvatar } from "@components/DefaultAvatar";
 import { AgentType } from "@pages/home/list-agent/constants";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import { formatCurrency, labelAmountOrNumberAdds } from "@utils/format.ts";
 import cs from "clsx";

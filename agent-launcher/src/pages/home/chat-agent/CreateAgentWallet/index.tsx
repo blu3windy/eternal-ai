@@ -1,7 +1,7 @@
 import s from "./styles.module.scss";
 import { Button, Flex, Text } from "@chakra-ui/react";
 import React, { useContext } from "react";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 
 const CreateAgentWallet = () => {
    const {

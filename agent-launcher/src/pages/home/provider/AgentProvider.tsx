@@ -13,60 +13,12 @@ import throttle from "lodash/throttle";
 import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ModelInfo } from "../../../../electron/share/model.ts";
 import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
-import CAgentTokenAPI from "../../../services/api/agents-token";
+import CAgentTokenAPI from "../../../services/api/agents-token/index.ts";
 import { IAgentToken, } from "../../../services/api/agents-token/interface.ts";
 import localStorageService from "../../../storage/LocalStorageService.ts";
 import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
-import { ETradePlatform, IAgentContext } from "./interface";
-
-const initialValue: IAgentContext = {
-   loading: false,
-   selectedAgent: undefined,
-   setSelectedAgent: () => {},
-   installAgent: () => {},
-   startAgent: () => {},
-   stopAgent: () => {},
-   isInstalling: false,
-   isStarting: false,
-   isStopping: false,
-   runningAgents: [],
-   isTrade: false,
-   setIsTrade(v) {},
-   agentWallet: undefined,
-   setAgentWallet: (v) => {},
-   isRunning: false,
-   tradePlatform: ETradePlatform.eternal,
-   coinPrices: [],
-   createAgentWallet: () => {},
-   isInstalled: false,
-   isCanChat: false,
-   isBackupedPrvKey: false,
-   setIsBackupedPrvKey: () => {},
-   requireInstall: false,
-   isModelRequirementSetup: false,
-   installedModelAgents: [],
-   availableModelAgents: [],
-   unInstallAgent: () => {},
-   isUnInstalling: false,
-   installedSocialAgents: [],
-   isCustomUI: false,
-   customUIPort: '',
-   agentStates: {},
-   liveViewUrl: '',
-   isSearchMode: false,
-   setIsSearchMode: () => {},
-   category: CategoryOption.All,
-   setCategory: () => {},
-   getDependAgents: () => {},
-   currentActiveModel: { agent: undefined, dependAgents: []},
-   installedAgentIds: {
-      utility: [],
-      model: [],
-      social: []
-   },
-};
-
-export const AgentContext = React.createContext<IAgentContext>(initialValue);
+import { ETradePlatform } from "./interface.ts";
+import { AgentContext } from "./AgentContext.tsx";
 
 const AgentProvider: React.FC<
     PropsWithChildren & { tokenAddress?: string }

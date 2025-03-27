@@ -1,5 +1,5 @@
 import { Box, Flex, Image, Text } from "@chakra-ui/react";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { formatAddressCenter } from "@utils/format";
 import { getExplorerByChain } from "@utils/helpers";
 import { useContext } from "react";

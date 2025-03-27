@@ -3,7 +3,7 @@ import { CHART_DECIMAL, IPriceChartData } from "@components/ChartV2/constants";
 
 import { Box, Center, Text } from "@chakra-ui/react";
 import AppLoading from "@components/AppLoading";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import CAgentTokenAPI from "@services/api/agents-token";
 import { agentsTradeSelector } from "@stores/states/agent-trade/selector";
 import { compareString } from "@utils/string";
