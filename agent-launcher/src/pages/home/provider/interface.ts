@@ -49,11 +49,21 @@ export interface IAgentContext {
     isStarting: boolean;
     isStopping: boolean;
     isInstalled: boolean;
+    customUIPort?: string;
   }>;
   liveViewUrl?: string;
   isSearchMode: boolean;
   setIsSearchMode: (value: boolean) => void;
   category: CategoryOption;
   setCategory: (category: CategoryOption) => void;
+  installedAgentIds: {
+    utility: number[];
+    model: number[];
+    social: number[];
+  };
   getDependAgents: any;
+  currentActiveModel: {
+    agent: IAgentToken | undefined,
+    dependAgents: string[];
+  };
 }

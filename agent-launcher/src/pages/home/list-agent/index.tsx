@@ -44,6 +44,7 @@ import {
    SortOption
 } from './constants';
 import s from './styles.module.scss';
+import BottomBar from './BottomBar/index.tsx';
 
 
 const AgentsList = () => {
@@ -64,7 +65,15 @@ const AgentsList = () => {
    const [latestAgent, setLatestAgent] = useState<IAgentToken | null>(null);
    const refLatestInterval = useRef<any>(null);
 
-   const { setSelectedAgent, selectedAgent, isSearchMode, setIsSearchMode, category, setCategory } = useContext(AgentContext);
+   const { 
+      setSelectedAgent, 
+      selectedAgent, 
+      isSearchMode, 
+      setIsSearchMode, 
+      category, 
+      setCategory,
+      installedAgentIds 
+   } = useContext(AgentContext);
 
    const refParams = useRef({
       page: 1,
@@ -168,6 +177,15 @@ const AgentsList = () => {
          if (!isSearchMode) {
             if (FilterOption.Installed === refParams.current.filter) {
                params.installed = true;
+
+               const allInstalledIds = [
+                  ...installedAgentIds.utility,
+                  ...installedAgentIds.model,
+                  ...installedAgentIds.social
+               ];
+               if (allInstalledIds.length > 0) {
+                  params.ids = allInstalledIds.join(',');
+               }
             }
          }
 
@@ -197,8 +215,8 @@ const AgentsList = () => {
       }
    };
 
-   const throttleGetTokens = useCallback(throttle(getTokens, 500), [isSearchMode]);
-   const debounceGetTokens = useCallback(debounce(getTokens, 500), [isSearchMode]);
+   const throttleGetTokens = useCallback(throttle(getTokens, 500), [isSearchMode, installedAgentIds]);
+   const debounceGetTokens = useCallback(debounce(getTokens, 500), [isSearchMode, installedAgentIds]);
 
    const onSearch = (searchText: string) => {
       refParams.current = {
@@ -451,7 +469,7 @@ const AgentsList = () => {
                   </Flex>
                );
             })}
-            <AgentMonitor />
+            {/* <AgentMonitor /> */}
             {/* <AgentNotification /> */}
          </Flex>
       )
@@ -731,21 +749,7 @@ No agents installed?
             </>
          )}
 
-         <Flex className={s.addTestBtn} onClick={onOpen}>
-            <Center w={'100%'}>
-               <Text textAlign={'center'}>+ Add test agent</Text>
-            </Center>
-         </Flex>
-
-         <BaseModal
-            isShow={isOpen}
-            onHide={() => {
-               onClose();
-               setIsSearchMode(false);
-            }}
-            size="small"
-         >
-            <AddTestAgent onAddAgentSuccess={(address: string) => {
+         <BottomBar  onAddAgentSuccess={(address: string) => {
                refAddAgentTestCA.current = address;
                onClose();
                setFilter(FilterOption.Installed);
@@ -755,8 +759,13 @@ No agents installed?
                };
                throttleGetTokens(true);
                setIsSearchMode(false);
-            }} />
-         </BaseModal>
+            }}  />
+
+         {/* <Flex className={s.addTestBtn} onClick={onOpen}>
+            <Center w={'100%'}>
+               <Text textAlign={'center'}>+ Add test agent</Text>
+            </Center>
+         </Flex> */}
       </Box>
    );
 };

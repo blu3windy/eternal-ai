@@ -1,25 +1,23 @@
-import React, { PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState, } from "react";
-import { ETradePlatform, IAgentContext } from "./interface";
-import { IAgentToken, } from "../../../services/api/agents-token/interface.ts";
 import { BASE_CHAIN_ID } from "@constants/chains";
-import { checkFileExistsOnLocal, getFilePathOnLocal, writeFileToLocal, } from "@contract/file";
-import CAgentTokenAPI from "../../../services/api/agents-token";
-import { Wallet } from "ethers";
-import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
-import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
-import { compareString, isBase64, splitBase64 } from "@utils/string.ts";
-import { useAuth } from "@pages/authen/provider.tsx";
-import localStorageService from "../../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
-import uniq from "lodash.uniq";
 import CAgentContract from "@contract/agent/index.ts";
+import { checkFileExistsOnLocal, getFilePathOnLocal, writeFileToLocal, } from "@contract/file";
+import { useAuth } from "@pages/authen/provider.tsx";
 import { AgentType, CategoryOption, SortOption } from "@pages/home/list-agent/constants.ts";
-import { ModelInfo } from "../../../../electron/share/model.ts";
-import { MODEL_HASH } from "@components/Loggers/action.button.tsx";
-import sleep from "@utils/sleep.ts";
-import throttle from "lodash/throttle";
 import storageModel from "@storage/StorageModel.ts";
 import { setReadyPort } from "@utils/agent.ts";
+import { compareString, isBase64, splitBase64 } from "@utils/string.ts";
+import { Wallet } from "ethers";
+import uniq from "lodash.uniq";
+import throttle from "lodash/throttle";
+import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ModelInfo } from "../../../../electron/share/model.ts";
+import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
+import CAgentTokenAPI from "../../../services/api/agents-token";
+import { IAgentToken, } from "../../../services/api/agents-token/interface.ts";
+import localStorageService from "../../../storage/LocalStorageService.ts";
+import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
+import { ETradePlatform, IAgentContext } from "./interface";
 
 const initialValue: IAgentContext = {
    loading: false,
@@ -61,6 +59,12 @@ const initialValue: IAgentContext = {
    category: CategoryOption.All,
    setCategory: () => {},
    getDependAgents: () => {},
+   currentActiveModel: { agent: undefined, dependAgents: []},
+   installedAgentIds: {
+      utility: [],
+      model: [],
+      social: []
+   },
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);
@@ -83,12 +87,10 @@ const AgentProvider: React.FC<
    const [installedModelAgents, setInstalledModelAgents] = useState<IAgentToken[]>([]);
    const [availableModelAgents, setAvailableModelAgents] = useState<IAgentToken[]>([]);
    const [installedSocialAgents, setInstalledSocialAgents] = useState<number[]>([]);
-   const [customUIPort, setCustomUIPort] = useState<string>('');
    const [liveViewUrl, setLiveViewUrl] = useState<string>('');
    const [isSearchMode, setIsSearchMode] = useState(false);
    const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
-
-   console.log("LEONNNN customUIPort", customUIPort)
+   const [installedUtilityAgentIds, setInstalledUtilityAgentIds] = useState<number[]>([]);
 
    const [agentStates, setAgentStates] = useState<Record<number, {
       data: IAgentToken;
@@ -98,6 +100,7 @@ const AgentProvider: React.FC<
       isStarting: boolean;
       isStopping: boolean;
       isInstalled: boolean;
+      customUIPort?: string;
     }>>({});
 
    const { genAgentSecretKey } = useAuth();
@@ -176,6 +179,60 @@ const AgentProvider: React.FC<
       return false;
    }, [selectedAgent, agentStates]);
 
+   useEffect(() => {
+      const fetchUtilityAgentIds = async () => {
+         try {
+            const utilityParams: any = {
+               page: 1,
+               limit: 100,
+               sort_col: SortOption.CreatedAt,
+               agent_types: [
+                  AgentType.UtilityJS, 
+                  AgentType.UtilityPython, 
+                  AgentType.Infra, 
+                  AgentType.CustomUI, 
+                  AgentType.CustomPrompt
+               ].join(','),
+               chain: '',
+               installed: true
+            };
+            const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
+
+            const utilityAgentIds = installedUtilityAgents.map(folderName => {
+               const [networkId, ...agentNameParts] = folderName.split('-');
+               const agentName = agentNameParts.join('-');
+               const agent = utilityAgents.find(a => 
+                  a.network_id.toString() === networkId 
+                  && a.agent_name?.toLowerCase() === agentName?.toLowerCase()
+               );
+               return agent?.id;
+            }).filter(Boolean) as number[];
+
+            setInstalledUtilityAgentIds(utilityAgentIds);
+         } catch (err) {
+            console.log("fetchUtilityAgentIds error:", err);
+            setInstalledUtilityAgentIds([]);
+         }
+      };
+
+      fetchUtilityAgentIds();
+   }, [installedUtilityAgents]);
+
+   const installedAgentIds = useMemo(() => {
+      return {
+         utility: installedUtilityAgentIds,
+         model: installedModelAgents.map(agent => agent.id),
+         social: installedSocialAgents
+      };
+   }, [installedUtilityAgentIds, installedModelAgents, installedSocialAgents]);
+
+   const customUIPort = useMemo(() => {
+      if (selectedAgent) {
+         return agentStates[selectedAgent.id]?.customUIPort;
+      }
+      return undefined;
+   }, [selectedAgent, agentStates]);
+
    const isCanChat = useMemo(() => {
       return !requireInstall || (requireInstall && isInstalled && (!selectedAgent?.required_wallet || (selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey)));
    }, [requireInstall, selectedAgent?.id, agentWallet, isInstalled, isBackupedPrvKey]);
@@ -193,6 +250,7 @@ const AgentProvider: React.FC<
    // console.log("stephen: installedUtilityAgents", installedUtilityAgents);
    // console.log('stephen installedModelAgents', installedModelAgents);
    // console.log('stephen agentStates', agentStates);
+   // console.log("stephen: customUIPort", customUIPort);
    // console.log("==============================");
 
    useEffect(() => {
@@ -228,6 +286,7 @@ const AgentProvider: React.FC<
       isStarting?: boolean;
       isStopping?: boolean;
       isInstalled?: boolean;
+      customUIPort?: string;
     }) => {
       setAgentStates(prev => ({
          ...prev,
@@ -997,7 +1056,6 @@ const AgentProvider: React.FC<
 
    const checkAllInstalledAgentsRunning = async () => {
       try {
-         console.log("LEONNNN 11111");
          // Check utility agents
          const utilityParams: any = {
             page: 1,
@@ -1014,7 +1072,7 @@ const AgentProvider: React.FC<
             installed: true
          };
          const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
-         console.log("LEONNNN 11111 installedUtilityAgents", installedUtilityAgents);
+
          // Check running status for each installed utility agent
          for (const folderName of installedUtilityAgents) {
             const [networkId, ...agentNameParts] = folderName.split('-');
@@ -1027,7 +1085,6 @@ const AgentProvider: React.FC<
                && a.agent_name?.toLowerCase() === agentName?.toLowerCase()
             );
             
-            console.log("LEONNNN 22222", { agent });
             if (agent) {
                if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
                   try {
@@ -1048,18 +1105,18 @@ const AgentProvider: React.FC<
                else if (agent.agent_type === AgentType.CustomUI) {
                   try {
                      const port = await globalThis.electronAPI.dockerRunningPort(agentName, networkId);
-                     console.log("LEONNNN portportportportport", { port, agentName, networkId });
-                     setCustomUIPort(port);
                      updateAgentState(agent.id, {
                         data: agent,
                         isInstalled: true,
-                        isRunning: !!port
+                        isRunning: !!port,
+                        customUIPort: port
                      });
                   } catch (err) {
                      updateAgentState(agent.id, {
                         data: agent,
                         isInstalled: true,
-                        isRunning: false
+                        isRunning: false,
+                        customUIPort: undefined
                      });
                   }
                }
@@ -1133,6 +1190,39 @@ const AgentProvider: React.FC<
       };
    }, [installedUtilityAgents, installedModelAgents, installedSocialAgents, selectedAgent?.id]);
 
+   const [currentActiveModel, setCurrentActiveModel] = useState<{
+      agent: IAgentToken | undefined,
+      dependAgents: string[];
+   }>();
+
+   useEffect(() => {
+      if (selectedAgent) {
+         onGetCurrentModel();
+      }
+   }, [selectedAgent])
+
+   const onGetCurrentModel = async () => {
+      try {
+         const model = await storageModel.getActiveModel();
+         if (model?.agent_type === AgentType.ModelOnline) {
+            setCurrentActiveModel({
+               agent: model,
+               dependAgents: [],
+            });
+            const chainId = model?.network_id || BASE_CHAIN_ID;
+            const cAgent = new CAgentContract({ contractAddress: model.agent_contract_address, chainId: chainId });
+            const codeVersion = await cAgent.getCurrentVersion();
+            const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+
+            setCurrentActiveModel({
+               agent: model,
+               dependAgents: depsAgentStrs,
+            });
+         }
+      } catch (error) {
+      }
+   }
+
    const contextValues: any = useMemo(() => {
       return {
          loading,
@@ -1172,6 +1262,8 @@ const AgentProvider: React.FC<
          setIsSearchMode,
          category,
          setCategory,
+         currentActiveModel,
+         installedAgentIds,
       };
    }, [
       loading,
@@ -1210,7 +1302,8 @@ const AgentProvider: React.FC<
       setIsSearchMode,
       category,
       setCategory,
-      getDependAgents,
+      currentActiveModel,
+      installedAgentIds,
    ]);
 
    return (

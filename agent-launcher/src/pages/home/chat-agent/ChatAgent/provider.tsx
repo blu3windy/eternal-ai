@@ -326,7 +326,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                title: selectedAgent?.agent_name || 'Agent',
                createdAt: new Date().toISOString(),
                agent: selectedAgent!,
-               agentType: selectedAgent?.agent_type
+               agentType: selectedAgent?.agent_type || AgentType.Normal
             });
             const res: string = await AgentAPI.chatAgentUtility({
                id: messageId,
@@ -345,7 +345,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                status: 'done',
                updatedAt: new Date().toISOString(),
             } as TaskItem);
-         } else if ([AgentType.Model].includes(selectedAgent?.agent_type)) {
+         } else if (selectedAgent?.agent_type === AgentType.Model) {
             updateTaskItem({
                id: messageId,
                status: 'processing',
@@ -353,7 +353,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                title: selectedAgent?.agent_name || 'Agent',
                createdAt: new Date().toISOString(),
                agent: selectedAgent!,
-               agentType: selectedAgent?.agent_type
+               agentType: selectedAgent?.agent_type || AgentType.Normal
             });
             let isGeneratedDone = false;
             await AgentAPI.chatAgentModelStreamCompletions({
@@ -440,7 +440,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                title: selectedAgent?.agent_name || 'Agent',
                createdAt: new Date().toISOString(),
                agent: selectedAgent!,
-               agentType: selectedAgent?.agent_type
+               agentType: selectedAgent?.agent_type || AgentType.Normal
             });
             let isGeneratedDone = false;
             await AgentAPI.chatStreamCompletions({

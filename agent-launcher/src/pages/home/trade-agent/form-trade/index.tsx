@@ -145,7 +145,7 @@ const FormTradeAgentContainer = () => {
             {Number(selectedAgent?.meme?.volume_last24h) <= 0.0000001
               ? '$0'
              : `$${formatCurrency(
-                  new BigNumber(selectedAgent?.meme?.volume_last24h).toString(),
+                  selectedAgent?.meme?.volume_last24h || '0',
                    0,
                    0,
                   'BTC',
