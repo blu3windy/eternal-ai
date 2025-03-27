@@ -701,7 +701,7 @@ func (s *Service) PostTwitterAferCreateToken(ctx context.Context, agentInfoID ui
 }
 
 func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses []string, userAddress string, networkID uint64, agentType int, agentTypes []int,
-	tokenAddress, search, agentModel string, installed *bool, sortListStr []string, page, limit int,
+	tokenAddress, search, agentModel string, installed *bool, ids []uint, sortListStr []string, page, limit int,
 ) ([]*models.AgentInfo, uint, error) {
 	sortDefault := "ifnull(agent_infos.priority, 0) desc, meme_market_cap desc"
 	if len(sortListStr) > 0 {
@@ -816,14 +816,13 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 							and agent_utility_installs.deleted_at IS NULL and agent_utility_installs.address = ?
 				`: {strings.ToLower(userAddress)},
 			}
-
-			// filters["agent_infos.id in (select agent_info_id from agent_utility_installs where address = ?)"] = []any{strings.ToLower(userAddress)}
-
 			sortDefault = "ifnull(agent_infos.priority, 0) desc, agent_utility_installs.created_at desc"
 		} else {
 			filters["agent_infos.id not in (select agent_info_id from agent_utility_installs where address = ?)"] = []any{strings.ToLower(userAddress)}
 			filters["agent_infos.is_public = 1"] = []any{}
 		}
+	} else if len(ids) > 0 {
+		filters["agent_infos.id in (?)"] = []any{ids}
 	} else {
 		filters["agent_infos.is_public = 1"] = []any{}
 	}
