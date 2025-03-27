@@ -167,7 +167,9 @@ const AgentMonitor: React.FC = () => {
           if (container?.containerId) {
             await globalThis.electronAPI.dockerDeleteContainer(container?.containerId);
          }
-         
+         if (container.image) {
+            await globalThis.electronAPI.dockerDeleteImageID(container.image);
+         }
       } catch (error) {
          console.error('Error deleting container:', error);
       } finally {
@@ -234,6 +236,7 @@ const AgentMonitor: React.FC = () => {
                return {
                   name: extractImageName(image.Repository),
                   image: image.Repository,
+                  imageId: image.ID,
                   ports: '-',
                   cpu: '0.00%',
                   lastStarted: '',
@@ -263,6 +266,7 @@ const AgentMonitor: React.FC = () => {
                   name: container.Names,
                   containerId: container.ID,
                   image: container.Image,
+                  imageId: image.ID,
                   ports: container.Ports || '-',
                   cpu: memInfo.CPUPerc,
                   lastStarted: container.RunningFor,
@@ -280,6 +284,7 @@ const AgentMonitor: React.FC = () => {
                name: container.Names,
                containerId: container.ID,
                image: container.Image,
+               imageId: image.ID,
                ports: container.Ports || '-',
                cpu: '0%',
                lastStarted: container.RunningFor,

@@ -280,6 +280,18 @@ const ipcMainDocker = () => {
       }
    });
 
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_DELETE_IMAGE_ID, async (_event, imageId: string) => {
+      try {
+         const params = [
+            `--container-id "${imageId}"`,
+         ]
+         const paramsStr = params.join(' ');
+         await command.execAsyncStream(`bash "${actionScriptPath}" remove_image_name ${paramsStr}`);
+      } catch (error) {
+         return undefined;
+      }
+   });
+
    ipcMain.handle(EMIT_EVENT_NAME.COPY_REQUIRE_RUN_PYTHON, async (_, folderName) => {
       await copyPublicToUserData({
          names: ["Dockerfile", "requirements.txt", "server.py"],

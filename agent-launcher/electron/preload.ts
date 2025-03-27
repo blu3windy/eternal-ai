@@ -62,6 +62,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
    dockerStartContainer: (containerId: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_START_CONTAINER, containerId),
    dockerDeleteContainer: (containerId: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_DELETE_CONTAINER, containerId),
    dockerDeleteImage: (agentName: string, chainId: string, type: CodeLanguage) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_DELETE_IMAGE, agentName, chainId, type),
+   dockerDeleteImageID: (imageId: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_DELETE_IMAGE_ID, imageId),
 
    modelStarter: () => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_STARTER),
    modelInstall: (hash: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.MODEL_INSTALL, hash),
