@@ -336,7 +336,6 @@ const AgentMonitor: React.FC = () => {
             Monitor
          </Button>
 
-
          <BaseModal
             isShow={isOpen}
             onHide={() => {
@@ -534,47 +533,7 @@ const AgentMonitor: React.FC = () => {
             }}
          />
       </>
-
    )
-   // return (
-   //    <Popover
-   //       isOpen={isOpen}
-   //       onClose={onClose}
-   //       placement="top-end"
-   //    >
-   //       <PopoverTrigger>
-   //          <MenuItem onClick={onToggle} icon={<svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-   //             <g clip-path="url(#clip0_54260_9784)">
-   //                <path d="M17.7501 9.75L17.75 10.65C17.75 10.7052 17.7948 10.75 17.85 10.75H19.65C19.7052 10.75 19.75 10.7052 19.75 10.65L19.7501 9.75" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-   //                <path d="M10.25 16.75V20.75" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-   //                <path d="M5.25 20.75H10.25" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-   //                <path d="M10.25 16.75H3.25C2.14543 16.75 1.25 15.8546 1.25 14.75V5.75C1.25 4.64543 2.14543 3.75 3.25 3.75H17.25C18.3546 3.75 19.25 4.64543 19.25 5.75" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-   //                <path d="M21.25 9.75H16.25C15.1454 9.75 14.25 10.6454 14.25 11.75V20.75C14.25 21.8546 15.1454 22.75 16.25 22.75H21.25C22.3546 22.75 23.25 21.8546 23.25 20.75V11.75C23.25 10.6454 22.3546 9.75 21.25 9.75Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-   //             </g>
-   //             <defs>
-   //                <clipPath id="clip0_54260_9784">
-   //                   <rect width="24" height="24" fill="white" transform="translate(0 0.5)" />
-   //                </clipPath>
-   //             </defs>
-   //          </svg>}
-   //          >
-   //             Monitor
-   //          </MenuItem>
-
-   //       </PopoverTrigger>
-   //       <PopoverContent
-   //          width="900px"
-   //          border="none"
-   //          boxShadow="0 4px 6px rgba(0, 0, 0, 0.1)"
-   //          className={s.popoverContent}
-   //       >
-   //          <PopoverBody p="20px">
-   
-   //          </PopoverBody>
-   //       </PopoverContent>
-   
-   //    </Popover>
-   // );
 };
 
 export default AgentMonitor; 
