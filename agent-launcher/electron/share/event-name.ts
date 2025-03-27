@@ -54,6 +54,7 @@ const EMIT_EVENT_NAME = {
 
 
    OS_CONTEXT: "os-context",
+   GET_VERSION: "get-version",
 }
 
 export {

@@ -81,6 +81,7 @@ export interface IElectronAPI {
 
   // OS
   osContext: () => Promise<any>
+  getVersion: () => Promise<string>
 }
 
 declare global {
