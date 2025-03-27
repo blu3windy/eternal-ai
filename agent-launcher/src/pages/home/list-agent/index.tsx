@@ -64,7 +64,15 @@ const AgentsList = () => {
    const [latestAgent, setLatestAgent] = useState<IAgentToken | null>(null);
    const refLatestInterval = useRef<any>(null);
 
-   const { setSelectedAgent, selectedAgent, isSearchMode, setIsSearchMode, category, setCategory } = useContext(AgentContext);
+   const { 
+      setSelectedAgent, 
+      selectedAgent, 
+      isSearchMode, 
+      setIsSearchMode, 
+      category, 
+      setCategory,
+      installedAgentIds 
+   } = useContext(AgentContext);
 
    const refParams = useRef({
       page: 1,
@@ -168,6 +176,15 @@ const AgentsList = () => {
          if (!isSearchMode) {
             if (FilterOption.Installed === refParams.current.filter) {
                params.installed = true;
+               
+               const allInstalledIds = [
+                  ...installedAgentIds.utility,
+                  ...installedAgentIds.model,
+                  ...installedAgentIds.social
+               ];
+               if (allInstalledIds.length > 0) {
+                  params.ids = allInstalledIds.join(',');
+               }
             }
          }
 
