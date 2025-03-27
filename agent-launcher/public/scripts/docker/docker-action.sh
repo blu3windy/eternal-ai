@@ -1,7 +1,9 @@
 #!/bin/bash
-
+set -x 
 export PATH="/opt/homebrew/bin/:$PATH"
 export PATH="$HOME/homebrew/bin:$PATH"
+export PATH="/usr/local/bin:$PATH"
+
 
 DEFAULT_PORT=65534
 

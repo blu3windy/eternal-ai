@@ -1,5 +1,9 @@
 #!/bin/bash
 set -o pipefail
+set -x 
+export PATH="/opt/homebrew/bin/:$PATH"
+export PATH="$HOME/homebrew/bin:$PATH"
+export PATH="/usr/local/bin:$PATH"
 
 # Logging functions
 log_message() {
@@ -34,9 +38,6 @@ handle_error() {
 command_exists() {
     command -v "$1" &> /dev/null
 }
-
-export PATH="/opt/homebrew/bin/:$PATH"
-export PATH="$HOME/homebrew/bin:$PATH"
 
 # Step 1: Ensure Homebrew is installed and set PATH
 if ! command_exists brew; then
