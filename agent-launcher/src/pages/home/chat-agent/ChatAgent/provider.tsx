@@ -116,10 +116,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                         const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
 
                         if (diffMinutes >= 30) {
-                           return {
+                           const updateMessage = {
                               ...item,
-                              status: 'failed',
+                              status: 'sync-waiting',
                            };
+                           // chatAgentDatabase.updateChatItem(updateMessage as PersistedMessageType);
+                           return updateMessage;
                         }
                      }
                      return item;
@@ -152,7 +154,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             is_reply: false,
             name: 'You',
             attachments,
-            createdAt: new Date().toISOString(),
          };
 
          setMessages((prev) => [...prev, newMessage]);
@@ -172,7 +173,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             replyTo: userMessageId,
             is_reply: true,
             name: selectedAgent?.agent_name || 'Agent',
-            createdAt: new Date().toISOString(),
          };
 
          setMessages((prev) => [...prev, responseMsg]);
@@ -593,7 +593,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             const newMessage: IChatMessage = {
                ...targetMessage,
                id: userMessageId,
-               createdAt: new Date().toISOString(),
             };
 
             setMessages((prev) => [...prev, newMessage]);
@@ -613,7 +612,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                replyTo: userMessageId,
                name: selectedAgent?.agent_name || 'Agent',
                is_reply: true,
-               createdAt: new Date().toISOString(),
             };
 
             setMessages((prev) => [...prev, responseMsg]);

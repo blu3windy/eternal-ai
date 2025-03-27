@@ -58,7 +58,15 @@ class ChatAgentDatabase {
          //     .limit(pagination.limit)
          //     .toArray();
          // }
-         return await this.db?.messages.where('threadId').equals(threadId).sortBy('createdAt');
+         const messages = await this.db?.messages
+            .where('threadId')
+            .equals(threadId)
+            .sortBy('createdAt');
+
+         return messages?.map((item) => ({
+            ...item,
+            createdAt: new Date(item.createdAt).getTime(),
+         }));
       } catch (error) {
          return [];
       }
@@ -68,6 +76,9 @@ class ChatAgentDatabase {
       try {
          await this.db?.messages.add({
             ...newItem,
+            createdAt: newItem.createdAt
+               ? new Date(newItem.createdAt).getTime()
+               : new Date().getTime(),
          });
          return newItem;
       } catch (e) {
@@ -77,7 +88,12 @@ class ChatAgentDatabase {
 
    async updateChatItem(updatedItem: PersistedMessageType) {
       try {
-         await this.db?.messages.update(updatedItem.id, updatedItem);
+         await this.db?.messages.update(updatedItem.id, {
+            ...updatedItem,
+            createdAt: updatedItem.createdAt
+               ? new Date(updatedItem.createdAt).getTime()
+               : new Date().getTime(),
+         });
          return updatedItem;
       } catch (e) {
          //

@@ -3,7 +3,7 @@ import AgentAPI from '@services/api/agent';
 import { IChatMessage } from '@services/api/agent/types';
 import { useContext, useEffect, useMemo } from 'react';
 import { useChatAgentProvider } from './provider';
-import { AgentContext } from "@pages/home/provider/AgentContext";
+import { AgentContext } from '@pages/home/provider/AgentContext';
 import { IAgentToken } from '@services/api/agents-token/interface';
 
 function HandleProcessingMessage({
@@ -29,7 +29,6 @@ function HandleProcessingMessage({
                      updateMessage(data.id, {
                         status: 'received',
                         msg: res.data || res,
-                        updatedAt: new Date().toISOString(),
                      });
                   } else {
                      setTimeout(() => {
@@ -41,7 +40,6 @@ function HandleProcessingMessage({
                   updateMessage(data.id, {
                      status: 'failed',
                      msg: errorMessage,
-                     updatedAt: new Date().toISOString(),
                   });
                }
             }
@@ -64,7 +62,12 @@ function HandleMessageProcessing({
    const { messages } = useChatAgentProvider();
 
    const processingMessages = useMemo(() => {
-      return messages.filter((item) => item.status === 'waiting' || item.status === 'receiving');
+      return messages.filter(
+         (item) =>
+            item.status === 'waiting' ||
+            item.status === 'receiving' ||
+            item.status === 'sync-waiting'
+      );
    }, [messages]);
 
    const renderTasks = () => {
