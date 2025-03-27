@@ -127,22 +127,14 @@
       "output": "release/${version}"
     },
     "mac": {
-      "target": [
-        "dmg",
-        "zip"
-      ],
       "icon": "public/icons/app-logo.png",
       "artifactName": "${productName}-Mac-${version}.${ext}",
-      "minimumSystemVersion": "13.0.1",
+      "target": ["mas"],
+      "type": "distribution",
       "hardenedRuntime": true,
-      "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
-      "identity": "Eternal AI Limited (9M75XA82CZ)",
-      "notarize": {
-        "teamId": "9M75XA82CZ"
-      },
-      "appId": "eternalai.org.vibe"
+      "provisioningProfile": "build/vibeApps.provisionprofile"
     },
     "extraResources": [
       {
