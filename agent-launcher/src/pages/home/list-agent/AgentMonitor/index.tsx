@@ -314,8 +314,9 @@ const AgentMonitor: React.FC = () => {
             display="flex"
             alignItems="center"
             padding="10px 20px"
-            gap="10px"
+            gap="12px"
             onClick={onToggle}
+            fontSize={'16px !important'}
          >
             <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                <g clip-path="url(#clip0_54260_9784)">
