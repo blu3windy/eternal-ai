@@ -521,7 +521,10 @@ const AgentProvider: React.FC<
             await handleRunDockerAgent(agent);
             console.log('stephen: startAgent Utility finish docker', new Date().toLocaleTimeString());
 
+            fetchInstalledUtilityAgents();
+
             if (agent.agent_type === AgentType.ModelOnline) {
+               fetchInstalledModelAgents();
                await storageModel.setActiveModel({
                   ...agent,
                   hash: ""
@@ -541,6 +544,8 @@ const AgentProvider: React.FC<
             console.log('stephen: startAgent Model run', new Date().toLocaleTimeString());
             await handleRunModelAgent(ipfsHash);
             console.log('stephen: startAgent Model finish run', new Date().toLocaleTimeString());
+
+            fetchInstalledModelAgents();
 
             await storageModel.setActiveModel({
                ...agent,
