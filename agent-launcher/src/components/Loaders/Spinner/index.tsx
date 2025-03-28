@@ -1,4 +1,3 @@
-import { s } from "node_modules/framer-motion/dist/types.d-6pKw1mTI";
 import styles from "./styles.module.scss";
 import cs from "clsx";
 
