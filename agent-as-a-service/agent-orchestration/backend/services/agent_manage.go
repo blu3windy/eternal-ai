@@ -122,6 +122,9 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		if req.TokenImageUrl == "" {
 			agent.TokenImageUrl = tokenInfo.TokenImageUrl
 		}
+	} else {
+		agent.TokenName = req.AgentName
+		agent.TokenSymbol = helpers.GenerateTokenSymbol(req.AgentName)
 	}
 
 	if req.CreateTokenMode == models.CreateTokenModeTypeLinkExisting {

@@ -778,3 +778,27 @@ func splitStringArray(arr []string, size int) [][]string {
 	}
 	return result
 }
+
+func GenerateTokenSymbol(tokenName string) string {
+	// Remove special characters and spaces
+	tokenSymbol := strings.ToLower(tokenName)
+	tokenSymbol = strings.ReplaceAll(tokenSymbol, " ", "")
+	tokenSymbol = strings.ReplaceAll(tokenSymbol, "-", "")
+	tokenSymbol = strings.ReplaceAll(tokenSymbol, "_", "")
+
+	// Remove any non-alphanumeric characters
+	reg := regexp.MustCompile("[^a-z0-9]")
+	tokenSymbol = reg.ReplaceAllString(tokenSymbol, "")
+
+	// Take first 5 characters
+	if len(tokenSymbol) > 5 {
+		tokenSymbol = tokenSymbol[:5]
+	}
+
+	// If empty after cleaning, return default
+	if tokenSymbol == "" {
+		tokenSymbol = RandomStringWithLength(5)
+	}
+	fmt.Println(tokenSymbol)
+	return strings.ToUpper(tokenSymbol)
+}

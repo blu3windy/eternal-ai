@@ -11,6 +11,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/configs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/databases"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services"
 )
@@ -106,8 +107,8 @@ func Test_OpenAI(t *testing.T) {
 func Test_SRV(t *testing.T) {
 
 	// ts.CreateClankerTokenForVideoByPostID(context.Background(), 35409)
-
-	ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 35409)
+	helpers.GenerateTokenSymbol("Hello World")
+	// ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 35409)
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
