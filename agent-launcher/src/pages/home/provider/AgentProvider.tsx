@@ -706,30 +706,35 @@ const AgentProvider: React.FC<
 
    const installUtilityAgent = async (agent: IAgentToken, needUpdateCode?: boolean) => {
       if (agent && !!agent.agent_contract_address) {
+         let fileNameOnLocal = 'prompt.js';
+         if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
+            fileNameOnLocal = 'app.zip';
+         }
+         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
+
+         const isExisted = await checkFileExistsOnLocal(
+            fileNameOnLocal,
+            folderNameOnLocal
+         );
+
+         if (isExisted && !needUpdateCode) {
+            console.log('stephen: startAgent return', new Date().toLocaleTimeString());
+            return;
+         }
+
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({
             contractAddress: agent.agent_contract_address,
             chainId: chainId
          });
 
-         let fileNameOnLocal = 'prompt.js';
-         if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
-            fileNameOnLocal = 'app.zip';
-         }
-
          const codeVersion = await cAgent.getCurrentVersion();
 
          const values = await localStorageService.getItem(agent.agent_contract_address);
          const oldCodeVersion = values ? Number(values) : 0;
 
-         const folderNameOnLocal = `${agent.network_id}-${agent.agent_name}`;
-
          let filePath: string | undefined = "";
-         const isExisted = await checkFileExistsOnLocal(
-            fileNameOnLocal,
-            folderNameOnLocal
-         );
-
+         
          if (!isExisted || needUpdateCode || oldCodeVersion <= 0) {
             const rawCode = await cAgent.getAgentCode(codeVersion);
             if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
@@ -752,8 +757,8 @@ const AgentProvider: React.FC<
                console.log('filePath New', filePath);
             }
          } else {
-            filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
-            console.log('filePath isExisted', filePath)
+            // filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+            console.log('filePath isExisted')
          }
       }
    };
@@ -873,6 +878,17 @@ const AgentProvider: React.FC<
             folderNameOnLocal
          );
 
+         if (isExisted && !needUpdateCode) {
+            return [
+               ...dependAgents,
+               {
+                  agent_name: agentName,
+                  network_id: chainId,
+                  agent_contract_address: agentContractAddr
+               }
+            ];
+         }
+
          if (!isExisted || needUpdateCode || oldCodeVersion <= 0) {
             const rawCode = await cAgent.getAgentCode(codeVersion);
             if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent_type)) {
@@ -895,8 +911,8 @@ const AgentProvider: React.FC<
                console.log('filePath New', filePath);
             }
          } else {
-            filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
-            console.log('filePath isExisted', filePath)
+            // filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
+            // console.log('filePath isExisted', filePath)
          }
          
 
