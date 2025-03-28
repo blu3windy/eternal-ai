@@ -128,9 +128,11 @@ const AgentAPI = {
       }
    },
    chatAgentUtilityStreamCompletions: async ({
+      agent,
       payload,
       streamHandlers,
    }: {
+      agent: IAgentToken,
       payload: ChatCompletionPayload;
       streamHandlers: ChatCompletionStreamHandler;
    }): Promise<any> => {
