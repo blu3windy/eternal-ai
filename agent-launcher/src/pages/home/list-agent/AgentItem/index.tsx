@@ -1,7 +1,7 @@
 import { Flex, Grid, Image, Text } from '@chakra-ui/react';
 import CustomMarkdown from "@components/CustomMarkdown";
 import { DefaultAvatar } from "@components/DefaultAvatar";
-import { AgentType } from "@pages/home/list-agent/constants";
+import { AgentType, AgentTypeName } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import { formatCurrency, labelAmountOrNumberAdds } from "@utils/format.ts";
@@ -30,7 +30,6 @@ const AgentItem = ({ token, isLatest }: IProps) => {
     || token?.token_image_url
     || token?.twitter_info?.twitter_avatar;
 
-
    const handleGoToChat = (e: any, token_address?: any) => {
       if (token_address) {
          e?.preventDefault();
@@ -40,7 +39,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
       }
    };
 
-   const iconSize = isLatest ? '68px' : '40px';
+   const iconSize = '68px';
 
    return (
       <Flex
@@ -51,12 +50,11 @@ const AgentItem = ({ token, isLatest }: IProps) => {
          onClick={(e) =>
             handleGoToChat(e, token?.id || token?.token_address || token?.agent_id)
          }
+         w={'100%'}
       >
-         {!token.is_public && 
-            <Flex position={"absolute"} top={"8px"} right={"24px"} className={s.testingStatus}>
-               <Text>Testing</Text>
-            </Flex>
-         }
+         <Flex position={"absolute"} top={"14px"} right={"24px"} className={s.testingStatus}>
+            <Text>{AgentTypeName[token.agent_type]}</Text>
+         </Flex>
          <Grid
             className={s.content}
             templateColumns={`${iconSize} 1fr`}
@@ -95,9 +93,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                      </Text>
                      <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
                   </Flex>
-{/*                  {
-                     isInstalled && <Text className={s.agentTypeTag}>Installed</Text>
-                  }*/}
+                  {/* { isInstalled && <Text className={s.agentTypeTag}>Installed</Text> } */}
 
                   {/*{
               isUtilityAgent && (
