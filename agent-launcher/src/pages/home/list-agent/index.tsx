@@ -208,7 +208,7 @@ const AgentsList = () => {
                if (testAgent) {
                   refAddAgentTestCA.current = '';
                   setSelectedAgent(testAgent);
-                  startAgent(testAgent);
+                  startAgent(testAgent, true);
                } else {
                   setSelectedAgent(newTokens[0]);
                }

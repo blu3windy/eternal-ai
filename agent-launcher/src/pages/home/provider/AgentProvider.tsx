@@ -1208,9 +1208,7 @@ const AgentProvider: React.FC<
    }>();
 
    useEffect(() => {
-      if (selectedAgent?.agent_type === AgentType.ModelOnline) {
-         onGetCurrentModel();
-      }
+      onGetCurrentModel();
    }, [selectedAgent, isRunning]);
 
    const onGetCurrentModel = async () => {
