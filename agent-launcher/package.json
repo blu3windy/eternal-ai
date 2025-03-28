@@ -92,7 +92,8 @@
     "@typescript-eslint/parser": "^7.1.1",
     "@vitejs/plugin-react": "^4.2.1",
     "electron": "^30.0.1",
-    "electron-builder": "^24.13.3",
+    "electron-builder": "^26.0.12",
+    "electron-notarize": "^1.2.2",
     "electron-rebuild": "^3.2.9",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -122,24 +123,24 @@
       "dist/**/*",
       "node_modules/**/*",
       "package.json",
-      "!node_modules/@esbuild/**/*" 
+      "!node_modules/@esbuild/**/*"
     ],
     "directories": {
       "output": "release/${version}"
     },
     "mac": {
-      "target": ["mas"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "category": "public.app-category.utilities",
       "identity": "Eternal AI Limited (9M75XA82CZ)",
-      "hardenedRuntime": false,
+      "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "icon": "build/icon.icns"
-    },
-    "mas": {
-      "type": "distribution",
+      "icon": "build/icon.icns",
       "entitlements": "build/entitlements.mas.plist",
       "entitlementsInherit": "build/entitlements.mas.plist",
-      "provisioningProfile": "build/vibeApps.provisionprofile"
+      "notarize": true
     },
     "extraResources": [
       {

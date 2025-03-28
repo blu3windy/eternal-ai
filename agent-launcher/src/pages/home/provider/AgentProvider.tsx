@@ -71,20 +71,21 @@ const AgentProvider: React.FC<
 
    const cPumpAPI = new CAgentTokenAPI();
 
-   const checkBackup = throttle(async () => {
+   const checkBackupPrvKey = useCallback(async () => {
       const values = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
-      console.log("stephen: values", values);
       if (!values) {
          setIsBackupedPrvKey(false);
          return;
       }
       const agentIdsHasBackup = JSON.parse(values);
       setIsBackupedPrvKey(agentWallet && selectedAgent && agentIdsHasBackup && agentIdsHasBackup?.some?.(id => id === selectedAgent?.id));
-   }, 1000);
+   }, [selectedAgent, agentWallet]);
+
+   const debouncedCheckBackupPrvKey = useDebounce(checkBackupPrvKey, 300);
 
    useEffect(() => {
-      checkBackup();
-   }, [selectedAgent, agentWallet]);
+      checkBackupPrvKey();
+   }, [debouncedCheckBackupPrvKey]);
 
 
    const requireInstall = useMemo(() => {

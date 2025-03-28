@@ -387,3 +387,6 @@ export const CATEGORIES = [
       icon: 'icons/ic-category-infra.svg'
    }
 ];
+
+
+export const SYSTEM_AGENTS = [14740];

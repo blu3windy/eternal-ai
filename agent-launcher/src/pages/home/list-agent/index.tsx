@@ -182,21 +182,24 @@ const AgentsList = () => {
          }
 
          if (!isSearchMode) {
+            const installIds = await installAgentStorage.getAgentIds();
+
+            const allInstalledIds = [
+               // ...installedAgentIds.utility,
+               // ...installedAgentIds.model,
+               // ...installedAgentIds.social,
+               ...installIds
+            ];
+
             if (FilterOption.Installed === refParams.current.filter) {
                // params.installed = true;
-               const installIds = await installAgentStorage.getAgentIds();
-
-               const allInstalledIds = [
-                  // ...installedAgentIds.utility,
-                  // ...installedAgentIds.model,
-                  // ...installedAgentIds.social,
-                  ...installIds
-               ];
                if (allInstalledIds.length > 0) {
                   params.ids = allInstalledIds.join(',');
                }
-
-
+            } else {
+               if (allInstalledIds.length > 0) {
+                  params.exlude_ids = allInstalledIds.join(',');
+               }
             }
          }
 
