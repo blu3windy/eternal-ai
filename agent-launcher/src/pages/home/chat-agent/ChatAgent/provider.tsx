@@ -100,7 +100,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                //       status: 'received',
                //    }));
 
-               console.log("__________items", items);
                const filterMessages = items
                   .filter((item) => item.createdAt)
                   .map((item) => {
@@ -166,6 +165,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          };
 
          setMessages((prev) => [...prev, newMessage]);
+         setTimeout(() => {
+            scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+         }, 0);
 
          chatAgentDatabase.addChatItem({
             ...newMessage,

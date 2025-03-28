@@ -80,7 +80,6 @@ class ChatAgentDatabase {
 
          return orderBy(normalizedMessages, "createdAt", "asc");
       } catch (error) {
-         console.log("__________error", error);
          return [];
       }
    }
