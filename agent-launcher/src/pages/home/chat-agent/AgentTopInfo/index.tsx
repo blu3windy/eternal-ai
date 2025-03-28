@@ -36,7 +36,7 @@ import s from './styles.module.scss';
 import ProcessingTasks from './ProcessingTasks';
 import { IAgentToken } from '@services/api/agents-token/interface';
 import DeleteAgentModal from '@pages/home/list-agent/AgentMonitor/DeleteAgentModal';
-import storageModel from '@storage/StorageModel';
+import { useDispatch } from 'react-redux';
 
 const AgentTopInfo = () => {
    const {
@@ -191,7 +191,7 @@ const AgentTopInfo = () => {
                   s.contentContainer,
                   showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : ''
                )}
-               w="clamp(600px, 95%, 1200px)"
+               w="clamp(600px, 81%, 1200px)"
                mx={'auto'}
             >
                {/* {isCanChat &&
@@ -363,7 +363,7 @@ const AgentTopInfo = () => {
                                     </Button>
                                  </>
                               )}
-                              {hasNewVersionCode && (
+                              {hasNewVersionCode && isInstalled && (
                                  <>
                                     <Divider color={'#E2E4E8'} mt={'16px'} mb={'8px'} />
                                     <Button

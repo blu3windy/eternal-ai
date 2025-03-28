@@ -20,6 +20,9 @@ import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
 import { ETradePlatform } from "./interface.ts";
 import { AgentContext } from "./AgentContext.tsx";
 import { useDebounce } from '@hooks/useDebounce';
+import installAgentStorage from "@storage/InstallAgentStorage.ts";
+import { useDispatch } from "react-redux";
+import { requestReloadListAgent } from "@stores/states/common/reducer.ts";
 
 const AgentProvider: React.FC<
     PropsWithChildren & { tokenAddress?: string }
@@ -27,6 +30,7 @@ const AgentProvider: React.FC<
    children,
    tokenAddress: _tokenAddress,
 }: PropsWithChildren & { tokenAddress?: string }): React.ReactElement => {
+   const dispatch = useDispatch();
    const [loading, setLoading] = useState(true);
    const [selectedAgent, _setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
    const [isTrade, setIsTrade] = useState(false);
@@ -506,6 +510,7 @@ const AgentProvider: React.FC<
             data: agent,
             isStarting: true,
          });
+         await installAgentStorage.addAgent([agent.id]);
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             console.log('stephen: startAgent Utility install', new Date().toLocaleTimeString());
@@ -572,6 +577,7 @@ const AgentProvider: React.FC<
          }, 2000);
          
          throttledCheckAll();
+         
       }
    };
 
@@ -612,7 +618,8 @@ const AgentProvider: React.FC<
             data: agent,
             isUnInstalling: true,
          });
-
+         await installAgentStorage.removeAgent(`${agent.id}`);
+         
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await stopAgent(agent);
 
@@ -654,6 +661,7 @@ const AgentProvider: React.FC<
       } catch (e) {
          console.log('unInstallAgent e', e);
       } finally {
+         
          setTimeout(() => {
             updateAgentState(agent.id, {
                data: agent,
@@ -662,6 +670,7 @@ const AgentProvider: React.FC<
          }, 2000);
          
          throttledCheckAll();
+         dispatch(requestReloadListAgent());
       }
    }
 

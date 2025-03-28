@@ -45,8 +45,9 @@ import {
 } from './constants';
 import s from './styles.module.scss';
 import BottomBar from './BottomBar/index.tsx';
-import localStorageService from '@storage/LocalStorageService.ts';
-import STORAGE_KEYS from '@constants/storage-key.ts';
+import installAgentStorage from '@storage/InstallAgentStorage.ts';
+import { commonSelector } from '@stores/states/common/selector.ts';
+import { useSelector } from 'react-redux';
 
 
 const AgentsList = () => {
@@ -67,6 +68,8 @@ const AgentsList = () => {
    const [latestAgent, setLatestAgent] = useState<IAgentToken | null>(null);
    const refLatestInterval = useRef<any>(null);
 
+   const { needReloadList } = useSelector(commonSelector);
+
    const { 
       setSelectedAgent, 
       selectedAgent, 
@@ -74,7 +77,8 @@ const AgentsList = () => {
       setIsSearchMode, 
       category, 
       setCategory,
-      installedAgentIds 
+      installedAgentIds,
+      startAgent,
    } = useContext(AgentContext);
 
    const refParams = useRef({
@@ -179,15 +183,15 @@ const AgentsList = () => {
          if (!isSearchMode) {
             if (FilterOption.Installed === refParams.current.filter) {
                // params.installed = true;
-               const installTestIds = await localStorageService.getItem(STORAGE_KEYS.INSTALLED_TEST_AGENTS);
-               const agentTestIds = installTestIds ? JSON.parse(installTestIds) : [];
+               const installIds = await installAgentStorage.getAgentIds();
 
                const allInstalledIds = [
-                  ...installedAgentIds.utility,
-                  ...installedAgentIds.model,
-                  ...installedAgentIds.social,
-                  ...agentTestIds
+                  // ...installedAgentIds.utility,
+                  // ...installedAgentIds.model,
+                  // ...installedAgentIds.social,
+                  ...installIds
                ];
+               console.log('===allInstalledIds', allInstalledIds)
                if (allInstalledIds.length > 0) {
                   params.ids = allInstalledIds.join(',');
                }
@@ -203,8 +207,9 @@ const AgentsList = () => {
             if ((!selectedAgent && newTokens.length > 0) || refAddAgentTestCA.current) {
                const testAgent = newTokens.find((token) => compareString(refAddAgentTestCA.current, token.agent_contract_address));
                if (testAgent) {
-                  setSelectedAgent(testAgent);
                   refAddAgentTestCA.current = '';
+                  setSelectedAgent(testAgent);
+                  startAgent(testAgent);
                } else {
                   setSelectedAgent(newTokens[0]);
                }
@@ -235,7 +240,7 @@ const AgentsList = () => {
 
    useEffect(() => {
       throttleGetTokens(true);
-   }, []);
+   }, [needReloadList]);
 
    const handleCategorySelect = (categoryOption: CategoryOption) => {
       refParams.current = {
