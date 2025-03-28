@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from "dexie";
 import { IChatMessage } from "../services/api/agent/types.ts";
+import orderBy from "lodash/orderBy";
 
 export type PersistedMessageType = {
    threadId: string;
@@ -72,11 +73,14 @@ class ChatAgentDatabase {
             }
          }, 0);
 
-         return messages?.map((item) => ({
+         const normalizedMessages = messages?.map((item) => ({
             ...item,
             createdAt: new Date(item.createdAt).getTime(),
          }));
+
+         return orderBy(normalizedMessages, "createdAt", "asc");
       } catch (error) {
+         console.log("__________error", error);
          return [];
       }
    }
