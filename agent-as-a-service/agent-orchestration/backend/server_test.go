@@ -111,9 +111,7 @@ func Test_SRV(t *testing.T) {
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
-	// nonce := helpers.RandomStringWithLength(32)
-	// fmt.Println(nonce)
-	// ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 34584)
+	ts.CreateTokenInfo(context.Background(), 14754)
 }
 
 func Test_IPFS(t *testing.T) {

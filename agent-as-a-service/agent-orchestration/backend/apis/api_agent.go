@@ -439,7 +439,7 @@ func (s *Server) GetDashBoardAgentDetail(c *gin.Context) {
 		return
 	}
 	userAddress, err := s.getUserAddressFromTK1Token(c)
-	ms, _, err := s.nls.GetDashboardAgentInfos(ctx, []string{}, userAddress, chain, 0, []int{}, tokenAddress, search, "",
+	ms, _, err := s.nls.GetDashboardAgentInfos(ctx, []string{}, userAddress, chain, -1, []int{}, tokenAddress, search, "",
 		nil, []uint{}, sortStr, page, limit)
 
 	if err != nil {
