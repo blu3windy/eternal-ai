@@ -1516,7 +1516,7 @@ func (s *Service) ValidateTweetContentGenerateVideoWithLLM2(ctx context.Context,
 	errChan := make(chan error, 1)
 	doneChan := make(chan bool, 1)
 	go func() {
-		s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(msg), "neuralmagic/Meta-Llama-3.1-405B-Instruct-quantized.w4a16",
+		s.openais["Agent"].CallStreamDirectlyEternalLLM(ctx, string(msg), "Qwen/QwQ-32B",
 			s.conf.KnowledgeBaseConfig.DirectServiceUrl, map[string]interface{}{
 				"temperature": 0,
 			}, outputChan, errChan, doneChan)
