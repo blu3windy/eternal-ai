@@ -66,7 +66,7 @@ const Starter = (props: IProps) => {
          throw new Error("No model only found");
       }
       const newAgent = _agents[0];
-      await agentCtx.startAgent(newAgent, true);
+      await agentCtx.startAgent(newAgent, false);
       await storageModel.setActiveModel({
          ...newAgent,
          hash: ""
@@ -96,25 +96,23 @@ const Starter = (props: IProps) => {
          // await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
 
-
          const activeModel = await storageModel.getActiveModel();
          if (!activeModel) {
-            await setReadyPort();
             await setDefaultAgent();
          } else {
             try {
                await setReadyPort();
                switch (activeModel.agent_type) {
                case AgentType.ModelOnline: {
-                  await agentCtx.startAgent(activeModel, true);
+                  await agentCtx.startAgent(activeModel, false);
                   break;
                }
                case AgentType.Model:
+                  await setReadyPort();
                   await globalThis.electronAPI.modelInstallBaseModel(activeModel.hash);
                   break;
                }
             } catch (error) {
-               await setReadyPort();
                await setDefaultAgent();
             }
          }
