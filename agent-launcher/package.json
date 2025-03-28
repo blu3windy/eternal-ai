@@ -121,21 +121,25 @@
       "dist-electron/**/*",
       "dist/**/*",
       "node_modules/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/@esbuild/**/*" 
     ],
     "directories": {
       "output": "release/${version}"
     },
     "mac": {
-      "target": [
-        "zip",
-        "dmg"
-      ],
-      "icon": "public/icons/app-logo.png",
-      "artifactName": "${productName}-Mac-${version}.${ext}",
-      "minimumSystemVersion": "13.0.1",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false
+      "target": ["mas"],
+      "category": "public.app-category.utilities",
+      "identity": "Eternal AI Limited (9M75XA82CZ)",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "icon": "build/icon.icns"
+    },
+    "mas": {
+      "type": "distribution",
+      "entitlements": "build/entitlements.mas.plist",
+      "entitlementsInherit": "build/entitlements.mas.plist",
+      "provisioningProfile": "build/vibeApps.provisionprofile"
     },
     "extraResources": [
       {
