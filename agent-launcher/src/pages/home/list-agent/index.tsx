@@ -191,7 +191,6 @@ const AgentsList = () => {
                   // ...installedAgentIds.social,
                   ...installIds
                ];
-               console.log('===allInstalledIds', allInstalledIds)
                if (allInstalledIds.length > 0) {
                   params.ids = allInstalledIds.join(',');
                }

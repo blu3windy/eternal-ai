@@ -145,6 +145,11 @@ const AgentProvider: React.FC<
    useEffect(() => {
       const fetchUtilityAgentIds = async () => {
          try {
+            const installIds = await installAgentStorage.getAgentIds();
+            let ids = '';
+            if (installIds.length > 0) {
+               ids = installIds.join(',');
+            }
             const utilityParams: any = {
                page: 1,
                limit: 100,
@@ -157,7 +162,7 @@ const AgentProvider: React.FC<
                   AgentType.CustomPrompt
                ].join(','),
                chain: '',
-               installed: true
+               ids,
             };
             const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
 
@@ -570,13 +575,20 @@ const AgentProvider: React.FC<
          }
       } finally {
          setTimeout(() => {
-            updateAgentState(agent.id, {
-               data: agent,
-               isStarting: false,
-            });
-         }, 2000);
-         
-         throttledCheckAll();
+            if (agent.agent_type === AgentType.CustomUI) {
+               updateAgentState(agent.id, {
+                  data: agent,
+                  isStarting: false,
+               });
+               throttledCheckAll();
+            } else {
+               updateAgentState(agent.id, {
+                  data: agent,
+                  isStarting: false,
+                  isRunning: true,
+               });
+            }
+         }, 1000);
          
       }
    };
@@ -1030,6 +1042,12 @@ const AgentProvider: React.FC<
    const checkAllInstalledAgentsRunning = async () => {
       try {
          // Check utility agents
+         const installIds = await installAgentStorage.getAgentIds();
+         let ids = '';
+         if (installIds.length > 0) {
+           ids = installIds.join(',');
+         }
+
          const utilityParams: any = {
             page: 1,
             limit: 100,
@@ -1042,7 +1060,7 @@ const AgentProvider: React.FC<
                AgentType.CustomPrompt
             ].join(','),
             chain: '',
-            installed: true
+            ids,
          };
          const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
 
@@ -1120,7 +1138,7 @@ const AgentProvider: React.FC<
                AgentType.Zerepy
             ].join(','),
             chain: '',
-            installed: true
+            ids,
          };
          const { agents: socialAgents } = await cPumpAPI.getAgentTokenList(socialParams);
 
@@ -1152,16 +1170,21 @@ const AgentProvider: React.FC<
       }, 30000);
    };
 
-   // Start checking when installed agents list changes
    useEffect(() => {
       intervalCheckAllAgents();
+   }, []);
+
+
+   // Start checking when installed agents list changes
+   // useEffect(() => {
+   //    intervalCheckAllAgents();
       
-      return () => {
-         if (refInterval.current) {
-            clearInterval(refInterval.current);
-         }
-      };
-   }, [debouncedUtilityAgents, debouncedModelAgents, debouncedSocialAgents, selectedAgent?.id]);
+   //    return () => {
+   //       if (refInterval.current) {
+   //          clearInterval(refInterval.current);
+   //       }
+   //    };
+   // }, [debouncedUtilityAgents, debouncedModelAgents, debouncedSocialAgents, selectedAgent?.id]);
 
    const [currentActiveModel, setCurrentActiveModel] = useState<{
       agent: IAgentToken | undefined,

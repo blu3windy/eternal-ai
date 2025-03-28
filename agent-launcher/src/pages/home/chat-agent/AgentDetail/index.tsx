@@ -17,6 +17,7 @@ const AgentDetail = () => {
       isInstalling,
       availableModelAgents,
       isInstalled,
+      isRunning,
       isStarting, startAgent, agentWallet, 
    } = useContext(AgentContext);
 
@@ -137,7 +138,7 @@ const AgentDetail = () => {
                   <Button
                      className={s.btnInstall}
                      onClick={handleStartAgent}
-                     isLoading={isStarting}
+                     isLoading={isStarting || (selectedAgent?.type === AgentType.CustomUI && !isRunning)}
                      isDisabled={isStarting}
                      loadingText={"Starting..."}
                   >

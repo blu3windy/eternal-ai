@@ -29,9 +29,6 @@ import CAgentTokenAPI from '@services/api/agents-token';
 import { AgentType } from '../constants';
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from '@services/api/agents-token/interface';
-import storageModel from '@storage/StorageModel';
-import { BASE_CHAIN_ID } from '@constants/chains';
-import CAgentContract from '@contract/agent';
 import DeleteAgentModal from './DeleteAgentModal';
 import BaseModal from '@components/BaseModal';
 import Loading from '@components/Loading';
@@ -110,7 +107,7 @@ const AgentMonitor: React.FC = () => {
    const intervalRef = useRef<NodeJS.Timeout>();
    const cPumpAPI = new CAgentTokenAPI();
    const [agents, setAgents] = useState<any[]>([]);
-   const { agentStates, startAgent, stopAgent, unInstallAgent, currentActiveModel, installedAgentIds } = useContext(AgentContext);
+   const { agentStates, startAgent, stopAgent, unInstallAgent, currentActiveModel } = useContext(AgentContext);
 
    const [stateActions, setStateActions] = useState<StateActions>({});
 
