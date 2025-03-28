@@ -339,7 +339,7 @@ const AgentMonitor: React.FC = () => {
          // Initial fetch
          onGetData();
          // Set up the interval
-         intervalRef.current = setInterval(onGetData, 5000);
+         intervalRef.current = setInterval(onGetData, 4000);
       }
       // Cleanup function
       return () => {

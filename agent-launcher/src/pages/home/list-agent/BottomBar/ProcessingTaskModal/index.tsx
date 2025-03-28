@@ -1,30 +1,37 @@
 import BaseModal from "@components/BaseModal";
 import styles from "./styles.module.scss";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Box, Flex, Text, Image } from "@chakra-ui/react";
 import { useSelector } from "react-redux";
 import { agentTasksProcessingSelector } from "@stores/states/agent-chat/selector";
-import { Content } from "agent-server-definition";
 import { TaskItem } from "@stores/states/agent-chat/type";
+import { motion } from "framer-motion";
+import uniqBy from "lodash.uniqby";
 
-function ProcessingTaskModal({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (isOpen: boolean) => void }) {
-   const pendingTasks = useSelector(agentTasksProcessingSelector);
+function TaskItemRenderer({ task, isLast, onRemoveTask }: { task: TaskItem; isLast: boolean; onRemoveTask: (taskId: string) => void }) {
+   useEffect(() => {
+      if (task.status === "done" || task.status === "failed") {
+         setTimeout(() => {
+            onRemoveTask(task.id);
+         }, 5000);
+      }
+   }, [task.status, onRemoveTask, task.id]);
 
-   const renderIcon = (data: TaskItem) => {
-      if (data.status === "processing") {
+   const renderIcon = () => {
+      if (task.status === "processing") {
          return <Image src="icons/ic-loading-bar.gif" alt="loading" width="24px" mixBlendMode="exclusion" />;
       }
-      if (data.status === "done") {
+      if (task.status === "done") {
          return (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                <path
-                  d="M10.0003 1.66699C5.40033 1.66699 1.66699 5.40033 1.66699 10.0003C1.66699 14.6003 5.40033 18.3337 10.0003 18.3337C14.6003 18.3337 18.3337 14.6003 18.3337 10.0003C18.3337 5.40033 14.6003 1.66699 10.0003 1.66699ZM13.3587 8.50034L9.46698 12.3836C9.35031 12.5086 9.19198 12.567 9.02531 12.567C8.86698 12.567 8.70865 12.5086 8.58365 12.3836L6.64199 10.442C6.40033 10.2004 6.40033 9.8003 6.64199 9.55863C6.88366 9.31697 7.28366 9.31697 7.52532 9.55863L9.02531 11.0587L12.4753 7.617C12.717 7.367 13.117 7.367 13.3587 7.617C13.6003 7.85867 13.6003 8.25034 13.3587 8.50034Z"
-                  fill="#00AA6C"
+                  d="M16.556 1H7.444L1 7.444V16.555L7.444 22.999H16.555L22.999 16.555V7.444L16.556 1ZM10.532 16.446L6.587 12.5L8.001 11.086L10.47 13.554L15.94 7.587L17.415 8.939L10.533 16.446H10.532Z"
+                  fill="#00FFA2"
                />
             </svg>
          );
       }
-      if (data.status === "failed") {
+      if (task.status === "failed") {
          return (
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px">
                <linearGradient id="hbE9Evnj3wAjjA2RX0We2a" x1="7.534" x2="27.557" y1="7.534" y2="27.557" gradientUnits="userSpaceOnUse">
@@ -51,12 +58,12 @@ function ProcessingTaskModal({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen
       return <></>;
    };
 
-   const renderMessage = (message: Content) => {
-      if (typeof message === "string") {
-         return message;
+   const renderMessage = () => {
+      if (typeof task.message === "string") {
+         return task.message;
       }
-      if (Array.isArray(message)) {
-         return message
+      if (Array.isArray(task.message)) {
+         return task.message
             .filter((item) => {
                return item.type === "text";
             })
@@ -65,6 +72,78 @@ function ProcessingTaskModal({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen
       }
       return "";
    };
+
+   const getItemBorder = () => {
+      if (task.status === "done") {
+         return "1px solid #00FFA2";
+      }
+      if (task.status === "failed") {
+         return "1px solid #ba1632";
+      }
+      return "1px solid rgba(255, 255, 255, 1)";
+   };
+
+   return (
+      <Flex
+         gap="16px"
+         key={task.id}
+         padding={"16px"}
+         // borderBottom={isLast ? "none" : "1px solid rgba(255, 255, 255, 0.10)"}
+         borderBottom={"1px solid rgba(255, 255, 255, 0.10)"}
+         _hover={{
+            cursor: "pointer",
+         }}
+         as={motion.div}
+         initial={{
+            transform: "translateX(0%)",
+         }}
+         animate={{ transform: "translateX(0%)" }}
+         exit={{
+            transform: "translateX(100%)",
+         }}
+      >
+         <Flex width={"48px"} minWidth={"48px"} height={"48px"} borderRadius={"50%"} border={getItemBorder()} alignItems={"center"} justifyContent={"center"}>
+            {renderIcon()}
+         </Flex>
+         <Flex flex={1} flexDirection={"column"} gap={"4px"} overflow={"hidden"}>
+            <Text color="#fff" fontSize={"16px"} fontWeight={"500"} lineHeight={"150%"}>
+               {task.agent.agent_name || "Agent"}
+            </Text>
+            <Text color="#fff" fontSize={"14px"} fontWeight={"500"} lineHeight={"140%"} overflow={"hidden"} whiteSpace={"nowrap"} opacity={"0.7"}>
+               {renderMessage()}
+            </Text>
+         </Flex>
+      </Flex>
+   );
+}
+
+function ProcessingTaskModal({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (isOpen: boolean) => void }) {
+   const pendingTasks = useSelector(agentTasksProcessingSelector);
+
+   const [renderTasks, setRenderTasks] = useState<TaskItem[]>(pendingTasks);
+
+   useEffect(() => {
+      setRenderTasks((prev) => {
+         const newTasks = prev.map((task) => {
+            const foundedIndex = pendingTasks.findIndex((t) => t.id === task.id);
+            if (foundedIndex !== -1) {
+               return {
+                  ...task,
+                  status: pendingTasks[foundedIndex].status,
+               };
+            }
+            return task;
+         });
+         return uniqBy([...newTasks, ...pendingTasks], "id");
+      });
+   }, [pendingTasks]);
+
+   const onRemoveTask = useCallback((taskId: string) => {
+      setRenderTasks((prev) => {
+         return prev.filter((task) => task.id !== taskId);
+      });
+   }, []);
+
    return (
       <BaseModal
          isShow={isOpen}
@@ -79,45 +158,25 @@ function ProcessingTaskModal({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen
                Task processing
             </Text>
 
-            <Box bg="rgba(255, 255, 255, 0.10)" borderRadius="12px" maxHeight={"400px"} overflowY={"auto"} className={styles.taskListScroll}>
-               {pendingTasks.length ? (
+            <Box
+               bg="rgba(255, 255, 255, 0.10)"
+               borderRadius="12px"
+               minHeight={"400px"}
+               maxHeight={"400px"}
+               overflowY={"auto"}
+               overflowX={"hidden"}
+               className={styles.taskListScroll}
+            >
+               {renderTasks.length ? (
                   <>
-                     {pendingTasks.map((task, index) => (
-                        <Flex
-                           gap="16px"
-                           key={task.id}
-                           padding={"16px"}
-                           borderBottom={index === pendingTasks.length - 1 ? "none" : "1px solid rgba(255, 255, 255, 0.10)"}
-                           _hover={{
-                              cursor: "pointer",
-                           }}
-                        >
-                           <Flex
-                              width={"48px"}
-                              minWidth={"48px"}
-                              height={"48px"}
-                              borderRadius={"50%"}
-                              border="1px solid rgba(255, 255, 255, 1)"
-                              alignItems={"center"}
-                              justifyContent={"center"}
-                           >
-                              {renderIcon(task)}
-                           </Flex>
-                           <Flex flex={1} flexDirection={"column"} gap={"4px"} overflow={"hidden"}>
-                              <Text color="#fff" fontSize={"16px"} fontWeight={"500"} lineHeight={"150%"}>
-                                 {task.agent.agent_name || "Agent"}
-                              </Text>
-                              <Text color="#fff" fontSize={"14px"} fontWeight={"500"} lineHeight={"140%"} overflow={"hidden"} whiteSpace={"nowrap"} opacity={"0.7"}>
-                                 {renderMessage(task.message)}
-                              </Text>
-                           </Flex>
-                        </Flex>
+                     {renderTasks.map((task, index) => (
+                        <TaskItemRenderer key={task.id} task={task} isLast={index === renderTasks.length - 1} onRemoveTask={onRemoveTask} />
                      ))}
                   </>
                ) : (
-                  <Flex padding={"16px"} justifyContent={"center"} alignItems={"center"}>
+                  <Flex height={"400px"} padding={"16px"} justifyContent={"center"} alignItems={"center"}>
                      <Text color="#fff" fontSize={"16px"} fontWeight={"500"} lineHeight={"150%"}>
-                        No task processing
+                        No task
                      </Text>
                   </Flex>
                )}

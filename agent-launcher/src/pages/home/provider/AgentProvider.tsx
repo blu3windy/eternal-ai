@@ -73,6 +73,7 @@ const AgentProvider: React.FC<
 
    const checkBackup = throttle(async () => {
       const values = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
+      console.log("stephen: values", values);
       if (!values) {
          setIsBackupedPrvKey(false);
          return;
@@ -442,7 +443,7 @@ const AgentProvider: React.FC<
       cPumpAPI.saveAgentInstalled({ ids: [agent.id], action: "uninstall" });
    }
 
-   const installAgent = async (agent: IAgentToken) => {
+   const installAgent = async (agent: IAgentToken, needUpdateCode?: boolean) => {
       try {
          updateAgentState(agent.id, {
             data: agent,
@@ -461,7 +462,7 @@ const AgentProvider: React.FC<
          } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
 
-            await startAgent(agent);
+            await startAgent(agent, needUpdateCode);
 
             fetchInstalledUtilityAgents(); //fetch then check agent installed in useEffect
 
@@ -477,7 +478,7 @@ const AgentProvider: React.FC<
             console.log('====ipfsHash', ipfsHash);
             await globalThis.electronAPI.modelInstall(ipfsHash);
 
-            await startAgent(agent);
+            await startAgent(agent, needUpdateCode);
 
             fetchInstalledModelAgents(); //fetch then check agent installed in useEffect
 
@@ -625,14 +626,17 @@ const AgentProvider: React.FC<
       }
    };
 
-   const unInstallAgent = async (agent: IAgentToken) => {
+   const unInstallAgent = async (agent: IAgentToken, needRemoveStorage: boolean = true) => {
       console.log('unInstallAgent', agent);
       try {
          updateAgentState(agent.id, {
             data: agent,
             isUnInstalling: true,
          });
-         await installAgentStorage.removeAgent(`${agent.id}`);
+
+         if (needRemoveStorage) {
+            await installAgentStorage.removeAgent(`${agent.id}`);
+         }
          
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await stopAgent(agent);
@@ -684,7 +688,9 @@ const AgentProvider: React.FC<
          }, 2000);
          
          throttledCheckAll();
-         dispatch(requestReloadListAgent());
+         if (needRemoveStorage) {
+            dispatch(requestReloadListAgent());
+         }
       }
    }
 
@@ -1037,7 +1043,7 @@ const AgentProvider: React.FC<
       console.log("stephen: setSelectedAgent", { newAgent, isInstalled, isRunning });
       console.log("stephen: setSelectedAgent agentStates", { agentStates });
 
-      if (isInstalled && !isRunning && !isStarting) {
+      if (isInstalled && !isRunning && !isStarting && newAgent?.agent_type !== AgentType.ModelOnline) {
          startAgent(newAgent);
       }
    }, [agentStates]);
@@ -1048,17 +1054,17 @@ const AgentProvider: React.FC<
          const installIds = await installAgentStorage.getAgentIds();
          let ids = '';
          if (installIds.length > 0) {
-           ids = installIds.join(',');
+            ids = installIds.join(',');
          }
 
          const agent_types = [
-               AgentType.UtilityJS, 
-               AgentType.UtilityPython, 
-               AgentType.Infra, 
-               AgentType.CustomUI, 
-               AgentType.CustomPrompt,
-               AgentType.ModelOnline
-            ].join(',');
+            AgentType.UtilityJS, 
+            AgentType.UtilityPython, 
+            AgentType.Infra, 
+            AgentType.CustomUI, 
+            AgentType.CustomPrompt,
+            AgentType.ModelOnline
+         ].join(',');
          const utilityParams: any = {
             page: 1,
             limit: 100,
@@ -1068,7 +1074,7 @@ const AgentProvider: React.FC<
             ids,
          };
 
-          const [{ agents }, { agents: agentsAll }] = await Promise.all([
+         const [{ agents }, { agents: agentsAll }] = await Promise.all([
             cPumpAPI.getAgentTokenList(utilityParams),
             cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
          ]);
@@ -1089,7 +1095,12 @@ const AgentProvider: React.FC<
             if (agent) {
                if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
                   try {
-                     const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+                     if (agent.agent_type === AgentType.ModelOnline) {
+                        const res = await cPumpAPI.checkAgentModelServiceRunning();
+                     } else {
+                        const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+                     }
+                     
                      updateAgentState(agent.id, {
                         data: agent,
                         isInstalled: true,
@@ -1202,10 +1213,8 @@ const AgentProvider: React.FC<
    }>();
 
    useEffect(() => {
-      if (selectedAgent) {
-         onGetCurrentModel();
-      }
-   }, [selectedAgent])
+      onGetCurrentModel();
+   }, [selectedAgent, isRunning]);
 
    const onGetCurrentModel = async () => {
       try {

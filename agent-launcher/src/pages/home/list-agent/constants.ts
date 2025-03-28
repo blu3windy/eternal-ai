@@ -355,9 +355,13 @@ export const AgentTypeName = {
    [AgentType.KnowledgeBase]: 'Knowledge',
    [AgentType.Eliza]: 'Eliza',
    [AgentType.Zerepy]: 'Zerepy',
-   [AgentType.UtilityJS]: 'Utility JS',
-   [AgentType.UtilityPython]: 'Utility Python',
+   [AgentType.UtilityJS]: 'Utility',
+   [AgentType.UtilityPython]: 'Utility',
+   [AgentType.Model]: 'Model',
    [AgentType.Infra]: 'Infra',
+   [AgentType.CustomUI]: 'Utility',
+   [AgentType.CustomPrompt]: 'Utility',
+   [AgentType.ModelOnline]: 'Model',
 }
 
 export const CATEGORIES = [
@@ -383,3 +387,6 @@ export const CATEGORIES = [
       icon: 'icons/ic-category-infra.svg'
    }
 ];
+
+
+export const SYSTEM_AGENTS = [14740];
