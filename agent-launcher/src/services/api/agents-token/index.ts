@@ -98,6 +98,17 @@ class CAgentTokenAPI extends CApiClient {
       }
    };
 
+   public checkAgentModelServiceRunning = async (): Promise<any> => {
+      try {
+         const res: any = await this.api.get(
+            `http://localhost:65534/health`,
+         );
+         return res;
+      } catch (e) {
+         throw e;
+      }
+   };
+
    public saveAgentPromptCount = async (
       id: number
    ): Promise<any> => {

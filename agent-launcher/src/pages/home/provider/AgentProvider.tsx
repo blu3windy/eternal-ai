@@ -73,6 +73,7 @@ const AgentProvider: React.FC<
 
    const checkBackup = throttle(async () => {
       const values = await localStorageService.getItem(STORAGE_KEYS.AGENTS_HAS_BACKUP_PRV_KEY);
+      console.log("stephen: values", values);
       if (!values) {
          setIsBackupedPrvKey(false);
          return;
@@ -1089,7 +1090,12 @@ const AgentProvider: React.FC<
             if (agent) {
                if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
                   try {
-                     const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+                     if (agent.agent_type === AgentType.ModelOnline) {
+                        const res = await cPumpAPI.checkAgentModelServiceRunning();
+                     } else {
+                        const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+                     }
+                     
                      updateAgentState(agent.id, {
                         data: agent,
                         isInstalled: true,
