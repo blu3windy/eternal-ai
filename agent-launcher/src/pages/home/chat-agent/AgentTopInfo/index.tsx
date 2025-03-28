@@ -20,7 +20,7 @@ import { BASE_CHAIN_ID } from '@constants/chains';
 import CAgentContract from '@contract/agent';
 import SelectModel from '@pages/home/chat-agent/AgentTopInfo/SelectModel';
 import ExportPrivateKey from '@pages/home/chat-agent/ExportPrivateKey';
-import { AgentType } from '@pages/home/list-agent/constants';
+import { AgentType, SYSTEM_AGENTS } from '@pages/home/list-agent/constants';
 import { AgentContext } from '@pages/home/provider/AgentContext';
 import TradeAgent from '@pages/home/trade-agent';
 import AgentOnChainInfo from '@pages/home/trade-agent/onchain-info';
@@ -52,7 +52,6 @@ const AgentTopInfo = () => {
       isInstalled,
       unInstallAgent,
       isUnInstalling,
-      currentActiveModel,
       installAgent,
    } = useContext(AgentContext);
 
@@ -74,30 +73,14 @@ const AgentTopInfo = () => {
       return showSetup || (!isCanChat && !showBackupPrvKey) ? 'white' : 'black';
    }, [isCanChat, showBackupPrvKey, showSetup]);
 
-   const deleteAble = useMemo(() => {
-      return !(
-         compareString(selectedAgent?.agent_name, currentActiveModel?.agent?.agent_name) ||
-         currentActiveModel?.dependAgents?.find((address) =>
-            compareString(address, selectedAgent?.agent_contract_address)
-         ) ||
-         compareString(selectedAgent?.agent_name, 'agent-router')
-      );
-   }, [selectedAgent, currentActiveModel]);
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
    const [isClickUpdateCode, setIsClickUpdate] = useState(false);
 
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
+
    const allowStopAgent = useMemo(() => {
-      return (
-         selectedAgent?.agent_type !== undefined &&
-         [
-            AgentType.Infra,
-            AgentType.CustomUI,
-            AgentType.CustomPrompt,
-            AgentType.ModelOnline,
-         ].includes(selectedAgent.agent_type)
-      );
+      return !SYSTEM_AGENTS.some(id => compareString(id, selectedAgent?.id));
    }, [selectedAgent]);
 
    useEffect(() => {
@@ -273,7 +256,7 @@ const AgentTopInfo = () => {
                               </Flex>
                               <Divider color={'#E2E4E8'} my={'16px'} />
                               <AgentOnChainInfo />
-                              {allowStopAgent && requireInstall && isRunning && deleteAble && (
+                              {allowStopAgent && requireInstall && isRunning && (
                                  <>
                                     <Divider color={'#E2E4E8'} my={'16px'} />
                                     <Button
@@ -304,7 +287,7 @@ const AgentTopInfo = () => {
                                     </Button>
                                  </>
                               )}
-                              {allowStopAgent && requireInstall && isInstalled && deleteAble && (
+                              {allowStopAgent && requireInstall && isInstalled && (
                                  <>
                                     <Divider color={'#E2E4E8'} my={'16px'} />
                                     <Button
