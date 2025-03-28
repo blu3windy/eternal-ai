@@ -160,7 +160,8 @@ const AgentProvider: React.FC<
                   AgentType.UtilityPython, 
                   AgentType.Infra, 
                   AgentType.CustomUI, 
-                  AgentType.CustomPrompt
+                  AgentType.CustomPrompt,
+                  AgentType.ModelOnline,
                ].join(','),
                chain: '',
                ids,
