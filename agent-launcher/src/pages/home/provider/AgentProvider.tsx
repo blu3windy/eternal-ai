@@ -1032,10 +1032,11 @@ const AgentProvider: React.FC<
 
       const isInstalled = agentStates[newAgent.id]?.isInstalled || false;
       const isRunning = agentStates[newAgent.id]?.isRunning || false;
+      const isStarting = agentStates[newAgent.id]?.isStarting || false;
       console.log("stephen: setSelectedAgent", { newAgent, isInstalled, isRunning });
       console.log("stephen: setSelectedAgent agentStates", { agentStates });
 
-      if (isInstalled && !isRunning) {
+      if (isInstalled && !isRunning && !isStarting) {
          startAgent(newAgent);
       }
    }, [agentStates]);
