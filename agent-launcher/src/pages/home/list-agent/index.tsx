@@ -79,6 +79,7 @@ const AgentsList = () => {
       setCategory,
       installedAgentIds,
       startAgent,
+      installAgent
    } = useContext(AgentContext);
 
    const refParams = useRef({
@@ -208,7 +209,7 @@ const AgentsList = () => {
                if (testAgent) {
                   refAddAgentTestCA.current = '';
                   setSelectedAgent(testAgent);
-                  startAgent(testAgent);
+                  installAgent(testAgent, true);
                } else {
                   setSelectedAgent(newTokens[0]);
                }

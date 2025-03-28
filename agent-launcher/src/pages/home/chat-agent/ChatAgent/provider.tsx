@@ -15,7 +15,6 @@ import AgentAPI from "../../../../services/api/agent";
 import { ChatCompletionPayload, IChatMessage } from "../../../../services/api/agent/types.ts";
 import { INIT_WELCOME_MESSAGE } from "./constants";
 import HandleMessageProcessing from "./HandleMessageProcessing.tsx";
-import { string } from "yup";
 
 type IChatAgentProviderContext = {
    isStopReceiving?: boolean;
@@ -117,7 +116,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                               return updateMessage;
                            }
 
-                           if (!item.msg) {
+                           if (item.msg) {
                               const updateMessage = {
                                  ...item,
                                  status: "received",
@@ -135,6 +134,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                      }
                      return item;
                   });
+               console.log("_____________", filterMessages);
                setMessages(filterMessages as any);
             }
          });

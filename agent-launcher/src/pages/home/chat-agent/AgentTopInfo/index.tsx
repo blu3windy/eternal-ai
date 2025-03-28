@@ -48,12 +48,12 @@ const AgentTopInfo = () => {
       stopAgent,
       requireInstall,
       isRunning,
-      startAgent,
       isStarting,
       isInstalled,
       unInstallAgent,
       isUnInstalling,
       currentActiveModel,
+      installAgent,
    } = useContext(AgentContext);
 
    const { isOpen, onOpen, onClose } = useDisclosure();
@@ -149,7 +149,8 @@ const AgentTopInfo = () => {
       setIsClickUpdate(true);
       if (!selectedAgent) return;
       await stopAgent(selectedAgent);
-      await startAgent(selectedAgent, true);
+      await unInstallAgent(selectedAgent, false);
+      await installAgent(selectedAgent, true);
       setIsClickUpdate(false);
    };
 

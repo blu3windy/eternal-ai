@@ -443,7 +443,7 @@ const AgentProvider: React.FC<
       cPumpAPI.saveAgentInstalled({ ids: [agent.id], action: "uninstall" });
    }
 
-   const installAgent = async (agent: IAgentToken) => {
+   const installAgent = async (agent: IAgentToken, needUpdateCode?: boolean) => {
       try {
          updateAgentState(agent.id, {
             data: agent,
@@ -462,7 +462,7 @@ const AgentProvider: React.FC<
          } else if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await installUtilityAgent(agent);
 
-            await startAgent(agent);
+            await startAgent(agent, needUpdateCode);
 
             fetchInstalledUtilityAgents(); //fetch then check agent installed in useEffect
 
@@ -478,7 +478,7 @@ const AgentProvider: React.FC<
             console.log('====ipfsHash', ipfsHash);
             await globalThis.electronAPI.modelInstall(ipfsHash);
 
-            await startAgent(agent);
+            await startAgent(agent, needUpdateCode);
 
             fetchInstalledModelAgents(); //fetch then check agent installed in useEffect
 
@@ -626,14 +626,17 @@ const AgentProvider: React.FC<
       }
    };
 
-   const unInstallAgent = async (agent: IAgentToken) => {
+   const unInstallAgent = async (agent: IAgentToken, needRemoveStorage: boolean = true) => {
       console.log('unInstallAgent', agent);
       try {
          updateAgentState(agent.id, {
             data: agent,
             isUnInstalling: true,
          });
-         await installAgentStorage.removeAgent(`${agent.id}`);
+
+         if (needRemoveStorage) {
+            await installAgentStorage.removeAgent(`${agent.id}`);
+         }
          
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
             await stopAgent(agent);
@@ -685,7 +688,9 @@ const AgentProvider: React.FC<
          }, 2000);
          
          throttledCheckAll();
-         dispatch(requestReloadListAgent());
+         if (needRemoveStorage) {
+            dispatch(requestReloadListAgent());
+         }
       }
    }
 
@@ -1208,9 +1213,7 @@ const AgentProvider: React.FC<
    }>();
 
    useEffect(() => {
-      if (selectedAgent?.agent_type === AgentType.ModelOnline) {
-         onGetCurrentModel();
-      }
+      onGetCurrentModel();
    }, [selectedAgent, isRunning]);
 
    const onGetCurrentModel = async () => {
