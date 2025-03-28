@@ -219,6 +219,7 @@ type AgentInfo struct {
 	IsCustomUi     bool   `gorm:"default:0"`
 	Likes          int64  `gorm:"default:0"`
 	IsPublic       bool   `gorm:"default:1"`
+	IsStreaming    bool   `gorm:"default:1"`
 	DockerPort     string
 	RequiredInfo   string `gorm:"type:longtext"`
 

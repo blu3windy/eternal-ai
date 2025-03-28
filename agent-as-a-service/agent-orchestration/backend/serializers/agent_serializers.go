@@ -135,6 +135,7 @@ type AgentInfoResp struct {
 	DependAgents              string                    `json:"depend_agents"`
 	RequiredWallet            bool                      `json:"required_wallet"`
 	IsOnchain                 bool                      `json:"is_onchain"`
+	IsStreaming               bool                      `json:"is_streaming"`
 	IsCustomUi                bool                      `json:"is_custom_ui"`
 	Likes                     int64                     `json:"likes"`
 	IsPublic                  bool                      `json:"is_public"`
@@ -304,6 +305,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		DependAgents:         m.DependAgents,
 		RequiredWallet:       m.RequiredWallet,
 		IsOnchain:            m.IsOnchain,
+		IsStreaming:          m.IsStreaming,
 		IsCustomUi:           m.IsCustomUi,
 		Likes:                m.Likes,
 		IsPublic:             m.IsPublic,
