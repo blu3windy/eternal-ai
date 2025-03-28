@@ -196,6 +196,7 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                </BaseModal>
 
                <ProcessingTaskModal
+                  key={`processing-task-${isOpenProcessingTask}`}
                   isOpen={isOpenProcessingTask}
                   setIsOpen={() => {
                      setIsOpenProcessingTask((prev) => !prev);
