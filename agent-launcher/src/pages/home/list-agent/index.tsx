@@ -79,6 +79,7 @@ const AgentsList = () => {
       setCategory,
       installedAgentIds,
       startAgent,
+      installAgent
    } = useContext(AgentContext);
 
    const refParams = useRef({
@@ -208,7 +209,7 @@ const AgentsList = () => {
                if (testAgent) {
                   refAddAgentTestCA.current = '';
                   setSelectedAgent(testAgent);
-                  startAgent(testAgent, true);
+                  installAgent(testAgent, true);
                } else {
                   setSelectedAgent(newTokens[0]);
                }
@@ -761,16 +762,16 @@ No agents installed?
          )}
 
          <BottomBar  onAddAgentSuccess={(address: string) => {
-               refAddAgentTestCA.current = address;
-               onClose();
-               setFilter(FilterOption.Installed);
-               refParams.current = {
-                  ...refParams.current,
-                  filter: FilterOption.Installed,
-               };
-               throttleGetTokens(true);
-               setIsSearchMode(false);
-            }}  />
+            refAddAgentTestCA.current = address;
+            onClose();
+            setFilter(FilterOption.Installed);
+            refParams.current = {
+               ...refParams.current,
+               filter: FilterOption.Installed,
+            };
+            throttleGetTokens(true);
+            setIsSearchMode(false);
+         }}  />
 
          {/* <Flex className={s.addTestBtn} onClick={onOpen}>
             <Center w={'100%'}>
