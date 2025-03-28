@@ -19,43 +19,57 @@ const slice = createSlice({
             localStorageService.setItem(CHAT_AGENT_TASKS_STATE_STORAGE_KEY, JSON.stringify(state.agentTasks));
          }
       },
-      addOrUpdateTaskItem: (state: AgentChatState, action: { payload: { id: string; taskItem: TaskItem } }) => {
+      addOrUpdateTaskItem: (
+         state: AgentChatState,
+         action: {
+            payload: {
+               id: string;
+               taskItem: Omit<TaskItem, "createdAt" | "updatedAt">;
+            };
+         }
+      ) => {
          const { id, taskItem } = action.payload;
          if (taskItem.id) {
             const tasks = state.agentTasks[id] || [];
-            const foundIndex = tasks.findIndex(item => item.id === taskItem.id)
+            const foundIndex = tasks.findIndex((item) => item.id === taskItem.id);
             if (foundIndex !== -1) {
                tasks[foundIndex] = {
                   ...tasks[foundIndex],
-                  ...taskItem
+                  ...taskItem,
+                  updatedAt: new Date().getTime(),
                };
 
-               state.agentTasks[id] = [
-                  ...tasks,
-               ];
+               state.agentTasks[id] = [...tasks];
             } else {
                state.agentTasks[id] = [
-                  ...state.agentTasks[id] || [],
-                  taskItem
+                  ...(state.agentTasks[id] || []),
+                  {
+                     ...taskItem,
+                     createdAt: new Date().getTime(),
+                  },
                ];
             }
             // update storage
             localStorageService.setItem(CHAT_AGENT_TASKS_STATE_STORAGE_KEY, JSON.stringify(state.agentTasks));
          }
       },
-      removeTaskItem: (state: AgentChatState, action: { payload: { id: string; taskItem: TaskItem } }) => {
+      removeTaskItem: (
+         state: AgentChatState,
+         action: {
+            payload: {
+               id: string;
+               taskItem: Omit<TaskItem, "createdAt" | "updatedAt">;
+            };
+         }
+      ) => {
          const { id, taskItem } = action.payload;
-         state.agentTasks[id] = [...(state.agentTasks[id] || []).filter(item => item.id !== taskItem.id)];
+         state.agentTasks[id] = [...(state.agentTasks[id] || []).filter((item) => item.id !== taskItem.id)];
          // update storage
          localStorageService.setItem(CHAT_AGENT_TASKS_STATE_STORAGE_KEY, JSON.stringify(state.agentTasks));
-      }
+      },
    },
 });
 
-export const {
-   initTaskItems,
-   addOrUpdateTaskItem,
-   removeTaskItem,
-} = slice.actions;
+export const { initTaskItems, addOrUpdateTaskItem, removeTaskItem } = slice.actions;
 
 export default slice.reducer;

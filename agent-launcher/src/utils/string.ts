@@ -2,8 +2,7 @@ import tokenIcons from "@constants/tokenIcons";
 import { IToken } from "@interfaces/token";
 import { ethers } from "ethers";
 import clone from "lodash/clone";
-export const TOKEN_ICON_DEFAULT
-  = "https://cdn.trustless.computer/upload/1683530065704444020-1683530065-default-coin.svg";
+export const TOKEN_ICON_DEFAULT = "https://cdn.trustless.computer/upload/1683530065704444020-1683530065-default-coin.svg";
 
 const compareString = (a: unknown, b: unknown): boolean => {
    return a?.toString?.()?.toLowerCase?.() === b?.toString?.()?.toLowerCase?.();
@@ -38,14 +37,13 @@ const addressFormater = (address?: string, sliceLength?: number) => {
    }
 };
 
-const tryToParseJsonString = (str: string, defaultValue = {}): Record<string, unknown> & any => {
+const tryToParseJsonString = <T extends Record<string, unknown>>(str: string, defaultValue: T = {} as T): T => {
    try {
-      return JSON.parse(str);
+      return JSON.parse(str) as T;
    } catch (error) {
       return defaultValue;
    }
 };
-
 const getFileExtension = (filename: string) => {
    return filename.slice(filename.lastIndexOf(".") + 1);
 };
@@ -111,15 +109,4 @@ const splitBase64 = (content: string) => {
       .filter((line) => line.length > 0);
 };
 
-export {
-   compareString,
-   getAvatarName,
-   addressFormater,
-   tryToParseJsonString,
-   getFileExtension,
-   parseSymbolName,
-   formatName,
-   getTokenIconUrl,
-   isBase64,
-   splitBase64,
-};
+export { compareString, getAvatarName, addressFormater, tryToParseJsonString, getFileExtension, parseSymbolName, formatName, getTokenIconUrl, isBase64, splitBase64 };
