@@ -35,11 +35,8 @@ import CAgentContract from '@contract/agent';
 import DeleteAgentModal from './DeleteAgentModal';
 import BaseModal from '@components/BaseModal';
 import Loading from '@components/Loading';
-import STORAGE_KEYS from '@constants/storage-key';
-import localStorageService from '@storage/LocalStorageService';
 import installAgentStorage from '@storage/InstallAgentStorage';
 import { useDispatch } from 'react-redux';
-import { requestReloadListAgent } from '@stores/states/common/reducer';
 
 interface DockerContainer {
    Command: string;
@@ -582,7 +579,6 @@ const AgentMonitor: React.FC = () => {
                if (deleteAgent) {
                   unInstallAgent(deleteAgent);
                   setDeleteAgent(undefined);
-                  dispatch(requestReloadListAgent());
                }
                if (deleteContainer) {
                   handleDeleteContainer(deleteContainer);

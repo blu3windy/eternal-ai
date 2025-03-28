@@ -36,9 +36,7 @@ import s from './styles.module.scss';
 import ProcessingTasks from './ProcessingTasks';
 import { IAgentToken } from '@services/api/agents-token/interface';
 import DeleteAgentModal from '@pages/home/list-agent/AgentMonitor/DeleteAgentModal';
-import storageModel from '@storage/StorageModel';
 import { useDispatch } from 'react-redux';
-import { requestReloadListAgent } from '@stores/states/common/reducer';
 
 const AgentTopInfo = () => {
    const {
@@ -58,7 +56,6 @@ const AgentTopInfo = () => {
       currentActiveModel,
    } = useContext(AgentContext);
 
-   const dispatch = useDispatch();
    const { isOpen, onOpen, onClose } = useDisclosure();
    const { isOpen: isOpenDrawer, onOpen: onOpenDrawer, onClose: onCloseDrawer } = useDisclosure();
 
@@ -440,7 +437,6 @@ const AgentTopInfo = () => {
                if (deleteAgent) {
                   unInstallAgent(deleteAgent);
                   setDeleteAgent(undefined);
-                  dispatch(requestReloadListAgent());
                }
             }}
          />
