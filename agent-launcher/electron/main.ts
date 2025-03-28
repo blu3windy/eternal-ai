@@ -1,9 +1,14 @@
-import { app, BrowserWindow, screen, dialog } from "electron";
+import { app, BrowserWindow, screen, dialog, ipcMain } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 import command from "./share/command-tool.ts";
+
+// Configure code signing for macOS
+if (process.platform === 'darwin') {
+   process.env.CSC_IDENTITY_AUTO_DISCOVERY = process.env.APPLE_DEVELOPER_IDENTITY || 'false';
+}
 
 // Disable code signing verification in development
 if (process.env.NODE_ENV === "development") {
@@ -20,80 +25,14 @@ if (process.env.NODE_ENV === "development") {
 
 // Configure update URL
 autoUpdater.setFeedURL({
-   provider: "generic",
-   url: "https://github.com/0x0603/electron-update-server/releases/download/0.0.5",
+   provider: "github",
+   owner: "0x0603",
+   repo: "electron-update-server",
+   releaseType: "release",
+   private: false,
+   vPrefixedTagName: true,
 });
 console.log("📡 Update URL configured");
-
-// Update event handlers
-autoUpdater.on("checking-for-update", () => {
-   console.log("🔍 Checking for updates...");
-   dialog.showMessageBox({
-      type: "info",
-      title: "Update Check",
-      message: "Checking for updates...",
-   });
-});
-
-autoUpdater.on("update-available", (info) => {
-   console.log("✨ Update available:", info);
-   dialog.showMessageBox({
-      type: "info",
-      title: "Update Available",
-      message: `Version ${info.version} is available. Download now?`,
-      buttons: ["Update", "Later"],
-   }).then(({ response }) => {
-      if (response === 0) {
-         console.log("📥 Starting update download...");
-         autoUpdater.downloadUpdate();
-      }
-   });
-});
-
-autoUpdater.on("update-not-available", (info) => {
-   console.log("✅ No updates available:", info);
-   dialog.showMessageBox({
-      type: "info",
-      title: "No Updates",
-      message: "You're running the latest version.",
-   });
-});
-
-autoUpdater.on("download-progress", (progress) => {
-   const percentage = Math.round(progress.percent);
-   console.log(`📊 Download progress: ${percentage}%`);
-   dialog.showMessageBox({
-      type: "info",
-      title: "Download Progress",
-      message: `Downloading... ${percentage}%\n${(progress.transferred / 1024 / 1024).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB`,
-   });
-});
-
-autoUpdater.on("update-downloaded", (info) => {
-   console.log("🎉 Update downloaded:", info);
-   dialog.showMessageBox({
-      type: "info",
-      title: "Update Ready",
-      message: `Version ${info.version} is downloaded. Restart to apply?`,
-      buttons: ["Restart", "Later"],
-   }).then(({ response }) => {
-      if (response === 0) {
-         console.log("🔄 Restarting application...");
-         setTimeout(() => {
-            autoUpdater.quitAndInstall();
-         }, 3000);
-      }
-   });
-});
-
-autoUpdater.on("error", (err) => {
-   console.error("❌ Update error:", err);
-   dialog.showMessageBox({
-      type: "error",
-      title: "Update Error",
-      message: `Error: ${err.message}`,
-   });
-});
 
 // const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -120,6 +59,11 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 
 let win: BrowserWindow | null;
 
+// Add IPC handler for accepting updates
+ipcMain.on('apply-update', () => {
+   autoUpdater.downloadUpdate();
+});
+
 runIpcMain();
 
 function createWindow() {
@@ -130,11 +74,7 @@ function createWindow() {
       console.log("🔄 Initiating update check...");
       autoUpdater.checkForUpdates().catch((err) => {
          console.error("❌ Update check failed:", err);
-         dialog.showMessageBox({
-            type: "error",
-            title: "Update Check Failed",
-            message: `Failed to check for updates: ${err.message}`,
-         });
+         win?.webContents.send("update-error", `Failed to check for updates: ${err.message}`);
       });
    }, 5000);
    win = new BrowserWindow({
@@ -167,17 +107,37 @@ function createWindow() {
 
    autoUpdater.on("update-available", (info) => {
       console.log("Update available:", info);
-      win?.webContents.send("update-available", info);
+      win?.webContents.send("update-available", {
+         version: info.version,
+         releaseNotes: info.releaseNotes,
+      });
    });
 
-   autoUpdater.on("download-progress", (info) => {
-      console.log("Update available:", info);
-      win?.webContents.send("download-progress", info);
+   autoUpdater.on("download-progress", (progress) => {
+      const percentage = Math.round(progress.percent);
+      console.log(`📊 Download progress: ${percentage}%`);
+      win?.webContents.send("download-progress", {
+         percent: percentage,
+         transferred: progress.transferred,
+         total: progress.total,
+         bytesPerSecond: progress.bytesPerSecond,
+      });
    });
 
    autoUpdater.on("update-downloaded", (info) => {
       console.log("update-downloaded:", info);
-      win?.webContents.send("update-downloaded", info);
+      win?.webContents.send("update-downloaded", {
+         version: info.version,
+      });
+      // Automatically restart after 3 seconds
+      setTimeout(() => {
+         autoUpdater.quitAndInstall();
+      }, 3000);
+   });
+
+   autoUpdater.on("error", (err) => {
+      console.error("❌ Update error:", err);
+      win?.webContents.send("update-error", err.message);
    });
 
    if (VITE_DEV_SERVER_URL) {

@@ -1,150 +1,167 @@
 {
-  "name": "agent-launcher",
-  "private": true,
-  "version": "0.0.5",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "postinstall": "electron-builder install-app-deps",
-    "build": "tsc && vite build && electron-builder --mac --universal -- -p always",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "sign": "electron-builder --mac --universal",
-    "xcode": "tsc && vite build && electron-builder --mac --universal --x64 --config.mac.target=dir"
-  },
-  "resolutions": {
-    "react": "^18",
-    "react-dom": "^18",
-    "@types/react": "^18",
-    "@types/react-dom": "^18"
-  },
-  "dependencies": {
-    "@chakra-ui/react": "2",
-    "@electron/notarize": "^3.0.1",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@enzoferey/ethers-error-parser": "^0.2.3",
-    "@fontsource/inter": "^5.1.1",
-    "@reduxjs/toolkit": "^2.6.0",
-    "adm-zip": "^0.5.16",
-    "agent-server-definition": "^0.1.7",
-    "axios": "^1.7.9",
-    "bignumber.js": "^9.1.2",
-    "clsx": "^2.1.1",
-    "crypto-js": "^4.2.0",
-    "dayjs": "^1.11.13",
-    "dexie": "^4.0.11",
-    "electron-store": "^10.0.1",
-    "electron-updater": "^6.3.9",
-    "ethers": "5.7.2",
-    "formik": "^2.4.6",
-    "framer-motion": "^12.4.7",
-    "keytar": "^7.9.0",
-    "lightweight-charts": "^4.2.1",
-    "lodash.clone": "^4.5.0",
-    "lodash.debounce": "^4.0.8",
-    "lodash.first": "^3.0.0",
-    "lodash.last": "^3.0.0",
-    "lodash.throttle": "^4.1.1",
-    "lodash.uniq": "^4.5.0",
-    "lodash.uniqby": "^4.7.0",
-    "lottie-react": "^2.4.1",
-    "net": "^1.0.2",
-    "query-string": "^9.1.1",
-    "rc-input-number": "^9.4.0",
-    "react": "^18",
-    "react-autosize-textarea": "^7.1.0",
-    "react-dom": "^18",
-    "react-dropzone": "^14.3.8",
-    "react-hot-toast": "^2.5.2",
-    "react-infinite-scroll-component": "^6.1.0",
-    "react-jazzicon": "^1.0.4",
-    "react-loading-skeleton": "^3.5.0",
-    "react-markdown": "^10.0.0",
-    "react-otp-input": "^3.1.1",
-    "react-qr-code": "^2.0.15",
-    "react-redux": "^9.2.0",
-    "react-resizable-panels": "^2.1.7",
-    "react-router-dom": "^7.2.0",
-    "react-scrollable-feed": "^2.0.2",
-    "react-svg": "^16.3.0",
-    "react-syntax-highlighter": "^15.6.1",
-    "react-use": "^17.6.0",
-    "redux-deep-persist": "^1.0.7",
-    "redux-persist": "^6.0.0",
-    "rehype-raw": "^7.0.0",
-    "remark-gfm": "^4.0.1",
-    "sass": "^1.85.0",
-    "swiper": "^11.2.5",
-    "uuid": "^11.1.0",
-    "yup": "^1.6.1",
-    "zustand": "^5.0.3"
-  },
-  "devDependencies": {
-    "@types/crypto-js": "^4.2.2",
-    "@types/lodash.debounce": "^4.0.9",
-    "@types/lodash.throttle": "^4.1.9",
-    "@types/lodash.uniq": "^4.5.9",
-    "@types/lodash.uniqby": "^4.7.9",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "@types/react-syntax-highlighter": "^15.5.13",
-    "@typescript-eslint/eslint-plugin": "^7.1.1",
-    "@typescript-eslint/parser": "^7.1.1",
-    "@vitejs/plugin-react": "^4.2.1",
-    "electron": "^30.0.1",
-    "electron-builder": "^24.13.3",
-    "electron-rebuild": "^3.2.9",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5",
-    "typescript": "^5.2.2",
-    "vite": "^5.1.6",
-    "vite-plugin-electron": "^0.28.6",
-    "vite-plugin-electron-renderer": "^0.14.5"
-  },
-  "main": "dist-electron/main.js",
-  "build": {
-    "appId": "eternalai.org.vibe",
-    "productName": "Vibe",
-    "asar": true,
-    "asarUnpack": [
-      "node_modules/keytar/**",
-      "public/**"
-    ],
-    "publish": [
-      {
-        "provider": "generic",
-        "url": "https://github.com/0x0603/electron-update-server/releases/download/0.0.5"
-      }
-    ],
-    "files": [
-      "dist-electron/**/*",
-      "dist/**/*",
-      "node_modules/**/*",
-      "package.json"
-    ],
-    "directories": {
-      "output": "release/${version}"
-    },
-    "mac": {
-      "identity": null,
-      "icon": "public/icons/app-logo.png",
-      "artifactName": "${productName}-Mac-${version}.${ext}",
-      "target": [
-        "dmg",
-        "zip"
+   "name": "agent-launcher",
+   "private": true,
+   "version": "0.0.1",
+   "type": "module",
+   "scripts": {
+      "dev": "vite",
+      "postinstall": "electron-builder install-app-deps",
+      "build": "tsc && vite build && electron-builder --mac --universal",
+      "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+      "preview": "vite preview",
+      "sign": "electron-builder --mac --universal",
+      "xcode": "tsc && vite build && electron-builder --mac --universal --x64 --config.mac.target=dir",
+      "notarize": "electron-notarize --appleId $APPLE_ID --password $APPLE_ID_PASSWORD --teamId $APPLE_TEAM_ID --file ./release/mac/Vibe.app"
+   },
+   "resolutions": {
+      "react": "^18",
+      "react-dom": "^18",
+      "@types/react": "^18",
+      "@types/react-dom": "^18"
+   },
+   "dependencies": {
+      "@chakra-ui/react": "2",
+      "@electron/notarize": "^3.0.1",
+      "@emotion/react": "^11.14.0",
+      "@emotion/styled": "^11.14.0",
+      "@enzoferey/ethers-error-parser": "^0.2.3",
+      "@fontsource/inter": "^5.1.1",
+      "@reduxjs/toolkit": "^2.6.0",
+      "adm-zip": "^0.5.16",
+      "agent-server-definition": "^0.1.7",
+      "axios": "^1.7.9",
+      "bignumber.js": "^9.1.2",
+      "clsx": "^2.1.1",
+      "crypto-js": "^4.2.0",
+      "dayjs": "^1.11.13",
+      "dexie": "^4.0.11",
+      "electron-notarize": "^1.2.2",
+      "electron-store": "^10.0.1",
+      "electron-updater": "^6.3.9",
+      "ethers": "5.7.2",
+      "formik": "^2.4.6",
+      "framer-motion": "^12.4.7",
+      "keytar": "^7.9.0",
+      "lightweight-charts": "^4.2.1",
+      "lodash.clone": "^4.5.0",
+      "lodash.debounce": "^4.0.8",
+      "lodash.first": "^3.0.0",
+      "lodash.last": "^3.0.0",
+      "lodash.throttle": "^4.1.1",
+      "lodash.uniq": "^4.5.0",
+      "lodash.uniqby": "^4.7.0",
+      "lottie-react": "^2.4.1",
+      "net": "^1.0.2",
+      "query-string": "^9.1.1",
+      "rc-input-number": "^9.4.0",
+      "react": "^18",
+      "react-autosize-textarea": "^7.1.0",
+      "react-dom": "^18",
+      "react-dropzone": "^14.3.8",
+      "react-hot-toast": "^2.5.2",
+      "react-infinite-scroll-component": "^6.1.0",
+      "react-jazzicon": "^1.0.4",
+      "react-loading-skeleton": "^3.5.0",
+      "react-markdown": "^10.0.0",
+      "react-otp-input": "^3.1.1",
+      "react-qr-code": "^2.0.15",
+      "react-redux": "^9.2.0",
+      "react-resizable-panels": "^2.1.7",
+      "react-router-dom": "^7.2.0",
+      "react-scrollable-feed": "^2.0.2",
+      "react-svg": "^16.3.0",
+      "react-syntax-highlighter": "^15.6.1",
+      "react-use": "^17.6.0",
+      "redux-deep-persist": "^1.0.7",
+      "redux-persist": "^6.0.0",
+      "rehype-raw": "^7.0.0",
+      "remark-gfm": "^4.0.1",
+      "sass": "^1.85.0",
+      "swiper": "^11.2.5",
+      "uuid": "^11.1.0",
+      "yup": "^1.6.1",
+      "zustand": "^5.0.3"
+   },
+   "devDependencies": {
+      "@types/crypto-js": "^4.2.2",
+      "@types/lodash.debounce": "^4.0.9",
+      "@types/lodash.throttle": "^4.1.9",
+      "@types/lodash.uniq": "^4.5.9",
+      "@types/lodash.uniqby": "^4.7.9",
+      "@types/react": "^18",
+      "@types/react-dom": "^18",
+      "@types/react-syntax-highlighter": "^15.5.13",
+      "@typescript-eslint/eslint-plugin": "^7.1.1",
+      "@typescript-eslint/parser": "^7.1.1",
+      "@vitejs/plugin-react": "^4.2.1",
+      "electron": "^30.0.1",
+      "electron-builder": "^24.13.3",
+      "electron-rebuild": "^3.2.9",
+      "eslint": "^8.57.0",
+      "eslint-plugin-react-hooks": "^4.6.0",
+      "eslint-plugin-react-refresh": "^0.4.5",
+      "typescript": "^5.2.2",
+      "vite": "^5.1.6",
+      "vite-plugin-electron": "^0.28.6",
+      "vite-plugin-electron-renderer": "^0.14.5"
+   },
+   "main": "dist-electron/main.js",
+   "build": {
+      "appId": "eternalai.org.vibe",
+      "productName": "Vibe",
+      "asar": true,
+      "asarUnpack": [
+         "node_modules/keytar/**",
+         "public/**"
       ],
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
-    },
-    "extraResources": [
-      {
-        "from": "public",
-        "to": "public"
-      }
-    ]
-  }
+      "publish": [
+         {
+            "provider": "github",
+            "owner": "0x0603",
+            "repo": "electron-update-server",
+            "releaseType": "release",
+            "private": false,
+            "vPrefixedTagName": true
+         }
+      ],
+      "files": [
+         "dist-electron/**/*",
+         "dist/**/*",
+         "node_modules/**/*",
+         "package.json"
+      ],
+      "directories": {
+         "output": "release/${version}"
+      },
+      "mac": {
+         "identity": null,
+         "icon": "public/icons/app-logo.png",
+         "artifactName": "${productName}-Mac-Universal-${version}.${ext}",
+         "target": [
+            {
+               "target": "dmg",
+               "arch": [
+                  "universal"
+               ]
+            },
+            {
+               "target": "zip",
+               "arch": [
+                  "universal"
+               ]
+            }
+         ],
+         "hardenedRuntime": true,
+         "gatekeeperAssess": false,
+         "entitlements": "build/entitlements.mac.plist",
+         "entitlementsInherit": "build/entitlements.mac.plist",
+         "notarize": true
+      },
+      "extraResources": [
+         {
+            "from": "public",
+            "to": "public"
+         }
+      ]
+   }
 }
