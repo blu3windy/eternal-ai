@@ -9,9 +9,7 @@
       "build": "tsc && vite build && electron-builder --mac --universal",
       "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
       "preview": "vite preview",
-      "sign": "electron-builder --mac --universal",
-      "xcode": "tsc && vite build && electron-builder --mac --universal --x64 --config.mac.target=dir",
-      "notarize": "electron-notarize --appleId $APPLE_ID --password $APPLE_ID_PASSWORD --teamId $APPLE_TEAM_ID --file ./release/mac/Vibe.app"
+      "sign": "electron-builder --mac --universal"
    },
    "resolutions": {
       "react": "^18",
@@ -21,7 +19,6 @@
    },
    "dependencies": {
       "@chakra-ui/react": "2",
-      "@electron/notarize": "^3.0.1",
       "@emotion/react": "^11.14.0",
       "@emotion/styled": "^11.14.0",
       "@enzoferey/ethers-error-parser": "^0.2.3",
@@ -35,7 +32,6 @@
       "crypto-js": "^4.2.0",
       "dayjs": "^1.11.13",
       "dexie": "^4.0.11",
-      "electron-notarize": "^1.2.2",
       "electron-store": "^10.0.1",
       "electron-updater": "^6.3.9",
       "ethers": "5.7.2",
@@ -154,8 +150,7 @@
          "hardenedRuntime": true,
          "gatekeeperAssess": false,
          "entitlements": "build/entitlements.mac.plist",
-         "entitlementsInherit": "build/entitlements.mac.plist",
-         "notarize": true
+         "entitlementsInherit": "build/entitlements.mac.plist"
       },
       "extraResources": [
          {
