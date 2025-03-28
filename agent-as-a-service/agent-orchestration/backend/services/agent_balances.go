@@ -701,8 +701,7 @@ func (s *Service) PostTwitterAferCreateToken(ctx context.Context, agentInfoID ui
 }
 
 func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses []string, userAddress string, networkID uint64, agentType int, agentTypes []int,
-	tokenAddress, search, agentModel string, installed *bool, ids []uint, sortListStr []string, page, limit int,
-) ([]*models.AgentInfo, uint, error) {
+	tokenAddress, search, agentModel string, installed *bool, ids, exludeIds []uint, sortListStr []string, page, limit int) ([]*models.AgentInfo, uint, error) {
 	sortDefault := "ifnull(agent_infos.priority, 0) desc, meme_market_cap desc"
 	if len(sortListStr) > 0 {
 		sortDefault = strings.Join(sortListStr, ", ")
@@ -827,6 +826,10 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 		} else {
 			filters["agent_infos.is_public = 1"] = []any{}
 		}
+	}
+
+	if len(exludeIds) > 0 {
+		filters["agent_infos.id not in (?)"] = []any{exludeIds}
 	}
 
 	agents, err := s.dao.FindAgentInfoJoinSelect(
