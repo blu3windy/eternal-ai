@@ -1,29 +1,29 @@
-import { Box, Flex, Image, Text } from "@chakra-ui/react";
-import { memo, useContext, useEffect, useMemo, useState } from "react";
-import s from "./ChatMessage.module.scss";
-import cs from "classnames";
-import { INIT_WELCOME_MESSAGE } from "../../constants";
-import SvgInset from "@components/SvgInset";
+import { Box, Flex, Image, Text } from '@chakra-ui/react';
+import { memo, useContext, useEffect, useMemo, useState } from 'react';
+import s from './ChatMessage.module.scss';
+import cs from 'classnames';
+import { INIT_WELCOME_MESSAGE } from '../../constants';
+import SvgInset from '@components/SvgInset';
 // import {WaitingAnimation} from '@/modules/chat/components/ChatMessage/WaitingForGenerate/WaitingForGenerateText';
-import { formatLongAddress } from "@utils/format";
-import dayjs from "dayjs";
-import duration from "dayjs/plugin/duration";
-import { IChatMessage } from "src/services/api/agent/types.ts";
-import { AgentContext } from "@pages/home/provider";
-import CustomMarkdown from "@components/CustomMarkdown";
-import { compareString } from "@utils/string.ts";
-import { getExplorerByChain } from "@utils/helpers.ts";
-import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/WaitingForGenerateText";
+import { formatLongAddress } from '@utils/format';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
+import { IChatMessage } from 'src/services/api/agent/types.ts';
+import { AgentContext } from '@pages/home/provider/AgentContext';
+import CustomMarkdown from '@components/CustomMarkdown';
+import { compareString } from '@utils/string.ts';
+import { getExplorerByChain } from '@utils/helpers.ts';
+import { WaitingAnimation } from '@components/ChatMessage/WaitingForGenerate/WaitingForGenerateText';
 
 dayjs.extend(duration);
 
 type Props = {
-  message: IChatMessage;
-  ref: any;
-  isLast: boolean;
-  onRetryErrorMessage: (messageId: string) => void;
-  isSending: boolean;
-  initialMessage?: boolean;
+   message: IChatMessage;
+   ref: any;
+   isLast: boolean;
+   onRetryErrorMessage: (messageId: string) => void;
+   isSending: boolean;
+   initialMessage?: boolean;
 };
 
 const ChatMessage = ({
@@ -41,9 +41,7 @@ const ChatMessage = ({
    const [seconds, setSeconds] = useState<number | null>(0);
 
    const calcTime = () => {
-      const diff = dayjs.duration(
-         dayjs(message?.updatedAt).diff(dayjs(message?.createdAt))
-      );
+      const diff = dayjs.duration(dayjs(message?.updatedAt).diff(dayjs(message?.createdAt)));
       if (diff.milliseconds() <= 0) {
          setHours(null);
          setMinutes(null);
@@ -93,18 +91,18 @@ const ChatMessage = ({
    };
 
    const renderMarkdown = () => {
-      if (message.status === "waiting") {
-         return <WaitingAnimation color={message?.is_reply ? "black" : "white"} />;
+      if (message.status === 'waiting' || message.status === 'sync-waiting') {
+         return <WaitingAnimation color={message?.is_reply ? 'black' : 'white'} />;
       }
 
-      if (message.status === "failed") {
+      if (message.status === 'failed') {
          return (
             <div
                className={cs(s.markdown, {
-                  [s.markdown__failed]: message.status === "failed",
+                  [s.markdown__failed]: message.status === 'failed',
                })}
             >
-               <span>{message.msg || "Something went wrong!"}</span>
+               <span>{message.msg || 'Something went wrong!'}</span>
                {!isSending && (
                   <span
                      className={s.retry}
@@ -120,12 +118,8 @@ const ChatMessage = ({
       }
 
       return (
-         <div className={cs(s.markdown, "markdown")}>
-            <CustomMarkdown
-               content={message?.msg}
-               isLight={false}
-               removeThink={initialMessage}
-            />
+         <div className={cs(s.markdown, 'markdown')}>
+            <CustomMarkdown content={message?.msg} isLight={false} removeThink={initialMessage} />
          </div>
       );
    };
@@ -147,13 +141,13 @@ const ChatMessage = ({
                alignItems="center"
                gap="6px"
                width="100%"
-               justifyContent={message?.is_reply ? "flex-start" : "flex-end"}
+               justifyContent={message?.is_reply ? 'flex-start' : 'flex-end'}
             >
                <Flex
                   gap="8px"
                   alignItems="center"
                   width="100%"
-                  flexDirection={message?.is_reply ? "row" : "row-reverse"}
+                  flexDirection={message?.is_reply ? 'row' : 'row-reverse'}
                >
                   {message?.is_reply && selectedAgent?.token_image_url && (
                      <Image
@@ -174,43 +168,41 @@ const ChatMessage = ({
                s.content,
                { [s.question]: !message?.is_reply },
                { [s.reply]: message?.is_reply },
-               { [s.failed]: message?.status === "failed" }
+               { [s.failed]: message?.status === 'failed' }
             )}
-            alignSelf={message?.is_reply ? "flex-start" : "flex-end"}
+            alignSelf={message?.is_reply ? 'flex-start' : 'flex-end'}
          >
             {renderContent()}
          </Box>
 
-         {(message.status === "receiving" || message.status === "waiting") &&
-        message.queryMessageState &&
-        !compareString(message.queryMessageState, "DONE") && (
-            <Box paddingLeft={"12px"}>
-               <Text
-                  opacity={"0.6"}
-                  color="#fff"
-                  fontSize={"12px"}
-                  fontWeight={"400"}
-                  lineHeight={"120%"}
-               >
-                  {message.queryMessageState}
-               </Text>
-            </Box>
-         )}
+         {(message.status === 'receiving' || message.status === 'waiting') &&
+            message.queryMessageState &&
+            !compareString(message.queryMessageState, 'DONE') && (
+               <Box paddingLeft={'12px'}>
+                  <Text
+                     opacity={'0.6'}
+                     color="#fff"
+                     fontSize={'12px'}
+                     fontWeight={'400'}
+                     lineHeight={'120%'}
+                  >
+                     {message.queryMessageState}
+                  </Text>
+               </Box>
+            )}
          {message?.tx_hash && (
             <Box
-               display={"flex"}
-               alignItems={"center"}
-               gap={"12px"}
-               justifyContent={message?.is_reply ? "flex-start" : "flex-end"}
-               mt={message?.is_reply ? "0px" : "-20px"}
+               display={'flex'}
+               alignItems={'center'}
+               gap={'12px'}
+               justifyContent={message?.is_reply ? 'flex-start' : 'flex-end'}
+               mt={message?.is_reply ? '0px' : '-20px'}
             >
-               {message?.is_reply &&
-            !!message?.createdAt &&
-            !!message?.updatedAt && (
+               {message?.is_reply && !!message?.createdAt && !!message?.updatedAt && (
                   <>
-                     <Text className={s.txLink}>{`${
-                        minutes && minutes > 0 ? `${minutes}m` : ""
-                     } ${seconds && seconds > 0 ? `${seconds}s` : ""}`}</Text>
+                     <Text className={s.txLink}>{`${minutes && minutes > 0 ? `${minutes}m` : ''} ${
+                        seconds && seconds > 0 ? `${seconds}s` : ''
+                     }`}</Text>
                      <svg
                         width="4"
                         height="4"
@@ -225,11 +217,11 @@ const ChatMessage = ({
                <a
                   className={s.txLink}
                   href={
-              getExplorerByChain({
-                 chainId: selectedAgent?.network_id as any,
-                 address: message?.tx_hash,
-                 type: "tx",
-              }) as any
+                     getExplorerByChain({
+                        chainId: selectedAgent?.network_id as any,
+                        address: message?.tx_hash,
+                        type: 'tx',
+                     }) as any
                   }
                   target="_blank"
                   rel="noopener noreferrer"

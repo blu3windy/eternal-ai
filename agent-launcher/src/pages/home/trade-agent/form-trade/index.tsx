@@ -1,6 +1,6 @@
 import { Flex, Text } from "@chakra-ui/react";
 // import Percent24h from "@components/Percent";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { formatCurrency } from "@utils/format";
 import { Form, Formik } from "formik";
 import { useContext, useRef } from "react";

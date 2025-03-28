@@ -20,19 +20,21 @@ import {
    Tooltip,
    MenuItem,
    Button,
+   Center,
 } from '@chakra-ui/react';
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import s from './styles.module.scss';
 import { compareString } from '@utils/string';
 import CAgentTokenAPI from '@services/api/agents-token';
 import { AgentType } from '../constants';
-import { AgentContext } from '@pages/home/provider';
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from '@services/api/agents-token/interface';
 import storageModel from '@storage/StorageModel';
 import { BASE_CHAIN_ID } from '@constants/chains';
 import CAgentContract from '@contract/agent';
 import DeleteAgentModal from './DeleteAgentModal';
 import BaseModal from '@components/BaseModal';
+import Loading from '@components/Loading';
 
 interface DockerContainer {
    Command: string;
@@ -165,7 +167,9 @@ const AgentMonitor: React.FC = () => {
           if (container?.containerId) {
             await globalThis.electronAPI.dockerDeleteContainer(container?.containerId);
          }
-         
+         if (container.image) {
+            await globalThis.electronAPI.dockerDeleteImageID(container.image);
+         }
       } catch (error) {
          console.error('Error deleting container:', error);
       } finally {
@@ -208,7 +212,7 @@ const AgentMonitor: React.FC = () => {
 
             // Find matching agent by container name
             const matchingAgent = agents?.find(agent => 
-               (container?.Names || image?.Repository).toLowerCase().includes(agent.agent_name?.toLowerCase() || '')
+               (container?.Names || extractImageName(image.Repository)).toLowerCase() === (`${agent?.network_id}-${agent.agent_name?.toLowerCase()}` || '')
             );
 
             let agentType = '-';
@@ -232,6 +236,7 @@ const AgentMonitor: React.FC = () => {
                return {
                   name: extractImageName(image.Repository),
                   image: image.Repository,
+                  imageId: image.ID,
                   ports: '-',
                   cpu: '0.00%',
                   lastStarted: '',
@@ -261,6 +266,7 @@ const AgentMonitor: React.FC = () => {
                   name: container.Names,
                   containerId: container.ID,
                   image: container.Image,
+                  imageId: image.ID,
                   ports: container.Ports || '-',
                   cpu: memInfo.CPUPerc,
                   lastStarted: container.RunningFor,
@@ -278,6 +284,7 @@ const AgentMonitor: React.FC = () => {
                name: container.Names,
                containerId: container.ID,
                image: container.Image,
+               imageId: image.ID,
                ports: container.Ports || '-',
                cpu: '0%',
                lastStarted: container.RunningFor,
@@ -430,7 +437,6 @@ const AgentMonitor: React.FC = () => {
                         />
                      </Flex>
                   </Flex>
-
                   <Table variant="unstyled" className={s.containerTable}>
                      <Thead>
                         <Tr>
@@ -444,8 +450,9 @@ const AgentMonitor: React.FC = () => {
                            <Th color="whiteAlpha.600">Actions</Th>
                         </Tr>
                      </Thead>
+                     
                      <Tbody>
-                        {agents.length > 0 && containers.map((container, idx) => (
+                        {containers.length > 0 && containers.map((container, idx) => (
                            <Tr key={idx}>
                               <Td>
                                  <Flex align="center" gap="2">
@@ -547,6 +554,7 @@ const AgentMonitor: React.FC = () => {
                         ))}
                      </Tbody>
                   </Table>
+                  {containers.length === 0 && <Center h="300px"><Loading/></Center>}
                </Box>
             </Box>
          </BaseModal>

@@ -45,7 +45,7 @@ const BaseModal = (props: PropsWithChildren<IBaseModalProps>) => {
    } = props;
 
    return (
-      <Modal isOpen={isShow} onClose={onHide} isCentered={true}>
+      <Modal isOpen={isShow} onClose={onHide} isCentered={true} returnFocusOnClose={false}>
          <ModalOverlay />
          <ModalContent className={cs(s.modalContent, s[size], className)}>
             <ModalHeader className={cs(s.modalHeader, headerClassName)}>

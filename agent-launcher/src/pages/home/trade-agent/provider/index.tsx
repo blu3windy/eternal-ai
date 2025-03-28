@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { IAgentTradeContext } from "./interface";
 import { IAgentToken } from "@services/api/agents-token/interface";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { ChainIdToChainType } from "./constant";
 import { ETradePlatform } from "@pages/home/provider/interface";
 import CAgentTradeContract from "@contract/agent-trade";

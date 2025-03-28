@@ -2,7 +2,7 @@ import { Flex, Text } from "@chakra-ui/react";
 import React, { useContext } from "react";
 import s from "./styles.module.scss";
 import { formatCurrency } from "@utils/format";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 
 export const depositRegex =
   /(\d+)\s?\$EAI.*?(0x[a-fA-F0-9]{5,}).*?\b(in\s+(\w+))/i;

@@ -4,7 +4,7 @@ import FieldAmountFormik from "@components/Form/Field.AmountFormik";
 import InputWrapper from "@components/Form/inputWrapper";
 import CAgentTradeContract from "@contract/agent-trade";
 import { IToken } from "@interfaces/token";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { ETradePlatform } from "@pages/home/provider/interface";
 import { agentsTradeSelector } from "@stores/states/agent-trade/selector";
 import { commonSelector } from "@stores/states/common/selector";
@@ -50,7 +50,7 @@ const FormTradeAgent = () => {
   const is_need_approve = values.is_need_approve;
   const current_token = values.current_token;
 
-  const amountDebounced: any = useDebounce(amount);
+  const amountDebounced: any = useDebounce(amount, 300);
 
   const tokenList: IToken[] = useMemo(() => {
     return pairs;

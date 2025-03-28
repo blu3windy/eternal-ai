@@ -3,7 +3,7 @@ import CustomMarkdown from "@components/CustomMarkdown";
 import { LLM_MODELS } from "@constants/models.ts";
 import useParseLogs from "@hooks/useParseLogs.ts";
 import { AgentType } from "@pages/home/list-agent/constants";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { formatCurrency, labelAmountOrNumberAdds } from "@utils/format.ts";
 import { compareString } from "@utils/string.ts";
 import cs from "classnames";

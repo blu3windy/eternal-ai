@@ -4,7 +4,7 @@ import BackupPrivateKey from "@pages/home/chat-agent/BackupPrivateKey";
 import ChatBox from "@pages/home/chat-agent/ChatAgent/components/ChatBox";
 import { ChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import CreateAgentWallet from "@pages/home/chat-agent/CreateAgentWallet";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "../provider/AgentContext";
 import { useContext } from "react";
 import s from "./styles.module.scss";
 

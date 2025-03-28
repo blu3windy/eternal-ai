@@ -2,7 +2,7 @@ import { Flex, Grid, Image, Text } from '@chakra-ui/react';
 import CustomMarkdown from "@components/CustomMarkdown";
 import { DefaultAvatar } from "@components/DefaultAvatar";
 import { AgentType } from "@pages/home/list-agent/constants";
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import { formatCurrency, labelAmountOrNumberAdds } from "@utils/format.ts";
 import cs from "clsx";
@@ -15,7 +15,7 @@ interface IProps {
 }
 
 const AgentItem = ({ token, isLatest }: IProps) => {
-   const { selectedAgent, setSelectedAgent, installedUtilityAgents } = useContext(AgentContext);
+   const { selectedAgent, setSelectedAgent } = useContext(AgentContext);
 
    const description = useMemo(() => {
       if ([AgentType.Infra, AgentType.Model, AgentType.CustomPrompt].includes(token.agent_type)) {
@@ -30,17 +30,6 @@ const AgentItem = ({ token, isLatest }: IProps) => {
     || token?.token_image_url
     || token?.twitter_info?.twitter_avatar;
 
-   // const isUtilityAgent = useMemo(() => {
-   //   return token?.agent_type === AgentType.UtilityJS;
-   // }, [token]);
-
-   const isInstalled = useMemo(() => {
-      if (token && installedUtilityAgents?.length) {
-         return installedUtilityAgents?.some(key => key === `${token.network_id}-${token.agent_name}`.toLowerCase());
-      }
-
-      return false;
-   }, [token, installedUtilityAgents]);
 
    const handleGoToChat = (e: any, token_address?: any) => {
       if (token_address) {

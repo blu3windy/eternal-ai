@@ -16,7 +16,7 @@ import {
    Grid,
    Divider
 } from '@chakra-ui/react';
-import { AgentContext } from "@pages/home/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { DefaultAvatar } from '@components/DefaultAvatar';
 
 interface AgentStatus {
