@@ -45,6 +45,8 @@ import {
 } from './constants';
 import s from './styles.module.scss';
 import BottomBar from './BottomBar/index.tsx';
+import localStorageService from '@storage/LocalStorageService.ts';
+import STORAGE_KEYS from '@constants/storage-key.ts';
 
 
 const AgentsList = () => {
@@ -177,15 +179,20 @@ const AgentsList = () => {
          if (!isSearchMode) {
             if (FilterOption.Installed === refParams.current.filter) {
                // params.installed = true;
+               const installTestIds = await localStorageService.getItem(STORAGE_KEYS.INSTALLED_TEST_AGENTS);
+               const agentTestIds = installTestIds ? JSON.parse(installTestIds) : [];
 
                const allInstalledIds = [
                   ...installedAgentIds.utility,
                   ...installedAgentIds.model,
-                  ...installedAgentIds.social
+                  ...installedAgentIds.social,
+                  ...agentTestIds
                ];
                if (allInstalledIds.length > 0) {
                   params.ids = allInstalledIds.join(',');
                }
+
+
             }
          }
 
