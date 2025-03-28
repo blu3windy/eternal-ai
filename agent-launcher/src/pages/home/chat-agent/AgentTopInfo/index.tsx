@@ -309,7 +309,7 @@ const AgentTopInfo = () => {
                                     <Divider color={'#E2E4E8'} my={'16px'} />
                                     <Button
                                        className={s.btnStop}
-                                       onClick={handleDeleteAgent}
+                                       onClick={() => setDeleteAgent(selectedAgent)}
                                        isLoading={isUnInstalling}
                                        isDisabled={isUnInstalling}
                                        loadingText={'Deleting...'}
