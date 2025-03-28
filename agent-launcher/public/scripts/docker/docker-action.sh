@@ -94,9 +94,40 @@ cd_docker_build_source_path() {
     }
 }
 
+# Function to check if a Docker image exists
+image_exists() {
+  # Check if the image exists and return the exit status
+  if [ "$(docker images -q "$1" 2> /dev/null)" ]; then
+    return 0  # Image exists
+  else
+    return 1  # Image does not exist
+  fi
+}
+
+# Function to check if a Docker container is running
+container_name_running() {
+  local container_name="$1"
+  # Check if the container is running
+  if [ "$(docker ps -q -f name="$container_name")" ]; then
+    return 0  # Container is running
+  else
+    return 1  # Container is not running
+  fi
+}
+
+# Function to build the Docker image
+docker_build() {
+  if image_exists "$IMAGE_NAME"; then
+    echo "Docker image '$IMAGE_NAME' already exists. Skipping build."
+  else
+    echo "Docker image '$IMAGE_NAME' does not exist. Building the image..."
+    docker build -t "$IMAGE_NAME" .
+  fi
+}
+
 run_container_custom_prompt() {
     cd_docker_build_source_path
-    docker build -t "$IMAGE_NAME" .;
+    docker_build
     if [ -n "$PORT" ]; then
     docker run -d -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" "${PORT}" --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
     else
@@ -107,7 +138,7 @@ run_container_custom_prompt() {
 run_container_open_ai() {
     cd_docker_build_source_path
     log_message "Building Docker image ${IMAGE_NAME}..."
-    docker build -t "$IMAGE_NAME" .;
+    docker_build
     log_message "Docker image ${IMAGE_NAME} built successfully."
     log_message "Running Docker container ${CONTAINER_NAME} with port ${DEFAULT_PORT}..."
     docker run -d -p $DEFAULT_PORT:$DEFAULT_PORT --network network-agent-external --name "$CONTAINER_NAME" "$IMAGE_NAME"
@@ -116,29 +147,32 @@ run_container_open_ai() {
 
 run_container_custom_ui() {
     cd_docker_build_source_path
-    docker build -t "$IMAGE_NAME" .;
+    docker_build
     docker run -d -p 0:8080 --network network-agent-external -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --name "$CONTAINER_NAME" "$IMAGE_NAME"
 }
 
 run_container() {
-  docker stop "$CONTAINER_NAME" 2>/dev/null || true
-  docker rm "$CONTAINER_NAME" 2>/dev/null || true
-  case "$TYPE" in
-    custom-ui)
-      run_container_custom_ui
-      ;;
-    custom-prompt)
-      run_container_custom_prompt
-      ;;
-    open-ai)
-      run_container_open_ai
-      ;;
-    *)
-      log_error "Unsupported code this type: $TYPE"
-      exit 1
-      ;;
-  esac
-
+  if container_name_running "$CONTAINER_NAME"; then
+    log_message "Container '$CONTAINER_NAME' is already running."
+    exit 0
+  else
+    stop_container
+    case "$TYPE" in
+      custom-ui)
+        run_container_custom_ui
+        ;;
+      custom-prompt)
+        run_container_custom_prompt
+        ;;
+      open-ai)
+        run_container_open_ai
+        ;;
+      *)
+        log_error "Unsupported code this type: $TYPE"
+        exit 1
+        ;;
+    esac
+  fi
 }
 
 # Function to stop a Docker container
