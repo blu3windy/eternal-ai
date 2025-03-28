@@ -1433,7 +1433,8 @@ func (s *Service) GetAgentChainFees(ctx context.Context) (map[string]interface{}
 	return chainFeeMap, nil
 }
 
-func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string, req *serializers.AgentActionReq) (bool, error) {
+func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string, req *serializers.AgentActionReq) ([]uint, error) {
+	resp := []uint{}
 	err := daos.WithTransaction(
 		daos.GetDBMainCtx(ctx),
 		func(tx *gorm.DB) error {
@@ -1468,7 +1469,7 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 						}
 						_ = s.dao.Create(tx, inst)
 					}
-
+					resp = append(resp, agentInfo.ID)
 				}
 			} else {
 				if req.Action == "uninstall" {
@@ -1479,6 +1480,7 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 						if err != nil {
 							return errs.NewError(err)
 						}
+						resp = append(resp, agentID)
 					}
 				} else {
 					for _, agentID := range req.Ids {
@@ -1487,6 +1489,7 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 							AgentInfoID: agentID,
 						}
 						_ = s.dao.Create(tx, inst)
+						resp = append(resp, agentID)
 					}
 				}
 			}
@@ -1495,10 +1498,10 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 	)
 
 	if err != nil {
-		return false, errs.NewError(err)
+		return resp, errs.NewError(err)
 	}
 
-	return true, nil
+	return resp, nil
 }
 
 func (s *Service) MarkRecentChatUtilityAgent(ctx context.Context, address string, req *serializers.AgentActionReq) (bool, error) {
