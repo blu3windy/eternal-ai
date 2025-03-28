@@ -1,37 +1,28 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-'use client';
+"use client";
 
-import { AgentType } from '@pages/home/list-agent/constants';
-import { AgentContext } from '@pages/home/provider/AgentContext.tsx';
-import CAgentTokenAPI from '@services/api/agents-token';
-import { addOrUpdateTaskItem, removeTaskItem } from '@stores/states/agent-chat/reducer.ts';
-import { TaskItem } from '@stores/states/agent-chat/type.ts';
-import React, {
-   createContext,
-   PropsWithChildren,
-   useCallback,
-   useContext,
-   useEffect,
-   useMemo,
-   useRef,
-   useState,
-} from 'react';
-import { useDispatch } from 'react-redux';
-import ScrollableFeed from 'react-scrollable-feed';
-import { v4 } from 'uuid';
-import chatAgentDatabase, { PersistedMessageType } from '../../../../database/chatAgentDatabase.ts';
-import AgentAPI from '../../../../services/api/agent';
-import { ChatCompletionPayload, IChatMessage } from '../../../../services/api/agent/types.ts';
-import { INIT_WELCOME_MESSAGE } from './constants';
-import HandleMessageProcessing from './HandleMessageProcessing.tsx';
-import { string } from 'yup';
+import { AgentType } from "@pages/home/list-agent/constants";
+import { AgentContext } from "@pages/home/provider/AgentContext.tsx";
+import CAgentTokenAPI from "@services/api/agents-token";
+import { addOrUpdateTaskItem, removeTaskItem } from "@stores/states/agent-chat/reducer.ts";
+import { TaskItem } from "@stores/states/agent-chat/type.ts";
+import React, { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useDispatch } from "react-redux";
+import ScrollableFeed from "react-scrollable-feed";
+import { v4 } from "uuid";
+import chatAgentDatabase, { PersistedMessageType } from "../../../../database/chatAgentDatabase.ts";
+import AgentAPI from "../../../../services/api/agent";
+import { ChatCompletionPayload, IChatMessage } from "../../../../services/api/agent/types.ts";
+import { INIT_WELCOME_MESSAGE } from "./constants";
+import HandleMessageProcessing from "./HandleMessageProcessing.tsx";
+import { string } from "yup";
 
 type IChatAgentProviderContext = {
    isStopReceiving?: boolean;
    messages: IChatMessage[];
    isLoadingMessages: boolean;
    setIsLoadingMessages: (value: boolean) => void;
-   publishEvent: (message: string, attachments?: IChatMessage['attachments']) => void;
+   publishEvent: (message: string, attachments?: IChatMessage["attachments"]) => void;
    scrollableRef: React.RefObject<ScrollableFeed>;
    scrollRef: any;
    loading: boolean;
@@ -111,23 +102,38 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                const filterMessages = items
                   .filter((item) => item.createdAt)
                   .map((item) => {
-                     if (item.status === 'waiting') {
+                     if (item.status === "waiting") {
                         const now = new Date();
-                        const createdAt = new Date(item.createdAt || '');
+                        const createdAt = new Date(item.createdAt || "");
                         const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
 
-                        if (diffMinutes >= 30) {
+                        if (diffMinutes >= 3) {
+                           if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
+                              const updateMessage = {
+                                 ...item,
+                                 status: "sync-waiting",
+                              };
+                              return updateMessage;
+                           }
+
+                           if (!item.msg) {
+                              const updateMessage = {
+                                 ...item,
+                                 status: "received",
+                              };
+                              return updateMessage;
+                           }
+
                            const updateMessage = {
                               ...item,
-                              status: 'sync-waiting',
+                              msg: "Something went wrong!",
+                              status: "failed",
                            };
-                           // chatAgentDatabase.updateChatItem(updateMessage as PersistedMessageType);
                            return updateMessage;
                         }
                      }
                      return item;
                   });
-
                setMessages(filterMessages as any);
             }
          });
@@ -135,10 +141,10 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    }, [threadId]);
 
    const lastMessage = messages[messages.length - 1];
-   const isStopReceiving = lastMessage?.status === 'receiving' || lastMessage?.status === 'waiting';
+   const isStopReceiving = lastMessage?.status === "receiving" || lastMessage?.status === "waiting";
 
-   const publishEvent = async (message: string, attachments?: IChatMessage['attachments']) => {
-      if (!message || lastMessage?.status === 'waiting' || isStopReceiving) {
+   const publishEvent = async (message: string, attachments?: IChatMessage["attachments"]) => {
+      if (!message || lastMessage?.status === "waiting" || isStopReceiving) {
          return;
       }
       if (message) {
@@ -148,12 +154,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
          const newMessage: IChatMessage = {
             id: userMessageId,
-            senderId: agentWallet?.address || '',
+            senderId: agentWallet?.address || "",
             msg: message,
-            status: 'sent',
-            type: 'human',
+            status: "sent",
+            type: "human",
             is_reply: false,
-            name: 'You',
+            name: "You",
             attachments,
          };
 
@@ -167,13 +173,13 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          const messageId = v4();
          const responseMsg: IChatMessage = {
             id: messageId,
-            senderId: id?.toString() || '',
-            msg: '',
-            status: 'waiting',
-            type: 'ai',
+            senderId: id?.toString() || "",
+            msg: "",
+            status: "waiting",
+            type: "ai",
             replyTo: userMessageId,
             is_reply: true,
-            name: selectedAgent?.agent_name || 'Agent',
+            name: selectedAgent?.agent_name || "Agent",
          };
 
          setMessages((prev) => [...prev, responseMsg]);
@@ -191,7 +197,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       }
    };
 
-   const updateTaskItem = (task: TaskItem) => {
+   const updateTaskItem = (task: Omit<TaskItem, "createdAt" | "updatedAt">) => {
       dispatch(
          addOrUpdateTaskItem({
             id: threadId,
@@ -199,7 +205,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          })
       );
 
-      if (task.status === 'done' || task.status === 'failed') {
+      if (task.status === "done" || task.status === "failed") {
          setTimeout(() => {
             dispatch(
                removeTaskItem({
@@ -211,12 +217,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       }
    };
 
-   const sendMessageToServer = async (
-      messageId: string,
-      agentId: number,
-      sendTxt: string,
-      attachments?: IChatMessage['attachments']
-   ) => {
+   const sendMessageToServer = async (messageId: string, agentId: number, sendTxt: string, attachments?: IChatMessage["attachments"]) => {
       const getStreamerHandler = (messageId: string) => {
          let isGeneratedDone = false;
          return {
@@ -227,7 +228,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   setIsLoading(false);
                   updateMessage(messageId, {
                      msg: text,
-                     status: 'pre-done',
+                     status: "pre-done",
                      queryMessageState: options?.message,
                      onchain_data: options.onchain_data,
                   });
@@ -235,7 +236,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   isGeneratedDone = !!options?.isGeneratedDone;
                   updateMessage(messageId, {
                      msg: text,
-                     status: text.trim().length ? 'receiving' : 'waiting',
+                     status: text.trim().length ? "receiving" : "waiting",
                      queryMessageState: options?.message,
                      onchain_data: options.onchain_data,
                   });
@@ -243,14 +244,13 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             },
             onFinish: (content: string, options) => {
                updateMessage(messageId, {
-                  status: 'received',
+                  status: "received",
                   queryMessageState: options?.message,
                   onchain_data: options.onchain_data,
                });
                updateTaskItem({
                   id: messageId,
-                  status: 'done',
-                  updatedAt: new Date().toISOString(),
+                  status: "done",
                } as TaskItem);
             },
             onFail: (err: any) => {
@@ -260,16 +260,13 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                // });
                updateTaskItem({
                   id: messageId,
-                  status: 'failed',
-                  updatedAt: new Date().toISOString(),
+                  status: "failed",
                } as TaskItem);
             },
-         }
-      }
+         };
+      };
       try {
-         let filteredMessages = messages
-            .filter((item) => item.status !== 'failed')
-            .filter((item) => !!item.msg);
+         let filteredMessages = messages.filter((item) => item.status !== "failed").filter((item) => !!item.msg);
 
          // remove pair of welcome message
          if (filteredMessages.find((item) => item.msg === INIT_WELCOME_MESSAGE)) {
@@ -284,14 +281,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
          const historyMessages = [
             {
-               role: 'system',
-               content: selectedAgent?.personality || '',
+               role: "system",
+               content: selectedAgent?.personality || "",
             },
             ...filteredMessages.reduce((acc: any[], item, index) => {
-               if (index > 0 && filteredMessages[index - 1].type !== 'ai' && item.type !== 'ai') {
+               if (index > 0 && filteredMessages[index - 1].type !== "ai" && item.type !== "ai") {
                   acc.push({
-                     role: 'assistant',
-                     content: '',
+                     role: "assistant",
+                     content: "",
                   });
                }
 
@@ -302,32 +299,32 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   // Add text content if exists
                   if (item.msg) {
                      messageContent.push({
-                        type: 'text',
+                        type: "text",
                         text: item.msg,
                      });
                   }
 
                   // Add image attachments
                   item.attachments.forEach((attachment) => {
-                     if (attachment.type.startsWith('image/')) {
+                     if (attachment.type.startsWith("image/")) {
                         messageContent.push({
-                           type: 'image_url',
+                           type: "image_url",
                            image_url: {
                               url: attachment.url,
-                              detail: '',
+                              detail: "",
                            },
                         });
                      }
                   });
 
                   acc.push({
-                     role: item.type === 'ai' ? 'assistant' : 'user',
+                     role: item.type === "ai" ? "assistant" : "user",
                      content: messageContent,
                   });
                } else {
                   // Regular text message without attachments
                   acc.push({
-                     role: item.type === 'ai' ? 'assistant' : 'user',
+                     role: item.type === "ai" ? "assistant" : "user",
                      content: item.msg,
                   });
                }
@@ -336,19 +333,22 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             }, []),
             // Handle the final message with potential attachments
             {
-               role: 'user',
+               role: "user",
                content:
                   sendTxt && attachments?.length
                      ? [
-                        { type: 'text', text: sendTxt },
-                        ...attachments.map((attachment) => ({
-                           type: 'image_url',
-                           image_url: {
-                              url: attachment.url,
-                              detail: '',
-                           },
-                        })),
-                     ]
+                          {
+                             type: "text",
+                             text: sendTxt,
+                          },
+                          ...attachments.map((attachment) => ({
+                             type: "image_url",
+                             image_url: {
+                                url: attachment.url,
+                                detail: "",
+                             },
+                          })),
+                       ]
                      : sendTxt,
             },
          ];
@@ -359,31 +359,30 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             model_name: selectedAgent?.agent_base_model,
          };
          if (selectedAgent?.kb_id) {
-            const kbId = `${selectedAgent?.kb_id}`.replace('kb-', '');
-            params['kb_id'] = `kb-${kbId}`;
+            const kbId = `${selectedAgent?.kb_id}`.replace("kb-", "");
+            params["kb_id"] = `kb-${kbId}`;
          }
 
          if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
             const content =
                sendTxt && attachments?.length
                   ? [
-                     { type: 'text', text: sendTxt },
-                     ...attachments.map((attachment) => ({
-                        type: 'image_url',
-                        image_url: {
-                           url: attachment.url,
-                           detail: '',
-                        },
-                     })),
-                  ]
+                       { type: "text", text: sendTxt },
+                       ...attachments.map((attachment) => ({
+                          type: "image_url",
+                          image_url: {
+                             url: attachment.url,
+                             detail: "",
+                          },
+                       })),
+                    ]
                   : sendTxt;
 
             updateTaskItem({
                id: messageId,
-               status: 'processing',
+               status: "processing",
                message: content as any,
-               title: selectedAgent?.agent_name || 'Agent',
-               createdAt: new Date().toISOString(),
+               title: selectedAgent?.agent_name || "Agent",
                agent: selectedAgent!,
                agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
@@ -403,28 +402,26 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   prvKey: agentWallet?.privateKey,
                   messages: historyMessages,
                });
-               console.log('res>>>>>', res);
+               console.log("res>>>>>", res);
                updateMessage(messageId, {
                   msg: res,
-                  status: 'received',
+                  status: "received",
                });
                updateTaskItem({
                   id: messageId,
-                  status: 'done',
-                  updatedAt: new Date().toISOString(),
+                  status: "done",
                } as TaskItem);
             }
          } else if (selectedAgent?.agent_type === AgentType.Model) {
             updateTaskItem({
                id: messageId,
-               status: 'processing',
+               status: "processing",
                message: sendTxt,
-               title: selectedAgent?.agent_name || 'Agent',
-               createdAt: new Date().toISOString(),
+               title: selectedAgent?.agent_name || "Agent",
                agent: selectedAgent!,
                agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
-            
+
             await AgentAPI.chatAgentModelStreamCompletions({
                payload: {
                   ...params,
@@ -434,10 +431,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          } else if (selectedAgent?.agent_type === AgentType.ModelOnline) {
             updateTaskItem({
                id: messageId,
-               status: 'processing',
+               status: "processing",
                message: sendTxt,
-               title: selectedAgent?.agent_name || 'Agent',
-               createdAt: new Date().toISOString(),
+               title: selectedAgent?.agent_name || "Agent",
                agent: selectedAgent!,
                agentType: selectedAgent?.agent_type,
             });
@@ -445,24 +441,22 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             const res = await AgentAPI.chatAgentModel({
                payload: params,
             });
-            console.log('res>>>>>', res);
+            console.log("res>>>>>", res);
 
             updateMessage(messageId, {
                msg: res.choices[0].message.content,
-               status: 'received',
+               status: "received",
             });
             updateTaskItem({
                id: messageId,
-               status: 'done',
-               updatedAt: new Date().toISOString(),
+               status: "done",
             } as TaskItem);
          } else {
             updateTaskItem({
                id: messageId,
-               status: 'processing',
+               status: "processing",
                message: sendTxt,
-               title: selectedAgent?.agent_name || 'Agent',
-               createdAt: new Date().toISOString(),
+               title: selectedAgent?.agent_name || "Agent",
                agent: selectedAgent!,
                agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
@@ -474,20 +468,19 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             });
          }
       } catch (e) {
-         const errorMessage = (e as any)?.response?.data?.error || 'Something went wrong!';
-         console.log('>>>> e', e, (e as any).message, (e as any).response?.data);
+         const errorMessage = (e as any)?.response?.data?.error || "Something went wrong!";
+         console.log(">>>> e", e, (e as any).message, (e as any).response?.data);
          updateMessage(messageId, {
-            status: 'failed',
+            status: "failed",
             msg: errorMessage,
          });
          updateTaskItem({
             id: messageId,
-            status: 'failed',
-            updatedAt: new Date().toISOString(),
+            status: "failed",
          } as TaskItem);
       } finally {
          setIsLoading(false);
-         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+         scrollRef.current?.scrollIntoView({ behavior: "smooth" });
       }
    };
 
@@ -496,27 +489,20 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          setMessages((prev) => {
             const matchedMessageIndex = prev.findLastIndex((i) => i.id === id);
             if (matchedMessageIndex !== -1) {
-               if (data.status === 'failed') {
-                  prev[matchedMessageIndex].status = 'failed';
+               if (data.status === "failed") {
+                  prev[matchedMessageIndex].status = "failed";
                   if (data.msg && data.msg !== prev[matchedMessageIndex].msg) {
                      prev[matchedMessageIndex].msg = data.msg;
                   }
 
-                  chatAgentDatabase.updateChatItem(
-                     prev[matchedMessageIndex] as PersistedMessageType
-                  );
+                  chatAgentDatabase.updateChatItem(prev[matchedMessageIndex] as PersistedMessageType);
                   return [...prev];
-               } else if (
-                  prev[matchedMessageIndex].status === 'waiting' ||
-                  prev[matchedMessageIndex].status === 'receiving' ||
-                  prev[matchedMessageIndex].status === 'pre-done'
-               ) {
+               } else if (prev[matchedMessageIndex].status === "waiting" || prev[matchedMessageIndex].status === "receiving" || prev[matchedMessageIndex].status === "pre-done") {
                   const updatedMessage = {
                      ...prev[matchedMessageIndex],
                      ...data,
                      updatedAt: new Date().getTime(),
-                     queryMessageState:
-                        data?.queryMessageState || prev[matchedMessageIndex]?.queryMessageState,
+                     queryMessageState: data?.queryMessageState || prev[matchedMessageIndex]?.queryMessageState,
                      tx_hash: data?.onchain_data?.propose_tx || prev[matchedMessageIndex]?.tx_hash,
                   };
                   prev[matchedMessageIndex] = updatedMessage;
@@ -545,7 +531,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       } catch (err) {
       } finally {
          setTimeout(() => {
-            scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+            scrollRef.current?.scrollIntoView({
+               behavior: "smooth",
+            });
          }, 200);
       }
    }, []);
@@ -573,11 +561,11 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             const responseMsg: IChatMessage = {
                id: messageId,
                senderId: id,
-               msg: '',
-               status: 'waiting',
-               type: 'ai',
+               msg: "",
+               status: "waiting",
+               type: "ai",
                replyTo: userMessageId,
-               name: selectedAgent?.agent_name || 'Agent',
+               name: selectedAgent?.agent_name || "Agent",
                is_reply: true,
             };
 
@@ -588,12 +576,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                threadId: threadId,
             });
 
-            await sendMessageToServer(
-               messageId,
-               Number(id),
-               targetMessage?.msg,
-               targetMessage.attachments
-            );
+            await sendMessageToServer(messageId, Number(id), targetMessage?.msg, targetMessage.attachments);
          }
       },
       [messages, id, isStopReceiving]

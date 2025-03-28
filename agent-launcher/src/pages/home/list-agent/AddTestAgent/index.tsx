@@ -3,6 +3,7 @@ import BaseButton from "@components/BaseButton";
 import InputText from "@components/Input/InputText";
 import STORAGE_KEYS from "@constants/storage-key";
 import CAgentTokenAPI from "@services/api/agents-token";
+import installAgentStorage from "@storage/InstallAgentStorage";
 import localStorageService from "@storage/LocalStorageService";
 import { ErrorMessage, Form, Formik } from "formik";
 import uniq from "lodash.uniq";
@@ -19,9 +20,7 @@ const AddTestAgent = (props: IAddTestAgent) => {
    const onSubmit = async (values: { contractAddress: string }) => {
       try {
          const data = await cPumpAPI.saveAgentInstalled({ contract_address: [values.contractAddress] });
-         const installAgents = await localStorageService.getItem(STORAGE_KEYS.INSTALLED_TEST_AGENTS);
-         const agentIds = installAgents ? JSON.parse(installAgents) : [];
-         await localStorageService.setItem(STORAGE_KEYS.INSTALLED_TEST_AGENTS, JSON.stringify(agentIds ? uniq([...agentIds, ...data]) : data));
+         await installAgentStorage.addAgent(data);
          props.onAddAgentSuccess(values.contractAddress);
       } catch (error) {
          console.log(error);

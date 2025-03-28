@@ -1,10 +1,10 @@
-import { AgentType } from '@pages/home/list-agent/constants';
-import AgentAPI from '@services/api/agent';
-import { IChatMessage } from '@services/api/agent/types';
-import { useContext, useEffect, useMemo } from 'react';
-import { useChatAgentProvider } from './provider';
-import { AgentContext } from '@pages/home/provider/AgentContext';
-import { IAgentToken } from '@services/api/agents-token/interface';
+import { AgentType } from "@pages/home/list-agent/constants";
+import AgentAPI from "@services/api/agent";
+import { IChatMessage } from "@services/api/agent/types";
+import { useContext, useEffect, useMemo } from "react";
+import { useChatAgentProvider } from "./provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
+import { IAgentToken } from "@services/api/agents-token/interface";
 
 function HandleProcessingMessage({
    data,
@@ -27,7 +27,7 @@ function HandleProcessingMessage({
 
                   if (res?.status !== 102) {
                      updateMessage(data.id, {
-                        status: 'received',
+                        status: "received",
                         msg: res.data || res,
                      });
                   } else {
@@ -36,12 +36,14 @@ function HandleProcessingMessage({
                      }, 30000);
                   }
                } catch (e) {
-                  const errorMessage = (e as any)?.response?.data?.error || 'Something went wrong!';
+                  const errorMessage = (e as any)?.response?.data?.error || "Something went wrong!";
                   updateMessage(data.id, {
-                     status: 'failed',
+                     status: "failed",
                      msg: errorMessage,
                   });
                }
+            } else {
+               //
             }
          }
       };
@@ -53,33 +55,17 @@ function HandleProcessingMessage({
    return <></>;
 }
 
-function HandleMessageProcessing({
-   updateMessage,
-}: {
-   updateMessage: (id: string, data: Partial<IChatMessage>) => void;
-}) {
+function HandleMessageProcessing({ updateMessage }: { updateMessage: (id: string, data: Partial<IChatMessage>) => void }) {
    const { selectedAgent } = useContext(AgentContext);
    const { messages } = useChatAgentProvider();
 
    const processingMessages = useMemo(() => {
-      return messages.filter(
-         (item) =>
-            item.status === 'waiting' ||
-            item.status === 'receiving' ||
-            item.status === 'sync-waiting'
-      );
+      return messages.filter((item) => item.status === "waiting" || item.status === "receiving" || item.status === "sync-waiting");
    }, [messages]);
 
    const renderTasks = () => {
       if (selectedAgent) {
-         return processingMessages.map((message) => (
-            <HandleProcessingMessage
-               key={`task_${message.id}`}
-               data={message}
-               updateMessage={updateMessage}
-               agent={selectedAgent}
-            />
-         ));
+         return processingMessages.map((message) => <HandleProcessingMessage key={`task_${message.id}`} data={message} updateMessage={updateMessage} agent={selectedAgent} />);
       }
       return <></>;
    };

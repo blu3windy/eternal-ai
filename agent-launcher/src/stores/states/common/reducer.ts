@@ -3,6 +3,7 @@ import { CommonState } from "./types";
 
 const initialState: CommonState = {
    needReload: 0,
+   needReloadList: 0,
 };
 
 const slice = createSlice({
@@ -12,9 +13,12 @@ const slice = createSlice({
       requestReload: (state) => {
          state.needReload += 1;
       },
+      requestReloadListAgent: (state) => {
+         state.needReloadList += 1;
+      },
    },
 });
 
-export const { requestReload } = slice.actions;
+export const { requestReload, requestReloadListAgent } = slice.actions;
 
 export default slice.reducer;

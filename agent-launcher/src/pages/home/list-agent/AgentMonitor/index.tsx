@@ -35,6 +35,11 @@ import CAgentContract from '@contract/agent';
 import DeleteAgentModal from './DeleteAgentModal';
 import BaseModal from '@components/BaseModal';
 import Loading from '@components/Loading';
+import STORAGE_KEYS from '@constants/storage-key';
+import localStorageService from '@storage/LocalStorageService';
+import installAgentStorage from '@storage/InstallAgentStorage';
+import { useDispatch } from 'react-redux';
+import { requestReloadListAgent } from '@stores/states/common/reducer';
 
 interface DockerContainer {
    Command: string;
@@ -95,6 +100,7 @@ interface ContainerActionState {
 type StateActions = Record<string, ContainerActionState>;
 
 const AgentMonitor: React.FC = () => {
+   const dispatch = useDispatch();
    const { isOpen, onToggle, onClose } = useDisclosure();
    const [searchTerm, setSearchTerm] = useState('');
    const [showRunningOnly, setShowRunningOnly] = useState(false);
@@ -107,15 +113,22 @@ const AgentMonitor: React.FC = () => {
    const intervalRef = useRef<NodeJS.Timeout>();
    const cPumpAPI = new CAgentTokenAPI();
    const [agents, setAgents] = useState<any[]>([]);
-   const { agentStates, startAgent, stopAgent, unInstallAgent, currentActiveModel } = useContext(AgentContext);
+   const { agentStates, startAgent, stopAgent, unInstallAgent, currentActiveModel, installedAgentIds } = useContext(AgentContext);
 
    const [stateActions, setStateActions] = useState<StateActions>({});
 
-
    const onGetDataAgents = async () => {
       try {
+         const installIds = await installAgentStorage.getAgentIds();
+         const allInstalledIds = [
+            // ...installedAgentIds.utility,
+            // ...installedAgentIds.model,
+            // ...installedAgentIds.social,
+            ...installIds
+         ];
+
          const [{ agents }, { agents: agentsAll }] = await Promise.all([
-            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, installed: true, agent_types: '5,12,10,11,8' }),
+            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, ids: allInstalledIds.length > 0 ? allInstalledIds.join(',') : '', agent_types: '5,12,10,11,8' }),
             cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types: '5,12,10,11,8' }),
          ]);
          setAgents([...agents, ...agentsAll]);
@@ -569,6 +582,7 @@ const AgentMonitor: React.FC = () => {
                if (deleteAgent) {
                   unInstallAgent(deleteAgent);
                   setDeleteAgent(undefined);
+                  dispatch(requestReloadListAgent());
                }
                if (deleteContainer) {
                   handleDeleteContainer(deleteContainer);
