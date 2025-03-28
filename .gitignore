@@ -203,3 +203,6 @@ cython_debug/
 # Ignore build binary
 eai-chat
 .vscode/
+agent-launcher/private.key
+agent-launcher/certificate.p12
+agent-launcher/certificate.pem
