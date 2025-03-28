@@ -210,14 +210,20 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       );
 
       if (task.status === "done" || task.status === "failed") {
-         setTimeout(() => {
-            dispatch(
-               removeTaskItem({
-                  id: threadId,
-                  taskItem: task,
-               })
-            );
-         }, 5000);
+         // setTimeout(() => {
+         //    dispatch(
+         //       removeTaskItem({
+         //          id: threadId,
+         //          taskItem: task,
+         //       })
+         //    );
+         // }, 5000);
+         dispatch(
+            removeTaskItem({
+               id: threadId,
+               taskItem: task,
+            })
+         );
       }
    };
 

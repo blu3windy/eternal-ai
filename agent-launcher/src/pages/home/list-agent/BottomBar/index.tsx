@@ -30,6 +30,7 @@ import Loaders from "@components/Loaders";
 import { useSelector } from "react-redux";
 import { RootState } from "@stores/index";
 import { totalPendingTasksSelector } from "@stores/states/agent-chat/selector";
+import ProcessingTaskModal from "./ProcessingTaskModal";
 
 const ProcessingTaskIcon = () => {
    return (
@@ -64,6 +65,8 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
    const { onCopy } = useClipboard(signer?.address || "");
    const [isOpen, setIsOpen] = useState(false);
 
+   const [isOpenProcessingTask, setIsOpenProcessingTask] = useState(false);
+
    const totalPendingTasks = useSelector(totalPendingTasksSelector);
 
    // get wallet balance
@@ -94,7 +97,18 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
          </Flex>
          <Flex gap={"12px"}>
             {!!totalPendingTasks && (
-               <Flex gap="4px" alignItems={"center"} borderRadius={"12px"} bg="rgba(255, 255, 255, 0.30)" px="8px" py="4px">
+               <Flex
+                  gap="4px"
+                  alignItems={"center"}
+                  borderRadius={"12px"}
+                  bg="rgba(255, 255, 255, 0.30)"
+                  px="8px"
+                  py="4px"
+                  onClick={() => {
+                     setIsOpenProcessingTask((prev) => !prev);
+                  }}
+                  cursor={"pointer"}
+               >
                   <Loaders.Spinner size={16} color="#000" />
                   <Text fontSize={"12px"} fontWeight={400} lineHeight={"120%"}>
                      {totalPendingTasks} {totalPendingTasks === 1 ? "task" : "tasks"}
@@ -148,20 +162,21 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                            Add test agent
                         </Button>
 
-                        {/* <Button
+                        <Button
                            width="100%"
                            height="45px"
                            display="flex"
                            alignItems="center"
                            padding="10px 20px"
                            gap="12px"
-                           onClick={() => setIsOpen(true)}
+                           onClick={() => {
+                              setIsOpenProcessingTask((prev) => !prev);
+                           }}
                            className={s.menuItem}
                         >
                            <ProcessingTaskIcon />
-                           Task processing{" "}
-                           {totalPendingTasks ? `(${totalPendingTasks})` : ""}
-                        </Button> */}
+                           Task processing {totalPendingTasks ? `(${totalPendingTasks})` : ""}
+                        </Button>
                      </PopoverBody>
                   </PopoverContent>
                </Popover>
@@ -179,6 +194,13 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                      }}
                   />
                </BaseModal>
+
+               <ProcessingTaskModal
+                  isOpen={isOpenProcessingTask}
+                  setIsOpen={() => {
+                     setIsOpenProcessingTask((prev) => !prev);
+                  }}
+               />
             </Box>
          </Flex>
       </Box>

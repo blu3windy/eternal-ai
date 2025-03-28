@@ -23,6 +23,7 @@ import { useDebounce } from '@hooks/useDebounce';
 import installAgentStorage from "@storage/InstallAgentStorage.ts";
 import { useDispatch } from "react-redux";
 import { requestReloadListAgent } from "@stores/states/common/reducer.ts";
+import uniqBy from "lodash.uniqby";
 
 const AgentProvider: React.FC<
     PropsWithChildren & { tokenAddress?: string }
@@ -1048,21 +1049,28 @@ const AgentProvider: React.FC<
            ids = installIds.join(',');
          }
 
-         const utilityParams: any = {
-            page: 1,
-            limit: 100,
-            sort_col: SortOption.CreatedAt,
-            agent_types: [
+         const agent_types = [
                AgentType.UtilityJS, 
                AgentType.UtilityPython, 
                AgentType.Infra, 
                AgentType.CustomUI, 
-               AgentType.CustomPrompt
-            ].join(','),
+               AgentType.CustomPrompt,
+               AgentType.ModelOnline
+            ].join(',');
+         const utilityParams: any = {
+            page: 1,
+            limit: 100,
+            sort_col: SortOption.CreatedAt,
+            agent_types: agent_types,
             chain: '',
             ids,
          };
-         const { agents: utilityAgents } = await cPumpAPI.getAgentTokenList(utilityParams);
+
+          const [{ agents }, { agents: agentsAll }] = await Promise.all([
+            cPumpAPI.getAgentTokenList(utilityParams),
+            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
+         ]);
+         const utilityAgents = uniqBy([...agents, ...agentsAll], 'id');
 
          // Check running status for each installed utility agent
          for (const folderName of refInstalledUtilityAgents.current) {
@@ -1077,7 +1085,7 @@ const AgentProvider: React.FC<
             );
             
             if (agent) {
-               if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
+               if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
                   try {
                      const res = await cPumpAPI.checkAgentServiceRunning({ agent });
                      updateAgentState(agent.id, {

@@ -6,6 +6,10 @@ export const agentTasksSelector = (state: RootState) => {
    return state.agentChat.agentTasks || {};
 };
 
+export const agentTasksProcessingSelector = (state: RootState) => {
+   return Object.values(state.agentChat.agentTasks || {}).flat();
+};
+
 export const totalPendingTasksSelector = (state: RootState) => {
    return Object.values(state.agentChat.agentTasks || {})
       .flat()
