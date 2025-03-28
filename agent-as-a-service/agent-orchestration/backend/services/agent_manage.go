@@ -98,6 +98,9 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	if req.IsOnchain != nil {
 		agent.IsOnchain = *req.IsOnchain
 	}
+	if req.IsStreaming != nil {
+		agent.IsStreaming = *req.IsStreaming
+	}
 	if req.IsCustomUi != nil {
 		agent.IsCustomUi = *req.IsCustomUi
 	}
@@ -488,6 +491,9 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				}
 				if req.IsOnchain != nil {
 					agent.IsOnchain = *req.IsOnchain
+				}
+				if req.IsStreaming != nil {
+					agent.IsStreaming = *req.IsStreaming
 				}
 				if req.IsCustomUi != nil {
 					agent.IsCustomUi = *req.IsCustomUi
