@@ -218,12 +218,20 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          //       })
          //    );
          // }, 5000);
-         dispatch(
-            removeTaskItem({
-               id: threadId,
-               taskItem: task,
-            })
-         );
+         setTimeout(() => {
+            dispatch(
+               removeTaskItem({
+                  id: threadId,
+                  taskItem: task,
+               })
+            );
+         }, 0);
+         // dispatch(
+         //    removeTaskItem({
+         //       id: threadId,
+         //       taskItem: task,
+         //    })
+         // );
       }
    };
 
