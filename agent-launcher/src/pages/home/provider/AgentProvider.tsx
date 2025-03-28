@@ -1037,7 +1037,7 @@ const AgentProvider: React.FC<
       console.log("stephen: setSelectedAgent", { newAgent, isInstalled, isRunning });
       console.log("stephen: setSelectedAgent agentStates", { agentStates });
 
-      if (isInstalled && !isRunning && !isStarting) {
+      if (isInstalled && !isRunning && !isStarting && newAgent?.agent_type !== AgentType.ModelOnline) {
          startAgent(newAgent);
       }
    }, [agentStates]);
@@ -1048,17 +1048,17 @@ const AgentProvider: React.FC<
          const installIds = await installAgentStorage.getAgentIds();
          let ids = '';
          if (installIds.length > 0) {
-           ids = installIds.join(',');
+            ids = installIds.join(',');
          }
 
          const agent_types = [
-               AgentType.UtilityJS, 
-               AgentType.UtilityPython, 
-               AgentType.Infra, 
-               AgentType.CustomUI, 
-               AgentType.CustomPrompt,
-               AgentType.ModelOnline
-            ].join(',');
+            AgentType.UtilityJS, 
+            AgentType.UtilityPython, 
+            AgentType.Infra, 
+            AgentType.CustomUI, 
+            AgentType.CustomPrompt,
+            AgentType.ModelOnline
+         ].join(',');
          const utilityParams: any = {
             page: 1,
             limit: 100,
@@ -1068,7 +1068,7 @@ const AgentProvider: React.FC<
             ids,
          };
 
-          const [{ agents }, { agents: agentsAll }] = await Promise.all([
+         const [{ agents }, { agents: agentsAll }] = await Promise.all([
             cPumpAPI.getAgentTokenList(utilityParams),
             cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
          ]);
