@@ -1054,7 +1054,8 @@ const AgentProvider: React.FC<
                AgentType.UtilityPython, 
                AgentType.Infra, 
                AgentType.CustomUI, 
-               AgentType.CustomPrompt
+               AgentType.CustomPrompt,
+               AgentType.ModelOnline
             ].join(',');
          const utilityParams: any = {
             page: 1,
@@ -1064,7 +1065,7 @@ const AgentProvider: React.FC<
             chain: '',
             ids,
          };
-         
+
           const [{ agents }, { agents: agentsAll }] = await Promise.all([
             cPumpAPI.getAgentTokenList(utilityParams),
             cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
@@ -1084,7 +1085,7 @@ const AgentProvider: React.FC<
             );
             
             if (agent) {
-               if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt].includes(agent.agent_type)) {
+               if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
                   try {
                      const res = await cPumpAPI.checkAgentServiceRunning({ agent });
                      updateAgentState(agent.id, {
