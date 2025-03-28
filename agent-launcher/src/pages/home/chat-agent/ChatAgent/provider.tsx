@@ -24,6 +24,7 @@ import AgentAPI from '../../../../services/api/agent';
 import { ChatCompletionPayload, IChatMessage } from '../../../../services/api/agent/types.ts';
 import { INIT_WELCOME_MESSAGE } from './constants';
 import HandleMessageProcessing from './HandleMessageProcessing.tsx';
+import { string } from 'yup';
 
 type IChatAgentProviderContext = {
    isStopReceiving?: boolean;
@@ -216,7 +217,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       sendTxt: string,
       attachments?: IChatMessage['attachments']
    ) => {
-      const getStreamerHandler = () => {
+      const getStreamerHandler = (messageId: string) => {
          let isGeneratedDone = false;
          return {
             onStream: (content: string, chunk: string, options) => {
@@ -389,10 +390,11 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
             if (selectedAgent?.is_streaming) {
                await AgentAPI.chatAgentUtilityStreamCompletions({
+                  agent: selectedAgent!,
                   payload: {
                      ...params,
                   },
-                  streamHandlers: getStreamerHandler(),
+                  streamHandlers: getStreamerHandler(messageId),
                });
             } else {
                const res: string = await AgentAPI.chatAgentUtility({
@@ -427,7 +429,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                payload: {
                   ...params,
                },
-               streamHandlers: getStreamerHandler(),
+               streamHandlers: getStreamerHandler(messageId),
             });
          } else if (selectedAgent?.agent_type === AgentType.ModelOnline) {
             updateTaskItem({
@@ -468,7 +470,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                payload: {
                   ...params,
                },
-               streamHandlers: getStreamerHandler(),
+               streamHandlers: getStreamerHandler(messageId),
             });
          }
       } catch (e) {
