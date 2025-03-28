@@ -90,6 +90,7 @@ export interface IAgentToken {
     arch: string;
   };
   is_public?: boolean;
+  is_streaming?: boolean;
 }
 
 export interface Meme {

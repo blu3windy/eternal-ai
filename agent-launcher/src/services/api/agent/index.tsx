@@ -127,6 +127,35 @@ const AgentAPI = {
          throw e;
       }
    },
+   chatAgentUtilityStreamCompletions: async ({
+      payload,
+      streamHandlers,
+   }: {
+      payload: ChatCompletionPayload;
+      streamHandlers: ChatCompletionStreamHandler;
+   }): Promise<any> => {
+      const headers = await getClientHeaders();
+      const messages = payload.messages.map((item) => ({
+         ...item,
+         content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
+      }));
+      const response = await fetch(`http://localhost:33030/${agent?.network_id}-${agent?.agent_name?.toLowerCase()}/prompt`, {
+         method: 'POST',
+         headers: {
+            ...headers,
+         },
+         body: JSON.stringify({ messages: messages, stream: true, seed: 0 })
+      });
+
+      if (response.status === 200) {
+         const reader = response.body?.getReader();
+         if (!reader) {
+            throw 'No reader';
+         }
+         return parseStreamAIResponse(reader, streamHandlers);
+      }
+      throw 'API error';
+   },
    chatStreamCompletions: async ({
       payload,
       streamHandlers,

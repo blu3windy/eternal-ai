@@ -216,6 +216,55 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       sendTxt: string,
       attachments?: IChatMessage['attachments']
    ) => {
+      const getStreamerHandler = () => {
+         let isGeneratedDone = false;
+         return {
+            onStream: (content: string, chunk: string, options) => {
+               const text = content;
+
+               if (isGeneratedDone) {
+                  setIsLoading(false);
+                  updateMessage(messageId, {
+                     msg: text,
+                     status: 'pre-done',
+                     queryMessageState: options?.message,
+                     onchain_data: options.onchain_data,
+                  });
+               } else {
+                  isGeneratedDone = !!options?.isGeneratedDone;
+                  updateMessage(messageId, {
+                     msg: text,
+                     status: text.trim().length ? 'receiving' : 'waiting',
+                     queryMessageState: options?.message,
+                     onchain_data: options.onchain_data,
+                  });
+               }
+            },
+            onFinish: (content: string, options) => {
+               updateMessage(messageId, {
+                  status: 'received',
+                  queryMessageState: options?.message,
+                  onchain_data: options.onchain_data,
+               });
+               updateTaskItem({
+                  id: messageId,
+                  status: 'done',
+                  updatedAt: new Date().toISOString(),
+               } as TaskItem);
+            },
+            onFail: (err: any) => {
+               // updateMessage(messageId, {
+               //   status: 'failed',
+               //   msg: (err as any)?.message || 'Something went wrong!',
+               // });
+               updateTaskItem({
+                  id: messageId,
+                  status: 'failed',
+                  updatedAt: new Date().toISOString(),
+               } as TaskItem);
+            },
+         }
+      }
       try {
          let filteredMessages = messages
             .filter((item) => item.status !== 'failed')
@@ -290,15 +339,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                content:
                   sendTxt && attachments?.length
                      ? [
-                          { type: 'text', text: sendTxt },
-                          ...attachments.map((attachment) => ({
-                             type: 'image_url',
-                             image_url: {
-                                url: attachment.url,
-                                detail: '',
-                             },
-                          })),
-                       ]
+                        { type: 'text', text: sendTxt },
+                        ...attachments.map((attachment) => ({
+                           type: 'image_url',
+                           image_url: {
+                              url: attachment.url,
+                              detail: '',
+                           },
+                        })),
+                     ]
                      : sendTxt,
             },
          ];
@@ -317,15 +366,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             const content =
                sendTxt && attachments?.length
                   ? [
-                       { type: 'text', text: sendTxt },
-                       ...attachments.map((attachment) => ({
-                          type: 'image_url',
-                          image_url: {
-                             url: attachment.url,
-                             detail: '',
-                          },
-                       })),
-                    ]
+                     { type: 'text', text: sendTxt },
+                     ...attachments.map((attachment) => ({
+                        type: 'image_url',
+                        image_url: {
+                           url: attachment.url,
+                           detail: '',
+                        },
+                     })),
+                  ]
                   : sendTxt;
 
             updateTaskItem({
@@ -337,27 +386,32 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                agent: selectedAgent!,
                agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
-            const res: string = await AgentAPI.chatAgentUtility({
-               id: messageId,
-               agent: selectedAgent!,
-               prvKey: agentWallet?.privateKey,
-               messages: [
-                  {
-                     role: 'user',
-                     content: content,
+
+            if (selectedAgent?.is_streaming) {
+               await AgentAPI.chatAgentUtilityStreamCompletions({
+                  payload: {
+                     ...params,
                   },
-               ],
-            });
-            console.log('res>>>>>', res);
-            updateMessage(messageId, {
-               msg: res,
-               status: 'received',
-            });
-            updateTaskItem({
-               id: messageId,
-               status: 'done',
-               updatedAt: new Date().toISOString(),
-            } as TaskItem);
+                  streamHandlers: getStreamerHandler(),
+               });
+            } else {
+               const res: string = await AgentAPI.chatAgentUtility({
+                  id: messageId,
+                  agent: selectedAgent!,
+                  prvKey: agentWallet?.privateKey,
+                  messages: historyMessages,
+               });
+               console.log('res>>>>>', res);
+               updateMessage(messageId, {
+                  msg: res,
+                  status: 'received',
+               });
+               updateTaskItem({
+                  id: messageId,
+                  status: 'done',
+                  updatedAt: new Date().toISOString(),
+               } as TaskItem);
+            }
          } else if (selectedAgent?.agent_type === AgentType.Model) {
             updateTaskItem({
                id: messageId,
@@ -368,57 +422,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                agent: selectedAgent!,
                agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
-            let isGeneratedDone = false;
+            
             await AgentAPI.chatAgentModelStreamCompletions({
                payload: {
                   ...params,
                },
-               streamHandlers: {
-                  onStream: (content: string, chunk: string, options) => {
-                     const text = content;
-
-                     if (isGeneratedDone) {
-                        setIsLoading(false);
-                        updateMessage(messageId, {
-                           msg: text,
-                           status: 'pre-done',
-                           queryMessageState: options?.message,
-                           onchain_data: options.onchain_data,
-                        });
-                     } else {
-                        isGeneratedDone = !!options?.isGeneratedDone;
-                        updateMessage(messageId, {
-                           msg: text,
-                           status: text.trim().length ? 'receiving' : 'waiting',
-                           queryMessageState: options?.message,
-                           onchain_data: options.onchain_data,
-                        });
-                     }
-                  },
-                  onFinish: (content: string, options) => {
-                     updateMessage(messageId, {
-                        status: 'received',
-                        queryMessageState: options?.message,
-                        onchain_data: options.onchain_data,
-                     });
-                     updateTaskItem({
-                        id: messageId,
-                        status: 'done',
-                        updatedAt: new Date().toISOString(),
-                     } as TaskItem);
-                  },
-                  onFail: (err: any) => {
-                     // updateMessage(messageId, {
-                     //   status: 'failed',
-                     //   msg: (err as any)?.message || 'Something went wrong!',
-                     // });
-                     updateTaskItem({
-                        id: messageId,
-                        status: 'failed',
-                        updatedAt: new Date().toISOString(),
-                     } as TaskItem);
-                  },
-               },
+               streamHandlers: getStreamerHandler(),
             });
          } else if (selectedAgent?.agent_type === AgentType.ModelOnline) {
             updateTaskItem({
@@ -455,57 +464,11 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                agent: selectedAgent!,
                agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
-            let isGeneratedDone = false;
             await AgentAPI.chatStreamCompletions({
                payload: {
                   ...params,
                },
-               streamHandlers: {
-                  onStream: (content: string, chunk: string, options) => {
-                     const text = content;
-
-                     if (isGeneratedDone) {
-                        setIsLoading(false);
-                        updateMessage(messageId, {
-                           msg: text,
-                           status: 'pre-done',
-                           queryMessageState: options?.message,
-                           onchain_data: options.onchain_data,
-                        });
-                     } else {
-                        isGeneratedDone = !!options?.isGeneratedDone;
-                        updateMessage(messageId, {
-                           msg: text,
-                           status: text.trim().length ? 'receiving' : 'waiting',
-                           queryMessageState: options?.message,
-                           onchain_data: options.onchain_data,
-                        });
-                     }
-                  },
-                  onFinish: (content: string, options) => {
-                     updateMessage(messageId, {
-                        status: 'received',
-                        queryMessageState: options?.message,
-                        onchain_data: options.onchain_data,
-                     });
-                     updateTaskItem({
-                        id: messageId,
-                        status: 'done',
-                        updatedAt: new Date().toISOString(),
-                     } as TaskItem);
-                  },
-                  onFail: (err: any) => {
-                     // updateMessage(messageId, {
-                     //   status: 'failed',
-                     //   msg: (err as any)?.message || 'Something went wrong!',
-                     // });
-                     updateTaskItem({
-                        id: messageId,
-                        status: 'failed',
-                        updatedAt: new Date().toISOString(),
-                     } as TaskItem);
-                  },
-               },
+               streamHandlers: getStreamerHandler(),
             });
          }
       } catch (e) {
