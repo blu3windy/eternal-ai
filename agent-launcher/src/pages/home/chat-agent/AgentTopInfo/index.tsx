@@ -191,7 +191,7 @@ const AgentTopInfo = () => {
                   s.contentContainer,
                   showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : ''
                )}
-               w="clamp(600px, 95%, 1200px)"
+               w="clamp(600px, 81%, 1200px)"
                mx={'auto'}
             >
                {/* {isCanChat &&
