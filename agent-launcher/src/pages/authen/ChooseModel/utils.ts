@@ -6,14 +6,8 @@ const getSetupAgents = async (agents: IAgentToken[]) => {
    const osContext = await window?.electronAPI?.osContext();
    const _agents = agents.filter((item) => {
       if (item.agent_type === AgentType.ModelOnline) return true;
-      item.required_info = JSON.stringify({
-         ram: 16,
-         disk: 20,
-         arch: "x64",
-      }) as any
       if (!item?.required_info) return false;
       const requirements = item.required_info;
-
 
       // check available free disk space, free memory
       const freeDisk = osContext?.disk.free / 1024 / 1024 / 1024;
