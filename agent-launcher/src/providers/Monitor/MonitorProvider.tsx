@@ -196,14 +196,14 @@ const MonitorProvider: React.FC<
       // Initial fetch
       onGetData();
       // Set up the interval
-      intervalRef.current = setInterval(onGetData, 3000);
+      intervalRef.current = setInterval(onGetData, 5000);
       // Cleanup function
       return () => {
          if (intervalRef.current) {
             clearInterval(intervalRef.current);
          }
       };
-   }, []); // Empty dependency array means this effect runs once on mount
+   }, [needReloadList]); // Empty dependency array means this effect runs once on mount
 
    useEffect(() => {
       // Initial fetch
