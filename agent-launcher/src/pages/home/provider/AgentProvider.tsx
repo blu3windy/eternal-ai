@@ -137,7 +137,11 @@ const AgentProvider: React.FC<
    const isRunning = useMemo(() => {
       if (selectedAgent) {
          const matchingContainer = containers?.find((container: ContainerData) => compareString(container.agent?.agent_name, selectedAgent?.agent_name));
-         return matchingContainer ? matchingContainer?.state === 'running' || false : agentStates[selectedAgent.id]?.isRunning;
+         if (matchingContainer?.agent && [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(matchingContainer?.agent?.agent_type)) {
+            return matchingContainer ? matchingContainer?.state === 'running' || false : agentStates[selectedAgent.id]?.isRunning;
+         } else {
+            return matchingContainer?.state === 'running' || agentStates[selectedAgent.id]?.isRunning || false;
+         }
       }
 
       return false;
@@ -498,6 +502,8 @@ const AgentProvider: React.FC<
             data: agent,
             isInstalling: false,
          });
+
+         dispatch(requestReloadListAgent());
       }
    }
 

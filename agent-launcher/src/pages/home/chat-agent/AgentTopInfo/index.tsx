@@ -293,7 +293,7 @@ const AgentTopInfo = () => {
                                     <Button
                                        className={s.btnStop}
                                        onClick={() => setDeleteAgent(selectedAgent)}
-                                       isLoading={isUnInstalling}
+                                       isLoading={isUnInstalling && !isClickUpdateCode}
                                        isDisabled={isUnInstalling}
                                        loadingText={'Deleting...'}
                                     >

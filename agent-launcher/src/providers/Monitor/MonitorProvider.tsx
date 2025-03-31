@@ -6,12 +6,15 @@ import { ContainerData, DockerContainer, DockerImage, DockerMemory } from "./int
 import { MonitorContext } from "./MonitorContext.tsx";
 import installAgentStorage from "@storage/InstallAgentStorage.ts";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
+import { commonSelector } from "@stores/states/common/selector.ts";
+import { useSelector } from "react-redux";
 
 const MonitorProvider: React.FC<
     PropsWithChildren
 > = ({
    children,
 }: PropsWithChildren): React.ReactElement => {
+   const { needReloadList } = useSelector(commonSelector);
 
    const [containers, setContainers] = useState<ContainerData[]>([]);
    const [totalMemory, setTotalMemory] = useState({ used: '0MB', total: '0GB' });
@@ -193,7 +196,7 @@ const MonitorProvider: React.FC<
       // Initial fetch
       onGetData();
       // Set up the interval
-      intervalRef.current = setInterval(onGetData, 2000);
+      intervalRef.current = setInterval(onGetData, 3000);
       // Cleanup function
       return () => {
          if (intervalRef.current) {
@@ -206,14 +209,14 @@ const MonitorProvider: React.FC<
       // Initial fetch
       onGetDataAgents();
       // Set up the interval
-      intervalAgentRef.current = setInterval(onGetDataAgents, 10000);
+      intervalAgentRef.current = setInterval(onGetDataAgents, 30000);
       // Cleanup function
       return () => {
          if (intervalAgentRef.current) {
             clearInterval(intervalAgentRef.current);
          }
       };
-   }, []);
+   }, [needReloadList]);
    
    const contextValues: any = useMemo(() => {
       return {
