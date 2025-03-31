@@ -298,10 +298,10 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          filteredMessages = filteredMessages.slice(-4);
 
          const historyMessages = [
-            {
-               role: "system",
-               content: selectedAgent?.personality || "",
-            },
+            // {
+            //    role: "system",
+            //    content: selectedAgent?.personality || "",
+            // },
             ...filteredMessages.reduce((acc: any[], item, index) => {
                if (index > 0 && filteredMessages[index - 1].type !== "ai" && item.type !== "ai") {
                   acc.push({
