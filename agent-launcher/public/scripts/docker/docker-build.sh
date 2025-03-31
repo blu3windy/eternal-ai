@@ -129,7 +129,16 @@ if [ "$build_success" = true ]; then
             log_message "• $name (running on port $port)"
         fi
     done
-    
+
+    log_message "Pulling agent-base-node..."
+    docker pull eternalpersonalagi/agent-base-node
+    log_message "Pulling agent-base-node done"
+
+
+    log_message "Pulling agent-base-python..."
+    docker pull eternalpersonalagi/agent-base-python
+    log_message "Pulling agent-base-python done"
+
     exit 0
 else
     log_error "Setup failed"
