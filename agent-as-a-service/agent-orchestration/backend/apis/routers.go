@@ -277,6 +277,12 @@ func (s *Server) Routers() {
 			{
 				launchpadAPI.POST("/:id/tier/:member_id", s.ExecuteLaunchpadTier)
 			}
+
+			robotAPI := internalAPI.Group("/robot")
+			{
+				robotAPI.POST("/wallet", s.GenerateRobotSaleWallet)
+				robotAPI.GET("/wallet", s.GetRobotSaleWallet)
+			}
 		}
 		// deprecated
 		externalWalletAPI := rootAPI.Group("/external-wallet")
