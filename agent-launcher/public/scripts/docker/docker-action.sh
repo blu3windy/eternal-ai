@@ -96,8 +96,8 @@ cd_docker_build_source_path() {
 
 # Function to check if a Docker image exists
 image_exists() {
-  # Check if the image exists and return the exit status
-  if [ "$(docker images -q "$1" 2> /dev/null)" ]; then
+  # Check if the image exists with exact name match
+  if [ "$(docker images -q --filter "reference=^$1$" 2> /dev/null)" ]; then
     return 0  # Image exists
   else
     return 1  # Image does not exist
@@ -107,8 +107,8 @@ image_exists() {
 # Function to check if a Docker container is running
 container_name_running() {
   local container_name="$1"
-  # Check if the container is running
-  if [ "$(docker ps -q -f name="$container_name")" ]; then
+  # Check if the container is running with exact name match
+  if [ "$(docker ps -q -f name="^$container_name$")" ]; then
     return 0  # Container is running
   else
     return 1  # Container is not running
