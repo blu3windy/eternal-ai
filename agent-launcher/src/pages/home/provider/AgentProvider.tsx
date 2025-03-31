@@ -10,7 +10,7 @@ import { compareString, isBase64, splitBase64 } from "@utils/string.ts";
 import { Wallet } from "ethers";
 import uniq from "lodash.uniq";
 import throttle from "lodash/throttle";
-import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ModelInfo } from "../../../../electron/share/model.ts";
 import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
 import CAgentTokenAPI from "../../../services/api/agents-token/index.ts";
@@ -24,6 +24,8 @@ import installAgentStorage from "@storage/InstallAgentStorage.ts";
 import { useDispatch } from "react-redux";
 import { requestReloadListAgent } from "@stores/states/common/reducer.ts";
 import uniqBy from "lodash.uniqby";
+import { MonitorContext } from "@providers/Monitor/MonitorContext.tsx";
+import { ContainerData } from "@providers/Monitor/interface.ts";
 
 const AgentProvider: React.FC<
     PropsWithChildren & { tokenAddress?: string }
@@ -55,6 +57,9 @@ const AgentProvider: React.FC<
    const debouncedModelAgents = useDebounce(refInstalledModelAgents.current, 300);
    const debouncedAvailableModelAgents = useDebounce(refAvailableModelAgents.current, 300);
    const debouncedSocialAgents = useDebounce(refInstalledSocialAgents.current, 300);
+
+   const { containers } = useContext(MonitorContext);
+
 
    const [agentStates, setAgentStates] = useState<Record<number, {
       data: IAgentToken;
@@ -131,11 +136,12 @@ const AgentProvider: React.FC<
 
    const isRunning = useMemo(() => {
       if (selectedAgent) {
-         return agentStates[selectedAgent.id]?.isRunning || false;
+         const matchingContainer = containers?.find((container: ContainerData) => compareString(container.agent?.agent_name, selectedAgent?.agent_name));
+         return matchingContainer ? matchingContainer?.state === 'running' || false : agentStates[selectedAgent.id]?.isRunning;
       }
 
       return false;
-   }, [selectedAgent, agentStates]);
+   }, [selectedAgent, agentStates, containers]);
 
    const isInstalled = useMemo(() => {
       if (selectedAgent) {
@@ -579,7 +585,7 @@ const AgentProvider: React.FC<
          }
       } finally {
          setTimeout(() => {
-            if (agent.agent_type === AgentType.CustomUI) {
+            if ([AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(agent.agent_type)) {
                updateAgentState(agent.id, {
                   data: agent,
                   isStarting: false,
@@ -1196,21 +1202,25 @@ const AgentProvider: React.FC<
       }
    };
 
-   const intervalCheckAllAgents = () => {
+    useEffect(() => {
       checkAllInstalledAgentsRunning();
-      
-      if (refInterval.current) {
-         clearInterval(refInterval.current);
-      }
-      
-      refInterval.current = setInterval(() => {
-         throttledCheckAll();
-      }, 30000);
-   };
-
-   useEffect(() => {
-      intervalCheckAllAgents();
    }, []);
+
+   // const intervalCheckAllAgents = () => {
+   //    checkAllInstalledAgentsRunning();
+      
+   //    if (refInterval.current) {
+   //       clearInterval(refInterval.current);
+   //    }
+      
+   //    refInterval.current = setInterval(() => {
+   //       throttledCheckAll();
+   //    }, 30000);
+   // };
+
+   // useEffect(() => {
+   //    intervalCheckAllAgents();
+   // }, []);
 
 
    // Start checking when installed agents list changes
