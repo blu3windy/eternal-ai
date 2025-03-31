@@ -2,7 +2,7 @@ import { Button, Divider, Flex, Image, Text } from "@chakra-ui/react";
 import CustomMarkdown from "@components/CustomMarkdown";
 import { LLM_MODELS } from "@constants/models.ts";
 import useParseLogs from "@hooks/useParseLogs.ts";
-import { AgentType } from "@pages/home/list-agent/constants";
+import { AgentType, AgentTypeName } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { formatCurrency, labelAmountOrNumberAdds } from "@utils/format.ts";
 import { compareString } from "@utils/string.ts";
@@ -130,6 +130,14 @@ const AgentDetail = () => {
          </Flex>
          <Divider color={'#FFFFFF33'} my={'40px'} />
          <Flex gap={"20px"}>
+         <Flex className={s.infoBox}>
+               <Text className={s.infoText}>
+                  Type
+               </Text>
+               <Text className={s.infoValue}>
+               {AgentTypeName[selectedAgent?.agent_type]}
+               </Text>
+            </Flex>
             {
                selectedAgent?.meme?.market_cap && (
                   <Flex className={s.infoBox}>
