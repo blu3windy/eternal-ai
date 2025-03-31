@@ -902,7 +902,7 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 
 									if s.conf.Clanker.IsCreateToken && twitterPost.TokenAddress != "" &&
 										twitterPost.TokenName != "" && twitterPost.TokenSymbol != "" {
-										contentReply = fmt.Sprintf("Hey @%v, here is your decentralized video.\n\nOnchain Video: basescan.org/tx/%v\n\nTicker $%s has been deployed.\n\n Contract address: %s\n\n Trade here: www.clanker.world/clanker/%s",
+										contentReply = fmt.Sprintf("Hey @%v, here is your decentralized video.\n\nOnchain Video: basescan.org/tx/%v\n\nTicker $%s has been deployed.\n\n Contract address: %s\n\n Trade here: https://www.clanker.world/clanker/%s",
 											twitterPost.TwitterUsername, twitterPost.SubmitSolutionTxHash, twitterPost.TokenSymbol, twitterPost.TokenAddress, twitterPost.TokenAddress)
 									}
 
