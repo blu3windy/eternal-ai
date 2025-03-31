@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/sashabaranov/go-openai"
 	"strings"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
@@ -153,7 +154,17 @@ func (s *Service) GenerateTokenInfoFromVideoPrompt(ctx context.Context, sysPromp
 
 						Please return in string in json format including token-name, token-symbol, just only json without explanation  and token name limit with 15 characters
 					`, sysPrompt)
-	aiStr, err := s.openais["Lama"].ChatMessage(promptGenerateToken)
+	message := []openai.ChatCompletionMessage{
+		openai.ChatCompletionMessage{
+			Role:    "system",
+			Content: "You are a helpful assistant",
+		},
+		openai.ChatCompletionMessage{
+			Role:    "user",
+			Content: promptGenerateToken,
+		},
+	}
+	aiStr, err := s.openais["Agent"].CallStreamDirectlyEternalLLMV2(ctx, message, "Llama3.3", s.conf.KnowledgeBaseConfig.DirectServiceUrl, nil)
 	if err != nil {
 		return nil, errs.NewError(err)
 	}

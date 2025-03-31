@@ -398,6 +398,62 @@ func (c OpenAI) CallStreamDirectlyEternalLLM(ctx context.Context, messages, mode
 	return
 }
 
+func (c OpenAI) CallStreamDirectlyEternalLLMV2(ctx context.Context, messages []openai.ChatCompletionMessage, model, baseUrl string, options map[string]interface{}) (string, error) {
+	seed := rand.Int()
+	config := openai.DefaultConfig("")
+	baseUrl = strings.Replace(baseUrl, "/chat/completions", "", 1)
+	config.BaseURL = baseUrl
+	client := openai.NewClientWithConfig(config)
+	llmRequest := openai.ChatCompletionRequest{
+		Model:    model,
+		Stream:   true,
+		Seed:     &seed,
+		Messages: messages,
+	}
+	if value, ok := options["top_p"]; ok {
+		llmRequest.TopP, _ = value.(float32)
+	}
+	if value, ok := options["max_tokens"]; ok {
+		llmRequest.MaxTokens, _ = value.(int)
+	}
+	if value, ok := options["temperature"]; ok {
+		llmRequest.Temperature, _ = value.(float32)
+	}
+	stream, err := client.CreateChatCompletionStream(
+		ctx,
+		llmRequest,
+	)
+	if err != nil {
+		return "", err
+	}
+	defer stream.Close()
+	thinking := false
+	output := ""
+	for {
+		body, err := stream.RecvRaw()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		var res models.ChatCompletionStreamResponse
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return "", fmt.Errorf("error when receive data from ai server: %v", err)
+		}
+		if res.Choices[0].Delta.Content != "" {
+			if strings.Contains(res.Choices[0].Delta.Content, "<think>") {
+				thinking = true
+			} else if strings.Contains(res.Choices[0].Delta.Content, "</think>") {
+				thinking = false
+				continue
+			}
+			if !thinking {
+				output += res.Choices[0].Delta.Content
+			}
+		}
+	}
+	return output, nil
+}
+
 func (c OpenAI) CallStreamOnchainEternalLLM(ctx context.Context, baseUrl string, apiKey string, llmRequest openai.ChatCompletionRequest, outputChan chan *models.ChatCompletionStreamResponse, errChan chan error, doneChan chan bool) {
 	config := openai.DefaultConfig(apiKey)
 	baseUrl = strings.Replace(baseUrl, "/chat/completions", "", 1)
