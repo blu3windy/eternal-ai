@@ -101,7 +101,7 @@
     color: #000;
     border-radius: 100px;
     min-width: 108px;
-    height: 48px;
+    height: 36px;
     font-size: 16px;
     font-weight: 500;
     display: flex;
@@ -109,5 +109,6 @@
     justify-content: center;
     gap: 8px;
     padding: 10px 40px;
+    width: fit-content;
   }
 }
