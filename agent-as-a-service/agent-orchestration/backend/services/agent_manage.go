@@ -26,6 +26,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/jinzhu/gorm"
+	"github.com/sashabaranov/go-openai"
 )
 
 func (s *Service) GetModelDefaultByChainID(chainID uint64) string {
@@ -720,7 +721,21 @@ func (s *Service) GenerateTokenInfoFromSystemPrompt(ctx context.Context, tokenNa
 
 						Please return in string in json format including token-name, token-symbol, token-story, just only json without explanation  and token name limit with 15 characters
 					`, sysPrompt)
-	aiStr, err := s.openais["Lama"].ChatMessage(promptGenerateToken)
+	// aiStr, err := s.openais["Lama"].ChatMessage(promptGenerateToken)
+	// if err != nil {
+	// 	return nil, errs.NewError(err)
+	// }
+	message := []openai.ChatCompletionMessage{
+		openai.ChatCompletionMessage{
+			Role:    "system",
+			Content: "You are a helpful assistant",
+		},
+		openai.ChatCompletionMessage{
+			Role:    "user",
+			Content: promptGenerateToken,
+		},
+	}
+	aiStr, err := s.openais["Agent"].CallStreamDirectlyEternalLLMV2(ctx, message, "Qwen/QwQ-32B", s.conf.KnowledgeBaseConfig.DirectServiceUrl, nil)
 	if err != nil {
 		return nil, errs.NewError(err)
 	}
