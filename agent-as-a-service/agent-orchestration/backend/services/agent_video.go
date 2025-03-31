@@ -3,8 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/sashabaranov/go-openai"
 	"strings"
+
+	"github.com/sashabaranov/go-openai"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
@@ -205,7 +206,7 @@ func (s *Service) GenerateTokenInfoFromVideoPrompt(ctx context.Context, sysPromp
 			Content: promptGenerateToken,
 		},
 	}
-	aiStr, err := s.openais["Agent"].CallStreamDirectlyEternalLLMV2(ctx, message, "Llama3.3", s.conf.KnowledgeBaseConfig.DirectServiceUrl, nil)
+	aiStr, err := s.openais["Agent"].CallStreamDirectlyEternalLLMV2(ctx, message, "Qwen/QwQ-32B", s.conf.KnowledgeBaseConfig.DirectServiceUrl, nil)
 	if err != nil {
 		return nil, errs.NewError(err)
 	}
