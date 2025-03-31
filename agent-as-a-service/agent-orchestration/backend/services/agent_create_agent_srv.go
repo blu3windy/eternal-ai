@@ -170,7 +170,7 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 			if err != nil {
 				return errs.NewError(err)
 			}
-			recentSearch, err := s.twitterWrapAPI.SearchRecentTweet(fmt.Sprintf("@%v", agent.TwitterUsername), "", twitterInfo.AccessToken, 100)
+			recentSearch, err := s.twitterWrapAPI.SearchRecentTweet(fmt.Sprintf("@%v", agent.TwitterUsername), "", twitterInfo.AccessToken, 50)
 			mentionIds := map[string]bool{}
 			for _, v := range tweetMentions.Tweets {
 				mentionIds[v.ID] = true
