@@ -170,7 +170,19 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 			if err != nil {
 				return errs.NewError(err)
 			}
-
+			recentSearch, err := s.twitterWrapAPI.SearchRecentTweet(fmt.Sprintf("@%v", agent.TwitterUsername), "", twitterInfo.AccessToken, 100)
+			mentionIds := map[string]bool{}
+			for _, v := range tweetMentions.Tweets {
+				mentionIds[v.ID] = true
+			}
+			if err == nil {
+				for _, v := range recentSearch.LookUps {
+					if v.Tweet.AuthorID != twitterInfo.TwitterID || !mentionIds[v.Tweet.ID] {
+						tweetMentions.Tweets = append(tweetMentions.Tweets, v.Tweet)
+						mentionIds[v.Tweet.ID] = true
+					}
+				}
+			}
 			sort.Slice(tweetMentions.Tweets, func(i, j int) bool {
 				return tweetMentions.Tweets[i].CreatedAt < tweetMentions.Tweets[j].CreatedAt
 			})
@@ -1015,14 +1027,14 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 							prompt := twitterPost.ExtractContent
 							if twitterPost.Type == models.AgentTwitterPostTypeImage2video {
 								model = "Wan-I2V"
-								if !strings.Contains(twitterPost.Content, "create video:") &&
+								/*if !strings.Contains(twitterPost.Content, "create video:") &&
 									!strings.Contains(twitterPost.Content, "create video :") {
 									videoMagicPrompt, err := s.GetVideoMagicPromptFromImage(ctx, twitterPost.ExtractContent, twitterPost.ExtractMediaContent)
 									if err != nil {
 										videoMagicPrompt = prompt
 									}
 									prompt = videoMagicPrompt
-								}
+								}*/
 								promptByte, _ := json.Marshal(map[string]interface{}{
 									"prompt": prompt,
 									"url":    twitterPost.ExtractMediaContent,
