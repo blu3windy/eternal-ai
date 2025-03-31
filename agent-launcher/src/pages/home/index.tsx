@@ -9,6 +9,7 @@ import AgentsList from "./list-agent";
 import AgentProvider from "./provider/AgentProvider";
 import { AgentContext } from "./provider/AgentContext";
 import s from "./styles.module.scss";
+import MonitorProvider from "@providers/Monitor/MonitorProvider";
 
 type Props = {
    // some props
@@ -53,11 +54,13 @@ const HandleHome = () => {
 const Home = (_props: Props) => {
    return (
       <MainLayout className={s.container}>
-         <AgentProvider>
-            <FundAgentProvider>
-               <HandleHome />
-            </FundAgentProvider>
-         </AgentProvider>
+         <MonitorProvider>
+            <AgentProvider>
+               <FundAgentProvider>
+                  <HandleHome />
+               </FundAgentProvider>
+            </AgentProvider>
+         </MonitorProvider>
       </MainLayout>
    );
 };
