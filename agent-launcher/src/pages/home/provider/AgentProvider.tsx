@@ -633,6 +633,7 @@ const AgentProvider: React.FC<
             updateAgentState(agent.id, {
                data: agent,
                isStopping: false,
+               isRunning: false,
             });
          }, 4000);
          throttledCheckAll();
