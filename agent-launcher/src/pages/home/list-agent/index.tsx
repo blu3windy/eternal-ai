@@ -147,15 +147,17 @@ const AgentsList = () => {
       }
    };
 
-   const getTokens = async (isNew: boolean) => {
+   const getTokens = async (isNew: boolean, isNoLoading?: boolean) => {
       if (refLoading.current) return;
       try {
-         setLoaded(false);
-         if (isNew) {
-            setAgents([]);
+         if (!isNoLoading) {
+            setLoaded(false);
+            if (isNew) {
+               setAgents([]);
+            }
+            refLoading.current = true;
          }
-
-         refLoading.current = true;
+         
          refParams.current = {
             ...refParams.current,
             page: isNew ? 1 : refParams.current.page + 1,
@@ -242,7 +244,7 @@ const AgentsList = () => {
    };
 
    useEffect(() => {
-      throttleGetTokens(true);
+      throttleGetTokens(true, true);
    }, [needReloadList]);
 
    const handleCategorySelect = (categoryOption: CategoryOption) => {

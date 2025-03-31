@@ -130,8 +130,12 @@
     },
     "mac": {
       "target": [
-        "dmg",
-        "zip"
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
       ],
       "category": "public.app-category.utilities",
       "identity": "Eternal AI Limited (9M75XA82CZ)",

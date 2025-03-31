@@ -961,7 +961,10 @@ func (s *Service) GenerateTokenImageBase64Gif(ctx context.Context, tokenSymbol, 
 		Token name: %s
 		Token Description: %s
 	`, tokenSymbol, tokenName, tokenDesc)
-	base64Str, _ := s.dojoAPI.GenerateImage(imagePrompt, s.conf.GenerateGifImageUrl)
+	base64Str, err := s.dojoAPI.GenerateImage(imagePrompt, s.conf.GenerateGifImageUrl)
+	if err != nil {
+		panic(err)
+	}
 	return base64Str
 }
 
