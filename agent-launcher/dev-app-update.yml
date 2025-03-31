@@ -1,0 +1,2 @@
+provider: "generic"
+url: "https://electron-update-server-production.up.railway.app/updates/"

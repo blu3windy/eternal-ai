@@ -322,9 +322,24 @@ const execAsyncStream = (_cmd: string, isZSH = true) => {
    });
 };
 
+const execAsyncDockerDir = async (cmd: string) => {
+   const execAsync = promisify(exec);
+   try {
+      const { stdout, stderr } = await execAsync(cmd, {
+         maxBuffer: MAX_BUFFER,
+         env: customEnv,
+      });
+      return { stdout, stderr };
+   } catch (error) {
+      console.error(`Error executing command: ${cmd}`, error);
+      throw error;
+   }
+};
+
 const command = {
    execAsync,
    execAsyncStream,
+   execAsyncDockerDir,
    sendEvent,
    getBrowser,
    setWindow,
