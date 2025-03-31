@@ -18,6 +18,7 @@
   }
 
   .wDescription {
+    max-width: 68vw;
     &::-webkit-scrollbar {
       width: 0 !important;
     }
