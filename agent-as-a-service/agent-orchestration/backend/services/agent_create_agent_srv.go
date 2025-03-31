@@ -177,7 +177,7 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 			}
 			if err == nil {
 				for _, v := range recentSearch.LookUps {
-					if v.Tweet.AuthorID != twitterInfo.TwitterID || !mentionIds[v.Tweet.ID] {
+					if v.Tweet.AuthorID != twitterInfo.TwitterID && !mentionIds[v.Tweet.ID] {
 						tweetMentions.Tweets = append(tweetMentions.Tweets, v.Tweet)
 						mentionIds[v.Tweet.ID] = true
 					}
