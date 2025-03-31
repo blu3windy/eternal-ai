@@ -96,8 +96,9 @@ cd_docker_build_source_path() {
 
 # Function to check if a Docker image exists
 image_exists() {
-  # Check if the image exists with exact name match
-  if [ "$(docker images -q --filter "reference=^$1$" 2> /dev/null)" ]; then
+  local image_name="$1"
+  # Check if the image exists with exact name match, including tag if specified
+  if [ "$(docker images -q "$image_name" 2> /dev/null)" ]; then
     return 0  # Image exists
   else
     return 1  # Image does not exist
