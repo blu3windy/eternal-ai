@@ -19,12 +19,13 @@ const MonitorProvider: React.FC<
    const [containers, setContainers] = useState<ContainerData[]>([]);
    const [totalMemory, setTotalMemory] = useState({ used: '0MB', total: '0GB' });
    const [totalCPU, setTotalCPU] = useState({ used: '0%', total: '800%' });
-   
+
    const intervalRef = useRef<NodeJS.Timeout>();
    const intervalAgentRef = useRef<NodeJS.Timeout>();
 
    const cPumpAPI = new CAgentTokenAPI();
    const agentsRef = useRef<IAgentToken[]>([]);
+   const cpuCoresRef = useRef<number>(8);
 
    const extractImageName = (repository: string): string => {
       const match = repository.match(/^agent-\w+-(.+)$/);
@@ -51,21 +52,31 @@ const MonitorProvider: React.FC<
       return `${numericValue.toFixed(2)}MB`;
    };
 
+    const onGetCpuData = async () => {
+      try {
+         // Fetch both container and memory data concurrently
+         const [cpuCores] = await Promise.all([
+            globalThis.electronAPI.dockerInfo("cpus").then(data => parseInt(data)),
+         ]);
+         cpuCoresRef.current = cpuCores;
+      } catch (error) {
+      }
+   }
+
    const onGetData = async () => {
       try {
          // Fetch both container and memory data concurrently
-         const [imageData, containerData, memoryData, cpuCores] = await Promise.all([
+         const [imageData, containerData, memoryData] = await Promise.all([
             globalThis.electronAPI.dockerInfo("images").then(data => JSON.parse(data)),
             globalThis.electronAPI.dockerInfo("containers").then(data => JSON.parse(data)),
             globalThis.electronAPI.dockerInfo("memory").then(data => JSON.parse(data)),
-            globalThis.electronAPI.dockerInfo("cpus").then(data => parseInt(data)),
          ]);
 
          // Calculate total memory and CPU usage
          let totalMemUsed = 0;
          let totalMemMax = 0;
          let totalCPUUsed = 0;
-         let totalCPUMax = cpuCores * 100; // Each core can use 100% CPU
+         let totalCPUMax = cpuCoresRef.current * 100; // Each core can use 100% CPU
 
          // Create a map of memory data for quick lookup
          const memoryMap = new Map(
@@ -217,6 +228,10 @@ const MonitorProvider: React.FC<
          }
       };
    }, [needReloadList]);
+
+   useEffect(() => {
+      onGetCpuData();
+   }, []);
    
    const contextValues: any = useMemo(() => {
       return {
