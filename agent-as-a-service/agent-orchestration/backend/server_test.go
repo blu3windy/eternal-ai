@@ -112,7 +112,10 @@ func Test_SRV(t *testing.T) {
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {
-	ts.CreateTokenInfo(context.Background(), 14754)
+	ts.GenerateTokenInfoFromVideoPrompt(context.Background(), "Dancing characters in green frog hoodie in a grid", false)
+	// ts.GenerateTokenInfoWithLLMV2(context.Background(), "Dancing characters in green frog hoodie in a grid", false)
+	// ts.GetGifImageUrlFromTokenInfo("ABC", "ABC", "ABC")
+	// ts.CreateTokenInfo(context.Background(), 14754)
 }
 
 func Test_IPFS(t *testing.T) {
