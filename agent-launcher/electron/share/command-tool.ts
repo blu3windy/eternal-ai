@@ -1,8 +1,8 @@
 import { exec, execSync, spawn } from "child_process";
 import { promisify } from "util";
-import fs from "fs";
 import { app, BrowserWindow, dialog } from "electron";
-import path from "path";
+
+let window: BrowserWindow | null = null;
 
 // Increase the buffer size for large outputs
 const MAX_BUFFER = 1024 * 1024 * 100; // 100MB buffer
@@ -51,6 +51,8 @@ const formatModelName = (cmd: string): string => {
 // Function to format process information
 const formatProcessInfo = (processes: Set<{ process: any, cmd: string }>) => {
    const processGroups: { [key: string]: { count: number, commands: string[] } } = {};
+
+   console.log("processes: ", processes);
    
    // Group processes by their friendly names
    Array.from(processes).forEach(({ cmd }) => {
@@ -112,21 +114,15 @@ const showCloseConfirmation = async (win: BrowserWindow): Promise<boolean> => {
          'What would you like to do?',
          '',
          '• Cancel - Return to the application',
-         '• Minimize - Keep tasks running in background',
          '• Terminate - Stop all tasks and quit'
       ].join('\n'),
-      buttons: ['Cancel', 'Minimize', 'Terminate and Quit'],
+      buttons: ['Cancel', 'Terminate and Quit'],
       defaultId: 0,
       cancelId: 0,
       noLink: true,
    });
 
-   if (response === 1) { // Minimize
-      win.minimize();
-      return false;
-   }
-
-   return response === 2; // true if "Terminate and Quit" was selected
+   return response === 1; // true if "Terminate and Quit" was selected
 };
 
 // Cleanup function for all processes
@@ -194,8 +190,6 @@ const execAsync = async (cmd: string) => {
    }
 };
 
-let dockerDir = '';
-let window: BrowserWindow | null = null;
 
 const getBrowser = () => {
    return window;
@@ -230,93 +224,8 @@ const sendEvent = (params: { type: string, message: string, cmd: string }) => {
    }
 }
 
-const execAsyncDockerDir = async (cmd: string) => {
-   try {
-      // Check and set Docker directory only once
-      if (!dockerDir) {
-         const possiblePaths = [
-            "/opt/homebrew/bin/docker", // Apple Silicon (Homebrew)
-            "/usr/local/bin/docker",    // Intel macOS (Homebrew)
-            "/usr/bin/docker",          // Standard system install
-            "/opt/local/bin/docker",    // MacPorts installation
-            "/Applications/Docker.app/Contents/Resources/bin/docker",
-            "/Library/Application Support/Docker Desktop/bin/docker",
-         ];
-
-         try {
-            const brewPath = execSync("brew --prefix", { encoding: "utf-8" }).trim();
-            console.log("brewPath: ", brewPath)
-            if (brewPath) {
-               possiblePaths.unshift(`${brewPath}/bin/docker`);
-            }
-         } catch (err) {
-            console.log("Homebrew not found:", err);
-         }
-
-         if (fs.existsSync("/var/lib/docker")) {
-            console.log("Docker data directory found at /var/lib/docker");
-         }
-
-         try {
-            const whichDocker = execSync("which docker", { encoding: "utf-8" }).trim();
-            if (whichDocker) {
-               console.log("Found Docker binary at:", whichDocker);
-               dockerDir = path.dirname(whichDocker);
-            }
-         } catch (err) {
-            console.log("`which docker` failed, falling back to predefined paths...");
-         }
-
-         if (!dockerDir) {
-            for (const dockerPath of possiblePaths) {
-               if (fs.existsSync(dockerPath)) {
-                  dockerDir = dockerPath.substring(0, dockerPath.lastIndexOf("/"));
-                  break;
-               }
-            }
-         }
-
-         const scriptsPath = app.isPackaged
-            ? path.join(process.resourcesPath, 'public', 'scripts')
-            : path.join(__dirname, '../public/scripts');
-
-         console.log('Scripts Path:', scriptsPath);
-
-         fs.readdir(scriptsPath, (err, files) => {
-            if (err) {
-               sendEvent({ type: "error", message: err.message, cmd });
-            } else {
-               sendEvent({ type: "output", message: `files: ${JSON.stringify(files)}`, cmd });
-            }
-         });
-
-         sendEvent({ type: "output", message: `Docker Dir: ${dockerDir || "Not Found"}`, cmd });
-      }
-
-      const env = dockerDir ? { ...process.env, PATH: `${dockerDir}:${process.env.PATH}` } : process.env;
-
-      const { stdout, stderr } = await promisify(exec)(cmd, { 
-         env,
-         maxBuffer: MAX_BUFFER
-      });
-
-      if (stderr) {
-         console.log(stderr);
-         sendEvent({ type: "error", message: stderr, cmd });
-      } else {
-         console.log(stdout)
-         sendEvent({ type: "output", message: stdout, cmd });
-      }
-      return { stdout, stderr };
-   } catch (error: any) {
-      sendEvent({ type: "error", message: error.message || "Unknown error", cmd });
-      throw error;
-   }
-};
-
 const execAsyncStream = (_cmd: string, isZSH = true) => {
    return new Promise<void>((resolve, reject) => {
-      let killed = false;
       const cmd = isZSH ? `zsh -l -c '${_cmd}'` : _cmd;
       
       console.log(`Starting process for command: ${_cmd}`);
@@ -334,15 +243,23 @@ const execAsyncStream = (_cmd: string, isZSH = true) => {
       });
 
       // Track this process
-      runningProcesses.add({ process: childProcess, cmd: _cmd });
+      // Create the process object once and store it
+      const processObj = { process: childProcess, cmd: _cmd };
+      runningProcesses.add(processObj);
       console.log(`Currently running processes: ${runningProcesses.size}`);
 
       // Log process ID for debugging
       console.log(`Process started with PID: ${childProcess.pid}`);
 
+      // Cleanup function to ensure consistent process removal
+      const cleanup = () => {
+         runningProcesses.delete(processObj);
+         console.log(`Process cleaned up - PID: ${childProcess.pid}`);
+      };
+
       // Handle process errors
       childProcess.on('error', (error) => {
-         runningProcesses.delete({ process: childProcess, cmd: _cmd });
+         cleanup();
          console.error('Process error:', error);
          sendEvent({ 
             type: "error", 
@@ -368,16 +285,10 @@ const execAsyncStream = (_cmd: string, isZSH = true) => {
 
       // Handle process exit
       childProcess.on("exit", (code, signal) => {
+         cleanup();
          console.log(`Process exiting - PID: ${childProcess.pid}, Code: ${code}, Signal: ${signal}`);
-         runningProcesses.delete({ process: childProcess, cmd: _cmd });
          console.log(`Remaining running processes: ${runningProcesses.size}`);
          
-         if (killed) {
-            sendEvent({ type: "error", message: "Process was killed", cmd });
-            reject(new Error("Process was killed"));
-            return;
-         }
-
          if (code === 0) {
             sendEvent({ type: "done", message: "Process completed successfully", cmd });
             resolve();
@@ -390,66 +301,33 @@ const execAsyncStream = (_cmd: string, isZSH = true) => {
 
       // Handle process close
       childProcess.on("close", (code, signal) => {
-         runningProcesses.delete({ process: childProcess, cmd: _cmd });
+         cleanup();
          
-         if (code !== 0 && !killed) {
+         if (code !== 0) {
             const errorMessage = `Process closed with code ${code}${signal ? ` (signal: ${signal})` : ''}`;
             sendEvent({ type: "error", message: errorMessage, cmd });
             reject(new Error(errorMessage));
          }
       });
 
+      // Handle process signals
+      const handleSignal = (signal: string) => {
+         cleanup();
+         childProcess.kill();
+      };
+
       // Set up cleanup on parent process exit
-      childProcess.on('SIGTERM', () => {
-         killed = true;
-         childProcess.kill();
-         runningProcesses.delete({ process: childProcess, cmd: _cmd });
-      });
-
-      childProcess.on('SIGINT', () => {
-         killed = true;
-         childProcess.kill();
-         runningProcesses.delete({ process: childProcess, cmd: _cmd });
-      });
+      childProcess.on('SIGTERM', () => handleSignal('SIGTERM'));
+      childProcess.on('SIGINT', () => handleSignal('SIGINT'));
    });
-};
-
-const killProcessUsingPort = async (port: number) => {
-   try {
-      // Execute the command to find processes using the specified port
-      const lsofOutput = await execAsync(`lsof -i :${port}`);
-
-      // Parse the output to find the PID
-      const lines = lsofOutput.split("\n");
-      for (const line of lines) {
-         const parts = line.trim().split(/\s+/); // Split by whitespace
-         if (parts.length > 1 && parts[0] !== "COMMAND") {
-            // Skip the header line
-            const pid = parts[1]; // Assuming the PID is in the second column
-            console.log(`Killing process with PID: ${pid}`);
-
-            try {
-               await execAsync(`kill ${pid}`);
-               console.log(`Process ${pid} killed successfully.`);
-            } catch (error: any) {
-               console.error(`Failed to kill process ${pid}: ${error.message}`);
-            }
-            // Kill the process
-         }
-      }
-   } catch (error: any) {
-      console.error(`Error: ${error.message}`);
-   }
 };
 
 const command = {
    execAsync,
    execAsyncStream,
-   execAsyncDockerDir,
    sendEvent,
    getBrowser,
    setWindow,
-   killProcessUsingPort
 }
 
 export default command;
