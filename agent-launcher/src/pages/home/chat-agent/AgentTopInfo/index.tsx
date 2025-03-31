@@ -53,6 +53,7 @@ const AgentTopInfo = () => {
       unInstallAgent,
       isUnInstalling,
       installAgent,
+      installedModelAgents,
    } = useContext(AgentContext);
 
    const { isOpen, onOpen, onClose } = useDisclosure();
@@ -160,18 +161,24 @@ const AgentTopInfo = () => {
          window.open(`https://x.com/${selectedAgent?.tmp_twitter_info?.twitter_username}`);
    };
 
+   const showSelectModel = useMemo(() => {
+      return isCanChat && installedModelAgents && installedModelAgents.length > 0 && [AgentType.Infra, AgentType.CustomPrompt].includes(
+         selectedAgent?.agent_type as AgentType
+      );
+   }, [isCanChat, installedModelAgents, selectedAgent]);
+
    return (
       <>
          <Flex className={s.container} position={'relative'}>
-            <Flex position={'absolute'} left={'16px'}>
+            {/* <Flex position={'absolute'} left={'16px'}>
                {isCanChat &&
                   [AgentType.Infra, AgentType.CustomPrompt].includes(
                      selectedAgent?.agent_type as AgentType
                   ) && <SelectModel showDescription={false} />}
-            </Flex>
+            </Flex> */}
             <Flex
                gap={'6px'}
-               justifyContent={'space-between'}
+               justifyContent={showSelectModel ? 'space-between' : 'center'}
                alignItems={'center'}
                className={cx(
                   s.contentContainer,
@@ -186,6 +193,11 @@ const AgentTopInfo = () => {
                   ) && (
                      <ProcessingTasks />
                   )} */}
+               {
+                  showSelectModel && (
+                     <SelectModel showDescription={false} />
+                  )
+               }
 
                <Flex gap={'6px'} justifyContent={'space-between'} alignItems={'center'}>
                   <Flex gap={'6px'} alignItems={'center'} className={s.content}>
