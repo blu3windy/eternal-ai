@@ -1,15 +1,17 @@
-body,
-html {
-  width: 100dvw;
-  height: 100dvh;
-  background-color: #e9e9ee !important;
-  #root {
-    height: 100%;
-  }
+// body,
+// html {
+//    width: 100dvw;
+//    height: 100dvh;
+//    background-color: #e9e9ee !important;
+//    #root {
+//       height: 100%;
+//    }
 
-  --font-inter: 'Inter'
-}
+//    --font-inter: "Inter";
+// }
 
-body {
-  font-family: 'Inter', sans-serif !important;
-}
+// body {
+//    font-family: "Inter", sans-serif !important;
+// }
+
+@import "./markdown.css";

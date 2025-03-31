@@ -138,8 +138,8 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                         </>
                      )}
                   </Text>
-                  <Text className={s.infoText}>{formatCurrency(token.prompt_calls, 0, 0)}{' '}<Text as={'span'} color={"#657786"}>prompt{labelAmountOrNumberAdds(token.prompt_calls)}</Text></Text>
-                  <Text className={s.infoText}>{formatCurrency(token.likes, 0, 0)}{' '}<Text as={'span'} color={"#657786"}>like{labelAmountOrNumberAdds(token.prompt_calls)}</Text></Text>
+                  <Text className={s.infoText}>{formatCurrency(token.installed_count, 0, 0)}{' '}<Text as={'span'} color={"#657786"}>installed</Text></Text>
+                  <Text className={s.infoText}>{formatCurrency(token.likes, 0, 0)}{' '}<Text as={'span'} color={"#657786"}>like{labelAmountOrNumberAdds(token.likes)}</Text></Text>
                </Flex>
             </Flex>
          </Grid>

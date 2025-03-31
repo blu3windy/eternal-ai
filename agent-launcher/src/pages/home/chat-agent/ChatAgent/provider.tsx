@@ -298,10 +298,10 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          filteredMessages = filteredMessages.slice(-4);
 
          const historyMessages = [
-            {
-               role: "system",
-               content: selectedAgent?.personality || "",
-            },
+            // {
+            //    role: "system",
+            //    content: selectedAgent?.personality || "",
+            // },
             ...filteredMessages.reduce((acc: any[], item, index) => {
                if (index > 0 && filteredMessages[index - 1].type !== "ai" && item.type !== "ai") {
                   acc.push({
@@ -519,13 +519,17 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   const updatedMessage = {
                      ...prev[matchedMessageIndex],
                      ...data,
-                     updatedAt: new Date().getTime(),
                      queryMessageState: data?.queryMessageState || prev[matchedMessageIndex]?.queryMessageState,
                      tx_hash: data?.onchain_data?.propose_tx || prev[matchedMessageIndex]?.tx_hash,
                   };
                   prev[matchedMessageIndex] = updatedMessage;
 
                   chatAgentDatabase.updateChatItem(updatedMessage as PersistedMessageType);
+               } else if (data.status === "received" && data.msg && data.msg !== prev[matchedMessageIndex].msg) {
+                  prev[matchedMessageIndex] = {
+                     ...prev[matchedMessageIndex],
+                     ...data,
+                  };
                }
 
                const replyToMessageId = prev[matchedMessageIndex].replyTo;
@@ -538,15 +542,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   };
 
                   prev[userMessageIndex] = updatedUserMessage;
-
-                  chatAgentDatabase.updateChatItem(updatedUserMessage as PersistedMessageType);
                }
 
+               chatAgentDatabase.updateChatItem(prev[matchedMessageIndex] as PersistedMessageType);
                return [...prev];
             }
             return prev;
          });
       } catch (err) {
+         //
       } finally {
          setTimeout(() => {
             scrollRef.current?.scrollIntoView({

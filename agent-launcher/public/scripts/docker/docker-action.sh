@@ -137,12 +137,10 @@ run_container_custom_prompt() {
 
 run_container_open_ai() {
     cd_docker_build_source_path
-    log_message "Building Docker image ${IMAGE_NAME}..."
     docker_build
     log_message "Docker image ${IMAGE_NAME} built successfully."
-    log_message "Running Docker container ${CONTAINER_NAME} with port ${DEFAULT_PORT}..."
     docker run -d -p $DEFAULT_PORT:$DEFAULT_PORT --network network-agent-external --name "$CONTAINER_NAME" "$IMAGE_NAME"
-    log_message "Docker container ${CONTAINER_NAME} with port ${DEFAULT_PORT} is running."
+    log_message "Running Docker container ${CONTAINER_NAME} with port ${DEFAULT_PORT}..."
 }
 
 run_container_custom_ui() {

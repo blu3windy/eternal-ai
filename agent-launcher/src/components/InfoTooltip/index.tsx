@@ -50,8 +50,8 @@ const InfoTooltip = (props: InfoTooltipProps) => {
       if (children && showIcon) {
          return (
             <Flex gap={1} alignItems={"center"}>
-               {children}
                <IcHelp color={iconColor}/>
+               {children}
             </Flex>
          );
       }
@@ -85,8 +85,8 @@ const InfoTooltip = (props: InfoTooltipProps) => {
                }}
                onMouseEnter={onOpen}
                cursor={"pointer"}
-               width={iconSize}
-               height={iconSize}
+               width={children && showIcon ? 'auto' : iconSize}
+               height={children && showIcon ? 'auto' : iconSize}
             >
                {renderChild()}
             </Box>

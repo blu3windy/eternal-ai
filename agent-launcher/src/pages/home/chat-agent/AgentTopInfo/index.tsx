@@ -53,6 +53,7 @@ const AgentTopInfo = () => {
       unInstallAgent,
       isUnInstalling,
       installAgent,
+      installedModelAgents,
    } = useContext(AgentContext);
 
    const { isOpen, onOpen, onClose } = useDisclosure();
@@ -60,6 +61,9 @@ const AgentTopInfo = () => {
 
    const [isLiked, setIsLiked] = useState(false);
    const [deleteAgent, setDeleteAgent] = useState<IAgentToken | undefined>();
+
+   const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
+   const [isClickUpdateCode, setIsClickUpdate] = useState(false);
 
    const cAgentTokenAPI = new CAgentTokenAPI();
 
@@ -70,12 +74,11 @@ const AgentTopInfo = () => {
    }, [requireInstall, isRunning]);
 
    const color = useMemo(() => {
+      if (hasNewVersionCode && isInstalled) {
+         return 'red';
+      }
       return showSetup || (!isCanChat && !showBackupPrvKey) ? 'white' : 'black';
-   }, [isCanChat, showBackupPrvKey, showSetup]);
-
-
-   const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
-   const [isClickUpdateCode, setIsClickUpdate] = useState(false);
+   }, [isCanChat, showBackupPrvKey, showSetup, hasNewVersionCode, isInstalled]);
 
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
@@ -158,18 +161,24 @@ const AgentTopInfo = () => {
          window.open(`https://x.com/${selectedAgent?.tmp_twitter_info?.twitter_username}`);
    };
 
+   const showSelectModel = useMemo(() => {
+      return isCanChat && installedModelAgents && installedModelAgents.length > 0 && [AgentType.Infra, AgentType.CustomPrompt].includes(
+         selectedAgent?.agent_type as AgentType
+      );
+   }, [isCanChat, installedModelAgents, selectedAgent]);
+
    return (
       <>
          <Flex className={s.container} position={'relative'}>
-            <Flex position={'absolute'} left={'16px'}>
+            {/* <Flex position={'absolute'} left={'16px'}>
                {isCanChat &&
                   [AgentType.Infra, AgentType.CustomPrompt].includes(
                      selectedAgent?.agent_type as AgentType
                   ) && <SelectModel showDescription={false} />}
-            </Flex>
+            </Flex> */}
             <Flex
                gap={'6px'}
-               justifyContent={'space-between'}
+               justifyContent={showSelectModel ? 'space-between' : 'center'}
                alignItems={'center'}
                className={cx(
                   s.contentContainer,
@@ -184,6 +193,11 @@ const AgentTopInfo = () => {
                   ) && (
                      <ProcessingTasks />
                   )} */}
+               {
+                  showSelectModel && (
+                     <SelectModel showDescription={false} />
+                  )
+               }
 
                <Flex gap={'6px'} justifyContent={'space-between'} alignItems={'center'}>
                   <Flex gap={'6px'} alignItems={'center'} className={s.content}>
@@ -365,11 +379,16 @@ const AgentTopInfo = () => {
                         }
                         placement="top"
                         iconColor={color}
-                     />
-                     <Text className={s.text}>{selectedAgent?.agent_name}</Text>
-                     <Text className={s.text} opacity={0.7}>
-                        ${selectedAgent?.token_symbol}
-                     </Text>
+                        showIcon
+                     >
+                        <Flex ml={'4px'} cursor={'pointer'} gap={'6px'} alignItems={'center'}>
+                           <Text className={s.text}>{selectedAgent?.agent_name}</Text>
+                           <Text className={s.text} opacity={0.7}>
+                              ${selectedAgent?.token_symbol}
+                           </Text>
+                        </Flex>
+                     </InfoTooltip>
+                     
                      <Divider
                         orientation={'vertical'}
                         borderColor={'#0000001F'}

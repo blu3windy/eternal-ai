@@ -80,6 +80,7 @@ export interface IAgentToken {
   is_custom_ui?: boolean;
   prompt_calls: number;
   likes: number;
+  installed_count: number;
   ipfsHash?: string;
   sizeGb?: number;
   docker_port: string;

@@ -104,7 +104,7 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
       }
 
       return (
-         <div className={cs(s.markdown, "markdown")}>
+         <div className={cs(s.markdown, "markdown-body")}>
             <CustomMarkdown content={message?.msg} isLight={false} removeThink={initialMessage} />
          </div>
       );
