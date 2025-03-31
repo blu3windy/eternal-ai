@@ -57,15 +57,8 @@ const AgentDetail = () => {
       }
    }, [selectedAgent]);
 
-   const modelInfo = useMemo(() => {
-      const modelAgent = availableModelAgents?.find(agent => agent.id === selectedAgent?.id);
+   const requirements = selectedAgent?.required_info;
 
-      if (modelAgent) {
-         return LLM_MODELS.find(model => compareString(model.hash, modelAgent.ipfsHash));
-      }
-
-      return undefined;
-   }, [selectedAgent, availableModelAgents]);
 
    const handleInstall = () => {
       if (isInstalled) return;
@@ -130,14 +123,41 @@ const AgentDetail = () => {
          </Flex>
          <Divider color={'#FFFFFF33'} my={'40px'} />
          <Flex gap={"20px"}>
-         <Flex className={s.infoBox}>
+            <Flex className={s.infoBox}>
                <Text className={s.infoText}>
                   Type
                </Text>
                <Text className={s.infoValue}>
-               {AgentTypeName[selectedAgent?.agent_type]}
+                  {AgentTypeName[selectedAgent?.agent_type]}
                </Text>
             </Flex>
+
+            {
+               requirements?.disk && (
+                  <Flex className={s.infoBox}>
+                     <Text className={s.infoText}>
+                     Storage
+                     </Text>
+                     <Text className={s.infoValue}>
+                        {requirements?.disk} GB
+                     </Text>
+                  </Flex>
+               )
+            }
+
+            {
+               requirements?.ram && (
+                  <Flex className={s.infoBox}>
+                     <Text className={s.infoText}>
+                     RAM
+                     </Text>
+                     <Text className={s.infoValue}>
+                        {requirements?.ram} GB
+                     </Text>
+                  </Flex>
+               )
+            }
+
             {
                selectedAgent?.meme?.market_cap && (
                   <Flex className={s.infoBox}>
@@ -190,7 +210,7 @@ const AgentDetail = () => {
                </div>
             )}
          </Flex>
-      </Flex>
+      </Flex >
    )
 }
 
