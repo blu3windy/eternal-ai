@@ -61,6 +61,9 @@ const AgentTopInfo = () => {
    const [isLiked, setIsLiked] = useState(false);
    const [deleteAgent, setDeleteAgent] = useState<IAgentToken | undefined>();
 
+   const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
+   const [isClickUpdateCode, setIsClickUpdate] = useState(false);
+
    const cAgentTokenAPI = new CAgentTokenAPI();
 
    const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
@@ -70,12 +73,11 @@ const AgentTopInfo = () => {
    }, [requireInstall, isRunning]);
 
    const color = useMemo(() => {
+      if (hasNewVersionCode && isInstalled) {
+         return 'red';
+      }
       return showSetup || (!isCanChat && !showBackupPrvKey) ? 'white' : 'black';
-   }, [isCanChat, showBackupPrvKey, showSetup]);
-
-
-   const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
-   const [isClickUpdateCode, setIsClickUpdate] = useState(false);
+   }, [isCanChat, showBackupPrvKey, showSetup, hasNewVersionCode, isInstalled]);
 
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
@@ -365,11 +367,16 @@ const AgentTopInfo = () => {
                         }
                         placement="top"
                         iconColor={color}
-                     />
-                     <Text className={s.text}>{selectedAgent?.agent_name}</Text>
-                     <Text className={s.text} opacity={0.7}>
-                        ${selectedAgent?.token_symbol}
-                     </Text>
+                        showIcon
+                     >
+                        <Flex ml={'4px'} cursor={'pointer'} gap={'6px'} alignItems={'center'}>
+                           <Text className={s.text}>{selectedAgent?.agent_name}</Text>
+                           <Text className={s.text} opacity={0.7}>
+                              ${selectedAgent?.token_symbol}
+                           </Text>
+                        </Flex>
+                     </InfoTooltip>
+                     
                      <Divider
                         orientation={'vertical'}
                         borderColor={'#0000001F'}

@@ -157,9 +157,22 @@ const AgentMonitor: React.FC = () => {
                      <Flex gap="12px">
                         <Image src="icons/cpu.svg" alt="CPU" boxSize="32px" />
                         <Box gap="6px">
-                           <Text fontSize="18px" fontWeight="600" color="white">CPU usage</Text>
+                           <Flex gap={'6px'} alignItems={'center'}>
+                              <Text fontSize="18px" fontWeight="600" color="white">CPU usage</Text>
+                              <Tooltip 
+                                 label="% of available CPU currently in use by agents."
+                                 hasArrow
+                                 placement="top"
+                                 bg="gray.700"
+                                 color="white"
+                              >
+                                 <Image cursor={'pointer'} w={'18px'} src="icons/ic-tooltip-white.svg" alt="tooltip" />
+                              </Tooltip>
+                           </Flex>
+                           
                            <Text fontSize="15px" fontWeight="500" color={"lightgray"}>
                               <Text as={'span'} color="#4ADE80">{totalCPU.used}</Text> / {totalCPU.total}
+                              <Text as={'span'} fontSize="12px"> ({(Number(totalCPU.total.replaceAll('%', ''))/100).toFixed(0)} CPUs available)</Text>
                            </Text>
                         </Box>
                      </Flex>
@@ -169,7 +182,18 @@ const AgentMonitor: React.FC = () => {
                      <Flex gap="12px">
                         <Image src="icons/ram.svg" alt="Memory" boxSize="32px" />
                         <Box gap="6px">
-                           <Text fontSize="18px" fontWeight="600" color="white">Memory usage</Text>
+                           <Flex gap={'6px'} alignItems={'center'}>
+                              <Text fontSize="18px" fontWeight="600" color="white">Memory usage</Text>
+                              <Tooltip 
+                                 label="Total amount of memory consumed by running agent processes."
+                                 hasArrow
+                                 placement="top"
+                                 bg="gray.700"
+                                 color="white"
+                              >
+                                 <Image cursor={'pointer'} w={'18px'} src="icons/ic-tooltip-white.svg" alt="tooltip" />
+                              </Tooltip>
+                           </Flex>
                            <Text fontSize="15px" fontWeight="500" color={"lightgray"}>
                               <Text as={'span'} color="#4ADE80">{totalMemory.used}</Text> / {totalMemory.total}
                            </Text>

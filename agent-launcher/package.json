@@ -1,12 +1,13 @@
 {
   "name": "agent-launcher",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.0-2025033106514",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "update-version": "node update-version.js",
     "postinstall": "electron-builder install-app-deps",
-    "build": "tsc && vite build && electron-builder --mac --universal -- -p always",
+    "build": "node build-mac.cjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "sign": "electron-builder --mac --universal",

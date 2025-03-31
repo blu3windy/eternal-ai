@@ -224,86 +224,166 @@ app.post('/:agentName/prompt', async (req, res) => {
          return;
       }
 
-      const proxyRequest = http.request(options, (proxyResponse) => {
-         let responseData = '';
+      if (payload?.stream === true) {
+         const proxyRequest = http.request(options, (proxyResponse) => {
+            // Forward status code and headers
+            res.writeHead(proxyResponse.statusCode, proxyResponse.headers);
 
-         proxyResponse.on('data', (chunk) => {
-            responseData += chunk;
-         });
+            // Collect streaming data chunks, write to log and pipe to client
+            proxyResponse.on('data', (chunk) => {
+               res.write(chunk);
 
-         proxyResponse.on('end', () => {
-            let result;
-            try {
-               result = tryToParseStringJson(responseData);
-            } catch (e) {
-               console.error('Error parsing response:', e);
-               result = responseData;
-            }
+               if (chunk.toString().includes('[DONE]')) {
+                  res.end();
+                  if (payload?.id) {
+                     writeRequestEndLogger(payload.id, 'Streaming request completed', proxyResponse.statusCode, agentName);
+                  }
+               }
+            });
 
-            res.status(proxyResponse.statusCode).json(result);
-            writeRequestEndLogger(payload?.id || '', result, proxyResponse.statusCode, agentName);
-         });
-      });
-
-      // Set timeout handler
-      proxyRequest.setTimeout(timeout, () => {
-         console.log('Request timed out!');
-         proxyRequest.destroy();
-      });
-
-      proxyRequest.on('error', (err) => {
-         console.error('Proxy request error:', err);
-         res.status(500).json({
-            status: 500,
-            error: 'Internal Server Error',
-         });
-         writeRequestEndLogger(payload?.id || '', 'Internal Server Error', 500, agentName);
-      });
-
-      // Write the request body to the proxy request
-      proxyRequest.write(payloadString);
-      proxyRequest.end();
-   } else {
-      const proxyRequest = http.request(options, (proxyResponse) => {
-         let responseData = '';
-
-         proxyResponse.on('data', (chunk) => {
-            responseData += chunk;
-         });
-
-         proxyResponse.on('end', () => {
-            let result;
-            try {
-               result = tryToParseStringJson(responseData);
-            } catch (e) {
-               console.error('Error parsing response:', e);
-               result = responseData;
-            }
-
-            res.status(proxyResponse.statusCode).json({
-               status: 200,
-               data: result,
+            proxyResponse.on('end', () => {
+               res.end();
+               if (payload?.id) {
+                  writeRequestEndLogger(payload.id, 'Streaming request completed', proxyResponse.statusCode, agentName);
+               }
             });
          });
-      });
 
-      // Set timeout handler
-      proxyRequest.setTimeout(timeout, () => {
-         console.log('Request timed out!');
-         proxyRequest.destroy();
-      });
-
-      proxyRequest.on('error', (err) => {
-         console.error('Proxy request error:', err);
-         res.status(500).json({
-            status: 500,
-            error: 'Internal Server Error',
+         proxyRequest.on('error', (err) => {
+            console.error('Streaming proxy request error:', err);
+            res.status(500).json({
+               error: 'Streaming proxy request failed',
+            });
+            if (payload?.id) {
+               writeRequestEndLogger(payload.id, 'Streaming request failed', 500, agentName);
+            }
          });
-      });
 
-      // Write the request body to the proxy request
-      proxyRequest.write(payloadString);
-      proxyRequest.end();
+         // Set timeout handler
+         proxyRequest.setTimeout(timeout, () => {
+            console.log('Streaming request timed out!');
+            proxyRequest.destroy();
+         });
+
+         // Write payload and end request
+         proxyRequest.write(payloadString);
+         proxyRequest.end();
+         return;
+      } else {
+         const proxyRequest = http.request(options, (proxyResponse) => {
+            let responseData = '';
+
+            proxyResponse.on('data', (chunk) => {
+               responseData += chunk;
+            });
+
+            proxyResponse.on('end', () => {
+               let result;
+               try {
+                  result = tryToParseStringJson(responseData);
+               } catch (e) {
+                  console.error('Error parsing response:', e);
+                  result = responseData;
+               }
+
+               res.status(proxyResponse.statusCode).json(result);
+               writeRequestEndLogger(payload?.id || '', result, proxyResponse.statusCode, agentName);
+            });
+         });
+
+         // Set timeout handler
+         proxyRequest.setTimeout(timeout, () => {
+            console.log('Request timed out!');
+            proxyRequest.destroy();
+         });
+
+         proxyRequest.on('error', (err) => {
+            console.error('Proxy request error:', err);
+            res.status(500).json({
+               status: 500,
+               error: 'Internal Server Error',
+            });
+            writeRequestEndLogger(payload?.id || '', 'Internal Server Error', 500, agentName);
+         });
+
+         // Write the request body to the proxy request
+         proxyRequest.write(payloadString);
+         proxyRequest.end();
+         return;
+      }
+   } else {
+      // Handle streaming requests
+      if (payload?.stream === true) {
+         const proxyRequest = http.request(options, (proxyResponse) => {
+            // Forward status code and headers
+            res.writeHead(proxyResponse.statusCode, proxyResponse.headers);
+
+            // Pipe the response directly to client
+            proxyResponse.pipe(res);
+
+            proxyResponse.on('end', () => {});
+         });
+
+         proxyRequest.on('error', (err) => {
+            console.error('Streaming proxy request error:', err);
+            res.status(500).json({
+               error: 'Streaming proxy request failed',
+            });
+         });
+
+         // Set timeout handler
+         proxyRequest.setTimeout(timeout, () => {
+            console.log('Streaming request timed out!');
+            proxyRequest.destroy();
+         });
+
+         // Write payload and end request
+         proxyRequest.write(payloadString);
+         proxyRequest.end();
+         return;
+      } else {
+         const proxyRequest = http.request(options, (proxyResponse) => {
+            let responseData = '';
+
+            proxyResponse.on('data', (chunk) => {
+               responseData += chunk;
+            });
+
+            proxyResponse.on('end', () => {
+               let result;
+               try {
+                  result = tryToParseStringJson(responseData);
+               } catch (e) {
+                  console.error('Error parsing response:', e);
+                  result = responseData;
+               }
+
+               res.status(proxyResponse.statusCode).json({
+                  status: 200,
+                  data: result,
+               });
+            });
+         });
+
+         // Set timeout handler
+         proxyRequest.setTimeout(timeout, () => {
+            console.log('Request timed out!');
+            proxyRequest.destroy();
+         });
+
+         proxyRequest.on('error', (err) => {
+            console.error('Proxy request error:', err);
+            res.status(500).json({
+               status: 500,
+               error: 'Internal Server Error',
+            });
+         });
+
+         // Write the request body to the proxy request
+         proxyRequest.write(payloadString);
+         proxyRequest.end();
+         return;
+      }
    }
 });
 
