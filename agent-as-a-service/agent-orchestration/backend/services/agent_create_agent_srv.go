@@ -831,6 +831,7 @@ func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 					return errs.NewError(err)
 				}
 				for _, twitterPost := range twitterPosts {
+					var err error
 					if s.conf.Clanker.IsCreateToken {
 						err = s.CreateClankerTokenForVideoByPostID(ctx, twitterPost.ID)
 						if err != nil {
@@ -838,10 +839,13 @@ func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 						}
 					}
 
-					err = s.AgentTwitterPostGenerateVideoByUserTweetId(ctx, twitterPost.ID)
-					if err != nil {
-						retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
+					if err == nil {
+						err = s.AgentTwitterPostGenerateVideoByUserTweetId(ctx, twitterPost.ID)
+						if err != nil {
+							retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
+						}
 					}
+
 				}
 			}
 			return retErr

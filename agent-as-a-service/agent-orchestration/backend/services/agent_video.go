@@ -162,6 +162,8 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 								if err != nil {
 									return errs.NewError(err)
 								}
+							} else {
+								return errs.NewError(errs.ErrBadRequest, "Token name or symbol is empty")
 							}
 						}
 					}
