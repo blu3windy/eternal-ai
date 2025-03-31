@@ -219,7 +219,9 @@ func (s *Service) GetAddressPrk(address string) string {
 	}
 	return prkHex
 }
-
+func (s *Service) GetTwitterWrapAPI() *twitter.Client {
+	return s.twitterWrapAPI
+}
 func (s *Service) JobRunCheck(ctx context.Context, jobId string, jobFunc func() error) error {
 	s.jobMutex.Lock()
 	isRun := s.jobRunMap[jobId]
