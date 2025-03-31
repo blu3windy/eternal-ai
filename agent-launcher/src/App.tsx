@@ -1,3 +1,5 @@
+import "./styles/global.scss";
+
 import { persistor, store } from "@stores/index.ts";
 import { Navigate, Route, HashRouter as Router, Routes } from "react-router-dom";
 import ROUTERS from "./constants/route-path";
