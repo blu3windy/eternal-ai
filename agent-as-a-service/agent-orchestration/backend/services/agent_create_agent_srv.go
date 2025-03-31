@@ -170,7 +170,12 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 			if err != nil {
 				return errs.NewError(err)
 			}
-
+			recentSearch, err := s.twitterWrapAPI.SearchRecentTweet(fmt.Sprintf("@%v", agent.TwitterUsername), "", twitterInfo.AccessToken, 100)
+			if err == nil {
+				for _, v := range recentSearch.LookUps {
+					tweetMentions.Tweets = append(tweetMentions.Tweets, v.Tweet)
+				}
+			}
 			sort.Slice(tweetMentions.Tweets, func(i, j int) bool {
 				return tweetMentions.Tweets[i].CreatedAt < tweetMentions.Tweets[j].CreatedAt
 			})
