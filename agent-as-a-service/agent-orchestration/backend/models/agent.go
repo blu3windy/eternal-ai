@@ -194,6 +194,7 @@ type AgentInfo struct {
 	SocialInfo           string `gorm:"type:longtext"`
 	InferenceCalls       int64
 	PromptCalls          int64
+	InstalledCount       int64 `gorm:"default:0"`
 	ExternalChartUrl     string
 	MissionTopics        string `gorm:"type:longtext"`
 	GraphData            string `gorm:"type:longtext"`
