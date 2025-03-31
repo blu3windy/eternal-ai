@@ -379,13 +379,13 @@ export const CATEGORIES = [
       gradient: 'linear-gradient(270deg, #EF3B2F 0%, #89221B 100%)',
       icon: 'icons/ic-category-model.svg'
    },
-   {
-      id: CategoryOption.Infra,
-      name: 'Infra',
-      description: 'Agents that offer APIs or services to build and manage other agents.',
-      gradient: 'linear-gradient(270deg, #3FBF5A 0%, #1D592A 100%)',
-      icon: 'icons/ic-category-infra.svg'
-   }
+   // {
+   //    id: CategoryOption.Infra,
+   //    name: 'Infra',
+   //    description: 'Agents that offer APIs or services to build and manage other agents.',
+   //    gradient: 'linear-gradient(270deg, #3FBF5A 0%, #1D592A 100%)',
+   //    icon: 'icons/ic-category-infra.svg'
+   // }
 ];
 
 
