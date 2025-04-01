@@ -14,7 +14,7 @@ interface IProps {
 }
 
 const ChatList = ({ onRetryErrorMessage, isSending = false }: IProps) => {
-   const { messages, isLoadingMessages, scrollableRef, loading, scrollRef } = useChatAgentProvider();
+   const { messages, isLoadingMessages, scrollableRef, loading, scrollRef, updateMessage } = useChatAgentProvider();
 
    const messageLengthPrevious = usePrevious(messages?.length);
 
@@ -37,7 +37,7 @@ const ChatList = ({ onRetryErrorMessage, isSending = false }: IProps) => {
 
    useLayoutEffect(() => {
       if (!messageLengthPrevious && messageLengthPrevious !== messages?.length) {
-         scrollRef.current?.scrollIntoView({ behavior: "auto" });
+         scrollRef?.current?.scrollIntoView && scrollRef?.current?.scrollIntoView({ behavior: "auto" });
       }
    }, [messageLengthPrevious, messages?.length]);
 
@@ -58,13 +58,14 @@ const ChatList = ({ onRetryErrorMessage, isSending = false }: IProps) => {
                if (index === 0) {
                   return (
                      <Box key={message.id} ref={topMostRef}>
-                        <ChatMessage message={message} isLast={isLast} onRetryErrorMessage={onRetryErrorMessageOverride} isSending={isSending} />
+                        <ChatMessage updateMessage={updateMessage} message={message} isLast={isLast} onRetryErrorMessage={onRetryErrorMessageOverride} isSending={isSending} />
                      </Box>
                   );
                }
 
                return (
                   <ChatMessage
+                     updateMessage={updateMessage}
                      key={message.id}
                      message={message}
                      isLast={isLast}

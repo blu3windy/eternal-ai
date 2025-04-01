@@ -22,7 +22,7 @@ import { AgentContext } from "./AgentContext.tsx";
 import { useDebounce } from '@hooks/useDebounce';
 import installAgentStorage from "@storage/InstallAgentStorage.ts";
 import { useDispatch } from "react-redux";
-import { requestReloadListAgent } from "@stores/states/common/reducer.ts";
+import { requestReloadListAgent, requestReloadMonitor } from "@stores/states/common/reducer.ts";
 import uniqBy from "lodash.uniqby";
 import { MonitorContext } from "@providers/Monitor/MonitorContext.tsx";
 import { ContainerData } from "@providers/Monitor/interface.ts";
@@ -592,18 +592,21 @@ const AgentProvider: React.FC<
          }
       } finally {
          setTimeout(() => {
+            dispatch(requestReloadMonitor());
             if ([AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(agent.agent_type)) {
                updateAgentState(agent.id, {
                   data: agent,
                   isStarting: false,
                });
                throttledCheckAll();
+               dispatch(requestReloadMonitor());
             } else {
                updateAgentState(agent.id, {
                   data: agent,
                   isStarting: false,
                   isRunning: true,
                });
+               dispatch(requestReloadMonitor());
             }
          }, 1000);
          
@@ -636,6 +639,7 @@ const AgentProvider: React.FC<
                isStopping: false,
                isRunning: false,
             });
+            dispatch(requestReloadMonitor());
          }, 4000);
          throttledCheckAll();
       }
@@ -710,7 +714,7 @@ const AgentProvider: React.FC<
          }, 2000);
          
          throttledCheckAll();
-         
+         dispatch(requestReloadMonitor());
       }
    }
 

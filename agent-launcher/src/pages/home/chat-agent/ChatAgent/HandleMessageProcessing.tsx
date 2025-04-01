@@ -5,6 +5,7 @@ import { useContext, useEffect, useMemo } from "react";
 import { useChatAgentProvider } from "./provider";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface";
+import CAgentTokenAPI from "@services/api/agents-token";
 
 function HandleProcessingMessage({
    data,
@@ -15,41 +16,52 @@ function HandleProcessingMessage({
    updateMessage: (id: string, data: Partial<IChatMessage>) => void;
    agent: IAgentToken | undefined;
 }) {
+   const cPumpAPI = new CAgentTokenAPI();
    useEffect(() => {
       const checkProcessingTask = async () => {
          if (data.id) {
             if ([AgentType.Infra, AgentType.CustomPrompt].includes(agent?.agent_type as any)) {
+               // try to ping first
+               // if error, try to start agent
                try {
-                  const res = await AgentAPI.chatAgentUtility({
-                     id: data.id,
-                     agent: agent,
+                  await cPumpAPI.checkAgentServiceRunning({
+                     agent,
                   } as any);
 
-                  if (res?.status !== 102) {
+                  try {
+                     const res = await AgentAPI.chatAgentUtility({
+                        id: data.id,
+                        agent: agent,
+                     } as any);
+
+                     if (res?.status !== 102) {
+                        updateMessage(data.id, {
+                           status: "received",
+                           msg: res.data || res,
+                        });
+                     } else {
+                        setTimeout(() => {
+                           checkProcessingTask();
+                        }, 10000);
+                     }
+                  } catch (e) {
+                     const errorMessage = (e as any)?.response?.data?.error || "Something went wrong!";
                      updateMessage(data.id, {
-                        status: "received",
-                        msg: res.data || res,
+                        status: "failed",
+                        msg: errorMessage,
                      });
-                  } else {
-                     setTimeout(() => {
-                        checkProcessingTask();
-                     }, 30000);
                   }
                } catch (e) {
-                  const errorMessage = (e as any)?.response?.data?.error || "Something went wrong!";
-                  updateMessage(data.id, {
-                     status: "failed",
-                     msg: errorMessage,
-                  });
+                  setTimeout(() => {
+                     checkProcessingTask();
+                  }, 10000);
                }
-            } else {
-               //
             }
          }
       };
       setTimeout(() => {
          checkProcessingTask();
-      }, 10000);
+      }, 1000);
    }, []);
 
    return <></>;
