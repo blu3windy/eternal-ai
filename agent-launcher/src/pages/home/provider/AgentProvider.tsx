@@ -26,6 +26,7 @@ import { requestReloadListAgent } from "@stores/states/common/reducer.ts";
 import uniqBy from "lodash.uniqby";
 import { MonitorContext } from "@providers/Monitor/MonitorContext.tsx";
 import { ContainerData } from "@providers/Monitor/interface.ts";
+import { showMessage } from "@components/Toast/toast.tsx";
 
 const AgentProvider: React.FC<
     PropsWithChildren & { tokenAddress?: string }
@@ -699,12 +700,17 @@ const AgentProvider: React.FC<
                data: agent,
                isUnInstalling: false,
             });
+            if (needRemoveStorage) {
+               dispatch(requestReloadListAgent());
+               showMessage({
+                  message: `Delete ${agent?.agent_name} successfully.`,
+                  status: 'success',
+               });
+            }
          }, 2000);
          
          throttledCheckAll();
-         if (needRemoveStorage) {
-            dispatch(requestReloadListAgent());
-         }
+         
       }
    }
 
