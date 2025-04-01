@@ -130,9 +130,16 @@ run_container_custom_prompt() {
     cd_docker_build_source_path
     docker_build
     if [ -n "$PORT" ]; then
-    docker run -d -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" "${PORT}" --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+      docker run -d \
+          -e PRIVATE_KEY="$PRIVATE_KEY" \
+          -e WALLET_ADDRESS="$WALLET_ADDRESS" \
+          $PORT \
+          --network network-agent-external \
+          --add-host=localmodel:host-gateway \
+          --name "$CONTAINER_NAME" \
+          "$IMAGE_NAME"
     else
-        docker run -d -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
+      docker run -d -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
     fi
 }
 
