@@ -22,6 +22,7 @@ function App() {
    useEffect(() => {
 
       if (globalThis.electronAPI) {
+         
 
          globalThis.electronAPI.onUpdateDownloaded(() => {
             console.log("updateDownloaded Done");
@@ -51,9 +52,9 @@ function App() {
          </Provider>
          {(updateAvailable) && (
             <motion.div
-               initial={{ y: -50, opacity: 0 }}
+               initial={{ y: 0, opacity: 0 }}
                animate={{ y: 0, opacity: 1 }}
-               exit={{ y: -50, opacity: 0 }}
+               exit={{ y: 0, opacity: 0 }}
                transition={{ duration: 0.3, ease: "easeOut" }}
                className={`${s.snackbar}`}
                onClick={() => globalThis.electronAPI.restartApp()}
@@ -62,7 +63,7 @@ function App() {
                }}
             >
                <Text>
-                  {"✨ Update available! Restart to get the latest version after 5 seconds."}
+                  {"App updated! Click to restart and enjoy the latest version. 🚀"}
                </Text>
             </motion.div>
          )}

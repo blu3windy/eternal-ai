@@ -157,9 +157,9 @@ function createWindow() {
    autoUpdater.on("update-downloaded", () => {
       console.log("update-downloaded");
       win?.webContents.send("update-downloaded");
-      setTimeout(() => {
-         autoUpdater.quitAndInstall();
-      }, 5000);
+      // setTimeout(() => {
+      //    autoUpdater.quitAndInstall();
+      // }, 5000);
    });
 
    autoUpdater.on("download-progress", (progress) => {
