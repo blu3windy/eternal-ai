@@ -216,6 +216,7 @@ type AgentInfo struct {
 	AuthenUrl      string `gorm:"type:text"`
 	DependAgents   string `gorm:"type:longtext"`
 	RequiredWallet bool   `gorm:"default:0"`
+	RequiredEnv    bool   `gorm:"default:0"`
 	IsOnchain      bool   `gorm:"default:0"`
 	IsCustomUi     bool   `gorm:"default:0"`
 	Likes          int64  `gorm:"default:0"`

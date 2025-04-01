@@ -134,6 +134,7 @@ type AgentInfoResp struct {
 	AgentKBId                 uint                      `json:"kb_id"`
 	DependAgents              string                    `json:"depend_agents"`
 	RequiredWallet            bool                      `json:"required_wallet"`
+	RequiredEnv               bool                      `json:"required_env"`
 	IsOnchain                 bool                      `json:"is_onchain"`
 	IsStreaming               bool                      `json:"is_streaming"`
 	IsCustomUi                bool                      `json:"is_custom_ui"`
@@ -313,6 +314,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		DockerPort:           m.DockerPort,
 		RequiredInfo:         m.RequiredInfo,
 		InstalledCount:       m.InstalledCount,
+		RequiredEnv:          m.RequiredEnv,
 	}
 
 	if m.NftTokenImage != "" {

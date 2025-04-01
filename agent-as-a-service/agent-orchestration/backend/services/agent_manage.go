@@ -92,6 +92,7 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		SourceUrl:        req.SourceUrl,
 		AuthenUrl:        req.AuthenUrl,
 		DependAgents:     req.DependAgents,
+		RequiredEnv:      req.RequiredEnv,
 	}
 	if req.RequiredWallet != nil {
 		agent.RequiredWallet = *req.RequiredWallet

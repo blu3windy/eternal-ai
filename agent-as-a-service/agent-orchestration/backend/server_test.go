@@ -104,8 +104,8 @@ func Test_OpenAI(t *testing.T) {
 }
 
 func Test_SRV(t *testing.T) {
-
-	ts.JobRobotScanBalanceSOL(context.Background())
+	ts.TestPrivy(context.Background())
+	// ts.JobRobotScanBalanceSOL(context.Background())
 	// ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 35409)
 }
 

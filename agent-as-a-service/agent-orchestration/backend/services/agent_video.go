@@ -273,6 +273,25 @@ func (s *Service) GetListUserVideo(ctx context.Context, userAddres, search strin
 	return res, nil
 }
 
+func (s *Service) TestPrivy(ctx context.Context) error {
+	privyResp, err := s.privyClient.CreateUser(&privy.CreateUserReq{
+		CreateEthereumWallet: true,
+		LinkedAccounts: []privy.LinkedAccountReq{
+			{
+				Type:     "twitter_oauth",
+				Subject:  "1872182928639451136",
+				Name:     "wilfred bvm",
+				Username: "BvmWilfred93209",
+			},
+		},
+	})
+	if err != nil {
+		return errs.NewError(err)
+	}
+	fmt.Println(privyResp)
+	return nil
+}
+
 // package services
 
 // import (
