@@ -59,7 +59,7 @@ const AgentsList = () => {
       onClose
    } = useDisclosure();
 
-   const [sort, setSort] = useState<SortOption>(SortOption.CreatedAt);
+   const [sort, setSort] = useState<SortOption>(SortOption.Installed);
    const [filter, setFilter] = useState<FilterOption>(FilterOption.Installed);
    const [loaded, setLoaded] = useState(false);
    const refLoading = useRef(false);

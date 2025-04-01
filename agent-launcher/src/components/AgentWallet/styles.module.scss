@@ -1,0 +1,41 @@
+.walletCard {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  min-width: 400px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+
+  :global {
+    .chakra-button {
+      height: 40px;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+  }
+}
+
+.btnWallet {
+  background: transparent !important;
+  padding: 0 !important;
+  min-width: unset !important;
+  width: 24px !important;
+  height: 24px !important;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.modalContent {
+  :global {
+    .chakra-modal__header {
+      margin-top: 0 !important;
+    }
+  }
+}
