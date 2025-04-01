@@ -7,7 +7,7 @@ const ipcCheckAndUpdateApp = () => {
     autoUpdater.checkForUpdates();
   });
 
-  ipcMain.handle("apply-update", () => {
+  ipcMain.handle("quit-and-install", () => {
     autoUpdater.quitAndInstall();
   });
 };

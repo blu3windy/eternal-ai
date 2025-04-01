@@ -60,7 +60,7 @@ autoUpdater.setFeedURL({
 //       buttons: ["Restart", "Later"],
 //     })
 //     .then(({ response }) => {
-//       if (response === 0) {
+//       if (response === 0) {-
 //         // User clicked "Restart"
 //         // Delay to ensure update applies correctly
 //         setTimeout(() => {
@@ -114,11 +114,11 @@ runIpcMain();
 function createWindow() {
    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
+   // Check for updates after startup
    setTimeout(() => {
-      autoUpdater.checkForUpdates().catch((err) => {
-         console.error("Update check failed:", err);
-      });
-   }, 5000);
+      autoUpdater.checkForUpdates();
+   }, 5000); // Wait 15 seconds before checking
+
    win = new BrowserWindow({
       icon: path.join(process.env.VITE_PUBLIC as any, "app-logo.png"),
       // icon: path.join(__dirname, "../public/icon.png"), // Use icon from public
@@ -147,19 +147,24 @@ function createWindow() {
       win?.webContents.send("main-process-message", new Date().toLocaleString());
    });
 
-   autoUpdater.on("update-available", (info) => {
-      console.log("Update available:", info);
-      win?.webContents.send("update-available", info);
+   // Events to notify the Renderer process (UI)
+   autoUpdater.on("update-available", () => {
+      console.log("update-available");
+      autoUpdater.downloadUpdate();
+      win?.webContents.send("update-available");
    });
 
-   autoUpdater.on("download-progress", (info) => {
-      console.log("Update available:", info);
-      win?.webContents.send("download-progress", info);
+   autoUpdater.on("update-downloaded", () => {
+      console.log("update-downloaded");
+      win?.webContents.send("update-downloaded");
+      setTimeout(() => {
+         autoUpdater.quitAndInstall();
+      }, 5000);
    });
 
-   autoUpdater.on("update-downloaded", (info) => {
-      console.log("update-downloaded:", info);
-      win?.webContents.send("update-downloaded", info);
+   autoUpdater.on("download-progress", (progress) => {
+      console.log("download-progress", progress);
+      win?.webContents.send("download-progress", progress);
    });
 
    if (VITE_DEV_SERVER_URL) {
