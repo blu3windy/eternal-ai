@@ -35,7 +35,7 @@ class CAgentTokenAPI extends CApiClient {
             agent.required_info = JSON.parse(agent?.required_info);
          }
 
-         agent.required_env = agent?.required_env || true;
+         // agent.required_env = agent?.required_env || true;
          return agent;
       });
 
