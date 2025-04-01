@@ -666,7 +666,7 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 					map[string][]interface{}{},
 					[]string{},
 					0,
-					5,
+					100,
 				)
 				if err != nil {
 					return errs.NewError(err)
