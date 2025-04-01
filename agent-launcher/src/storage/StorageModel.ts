@@ -34,7 +34,9 @@ class StorageModel extends LocalStorageService {
       await this.removeItem(ACTIVE_MODEL_STORAGE_KEY);
    }
 
-   getDependAgentKey({ contractAddress, chainId }: IAgentId) {
+
+   // Depend agents
+   private getDependAgentKey({ contractAddress, chainId }: IAgentId) {
       return `${contractAddress}-${chainId}`?.toLowerCase();
    }
 
@@ -54,6 +56,36 @@ class StorageModel extends LocalStorageService {
 
    async removeDependAgents({ contractAddress, chainId }: IAgentId) {
       const key = this.getDependAgentKey({ contractAddress, chainId });
+      await this.removeItem(key);
+   }
+
+
+   // Environments
+   private getEnvironmentKey({ contractAddress, chainId }: IAgentId) {
+      return `env-${contractAddress}-${chainId}`?.toLowerCase();
+   }
+
+   async getEnvironment({ contractAddress, chainId }: IAgentId): Promise<JSON | undefined> {
+      const key = this.getEnvironmentKey({ contractAddress, chainId });
+      const environment = await this.getItem(key);
+      console.log('environment', {
+         environment, 
+         key
+      });
+      
+      if (environment) {
+         return JSON.parse(environment);
+      }
+      return undefined;
+   }
+
+   async setEnvironment({ contractAddress, chainId }: IAgentId, environment: string) {
+      const key = this.getEnvironmentKey({ contractAddress, chainId });
+      await this.setItem(key, environment);
+   }
+
+   async removeEnvironment({ contractAddress, chainId }: IAgentId) {
+      const key = this.getEnvironmentKey({ contractAddress, chainId });
       await this.removeItem(key);
    }
 }

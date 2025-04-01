@@ -116,28 +116,6 @@ const ipcMainDocker = () => {
       }
    })
 
-   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL, async (_event) => {
-
-      try {
-         const { stdout, stderr } = await command.execAsyncDockerDir("docker info");
-         console.log(stdout, stderr);
-         if (!stdout) {
-            command.sendEvent({
-               message: '[LAUNCHER_LOGGER] [INITIALIZE] --name [DOCKER_CHECK] --error "Docker is not installed or not running"',
-               cmd: 'docker info',
-               type: 'error',
-            });
-         }
-      } catch (error) {
-         command.sendEvent({
-            type: 'error',
-            message: '[LAUNCHER_LOGGER] [INITIALIZE] --name [DOCKER_CHECK] --error "Docker is not installed or not running"',
-            cmd: 'docker info',
-         });
-         throw error;
-      }
-   });
-
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INSTALL, async (_event) => {
       try {
          const userDataPath = app.getPath("userData");
@@ -182,6 +160,18 @@ const ipcMainDocker = () => {
             imageName = DOCKER_SERVER_JS;
          }
 
+         const convertJsonToDockerEnv = (jsonObject: Record<string, string>) => {
+            return Object.entries(jsonObject)
+               .map(([key, value]) => {
+                  // Trim the key and value to avoid leading/trailing spaces
+                  const trimmedKey = key.trim();
+                  const trimmedValue = encodeURIComponent(value || "").trim(); // Ensure value is encoded and trimmed
+                  return `${trimmedKey}=${trimmedValue}`; // Construct the key=value pair
+               })
+               .filter(entry => entry !== '=' && entry !== undefined) // Filter out any empty entries
+               .join(' '); // Join with space for multiple environment variables
+         };
+
          const params = [
             `--folder-path "${folderPath}"`,
             `--container-name "${dnsHost}"`,
@@ -190,6 +180,7 @@ const ipcMainDocker = () => {
             `--private-key "${_options?.privateKey || ""}"`,
             `--wallet-address "${_options?.address || ""}"`,
             `--port "${port || ""}"`,
+            `--environment "${_options?.environment ? convertJsonToDockerEnv(_options?.environment) : ""}"`,
          ]
 
          const paramsStr = params.join(' ');
@@ -254,7 +245,7 @@ const ipcMainDocker = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_DELETE_IMAGE, async (_event, agentName: string, chainId: string, type: CodeLanguage) => {
       try {
-         let dnsHost = getDnsHost(chainId, agentName);
+         const dnsHost = getDnsHost(chainId, agentName);
          let imageName = '';
          switch (type) {
          case 'custom-prompt':

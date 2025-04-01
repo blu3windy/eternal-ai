@@ -33,6 +33,9 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import AgentWallet from '../../../../components/AgentWallet';
 import s from './styles.module.scss';
+import storageModel from '@storage/StorageModel';
+import SetupEnvModel from '../SetupEnvironment';
+
 
 const AgentTopInfo = () => {
    const {
@@ -50,7 +53,11 @@ const AgentTopInfo = () => {
       isUnInstalling,
       installAgent,
       installedModelAgents,
+      startAgent
    } = useContext(AgentContext);
+
+   const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
+   const [environments, setEnvironments] = useState<JSON>();
 
    const { isOpen, onOpen, onClose } = useDisclosure();
    const { isOpen: isOpenDrawer, onOpen: onOpenDrawer, onClose: onCloseDrawer } = useDisclosure();
@@ -86,6 +93,14 @@ const AgentTopInfo = () => {
       return !SYSTEM_AGENTS.some(id => compareString(id, selectedAgent?.id));
    }, [selectedAgent]);
 
+   const getEnvironments = async () => {
+      const environments = await storageModel.getEnvironment({
+         contractAddress: selectedAgent?.agent_contract_address || '',
+         chainId: selectedAgent?.network_id,
+      });
+      setEnvironments(environments);
+   };
+
    useEffect(() => {
       if (selectedAgent || !isRunning) {
          checkVersionCode();
@@ -93,11 +108,17 @@ const AgentTopInfo = () => {
       }
    }, [selectedAgent, isRunning]);
 
+   useEffect(() => {
+      if (selectedAgent) {
+         getEnvironments();
+      }
+   }, [selectedAgent]);
+
    const checkVersionCode = async () => {
       setHaveNewVersionCode(false);
       if (
-         selectedAgent?.agent_type &&
-         [
+         selectedAgent?.agent_type
+         && [
             AgentType.Infra,
             AgentType.CustomUI,
             AgentType.CustomPrompt,
@@ -270,6 +291,24 @@ const AgentTopInfo = () => {
                               </Flex>
                               <Divider color={'#E2E4E8'} my={'16px'} />
                               <AgentOnChainInfo />
+                              {!!environments && selectedAgent?.required_env && (
+                                 <>
+                                    <Divider color={'#E2E4E8'} my={'16px'} />
+                                    <Button
+                                       className={s.btnStop}
+                                       onClick={async () => {
+                                          handleStopAgent();
+                                          setIsShowSetupEnvModel(true);
+                                       }}
+                                       isDisabled={isStopping}
+                                    >
+                                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                          <path d="M20.19 17.59L13.6 20.65C12.59 21.12 11.41 21.12 10.4 20.65L3.81 17.59C2.73 17.09 2.73 15.55 3.81 15.05L3.95001 14.99L9.76999 17.68C10.47 18.01 11.22 18.18 12 18.18C12.78 18.18 13.53 18.01 14.23 17.68L20.05 14.99L20.19 15.05C21.27 15.55 21.27 17.09 20.19 17.59ZM20.19 10.72L20.06 10.66L15.4 12.83L14.23 13.37C13.53 13.69 12.78 13.86 12 13.86C11.22 13.86 10.47 13.69 9.76999 13.37L8.60001 12.83L3.94 10.66L3.81 10.72C2.73 11.23 2.73 12.77 3.81 13.27L5.73001 14.16L10.4 16.32C10.91 16.56 11.45 16.68 12 16.68C12.55 16.68 13.09 16.56 13.6 16.32L18.27 14.16L20.19 13.27C21.27 12.77 21.27 11.23 20.19 10.72ZM20.19 6.41L13.6 3.35001C13.09 3.12001 12.55 3 12 3C11.45 3 10.91 3.12001 10.4 3.35001L3.81 6.41C2.73 6.91 2.73 8.45001 3.81 8.95001L3.94 9.01001L4.82999 9.42001L5.72 9.84L10.4 12.01C10.91 12.24 11.45 12.36 12 12.36C12.55 12.36 13.09 12.24 13.6 12.01L18.28 9.84L19.17 9.42001L20.06 9.01001L20.19 8.95001C21.27 8.45001 21.27 6.91 20.19 6.41Z" fill="black"/>
+                                       </svg>
+                                       Update environment {selectedAgent?.agent_name}
+                                    </Button>
+                                 </>
+                              )}
                               {allowStopAgent && requireInstall && isRunning && (
                                  <>
                                     <Divider color={'#E2E4E8'} my={'16px'} />
@@ -438,6 +477,28 @@ const AgentTopInfo = () => {
                }
             }}
          />
+         {!!environments && isShowSetupEnvModel && (
+            <BaseModal isShow={isShowSetupEnvModel} onHide={() => {
+               // storageModel.setEnvironment({
+               //    contractAddress: selectedAgent?.agent_contract_address || '',
+               //    chainId: selectedAgent?.network_id,
+               // }, JSON.stringify(environments || {}));
+               setIsShowSetupEnvModel(false);
+            }} title={'Setup environment'} size="small">
+               <SetupEnvModel
+                  agent={selectedAgent}
+                  environments={JSON.stringify(environments || "")}
+                  onSubmit={async () => {
+                     try {
+                        await getEnvironments();
+                        setIsShowSetupEnvModel(false);
+                     } catch (error) {
+                        console.log(error);
+                     }
+                  }}
+               />
+            </BaseModal>
+         )}
       </>
    );
 };

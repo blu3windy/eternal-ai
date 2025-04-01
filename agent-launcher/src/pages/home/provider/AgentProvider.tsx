@@ -710,11 +710,15 @@ const AgentProvider: React.FC<
 
          const lang = getUtilityAgentCodeLanguage(agent);
          await Promise.all([
+            await storageModel.removeEnvironment({
+               contractAddress: agent.agent_contract_address,
+               chainId: agent.network_id
+            }),
             await globalThis.electronAPI.dockerDeleteImage(agent.agent_name?.toLowerCase(), agent.network_id?.toString(), lang),
             await storageModel.removeDependAgents({
                contractAddress: agent.agent_contract_address,
                chainId: agent.network_id
-            })
+            }),
          ])
       } catch (e) {
          console.log('unInstallAgent e', e);
@@ -1002,6 +1006,17 @@ const AgentProvider: React.FC<
             type: lang,
             port: agent.docker_port
          };
+
+         const environment = await storageModel.getEnvironment({
+            contractAddress: agent.agent_contract_address,
+            chainId: agent.network_id
+         });
+
+         console.log('LEON: environment', environment, JSON.stringify(environment));
+
+         if (environment) {
+            options.environment = environment;
+         }
 
          if (agent?.required_wallet) {
             options.privateKey = agentWallet?.privateKey;

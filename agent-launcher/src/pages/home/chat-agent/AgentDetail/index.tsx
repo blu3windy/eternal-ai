@@ -1,25 +1,27 @@
 import { Button, Divider, Flex, Image, Text } from "@chakra-ui/react";
 import CustomMarkdown from "@components/CustomMarkdown";
-import { LLM_MODELS } from "@constants/models.ts";
 import useParseLogs from "@hooks/useParseLogs.ts";
 import { AgentType, AgentTypeName } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext";
-import { formatCurrency, labelAmountOrNumberAdds } from "@utils/format.ts";
-import { compareString } from "@utils/string.ts";
+import { formatCurrency } from "@utils/format.ts";
 import cs from "classnames";
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import s from "./styles.module.scss";
+import SetupEnvModel from "../SetupEnvironment";
+import BaseModal from "@components/BaseModal";
+import storageModel from "@storage/StorageModel";
 
 const AgentDetail = () => {
    const {
       selectedAgent,
       installAgent,
       isInstalling,
-      availableModelAgents,
       isInstalled,
       isRunning,
-      isStarting, startAgent, agentWallet,
+      isStarting,
+      startAgent,
    } = useContext(AgentContext);
+   const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
 
    const {
       parsedLog,
@@ -60,9 +62,24 @@ const AgentDetail = () => {
    const requirements = selectedAgent?.required_info;
 
 
-   const handleInstall = () => {
+   const handleInstall =  async () => {
       if (isInstalled) return;
       if (!selectedAgent) return;
+
+      const _selectedAgent = {
+         ...selectedAgent,
+         required_env: true
+      }
+   
+      if (_selectedAgent?.required_env) {
+         const environment = await storageModel.getEnvironment({ contractAddress: selectedAgent?.agent_contract_address, chainId: selectedAgent?.network_id });
+         console.log('environment', environment);
+         
+         if (!environment) {
+            setIsShowSetupEnvModel(true);
+            return;
+         }
+      }
 
       installAgent(selectedAgent);
    };
@@ -73,144 +90,161 @@ const AgentDetail = () => {
    };
 
    return (
-      <Flex
-         className={s.container}
-         direction={"column"}
-         // alignItems={"center"}
-         justifyContent={"center"}
-         w={"100%"}
-      >
-         <Flex w={"100%"} justifyContent={"space-between"} alignItems={"center"}>
-            <Flex gap={"16px"} alignItems={"center"}>
-               <Image w="100px" h="100px" src={avatarUrl} borderRadius={"50%"} objectFit={'cover'} />
-               <Flex direction={"column"} gap={"16px"}>
-                  <Flex gap={"6px"}>
-                     <Text className={s.nameText}>
-                        {selectedAgent?.agent_name}{' '}
-                     </Text>
-                     <Text className={s.nameText} opacity={0.5}>{selectedAgent?.token_symbol ? `$${selectedAgent?.token_symbol}` : ''}</Text>
-                  </Flex>
-                  {
-                     isInstalled ? (
-                        <Button
-                           className={s.btnInstall}
-                           onClick={handleStartAgent}
-                           isLoading={isStarting || (selectedAgent?.agent_type === AgentType.CustomUI && !isRunning)}
-                           isDisabled={isStarting}
-                           loadingText={"Starting..."}
-                        >
-                           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M15.5507 11.989L7.15397 17.1274C5.48314 18.1499 3.33398 16.9506 3.33398 14.9956V5.00479C3.33398 3.04979 5.48314 1.85074 7.15397 2.87324L15.5507 8.01158C17.0382 8.92242 17.0382 11.079 15.5507 11.989Z" fill="black" />
-                           </svg>
+      <>
+         <Flex
+            className={s.container}
+            direction={"column"}
+            justifyContent={"center"}
+            w={"100%"}
+         >
+            <Flex w={"100%"} justifyContent={"space-between"} alignItems={"center"}>
+               <Flex gap={"16px"} alignItems={"center"}>
+                  <Image w="100px" h="100px" src={avatarUrl} borderRadius={"50%"} objectFit={'cover'} />
+                  <Flex direction={"column"} gap={"16px"}>
+                     <Flex gap={"6px"}>
+                        <Text className={s.nameText}>
+                           {selectedAgent?.agent_name}{' '}
+                        </Text>
+                        <Text className={s.nameText} opacity={0.5}>{selectedAgent?.token_symbol ? `$${selectedAgent?.token_symbol}` : ''}</Text>
+                     </Flex>
+                     {
+                        isInstalled ? (
+                           <Button
+                              className={s.btnInstall}
+                              onClick={handleStartAgent}
+                              isLoading={isStarting || (selectedAgent?.agent_type === AgentType.CustomUI && !isRunning)}
+                              isDisabled={isStarting}
+                              loadingText={"Starting..."}
+                           >
+                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                 <path d="M15.5507 11.989L7.15397 17.1274C5.48314 18.1499 3.33398 16.9506 3.33398 14.9956V5.00479C3.33398 3.04979 5.48314 1.85074 7.15397 2.87324L15.5507 8.01158C17.0382 8.92242 17.0382 11.079 15.5507 11.989Z" fill="black" />
+                              </svg>
 
                            Start
-                        </Button>
-                     ) : (
-                        <Button
-                           className={s.btnInstall}
-                           onClick={handleInstall}
-                           isLoading={isInstalling}
-                           isDisabled={isInstalling}
-                           loadingText={totalStep > 0 ? `${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : 'Installing...'}
-                        >
+                           </Button>
+                        ) : (
+                           <Button
+                              className={s.btnInstall}
+                              onClick={handleInstall}
+                              isLoading={isInstalling}
+                              isDisabled={isInstalling}
+                              loadingText={totalStep > 0 ? `${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : 'Installing...'}
+                           >
                            Get
-                        </Button>
-                     )
-                  }
+                           </Button>
+                        )
+                     }
+                  </Flex>
+               </Flex>
+
+            </Flex>
+            <Divider color={'#FFFFFF33'} my={'40px'} />
+            <Flex gap={"20px"}>
+               <Flex className={s.infoBox}>
+                  <Text className={s.infoText}>
+                  Type
+                  </Text>
+                  <Text className={s.infoValue}>
+                     {AgentTypeName[selectedAgent?.agent_type]}
+                  </Text>
+               </Flex>
+
+               {
+                  requirements?.disk && (
+                     <Flex className={s.infoBox}>
+                        <Text className={s.infoText}>
+                     Storage
+                        </Text>
+                        <Text className={s.infoValue}>
+                           {requirements?.disk} GB
+                        </Text>
+                     </Flex>
+                  )
+               }
+
+               {
+                  requirements?.ram && (
+                     <Flex className={s.infoBox}>
+                        <Text className={s.infoText}>
+                     RAM
+                        </Text>
+                        <Text className={s.infoValue}>
+                           {requirements?.ram} GB
+                        </Text>
+                     </Flex>
+                  )
+               }
+
+               {
+                  selectedAgent?.meme?.market_cap && (
+                     <Flex className={s.infoBox}>
+                        <Text className={s.infoText}>
+                        Market cap
+                        </Text>
+                        <Text className={s.infoValue}>
+                           {Number(selectedAgent?.meme?.market_cap) > 0
+                              ? `$${formatCurrency(
+                                 selectedAgent?.meme?.market_cap,
+                                 0,
+                                 3,
+                                 'BTC',
+                                 false,
+                                 true,
+                              )}`
+                              : '$0'}
+                        </Text>
+                     </Flex>
+                  )
+               }
+
+               <Flex className={s.infoBox}>
+                  <Text className={s.infoText}>
+                  installed
+                  </Text>
+                  <Text className={s.infoValue}>
+                     {formatCurrency(selectedAgent?.installed_count, 0, 0)}
+                  </Text>
+               </Flex>
+
+               <Flex className={s.infoBox}>
+                  <Text className={s.infoText}>
+                  likes
+                  </Text>
+                  <Text className={s.infoValue}>
+                     {formatCurrency(selectedAgent?.likes, 0, 0)}
+                  </Text>
                </Flex>
             </Flex>
-
-         </Flex>
-         <Divider color={'#FFFFFF33'} my={'40px'} />
-         <Flex gap={"20px"}>
-            <Flex className={s.infoBox}>
-               <Text className={s.infoText}>
-                  Type
-               </Text>
-               <Text className={s.infoValue}>
-                  {AgentTypeName[selectedAgent?.agent_type]}
-               </Text>
+            <Divider color={'#FFFFFF33'} my={'40px'} />
+            <Flex h={'100%'} overflow={'auto'} marginLeft={'8px'} marginBottom={'28px'} className={s.wDescription}>
+               {description && (
+                  <div className={cs(s.descriptionText, "markdown")}>
+                     <CustomMarkdown
+                        content={description}
+                        isLight={false}
+                        removeThink={false}
+                     />
+                  </div>
+               )}
             </Flex>
-
-            {
-               requirements?.disk && (
-                  <Flex className={s.infoBox}>
-                     <Text className={s.infoText}>
-                     Storage
-                     </Text>
-                     <Text className={s.infoValue}>
-                        {requirements?.disk} GB
-                     </Text>
-                  </Flex>
-               )
-            }
-
-            {
-               requirements?.ram && (
-                  <Flex className={s.infoBox}>
-                     <Text className={s.infoText}>
-                     RAM
-                     </Text>
-                     <Text className={s.infoValue}>
-                        {requirements?.ram} GB
-                     </Text>
-                  </Flex>
-               )
-            }
-
-            {
-               selectedAgent?.meme?.market_cap && (
-                  <Flex className={s.infoBox}>
-                     <Text className={s.infoText}>
-                        Market cap
-                     </Text>
-                     <Text className={s.infoValue}>
-                        {Number(selectedAgent?.meme?.market_cap) > 0
-                           ? `$${formatCurrency(
-                              selectedAgent?.meme?.market_cap,
-                              0,
-                              3,
-                              'BTC',
-                              false,
-                              true,
-                           )}`
-                           : '$0'}
-                     </Text>
-                  </Flex>
-               )
-            }
-
-            <Flex className={s.infoBox}>
-               <Text className={s.infoText}>
-                  installed
-               </Text>
-               <Text className={s.infoValue}>
-                  {formatCurrency(selectedAgent?.installed_count, 0, 0)}
-               </Text>
-            </Flex>
-
-            <Flex className={s.infoBox}>
-               <Text className={s.infoText}>
-                  likes
-               </Text>
-               <Text className={s.infoValue}>
-                  {formatCurrency(selectedAgent?.likes, 0, 0)}
-               </Text>
-            </Flex>
-         </Flex>
-         <Divider color={'#FFFFFF33'} my={'40px'} />
-         <Flex h={'100%'} overflow={'auto'} marginLeft={'8px'} marginBottom={'28px'} className={s.wDescription}>
-            {description && (
-               <div className={cs(s.descriptionText, "markdown")}>
-                  <CustomMarkdown
-                     content={description}
-                     isLight={false}
-                     removeThink={false}
-                  />
-               </div>
-            )}
-         </Flex>
-      </Flex >
+         </Flex >
+         {isShowSetupEnvModel && (
+            <BaseModal
+               isShow={isShowSetupEnvModel}
+               onHide={() => setIsShowSetupEnvModel(false)}
+               size="small"
+               title="Setup Environment"
+            >
+               <SetupEnvModel
+                  agent={selectedAgent}
+                  onSubmit={async () => {
+                     setIsShowSetupEnvModel(false);
+                     handleInstall();
+                  }}
+               />
+            </BaseModal>
+         )}
+      </>
    )
 }
 
