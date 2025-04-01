@@ -297,6 +297,7 @@ export enum SortOption {
    Volume24h = 'meme_volume_last24h',
    CreatedAt = 'created_at',
    Popuplar = 'prompt_calls',
+   Installed = 'installed',
 }
 
 export const SortBy = [
@@ -305,6 +306,7 @@ export const SortBy = [
    { value: SortOption.CreatedAt, label: 'Creation time' },
    { value: SortOption.Volume24h, label: '24h volume' },
    { value: SortOption.Popuplar, label: 'Popular' },
+   { value: SortOption.Installed, label: 'Installed' },
 ];
 
 export enum CategoryOption {
