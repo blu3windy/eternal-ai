@@ -274,7 +274,7 @@ const SelectModel = ({
                   background={'#fff'}
                   minW={'600px'}
                >
-                  {installedModelAgents.map((t, i) => (
+                  {installedModelAgents.map((t, _i) => (
                      <>
                         <ItemToken
                            key={t.id}

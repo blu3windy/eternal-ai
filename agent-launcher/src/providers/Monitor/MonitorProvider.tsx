@@ -8,6 +8,7 @@ import installAgentStorage from "@storage/InstallAgentStorage.ts";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import { commonSelector } from "@stores/states/common/selector.ts";
 import { useSelector } from "react-redux";
+import uniqBy from "lodash.uniqby";
 
 const MonitorProvider: React.FC<
     PropsWithChildren
@@ -35,11 +36,20 @@ const MonitorProvider: React.FC<
    const onGetDataAgents = async () => {
       try {
          const installIds = await installAgentStorage.getAgentIds();
+         const agent_types = [
+            AgentType.UtilityJS, 
+            AgentType.UtilityPython, 
+            AgentType.Infra, 
+            AgentType.CustomUI, 
+            AgentType.CustomPrompt,
+            AgentType.ModelOnline,
+            AgentType.Model
+         ].join(',');
          const [{ agents }, { agents: agentsAll }] = await Promise.all([
-            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, ids: installIds.length > 0 ? installIds.join(',') : '', agent_types: '5,12,10,11,8' }),
-            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types: '5,12,10,11,8' }),
+            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, ids: installIds.length > 0 ? installIds.join(',') : '', agent_types }),
+            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
          ]);
-         agentsRef.current = [...agents, ...agentsAll];
+         agentsRef.current = uniqBy([...agents, ...agentsAll], 'id');
       } catch {
       }
    }
