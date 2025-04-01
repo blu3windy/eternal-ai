@@ -527,6 +527,7 @@ const AgentProvider: React.FC<
 
    const startAgent = async (agent: IAgentToken, needUpdateCode?: boolean) => {
       console.log("stephen: startAgent", agent);
+      console.time('LEON: startAgent');
       try {
          updateAgentState(agent.id, {
             data: agent,
@@ -535,27 +536,38 @@ const AgentProvider: React.FC<
          await installAgentStorage.addAgent([agent.id]);
 
          if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
-            console.log('stephen: startAgent Utility install', new Date().toLocaleTimeString());
+            console.time('LEON: installUtilityAgent');
             await installUtilityAgent(agent, needUpdateCode);
-            await startDependAgents(agent, needUpdateCode);
+            console.timeEnd('LEON: installUtilityAgent');
 
             if ([AgentType.ModelOnline].includes(agent.agent_type)) {
-               console.log('stephen: startAgent Model set ready port', new Date().toLocaleTimeString());
                await setReadyPort();
             }
 
-            console.log('stephen: startAgent Utility start docker', new Date().toLocaleTimeString());
-            await handleRunDockerAgent(agent);
-            console.log('stephen: startAgent Utility finish docker', new Date().toLocaleTimeString());
+            const tasks: Promise<void>[] = []
 
+            tasks.push(startDependAgents(agent, needUpdateCode));
+            tasks.push(handleRunDockerAgent(agent));
+
+            console.time('LEON: run tasks');
+            await Promise.all(tasks);
+            console.timeEnd('LEON: run tasks');
+
+            console.time('LEON: fetchInstalledUtilityAgents');
             fetchInstalledUtilityAgents();
+            console.timeEnd('LEON: fetchInstalledUtilityAgents');
 
             if (agent.agent_type === AgentType.ModelOnline) {
+               console.time('LEON: fetchInstalledModelAgents');   
                fetchInstalledModelAgents();
+               console.timeEnd('LEON: fetchInstalledModelAgents');
+
+               console.time('LEON: setActiveModel');
                await storageModel.setActiveModel({
                   ...agent,
                   hash: ""
                });
+               console.timeEnd('LEON: setActiveModel');
             }
          } else if (agent.agent_type === AgentType.Model) {
             console.log('stephen: startAgent Model install', new Date().toLocaleTimeString());
@@ -606,7 +618,8 @@ const AgentProvider: React.FC<
                });
             }
          }, 1000);
-         
+
+         console.timeEnd('LEON: startAgent');
       }
    };
 
@@ -690,7 +703,13 @@ const AgentProvider: React.FC<
          }
 
          const lang = getUtilityAgentCodeLanguage(agent);
-         await globalThis.electronAPI.dockerDeleteImage(agent.agent_name?.toLowerCase(), agent.network_id?.toString(), lang)
+         await Promise.all([
+            await globalThis.electronAPI.dockerDeleteImage(agent.agent_name?.toLowerCase(), agent.network_id?.toString(), lang),
+            await storageModel.removeDependAgents({
+               contractAddress: agent.agent_contract_address,
+               chainId: agent.network_id
+            })
+         ])
       } catch (e) {
          console.log('unInstallAgent e', e);
       } finally {
@@ -794,7 +813,11 @@ const AgentProvider: React.FC<
    };
 
    const startDependAgents = async (agent: IAgentToken, needUpdateCode?: boolean) => {
+      console.time('LEON: startDependAgents');
+      console.time('LEON: getDependAgents');
       const dependAgents = await getDependAgents(agent, needUpdateCode);
+      console.timeEnd('LEON: getDependAgents');
+
       if (dependAgents.length > 0) {
          await Promise.all(dependAgents.map(async (agent) => {
             try {
@@ -803,6 +826,7 @@ const AgentProvider: React.FC<
             }
          }));
       }
+      console.timeEnd('LEON: startDependAgents');
    };
 
    const stopDependAgents = async (agent: IAgentToken) => {
@@ -818,6 +842,14 @@ const AgentProvider: React.FC<
    };
 
    const getDependAgents = async (agent: IAgentToken, needUpdateCode?: boolean) => {
+      const dependAgents = await storageModel.getDependAgents({
+         contractAddress: agent.agent_contract_address,
+         chainId: agent.network_id
+      });
+
+      if (dependAgents && dependAgents.length > 0 && !needUpdateCode) {
+         return dependAgents;
+      }
       if (agent && !!agent.agent_contract_address) {
          const chainId = agent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
@@ -826,6 +858,10 @@ const AgentProvider: React.FC<
          const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
          if (depsAgentStrs.length > 0) {
             const dependAgents = await installDependAgents(depsAgentStrs, chainId, needUpdateCode);
+            await storageModel.setDependAgents({
+               contractAddress: agent.agent_contract_address,
+               chainId: agent.network_id
+            }, dependAgents);
             return dependAgents;
          }
       }
@@ -1215,7 +1251,7 @@ const AgentProvider: React.FC<
       }
    };
 
-    useEffect(() => {
+   useEffect(() => {
       checkAllInstalledAgentsRunning();
    }, []);
 
