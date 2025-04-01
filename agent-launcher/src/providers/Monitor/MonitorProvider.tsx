@@ -14,7 +14,7 @@ const MonitorProvider: React.FC<
 > = ({
    children,
 }: PropsWithChildren): React.ReactElement => {
-   const { needReloadList } = useSelector(commonSelector);
+   const { needReloadList, needReloadMonitor } = useSelector(commonSelector);
 
    const [containers, setContainers] = useState<ContainerData[]>([]);
    const [totalMemory, setTotalMemory] = useState({ used: '0MB', total: '0GB' });
@@ -214,7 +214,7 @@ const MonitorProvider: React.FC<
             clearInterval(intervalRef.current);
          }
       };
-   }, [needReloadList]); // Empty dependency array means this effect runs once on mount
+   }, [needReloadMonitor]); // Empty dependency array means this effect runs once on mount
 
    useEffect(() => {
       // Initial fetch

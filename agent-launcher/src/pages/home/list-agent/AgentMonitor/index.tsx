@@ -185,7 +185,7 @@ const AgentMonitor: React.FC = () => {
                            <Flex gap={'6px'} alignItems={'center'}>
                               <Text fontSize="18px" fontWeight="600" color="white">Memory usage</Text>
                               <Tooltip 
-                                 label="Total amount of memory consumed by running agent processes."
+                                 label="Total amount of memory consumed by running agent processs."
                                  hasArrow
                                  placement="top"
                                  bg="gray.700"
