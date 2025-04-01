@@ -594,12 +594,14 @@ const AgentProvider: React.FC<
          setTimeout(() => {
             dispatch(requestReloadMonitor());
             if ([AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(agent.agent_type)) {
-               updateAgentState(agent.id, {
-                  data: agent,
-                  isStarting: false,
-               });
                throttledCheckAll();
-               dispatch(requestReloadMonitor());
+               setTimeout(() => {
+                  updateAgentState(agent.id, {
+                     data: agent,
+                     isStarting: false,
+                  });
+                  dispatch(requestReloadMonitor());
+               }, 2000);
             } else {
                updateAgentState(agent.id, {
                   data: agent,
@@ -1088,132 +1090,137 @@ const AgentProvider: React.FC<
       }
    }, [agentStates]);
 
-   const checkAllInstalledAgentsRunning = async () => {
-      try {
-         // Check utility agents
-         const installIds = await installAgentStorage.getAgentIds();
-         let ids = '';
-         if (installIds.length > 0) {
-            ids = installIds.join(',');
-         }
+   const checkInstalledUtilityAgentsRunning = async () => {
+      // Check utility agents
+      const installIds = await installAgentStorage.getAgentIds();
+      const agent_types = [
+         AgentType.UtilityJS, 
+         AgentType.UtilityPython, 
+         AgentType.Infra, 
+         AgentType.CustomUI, 
+         AgentType.CustomPrompt,
+         AgentType.ModelOnline,
+         AgentType.Model,
+      ].join(',');
+      const utilityParams: any = {
+         page: 1,
+         limit: 100,
+         sort_col: SortOption.CreatedAt,
+         agent_types: agent_types,
+         chain: '',
+         ids: installIds.length > 0 ? '' : installIds.join(','),
+      };
 
-         const agent_types = [
-            AgentType.UtilityJS, 
-            AgentType.UtilityPython, 
-            AgentType.Infra, 
-            AgentType.CustomUI, 
-            AgentType.CustomPrompt,
-            AgentType.ModelOnline
-         ].join(',');
-         const utilityParams: any = {
-            page: 1,
-            limit: 100,
-            sort_col: SortOption.CreatedAt,
-            agent_types: agent_types,
-            chain: '',
-            ids,
-         };
+      const [{ agents }, { agents: agentsAll }] = await Promise.all([
+         cPumpAPI.getAgentTokenList(utilityParams),
+         cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
+      ]);
+      const utilityAgents = uniqBy([...agents, ...agentsAll], 'id');
 
-         const [{ agents }, { agents: agentsAll }] = await Promise.all([
-            cPumpAPI.getAgentTokenList(utilityParams),
-            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
-         ]);
-         const utilityAgents = uniqBy([...agents, ...agentsAll], 'id');
+      // Check running status for each installed utility agent
+      for (const folderName of refInstalledUtilityAgents.current) {
+         const [networkId, ...agentNameParts] = folderName.split('-');
+         const agentName = agentNameParts.join('-');
+         if (!networkId || !agentName) continue;
 
-         // Check running status for each installed utility agent
-         for (const folderName of refInstalledUtilityAgents.current) {
-            const [networkId, ...agentNameParts] = folderName.split('-');
-            const agentName = agentNameParts.join('-');
-            if (!networkId || !agentName) continue;
-
-            // Find agent info from API result
-            const agent = utilityAgents.find(a => 
-               a.network_id.toString() === networkId 
-               && a.agent_name?.toLowerCase() === agentName?.toLowerCase()
-            );
-            
-            if (agent) {
-               if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
-                  try {
-                     if (agent.agent_type === AgentType.ModelOnline) {
-                        const res = await cPumpAPI.checkAgentModelServiceRunning();
-                     } else {
-                        const res = await cPumpAPI.checkAgentServiceRunning({ agent });
-                     }
-                     
-                     updateAgentState(agent.id, {
-                        data: agent,
-                        isInstalled: true,
-                        isRunning: true
-                     });
-                  } catch (err) {
-                     updateAgentState(agent.id, {
-                        data: agent,
-                        isInstalled: true,
-                        isRunning: false
-                     });
+         // Find agent info from API result
+         const agent = utilityAgents.find(a => 
+            a.network_id.toString() === networkId 
+            && a.agent_name?.toLowerCase() === agentName?.toLowerCase()
+         );
+         
+         if (agent) {
+            if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent.agent_type)) {
+               try {
+                  if (agent.agent_type === AgentType.ModelOnline) {
+                     const res = await cPumpAPI.checkAgentModelServiceRunning();
+                  } else {
+                     const res = await cPumpAPI.checkAgentServiceRunning({ agent });
                   }
-               } 
-               else if (agent.agent_type === AgentType.CustomUI) {
-                  try {
-                     const port = await globalThis.electronAPI.dockerRunningPort(agentName, networkId);
-                     updateAgentState(agent.id, {
-                        data: agent,
-                        isInstalled: true,
-                        isRunning: !!port,
-                        customUIPort: port
-                     });
-                  } catch (err) {
-                     updateAgentState(agent.id, {
-                        data: agent,
-                        isInstalled: true,
-                        isRunning: false,
-                        customUIPort: undefined
-                     });
-                  }
+                  
+                  updateAgentState(agent.id, {
+                     data: agent,
+                     isInstalled: true,
+                     isRunning: true
+                  });
+               } catch (err) {
+                  updateAgentState(agent.id, {
+                     data: agent,
+                     isInstalled: true,
+                     isRunning: false
+                  });
+               }
+            } 
+            else if (agent.agent_type === AgentType.CustomUI) {
+               try {
+                  const port = await globalThis.electronAPI.dockerRunningPort(agentName, networkId);
+                  updateAgentState(agent.id, {
+                     data: agent,
+                     isInstalled: true,
+                     isRunning: !!port,
+                     customUIPort: port
+                  });
+               } catch (err) {
+                  updateAgentState(agent.id, {
+                     data: agent,
+                     isInstalled: true,
+                     isRunning: false,
+                     customUIPort: undefined
+                  });
                }
             }
          }
+      }
+   }
 
-         // Check model agents
-         const activeModel = await storageModel.getActiveModel();
+   const checkInstalledModelAgentsRunning = async () => {
+      // Check model agents
+      const activeModel = await storageModel.getActiveModel();
 
-         for (const agent of refInstalledModelAgents.current) {
-            updateAgentState(agent.id, {
-               data: agent,
-               isInstalled: true,
-               isRunning: agent.id === activeModel?.id
-            });
-         }
+      for (const agent of refInstalledModelAgents.current) {
+         updateAgentState(agent.id, {
+            data: agent,
+            isInstalled: true,
+            isRunning: agent.id === activeModel?.id
+         });
+      }
+   }
 
-         // Check social agents
-         const socialParams: any = {
-            page: 1,
-            limit: 100,
-            sort_col: SortOption.CreatedAt,
-            agent_types: [
-               AgentType.Normal,
-               AgentType.Reasoning,
-               AgentType.KnowledgeBase,
-               AgentType.Eliza,
-               AgentType.Zerepy
-            ].join(','),
-            chain: '',
-            ids,
-         };
-         const { agents: socialAgents } = await cPumpAPI.getAgentTokenList(socialParams);
+   const checkAllInstalledAgentsRunning = async () => {
+      try {
+         await Promise.all([
+            checkInstalledUtilityAgentsRunning(),
+            checkInstalledModelAgentsRunning(),
+         ]);
+         
+         // // Check social agents
+         // const socialParams: any = {
+         //    page: 1,
+         //    limit: 100,
+         //    sort_col: SortOption.CreatedAt,
+         //    agent_types: [
+         //       AgentType.Normal,
+         //       AgentType.Reasoning,
+         //       AgentType.KnowledgeBase,
+         //       AgentType.Eliza,
+         //       AgentType.Zerepy
+         //    ].join(','),
+         //    chain: '',
+         //    ids,
+         // };
+         // const { agents: socialAgents } = await cPumpAPI.getAgentTokenList(socialParams);
 
-         // Check running status for each installed social agent
-         for (const agentId of refInstalledSocialAgents.current) {
-            const agent = socialAgents.find(a => a.id === agentId);
-            if (agent) {
-               updateAgentState(agent.id, {
-                  data: agent,
-                  isInstalled: true,
-                  isRunning: true // Social agents are always running after installed
-               });
-            }
-         }
+         // // Check running status for each installed social agent
+         // for (const agentId of refInstalledSocialAgents.current) {
+         //    const agent = socialAgents.find(a => a.id === agentId);
+         //    if (agent) {
+         //       updateAgentState(agent.id, {
+         //          data: agent,
+         //          isInstalled: true,
+         //          isRunning: true // Social agents are always running after installed
+         //       });
+         //    }
+         // }
       } catch (err) {
          console.log("checkAllInstalledAgentsRunning error:", err);
       }
