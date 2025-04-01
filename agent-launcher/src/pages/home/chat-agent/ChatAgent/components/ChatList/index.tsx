@@ -37,7 +37,7 @@ const ChatList = ({ onRetryErrorMessage, isSending = false }: IProps) => {
 
    useLayoutEffect(() => {
       if (!messageLengthPrevious && messageLengthPrevious !== messages?.length) {
-         scrollRef.current?.scrollIntoView({ behavior: "auto" });
+         scrollRef?.current?.scrollIntoView && scrollRef?.current?.scrollIntoView({ behavior: "auto" });
       }
    }, [messageLengthPrevious, messages?.length]);
 
