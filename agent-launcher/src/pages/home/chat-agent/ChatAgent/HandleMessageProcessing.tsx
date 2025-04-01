@@ -45,7 +45,13 @@ function HandleProcessingMessage({
                         }, 10000);
                      }
                   } catch (e) {
-                     const errorMessage = (e as any)?.response?.data?.error || "Something went wrong!";
+                     let errorMessage = (e as any)?.response?.data?.error;
+                     if (!errorMessage && (e as any)?.response?.data && typeof (e as any)?.response?.data === "string") {
+                        errorMessage = (e as any)?.response?.data;
+                     }
+                     if (!errorMessage) {
+                        errorMessage = "Something went wrong!";
+                     }
                      updateMessage(data.id, {
                         status: "failed",
                         msg: errorMessage,

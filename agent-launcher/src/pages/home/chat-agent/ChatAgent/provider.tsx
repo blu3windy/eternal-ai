@@ -34,6 +34,8 @@ type IChatAgentProviderContext = {
    isFocusChatInput: boolean;
    setIsFocusChatInput: (_: boolean) => void;
    isAllowChat: boolean;
+
+   updateMessage: (id: string, data: Partial<IChatMessage>, isUpdateDB?: boolean) => void;
 };
 
 const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
@@ -50,6 +52,7 @@ const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
    setIsFocusChatInput: () => {},
    isAllowChat: false,
    scrollRef: undefined,
+   updateMessage: () => {},
 });
 
 export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
@@ -502,20 +505,16 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       }
    };
 
-   const updateMessage = useCallback((id: string, data: Partial<IChatMessage>) => {
+   const updateMessage = useCallback((id: string, data: Partial<IChatMessage>, isUpdateDB = true) => {
       try {
          setMessages((prev) => {
             const matchedMessageIndex = prev.findLastIndex((i) => i.id === id);
             if (matchedMessageIndex !== -1) {
-               if (data.status === "failed") {
-                  prev[matchedMessageIndex].status = "failed";
-                  if (data.msg && data.msg !== prev[matchedMessageIndex].msg) {
-                     prev[matchedMessageIndex].msg = data.msg;
-                  }
-
-                  chatAgentDatabase.updateChatItem(prev[matchedMessageIndex] as PersistedMessageType);
-                  return [...prev];
-               } else if (prev[matchedMessageIndex].status === "waiting" || prev[matchedMessageIndex].status === "receiving" || prev[matchedMessageIndex].status === "pre-done") {
+               prev[matchedMessageIndex] = {
+                  ...prev[matchedMessageIndex],
+                  ...data,
+               };
+               if (prev[matchedMessageIndex].status === "waiting" || prev[matchedMessageIndex].status === "receiving" || prev[matchedMessageIndex].status === "pre-done") {
                   const updatedMessage = {
                      ...prev[matchedMessageIndex],
                      ...data,
@@ -523,13 +522,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                      tx_hash: data?.onchain_data?.propose_tx || prev[matchedMessageIndex]?.tx_hash,
                   };
                   prev[matchedMessageIndex] = updatedMessage;
-
-                  chatAgentDatabase.updateChatItem(updatedMessage as PersistedMessageType);
-               } else if (data.status === "received" && data.msg && data.msg !== prev[matchedMessageIndex].msg) {
-                  prev[matchedMessageIndex] = {
-                     ...prev[matchedMessageIndex],
-                     ...data,
-                  };
                }
 
                const replyToMessageId = prev[matchedMessageIndex].replyTo;
@@ -544,7 +536,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   prev[userMessageIndex] = updatedUserMessage;
                }
 
-               chatAgentDatabase.updateChatItem(prev[matchedMessageIndex] as PersistedMessageType);
+               if (isUpdateDB) {
+                  chatAgentDatabase.updateChatItem(prev[matchedMessageIndex] as PersistedMessageType);
+               }
                return [...prev];
             }
             return prev;
@@ -621,6 +615,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isStopReceiving,
          isAllowChat,
          scrollRef,
+         updateMessage,
       };
    }, [
       messages,
@@ -638,6 +633,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       isStopReceiving,
       isAllowChat,
       scrollRef,
+      updateMessage,
    ]);
 
    return (

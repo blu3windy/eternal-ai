@@ -24,14 +24,39 @@ type Props = {
    onRetryErrorMessage: (messageId: string) => void;
    isSending: boolean;
    initialMessage?: boolean;
+   updateMessage: (id: string, data: Partial<IChatMessage>, isUpdateDB?: boolean) => void;
 };
 
-const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, initialMessage }: Props) => {
+const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, initialMessage, updateMessage }: Props) => {
    const { selectedAgent } = useContext(AgentContext);
 
    const [hours, setHours] = useState<number | null>(0);
    const [minutes, setMinutes] = useState<number | null>(0);
    const [seconds, setSeconds] = useState<number | null>(0);
+
+   useEffect(() => {
+      if (message.status === "waiting") {
+         const timeout = setTimeout(() => {
+            updateMessage(message.id, {
+               status: "sync-waiting",
+            });
+         }, 1000 * 60 * 3);
+
+         return () => {
+            clearTimeout(timeout);
+         };
+      } else if (message.status === "sync-waiting") {
+         const timeout = setTimeout(() => {
+            updateMessage(message.id, {
+               status: "failed",
+               msg: "Server is not responding",
+            });
+         }, 1000 * 60 * 30);
+         return () => {
+            clearTimeout(timeout);
+         };
+      }
+   }, [message.status, updateMessage, message.id]);
 
    const calcTime = () => {
       const diff = dayjs.duration(dayjs(message?.updatedAt).diff(dayjs(message?.createdAt)));

@@ -8,13 +8,14 @@ import installAgentStorage from "@storage/InstallAgentStorage.ts";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import { commonSelector } from "@stores/states/common/selector.ts";
 import { useSelector } from "react-redux";
+import uniqBy from "lodash.uniqby";
 
 const MonitorProvider: React.FC<
     PropsWithChildren
 > = ({
    children,
 }: PropsWithChildren): React.ReactElement => {
-   const { needReloadList } = useSelector(commonSelector);
+   const { needReloadList, needReloadMonitor } = useSelector(commonSelector);
 
    const [containers, setContainers] = useState<ContainerData[]>([]);
    const [totalMemory, setTotalMemory] = useState({ used: '0MB', total: '0GB' });
@@ -35,11 +36,20 @@ const MonitorProvider: React.FC<
    const onGetDataAgents = async () => {
       try {
          const installIds = await installAgentStorage.getAgentIds();
+         const agent_types = [
+            AgentType.UtilityJS, 
+            AgentType.UtilityPython, 
+            AgentType.Infra, 
+            AgentType.CustomUI, 
+            AgentType.CustomPrompt,
+            AgentType.ModelOnline,
+            AgentType.Model
+         ].join(',');
          const [{ agents }, { agents: agentsAll }] = await Promise.all([
-            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, ids: installIds.length > 0 ? installIds.join(',') : '', agent_types: '5,12,10,11,8' }),
-            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types: '5,12,10,11,8' }),
+            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, ids: installIds.length > 0 ? installIds.join(',') : '', agent_types }),
+            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
          ]);
-         agentsRef.current = [...agents, ...agentsAll];
+         agentsRef.current = uniqBy([...agents, ...agentsAll], 'id');
       } catch {
       }
    }
@@ -214,13 +224,13 @@ const MonitorProvider: React.FC<
             clearInterval(intervalRef.current);
          }
       };
-   }, [needReloadList]); // Empty dependency array means this effect runs once on mount
+   }, [needReloadMonitor]); // Empty dependency array means this effect runs once on mount
 
    useEffect(() => {
       // Initial fetch
       onGetDataAgents();
       // Set up the interval
-      intervalAgentRef.current = setInterval(onGetDataAgents, 30000);
+      intervalAgentRef.current = setInterval(onGetDataAgents, 40000);
       // Cleanup function
       return () => {
          if (intervalAgentRef.current) {
