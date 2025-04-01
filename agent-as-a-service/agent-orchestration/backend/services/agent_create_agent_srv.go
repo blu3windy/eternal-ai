@@ -820,7 +820,10 @@ func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 						"status = ?":           {models.AgentTwitterPostStatusNew},
 						"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
 					},
-					map[string][]interface{}{},
+					map[string][]interface{}{
+						"AgentInfo":             {},
+						"AgentInfo.TwitterInfo": {},
+					},
 					[]string{
 						"post_at desc",
 					},
@@ -830,22 +833,26 @@ func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 				if err != nil {
 					return errs.NewError(err)
 				}
-				for _, twitterPost := range twitterPosts {
-					var err error
-					if s.conf.Clanker.IsCreateToken {
-						err = s.CreateClankerTokenForVideoByPostID(ctx, twitterPost.ID)
-						if err != nil {
-							retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
-						}
-					}
+				if len(twitterPosts) > 0 {
+					s.UpdateTwitterAccessToken(ctx, twitterPosts[0].AgentInfo.TwitterInfo.ID)
 
-					if err == nil {
-						err = s.AgentTwitterPostGenerateVideoByUserTweetId(ctx, twitterPost.ID)
-						if err != nil {
-							retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
+					for _, twitterPost := range twitterPosts {
+						var err error
+						if s.conf.Clanker.IsCreateToken {
+							err = s.CreateClankerTokenForVideoByPostID(ctx, twitterPost.ID)
+							if err != nil {
+								retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
+							}
 						}
-					}
 
+						if err == nil {
+							err = s.AgentTwitterPostGenerateVideoByUserTweetId(ctx, twitterPost.ID)
+							if err != nil {
+								retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
+							}
+						}
+
+					}
 				}
 			}
 			return retErr
@@ -887,7 +894,7 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 						if videoUrl != "" {
 							mediaID, err = s.twitterAPI.UploadVideo(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
 							if err != nil {
-								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL] upload video to twitter err: %v ", err))
+								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL] upload video to twitter db_id:%v , err: %v ", twitterPost.ID, err))
 							}
 						}
 
