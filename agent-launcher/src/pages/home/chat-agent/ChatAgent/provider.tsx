@@ -430,7 +430,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   status: "done",
                } as TaskItem);
             }
-         } else if (selectedAgent?.agent_type === AgentType.Model) {
+         } else if ([AgentType.Model, AgentType.ModelOnline].includes(selectedAgent?.agent_type as any)) {
             updateTaskItem({
                id: messageId,
                status: "processing",
@@ -440,35 +440,56 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
 
-            await AgentAPI.chatAgentModelStreamCompletions({
-               payload: {
-                  ...params,
-               },
-               streamHandlers: getStreamerHandler(messageId),
-            });
-         } else if (selectedAgent?.agent_type === AgentType.ModelOnline) {
-            updateTaskItem({
-               id: messageId,
-               status: "processing",
-               message: sendTxt,
-               title: selectedAgent?.agent_name || "Agent",
-               agent: selectedAgent!,
-               agentType: selectedAgent?.agent_type,
-            });
+            try {
+               const response = await AgentAPI.chatAgentModelStreamCompletions({
+                  payload: params,
+                  streamHandlers: getStreamerHandler(messageId),
+               });
 
-            const res = await AgentAPI.chatAgentModel({
-               payload: params,
-            });
-            console.log("res>>>>>", res);
+               // If response is undefined/null, it means it's a streaming response
+               // which is handled by streamHandlers
+               if (!response) {
+                  return;
+               }
 
-            updateMessage(messageId, {
-               msg: res.choices[0].message.content,
-               status: "received",
-            });
-            updateTaskItem({
-               id: messageId,
-               status: "done",
-            } as TaskItem);
+               // Handle non-streaming response
+               if (!response.success) {
+                  updateMessage(messageId, {
+                     msg: response.error || "Error occurred",
+                     status: "failed",
+                  });
+                  updateTaskItem({
+                     id: messageId,
+                     status: "failed",
+                     message: sendTxt,
+                     title: selectedAgent?.agent_name || "Agent",
+                     agent: selectedAgent!,
+                     agentType: selectedAgent?.agent_type || AgentType.Normal,
+                  } as TaskItem);
+               } else {
+                  updateMessage(messageId, {
+                     msg: response.data.choices[0].message.content,
+                     status: "received",
+                  });
+                  updateTaskItem({
+                     id: messageId,
+                     status: "done",
+                  } as TaskItem);
+               }
+            } catch (error) {
+               updateMessage(messageId, {
+                  msg: error instanceof Error ? error.message : "Error occurred",
+                  status: "failed",
+               });
+               updateTaskItem({
+                  id: messageId,
+                  status: "failed",
+                  message: sendTxt,
+                  title: selectedAgent?.agent_name || "Agent",
+                  agent: selectedAgent!,
+                  agentType: selectedAgent?.agent_type || AgentType.Normal,
+               } as TaskItem);
+            }
          } else {
             updateTaskItem({
                id: messageId,

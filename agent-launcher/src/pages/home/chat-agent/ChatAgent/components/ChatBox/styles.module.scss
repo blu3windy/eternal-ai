@@ -17,6 +17,19 @@
   //   70vh - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 60px - 32px
   // );
 
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+
   .btnStart {
     height: 60px;
     min-width: 300px;
