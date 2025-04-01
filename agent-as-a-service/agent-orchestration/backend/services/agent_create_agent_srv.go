@@ -531,6 +531,27 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 			tweetId, v.User.UserName, fullText), s.conf.VideoFailSyntaxTelegramAlert)
 		return nil, nil
 	}
+	if source != "admin_api" {
+		limitPost, err := s.dao.FindAgentTwitterPost(
+			tx,
+			map[string][]interface{}{
+				"twitter_id = ?":  {v.User.ID},
+				"created_at >= ?": {time.Now().Add(-24 * time.Hour)},
+			},
+			map[string][]interface{}{},
+			[]string{},
+			0, 10,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if len(limitPost) >= 5 {
+			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[SKIP_LIMIT_GEN_VIDEO] gen video, "+
+				"twitter_user=%v tweet_id=%v,  total_24h :%v,post :%v ",
+				v.User.UserName, v.Tweet.ID, fullText, len(limitPost)))
+			return nil, nil
+		}
+	}
 
 	imageToVideoInfo := s.DetectTweetIsImageToVideo(twitterInfo, v)
 	entityType := models.AgentTwitterPostTypeText2Video
