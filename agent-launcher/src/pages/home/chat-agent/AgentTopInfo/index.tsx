@@ -401,7 +401,9 @@ const AgentTopInfo = () => {
                      <Percent24h clsName={s.percent} percent={selectedAgent?.meme?.percent || 0} />
                   </Flex>
                   {selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey && (
-                     <AgentWallet color={colorWallet}/>
+                     <AgentTradeProvider>
+                        <AgentWallet color={colorWallet}/>
+                     </AgentTradeProvider>
                   )}
                   <Button className={s.btnBuy} onClick={onOpenDrawer}>
                      Buy

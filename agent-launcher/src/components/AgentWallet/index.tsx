@@ -1,8 +1,10 @@
 import {
   Box,
   Button,
+  Flex,
   HStack,
   IconButton,
+  Image,
   Menu,
   MenuButton,
   MenuItem,
@@ -18,20 +20,67 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import BaseModal from '@components/BaseModal';
+import ERC20Balance from '@components/ERC20Balance';
+import { IToken } from '@interfaces/token';
 import ExportPrivateKey from '@pages/home/chat-agent/ExportPrivateKey';
 import { AgentContext } from '@pages/home/provider/AgentContext';
-import React, { useContext } from 'react';
+import { AgentTradeContext } from '@pages/home/trade-agent/provider';
+import { agentsTradeSelector } from '@stores/states/agent-trade/selector';
+import { formatName, getTokenIconUrl, parseSymbolName } from '@utils/string';
+import React, { useContext, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import s from './styles.module.scss';
 
 interface Props {
   color?: string;
 }
 
+const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: number }) => {
+  const { currentChain } = useSelector(agentsTradeSelector);
+  const [balance, setBalance] = useState<string | undefined>("0");
+  const [usdValue, setUsdValue] = useState<string | undefined>("0");
+  
+  return (
+    <HStack key={index} justify="space-between">
+      <HStack>
+      <Image
+        borderRadius={"100px"}
+        width={"24px"}
+        height={"24px"}
+        src={token.icon}
+      />
+        <VStack align="start" spacing={0}>
+          <Text fontSize={'14px'} fontWeight={500} color={'#000'}>{token?.symbol}</Text>
+          <Text fontSize={'12px'} fontWeight={400} color={'#000'} opacity={0.6}>{token?.name}</Text>
+        </VStack>
+      </HStack>
+      <VStack align="end" spacing={0}>
+        <Flex>
+        <ERC20Balance
+              token={token}
+              maxDecimal={5}
+              onBalanceChange={(_amount) => setBalance(_amount)}
+              chain={currentChain}
+            />
+            &nbsp;
+            <Text color={"#000"} fontWeight={500} fontSize={"14px"}>
+              {formatName(parseSymbolName(token)?.symbol as string, 50)}
+            </Text>
+        </Flex>
+        <Text fontSize={'12px'} fontWeight={400} color={'#000'} opacity={0.6}>${usdValue?.toLocaleString()}</Text>
+      </VStack>
+    </HStack>
+  )
+}
 const AgentWallet: React.FC<Props> = ({ color }) => {
-  const { agentWallet } = useContext(AgentContext);
+  const { agentWallet, selectedAgent } = useContext(AgentContext);
+  const { pairs } = useContext(AgentTradeContext);
+
   const { onCopy: onCopyAddress } = useClipboard(agentWallet?.address || '');
   const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
-  const toast = useToast(); 
+  const toast = useToast();
+
+  console.log("pairs 2222", pairs);
 
   const handleExportPrvKey = () => {
     onModalOpen();
@@ -51,32 +100,22 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
   const balance = {
     btc: 0,
     usd: 0,
-    tokens: [
-      // {
-      //   symbol: "BTC",
-      //   network: "Ethereum",
-      //   balance: 0.07772,
-      //   usdValue: 3200.53
-      // },
-      // {
-      //   symbol: "ETH",
-      //   network: "Ethereum",
-      //   balance: 0.07772,
-      //   usdValue: 3200.53
-      // },
-      // {
-      //   symbol: "USDT",
-      //   network: "Ethereum",
-      //   balance: 0.07772,
-      //   usdValue: 3200.53
-      // }
-    ]
   };
+
+  const tokens = useMemo(() => {
+    return pairs.map(p => {
+      return {
+        ...p,
+        icon: p.symbol === 'EAI' ? getTokenIconUrl(p) : getTokenIconUrl(selectedAgent)
+      }
+    })
+  }, [pairs]);
+
+  console.log("tokens 2222", tokens);
 
   const WalletContent = () => (
     <Box className={s.walletCard}>
       <VStack align="stretch" spacing={4}>
-        {/* Header with address and menu */}
         <HStack justify="space-between" align="center">
           <HStack>
             <Text fontSize={'14px'} fontWeight={400} color={'#000'} opacity={0.6}>Address: </Text>
@@ -107,7 +146,6 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
           </Menu>
         </HStack>
 
-        {/* Main balance */}
         <VStack align="stretch" spacing={1}>
           <Text fontSize="24px" fontWeight="500" color="#000">
             {balance.btc.toLocaleString()} EAI
@@ -117,22 +155,9 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
           </Text>
         </VStack>
 
-        {/* Token list */}
         <VStack align="stretch" spacing={3}>
-          {balance.tokens.map((token, index) => (
-            <HStack key={index} justify="space-between">
-              <HStack>
-                <TokenIcon symbol={token.symbol} />
-                <VStack align="start" spacing={0}>
-                  <Text fontWeight="medium">{token.symbol}</Text>
-                  <Text fontSize="sm" color="gray.600">{token.network}</Text>
-                </VStack>
-              </HStack>
-              <VStack align="end" spacing={0}>
-                <Text>{token.balance.toLocaleString()} BVM</Text>
-                <Text fontSize="sm" color="gray.600">${token.usdValue.toLocaleString()}</Text>
-              </VStack>
-            </HStack>
+          {tokens.map((token, index) => (
+            <TokenItem token={token} index={index} />
           ))}
         </VStack>
       </VStack>
@@ -161,36 +186,6 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
       </BaseModal>
     </>
   );
-};
-
-// Icons components
-
-const TokenIcon = ({ symbol }: { symbol: string }) => {
-  const icons: { [key: string]: JSX.Element } = {
-    BTC: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="12" fill="#F7931A" />
-        <path d="M16.45 10.2c.2-1.4-.9-2.2-2.4-2.7l.5-2-1.2-.3-.5 1.9c-.3-.1-.6-.2-1-.2l.5-1.9-1.2-.3-.5 2c-.2-.1-.5-.1-.7-.2l-1.6-.4-.3 1.3s.9.2.9.2c.5.1.6.4.5.7l-.5 2.1c0 0 .1 0 .1 0-.1 0-.1 0-.2 0l-.7 3c-.1.2-.2.4-.6.3 0 0-.9-.2-.9-.2l-.6 1.4 1.5.4c.3.1.6.2.8.2l-.5 2 1.2.3.5-2c.3.1.6.2 1 .2l-.5 2 1.2.3.5-2c2.2.4 3.8.2 4.5-1.7.6-1.5 0-2.4-1.2-3 .9-.2 1.5-.8 1.7-1.9zm-3 4.2c-.4 1.7-3.3.8-4.3.5l.8-3.1c1 .2 4 .7 3.5 2.6zm.4-4.4c-.4 1.5-2.9.8-3.7.6l.7-2.8c.8.2 3.4.5 3 2.2z" fill="white" />
-      </svg>
-    ),
-    ETH: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="12" fill="#627EEA" />
-        <path d="M12 15.8V9.6l-4.6 2.1L12 15.8z" fill="white" fillOpacity="0.6" />
-        <path d="M12 9.6v6.2l4.6-2.1L12 9.6z" fill="white" />
-        <path d="M12 8.3v-3L7.4 11.7 12 8.3z" fill="white" fillOpacity="0.2" />
-        <path d="M12 8.3v-3l4.6 6.4L12 8.3z" fill="white" fillOpacity="0.6" />
-      </svg>
-    ),
-    USDT: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="12" fill="#26A17B" />
-        <path d="M12 4.5v15M7.5 7.5h9" stroke="white" strokeWidth="2" />
-      </svg>
-    ),
-  };
-
-  return icons[symbol] || <Box w="24px" h="24px" bg="gray.200" borderRadius="full" />;
 };
 
 export default AgentWallet; 
