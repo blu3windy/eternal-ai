@@ -61,6 +61,10 @@ while [[ "$#" -gt 0 ]]; do
       CONTAINER_ID="$2"
       shift 2
       ;;
+    --environment)
+      ENVIRONMENT="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown option: $1"
       usage
@@ -127,20 +131,39 @@ docker_build() {
 }
 
 run_container_custom_prompt() {
+    # Parse the ENVIRONMENT string into Docker environment variables
+    IFS=' ' read -r -a env_vars <<< "$ENVIRONMENT"
+
+    echo "
+        docker run -d \
+        $(for var in "${env_vars[@]}"; do
+            trimmed_var=$(echo "$var" | xargs); # Trim spaces
+            echo "-e $trimmed_var"
+        done) \
+        -e PRIVATE_KEY="$PRIVATE_KEY" \
+        -e WALLET_ADDRESS="$WALLET_ADDRESS" \
+        --network network-agent-external \
+        --add-host=localmodel:host-gateway \
+        --name "$CONTAINER_NAME" \
+        "$IMAGE_NAME"
+    "
+
+    echo "Environment Variables: ${env_vars[@]}"
     cd_docker_build_source_path
     docker_build
-    if [ -n "$PORT" ]; then
-      docker run -d \
-          -e PRIVATE_KEY="$PRIVATE_KEY" \
-          -e WALLET_ADDRESS="$WALLET_ADDRESS" \
-          $PORT \
-          --network network-agent-external \
-          --add-host=localmodel:host-gateway \
-          --name "$CONTAINER_NAME" \
-          "$IMAGE_NAME"
-    else
-      docker run -d -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --network network-agent-external --add-host=localmodel:host-gateway --name "$CONTAINER_NAME" "$IMAGE_NAME"
-    fi
+
+    # Construct the docker run command with environment variables
+    docker run -d \
+        $(for var in "${env_vars[@]}"; do
+            trimmed_var=$(echo "$var" | xargs); # Trim spaces
+            echo "-e $trimmed_var"
+        done) \
+        -e PRIVATE_KEY="$PRIVATE_KEY" \
+        -e WALLET_ADDRESS="$WALLET_ADDRESS" \
+        --network network-agent-external \
+        --add-host=localmodel:host-gateway \
+        --name "$CONTAINER_NAME" \
+        "$IMAGE_NAME"
 }
 
 run_container_open_ai() {

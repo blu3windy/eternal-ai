@@ -34,6 +34,8 @@ class CAgentTokenAPI extends CApiClient {
          if (agent?.required_info && typeof agent?.required_info === "string") {
             agent.required_info = JSON.parse(agent?.required_info);
          }
+
+         agent.required_env = agent?.required_env || true;
          return agent;
       });
 
