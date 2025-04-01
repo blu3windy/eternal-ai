@@ -2,7 +2,7 @@ import { Button, Divider, Flex, Image, Text } from "@chakra-ui/react";
 import CustomMarkdown from "@components/CustomMarkdown";
 import { LLM_MODELS } from "@constants/models.ts";
 import useParseLogs from "@hooks/useParseLogs.ts";
-import { AgentType } from "@pages/home/list-agent/constants";
+import { AgentType, AgentTypeName } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { formatCurrency, labelAmountOrNumberAdds } from "@utils/format.ts";
 import { compareString } from "@utils/string.ts";
@@ -57,15 +57,8 @@ const AgentDetail = () => {
       }
    }, [selectedAgent]);
 
-   const modelInfo = useMemo(() => {
-      const modelAgent = availableModelAgents?.find(agent => agent.id === selectedAgent?.id);
+   const requirements = selectedAgent?.required_info;
 
-      if (modelAgent) {
-         return LLM_MODELS.find(model => compareString(model.hash, modelAgent.ipfsHash));
-      }
-
-      return undefined;
-   }, [selectedAgent, availableModelAgents]);
 
    const handleInstall = () => {
       if (isInstalled) return;
@@ -129,11 +122,49 @@ const AgentDetail = () => {
 
          </Flex>
          <Divider color={'#FFFFFF33'} my={'40px'} />
-         <Flex gap={"8px"}>
-            <Text className={s.infoText}>
-               {selectedAgent?.meme?.market_cap && (
-                  <>
-                     <Text as={'span'}>
+         <Flex gap={"20px"}>
+            <Flex className={s.infoBox}>
+               <Text className={s.infoText}>
+                  Type
+               </Text>
+               <Text className={s.infoValue}>
+                  {AgentTypeName[selectedAgent?.agent_type]}
+               </Text>
+            </Flex>
+
+            {
+               requirements?.disk && (
+                  <Flex className={s.infoBox}>
+                     <Text className={s.infoText}>
+                     Storage
+                     </Text>
+                     <Text className={s.infoValue}>
+                        {requirements?.disk} GB
+                     </Text>
+                  </Flex>
+               )
+            }
+
+            {
+               requirements?.ram && (
+                  <Flex className={s.infoBox}>
+                     <Text className={s.infoText}>
+                     RAM
+                     </Text>
+                     <Text className={s.infoValue}>
+                        {requirements?.ram} GB
+                     </Text>
+                  </Flex>
+               )
+            }
+
+            {
+               selectedAgent?.meme?.market_cap && (
+                  <Flex className={s.infoBox}>
+                     <Text className={s.infoText}>
+                        Market cap
+                     </Text>
+                     <Text className={s.infoValue}>
                         {Number(selectedAgent?.meme?.market_cap) > 0
                            ? `$${formatCurrency(
                               selectedAgent?.meme?.market_cap,
@@ -145,23 +176,27 @@ const AgentDetail = () => {
                            )}`
                            : '$0'}
                      </Text>
-                     {' '}<Text as={'span'} color={"#FFF"}>MC</Text>
-                  </>
-               )}
-            </Text>
-            <Text className={s.infoText}>{formatCurrency(selectedAgent?.prompt_calls, 0, 0)}{' '}<Text as={'span'} color={"#FFF"}>prompt{labelAmountOrNumberAdds(selectedAgent?.prompt_calls || 0)}</Text></Text>
-            {
-               modelInfo && (
-                  <>
-                     <Text className={s.infoText}>
-                        Storage required: {modelInfo.size * 2} GB
-                     </Text>
-                     <Text className={s.infoText}>
-                        RAM required: {modelInfo.ram} GB
-                     </Text>
-                  </>
+                  </Flex>
                )
             }
+
+            <Flex className={s.infoBox}>
+               <Text className={s.infoText}>
+                  installed
+               </Text>
+               <Text className={s.infoValue}>
+                  {formatCurrency(selectedAgent?.installed_count, 0, 0)}
+               </Text>
+            </Flex>
+
+            <Flex className={s.infoBox}>
+               <Text className={s.infoText}>
+                  likes
+               </Text>
+               <Text className={s.infoValue}>
+                  {formatCurrency(selectedAgent?.likes, 0, 0)}
+               </Text>
+            </Flex>
          </Flex>
          <Divider color={'#FFFFFF33'} my={'40px'} />
          <Flex h={'100%'} overflow={'auto'} marginLeft={'8px'} marginBottom={'28px'} className={s.wDescription}>
@@ -175,7 +210,7 @@ const AgentDetail = () => {
                </div>
             )}
          </Flex>
-      </Flex>
+      </Flex >
    )
 }
 
