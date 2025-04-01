@@ -52,10 +52,10 @@ const ChatBox = () => {
             // }
          >
             {
-               isCustomUI ? (
+               true ? (
                   <Box width="100%">
                      <WebView 
-                        url={`http://localhost:${customUIPort}`}
+                        url={`https://www.w3schools.com/tags/tag_a.asp`}
                         height="calc(100vh - 100px)"
                         width="100%"
                      />
