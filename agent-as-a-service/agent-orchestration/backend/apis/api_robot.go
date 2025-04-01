@@ -5,6 +5,7 @@ import (
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
+	blockchainutils "github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/blockchain_utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,4 +35,34 @@ func (s *Server) GetRobotSaleWallet(c *gin.Context) {
 		return
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewRobotSaleWalletResp(robotSaleWallet)})
+}
+
+func (s *Server) RobotCreateToken(c *gin.Context) {
+	ctx := s.requestContext(c)
+	var req blockchainutils.SolanaCreateTokenReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	robotProject, err := s.nls.RobotCreateToken(ctx, req.ProjectID, &req)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewRobotProjectResp(robotProject)})
+}
+
+func (s *Server) RobotTransferToken(c *gin.Context) {
+	ctx := s.requestContext(c)
+	var req serializers.RobotTokenTransferReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	transfer, err := s.nls.RobotTransferToken(ctx, &req)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewRobotTokenTransferResp(transfer)})
 }

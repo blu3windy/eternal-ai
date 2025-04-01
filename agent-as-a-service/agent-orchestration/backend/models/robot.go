@@ -9,9 +9,15 @@ import (
 
 type RobotProject struct {
 	gorm.Model
-	ProjectID    string `gorm:"unique_index"`
-	ScanEnabled  bool   `gorm:"default:0"`
-	TokenAddress string `gorm:"index"`
+	ProjectID     string `gorm:"unique_index"`
+	ScanEnabled   bool   `gorm:"default:0"`
+	TokenAddress  string `gorm:"index"`
+	TokenSymbol   string
+	TokenName     string
+	TokenImageUrl string
+	TokenSupply   numeric.BigFloat `gorm:"type:decimal(18,9);default:0"`
+	MintHash      string
+	Signature     string
 }
 
 type RobotSaleWallet struct {
@@ -25,4 +31,15 @@ type RobotSaleWallet struct {
 	IsSOLTransferring bool             `gorm:"default:0"`
 	SOLRequestAt      *time.Time       `gorm:"index"`
 	SOLScanAt         *time.Time       `gorm:"index"`
+}
+
+type RobotTokenTransfer struct {
+	gorm.Model
+	ProjectID       string           `gorm:"index"`
+	ReceiverAddress string           `gorm:"index"`
+	Amount          numeric.BigFloat `gorm:"type:decimal(18,9);default:0"`
+	TransferAt      *time.Time       `gorm:"index"`
+	TxHash          string
+	Status          string
+	Error           string
 }

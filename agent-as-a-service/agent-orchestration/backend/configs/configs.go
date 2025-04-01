@@ -286,6 +286,9 @@ type Config struct {
 		AppID     string `json:"app_id"`
 		AppSecret string `json:"app_secret"`
 	} `json:"privy"`
+	Robot struct {
+		TokenAdminAddress string `json:"token_admin_address"`
+	} `json:"robot"`
 }
 
 func (cf *Config) ExistsedConfigKey(networkID uint64, name string) bool {

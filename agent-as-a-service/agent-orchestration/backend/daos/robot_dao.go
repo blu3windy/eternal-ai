@@ -48,6 +48,20 @@ func (d *DAO) FirstRobotSaleWalletByID(tx *gorm.DB, id uint, preloads map[string
 func (d *DAO) FirstRobotProject(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string) (*models.RobotProject, error) {
 	var m models.RobotProject
 	if err := d.first(tx, &m, filters, preloads, orders, false); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &m, nil
+}
+
+func (d *DAO) FirstRobotProjectByID(tx *gorm.DB, id uint, preloads map[string][]interface{}, forUpdate bool) (*models.RobotProject, error) {
+	var m models.RobotProject
+	if err := d.first(tx, &m, map[string][]interface{}{"id = ?": []interface{}{id}}, preloads, nil, forUpdate); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &m, nil

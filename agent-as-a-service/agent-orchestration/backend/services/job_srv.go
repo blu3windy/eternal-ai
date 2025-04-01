@@ -276,6 +276,11 @@ func (s *Service) RunJobs(ctx context.Context) error {
 		},
 	)
 
+	// scan robot sale wallet balance
+	gocron.Every(30).Second().Do(func() {
+		s.JobRobotScanBalanceSOL(context.Background())
+	})
+
 	// create launchpad
 	// gocron.Every(5).Minute().Do(s.JobScanAgentTwitterPostForCreateLaunchpad, context.Background())
 	// gocron.Every(30).Second().Do(
