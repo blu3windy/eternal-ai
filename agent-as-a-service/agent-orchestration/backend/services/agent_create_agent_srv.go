@@ -1764,7 +1764,7 @@ func (s *Service) ModifyTwitterImageRatio(imageUrl string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if res.StatusCode != 200 {
+	if res.StatusCode != http.StatusOK {
 		return "", errors.New(res.Status)
 	}
 	defer res.Body.Close()
@@ -1772,9 +1772,9 @@ func (s *Service) ModifyTwitterImageRatio(imageUrl string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	imageInfo, err := jpeg.Decode(bytes.NewReader(data))
+	imageInfo, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
-		return "", err
+		return imageUrl, nil
 	}
 	width := float64(imageInfo.Bounds().Dx())
 	height := float64(imageInfo.Bounds().Dy())
@@ -1805,6 +1805,9 @@ func (s *Service) ModifyTwitterImageRatio(imageUrl string) (string, error) {
 		return "", err
 	}
 	defer response.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return "", errors.New(res.Status)
+	}
 	output, err := io.ReadAll(response.Body)
 	if err != nil {
 		return "", err
