@@ -613,7 +613,6 @@ const AgentProvider: React.FC<
                      data: agent,
                      isStarting: false,
                   });
-                  dispatch(requestReloadMonitor());
                }, 3000);
             } else {
                updateAgentState(agent.id, {
@@ -655,8 +654,7 @@ const AgentProvider: React.FC<
                isStopping: false,
                isRunning: false,
             });
-            dispatch(requestReloadMonitor());
-         }, 4000);
+         }, 2000);
          throttledCheckAll();
       }
    };
@@ -740,7 +738,6 @@ const AgentProvider: React.FC<
          }, 2000);
          
          throttledCheckAll();
-         dispatch(requestReloadMonitor());
       }
    }
 
