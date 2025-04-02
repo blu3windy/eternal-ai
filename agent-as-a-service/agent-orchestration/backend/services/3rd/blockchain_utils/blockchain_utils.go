@@ -431,9 +431,14 @@ type SolanaCreateTokenReq struct {
 	Amount      uint64 `json:"amount"`
 }
 
-func (c *Client) SolanaCreateToken(req *SolanaCreateTokenReq) (*SolanaCreatePumpfunTokenResp, error) {
+type SolanaCreateTokenResp struct {
+	Signature interface{} `json:"signature"`
+	Mint      string      `json:"mint"`
+}
+
+func (c *Client) SolanaCreateToken(req *SolanaCreateTokenReq) (*SolanaCreateTokenResp, error) {
 	resp := struct {
-		Result *SolanaCreatePumpfunTokenResp `json:"result"`
+		Result *SolanaCreateTokenResp `json:"result"`
 	}{}
 	err := c.methodJSON(
 		http.MethodPost,

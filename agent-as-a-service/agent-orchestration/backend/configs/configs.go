@@ -288,6 +288,7 @@ type Config struct {
 	} `json:"privy"`
 	Robot struct {
 		TokenAdminAddress string `json:"token_admin_address"`
+		TokenSupply       uint64 `json:"token_supply"`
 	} `json:"robot"`
 }
 

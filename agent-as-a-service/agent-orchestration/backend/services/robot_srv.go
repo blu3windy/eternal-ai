@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"strings"
 	"time"
@@ -222,6 +223,10 @@ func (s *Service) RobotCreateToken(ctx context.Context, projectID string, req *b
 			if robotProject != nil && robotProject.TokenAddress == "" {
 				robotProject, _ = s.dao.FirstRobotProjectByID(tx, robotProject.ID, map[string][]interface{}{}, true)
 				req.Address = s.conf.Robot.TokenAdminAddress
+				if req.Amount == 0 {
+					req.Amount = s.conf.Robot.TokenSupply
+				}
+
 				if req.Name != "" && req.Symbol != "" {
 					robotProject.TokenSymbol = req.Symbol
 					robotProject.TokenName = req.Name
@@ -235,7 +240,6 @@ func (s *Service) RobotCreateToken(ctx context.Context, projectID string, req *b
 
 						req.Name = tokenInfo.TokenName
 						req.Symbol = tokenInfo.TokenSymbol
-						// req.Uri = tokenInfo.TokenImageUrl
 					}
 				}
 
@@ -247,7 +251,7 @@ func (s *Service) RobotCreateToken(ctx context.Context, projectID string, req *b
 				robotProject.TokenAddress = solanaCreateTokenResp.Mint
 				robotProject.TokenSupply = numeric.NewBigFloatFromFloat(big.NewFloat(float64(req.Amount)))
 				robotProject.MintHash = solanaCreateTokenResp.Mint
-				robotProject.Signature = solanaCreateTokenResp.Signature
+				robotProject.Signature = fmt.Sprintf("%v", solanaCreateTokenResp.Signature)
 
 				err = s.dao.Save(tx, robotProject)
 				if err != nil {
