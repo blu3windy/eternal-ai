@@ -383,6 +383,7 @@ const AgentProvider: React.FC<
          const res = newTokens.map((t, index) => ({ ...t, ipfsHash: agentHashes[index] }));
 
          refAvailableModelAgents.current = res;
+         fetchInstalledModelAgents();
       } catch (e) {
 
       } finally {
@@ -411,6 +412,7 @@ const AgentProvider: React.FC<
       }) as IAgentToken[] || [];
 
       refInstalledModelAgents.current = installedAgents;
+      checkInstalledModelAgentsRunning();
 
       // if (!runningModelHash) {
       //    const defaultModelAgent = installedAgents.find((t, index) => compareString(t.ipfsHash, MODEL_HASH)) || installedAgents[0];
@@ -1050,6 +1052,7 @@ const AgentProvider: React.FC<
       try {
          const folders = await globalThis.electronAPI.getExistAgentFolders();
          refInstalledUtilityAgents.current = folders || [];
+         checkInstalledUtilityAgentsRunning();
       } catch (error) {
          console.error('Error fetching installed utility agents:', error);
          refInstalledUtilityAgents.current = [];
@@ -1291,7 +1294,7 @@ const AgentProvider: React.FC<
    };
 
    useEffect(() => {
-      checkAllInstalledAgentsRunning();
+      throttledCheckAll();
    }, []);
 
    // const intervalCheckAllAgents = () => {

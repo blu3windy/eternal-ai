@@ -187,13 +187,6 @@ const MonitorProvider: React.FC<
          const filteredData = transformedData
             .filter(container => {
                return (container?.agent || container.name === 'agent-router');
-            })
-            .sort((a, b) => {
-               // Sort running containers first
-               if (a.state === 'running' && b.state !== 'running') return -1;
-               if (a.state !== 'running' && b.state === 'running') return 1;
-               // If both have same state, sort by name
-               return a.name.localeCompare(b.name);
             });
 
          // Update states
