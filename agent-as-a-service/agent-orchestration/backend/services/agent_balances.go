@@ -818,7 +818,6 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 							and agent_utility_installs.deleted_at IS NULL and agent_utility_installs.address = ?
 				`: {strings.ToLower(userAddress)},
 				}
-				sortDefault = "ifnull(agent_infos.priority, 0) desc, agent_utility_installs.created_at desc"
 			} else {
 				filters["agent_infos.id not in (select agent_info_id from agent_utility_installs where address = ?)"] = []any{strings.ToLower(userAddress)}
 				filters["agent_infos.is_public = 1"] = []any{}
