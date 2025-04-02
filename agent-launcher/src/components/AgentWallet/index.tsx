@@ -201,7 +201,7 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
 
         <VStack align="stretch" spacing={3}>
           {tokens.map((token, index) => (
-            <TokenItem token={token} index={index} />
+            <TokenItem token={token} index={index} showUsdValue={true} />
           ))}
         </VStack>
       </VStack>
