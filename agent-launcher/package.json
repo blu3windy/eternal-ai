@@ -1,7 +1,7 @@
 {
   "name": "agent-launcher",
   "private": true,
-  "version": "1.0.4-2025040108453",
+  "version": "1.0.5-2025040202490",
   "type": "module",
   "scripts": {
     "dev": "vite",

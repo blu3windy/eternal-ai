@@ -65,13 +65,8 @@ const AgentDetail = () => {
    const handleInstall =  async () => {
       if (isInstalled) return;
       if (!selectedAgent) return;
-
-      const _selectedAgent = {
-         ...selectedAgent,
-         required_env: true
-      }
-   
-      if (_selectedAgent?.required_env) {
+      
+      if (selectedAgent?.required_env) {
          const environment = await storageModel.getEnvironment({ contractAddress: selectedAgent?.agent_contract_address, chainId: selectedAgent?.network_id });
          console.log('environment', environment);
          
