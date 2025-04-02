@@ -37,13 +37,13 @@ const Loggers = () => {
    }, [handleNewLog]);
 
    // Optimized scrolling using requestAnimationFrame
-   useEffect(() => {
-      if (logRef.current) {
-         requestAnimationFrame(() => {
-                logRef.current!.scrollTop = logRef.current!.scrollHeight;
-         });
-      }
-   }, [logs]);
+   // useEffect(() => {
+   //    if (logRef.current) {
+   //       requestAnimationFrame(() => {
+   //              logRef.current!.scrollTop = logRef.current!.scrollHeight;
+   //       });
+   //    }
+   // }, [logs]);
 
    // Optimized filtering with useMemo
    const filteredLogs = useMemo(

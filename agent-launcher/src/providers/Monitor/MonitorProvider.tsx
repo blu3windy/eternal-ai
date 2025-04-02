@@ -187,13 +187,6 @@ const MonitorProvider: React.FC<
          const filteredData = transformedData
             .filter(container => {
                return (container?.agent || container.name === 'agent-router');
-            })
-            .sort((a, b) => {
-               // Sort running containers first
-               if (a.state === 'running' && b.state !== 'running') return -1;
-               if (a.state !== 'running' && b.state === 'running') return 1;
-               // If both have same state, sort by name
-               return a.name.localeCompare(b.name);
             });
 
          // Update states
@@ -217,7 +210,7 @@ const MonitorProvider: React.FC<
       // Initial fetch
       onGetData();
       // Set up the interval
-      intervalRef.current = setInterval(onGetData, 4000);
+      intervalRef.current = setInterval(onGetData, 2 * 60000);
       // Cleanup function
       return () => {
          if (intervalRef.current) {
@@ -230,7 +223,7 @@ const MonitorProvider: React.FC<
       // Initial fetch
       onGetDataAgents();
       // Set up the interval
-      intervalAgentRef.current = setInterval(onGetDataAgents, 40000);
+      intervalAgentRef.current = setInterval(onGetDataAgents, 5 * 60000);
       // Cleanup function
       return () => {
          if (intervalAgentRef.current) {

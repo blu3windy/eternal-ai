@@ -80,8 +80,6 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
   const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
   const toast = useToast();
 
-  console.log("pairs 2222", pairs);
-
   const handleExportPrvKey = () => {
     onModalOpen();
   };
@@ -110,8 +108,6 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
       }
     })
   }, [pairs]);
-
-  console.log("tokens 2222", tokens);
 
   const WalletContent = () => (
     <Box className={s.walletCard}>
@@ -166,7 +162,7 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
 
   return (
     <>
-      <Popover placement="bottom-end">
+      <Popover placement="start-start">
         <PopoverTrigger>
           <Button className={s.btnWallet}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={color || 'currentColor'}>
