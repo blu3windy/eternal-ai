@@ -1196,15 +1196,20 @@ const AgentProvider: React.FC<
                try {
                   if (agent.agent_type === AgentType.ModelOnline) {
                      const res = await cPumpAPI.checkAgentModelServiceRunning();
+                     const activeModel = await storageModel.getActiveModel();
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: agent.id === activeModel?.id
+                     });
                   } else {
                      const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: true
+                     });
                   }
-                  
-                  updateAgentState(agent.id, {
-                     data: agent,
-                     isInstalled: true,
-                     isRunning: true
-                  });
                   dispatch(requestReloadMonitor());
 
                } catch (err) {
