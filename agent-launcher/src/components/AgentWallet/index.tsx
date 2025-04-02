@@ -21,11 +21,16 @@ import {
 } from '@chakra-ui/react';
 import BaseModal from '@components/BaseModal';
 import ERC20Balance from '@components/ERC20Balance';
+import useERC20Balance from '@components/ERC20Balance/useERC20Balance';
+import { CHAIN_CONFIG, CHAIN_TYPE, MAX_DECIMAL, MIN_DECIMAL } from '@constants/chains';
+import { NATIVE_TOKEN_ADDRESS } from '@contract/token/constants';
 import { IToken } from '@interfaces/token';
 import ExportPrivateKey from '@pages/home/chat-agent/ExportPrivateKey';
 import { AgentContext } from '@pages/home/provider/AgentContext';
 import { AgentTradeContext } from '@pages/home/trade-agent/provider';
+import { ChainIdToChainType } from '@pages/home/trade-agent/provider/constant';
 import { agentsTradeSelector } from '@stores/states/agent-trade/selector';
+import { formatCurrency } from '@utils/format';
 import { formatName, getTokenIconUrl, parseSymbolName } from '@utils/string';
 import React, { useContext, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -39,16 +44,16 @@ const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: 
   const { currentChain } = useSelector(agentsTradeSelector);
   const [balance, setBalance] = useState<string | undefined>("0");
   const [usdValue, setUsdValue] = useState<string | undefined>("0");
-  
+
   return (
     <HStack key={index} justify="space-between">
       <HStack>
-      <Image
-        borderRadius={"100px"}
-        width={"24px"}
-        height={"24px"}
-        src={token.icon}
-      />
+        <Image
+          borderRadius={"100px"}
+          width={"24px"}
+          height={"24px"}
+          src={token.icon}
+        />
         <VStack align="start" spacing={0}>
           <Text fontSize={'14px'} fontWeight={500} color={'#000'}>{token?.symbol}</Text>
           <Text fontSize={'12px'} fontWeight={400} color={'#000'} opacity={0.6}>{token?.name}</Text>
@@ -56,16 +61,16 @@ const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: 
       </HStack>
       <VStack align="end" spacing={0}>
         <Flex>
-        <ERC20Balance
-              token={token}
-              maxDecimal={5}
-              onBalanceChange={(_amount) => setBalance(_amount)}
-              chain={currentChain}
-            />
-            &nbsp;
-            <Text color={"#000"} fontWeight={500} fontSize={"14px"}>
-              {formatName(parseSymbolName(token)?.symbol as string, 50)}
-            </Text>
+          <ERC20Balance
+            token={token}
+            maxDecimal={5}
+            onBalanceChange={(_amount) => setBalance(_amount)}
+            chain={currentChain}
+          />
+          &nbsp;
+          <Text color={"#000"} fontWeight={500} fontSize={"14px"}>
+            {formatName(parseSymbolName(token)?.symbol as string, 50)}
+          </Text>
         </Flex>
         <Text fontSize={'12px'} fontWeight={400} color={'#000'} opacity={0.6}>${usdValue?.toLocaleString()}</Text>
       </VStack>
@@ -73,12 +78,45 @@ const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: 
   )
 }
 const AgentWallet: React.FC<Props> = ({ color }) => {
-  const { agentWallet, selectedAgent } = useContext(AgentContext);
+  const { agentWallet, selectedAgent, coinPrices } = useContext(AgentContext);
   const { pairs } = useContext(AgentTradeContext);
 
   const { onCopy: onCopyAddress } = useClipboard(agentWallet?.address || '');
   const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
   const toast = useToast();
+
+  const chainType = useMemo(() => {
+    if (!selectedAgent?.network_id) return CHAIN_TYPE.BASE;
+    return ChainIdToChainType[selectedAgent.network_id] || CHAIN_TYPE.BASE;
+  }, [selectedAgent?.network_id]);
+
+  const chainConfig = useMemo(() => {
+    return CHAIN_CONFIG[chainType];
+  }, [chainType]);
+
+  const nativeToken = useMemo(() => {
+    return {
+      address: NATIVE_TOKEN_ADDRESS,
+      name: chainConfig?.nativeCurrency?.name || "Ethereum",
+      symbol: chainConfig?.nativeCurrency?.symbol || "ETH",
+    }
+  }, [chainConfig]);
+
+  const { balance: nativeBalance } = useERC20Balance({
+    token: nativeToken,
+    chain: chainType,
+    walletAddress: agentWallet?.address,
+  });
+  
+  const usdValue = useMemo(() => {
+    return Number(nativeBalance || 0) * (coinPrices?.[nativeToken?.symbol as string] || 0);
+  }, [nativeBalance, coinPrices, nativeToken?.symbol]);
+
+  console.log('agentWallet', agentWallet);
+  console.log('balanceETH', nativeBalance);
+  console.log('nativeToken', nativeToken);
+  console.log('coinPrices', coinPrices);
+  console.log('=== == ')
 
   const handleExportPrvKey = () => {
     onModalOpen();
@@ -93,11 +131,6 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
       isClosable: true,
       position: "bottom",
     });
-  };
-
-  const balance = {
-    btc: 0,
-    usd: 0,
   };
 
   const tokens = useMemo(() => {
@@ -144,10 +177,12 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
 
         <VStack align="stretch" spacing={1}>
           <Text fontSize="24px" fontWeight="500" color="#000">
-            {balance.btc.toLocaleString()} EAI
+            {Number(nativeBalance) === 0 || !nativeBalance
+              ? "0"
+              : formatCurrency(nativeBalance, MIN_DECIMAL, MAX_DECIMAL)} {nativeToken?.symbol}
           </Text>
           <Text fontSize={'14px'} fontWeight={400} color={'#000'} opacity={0.6}>
-            ${balance.usd.toLocaleString()}
+            ${formatCurrency(usdValue, MIN_DECIMAL, MIN_DECIMAL)}
           </Text>
         </VStack>
 
@@ -162,15 +197,27 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
 
   return (
     <>
-      <Popover placement="start-start">
+      <Popover placement="bottom-start">
         <PopoverTrigger>
-          <Button className={s.btnWallet}>
+          <Flex fontSize="13px" fontWeight="400" color="#000" cursor={'pointer'} gap={'4px'}>
+            <Text as={'span'} opacity={0.7}>Balance: </Text>
+            <Text as={'span'}>
+              {Number(nativeBalance) === 0 || !nativeBalance
+                ? "0"
+                : formatCurrency(nativeBalance, MIN_DECIMAL, MAX_DECIMAL)} {nativeToken?.symbol}
+            </Text>
+            <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 8L10 13L15 8" stroke="#686A6C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </Flex>
+
+          {/* <Button className={s.btnWallet}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill={color || 'currentColor'}>
               <path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c17.7 0 32-14.3 32-32s-14.3-32-32-32H64zM416 272c0 8.8-7.2 16-16 16H304c-8.8 0-16-7.2-16-16s7.2-16 16-16H400c8.8 0 16 7.2 16 16z" />
             </svg>
-          </Button>
+          </Button> */}
         </PopoverTrigger>
-        <PopoverContent>
+        <PopoverContent minWidth={'400px'} border={'none'}>
           <PopoverBody p={0}>
             <WalletContent />
           </PopoverBody>
