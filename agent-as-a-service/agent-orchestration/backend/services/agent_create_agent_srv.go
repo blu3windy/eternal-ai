@@ -1,10 +1,15 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/jpeg"
 	io "io"
 	"net/http"
 	"regexp"
@@ -26,6 +31,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/twitter"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
+	"github.com/nfnt/resize"
 )
 
 // func (s *Service) JobScanAgentTwitterPostForCreateAgent(ctx context.Context) error {
@@ -531,6 +537,27 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 			tweetId, v.User.UserName, fullText), s.conf.VideoFailSyntaxTelegramAlert)
 		return nil, nil
 	}
+	if source != "admin_api" {
+		limitPost, err := s.dao.FindAgentTwitterPost(
+			tx,
+			map[string][]interface{}{
+				"twitter_id = ?":  {v.User.ID},
+				"created_at >= ?": {time.Now().Add(-24 * time.Hour)},
+			},
+			map[string][]interface{}{},
+			[]string{},
+			0, 10,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if len(limitPost) >= 10 {
+			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[SKIP_LIMIT_GEN_VIDEO] gen video, "+
+				"twitter_user=%v tweet_id=%v,  total_24h :%v,post :%v ",
+				v.User.UserName, v.Tweet.ID, fullText, len(limitPost)))
+			return nil, nil
+		}
+	}
 
 	imageToVideoInfo := s.DetectTweetIsImageToVideo(twitterInfo, v)
 	entityType := models.AgentTwitterPostTypeText2Video
@@ -546,6 +573,10 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 			} else {
 				break
 			}
+		}
+		extractMediaContent, err = s.ModifyTwitterImageRatio(extractMediaContent)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -1726,6 +1757,74 @@ func (s *Service) DetectTweetIsImageToVideo(twitterInfo *models.TwitterInfo, ite
 		IsImageToVideo:     isImageToVideo,
 		LighthouseImageUrl: lighthouse.IPFSGateway + cid,
 	}
+}
+
+func (s *Service) ModifyTwitterImageRatio(imageUrl string) (string, error) {
+	res, err := http.Get(imageUrl)
+	if err != nil {
+		return "", err
+	}
+	if res.StatusCode != 200 {
+		return "", errors.New(res.Status)
+	}
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+	imageInfo, err := jpeg.Decode(bytes.NewReader(data))
+	if err != nil {
+		return "", err
+	}
+	width := float64(imageInfo.Bounds().Dx())
+	height := float64(imageInfo.Bounds().Dy())
+	ratio := height / width
+	if ratio <= 2.5 && ratio >= 0.4 {
+		return imageUrl, nil
+	}
+	newWidth := imageInfo.Bounds().Dx()
+	newHeight := newWidth * 2 / 5 // height = width/2.5
+	if width < height {
+		newHeight = imageInfo.Bounds().Dy()
+		newWidth = newHeight * 2 / 5 // width = height/2.5
+	}
+	resizedImg := resize.Resize(uint(newWidth), uint(newHeight), imageInfo, resize.Lanczos3)
+
+	filledImg := image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
+
+	dstRect := image.Rect(0, 0, resizedImg.Bounds().Dx(), resizedImg.Bounds().Dy())
+	draw.Draw(filledImg, filledImg.Bounds(), &image.Uniform{C: color.White}, image.Point{}, draw.Src) // Fill with white
+	draw.Draw(filledImg, dstRect, resizedImg, image.Point{}, draw.Over)
+	var buf bytes.Buffer
+	err = jpeg.Encode(&buf, filledImg, nil)
+	if err != nil {
+		return "", err
+	}
+	response, err := http.Post(s.conf.LighthouseUploadBinaryUrl, "", bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+	output, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+	type LightHouseResult struct {
+		Error string `json:"error"`
+		Data  string `json:"data"`
+	}
+	var result LightHouseResult
+	err = json.Unmarshal(output, &result)
+	if err != nil {
+		return "", err
+	}
+	if len(result.Error) > 0 {
+		return "", errors.New(result.Error)
+	}
+	if len(result.Data) == 0 {
+		return "", errors.New("can not upload image to lighthouse")
+	}
+	return strings.ReplaceAll(result.Data, "ipfs://", "https://gateway.lighthouse.storage/ipfs/"), err
 }
 
 func (s *Service) GetFirstImageFromTweet(twitterInfo *models.TwitterInfo, tweetID string) (*TweetImageToVideo, error) {
