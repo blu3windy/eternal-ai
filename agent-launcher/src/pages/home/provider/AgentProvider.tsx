@@ -654,7 +654,7 @@ const AgentProvider: React.FC<
                isStopping: false,
                isRunning: false,
             });
-         }, 2500);
+         }, 4000);
          throttledCheckAll();
       }
    };
