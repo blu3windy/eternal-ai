@@ -31,10 +31,11 @@ import { addressFormater, compareString } from '@utils/string';
 import cx from 'clsx';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
-import AgentWallet from '../../../../components/AgentWallet';
+import AgentWallet from '@components/AgentWallet';
 import s from './styles.module.scss';
 import storageModel from '@storage/StorageModel';
 import SetupEnvModel from '../SetupEnvironment';
+import BaseModal from '@components/BaseModal';
 
 
 const AgentTopInfo = () => {
