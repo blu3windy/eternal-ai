@@ -1,13 +1,11 @@
 import {
-    Box,
-    Button,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    Input,
-    useToast,
-    VStack
+  Box,
+  Text,
+  useToast,
+  VStack
 } from '@chakra-ui/react';
+import BaseButton from "@components/BaseButton";
+import InputText from '@components/Input/InputText';
 import CAgentTradeContract from "@contract/agent-trade";
 import { useDebounce } from '@hooks/useDebounce';
 import { IToken } from '@interfaces/token';
@@ -16,9 +14,10 @@ import { AgentTradeContext } from '@pages/home/trade-agent/provider';
 import localStorageService from '@storage/LocalStorageService';
 import { agentsTradeSelector } from '@stores/states/agent-trade/selector';
 import { compareString } from '@utils/string';
-import { Field, Form, Formik, useFormikContext } from 'formik';
+import { Form, Formik } from 'formik';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import * as Yup from "yup";
 import s from './styles.module.scss';
 
 interface ImportTokenFormValues {
@@ -29,7 +28,23 @@ interface ImportTokenFormValues {
 
 const STORAGE_KEY_PREFIX = 'imported_tokens_';
 
-const ImportTokenForm = ({ values, isSubmitting }: { values: ImportTokenFormValues, isSubmitting: boolean }) => {
+const ImportTokenForm = ({ 
+  values, 
+  isSubmitting, 
+  setFieldValue, 
+  dirty,
+  touched,
+  errors,
+  handleBlur
+}: { 
+  values: ImportTokenFormValues, 
+  isSubmitting: boolean,
+  setFieldValue: (field: string, value: any) => void,
+  dirty: boolean,
+  touched: { [key: string]: boolean },
+  errors: { [key: string]: string },
+  handleBlur: (e: React.FocusEvent<any>) => void
+}) => {
   const { pairs } = useContext(AgentTradeContext);
   const { selectedAgent } = useContext(AgentContext);
   const [isSearching, setIsSearching] = useState(false);
@@ -37,8 +52,13 @@ const ImportTokenForm = ({ values, isSubmitting }: { values: ImportTokenFormValu
   const [storedTokens, setStoredTokens] = useState<IToken[]>([]);
   const { currentChain } = useSelector(agentsTradeSelector);
   const agentContract = new CAgentTradeContract();
-  const formik = useFormikContext<ImportTokenFormValues>();
   const debouncedAddress = useDebounce(values.address, 500);
+
+  // console.log('touched', touched);
+  // console.log('errors', errors);
+  // console.log('values', values);
+  // console.log('tokenInfo', tokenInfo);
+  // console.log('============');
 
   useEffect(() => {
     const loadStoredTokens = async () => {
@@ -73,8 +93,8 @@ const ImportTokenForm = ({ values, isSubmitting }: { values: ImportTokenFormValu
         
         if (info) {
           setTokenInfo(info);
-          formik.setFieldValue('symbol', info.symbol || '');
-          formik.setFieldValue('decimals', '18');
+          setFieldValue('symbol', info.symbol || '');
+          setFieldValue('decimals', '18');
         }
       } catch (error) {
         console.error('Error searching token:', error);
@@ -87,49 +107,6 @@ const ImportTokenForm = ({ values, isSubmitting }: { values: ImportTokenFormValu
     getTokenInfo();
   }, [debouncedAddress, currentChain]);
 
-  const validateAddress = useCallback((value: string) => {
-    if (!value) {
-      return 'Token address is required';
-    }
-    if (!/^0x[a-fA-F0-9]{40}$/.test(value)) {
-      return 'Invalid token address format';
-    }
-    
-    if (pairs.some(token => compareString(token.address, value))) {
-      return 'Token exists in current pairs';
-    }
-
-    if (storedTokens.some(token => compareString(token.address, value))) {
-      return 'Token already imported previously';
-    }
-
-    return undefined;
-  }, [pairs, storedTokens]);
-
-  const validateSymbol = useCallback((value: string) => {
-    if (!value) {
-      return 'Token symbol is required';
-    }
-    return undefined;
-  }, []);
-
-  const validateDecimals = useCallback((value: string) => {
-    if (!value) {
-      return 'Token decimals is required';
-    }
-    const numValue = Number(value);
-    if (isNaN(numValue)) {
-      return 'Decimals must be a number';
-    }
-    if (numValue < 0) {
-      return 'Decimals must be at least 0';
-    }
-    if (numValue > 18) {
-      return 'Decimals cannot exceed 18';
-    }
-    return undefined;
-  }, []);
-
   const isTokenAlreadyImported = useCallback((address: string) => {
     return pairs.some(token => compareString(token.address, address)) ||
            storedTokens.some(token => compareString(token.address, address));
@@ -140,63 +117,90 @@ const ImportTokenForm = ({ values, isSubmitting }: { values: ImportTokenFormValu
                           isSubmitting || 
                           !values.symbol || 
                           !values.decimals ||
-                          isTokenAlreadyImported(values.address);
+                          isTokenAlreadyImported(values.address) ||
+                          !dirty;
 
   return (
     <Form>
       <VStack spacing={4} align="stretch">
-        <FormControl isInvalid={!!formik.errors.address && formik.touched.address} className={s.formControl}>
-          <FormLabel className={s.label}>Token Contract Address</FormLabel>
-          <Field
-            as={Input}
+        <Box>
+          <InputText
             name="address"
+            header={{
+              label: "Token Contract Address",
+              fontSize: '14px',
+            }}
             placeholder="0x..."
-            validate={validateAddress}
-            className={s.input}
+            onChange={(e) => setFieldValue('address', e.target.value)}
+            onBlur={handleBlur}
+            height={'44px'}
+            isInvalid={touched.address && !!errors.address}
           />
-          <FormErrorMessage>{formik.errors.address}</FormErrorMessage>
-        </FormControl>
+          {touched.address && errors.address && (
+            <Text fontSize="12px" color="red" textAlign="left">
+              {errors.address}
+            </Text>
+          )}
+        </Box>
 
         {(isSearching || tokenInfo) && (
           <>
-            <FormControl isInvalid={!!formik.errors.symbol && formik.touched.symbol} className={s.formControl}>
-              <FormLabel className={s.label}>Token Symbol</FormLabel>
-              <Field
-                as={Input}
+            <Box>
+              <InputText
                 name="symbol"
+                header={{
+                  label: "Token Symbol",
+                  fontSize: '14px',
+                }}
                 placeholder="Enter token symbol"
-                validate={validateSymbol}
-                className={s.input}
-                disabled={isSearching}
+                value={values.symbol}
+                onChange={(e) => setFieldValue('symbol', e.target.value)}
+                onBlur={handleBlur}
+                height={'44px'}
+                isDisabled={isSearching}
+                isInvalid={touched.symbol && !!errors.symbol}
               />
-              <FormErrorMessage>{formik.errors.symbol}</FormErrorMessage>
-            </FormControl>
+              {touched.symbol && errors.symbol && (
+                <Text fontSize="12px" color="red" textAlign="left">
+                  {errors.symbol}
+                </Text>
+              )}
+            </Box>
 
-            <FormControl isInvalid={!!formik.errors.decimals && formik.touched.decimals} className={s.formControl}>
-              <FormLabel className={s.label}>Token Decimals</FormLabel>
-              <Field
-                as={Input}
+            <Box>
+              <InputText
                 name="decimals"
+                header={{
+                  label: "Token Decimals",
+                  fontSize: '14px',
+                }}
                 placeholder="Enter token decimals"
                 type="number"
-                validate={validateDecimals}
-                className={s.input}
-                disabled={isSearching}
+                value={values.decimals}
+                onChange={(e) => setFieldValue('decimals', e.target.value)}
+                onBlur={handleBlur}
+                height={'44px'}
+                isDisabled={isSearching || !!values.decimals}
+                isInvalid={touched.decimals && !!errors.decimals}
               />
-              <FormErrorMessage>{formik.errors.decimals}</FormErrorMessage>
-            </FormControl>
+              {touched.decimals && errors.decimals && (
+                <Text fontSize="12px" color="red" textAlign="left">
+                  {errors.decimals}
+                </Text>
+              )}
+            </Box>
           </>
         )}
 
-        <Button
-          mt={4}
-          isLoading={isSubmitting || isSearching}
+        <BaseButton
           type="submit"
-          className={s.btnSubmit}
+          width="100% !important"
+          marginTop="32px"
           disabled={isSubmitDisabled}
+          isLoading={isSubmitting || isSearching}
         >
           Import Token
-        </Button>
+        </BaseButton>
       </VStack>
     </Form>
   );
@@ -205,6 +209,35 @@ const ImportTokenForm = ({ values, isSubmitting }: { values: ImportTokenFormValu
 const ImportToken = ({ onClose }: { onClose: () => void }) => {
   const toast = useToast();
   const { selectedAgent } = useContext(AgentContext);
+  const { pairs } = useContext(AgentTradeContext);
+
+  const validationSchema = Yup.object().shape({
+    address: Yup.string()
+      .required('Token address is required')
+      .matches(/^0x[a-fA-F0-9]{40}$/, 'Invalid token address format')
+      .test('unique-address', 'Token exists in current pairs', function(value) {
+        if (!value) return true;
+        return !pairs.some(token => compareString(token.address, value));
+      })
+      .test('not-imported', 'Token already imported previously', async function(value) {
+        if (!value || !selectedAgent?.id) return true;
+        try {
+          const storageKey = `${STORAGE_KEY_PREFIX}${selectedAgent.id}`;
+          const existingTokensStr = await localStorageService.getItem(storageKey);
+          const existingTokens: IToken[] = existingTokensStr ? JSON.parse(existingTokensStr) : [];
+          return !existingTokens.some(token => compareString(token.address, value));
+        } catch (error) {
+          return true;
+        }
+      }),
+    symbol: Yup.string()
+      .required('Token symbol is required')
+      .min(1, 'Token symbol is required'),
+    decimals: Yup.number()
+      .required('Token decimals is required')
+      .min(0, 'Decimals must be at least 0')
+      .max(18, 'Decimals cannot exceed 18')
+  });
 
   const handleSubmit = async (values: ImportTokenFormValues) => {
     try {
@@ -249,10 +282,19 @@ const ImportToken = ({ onClose }: { onClose: () => void }) => {
           symbol: '',
           decimals: '',
         }}
+        validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ values, isSubmitting }) => (
-          <ImportTokenForm values={values} isSubmitting={isSubmitting} />
+        {({ values, isSubmitting, setFieldValue, dirty, touched, errors, handleBlur }) => (
+          <ImportTokenForm 
+            values={values} 
+            isSubmitting={isSubmitting} 
+            setFieldValue={setFieldValue}
+            dirty={dirty}
+            touched={touched}
+            errors={errors}
+            handleBlur={handleBlur}
+          />
         )}
       </Formik>
     </Box>
