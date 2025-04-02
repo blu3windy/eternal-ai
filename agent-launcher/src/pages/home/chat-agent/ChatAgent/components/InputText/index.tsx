@@ -1,5 +1,5 @@
 import { Box, Flex, IconButton } from "@chakra-ui/react";
-import React, { useCallback, useContext, useRef, useState } from "react";
+import React, { useCallback, useContext, useMemo, useRef, useState } from "react";
 import AutosizeTextarea from "react-autosize-textarea";
 import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import useFundAgent from "@providers/FundAgent/useFundAgent.ts";
@@ -11,6 +11,8 @@ import { compareString } from "@utils/string.ts";
 import CAgentTokenAPI from "@services/api/agents-token";
 import { useDropzone } from 'react-dropzone';
 import cx from "clsx";
+import AgentTradeProvider from "@pages/home/trade-agent/provider";
+import AgentWallet from "@components/AgentWallet";
 
 interface IProps {
    inputRef?: any;
@@ -35,6 +37,8 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
       selectedAgent,
       isRunning,
       requireInstall,
+      agentWallet,
+      isBackupedPrvKey,
    } = useContext(AgentContext);
 
    const [message, setMessage] = useState('');
@@ -130,29 +134,13 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
       setAttachments(prev => [...prev, ...imageFiles]);
    };
 
+   const isShowWallet = useMemo(() => {
+      return selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey;
+   }, [selectedAgent, agentWallet, isBackupedPrvKey]);
 
-   const isSend = React.useMemo(() => {
-      return !!message;
-   }, [message]);
 
-   // const onSendMessage = (_message: string) => {
-   //   if (isSend && !loading) {
-   //     publishEvent(_message);
-   //     setMessage("");
 
-   //     let recentAgents = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.RECENT_AGENTS)!) || [];
-   //     recentAgents = recentAgents.filter(id => !compareString(id, selectedAgent?.id?.toString()));
-   //     recentAgents.unshift(selectedAgent?.id);
 
-   //     if (recentAgents.length > 10) {
-   //       recentAgents = recentAgents.slice(0, 10);
-   //     }
-
-   //     localStorageService.setItem(STORAGE_KEYS.RECENT_AGENTS, JSON.stringify(recentAgents));
-
-   //     cPumpAPI.saveRecentAgents({ ids: recentAgents })
-   //   }
-   // };
 
    // const handleDeposit = () => {
    //   setDepositAgentID(selectedAgent?.agent_id);
@@ -205,7 +193,9 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
                   ? s.runningWrapper
                   : isRunning
                      ? s.runningWrapper
-                     : s.stopWrapper)
+                     : s.stopWrapper,
+                     isShowWallet ? s.hasWallet : ''
+                  )
 
                }
             >
@@ -310,6 +300,14 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
                </Flex>
             </Flex>
          </Flex>
+
+         {isShowWallet && (
+            <Flex className={s.walletWrapper}>
+               <AgentTradeProvider>
+                  <AgentWallet color={'black'} />
+               </AgentTradeProvider>
+            </Flex>
+         )}
       </Flex>
    );
 };

@@ -80,8 +80,6 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
   const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
   const toast = useToast();
 
-  console.log("pairs 2222", pairs);
-
   const handleExportPrvKey = () => {
     onModalOpen();
   };
@@ -110,8 +108,6 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
       }
     })
   }, [pairs]);
-
-  console.log("tokens 2222", tokens);
 
   const WalletContent = () => (
     <Box className={s.walletCard}>
