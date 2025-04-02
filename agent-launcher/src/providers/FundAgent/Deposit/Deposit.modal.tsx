@@ -2,6 +2,7 @@ import React from 'react';
 import BaseModal from '@components/BaseModal';
 import DepositBox from "./DepositBox.tsx";
 import useFundAgent from "../useFundAgent.ts";
+import s from './styles.module.scss';
 
 const DepositModal = React.memo(() => {
    const { depositAgentID, setDepositAgentID, depositAgentInfo } = useFundAgent();
@@ -14,9 +15,10 @@ const DepositModal = React.memo(() => {
       <BaseModal
          isShow={!!depositAgentID}
          onHide={onClose}
-         title={depositAgentInfo ? `Keep ${depositAgentInfo?.twitter_info?.twitter_name || depositAgentInfo?.agent_name} engaging!` : ""}
+         title={'Deposit'}
          size="small"
-         description={depositAgentInfo ? `Love what ${depositAgentInfo?.twitter_info?.twitter_name || depositAgentInfo?.agent_name} brings? Tip to help it thrive, grow, and deliver even more to the community. Every bit counts!` : ""}
+         description={''}
+         className={s.modalContent}
       >
          <DepositBox agentID={depositAgentID || ''} />
       </BaseModal>

@@ -11,3 +11,5 @@ export const isNativeToken = (tokenAddress: string) => {
     compareString(address, tokenAddress)
   );
 };
+
+export const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";

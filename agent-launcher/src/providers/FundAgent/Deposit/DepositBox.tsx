@@ -1,19 +1,19 @@
-import React, { useContext } from 'react';
 import { Center, Divider, Flex, Image, Text } from '@chakra-ui/react';
-import QRCodeGenerator from '@components/QRCodeGenerator';
-import s from './styles.module.scss';
-import copy from 'copy-to-clipboard';
-import toast from 'react-hot-toast';
-import { IFundAgent } from "../types.ts";
 import Loading from "@components/Loading";
-import useFundAgent from '../useFundAgent.ts';
-import AgentAPI from "../../../services/api/agent";
+import QRCodeGenerator from '@components/QRCodeGenerator';
 import { AgentContext } from "@pages/home/provider/AgentContext.tsx";
+import copy from 'copy-to-clipboard';
+import React, { useContext } from 'react';
+import toast from 'react-hot-toast';
+import AgentAPI from "../../../services/api/agent";
+import { IFundAgent } from "../types.ts";
+import useFundAgent from '../useFundAgent.ts';
+import s from './styles.module.scss';
 
 interface IExplorer {
-  name: string;
-  url: string;
-  icon: string;
+   name: string;
+   url: string;
+   icon: string;
 }
 
 const DepositBox: React.FC<IFundAgent> = ({ agentID }) => {
@@ -67,10 +67,6 @@ const DepositBox: React.FC<IFundAgent> = ({ agentID }) => {
             mt={"20px"}
          >
             <Flex direction={"column"} gap={"12px"}>
-               <Text color="#000" fontSize="16px">
-                  Send <Text as={"span"} fontSize={"16px"} fontWeight={500} color={"#000"}>any amount EAI or more</Text> to the below wallet. Sending less won’t work!
-               </Text>
-
                <Flex flexDirection="column" gap="12px" className={s.addressBox}>
                   <Flex flexDirection="column" gap="4px">
                      <Text color="#000" fontSize="13px" fontWeight={400}>
@@ -108,7 +104,7 @@ const DepositBox: React.FC<IFundAgent> = ({ agentID }) => {
                   />
                </Flex>
             </Flex>
-            <Text fontSize={'14px'} fontWeight={400} cursor={"pointer"} onClick={handleShowTransaction}>Transaction History</Text>
+            {/* <Text fontSize={'14px'} fontWeight={400} cursor={"pointer"} onClick={handleShowTransaction}>Transaction History</Text> */}
          </Flex>
       );
    };
