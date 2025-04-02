@@ -34,6 +34,7 @@ import { formatName, getTokenIconUrl, parseSymbolName } from '@utils/string';
 import React, { useContext, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import s from './styles.module.scss';
+import ImportToken from './ImportToken/index';
 
 interface Props {
   color?: string;
@@ -96,6 +97,7 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
 
   const { onCopy: onCopyAddress } = useClipboard(agentWallet?.address || '');
   const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
+  const { isOpen: isImportModalOpen, onOpen: onImportModalOpen, onClose: onImportModalClose } = useDisclosure();
   const toast = useToast();
 
   const chainType = useMemo(() => {
@@ -133,6 +135,10 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
 
   const handleExportPrvKey = () => {
     onModalOpen();
+  };
+
+  const handleImportToken = () => {
+    onImportModalOpen();
   };
 
   const handleCopyAddress = () => {
@@ -184,6 +190,7 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
             />
             <MenuList>
               <MenuItem onClick={handleExportPrvKey}>Export Private Key</MenuItem>
+              <MenuItem onClick={handleImportToken}>Import Token</MenuItem>
             </MenuList>
           </Menu>
         </HStack>
@@ -239,6 +246,10 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
 
       <BaseModal isShow={isModalOpen} onHide={onModalClose} title={'Export private key'} size="small" className={s.modalContent}>
         <ExportPrivateKey />
+      </BaseModal>
+
+      <BaseModal isShow={isImportModalOpen} onHide={onImportModalClose} title={'Import Token'} size="small" className={s.modalContent}>
+        <ImportToken onClose={onImportModalClose} />
       </BaseModal>
     </>
   );
