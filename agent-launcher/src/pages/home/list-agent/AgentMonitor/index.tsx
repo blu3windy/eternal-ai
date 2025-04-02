@@ -168,7 +168,7 @@ const AgentMonitor: React.FC = () => {
                            <Flex gap={'6px'} alignItems={'center'}>
                               <Text fontSize="18px" fontWeight="600" color="white">CPU usage</Text>
                               <Tooltip 
-                                 label="% of available CPU currently in use by agents."
+                                 label="This shows the CPU usage available to Docker, not your actual device’s total CPU usage."
                                  hasArrow
                                  placement="top"
                                  bg="gray.700"
@@ -193,7 +193,7 @@ const AgentMonitor: React.FC = () => {
                            <Flex gap={'6px'} alignItems={'center'}>
                               <Text fontSize="18px" fontWeight="600" color="white">Memory usage</Text>
                               <Tooltip 
-                                 label="Total amount of memory consumed by running agent processs."
+                                 label="This reflects the memory allocated to Docker, not your computer’s full memory. Your device may have more RAM available overall."
                                  hasArrow
                                  placement="top"
                                  bg="gray.700"

@@ -55,4 +55,5 @@ export interface IMonitorContext {
   containers: ContainerData[];
   totalMemory: any;
   totalCPU: any;
+  installedAgents: IAgentToken[];
 }

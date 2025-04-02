@@ -37,16 +37,13 @@ const MonitorProvider: React.FC<
       try {
          const installIds = await installAgentStorage.getAgentIds();
          const agent_types = [
-            AgentType.UtilityJS, 
-            AgentType.UtilityPython, 
-            AgentType.Infra, 
             AgentType.CustomUI, 
             AgentType.CustomPrompt,
             AgentType.ModelOnline,
             AgentType.Model
          ].join(',');
          const [{ agents }, { agents: agentsAll }] = await Promise.all([
-            cPumpAPI.getAgentTokenList({ page: 1, limit: 100, ids: installIds.length > 0 ? installIds.join(',') : '', agent_types }),
+            cPumpAPI.getAgentTokenList({ page: 1, limit: 200, ids: installIds.length > 0 ? installIds.join(',') : '', agent_types }),
             cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
          ]);
          agentsRef.current = uniqBy([...agents, ...agentsAll], 'id');
@@ -241,11 +238,13 @@ const MonitorProvider: React.FC<
         containers,
         totalMemory,
         totalCPU,
+        installedAgents: agentsRef.current,
       };
    }, [
       containers,
       totalMemory,
       totalCPU,
+      agentsRef.current
    ]);
 
    return (
