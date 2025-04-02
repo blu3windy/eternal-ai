@@ -1178,6 +1178,7 @@ const AgentProvider: React.FC<
          cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
       ]);
       const utilityAgents = uniqBy([...agents, ...agentsAll], 'id');
+      const activeModel = await storageModel.getActiveModel();
 
       // Check running status for each installed utility agent
       for (const folderName of refInstalledUtilityAgents.current) {
@@ -1196,7 +1197,6 @@ const AgentProvider: React.FC<
                try {
                   if (agent.agent_type === AgentType.ModelOnline) {
                      const res = await cPumpAPI.checkAgentModelServiceRunning();
-                     const activeModel = await storageModel.getActiveModel();
                      updateAgentState(agent.id, {
                         data: agent,
                         isInstalled: true,
