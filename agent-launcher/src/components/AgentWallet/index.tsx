@@ -35,6 +35,7 @@ import React, { useContext, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import s from './styles.module.scss';
 import ImportToken from './ImportToken/index';
+import useFundAgent from '@providers/FundAgent/useFundAgent';
 
 interface Props {
   color?: string;
@@ -100,6 +101,8 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
   const { isOpen: isImportModalOpen, onOpen: onImportModalOpen, onClose: onImportModalClose } = useDisclosure();
   const toast = useToast();
 
+  const { setDepositAgentID } = useFundAgent();
+
   const chainType = useMemo(() => {
     if (!selectedAgent?.network_id) return CHAIN_TYPE.BASE;
     return ChainIdToChainType[selectedAgent.network_id] || CHAIN_TYPE.BASE;
@@ -122,7 +125,7 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
     chain: chainType,
     walletAddress: agentWallet?.address,
   });
-  
+
   const usdValue = useMemo(() => {
     return Number(nativeBalance || 0) * (coinPrices?.[nativeToken?.symbol as string] || 0);
   }, [nativeBalance, coinPrices, nativeToken?.symbol]);
@@ -150,6 +153,14 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
       isClosable: true,
       position: "bottom",
     });
+  };
+
+  const handleDeposit = () => {
+    setDepositAgentID(selectedAgent?.id);
+  };
+
+  const handleTransfer = () => {
+    onModalOpen();
   };
 
   const tokens = useMemo(() => {
@@ -205,6 +216,21 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
             ${formatCurrency(usdValue, MIN_DECIMAL, MIN_DECIMAL)}
           </Text>
         </VStack>
+
+        <HStack spacing={3}>
+          <Flex className={s.actionButton} onClick={handleDeposit}>
+            <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4.05273 7.2002L8.16702 3.2002M8.16702 3.2002L12.2813 7.2002M8.16702 3.2002V12.8002" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <Text fontSize={'14px'} fontWeight={500} color={'#FFF'}>Deposit</Text>
+          </Flex>
+          <Flex className={s.actionButton} onClick={handleTransfer}>
+            <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.8332 3.33366V10.0003C13.8332 10.3683 13.5352 10.667 13.1665 10.667C12.7979 10.667 12.4999 10.3683 12.4999 10.0003V4.94303L4.97122 12.4717C4.84122 12.6017 4.67053 12.667 4.49986 12.667C4.3292 12.667 4.15851 12.6017 4.02851 12.4717C3.76784 12.211 3.76784 11.7896 4.02851 11.529L11.5572 4.00033H6.49986C6.1312 4.00033 5.8332 3.70166 5.8332 3.33366C5.8332 2.96566 6.1312 2.66699 6.49986 2.66699H13.1665C13.2532 2.66699 13.3399 2.68493 13.4212 2.71826C13.5846 2.7856 13.7146 2.91561 13.7819 3.07894C13.8159 3.16027 13.8332 3.24699 13.8332 3.33366Z" fill="white" />
+            </svg>
+            <Text fontSize={'14px'} fontWeight={500} color={'#FFF'}>Transfer</Text>
+          </Flex>
+        </HStack>
 
         <VStack align="stretch" spacing={3}>
           {tokens.map((token, index) => (
