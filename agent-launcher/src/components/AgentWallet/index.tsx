@@ -30,12 +30,13 @@ import { AgentTradeContext } from '@pages/home/trade-agent/provider';
 import { ChainIdToChainType } from '@pages/home/trade-agent/provider/constant';
 import { agentsTradeSelector } from '@stores/states/agent-trade/selector';
 import { formatCurrency } from '@utils/format';
-import { formatName, getTokenIconUrl, parseSymbolName } from '@utils/string';
-import React, { useContext, useMemo, useState } from 'react';
+import { formatName, getTokenIconUrl, parseSymbolName, TOKEN_ICON_DEFAULT } from '@utils/string';
+import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import s from './styles.module.scss';
 import ImportToken from './ImportToken/index';
 import useFundAgent from '@providers/FundAgent/useFundAgent';
+import localStorageService from '@storage/LocalStorageService';
 
 interface Props {
   color?: string;
@@ -87,7 +88,7 @@ const TokenItem = ({ token, index, showUsdValue = false }: { token: IToken & { i
             {formatName(parseSymbolName(token)?.symbol as string, 50)}
           </Text>
         </Flex>
-        <Text fontSize={'12px'} fontWeight={400} color={'#000'} opacity={0.6}>{showUsdValue ? `$${formatCurrency(usdValue, MIN_DECIMAL, MAX_DECIMAL)}` : ''}</Text>
+        {showUsdValue ? <Text fontSize={'12px'} fontWeight={400} color={'#000'} opacity={0.6}>${formatCurrency(usdValue, MIN_DECIMAL, MAX_DECIMAL)}</Text> : <Text>&nbsp;</Text>}
       </VStack>
     </HStack>
   )
@@ -100,6 +101,8 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
   const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
   const { isOpen: isImportModalOpen, onOpen: onImportModalOpen, onClose: onImportModalClose } = useDisclosure();
   const toast = useToast();
+
+  const [importedTokens, setImportedTokens] = useState<IToken[]>([]);
 
   const { setDepositAgentID } = useFundAgent();
 
@@ -163,14 +166,35 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
     onModalOpen();
   };
 
-  const tokens = useMemo(() => {
-    return pairs.map(p => {
-      return {
-        ...p,
-        icon: p.symbol === 'EAI' ? getTokenIconUrl(p) : getTokenIconUrl(selectedAgent)
+  
+  useEffect(() => {
+    const loadImportedTokens = async () => {
+      if (!selectedAgent?.id) return;
+      
+      try {
+        const storageKey = `imported_tokens_${selectedAgent.id}`;
+        const existingTokensStr = await localStorageService.getItem(storageKey);
+        const existingTokens: IToken[] = existingTokensStr ? JSON.parse(existingTokensStr) : [];
+        setImportedTokens(existingTokens.map(token => ({
+          ...token,
+          icon: getTokenIconUrl(token) || TOKEN_ICON_DEFAULT
+        })));
+      } catch (error) {
+        console.error('Error loading imported tokens:', error);
       }
-    })
-  }, [pairs]);
+    };
+
+    loadImportedTokens();
+  }, [selectedAgent?.id]);
+
+  const tokens = useMemo(() => {
+    const pairTokens = pairs.map(p => ({
+      ...p,
+      icon: p.symbol === 'EAI' ? getTokenIconUrl(p) : getTokenIconUrl(selectedAgent)
+    }));
+
+    return [...pairTokens, ...importedTokens];
+  }, [pairs, selectedAgent, importedTokens]);
 
   const WalletContent = () => (
     <Box className={s.walletCard}>
@@ -233,9 +257,18 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
         </HStack>
 
         <VStack align="stretch" spacing={3}>
-          {tokens.map((token, index) => (
-            <TokenItem token={token} index={index} showUsdValue={true} />
-          ))}
+          {tokens.map((token, index) => {
+            const isImportedToken = !pairs.some(p => p.address === token.address);
+            
+            return (
+              <TokenItem 
+                key={index}
+                token={{...token, icon: token.icon || ''}} 
+                index={index} 
+                showUsdValue={!isImportedToken}
+              />
+            );
+          })}
         </VStack>
       </VStack>
     </Box>
