@@ -101,7 +101,7 @@ const AgentMonitor: React.FC = () => {
       const filteredData = containers
          .filter(container => {
             const matchesSearch = container.name.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesRunning = !showRunningOnly || container.state === 'running';
+            const matchesRunning = !showRunningOnly || (container?.agent ? agentStates[container?.agent?.id]?.isRunning : container.state === 'running');
             return matchesSearch && matchesRunning && !!container.name;
          });
       setFilterContainers(filteredData);
@@ -248,7 +248,7 @@ const AgentMonitor: React.FC = () => {
                                        w="8px"
                                        h="8px"
                                        borderRadius="full"
-                                       bg={container.state === 'running' ? '#4ADE80' : 'lightgray'}
+                                       bg={(container?.agent ? agentStates[container?.agent?.id]?.isRunning : container.state === 'running') ? '#4ADE80' : 'lightgray'}
                                     />
                                     <Text color="white">{container.agent?.agent_name || container.name}</Text>
                                  </Flex>

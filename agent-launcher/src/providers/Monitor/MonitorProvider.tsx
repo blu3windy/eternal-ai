@@ -217,7 +217,7 @@ const MonitorProvider: React.FC<
       // Initial fetch
       onGetData();
       // Set up the interval
-      intervalRef.current = setInterval(onGetData, 4000);
+      intervalRef.current = setInterval(onGetData, 60000);
       // Cleanup function
       return () => {
          if (intervalRef.current) {
@@ -230,7 +230,7 @@ const MonitorProvider: React.FC<
       // Initial fetch
       onGetDataAgents();
       // Set up the interval
-      intervalAgentRef.current = setInterval(onGetDataAgents, 40000);
+      intervalAgentRef.current = setInterval(onGetDataAgents, 60000);
       // Cleanup function
       return () => {
          if (intervalAgentRef.current) {

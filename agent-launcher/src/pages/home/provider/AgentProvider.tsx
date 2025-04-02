@@ -1202,6 +1202,8 @@ const AgentProvider: React.FC<
                      isInstalled: true,
                      isRunning: true
                   });
+                  dispatch(requestReloadMonitor());
+
                } catch (err) {
                   updateAgentState(agent.id, {
                      data: agent,
@@ -1219,6 +1221,8 @@ const AgentProvider: React.FC<
                      isRunning: !!port,
                      customUIPort: port
                   });
+                  dispatch(requestReloadMonitor());
+
                } catch (err) {
                   updateAgentState(agent.id, {
                      data: agent,
@@ -1243,6 +1247,7 @@ const AgentProvider: React.FC<
             isRunning: agent.id === activeModel?.id
          });
       }
+      dispatch(requestReloadMonitor());
    }
 
    const checkAllInstalledAgentsRunning = async () => {
