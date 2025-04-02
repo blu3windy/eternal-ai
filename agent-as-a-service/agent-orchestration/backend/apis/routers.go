@@ -282,6 +282,7 @@ func (s *Server) Routers() {
 			{
 				robotAPI.POST("/wallet", s.GenerateRobotSaleWallet)
 				robotAPI.GET("/wallet", s.GetRobotSaleWallet)
+				robotAPI.GET("/project", s.GetRobotProject)
 				robotAPI.POST("/token", s.RobotCreateToken)
 				robotAPI.POST("/transfer", s.RobotTransferToken)
 			}

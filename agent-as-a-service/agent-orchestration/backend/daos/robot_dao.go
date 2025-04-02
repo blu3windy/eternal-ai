@@ -66,3 +66,18 @@ func (d *DAO) FirstRobotProjectByID(tx *gorm.DB, id uint, preloads map[string][]
 	}
 	return &m, nil
 }
+
+func (d *DAO) UpdatePrijectTotalBalance(tx *gorm.DB, projectID string) error {
+	err := tx.Exec(`
+			update robot_projects 
+			join (
+				select project_id, sum(sol_balance) sol_balance
+				from robot_sale_wallets rsw 
+				where project_id = ?
+				group by project_id 
+			) tmp on robot_projects.project_id = tmp.project_id
+			set total_balance= tmp.sol_balance
+			where robot_projects.project_id = ?
+	`, projectID, projectID).Error
+	return err
+}

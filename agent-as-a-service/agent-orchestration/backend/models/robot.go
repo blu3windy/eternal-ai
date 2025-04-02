@@ -18,6 +18,7 @@ type RobotProject struct {
 	TokenSupply   numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	MintHash      string
 	Signature     string
+	TotalBalance  numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 }
 
 type RobotSaleWallet struct {

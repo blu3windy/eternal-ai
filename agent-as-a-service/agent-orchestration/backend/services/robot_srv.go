@@ -92,6 +92,16 @@ func (s *Service) GetRobotSaleWallet(ctx context.Context, projectID string, user
 	return robotSaleWallet, nil
 }
 
+func (s *Service) GetRobotProject(ctx context.Context, projectID string) (*models.RobotProject, error) {
+	robotProject, err := s.dao.FirstRobotProject(daos.GetDBMainCtx(ctx), map[string][]interface{}{
+		"project_id = ?": {projectID},
+	}, nil, nil)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return robotProject, nil
+}
+
 func (s *Service) JobRobotScanBalanceSOL(ctx context.Context) error {
 	err := s.JobRunCheck(
 		ctx,
@@ -177,6 +187,11 @@ func (s *Service) RobotScanBalanceByWallet(ctx context.Context, walletId uint) e
 								),
 							},
 						).Error
+					if err != nil {
+						return errs.NewError(err)
+					}
+
+					err = s.dao.UpdatePrijectTotalBalance(tx, saleWallet.ProjectID)
 					if err != nil {
 						return errs.NewError(err)
 					}

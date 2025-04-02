@@ -37,6 +37,17 @@ func (s *Server) GetRobotSaleWallet(c *gin.Context) {
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewRobotSaleWalletResp(robotSaleWallet)})
 }
 
+func (s *Server) GetRobotProject(c *gin.Context) {
+	ctx := s.requestContext(c)
+	projectID := s.stringFromContextQuery(c, "project_id")
+	robotProject, err := s.nls.GetRobotProject(ctx, projectID)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewRobotProjectResp(robotProject)})
+}
+
 func (s *Server) RobotCreateToken(c *gin.Context) {
 	ctx := s.requestContext(c)
 	var req blockchainutils.SolanaCreateTokenReq
