@@ -74,7 +74,8 @@ type AssistantsReq struct {
 
 	DependAgents   string  `json:"depend_agents"`
 	RequiredWallet *bool   `json:"required_wallet"`
-	RequiredEnv    bool    `json:"required_env"`
+	RequiredEnv    *bool   `json:"required_env"`
+	EnvExample     string  `json:"env_example"`
 	IsOnchain      *bool   `json:"is_onchain"`
 	IsStreaming    *bool   `json:"is_streaming"`
 	IsCustomUi     *bool   `json:"is_custom_ui"`

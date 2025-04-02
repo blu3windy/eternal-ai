@@ -92,8 +92,12 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		SourceUrl:        req.SourceUrl,
 		AuthenUrl:        req.AuthenUrl,
 		DependAgents:     req.DependAgents,
-		RequiredEnv:      req.RequiredEnv,
+		EnvExample:       req.EnvExample,
 	}
+	if req.RequiredEnv != nil {
+		agent.RequiredEnv = *req.RequiredEnv
+	}
+
 	if req.RequiredWallet != nil {
 		agent.RequiredWallet = *req.RequiredWallet
 	}
@@ -482,6 +486,15 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				agent.Style = req.GetAssistantCharacter(req.Style)
 				agent.Adjectives = req.GetAssistantCharacter(req.Adjectives)
 				agent.SocialInfo = req.GetAssistantCharacter(req.SocialInfo)
+
+				if req.EnvExample != "" {
+					agent.EnvExample = req.EnvExample
+				}
+
+				if req.RequiredEnv != nil {
+					agent.RequiredEnv = *req.RequiredEnv
+				}
+
 				if req.SourceUrl != "" {
 					agent.SourceUrl = req.SourceUrl
 				}

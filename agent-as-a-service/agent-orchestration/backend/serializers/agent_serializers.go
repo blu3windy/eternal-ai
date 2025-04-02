@@ -143,6 +143,7 @@ type AgentInfoResp struct {
 	DockerPort                string                    `json:"docker_port"`
 	RequiredInfo              string                    `json:"required_info"`
 	InstalledCount            int64                     `json:"installed_count"`
+	EnvExample                string                    `json:"env_example"`
 }
 
 type AgentTwitterPostResp struct {
@@ -315,6 +316,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		RequiredInfo:         m.RequiredInfo,
 		InstalledCount:       m.InstalledCount,
 		RequiredEnv:          m.RequiredEnv,
+		EnvExample:           m.EnvExample,
 	}
 
 	if m.NftTokenImage != "" {

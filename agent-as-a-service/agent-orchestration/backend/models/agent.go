@@ -224,6 +224,7 @@ type AgentInfo struct {
 	IsStreaming    bool   `gorm:"default:1"`
 	DockerPort     string
 	RequiredInfo   string `gorm:"type:longtext"`
+	EnvExample     string `gorm:"type:longtext"`
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string
