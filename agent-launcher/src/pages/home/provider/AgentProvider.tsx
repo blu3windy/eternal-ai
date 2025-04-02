@@ -613,7 +613,7 @@ const AgentProvider: React.FC<
                      isStarting: false,
                   });
                   dispatch(requestReloadMonitor());
-               }, 2000);
+               }, 3000);
             } else {
                updateAgentState(agent.id, {
                   data: agent,
@@ -827,11 +827,19 @@ const AgentProvider: React.FC<
       console.time('LEON: getDependAgents');
       const dependAgents = await getDependAgents(agent, needUpdateCode);
       console.timeEnd('LEON: getDependAgents');
+      console.log('LEON: getDependAgents', dependAgents);
 
       if (dependAgents.length > 0) {
          await Promise.all(dependAgents.map(async (agent) => {
             try {
-               await handleRunDockerAgent(agent);
+               if (needUpdateCode) {
+                  await handleStopDockerAgent(agent);
+                  const lang = getUtilityAgentCodeLanguage(agent);
+                  await globalThis.electronAPI.dockerDeleteImage(agent.agent_name?.toLowerCase(), agent.network_id?.toString(), lang);
+                  await handleRunDockerAgent(agent);
+               } else {
+                  await handleRunDockerAgent(agent);
+               }
             } catch (error) {
             }
          }));
