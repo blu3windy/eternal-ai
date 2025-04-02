@@ -1,6 +1,8 @@
 import { Box, Flex, Image, Text } from "@chakra-ui/react";
 import { memo, useContext, useEffect, useMemo, useState } from "react";
 import s from "./ChatMessage.module.scss";
+import pdfMake from "pdfmake";
+import { mdpdfmake } from "mdpdfmake";
 import cs from "classnames";
 import { INIT_WELCOME_MESSAGE } from "../../constants";
 import SvgInset from "@components/SvgInset";
@@ -13,7 +15,9 @@ import { AgentContext } from "@pages/home/provider/AgentContext";
 import CustomMarkdown from "@components/CustomMarkdown";
 import { compareString } from "@utils/string.ts";
 import { getExplorerByChain } from "@utils/helpers.ts";
+import { motion } from "framer-motion";
 import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/WaitingForGenerateText";
+import { v4 } from "uuid";
 
 dayjs.extend(duration);
 
@@ -29,7 +33,7 @@ type Props = {
 
 const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, initialMessage, updateMessage }: Props) => {
    const { selectedAgent } = useContext(AgentContext);
-
+   const [markdownId, setMarkdownId] = useState<string>(v4());
    const [hours, setHours] = useState<number | null>(0);
    const [minutes, setMinutes] = useState<number | null>(0);
    const [seconds, setSeconds] = useState<number | null>(0);
@@ -128,9 +132,42 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
          );
       }
 
+      if (message.status === "received" && message.type === "ai") {
+         return (
+            <div
+               className={cs(s.markdown, "markdown-body", {
+                  [s.markdown__received]: true,
+               })}
+            >
+               <div className={s.exportPdf}>
+                  <motion.div
+                     initial={{ y: 0, opacity: 0 }}
+                     animate={{ y: 0, opacity: 1 }}
+                     exit={{ y: 0, opacity: 0 }}
+                     transition={{ duration: 0.3, ease: "easeOut" }}
+                     className={`${s.snackbar}`}
+                     onClick={() => {
+                        mdpdfmake(message.msg).then((docDefinition) => {
+                           console.log(docDefinition);
+                           // Use docDefinition with a PDFMake instance to generate a PDF
+                           pdfMake.createPdf(docDefinition).download(`${selectedAgent?.agent_name || "Agent"}-${dayjs().format("YYYY-MM-DD-hh:mm:ss")}.pdf`);
+                        });
+                     }}
+                     style={{
+                        cursor: "pointer",
+                     }}
+                  >
+                     <Text>Export to PDF</Text>
+                  </motion.div>
+               </div>
+               <CustomMarkdown id={markdownId} content={message?.msg} isLight={false} removeThink={initialMessage} />
+            </div>
+         );
+      }
+
       return (
          <div className={cs(s.markdown, "markdown-body")}>
-            <CustomMarkdown content={message?.msg} isLight={false} removeThink={initialMessage} />
+            <CustomMarkdown id={markdownId} content={message?.msg} isLight={false} removeThink={initialMessage} />
          </div>
       );
    };
