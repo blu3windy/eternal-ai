@@ -290,6 +290,7 @@ type Config struct {
 		TokenAdminAddress string `json:"token_admin_address"`
 		TokenSupply       uint64 `json:"token_supply"`
 	} `json:"robot"`
+	LighthouseUploadBinaryUrl string `json:"lighthouse_upload_binary_url"`
 }
 
 func (cf *Config) ExistsedConfigKey(networkID uint64, name string) bool {
