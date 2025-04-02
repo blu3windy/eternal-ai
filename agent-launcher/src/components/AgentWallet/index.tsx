@@ -1,6 +1,5 @@
 import {
   Box,
-  Button,
   Flex,
   HStack,
   IconButton,
@@ -17,7 +16,7 @@ import {
   useClipboard,
   useDisclosure,
   useToast,
-  VStack,
+  VStack
 } from '@chakra-ui/react';
 import BaseModal from '@components/BaseModal';
 import ERC20Balance from '@components/ERC20Balance';
@@ -40,10 +39,24 @@ interface Props {
   color?: string;
 }
 
-const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: number }) => {
+const TokenItem = ({ token, index, showUsdValue = false }: { token: IToken & { icon: string }, index: number, showUsdValue?: boolean }) => {
   const { currentChain } = useSelector(agentsTradeSelector);
   const [balance, setBalance] = useState<string | undefined>("0");
-  const [usdValue, setUsdValue] = useState<string | undefined>("0");
+  const { agentWallet, selectedAgent, coinPrices } = useContext(AgentContext);
+
+  const priceUsd = useMemo(() => {
+    if (token.symbol === selectedAgent?.token_symbol) {
+      return selectedAgent?.meme?.price_usd || 0;
+    }
+    if (token.symbol === 'EAI') {
+      return coinPrices?.[token.symbol] || 0;
+    }
+    return 0;
+  }, [coinPrices, token?.symbol, selectedAgent?.meme?.price_usd, selectedAgent?.token_symbol]);
+
+  const usdValue = useMemo(() => {
+    return Number(balance || 0) * (priceUsd || 0);
+  }, [balance, priceUsd]);
 
   return (
     <HStack key={index} justify="space-between">
@@ -72,7 +85,7 @@ const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: 
             {formatName(parseSymbolName(token)?.symbol as string, 50)}
           </Text>
         </Flex>
-        <Text fontSize={'12px'} fontWeight={400} color={'#000'} opacity={0.6}>${usdValue?.toLocaleString()}</Text>
+        <Text fontSize={'12px'} fontWeight={400} color={'#000'} opacity={0.6}>{showUsdValue ? `$${formatCurrency(usdValue, MIN_DECIMAL, MAX_DECIMAL)}` : ''}</Text>
       </VStack>
     </HStack>
   )
