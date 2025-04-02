@@ -1294,7 +1294,7 @@ const AgentProvider: React.FC<
    };
 
    useEffect(() => {
-      throttledCheckAll();
+      checkAllInstalledAgentsRunning();
    }, []);
 
    // const intervalCheckAllAgents = () => {
