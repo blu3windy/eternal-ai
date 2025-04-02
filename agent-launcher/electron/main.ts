@@ -7,7 +7,7 @@ import command from "./share/command-tool.ts";
 
 if (process.env.NODE_ENV === "development") {
    autoUpdater.autoDownload = false;
-   autoUpdater.allowDowngrade = true;
+   // autoUpdater.allowDowngrade = true;
    autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
 }
 
@@ -114,11 +114,6 @@ runIpcMain();
 function createWindow() {
    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
-   // Check for updates after startup
-   setTimeout(() => {
-      autoUpdater.checkForUpdates();
-   }, 5000); // Wait 15 seconds before checking
-
    win = new BrowserWindow({
       icon: path.join(process.env.VITE_PUBLIC as any, "app-logo.png"),
       // icon: path.join(__dirname, "../public/icon.png"), // Use icon from public
@@ -144,22 +139,21 @@ function createWindow() {
 
    // Test active push message to Renderer-process.
    win.webContents.on("did-finish-load", () => {
+      autoUpdater.checkForUpdates();
       win?.webContents.send("main-process-message", new Date().toLocaleString());
    });
 
    // Events to notify the Renderer process (UI)
    autoUpdater.on("update-available", () => {
       console.log("update-available");
-      autoUpdater.downloadUpdate();
       win?.webContents.send("update-available");
    });
 
    autoUpdater.on("update-downloaded", () => {
-      console.log("update-downloaded");
       win?.webContents.send("update-downloaded");
-      // setTimeout(() => {
-      //    autoUpdater.quitAndInstall();
-      // }, 5000);
+      console.log("update-downloaded");
+      autoUpdater.downloadUpdate();
+      autoUpdater.quitAndInstall();
    });
 
    autoUpdater.on("download-progress", (progress) => {

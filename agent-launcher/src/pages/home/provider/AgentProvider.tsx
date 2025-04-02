@@ -383,6 +383,7 @@ const AgentProvider: React.FC<
          const res = newTokens.map((t, index) => ({ ...t, ipfsHash: agentHashes[index] }));
 
          refAvailableModelAgents.current = res;
+         fetchInstalledModelAgents();
       } catch (e) {
 
       } finally {
@@ -411,6 +412,7 @@ const AgentProvider: React.FC<
       }) as IAgentToken[] || [];
 
       refInstalledModelAgents.current = installedAgents;
+      checkInstalledModelAgentsRunning();
 
       // if (!runningModelHash) {
       //    const defaultModelAgent = installedAgents.find((t, index) => compareString(t.ipfsHash, MODEL_HASH)) || installedAgents[0];
@@ -604,7 +606,6 @@ const AgentProvider: React.FC<
          }
       } finally {
          setTimeout(() => {
-            dispatch(requestReloadMonitor());
             if ([AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(agent.agent_type)) {
                throttledCheckAll();
                setTimeout(() => {
@@ -612,7 +613,6 @@ const AgentProvider: React.FC<
                      data: agent,
                      isStarting: false,
                   });
-                  dispatch(requestReloadMonitor());
                }, 3000);
             } else {
                updateAgentState(agent.id, {
@@ -654,8 +654,7 @@ const AgentProvider: React.FC<
                isStopping: false,
                isRunning: false,
             });
-            dispatch(requestReloadMonitor());
-         }, 4000);
+         }, 2000);
          throttledCheckAll();
       }
    };
@@ -739,7 +738,6 @@ const AgentProvider: React.FC<
          }, 2000);
          
          throttledCheckAll();
-         dispatch(requestReloadMonitor());
       }
    }
 
@@ -1050,6 +1048,7 @@ const AgentProvider: React.FC<
       try {
          const folders = await globalThis.electronAPI.getExistAgentFolders();
          refInstalledUtilityAgents.current = folders || [];
+         checkInstalledUtilityAgentsRunning();
       } catch (error) {
          console.error('Error fetching installed utility agents:', error);
          refInstalledUtilityAgents.current = [];
@@ -1175,6 +1174,7 @@ const AgentProvider: React.FC<
          cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
       ]);
       const utilityAgents = uniqBy([...agents, ...agentsAll], 'id');
+      const activeModel = await storageModel.getActiveModel();
 
       // Check running status for each installed utility agent
       for (const folderName of refInstalledUtilityAgents.current) {
@@ -1193,16 +1193,20 @@ const AgentProvider: React.FC<
                try {
                   if (agent.agent_type === AgentType.ModelOnline) {
                      const res = await cPumpAPI.checkAgentModelServiceRunning();
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: agent.id === activeModel?.id
+                     });
                   } else {
                      const res = await cPumpAPI.checkAgentServiceRunning({ agent });
+                     updateAgentState(agent.id, {
+                        data: agent,
+                        isInstalled: true,
+                        isRunning: true
+                     });
                   }
                   
-                  updateAgentState(agent.id, {
-                     data: agent,
-                     isInstalled: true,
-                     isRunning: true
-                  });
-                  dispatch(requestReloadMonitor());
 
                } catch (err) {
                   updateAgentState(agent.id, {
@@ -1221,7 +1225,6 @@ const AgentProvider: React.FC<
                      isRunning: !!port,
                      customUIPort: port
                   });
-                  dispatch(requestReloadMonitor());
 
                } catch (err) {
                   updateAgentState(agent.id, {
@@ -1234,6 +1237,7 @@ const AgentProvider: React.FC<
             }
          }
       }
+      dispatch(requestReloadMonitor());
    }
 
    const checkInstalledModelAgentsRunning = async () => {

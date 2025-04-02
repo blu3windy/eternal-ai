@@ -22,14 +22,21 @@ function App() {
    useEffect(() => {
 
       if (globalThis.electronAPI) {
-         
-
-         globalThis.electronAPI.onUpdateDownloaded(() => {
-            console.log("updateDownloaded Done");
+         globalThis.electronAPI.onUpdateAvailable(() => {
             setUpdateAvailable(true);
+         });
+         globalThis.electronAPI.onUpdateDownloadProcessing((progress) => {
+            console.log("onUpdateDownloadProcessing", progress);
          });
       }
    }, []);
+
+
+   const handleUpdateDownloaded = () => {
+      globalThis.electronAPI.onUpdateDownloaded(() => {
+         console.log("onUpdateDownloaded");
+      });
+   }
 
 
    return (
@@ -57,13 +64,13 @@ function App() {
                exit={{ y: 0, opacity: 0 }}
                transition={{ duration: 0.3, ease: "easeOut" }}
                className={`${s.snackbar}`}
-               onClick={() => globalThis.electronAPI.restartApp()}
+               onClick={handleUpdateDownloaded}
                style={{
                  cursor: "pointer"
                }}
             >
                <Text>
-                  {"App updated! Click to restart and enjoy the latest version. 🚀"}
+                  {"App update available! Click to download the latest version."}
                </Text>
             </motion.div>
          )}
