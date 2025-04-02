@@ -34,10 +34,28 @@ const ImportTokenForm = ({ values, isSubmitting }: { values: ImportTokenFormValu
   const { selectedAgent } = useContext(AgentContext);
   const [isSearching, setIsSearching] = useState(false);
   const [tokenInfo, setTokenInfo] = useState<IToken | null>(null);
+  const [storedTokens, setStoredTokens] = useState<IToken[]>([]);
   const { currentChain } = useSelector(agentsTradeSelector);
   const agentContract = new CAgentTradeContract();
   const formik = useFormikContext<ImportTokenFormValues>();
   const debouncedAddress = useDebounce(values.address, 500);
+
+  useEffect(() => {
+    const loadStoredTokens = async () => {
+      if (!selectedAgent?.id) return;
+      
+      try {
+        const storageKey = `${STORAGE_KEY_PREFIX}${selectedAgent.id}`;
+        const existingTokensStr = await localStorageService.getItem(storageKey);
+        const existingTokens: IToken[] = existingTokensStr ? JSON.parse(existingTokensStr) : [];
+        setStoredTokens(existingTokens);
+      } catch (error) {
+        console.error('Error loading stored tokens:', error);
+      }
+    };
+
+    loadStoredTokens();
+  }, [selectedAgent?.id]);
 
   useEffect(() => {
     const getTokenInfo = async () => {
@@ -76,11 +94,17 @@ const ImportTokenForm = ({ values, isSubmitting }: { values: ImportTokenFormValu
     if (!/^0x[a-fA-F0-9]{40}$/.test(value)) {
       return 'Invalid token address format';
     }
+    
     if (pairs.some(token => compareString(token.address, value))) {
-      return 'Token already imported';
+      return 'Token exists in current pairs';
     }
+
+    if (storedTokens.some(token => compareString(token.address, value))) {
+      return 'Token already imported previously';
+    }
+
     return undefined;
-  }, [pairs]);
+  }, [pairs, storedTokens]);
 
   const validateSymbol = useCallback((value: string) => {
     if (!value) {
@@ -106,7 +130,17 @@ const ImportTokenForm = ({ values, isSubmitting }: { values: ImportTokenFormValu
     return undefined;
   }, []);
 
-  const isSubmitDisabled = !tokenInfo || isSearching || isSubmitting || !values.symbol || !values.decimals;
+  const isTokenAlreadyImported = useCallback((address: string) => {
+    return pairs.some(token => compareString(token.address, address)) ||
+           storedTokens.some(token => compareString(token.address, address));
+  }, [pairs, storedTokens]);
+
+  const isSubmitDisabled = !tokenInfo || 
+                          isSearching || 
+                          isSubmitting || 
+                          !values.symbol || 
+                          !values.decimals ||
+                          isTokenAlreadyImported(values.address);
 
   return (
     <Form>
