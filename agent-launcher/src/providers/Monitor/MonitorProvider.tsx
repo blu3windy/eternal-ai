@@ -223,7 +223,7 @@ const MonitorProvider: React.FC<
       // Initial fetch
       onGetDataAgents();
       // Set up the interval
-      intervalAgentRef.current = setInterval(onGetDataAgents, 60000);
+      intervalAgentRef.current = setInterval(onGetDataAgents, 5 * 60000);
       // Cleanup function
       return () => {
          if (intervalAgentRef.current) {
