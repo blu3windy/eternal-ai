@@ -806,6 +806,56 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideoMagicPrompt(ctx context.
 	}
 	return nil
 }
+
+func (s *Service) JobAgentTwitterPostCreateClankerToken(ctx context.Context) error {
+	err := s.JobRunCheck(
+		ctx,
+		"JobAgentTwitterPostCreateClankerToken",
+		func() error {
+			var retErr error
+			{
+				twitterPosts, err := s.dao.FindAgentTwitterPost(
+					daos.GetDBMainCtx(ctx),
+					map[string][]interface{}{
+						"agent_info_id in (?)": {[]uint{s.conf.VideoAiAgentInfoId}},
+						"status = ?":           {models.AgentTwitterPostStatusNew},
+						"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
+						"token_address = ?":    {""},
+					},
+					map[string][]interface{}{
+						"AgentInfo":             {},
+						"AgentInfo.TwitterInfo": {},
+					},
+					[]string{
+						"post_at desc",
+					},
+					0,
+					5,
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				if len(twitterPosts) > 0 {
+					for _, twitterPost := range twitterPosts {
+						var err error
+						if s.conf.Clanker.IsCreateToken {
+							err = s.CreateClankerTokenForVideoByPostID(ctx, twitterPost.ID)
+							if err != nil {
+								retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
+							}
+						}
+					}
+				}
+			}
+			return retErr
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
+
 func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 	err := s.JobRunCheck(
 		ctx,
@@ -819,6 +869,7 @@ func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 						"agent_info_id in (?)": {[]uint{s.conf.VideoAiAgentInfoId}},
 						"status = ?":           {models.AgentTwitterPostStatusNew},
 						"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
+						"token_address != '' and token_address is not null": {},
 					},
 					map[string][]interface{}{
 						"AgentInfo":             {},
@@ -837,19 +888,9 @@ func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 					s.UpdateTwitterAccessToken(ctx, twitterPosts[0].AgentInfo.TwitterInfo.ID)
 
 					for _, twitterPost := range twitterPosts {
-						var err error
-						if s.conf.Clanker.IsCreateToken {
-							err = s.CreateClankerTokenForVideoByPostID(ctx, twitterPost.ID)
-							if err != nil {
-								retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
-							}
-						}
-
-						if err == nil {
-							err = s.AgentTwitterPostGenerateVideoByUserTweetId(ctx, twitterPost.ID)
-							if err != nil {
-								retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
-							}
+						err := s.AgentTwitterPostGenerateVideoByUserTweetId(ctx, twitterPost.ID)
+						if err != nil {
+							retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
 						}
 
 					}
@@ -887,7 +928,7 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 
 					if twitterPost.Status == models.AgentTwitterPostStatusNew &&
 						twitterPost.PostType == models.AgentSnapshotPostActionTypeGenerateVideo &&
-						twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil {
+						twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil && twitterPost.TokenAddress != "" {
 
 						videoUrl := twitterPost.ImageUrl
 						mediaID := ""

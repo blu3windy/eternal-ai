@@ -39,7 +39,7 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 					}
 
 					if twitterPost != nil && twitterPost.Status == models.AgentTwitterPostStatusNew &&
-						twitterPost.PostType == models.AgentSnapshotPostActionTypeGenerateVideo {
+						twitterPost.PostType == models.AgentSnapshotPostActionTypeGenerateVideo && twitterPost.TokenAddress == "" {
 						// check if privy wallet already exists
 						privyWallet, err := s.dao.FirstPrivyWallet(tx,
 							map[string][]interface{}{
