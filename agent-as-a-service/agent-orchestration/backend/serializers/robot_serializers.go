@@ -40,8 +40,6 @@ type RobotProjectResp struct {
 	TokenSymbol  string           `json:"token_symbol"`
 	TokenName    string           `json:"token_name"`
 	TokenSupply  numeric.BigFloat `json:"token_supply"`
-	MintHash     string           `json:"mint_hash"`
-	Signature    string           `json:"signature"`
 	TotalBalance numeric.BigFloat `json:"sol_balance"`
 }
 
@@ -52,8 +50,6 @@ func NewRobotProjectResp(m *models.RobotProject) *RobotProjectResp {
 		TokenSymbol:  m.TokenSymbol,
 		TokenName:    m.TokenName,
 		TokenSupply:  m.TokenSupply,
-		MintHash:     m.MintHash,
-		Signature:    m.Signature,
 		TotalBalance: m.TotalBalance,
 	}
 }
