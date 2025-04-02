@@ -606,7 +606,6 @@ const AgentProvider: React.FC<
          }
       } finally {
          setTimeout(() => {
-            dispatch(requestReloadMonitor());
             if ([AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(agent.agent_type)) {
                throttledCheckAll();
                setTimeout(() => {
@@ -1210,7 +1209,7 @@ const AgentProvider: React.FC<
                         isRunning: true
                      });
                   }
-                  dispatch(requestReloadMonitor());
+                  
 
                } catch (err) {
                   updateAgentState(agent.id, {
@@ -1229,7 +1228,6 @@ const AgentProvider: React.FC<
                      isRunning: !!port,
                      customUIPort: port
                   });
-                  dispatch(requestReloadMonitor());
 
                } catch (err) {
                   updateAgentState(agent.id, {
@@ -1242,6 +1240,7 @@ const AgentProvider: React.FC<
             }
          }
       }
+      dispatch(requestReloadMonitor());
    }
 
    const checkInstalledModelAgentsRunning = async () => {
