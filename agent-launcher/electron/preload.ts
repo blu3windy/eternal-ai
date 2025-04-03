@@ -78,9 +78,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
    sendCommand: (cmd: string) => ipcRenderer.send("run-command", cmd),
    onCommandEvent: (callback: any) => ipcRenderer.on("command-event", (_, data) => callback(data)),
 
-   onUpdateDownloaded: (callback) => ipcRenderer.invoke("download-and-restart"),
+   onUpdateDownloaded: () => ipcRenderer.invoke("download-and-restart"),
    onUpdateAvailable: (callback) => ipcRenderer.on("update-available", callback),
-   onUpdateDownloadProcessing: (callback) => ipcRenderer.on("download-progress", callback),
+   onCheckForUpdate: () => ipcRenderer.invoke(EMIT_EVENT_NAME.CHECK_FOR_UPDATE),
+   onUpdateDownloadProcessing: (callback) => ipcRenderer.on("download-progress", (_, progress) => callback(progress)),
    restartApp: () => ipcRenderer.invoke("quit-and-install"),
 
 
