@@ -35,6 +35,7 @@ import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import s from './styles.module.scss';
 import ImportToken from './ImportToken/index';
+import TransferToken from './TransferToken/index';
 import useFundAgent from '@providers/FundAgent/useFundAgent';
 import localStorageService from '@storage/LocalStorageService';
 
@@ -100,6 +101,7 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
   const { onCopy: onCopyAddress } = useClipboard(agentWallet?.address || '');
   const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
   const { isOpen: isImportModalOpen, onOpen: onImportModalOpen, onClose: onImportModalClose } = useDisclosure();
+  const { isOpen: isTransferModalOpen, onOpen: onTransferModalOpen, onClose: onTransferModalClose } = useDisclosure();
   const toast = useToast();
 
   const [importedTokens, setImportedTokens] = useState<IToken[]>([]);
@@ -163,7 +165,7 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
   };
 
   const handleTransfer = () => {
-    onModalOpen();
+    onTransferModalOpen();
   };
 
   
@@ -309,6 +311,10 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
 
       <BaseModal isShow={isImportModalOpen} onHide={onImportModalClose} title={'Import Token'} size="small" className={s.modalContent}>
         <ImportToken onClose={onImportModalClose} />
+      </BaseModal>
+
+      <BaseModal isShow={isTransferModalOpen} onHide={onTransferModalClose} title={'Transfer Token'} size="small" className={s.modalContent}>
+        <TransferToken onClose={onTransferModalClose} />
       </BaseModal>
     </>
   );
