@@ -309,7 +309,7 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
          {isShowWallet && (
             <Flex className={s.walletWrapper}>
                <HStack>
-                  <Text fontSize={'14px'} fontWeight={400} color={'#000'} opacity={0.6}>{selectedAgent?.agent_name} Address: </Text>
+                  <Text fontSize={'14px'} fontWeight={400} color={'#000'} opacity={0.6}>{selectedAgent?.agent_name} Wallet: </Text>
                   <Text fontSize={'14px'} fontWeight={400} color={'#000'}>{(agentWallet?.address || '').slice(0, 10)}...{(agentWallet?.address || '').slice(-4)}</Text>
                      <Box cursor={'pointer'} onClick={handleCopyAddress}>
                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
