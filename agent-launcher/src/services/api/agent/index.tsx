@@ -159,27 +159,50 @@ const AgentAPI = {
       payload: ChatCompletionPayload;
       streamHandlers: ChatCompletionStreamHandler;
    }): Promise<any> => {
-      const headers = await getClientHeaders();
-      const messages = payload.messages.map((item) => ({
-         ...item,
-         content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
-      }));
-      const response = await fetch(`http://localhost:33030/${agent?.network_id}-${agent?.agent_name?.toLowerCase()}/prompt`, {
-         method: 'POST',
-         headers: {
-            ...headers,
-         },
-         body: JSON.stringify({ messages: messages, stream: true, seed: 0 })
-      });
+      try {
+         const headers = await getClientHeaders();
+         const messages = payload.messages.map((item) => ({
+            ...item,
+            content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
+         }));
+         const response = await fetch(`http://localhost:33030/${agent?.network_id}-${agent?.agent_name?.toLowerCase()}/prompt`, {
+            method: 'POST',
+            headers: {
+               ...headers,
+            },
+            body: JSON.stringify({ messages: messages, stream: true, seed: 0 })
+         });
 
-      if (response.status === 200) {
-         const reader = response.body?.getReader();
-         if (!reader) {
-            throw 'No reader';
+         if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
          }
-         return parseStreamAIResponse(reader, streamHandlers);
+
+         const contentType = response.headers.get('content-type');
+         
+         if (contentType?.includes('text/event-stream')) {
+            const reader = response.body?.getReader();
+            if (!reader) {
+               throw new Error('No reader available for stream response');
+            }
+            return await parseStreamAIResponse(reader, streamHandlers);
+         } else if (contentType?.includes('application/json')) {
+            const data = await response.json();
+            return {
+               success: true,
+               data,
+               isStream: false
+            };
+         } else {
+            throw new Error(`Unsupported content type: ${contentType}`);
+         }
+      } catch (error) {
+         console.error('Error in chatAgentUtilityStreamCompletions:', error);
+         return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred',
+            isStream: false
+         };
       }
-      throw 'API error';
    },
    chatStreamCompletions: async ({
       payload,
