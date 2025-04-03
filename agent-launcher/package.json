@@ -1,15 +1,15 @@
 {
   "name": "agent-launcher",
   "private": true,
-  "version": "1.0.8-2025040303340",
+  "version": "1.0.10-2025040307253",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "postinstall": "electron-builder install-app-deps",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "build:install": "node build/build-install.cjs",
-    "build:update": "node build/build-update.cjs"
+    "build:install": "node configBuild/build-install.cjs",
+    "build:update": "node configBuild/build-update.cjs"
   },
   "resolutions": {
     "react": "^18",
@@ -154,9 +154,9 @@
       "identity": "Eternal AI Limited (9M75XA82CZ)",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "icon": "build/icon.icns",
-      "entitlements": "build/entitlements.mas.plist",
-      "entitlementsInherit": "build/entitlements.mas.plist",
+      "icon": "configBuild/icon.icns",
+      "entitlements": "configBuild/entitlements.mas.plist",
+      "entitlementsInherit": "configBuild/entitlements.mas.plist",
       "notarize": true
     },
     "extraResources": [
