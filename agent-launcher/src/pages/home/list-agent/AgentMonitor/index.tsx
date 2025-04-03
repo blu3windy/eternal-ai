@@ -101,15 +101,23 @@ const AgentMonitor: React.FC = () => {
       const filteredData = containers
          .filter(container => {
             const matchesSearch = container.name.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesRunning = !showRunningOnly || (container?.agent ? agentStates[container?.agent?.id]?.isRunning : container.state === 'running');
+            const matchesRunning = !showRunningOnly || (agentStates[container?.agent?.id || '']?.isRunning || container.state === 'running');
             return matchesSearch && matchesRunning && !!container.name;
+         })
+         .sort((a, b) => {
+
+            // Sort running containers first
+            if ((agentStates[a?.agent?.id || '']?.isRunning || a.state === 'running') && (!agentStates[b?.agent?.id || '']?.isRunning || b.state !== 'running')) return -1;
+            if ((!agentStates[a?.agent?.id || '']?.isRunning || a.state !== 'running') && (agentStates[b?.agent?.id || '']?.isRunning || b.state === 'running')) return 1;
+            // If both have same state, sort by name
+            return a.name.localeCompare(b.name);
          });
       setFilterContainers(filteredData);
    };
 
    useEffect(() => {
       onFilterData();
-   }, [searchTerm, showRunningOnly, containers]); // Empty dependency array means this effect runs once on mount
+   }, [searchTerm, showRunningOnly, containers, agentStates]); // Empty dependency array means this effect runs once on mount
 
    return (
       <>
@@ -160,7 +168,7 @@ const AgentMonitor: React.FC = () => {
                            <Flex gap={'6px'} alignItems={'center'}>
                               <Text fontSize="18px" fontWeight="600" color="white">CPU usage</Text>
                               <Tooltip 
-                                 label="% of available CPU currently in use by agents."
+                                 label="This shows the CPU usage available to Docker, not your actual device’s total CPU usage."
                                  hasArrow
                                  placement="top"
                                  bg="gray.700"
@@ -185,7 +193,7 @@ const AgentMonitor: React.FC = () => {
                            <Flex gap={'6px'} alignItems={'center'}>
                               <Text fontSize="18px" fontWeight="600" color="white">Memory usage</Text>
                               <Tooltip 
-                                 label="Total amount of memory consumed by running agent processs."
+                                 label="This reflects the memory allocated to Docker, not your computer’s full memory. Your device may have more RAM available overall."
                                  hasArrow
                                  placement="top"
                                  bg="gray.700"
@@ -248,7 +256,7 @@ const AgentMonitor: React.FC = () => {
                                        w="8px"
                                        h="8px"
                                        borderRadius="full"
-                                       bg={(container?.agent ? agentStates[container?.agent?.id]?.isRunning : container.state === 'running') ? '#4ADE80' : 'lightgray'}
+                                       bg={(agentStates[container?.agent?.id || '']?.isRunning || container.state === 'running') ? '#4ADE80' : 'lightgray'}
                                     />
                                     <Text color="white">{container.agent?.agent_name || container.name}</Text>
                                  </Flex>
@@ -272,22 +280,22 @@ const AgentMonitor: React.FC = () => {
                                     ? (
                                        <>
                                           <Tooltip 
-                                             label={container.state === 'running' ? 'Stop' : 'Start'}
+                                             label={(agentStates[container?.agent?.id || '']?.isRunning || container.state === 'running') ? 'Stop' : 'Start'}
                                              hasArrow
                                              placement="top"
                                              bg="gray.700"
                                              color="white"
                                           >
                                              <IconButton
-                                                aria-label={container.state === 'running' ? 'Stop container' : 'Start container'}
-                                                icon={<Image src={container.state === 'running' ? "icons/stop.svg" : "icons/play.svg"} alt={container.state === 'running' ? "Stop" : "Start"} />}
+                                                aria-label={(agentStates[container?.agent?.id || '']?.isRunning || container.state === 'running') ? 'Stop container' : 'Start container'}
+                                                icon={<Image src={(agentStates[container?.agent?.id || '']?.isRunning || container.state === 'running') ? "icons/stop.svg" : "icons/play.svg"} alt={container.state === 'running' ? "Stop" : "Start"} />}
                                                 size="sm"
                                                 variant="ghost"
                                                 color="white"
                                                 _hover={{ bg: 'whiteAlpha.200' }}
                                                 isLoading={container?.agent ? (agentStates[container?.agent?.id]?.isStarting || agentStates[container?.agent?.id]?.isStopping) : stateActions[container.name]?.isLoading ?? false}
                                                 onClick={ () => {
-                                                if (container.state === 'running') {
+                                                if ((agentStates[container?.agent?.id || '']?.isRunning || container.state === 'running')) {
                                                    container.agent ? stopAgent(container.agent) : handleStopContainer(container);
                                                 } else {
                                                    container.agent ? startAgent(container.agent) : handleStartContainer(container);

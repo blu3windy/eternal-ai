@@ -1,5 +1,5 @@
-import { Box, Flex, IconButton } from "@chakra-ui/react";
-import React, { useCallback, useContext, useRef, useState } from "react";
+import { Box, Flex, HStack, IconButton, Text, useClipboard, useToast } from "@chakra-ui/react";
+import React, { useCallback, useContext, useMemo, useRef, useState } from "react";
 import AutosizeTextarea from "react-autosize-textarea";
 import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import useFundAgent from "@providers/FundAgent/useFundAgent.ts";
@@ -11,6 +11,8 @@ import { compareString } from "@utils/string.ts";
 import CAgentTokenAPI from "@services/api/agents-token";
 import { useDropzone } from 'react-dropzone';
 import cx from "clsx";
+import AgentTradeProvider from "@pages/home/trade-agent/provider";
+import AgentWallet from "@components/AgentWallet";
 
 interface IProps {
    inputRef?: any;
@@ -30,12 +32,16 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
       isAllowChat,
    } = useChatAgentProvider();
 
-   const { setDepositAgentID } = useFundAgent();
    const {
       selectedAgent,
       isRunning,
       requireInstall,
+      agentWallet,
+      isBackupedPrvKey,
    } = useContext(AgentContext);
+
+   const { onCopy: onCopyAddress } = useClipboard(agentWallet?.address || '');
+   const toast = useToast();
 
    const [message, setMessage] = useState('');
    const [attachments, setAttachments] = useState<File[]>([]);
@@ -130,33 +136,20 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
       setAttachments(prev => [...prev, ...imageFiles]);
    };
 
+   const isShowWallet = useMemo(() => {
+      return selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey;
+   }, [selectedAgent, agentWallet, isBackupedPrvKey]);
 
-   const isSend = React.useMemo(() => {
-      return !!message;
-   }, [message]);
-
-   // const onSendMessage = (_message: string) => {
-   //   if (isSend && !loading) {
-   //     publishEvent(_message);
-   //     setMessage("");
-
-   //     let recentAgents = JSON.parse(await localStorageService.getItem(STORAGE_KEYS.RECENT_AGENTS)!) || [];
-   //     recentAgents = recentAgents.filter(id => !compareString(id, selectedAgent?.id?.toString()));
-   //     recentAgents.unshift(selectedAgent?.id);
-
-   //     if (recentAgents.length > 10) {
-   //       recentAgents = recentAgents.slice(0, 10);
-   //     }
-
-   //     localStorageService.setItem(STORAGE_KEYS.RECENT_AGENTS, JSON.stringify(recentAgents));
-
-   //     cPumpAPI.saveRecentAgents({ ids: recentAgents })
-   //   }
-   // };
-
-   // const handleDeposit = () => {
-   //   setDepositAgentID(selectedAgent?.agent_id);
-   // };
+   const handleCopyAddress = () => {
+      onCopyAddress();
+      toast({
+        description: "Address copied to clipboard",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+        position: "bottom",
+      });
+    };
 
    return (
       <Flex
@@ -205,7 +198,9 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
                   ? s.runningWrapper
                   : isRunning
                      ? s.runningWrapper
-                     : s.stopWrapper)
+                     : s.stopWrapper,
+                  isShowWallet ? s.hasWallet : ''
+               )
 
                }
             >
@@ -310,6 +305,25 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
                </Flex>
             </Flex>
          </Flex>
+
+         {isShowWallet && (
+            <Flex className={s.walletWrapper}>
+               <HStack>
+                  <Text fontSize={'14px'} fontWeight={400} color={'#000'} opacity={0.6}>{selectedAgent?.agent_name} Wallet: </Text>
+                  <Text fontSize={'14px'} fontWeight={400} color={'#000'}>{(agentWallet?.address || '').slice(0, 10)}...{(agentWallet?.address || '').slice(-4)}</Text>
+                     <Box cursor={'pointer'} onClick={handleCopyAddress}>
+                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g opacity="0.5">
+                           <path d="M5.00104 4.39948V2.59987C5.00104 2.44077 5.06424 2.2882 5.17674 2.1757C5.28924 2.0632 5.44182 2 5.60091 2H12.7994C12.9584 2 13.111 2.0632 13.2235 2.1757C13.336 2.2882 13.3992 2.44077 13.3992 2.59987V10.998C13.3992 11.1571 13.336 11.3097 13.2235 11.4222C13.111 11.5347 12.9584 11.5979 12.7994 11.5979H10.9997V13.3975C10.9997 13.7287 10.7298 13.9974 10.3957 13.9974H3.20563C3.1265 13.998 3.04805 13.9828 2.97478 13.9529C2.90152 13.923 2.83489 13.879 2.77874 13.8232C2.72259 13.7674 2.67803 13.7011 2.64762 13.6281C2.61721 13.555 2.60156 13.4767 2.60156 13.3975L2.60336 4.99935C2.60336 4.66822 2.8733 4.39948 3.20683 4.39948H5.00104ZM6.20078 4.39948H10.9997V10.3982H12.1995V3.19974H6.20078V4.39948Z" fill="black" />
+                        </g>
+                     </svg>
+                  </Box>
+               </HStack>
+               <AgentTradeProvider>
+                  <AgentWallet color={'black'} />
+               </AgentTradeProvider>
+            </Flex>
+         )}
       </Flex>
    );
 };

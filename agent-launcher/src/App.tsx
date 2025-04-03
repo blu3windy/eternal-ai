@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import s from "./styles/styles.module.scss";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Text } from "@chakra-ui/react";
+import { Box, Text, Button } from "@chakra-ui/react";
 
 function App() {
    const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -22,14 +22,21 @@ function App() {
    useEffect(() => {
 
       if (globalThis.electronAPI) {
-         
-
-         globalThis.electronAPI.onUpdateDownloaded(() => {
-            console.log("updateDownloaded Done");
+         globalThis.electronAPI.onUpdateAvailable(() => {
             setUpdateAvailable(true);
+         });
+         globalThis.electronAPI.onUpdateDownloadProcessing((progress) => {
+            console.log("onUpdateDownloadProcessing", progress);
          });
       }
    }, []);
+
+
+   const handleUpdateDownloaded = () => {
+      globalThis.electronAPI.onUpdateDownloaded(() => {
+         console.log("onUpdateDownloaded");
+      });
+   }
 
 
    return (
@@ -57,14 +64,21 @@ function App() {
                exit={{ y: 0, opacity: 0 }}
                transition={{ duration: 0.3, ease: "easeOut" }}
                className={`${s.snackbar}`}
-               onClick={() => globalThis.electronAPI.restartApp()}
+               onClick={handleUpdateDownloaded}
                style={{
-                 cursor: "pointer"
+                  cursor: "pointer"
                }}
             >
                <Text>
-                  {"App updated! Click to restart and enjoy the latest version. 🚀"}
+                  {"App update available! Click to download the latest version."}
                </Text>
+               {
+                  // add button close
+                  // svg icon close 
+                  <Box onClick={() => setUpdateAvailable(false)}>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-x"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                  </Box>
+               }
             </motion.div>
          )}
       </>

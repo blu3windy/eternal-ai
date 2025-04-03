@@ -12,6 +12,7 @@ import {
    useDisclosure,
 } from '@chakra-ui/react';
 import Avatar from '@components/Avatar';
+import BaseModal from '@components/BaseModal';
 import InfoTooltip from '@components/InfoTooltip';
 import Percent24h from '@components/Percent';
 import { BASE_CHAIN_ID } from '@constants/chains';
@@ -26,16 +27,14 @@ import AgentTradeProvider from '@pages/home/trade-agent/provider';
 import CAgentTokenAPI from '@services/api/agents-token';
 import { IAgentToken } from '@services/api/agents-token/interface';
 import localStorageService from '@storage/LocalStorageService';
+import storageModel from '@storage/StorageModel';
 import { formatCurrency } from '@utils/format.ts';
 import { addressFormater, compareString } from '@utils/string';
 import cx from 'clsx';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
-import AgentWallet from '@components/AgentWallet';
-import s from './styles.module.scss';
-import storageModel from '@storage/StorageModel';
 import SetupEnvModel from '../SetupEnvironment';
-import BaseModal from '@components/BaseModal';
+import s from './styles.module.scss';
 
 
 const AgentTopInfo = () => {
@@ -440,11 +439,11 @@ const AgentTopInfo = () => {
                      </Text>
                      <Percent24h clsName={s.percent} percent={selectedAgent?.meme?.percent || 0} />
                   </Flex>
-                  {selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey && (
+                  {/* {selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey && (
                      <AgentTradeProvider>
                         <AgentWallet color={colorWallet}/>
                      </AgentTradeProvider>
-                  )}
+                  )} */}
                   <Button className={s.btnBuy} onClick={onOpenDrawer}>
                      Buy
                   </Button>

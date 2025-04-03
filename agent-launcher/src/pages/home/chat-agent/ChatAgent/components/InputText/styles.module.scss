@@ -41,6 +41,22 @@
     }
   }
 
+  .hasWallet {
+    box-shadow: none !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+
+  .walletWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border: 1px solid #00000026;
+    border-radius: 0px 0px 16px 16px;
+    border-top-width: 0px;
+    margin: -1px 1px;
+  }
+
 }
 
 .attachmentPreview {
