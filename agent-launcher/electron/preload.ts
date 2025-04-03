@@ -90,4 +90,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
    storeClear: () => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_CLEAR),
 
    osContext: () => ipcRenderer.invoke(EMIT_EVENT_NAME.OS_CONTEXT),
+
+
+   getInitialDockerData: () => ipcRenderer.invoke('get-initial-docker-data'),
+   onContainersUpdate: (callback) =>
+      ipcRenderer.on('docker-containers-update', (event, data) => callback(data)),
+   onImagesUpdate: (callback) =>
+      ipcRenderer.on('docker-images-update', (event, data) => callback(data))
 });

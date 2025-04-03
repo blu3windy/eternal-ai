@@ -23,6 +23,7 @@ import { BASE_CHAIN_ID } from "../../config.ts";
 import EaiSigner from "../../helpers/signer";
 import localStorageService from "../../storage/LocalStorageService.ts";
 import HomeAuthen from "./Home";
+// import { ipcRenderer } from "electron";
 
 interface IReqAgentSecretKey {
   chainId: string;
@@ -172,6 +173,30 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
          sendTransaction,
       };
    }, [signer, hasUser]);
+
+
+   // useEffect(() => {
+   //    // Fetch initial data
+   //    window.electronAPI.getInitialDockerData().then(({ containers, images }) => {
+   //       console.log('LEON getInitialDockerData', { containers, images });
+   //    });
+  
+   //    // Listen for container updates
+   //    window.electronAPI.onContainersUpdate((updatedContainers) => {
+   //       console.log('LEON onContainersUpdate', updatedContainers);
+   //    });
+  
+   //    // Listen for image updates
+   //    window.electronAPI.onImagesUpdate((updatedImages) => {
+   //       console.log('LEON onImagesUpdate', updatedImages);
+   //    });
+  
+   //    // Cleanup listeners (optional, for robustness)
+   //    return () => {
+   //       // Electron doesn’t provide a direct way to remove specific listeners here,
+   //       // but you could manage this in preload.js if needed.
+   //    };
+   // }, []);
 
    const renderContent = () => {
       if (checking || loading) {
