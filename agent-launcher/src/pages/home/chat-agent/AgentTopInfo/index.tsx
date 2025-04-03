@@ -36,6 +36,7 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import SetupEnvModel from '../SetupEnvironment';
 import s from './styles.module.scss';
+import debounce from 'lodash.debounce';
 
 
 const AgentTopInfo = () => {
@@ -138,6 +139,8 @@ const AgentTopInfo = () => {
          const oldCodeVersion = values ? Number(values) : 1;
          if (codeVersion > 1 && codeVersion > oldCodeVersion) {
             setHaveNewVersionCode(true);
+         } else {
+            setHaveNewVersionCode(false);
          }
       }
    };
