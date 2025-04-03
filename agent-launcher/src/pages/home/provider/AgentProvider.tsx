@@ -604,13 +604,11 @@ const AgentProvider: React.FC<
                });
             }, 3000);
          } else {
-            setTimeout(() => {
-               updateAgentState(agent.id, {
-                  data: agent,
-                  isStarting: false,
-                  isRunning: true,
-               });
-            }, 1000);
+            updateAgentState(agent.id, {
+               data: agent,
+               isStarting: false,
+               isRunning: true,
+            });
             dispatch(requestReloadMonitor());
          }
 
