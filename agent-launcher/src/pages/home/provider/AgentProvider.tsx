@@ -604,11 +604,13 @@ const AgentProvider: React.FC<
                });
             }, 3000);
          } else {
-            updateAgentState(agent.id, {
-               data: agent,
-               isStarting: false,
-               isRunning: true,
-            });
+            setTimeout(() => {
+               updateAgentState(agent.id, {
+                  data: agent,
+                  isStarting: false,
+                  isRunning: true,
+               });
+            }, 1000);
             dispatch(requestReloadMonitor());
          }
 
@@ -632,7 +634,7 @@ const AgentProvider: React.FC<
       }
    };
 
-   const stopAgent = async (agent: IAgentToken) => {
+   const stopAgent = async (agent: IAgentToken, isUpdateCode?: boolean) => {
       try {
          updateAgentState(agent.id, {
             data: agent,
@@ -660,6 +662,12 @@ const AgentProvider: React.FC<
             });
          }, 4000);
          throttledCheckAll();
+         if (isUpdateCode) {
+            updateAgentState(agent.id, {
+               data: agent,
+               isStarting: true,
+            });
+         }
       }
    };
 
