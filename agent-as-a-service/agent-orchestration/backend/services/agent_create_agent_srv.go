@@ -183,7 +183,19 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 			}
 			if err == nil {
 				for _, v := range recentSearch.LookUps {
-					if v.Tweet.AuthorID != twitterInfo.TwitterID && !mentionIds[v.Tweet.ID] && len(v.Tweet.ReferencedTweets) == 0 {
+					if len(v.Tweet.ReferencedTweets) > 0 {
+						retweeted := false
+						for _, tweetType := range v.Tweet.ReferencedTweets {
+							if tweetType.Type == "retweeted" {
+								retweeted = true
+								break
+							}
+						}
+						if retweeted {
+							continue
+						}
+					}
+					if v.Tweet.AuthorID != twitterInfo.TwitterID && !mentionIds[v.Tweet.ID] {
 						tweetMentions.Tweets = append(tweetMentions.Tweets, v.Tweet)
 						mentionIds[v.Tweet.ID] = true
 					}
@@ -1517,9 +1529,15 @@ func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userNam
 		isGenerateVideo = true
 		index := strings.Index(inferContent, "create video :")
 		inferContent = fullText[index+len("create video :"):]
+	} else if strings.Contains(inferContent, fmt.Sprintf("%v", "create video")) {
+		isGenerateVideo = true
+		index := strings.Index(inferContent, "create video")
+		inferContent = fullText[index+len("create video"):]
 	}
 	inferContent = strings.TrimSpace(inferContent)
-
+	if len(inferContent) == 0 {
+		inferContent = fullText
+	}
 	return &models.TweetParseInfo{
 		IsGenerateVideo:      isGenerateVideo,
 		GenerateVideoContent: strings.TrimSpace(inferContent),
