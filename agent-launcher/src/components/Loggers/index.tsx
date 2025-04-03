@@ -3,12 +3,11 @@ import { Box, Text, useColorModeValue, Code, Input, Button, useToast, Flex } fro
 import { useLoggersStore } from "@components/Loggers/useLogs.ts";
 import LoggersButton from "@components/Loggers/Loggers.button.tsx";
 import ActionButtons from "@components/Loggers/action.button.tsx"; // Zustand store
+import s from "./styles.module.scss";
+import { LogEntry } from "@stores/states/logger/types.ts";
 
-interface LogEntry {
-    type: "output" | "error";
-    cmd?: string;
-    message: string;
-}
+const MAX_LOGS_PER_KEY = 10;
+const MAX_COMMAND_KEYS = 10;
 
 const Loggers = () => {
    const [logs, setLogs] = useState<Record<string, LogEntry[]>>({});
@@ -18,14 +17,39 @@ const Loggers = () => {
    const initialized = useRef(false);
    const toast = useToast();
 
-   // Optimized event listener setup
    const handleNewLog = useCallback((data: LogEntry) => {
       setLogs((prev) => {
          const cmdKey = data.cmd || "No Command";
-         return {
+         
+         // Get current logs for this command key
+         const currentLogs = prev[cmdKey] || [];
+         
+         // Add new log and keep only the latest MAX_LOGS_PER_KEY items
+         const updatedLogs = [...currentLogs, data].slice(-MAX_LOGS_PER_KEY);
+         
+         // Create new logs object with the updated command key
+         const newLogs = {
             ...prev,
-            [cmdKey]: [...(prev[cmdKey] || []), data],
+            [cmdKey]: updatedLogs,
          };
+         
+         // Get all command keys and sort by most recent log timestamp
+         const sortedKeys = Object.keys(newLogs).sort((a, b) => {
+            const lastLogA = newLogs[a][newLogs[a].length - 1]?.timestamp || 0;
+            const lastLogB = newLogs[b][newLogs[b].length - 1]?.timestamp || 0;
+            return lastLogB - lastLogA;
+         });
+         
+         // Keep only the latest MAX_COMMAND_KEYS command keys
+         const latestKeys = sortedKeys.slice(0, MAX_COMMAND_KEYS);
+         
+         // Create final logs object with only the latest command keys
+         const finalLogs: Record<string, LogEntry[]> = {};
+         latestKeys.forEach(key => {
+            finalLogs[key] = newLogs[key];
+         });
+         
+         return finalLogs;
       });
    }, []);
 
@@ -112,22 +136,12 @@ const Loggers = () => {
                   </Text>
                ) : (
                   filteredLogs.map(([cmd, entries]) => (
-                     <Box key={cmd} p={3} borderRadius="md" mb={4} bg="gray.700" color="white">
-                        <Text fontWeight="bold" fontSize="md" mb={2}>
-                           Command: <Code>{cmd}</Code>
-                        </Text>
-                        {entries.map((log, index) => (
-                           <Box
-                              key={index}
-                              p={2}
-                              borderRadius="md"
-                              mb={1}
-                              bg={log.type === "error" ? "red.400" : "gray.600"}
-                           >
-                              <Code whiteSpace="pre-wrap" fontSize="12px">
-                                 {log.message.trim()}
-                              </Code>
-                           </Box>
+                     <Box key={cmd} className={s.logGroup}>
+                        <Text className={s.command}>{cmd}</Text>
+                        {entries.map((entry, index) => (
+                           <Text key={index} className={s.logEntry}>
+                              {entry.message}
+                           </Text>
                         ))}
                      </Box>
                   ))

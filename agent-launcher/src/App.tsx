@@ -14,11 +14,11 @@ import { useEffect, useState } from "react";
 import s from "./styles/styles.module.scss";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Box, Text, Button } from "@chakra-ui/react";
+import { Box, Text, Button, Spinner, Flex } from "@chakra-ui/react";
 
 function App() {
    const [updateAvailable, setUpdateAvailable] = useState(false);
-
+   const [updateDownloadProcessing, setUpdateDownloadProcessing] = useState(false);
    useEffect(() => {
 
       if (globalThis.electronAPI) {
@@ -26,7 +26,7 @@ function App() {
             setUpdateAvailable(true);
          });
          globalThis.electronAPI.onUpdateDownloadProcessing((progress) => {
-            console.log("onUpdateDownloadProcessing", progress);
+            setUpdateDownloadProcessing(progress);
          });
       }
    }, []);
@@ -64,15 +64,21 @@ function App() {
                exit={{ y: 0, opacity: 0 }}
                transition={{ duration: 0.3, ease: "easeOut" }}
                className={`${s.snackbar}`}
-               onClick={handleUpdateDownloaded}
+               onClick={updateDownloadProcessing ? undefined : handleUpdateDownloaded}
                style={{
-                  cursor: "pointer"
+                  cursor: updateDownloadProcessing ? "default" : "pointer"
                }}
             >
-               <Text>
-                  {"App update available! Click to download the latest version."}
-               </Text>
                {
+                  updateDownloadProcessing ? <Flex alignItems={"center"} gap={2}>
+                     <Spinner size="sm" />
+                     <Text>Downloading update and restart app when finished...</Text>
+                  </Flex> : <Text>
+                     App update available! Click to download the latest version.
+                  </Text>
+               }
+
+               { !updateDownloadProcessing &&
                   // add button close
                   // svg icon close 
                   <Box onClick={() => setUpdateAvailable(false)}>

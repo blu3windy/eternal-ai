@@ -1,6 +1,20 @@
 import CApiClient from "./apiClient";
 import { IAgentToken, IChainConnected } from "./interface";
 
+// Convert string to JSON
+const envToJson = (str) => {
+   const obj = {};
+   const lines = str.trim().split('\n');
+   
+   lines.forEach(line => {
+      const [key, value] = line.split('=');
+      // Remove quotes from value if they exist and handle empty values
+      obj[key] = value ? value.replace(/^"|"$/g, '') : '';
+   });
+   
+   return JSON.stringify(obj, null, 2);
+};
+
 class CAgentTokenAPI extends CApiClient {
    private prefix = (url: string) => `/meme/${url}`;
    public getChainList = async (): Promise<IChainConnected[] | null> => {
@@ -35,7 +49,17 @@ class CAgentTokenAPI extends CApiClient {
             agent.required_info = JSON.parse(agent?.required_info);
          }
 
-         // agent.required_env = agent?.required_env || true;
+         if (agent?.env_example && typeof agent?.env_example === "string") {
+            console.log('LEON agent.env_example 000', agent.agent_name, agent.env_example);
+            agent.env_example = envToJson(agent?.env_example);
+
+            if (agent.env_example && Object.keys(agent.env_example).length === 0) {
+               agent.env_example = undefined;
+            }
+
+            console.log('LEON agent.env_example 111', agent.env_example);
+
+         }
          return agent;
       });
 
@@ -48,6 +72,7 @@ class CAgentTokenAPI extends CApiClient {
       const response = (await this.api.get(
          `/agent/dashboard/${token_address}`
       )) as any;
+      
 
       return response;
    };

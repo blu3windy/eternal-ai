@@ -66,7 +66,7 @@ const AgentDetail = () => {
       if (isInstalled) return;
       if (!selectedAgent) return;
       
-      if (selectedAgent?.required_env) {
+      if (selectedAgent?.env_example) {
          const environment = await storageModel.getEnvironment({ contractAddress: selectedAgent?.agent_contract_address, chainId: selectedAgent?.network_id });
          console.log('environment', environment);
          
@@ -83,6 +83,9 @@ const AgentDetail = () => {
       if (!selectedAgent) return;
       startAgent(selectedAgent);
    };
+   
+   console.log('LEON selectedAgent', selectedAgent?.env_example);
+   
 
    return (
       <>
@@ -231,6 +234,7 @@ const AgentDetail = () => {
                title="Setup Environment"
             >
                <SetupEnvModel
+                  environments={selectedAgent?.env_example}
                   agent={selectedAgent}
                   onSubmit={async () => {
                      setIsShowSetupEnvModel(false);

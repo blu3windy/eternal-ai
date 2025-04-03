@@ -12,7 +12,7 @@ export default defineConfig({
             vite: {
                build: {
                   rollupOptions: {
-                     external: ['keytar'], // ✅ Exclude keytar from bundling
+                     external: ['keytar', 'dockerode'], // ✅ Exclude from bundling
                   },
                },
             },
@@ -22,7 +22,7 @@ export default defineConfig({
             vite: {
                build: {
                   rollupOptions: {
-                     external: ['keytar'], // ✅ Exclude keytar from bundling
+                     external: ['keytar', 'dockerode'], // ✅ Exclude from bundling
                   },
                },
             },
