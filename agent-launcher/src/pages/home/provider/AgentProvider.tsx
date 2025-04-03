@@ -27,6 +27,7 @@ import uniqBy from "lodash.uniqby";
 import { MonitorContext } from "@providers/Monitor/MonitorContext.tsx";
 import { ContainerData } from "@providers/Monitor/interface.ts";
 import { showMessage } from "@components/Toast/toast.tsx";
+import { toast } from "react-hot-toast";
 
 const AgentProvider: React.FC<
     PropsWithChildren & { tokenAddress?: string }
@@ -594,8 +595,26 @@ const AgentProvider: React.FC<
             });
          }
 
+         if ([AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(agent.agent_type)) {
+            checkAgentRunning(agent);
+            setTimeout(() => {
+               updateAgentState(agent.id, {
+                  data: agent,
+                  isStarting: false,
+               });
+            }, 3000);
+         } else {
+            updateAgentState(agent.id, {
+               data: agent,
+               isStarting: false,
+               isRunning: true,
+            });
+            dispatch(requestReloadMonitor());
+         }
+
+         console.timeEnd('LEON: startAgent');
          // await sleep(2000);
-      } catch (e) {
+      } catch (e: any) {
          console.log('startAgent e', e);
 
          if ([AgentType.Model, AgentType.ModelOnline].includes(agent.agent_type)) {
@@ -604,27 +623,12 @@ const AgentProvider: React.FC<
                await setReadyPort();
             }
          }
-      } finally {
-         setTimeout(() => {
-            if ([AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(agent.agent_type)) {
-               checkAgentRunning(agent);
-               setTimeout(() => {
-                  updateAgentState(agent.id, {
-                     data: agent,
-                     isStarting: false,
-                  });
-               }, 3000);
-            } else {
-               updateAgentState(agent.id, {
-                  data: agent,
-                  isStarting: false,
-                  isRunning: true,
-               });
-               dispatch(requestReloadMonitor());
-            }
-         }, 1000);
-
-         console.timeEnd('LEON: startAgent');
+         toast.error(`Start agent failed.`);
+         updateAgentState(agent.id, {
+            data: agent,
+            isStarting: false,
+            isRunning: false,
+         });
       }
    };
 
@@ -1005,37 +1009,32 @@ const AgentProvider: React.FC<
    const handleRunDockerAgent = async (agent?: IAgentToken) => {
       if (!agent) return;
 
-      try {
-         const lang = getUtilityAgentCodeLanguage(agent);
+      const lang = getUtilityAgentCodeLanguage(agent);
 
-         const options: any = {
-            type: lang,
-            port: agent.docker_port
-         };
+      const options: any = {
+         type: lang,
+         port: agent.docker_port
+      };
 
-         const environment = await storageModel.getEnvironment({
-            contractAddress: agent.agent_contract_address,
-            chainId: agent.network_id
-         });
+      const environment = await storageModel.getEnvironment({
+         contractAddress: agent.agent_contract_address,
+         chainId: agent.network_id
+      });
 
-         console.log('LEON: environment', environment, JSON.stringify(environment));
+      console.log('LEON: environment', environment, JSON.stringify(environment));
 
-         if (environment) {
-            options.environment = environment;
-         }
-
-         if (agent?.required_wallet) {
-            options.privateKey = agentWallet?.privateKey;
-            options.address = agentWallet?.address;
-         }
-
-         console.log("stephen: options", agent?.agent_name?.toLowerCase(), agent?.network_id.toString(), JSON.stringify(options));
-
-         await globalThis.electronAPI.dockerRunAgent(agent?.agent_name?.toLowerCase(), agent?.network_id.toString(), JSON.stringify(options));
-      } catch (e) {
-         console.log('handleRunDockerAgent', e);
-      } finally {
+      if (environment) {
+         options.environment = environment;
       }
+
+      if (agent?.required_wallet) {
+         options.privateKey = agentWallet?.privateKey;
+         options.address = agentWallet?.address;
+      }
+
+      console.log("stephen: options", agent?.agent_name?.toLowerCase(), agent?.network_id.toString(), JSON.stringify(options));
+
+      await globalThis.electronAPI.dockerRunAgent(agent?.agent_name?.toLowerCase(), agent?.network_id.toString(), JSON.stringify(options));
    };
 
    const handleStopDockerAgent = async (agent?: IAgentToken) => {
