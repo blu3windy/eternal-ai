@@ -1,7 +1,14 @@
 import {
     Box,
-    Select,
+    Flex,
+    HStack,
+    Image,
+    Popover,
+    PopoverBody,
+    PopoverContent,
+    PopoverTrigger,
     Text,
+    useDisclosure,
     useToast,
     VStack
 } from '@chakra-ui/react';
@@ -21,6 +28,7 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import * as Yup from "yup";
 import s from './styles.module.scss';
+import ERC20Balance from '@components/ERC20Balance';
 
 interface TransferTokenFormValues {
   token: string;
@@ -29,6 +37,66 @@ interface TransferTokenFormValues {
 }
 
 const STORAGE_KEY_PREFIX = 'imported_tokens_';
+
+const TokenItem = ({ token, index, showUsdValue = false, onClick }: { token: IToken & { icon: string }, index: number, showUsdValue?: boolean, onClick?: () => void }) => {
+  const { currentChain } = useSelector(agentsTradeSelector);
+  const [balance, setBalance] = useState<string | undefined>("0");
+  const { selectedAgent, coinPrices } = useContext(AgentContext);
+
+  const priceUsd = useMemo(() => {
+    if (token.symbol === selectedAgent?.token_symbol) {
+      return selectedAgent?.meme?.price_usd || 0;
+    }
+    if (token.symbol === 'EAI') {
+      return coinPrices?.[token.symbol] || 0;
+    }
+    return 0;
+  }, [coinPrices, token?.symbol, selectedAgent?.meme?.price_usd, selectedAgent?.token_symbol]);
+
+  const usdValue = useMemo(() => {
+    return Number(balance || 0) * (priceUsd || 0);
+  }, [balance, priceUsd]);
+
+  return (
+    <HStack 
+      key={index} 
+      justify="space-between" 
+      cursor="pointer" 
+      onClick={onClick}
+      p={2}
+      borderRadius="8px"
+      _hover={{ bg: 'gray.100' }}
+    >
+      <HStack>
+        <Image
+          borderRadius={"100px"}
+          width={"24px"}
+          height={"24px"}
+          src={token.icon}
+        />
+        <VStack align="start" spacing={0}>
+          <Text fontSize={'14px'} fontWeight={500} color={'#000'}>{token?.symbol}</Text>
+          <Text fontSize={'12px'} fontWeight={400} color={'#000'} opacity={0.6}>{token?.name}</Text>
+        </VStack>
+      </HStack>
+      <VStack align="end" spacing={0}>
+        <Flex>
+          <ERC20Balance
+            token={token}
+            maxDecimal={5}
+            onBalanceChange={(_amount) => setBalance(_amount)}
+            chain={currentChain}
+          />
+          &nbsp;
+          <Text color={"#000"} fontWeight={500} fontSize={"14px"}>
+            {token.symbol}
+          </Text>
+        </Flex>
+        {showUsdValue ? <Text fontSize={'12px'} fontWeight={400} color={'#000'} opacity={0.6}>${usdValue.toFixed(2)}</Text> : <Text>&nbsp;</Text>}
+      </VStack>
+    </HStack>
+  )
+}
 
 const TransferTokenForm = ({ 
   values, 
@@ -49,33 +117,77 @@ const TransferTokenForm = ({
   handleBlur: (e: React.FocusEvent<any>) => void,
   tokens: IToken[]
 }) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { pairs } = useContext(AgentTradeContext);
   const isSubmitDisabled = !values.token || 
                           !values.amount || 
                           !values.toAddress || 
                           isSubmitting || 
                           !dirty;
 
+  const selectedToken = useMemo(() => {
+    return tokens.find(token => token.address === values.token);
+  }, [tokens, values.token]);
+
   return (
     <Form>
       <VStack spacing={4} align="stretch">
         <Box>
-          <Select
-            name="token"
-            placeholder="Select token to transfer"
-            value={values.token}
-            onChange={(e) => setFieldValue('token', e.target.value)}
-            onBlur={handleBlur}
-            height={'44px'}
-            isInvalid={touched.token && !!errors.token}
-          >
-            {tokens.map((token, index) => (
-              <option key={index} value={token.address}>
-                {token.symbol} - {token.name}
-              </option>
-            ))}
-          </Select>
+          <Text fontSize="14px" fontWeight="500" mb="8px">Select Token</Text>
+          <Popover isOpen={isOpen} onClose={onClose} placement="bottom-start">
+            <PopoverTrigger>
+              <Flex 
+                border="1px solid" 
+                borderColor={touched.token && errors.token ? "red.500" : "gray.200"} 
+                borderRadius="8px" 
+                p="10px 16px" 
+                justify="space-between" 
+                align="center"
+                cursor="pointer"
+                onClick={onOpen}
+              >
+                {selectedToken ? (
+                  <HStack>
+                    <Image
+                      borderRadius={"100px"}
+                      width={"24px"}
+                      height={"24px"}
+                      src={selectedToken.icon}
+                    />
+                    <Text fontSize={'14px'} fontWeight={500}>{selectedToken.symbol}</Text>
+                  </HStack>
+                ) : (
+                  <Text fontSize={'14px'} color="gray.500">Select token to transfer</Text>
+                )}
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="#686A6C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Flex>
+            </PopoverTrigger>
+            <PopoverContent width="400px" maxHeight="300px" overflowY="auto">
+              <PopoverBody p={0}>
+                <VStack align="stretch" spacing={0}>
+                  {tokens.map((token, index) => {
+                    const isImportedToken = !pairs.some(p => p.address === token.address);
+                    return (
+                      <TokenItem 
+                        key={index}
+                        token={{...token, icon: token.icon || ''}} 
+                        index={index} 
+                        showUsdValue={!isImportedToken}
+                        onClick={() => {
+                          setFieldValue('token', token.address);
+                          onClose();
+                        }}
+                      />
+                    );
+                  })}
+                </VStack>
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
           {touched.token && errors.token && (
-            <Text fontSize="12px" color="red" textAlign="left">
+            <Text fontSize="12px" color="red" textAlign="left" mt="4px">
               {errors.token}
             </Text>
           )}
