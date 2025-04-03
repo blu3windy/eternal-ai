@@ -9,6 +9,76 @@ import { IAgentToken } from "../agents-token/interface.ts";
 
 import qs from 'query-string';
 
+// Utility function to handle API responses
+const handleStreamResponse = async (
+   response: Response,
+   streamHandlers: ChatCompletionStreamHandler
+): Promise<any> => {
+   if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+   }
+
+   const contentType = response.headers.get('content-type');
+   
+   if (contentType?.includes('text/event-stream')) {
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      if (!reader) {
+         throw new Error('No reader available for stream response');
+      }
+      return await parseStreamAIResponse(reader, streamHandlers);
+   } else if (contentType?.includes('application/json')) {
+      // Handle non-streaming response
+      const data = await response.json();
+      
+      // Check if the response has the expected structure
+      if (data && data.choices && data.choices[0] && data.choices[0].message) {
+         // Standard OpenAI format
+         return {
+            success: true,
+            data,
+            isStream: false
+         };
+      } else if (data && data.data && data.data.choices && data.data.choices[0] && data.data.choices[0].message) {
+         // Nested data format
+         return {
+            success: true,
+            data: data.data,
+            isStream: false
+         };
+      } else if (data && typeof data === 'string') {
+         // Simple string response
+         return {
+            success: true,
+            data: {
+               choices: [{
+                  message: {
+                     content: data
+                  }
+               }]
+            },
+            isStream: false
+         };
+      } else {
+         // Unknown format, try to extract content
+         console.warn('Unexpected response format:', data);
+         return {
+            success: true,
+            data: {
+               choices: [{
+                  message: {
+                     content: JSON.stringify(data)
+                  }
+               }]
+            },
+            isStream: false
+         };
+      }
+   } else {
+      throw new Error(`Unsupported content type: ${contentType}`);
+   }
+};
+
 const AgentAPI = {
    getAuthenToken: async ({
       signature,
@@ -69,6 +139,8 @@ const AgentAPI = {
             ...item,
             content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
          }));
+         
+         // Try with stream first
          const response = await fetch(`http://localhost:65534/v1/chat/completions`, {
             method: 'POST',
             headers: {
@@ -77,28 +149,7 @@ const AgentAPI = {
             body: JSON.stringify({ messages: messages, stream: true, seed: 0 })
          });
 
-         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-         }
-
-         const contentType = response.headers.get('content-type');
-         
-         if (contentType?.includes('text/event-stream')) {
-            const reader = response.body?.getReader();
-            if (!reader) {
-               throw new Error('No reader available for stream response');
-            }
-            return await parseStreamAIResponse(reader, streamHandlers);
-         } else if (contentType?.includes('application/json')) {
-            const data = await response.json();
-            return {
-               success: true,
-               data,
-               isStream: false
-            };
-         } else {
-            throw new Error(`Unsupported content type: ${contentType}`);
-         }
+         return await handleStreamResponse(response, streamHandlers);
       } catch (error) {
          console.error('Error in chatAgentModelStreamCompletions:', error);
          return {
@@ -165,6 +216,8 @@ const AgentAPI = {
             ...item,
             content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
          }));
+         
+         // Try with stream first
          const response = await fetch(`http://localhost:33030/${agent?.network_id}-${agent?.agent_name?.toLowerCase()}/prompt`, {
             method: 'POST',
             headers: {
@@ -173,28 +226,7 @@ const AgentAPI = {
             body: JSON.stringify({ messages: messages, stream: true, seed: 0 })
          });
 
-         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-         }
-
-         const contentType = response.headers.get('content-type');
-         
-         if (contentType?.includes('text/event-stream')) {
-            const reader = response.body?.getReader();
-            if (!reader) {
-               throw new Error('No reader available for stream response');
-            }
-            return await parseStreamAIResponse(reader, streamHandlers);
-         } else if (contentType?.includes('application/json')) {
-            const data = await response.json();
-            return {
-               success: true,
-               data,
-               isStream: false
-            };
-         } else {
-            throw new Error(`Unsupported content type: ${contentType}`);
-         }
+         return await handleStreamResponse(response, streamHandlers);
       } catch (error) {
          console.error('Error in chatAgentUtilityStreamCompletions:', error);
          return {

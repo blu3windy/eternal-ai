@@ -286,6 +286,41 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             },
          };
       };
+
+      // Utility function to handle API response
+      const handleApiResponse = (response: any, messageId: string, sendTxt: string) => {
+         // If response is undefined/null, it means it's a streaming response
+         // which is handled by streamHandlers
+         if (!response) {
+            return;
+         }
+
+         // Handle non-streaming response
+         if (!response.success) {
+            updateMessage(messageId, {
+               msg: response.error || "Error occurred",
+               status: "failed",
+            });
+            updateTaskItem({
+               id: messageId,
+               status: "failed",
+               message: sendTxt,
+               title: selectedAgent?.agent_name || "Agent",
+               agent: selectedAgent!,
+               agentType: selectedAgent?.agent_type || AgentType.Normal,
+            } as TaskItem);
+         } else {
+            updateMessage(messageId, {
+               msg: response.data.choices[0].message.content,
+               status: "received",
+            });
+            updateTaskItem({
+               id: messageId,
+               status: "done",
+            } as TaskItem);
+         }
+      };
+
       try {
          let filteredMessages = messages.filter((item) => item.status !== "failed").filter((item) => !!item.msg);
 
@@ -417,36 +452,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   streamHandlers: getStreamerHandler(messageId),
                });
 
-               // If response is undefined/null, it means it's a streaming response
-               // which is handled by streamHandlers
-               if (!response) {
-                  return;
-               }
-
-               // Handle non-streaming response
-               if (!response.success) {
-                  updateMessage(messageId, {
-                     msg: response.error || "Error occurred",
-                     status: "failed",
-                  });
-                  updateTaskItem({
-                     id: messageId,
-                     status: "failed",
-                     message: sendTxt,
-                     title: selectedAgent?.agent_name || "Agent",
-                     agent: selectedAgent!,
-                     agentType: selectedAgent?.agent_type || AgentType.Normal,
-                  } as TaskItem);
-               } else {
-                  updateMessage(messageId, {
-                     msg: response.data.choices[0].message.content,
-                     status: "received",
-                  });
-                  updateTaskItem({
-                     id: messageId,
-                     status: "done",
-                  } as TaskItem);
-               }
+               handleApiResponse(response, messageId, sendTxt);
             } catch (error) {
                console.error('Error in chatAgentUtilityStreamCompletions:', error);
                updateMessage(messageId, {
@@ -478,36 +484,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   streamHandlers: getStreamerHandler(messageId),
                });
 
-               // If response is undefined/null, it means it's a streaming response
-               // which is handled by streamHandlers
-               if (!response) {
-                  return;
-               }
-
-               // Handle non-streaming response
-               if (!response.success) {
-                  updateMessage(messageId, {
-                     msg: response.error || "Error occurred",
-                     status: "failed",
-                  });
-                  updateTaskItem({
-                     id: messageId,
-                     status: "failed",
-                     message: sendTxt,
-                     title: selectedAgent?.agent_name || "Agent",
-                     agent: selectedAgent!,
-                     agentType: selectedAgent?.agent_type || AgentType.Normal,
-                  } as TaskItem);
-               } else {
-                  updateMessage(messageId, {
-                     msg: response.data.choices[0].message.content,
-                     status: "received",
-                  });
-                  updateTaskItem({
-                     id: messageId,
-                     status: "done",
-                  } as TaskItem);
-               }
+               handleApiResponse(response, messageId, sendTxt);
             } catch (error) {
                updateMessage(messageId, {
                   msg: error instanceof Error ? error.message : "Error occurred",
