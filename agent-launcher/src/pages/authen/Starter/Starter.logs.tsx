@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 const StarterLogs = () => {
    const scrollRef = useRef<HTMLDivElement>(null);
    const [userScrolled, setUserScrolled] = useState(false);
+   const [showAllLogs, setShowAllLogs] = useState(false);
    
    const { parsedLogs } = useParseLogs({
       functionNames: ["INITIALIZE", "MODEL_INSTALL", "DOCKER_BUILD", "MODEL_INSTALL_LLAMA", "DOCKER_ACTION"],
@@ -27,12 +28,17 @@ const StarterLogs = () => {
       });
    }, [parsedLogs]);
 
+   // Filter logs based on showAllLogs state
+   const displayedLogs = useMemo(() => {
+      return showAllLogs ? uniqueLogs : uniqueLogs.slice(-1);
+   }, [uniqueLogs, showAllLogs]);
+
    useEffect(() => {
       if (scrollRef.current && !userScrolled) {
          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
    }, [
-      JSON.stringify(uniqueLogs)
+      JSON.stringify(displayedLogs)
    ]);
 
    const handleScroll = (e: any) => {
@@ -52,7 +58,6 @@ const StarterLogs = () => {
          _message = `⚡ Downloading model... | ${percentage}%`;
       }
 
-      // Default message rendering
       return (
          <Text
             color="gray.600"
@@ -75,11 +80,9 @@ const StarterLogs = () => {
          overflow="hidden"
          alignSelf="center"
          borderRadius="2xl"
-         // bg="white"
-         // boxShadow="0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
       >
          {/* Top gradient */}
-         {uniqueLogs?.length > 1 && (
+         {displayedLogs?.length > 1 && (
             <Box
                position="absolute"
                top={0}
@@ -106,7 +109,7 @@ const StarterLogs = () => {
             padding="16px"
             sx={{
                '&::-webkit-scrollbar': {
-                  width: '3px',
+                  width: '0px',
                },
                '&::-webkit-scrollbar-track': {
                   background: 'transparent',
@@ -118,7 +121,7 @@ const StarterLogs = () => {
             }}
             onScroll={handleScroll}
          >
-            {uniqueLogs.map((log, index) => (
+            {displayedLogs.map((log, index) => (
                <motion.div
                   key={`${log.values.message}${log.values.error}${log.values.step}-${index}`}
                   initial={{ opacity: 0, y: 5 }}
@@ -146,6 +149,29 @@ const StarterLogs = () => {
                   </Box>
                </motion.div>
             ))}
+
+            {/* Show More Button */}
+            {uniqueLogs.length > 1 && (
+               <Box
+                  position="sticky"
+                  bottom="0"
+                  left="0"
+                  right="0"
+                  color="#5400FB"
+                  opacity="0.8"
+                  backgroundColor="transparent"
+                  _hover={{ opacity: "0.5" }}
+                  onClick={() => setShowAllLogs(!showAllLogs)}
+                  fontSize="13px"
+                  fontWeight="400"
+                  cursor="pointer"
+                  textAlign="center"
+                  py={2}
+                  mt={2}
+               >
+                  {showAllLogs ? "Show Less" : `Show More (${uniqueLogs.length - 1})`}
+               </Box>
+            )}
          </VStack>
       </Box>
    );

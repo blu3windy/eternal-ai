@@ -127,7 +127,7 @@ const Starter = (props: IProps) => {
          // // await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
          // console.timeEnd("MODEL_BASE");
 
-         setChecking(false);
+         // setChecking(false);
       } catch (error: any) {
          // alert(error?.message || "Something went wrong.");
          setHasError(true);
