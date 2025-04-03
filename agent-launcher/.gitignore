@@ -28,3 +28,8 @@ release/*
 **/data/requests/
 
 .env
+
+/configBuild/AuthKey_58T29H46WS.p8
+/configBuild/Certificates.p12
+/configBuild/entitlements.mas.plist
+/configBuild/vibeApps.provisionprofile
