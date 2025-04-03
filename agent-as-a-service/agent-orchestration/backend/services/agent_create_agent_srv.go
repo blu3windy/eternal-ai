@@ -1535,7 +1535,7 @@ func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userNam
 		inferContent = fullText[index+len("create video"):]
 	}
 	inferContent = strings.TrimSpace(inferContent)
-	if len(inferContent) == 0 {
+	if len(inferContent) == 0 && isGenerateVideo {
 		inferContent = fullText
 	}
 	return &models.TweetParseInfo{
