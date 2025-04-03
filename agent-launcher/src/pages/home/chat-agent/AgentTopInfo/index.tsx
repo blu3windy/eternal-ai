@@ -1,4 +1,5 @@
 import {
+   Box,
    Button,
    Divider,
    Drawer,
@@ -201,7 +202,7 @@ const AgentTopInfo = () => {
             </Flex> */}
             <Flex
                gap={'6px'}
-               justifyContent={showSelectModel ? 'space-between' : 'center'}
+               justifyContent={'space-between'}
                alignItems={'center'}
                className={cx(
                   s.contentContainer,
@@ -217,9 +218,9 @@ const AgentTopInfo = () => {
                      <ProcessingTasks />
                   )} */}
                {
-                  showSelectModel && (
+                  showSelectModel ? (
                      <SelectModel showDescription={false} />
-                  )
+                  ) : (<Box />)
                }
 
                <Flex gap={'6px'} justifyContent={'space-between'} alignItems={'center'}>
