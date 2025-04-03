@@ -28,16 +28,16 @@ interface ImportTokenFormValues {
 
 const STORAGE_KEY_PREFIX = 'imported_tokens_';
 
-const ImportTokenForm = ({ 
-  values, 
-  isSubmitting, 
-  setFieldValue, 
+const ImportTokenForm = ({
+  values,
+  isSubmitting,
+  setFieldValue,
   dirty,
   touched,
   errors,
   handleBlur
-}: { 
-  values: ImportTokenFormValues, 
+}: {
+  values: ImportTokenFormValues,
   isSubmitting: boolean,
   setFieldValue: (field: string, value: any) => void,
   dirty: boolean,
@@ -63,7 +63,7 @@ const ImportTokenForm = ({
   useEffect(() => {
     const loadStoredTokens = async () => {
       if (!selectedAgent?.id) return;
-      
+
       try {
         const storageKey = `${STORAGE_KEY_PREFIX}${selectedAgent.id}`;
         const existingTokensStr = await localStorageService.getItem(storageKey);
@@ -90,7 +90,7 @@ const ImportTokenForm = ({
           contractAddress: debouncedAddress,
           chain: currentChain,
         });
-        
+
         if (info) {
           setTokenInfo(info);
           setFieldValue('symbol', info.symbol || '');
@@ -109,16 +109,16 @@ const ImportTokenForm = ({
 
   const isTokenAlreadyImported = useCallback((address: string) => {
     return pairs.some(token => compareString(token.address, address)) ||
-           storedTokens.some(token => compareString(token.address, address));
+      storedTokens.some(token => compareString(token.address, address));
   }, [pairs, storedTokens]);
 
-  const isSubmitDisabled = !tokenInfo || 
-                          isSearching || 
-                          isSubmitting || 
-                          !values.symbol || 
-                          !values.decimals ||
-                          isTokenAlreadyImported(values.address) ||
-                          !dirty;
+  const isSubmitDisabled = !tokenInfo ||
+    isSearching ||
+    isSubmitting ||
+    !values.symbol ||
+    !values.decimals ||
+    isTokenAlreadyImported(values.address) ||
+    !dirty;
 
   return (
     <Form>
@@ -215,11 +215,11 @@ const ImportToken = ({ onClose }: { onClose: () => void }) => {
     address: Yup.string()
       .required('Token address is required')
       .matches(/^0x[a-fA-F0-9]{40}$/, 'Invalid token address format')
-      .test('unique-address', 'Token exists in current pairs', function(value) {
+      .test('unique-address', 'Token exists in current pairs', function (value) {
         if (!value) return true;
         return !pairs.some(token => compareString(token.address, value));
       })
-      .test('not-imported', 'Token already imported previously', async function(value) {
+      .test('not-imported', 'Token already imported previously', async function (value) {
         if (!value || !selectedAgent?.id) return true;
         try {
           const storageKey = `${STORAGE_KEY_PREFIX}${selectedAgent.id}`;
@@ -242,16 +242,16 @@ const ImportToken = ({ onClose }: { onClose: () => void }) => {
   const handleSubmit = async (values: ImportTokenFormValues) => {
     try {
       const storageKey = `${STORAGE_KEY_PREFIX}${selectedAgent?.id}`;
-      
+
       const existingTokensStr = await localStorageService.getItem(storageKey);
       const existingTokens: IToken[] = existingTokensStr ? JSON.parse(existingTokensStr) : [];
-      
+
       const newToken: IToken = {
         address: values.address,
         symbol: values.symbol || '',
         name: values.symbol || '',
       };
-      
+
       await localStorageService.setItem(storageKey, JSON.stringify([...existingTokens, newToken]));
 
       toast({
@@ -286,9 +286,9 @@ const ImportToken = ({ onClose }: { onClose: () => void }) => {
         onSubmit={handleSubmit}
       >
         {({ values, isSubmitting, setFieldValue, dirty, touched, errors, handleBlur }) => (
-          <ImportTokenForm 
-            values={values} 
-            isSubmitting={isSubmitting} 
+          <ImportTokenForm
+            values={values}
+            isSubmitting={isSubmitting}
             setFieldValue={setFieldValue}
             dirty={dirty}
             touched={touched}
