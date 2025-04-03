@@ -287,7 +287,7 @@ app.post('/:agentName/prompt', async (req, res) => {
                }
 
                res.status(proxyResponse.statusCode).json(result);
-               writeRequestEndLogger(payload?.id || '', result, proxyResponse.statusCode, agentName);
+               // writeRequestEndLogger(payload?.id || '', result, proxyResponse.statusCode, agentName);
             });
          });
 
@@ -303,7 +303,7 @@ app.post('/:agentName/prompt', async (req, res) => {
                status: 500,
                error: 'Internal Server Error',
             });
-            writeRequestEndLogger(payload?.id || '', 'Internal Server Error', 500, agentName);
+            // writeRequestEndLogger(payload?.id || '', 'Internal Server Error', 500, agentName);
          });
 
          // Write the request body to the proxy request

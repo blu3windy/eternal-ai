@@ -12,9 +12,10 @@
     // padding-top: 16px;
 
     &.isSetup {
-      background-image: url("/images/bg-setup-agent.png");
-      background-size: cover;
-      background-repeat: no-repeat;
+      background: linear-gradient(117deg, #000 12.51%, #666 87.43%);
+      // background-image: url("/images/bg-setup-agent.png");
+      // background-size: cover;
+      // background-repeat: no-repeat;
     }
   }
 }
