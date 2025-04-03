@@ -235,17 +235,17 @@ app.post('/:agentName/prompt', async (req, res) => {
 
                if (chunk.toString().includes('[DONE]')) {
                   res.end();
-                  if (payload?.id) {
-                     writeRequestEndLogger(payload.id, 'Streaming request completed', proxyResponse.statusCode, agentName);
-                  }
+                  // if (payload?.id) {
+                  //    writeRequestEndLogger(payload.id, 'Streaming request completed', proxyResponse.statusCode, agentName);
+                  // }
                }
             });
 
             proxyResponse.on('end', () => {
                res.end();
-               if (payload?.id) {
-                  writeRequestEndLogger(payload.id, 'Streaming request completed', proxyResponse.statusCode, agentName);
-               }
+               // if (payload?.id) {
+               //    writeRequestEndLogger(payload.id, 'Streaming request completed', proxyResponse.statusCode, agentName);
+               // }
             });
          });
 
@@ -254,9 +254,9 @@ app.post('/:agentName/prompt', async (req, res) => {
             res.status(500).json({
                error: 'Streaming proxy request failed',
             });
-            if (payload?.id) {
-               writeRequestEndLogger(payload.id, 'Streaming request failed', 500, agentName);
-            }
+            // if (payload?.id) {
+            //    writeRequestEndLogger(payload.id, 'Streaming request failed', 500, agentName);
+            // }
          });
 
          // Set timeout handler
