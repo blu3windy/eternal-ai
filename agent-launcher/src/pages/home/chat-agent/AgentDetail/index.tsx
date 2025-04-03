@@ -136,8 +136,8 @@ const AgentDetail = () => {
                </Flex>
 
             </Flex>
-            <Divider color={'#FFFFFF33'} my={'40px'} />
-            <Flex gap={"20px"}>
+            <Divider color={'rgba(255, 255, 255, 0.15)'} my={'40px'} />
+            <Flex gap={"20px"} justifyContent={'space-between'}>
                <Flex className={s.infoBox}>
                   <Text className={s.infoText}>
                   Type
@@ -213,7 +213,7 @@ const AgentDetail = () => {
                   </Text>
                </Flex>
             </Flex>
-            <Divider color={'#FFFFFF33'} my={'40px'} />
+            <Divider color={'rgba(255, 255, 255, 0.15)'} my={'40px'} />
             <Flex h={'100%'} overflow={'auto'} marginLeft={'8px'} marginBottom={'28px'} className={s.wDescription}>
                {description && (
                   <div className={cs(s.descriptionText, "markdown")}>

@@ -135,11 +135,11 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
     return Number(nativeBalance || 0) * (coinPrices?.[nativeToken?.symbol as string] || 0);
   }, [nativeBalance, coinPrices, nativeToken?.symbol]);
 
-  console.log('agentWallet', agentWallet);
-  console.log('balanceETH', nativeBalance);
-  console.log('nativeToken', nativeToken);
-  console.log('coinPrices', coinPrices);
-  console.log('=== == ')
+  // console.log('agentWallet', agentWallet);
+  // console.log('balanceETH', nativeBalance);
+  // console.log('nativeToken', nativeToken);
+  // console.log('coinPrices', coinPrices);
+  // console.log('=== == ')
 
   const handleExportPrvKey = () => {
     onModalOpen();

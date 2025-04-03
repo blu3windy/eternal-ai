@@ -1,4 +1,5 @@
 import {
+   Box,
    Button,
    Divider,
    Drawer,
@@ -35,6 +36,7 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import SetupEnvModel from '../SetupEnvironment';
 import s from './styles.module.scss';
+import debounce from 'lodash.debounce';
 
 
 const AgentTopInfo = () => {
@@ -53,7 +55,6 @@ const AgentTopInfo = () => {
       isUnInstalling,
       installAgent,
       installedModelAgents,
-      startAgent
    } = useContext(AgentContext);
 
    const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
@@ -104,11 +105,12 @@ const AgentTopInfo = () => {
    };
 
    useEffect(() => {
+       setHaveNewVersionCode(false);
       if (selectedAgent || !isRunning) {
          checkVersionCode();
          checkIsLiked();
       }
-   }, [selectedAgent, isRunning]);
+   }, [selectedAgent, isRunning, isInstalled]);
 
    useEffect(() => {
       if (selectedAgent) {
@@ -117,7 +119,6 @@ const AgentTopInfo = () => {
    }, [selectedAgent]);
 
    const checkVersionCode = async () => {
-      setHaveNewVersionCode(false);
       if (
          selectedAgent?.agent_type
          && [
@@ -126,6 +127,7 @@ const AgentTopInfo = () => {
             AgentType.CustomPrompt,
             AgentType.ModelOnline,
          ].includes(selectedAgent.agent_type)
+         && isInstalled
       ) {
          const chainId = selectedAgent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({
@@ -137,6 +139,8 @@ const AgentTopInfo = () => {
          const oldCodeVersion = values ? Number(values) : 1;
          if (codeVersion > 1 && codeVersion > oldCodeVersion) {
             setHaveNewVersionCode(true);
+         } else {
+            setHaveNewVersionCode(false);
          }
       }
    };
@@ -157,7 +161,7 @@ const AgentTopInfo = () => {
    const handleUpdateCode = async () => {
       setIsClickUpdate(true);
       if (!selectedAgent) return;
-      await stopAgent(selectedAgent);
+      await stopAgent(selectedAgent, true);
       await unInstallAgent(selectedAgent, false);
       await installAgent(selectedAgent, true);
       setIsClickUpdate(false);
@@ -201,7 +205,7 @@ const AgentTopInfo = () => {
             </Flex> */}
             <Flex
                gap={'6px'}
-               justifyContent={showSelectModel ? 'space-between' : 'center'}
+               justifyContent={'space-between'}
                alignItems={'center'}
                className={cx(
                   s.contentContainer,
@@ -217,9 +221,9 @@ const AgentTopInfo = () => {
                      <ProcessingTasks />
                   )} */}
                {
-                  showSelectModel && (
+                  showSelectModel ? (
                      <SelectModel showDescription={false} />
-                  )
+                  ) : (<Box />)
                }
 
                <Flex gap={'6px'} justifyContent={'space-between'} alignItems={'center'}>

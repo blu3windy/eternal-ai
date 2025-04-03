@@ -39,7 +39,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
       }
    };
 
-   const iconSize = '68px';
+   const iconSize = '60px';
 
    return (
       <Flex
@@ -91,7 +91,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                      <Text className={s.nameText}>
                         {token?.agent_name}{' '}
                      </Text>
-                     <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text>
+                     {/* <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text> */}
                   </Flex>
                   {/* { isInstalled && <Text className={s.agentTypeTag}>Installed</Text> } */}
 
@@ -139,7 +139,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                      )}
                   </Text>
                   <Text className={s.infoText}>{formatCurrency(token.installed_count, 0, 0)}{' '}<Text as={'span'} color={"#657786"}>installed</Text></Text>
-                  <Text className={s.infoText}>{formatCurrency(token.likes, 0, 0)}{' '}<Text as={'span'} color={"#657786"}>like{labelAmountOrNumberAdds(token.likes)}</Text></Text>
+                  {/* <Text className={s.infoText}>{formatCurrency(token.likes, 0, 0)}{' '}<Text as={'span'} color={"#657786"}>like{labelAmountOrNumberAdds(token.likes)}</Text></Text> */}
                </Flex>
             </Flex>
          </Grid>
