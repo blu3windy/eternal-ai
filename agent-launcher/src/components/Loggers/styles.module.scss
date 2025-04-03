@@ -32,3 +32,21 @@
     margin-bottom: 20px;
   }
 } 
+
+
+.buttonActionGroup {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  button {
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #000;
+    
+  }
+}

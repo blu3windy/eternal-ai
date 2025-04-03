@@ -1,14 +1,14 @@
 import { Button, Flex } from "@chakra-ui/react";
+import s from "./styles.module.scss";
 
 
 export const MODEL_HASH = "bafkreideybeu6dpfurmbhqhs2ylscys2gkimfgghg2fjg6ngrmo3wyk2uu"
 
 const ActionButtons = () => {
    return (
-      <Flex gap="12px" flexWrap="wrap" width="100%" alignItems="center">
+      <Flex className={s.buttonActionGroup}>
          <Button
             onClick={async () => {
-
                try {
                   await globalThis.electronAPI.dockerRunAgent("elvis", "1", JSON.stringify({ privateKey: "12454", address: "43422", type: "custom-prompt" }))
                   alert("Agent started");
