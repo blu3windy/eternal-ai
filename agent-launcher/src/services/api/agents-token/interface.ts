@@ -92,7 +92,7 @@ export interface IAgentToken {
   };
   is_public?: boolean;
   is_streaming?: boolean;
-  required_env?: boolean;
+  env_example?: string;
 }
 
 export interface Meme {
