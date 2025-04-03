@@ -5,6 +5,8 @@ import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 import command from "./share/command-tool.ts";
 
+// import listenToDockerEvents from "./ipcMain/docker-listener.ts";
+
 if (process.env.NODE_ENV === "development") {
    autoUpdater.autoDownload = false;
    autoUpdater.allowDowngrade = true;
@@ -173,6 +175,8 @@ function createWindow() {
       // win.loadFile('dist/index.html')
       win.loadFile(path.join(RENDERER_DIST, "index.html"));
    }
+   // listenToDockerEvents(win);
+
    win.on("closed", () => {
       win = null;
    });
