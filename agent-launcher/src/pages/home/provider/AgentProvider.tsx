@@ -722,8 +722,8 @@ const AgentProvider: React.FC<
       } catch (e) {
          console.log('unInstallAgent e', e);
       } finally {
-         
          setTimeout(() => {
+            dispatch(requestReloadMonitor());
             updateAgentState(agent.id, {
                data: agent,
                isUnInstalling: false,

@@ -1,37 +1,22 @@
-import { useMemo, useState } from 'react';
-import Markdown, { Components } from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import remarkGfm from 'remark-gfm';
-import GeneralCode from './GenerateCode';
-import DeepThinking from './DeepThinking';
-import { CustomComponentProps } from './types';
-import { THINK_TAG_REGEX } from './constants';
-import CustomLink from './Link';
-import ContentReplay from './Content';
-import {
-   Modal,
-   ModalOverlay,
-   ModalContent,
-   ModalHeader,
-   ModalBody,
-   ModalCloseButton,
-   Input,
-   Flex,
-   IconButton,
-   Box,
-   useDisclosure,
-} from '@chakra-ui/react';
+import { useMemo, useState } from "react";
+import Markdown, { Components } from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
+import GeneralCode from "./GenerateCode";
+import DeepThinking from "./DeepThinking";
+import { CustomComponentProps } from "./types";
+import { THINK_TAG_REGEX } from "./constants";
+import CustomLink from "./Link";
+import ContentReplay from "./Content";
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton, Input, Flex, IconButton, Box, useDisclosure } from "@chakra-ui/react";
 
 const preprocessMarkdown = (content: string) => {
    try {
-      const result = content?.replace?.(
-         THINK_TAG_REGEX,
-         (_, innerText) => `<think>${innerText.trim().replace(/\n/g, '<br />')}</think>`
-      );
+      const result = content?.replace?.(THINK_TAG_REGEX, (_, innerText) => `<think>${innerText.trim().replace(/\n/g, "<br />")}</think>`);
 
       return result;
    } catch (error) {
-      return '';
+      return "";
    }
 };
 
@@ -57,13 +42,7 @@ const WebviewModal: React.FC<WebviewModalProps> = ({ url, isOpen, onClose }) => 
                      🔍
                   </Box>
                   <Input value={url} readOnly variant="filled" size="sm" flex={1} />
-                  <IconButton
-                     aria-label="Fullscreen"
-                     icon={<Box as="span">⛶</Box>}
-                     variant="ghost"
-                     size="sm"
-                     onClick={() => document.documentElement.requestFullscreen()}
-                  />
+                  <IconButton aria-label="Fullscreen" icon={<Box as="span">⛶</Box>} variant="ghost" size="sm" onClick={() => document.documentElement.requestFullscreen()} />
                   <ModalCloseButton position="static" />
                </Flex>
             </ModalHeader>
@@ -76,11 +55,13 @@ const WebviewModal: React.FC<WebviewModalProps> = ({ url, isOpen, onClose }) => 
 };
 
 function CustomMarkdown({
+   id,
    content,
    components = {},
    isLight = true,
    removeThink = false,
 }: {
+   id: string;
    content: string;
    components?: ComponentExtended;
    isLight?: boolean;
@@ -106,7 +87,7 @@ function CustomMarkdown({
 
    const children = useMemo(() => preprocessMarkdown(content), [content]);
    const { isOpen, onOpen, onClose } = useDisclosure();
-   const [currentUrl, setCurrentUrl] = useState('');
+   const [currentUrl, setCurrentUrl] = useState("");
 
    const handleLinkClick = (e: any) => {
       e.preventDefault();
@@ -120,13 +101,14 @@ function CustomMarkdown({
    return (
       <>
          <div
-         // onClick={(e) => {
-         //    const target = e.target as HTMLElement;
-         //    if (target.tagName === 'A') {
-         //       e.preventDefault();
-         //       handleLinkClick(e as unknown as React.MouseEvent<HTMLAnchorElement>);
-         //    }
-         // }}
+            // onClick={(e) => {
+            //    const target = e.target as HTMLElement;
+            //    if (target.tagName === 'A') {
+            //       e.preventDefault();
+            //       handleLinkClick(e as unknown as React.MouseEvent<HTMLAnchorElement>);
+            //    }
+            // }}
+            id={id}
          >
             <Markdown
                remarkPlugins={[remarkGfm]} // Enables GitHub Flavored Markdown
