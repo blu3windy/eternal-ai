@@ -105,6 +105,7 @@ const AgentTopInfo = () => {
    };
 
    useEffect(() => {
+       setHaveNewVersionCode(false);
       if (selectedAgent || !isRunning) {
          checkVersionCode();
          checkIsLiked();
@@ -118,7 +119,6 @@ const AgentTopInfo = () => {
    }, [selectedAgent]);
 
    const checkVersionCode = async () => {
-      setHaveNewVersionCode(false);
       if (
          selectedAgent?.agent_type
          && [

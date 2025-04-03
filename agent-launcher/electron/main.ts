@@ -7,8 +7,9 @@ import command from "./share/command-tool.ts";
 
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
 
+autoUpdater.autoDownload = false;
+
 if (process.env.NODE_ENV === "development") {
-   autoUpdater.autoDownload = false;
    // autoUpdater.allowDowngrade = true;
    autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
 }
@@ -141,7 +142,6 @@ function createWindow() {
 
    // Test active push message to Renderer-process.
    win.webContents.on("did-finish-load", () => {
-      autoUpdater.checkForUpdates();
       win?.webContents.send("main-process-message", new Date().toLocaleString());
    });
 
@@ -154,12 +154,11 @@ function createWindow() {
    autoUpdater.on("update-downloaded", () => {
       win?.webContents.send("update-downloaded");
       console.log("update-downloaded");
-      autoUpdater.downloadUpdate();
+      // autoUpdater.downloadUpdate();
       autoUpdater.quitAndInstall();
    });
 
    autoUpdater.on("download-progress", (progress) => {
-      console.log("download-progress", progress);
       win?.webContents.send("download-progress", progress);
    });
 

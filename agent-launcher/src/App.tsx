@@ -18,24 +18,39 @@ import { Box, Text, Button, Spinner, Flex } from "@chakra-ui/react";
 
 function App() {
    const [updateAvailable, setUpdateAvailable] = useState(false);
-   const [updateDownloadProcessing, setUpdateDownloadProcessing] = useState(false);
+   const [updateDownloadProcessing, setUpdateDownloadProcessing] = useState<any>(false);
+
+
+
+
+
    useEffect(() => {
 
       if (globalThis.electronAPI) {
+         globalThis.electronAPI.onCheckForUpdate();
          globalThis.electronAPI.onUpdateAvailable(() => {
             setUpdateAvailable(true);
          });
          globalThis.electronAPI.onUpdateDownloadProcessing((progress) => {
+            console.log(progress);
+
             setUpdateDownloadProcessing(progress);
          });
       }
+
+
+      // 1 min = ? milisecond
+      const oneMinute = 60000;
+      setInterval(() => {
+         globalThis.electronAPI.onCheckForUpdate();
+      }, oneMinute);
+
+
    }, []);
 
 
    const handleUpdateDownloaded = () => {
-      globalThis.electronAPI.onUpdateDownloaded(() => {
-         console.log("onUpdateDownloaded");
-      });
+      globalThis.electronAPI.onUpdateDownloaded();
    }
 
 
@@ -69,16 +84,27 @@ function App() {
                   cursor: updateDownloadProcessing ? "default" : "pointer"
                }}
             >
-               {
-                  updateDownloadProcessing ? <Flex alignItems={"center"} gap={2}>
-                     <Spinner size="sm" />
-                     <Text>Downloading update and restart app when finished...</Text>
-                  </Flex> : <Text>
-                     App update available! Click to download the latest version.
-                  </Text>
-               }
 
-               { !updateDownloadProcessing &&
+               <Flex alignItems={"center"} gap={4}>
+                  {
+                     updateDownloadProcessing ? <>
+                        <Spinner size="sm" />
+                        <Box>
+                           <Text fontWeight={700} fontSize={"16px"}>Downloading {updateDownloadProcessing?.percent?.toFixed(0)}%</Text>
+                           <Text fontSize={"12px"} opacity={0.7}>App will auto restart when finished.</Text>
+                        </Box>
+
+                     </> : <>
+                        🎉
+                        <Box>
+                           <Text fontWeight={700} fontSize={"16px"}>Update available!</Text>
+                           <Text fontSize={"12px"} opacity={0.7}>Click to download and install the latest version. Current conversation will be saved.</Text>
+                        </Box>
+                     </>
+                  }
+
+               </Flex>
+               {!updateDownloadProcessing &&
                   // add button close
                   // svg icon close 
                   <Box onClick={() => setUpdateAvailable(false)}>
