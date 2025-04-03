@@ -13,9 +13,11 @@ import {
     VStack
 } from '@chakra-ui/react';
 import BaseButton from "@components/BaseButton";
-import InputText from '@components/Input/InputText';
+import ERC20Balance from '@components/ERC20Balance';
 import InputWrapper from '@components/Form/inputWrapper';
+import InputText from '@components/Input/InputText';
 import { CHAIN_CONFIG, CHAIN_TYPE } from '@constants/chains';
+import CTokenContract from '@contract/token';
 import { NATIVE_TOKEN_ADDRESS } from '@contract/token/constants';
 import { IToken } from '@interfaces/token';
 import { AgentContext } from '@pages/home/provider/AgentContext';
@@ -23,16 +25,15 @@ import { AgentTradeContext } from '@pages/home/trade-agent/provider';
 import { ChainIdToChainType } from '@pages/home/trade-agent/provider/constant';
 import localStorageService from '@storage/LocalStorageService';
 import { agentsTradeSelector } from '@stores/states/agent-trade/selector';
+import { getExplorerByChain } from '@utils/helpers';
 import { getTokenIconUrl, TOKEN_ICON_DEFAULT } from '@utils/string';
+import { BigNumber } from 'ethers';
+import { parseEther } from 'ethers/lib/utils';
 import { Form, Formik } from 'formik';
-import { useContext, useEffect, useMemo, useState, useRef } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import * as Yup from "yup";
 import s from './styles.module.scss';
-import ERC20Balance from '@components/ERC20Balance';
-import { BigNumber } from 'ethers';
-import { parseEther } from 'ethers/lib/utils';
-import CTokenContract from '@contract/token';
 
 interface TransferTokenFormValues {
     token: string;
@@ -344,7 +345,7 @@ const TransferToken = ({ onClose }: { onClose: () => void }) => {
         amount: Yup.number()
             .required('Amount is required')
             .min(0, 'Amount must be greater than 0')
-            .test('balance', 'Amount exceeds balance', function (value) {
+            .test('balance', 'Insufficient balance', function (value) {
                 if (!value || !selectedTokenBalance) return true;
                 const amount = BigNumber.from(parseEther(value.toString()));
                 const balance = BigNumber.from(parseEther(selectedTokenBalance));
@@ -364,13 +365,43 @@ const TransferToken = ({ onClose }: { onClose: () => void }) => {
 
     const handleSubmit = async (values: TransferTokenFormValues) => {
         try {
-            // TODO: Implement transfer logic
             console.log('Transfer values:', values);
+
+            if (!agentWallet?.privateKey) {
+                throw new Error('Private key not available');
+            }
+
+            const txHash = await cTokenContract.transferToken({
+                to: values.toAddress,
+                amount: values.amount,
+                tokenAddress: values.token,
+                chain: currentChain,
+                privateKey: agentWallet.privateKey
+            });
+
+            const explorerUrl = getExplorerByChain({
+                chainId: selectedAgent?.network_id || "",
+                type: "tx",
+                address: txHash
+            });
 
             toast({
                 title: "Transfer initiated",
+                description: (
+                    <Text>
+                        Transaction hash:{" "}
+                        <a
+                            href={explorerUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: "blue", textDecoration: "underline" }}
+                        >
+                            {txHash}
+                        </a>
+                    </Text>
+                ),
                 status: "success",
-                duration: 3000,
+                duration: 5000,
                 isClosable: true,
             });
 
@@ -444,7 +475,7 @@ const TransferToken = ({ onClose }: { onClose: () => void }) => {
                                     tokenAddress: values.token,
                                     chain: currentChain
                                 });
-                                
+
                                 setEstimatedFee(fee);
                             } catch (error) {
                                 console.error('Error estimating fee:', error);

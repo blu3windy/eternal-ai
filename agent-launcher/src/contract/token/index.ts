@@ -8,7 +8,7 @@ import { useAuth } from "@pages/authen/provider";
 import { ethers } from "ethers";
 import { formatEther, parseEther } from "ethers/lib/utils";
 import { isNativeToken } from "./constants";
-import BigNumber from "bignumber.js";
+import BN from "bignumber.js";
 
 class CTokenContract extends GenericContract {
   private erc20: ERC20 | undefined = undefined;
@@ -65,7 +65,7 @@ class CTokenContract extends GenericContract {
         chain,
       }).allowance(_wallet, spender_address);
 
-      return BigNumber.from(response).lt(parseEther("1"));
+      return ethers.BigNumber.from(response).lt(parseEther("1"));
     } catch (error) {
       console.log("error >>> isNeedApprove", error);
 
@@ -98,8 +98,6 @@ class CTokenContract extends GenericContract {
         contractAddress: tokenAddress,
         chain,
       }).balanceOf(latestAddress as string);
-
-      console.log("getTokenBalance balance", balance);
 
       return formatEther(balance).toString();
     } catch (e) {
@@ -156,7 +154,7 @@ class CTokenContract extends GenericContract {
     try {
       const provider = this.getProviderByChain(chain);
       const value = parseEther(
-        new BigNumber(transferAmount).toString()
+        new BN(transferAmount).toString()
       );
 
       if (tokenAddress && !isNativeToken(tokenAddress)) {
@@ -166,6 +164,7 @@ class CTokenContract extends GenericContract {
           chain,
         });
         const estimateGas = await contract.estimateGas.transfer(to, value);
+        console.log("estimateGas 1111", estimateGas);
         return formatEther(estimateGas).toString();
       } else {
         // For native token
@@ -174,11 +173,78 @@ class CTokenContract extends GenericContract {
           to: to,
           value: value,
         });
+
+        console.log("estimateGas 2222", estimateGas);
         return formatEther(estimateGas).toString();
       }
     } catch (e) {
       console.log("Error estimating gas:", e);
-      return "0";
+      return "0.001";
+    }
+  }
+
+  /**
+   * Transfer tokens (native or ERC20) using a private key
+   * @param params Transfer parameters
+   * @returns Transaction hash
+   */
+  async transferToken({
+    to,
+    amount,
+    tokenAddress,
+    chain = CHAIN_TYPE.BASE,
+    privateKey
+  }: {
+    to: string;
+    amount: string;
+    tokenAddress?: string;
+    chain?: CHAIN_TYPE;
+    privateKey: string; // Private key instead of wallet
+  }): Promise<string> {
+    try {
+      const chainID = this.getChainId(chain);
+      const value = parseEther(new BN(amount).toString());
+      
+      // Create a wallet from the private key
+      const provider = this.getProviderByChain(chain);
+      const wallet = new ethers.Wallet(privateKey, provider);
+      
+      // Get the address from the wallet
+      const from = await wallet.getAddress();
+      
+      if (tokenAddress && !isNativeToken(tokenAddress)) {
+        // For ERC20 tokens
+        const contract = this.getERC20Contract({
+          contractAddress: tokenAddress,
+          chain,
+        });
+        
+        // Connect the contract to the wallet created from private key
+        const connectedContract = contract.connect(wallet);
+        
+        // Send the transaction
+        const tx = await connectedContract.transfer(to, value);
+        
+        // Wait for transaction to be mined
+        const receipt = await tx.wait();
+        
+        return receipt.transactionHash;
+      } else {
+        // For native token
+        const tx = await wallet.sendTransaction({
+          to: to,
+          value: value,
+          chainId: Number(chainID),
+        });
+        
+        // Wait for transaction to be mined
+        const receipt = await tx.wait();
+        
+        return receipt.transactionHash;
+      }
+    } catch (error) {
+      console.error("Error transferring token:", error);
+      throw error;
     }
   }
 }
