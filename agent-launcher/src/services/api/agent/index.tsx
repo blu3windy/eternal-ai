@@ -205,10 +205,14 @@ const AgentAPI = {
       agent,
       payload,
       streamHandlers,
+      id,
+      prvKey,
    }: {
       agent: IAgentToken,
       payload: ChatCompletionPayload;
       streamHandlers: ChatCompletionStreamHandler;
+      id?: string;
+      prvKey?: string;
    }): Promise<any> => {
       try {
          const headers = await getClientHeaders();
@@ -223,7 +227,14 @@ const AgentAPI = {
             headers: {
                ...headers,
             },
-            body: JSON.stringify({ messages: messages, stream: true, seed: 0 })
+            body: JSON.stringify({ 
+               id,
+               messages: messages, 
+               stream: true, 
+               seed: 0,
+               privateKey: prvKey,
+               chainId: agent?.network_id
+            })
          });
 
          return await handleStreamResponse(response, streamHandlers);

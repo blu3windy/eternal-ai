@@ -450,6 +450,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                      ...params,
                   },
                   streamHandlers: getStreamerHandler(messageId),
+                  id: messageId,
+                  prvKey: agentWallet?.privateKey,
                });
 
                handleApiResponse(response, messageId, sendTxt);
