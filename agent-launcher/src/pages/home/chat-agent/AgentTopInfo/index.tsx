@@ -54,7 +54,6 @@ const AgentTopInfo = () => {
       isUnInstalling,
       installAgent,
       installedModelAgents,
-      startAgent
    } = useContext(AgentContext);
 
    const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
@@ -158,7 +157,7 @@ const AgentTopInfo = () => {
    const handleUpdateCode = async () => {
       setIsClickUpdate(true);
       if (!selectedAgent) return;
-      await stopAgent(selectedAgent);
+      await stopAgent(selectedAgent, true);
       await unInstallAgent(selectedAgent, false);
       await installAgent(selectedAgent, true);
       setIsClickUpdate(false);

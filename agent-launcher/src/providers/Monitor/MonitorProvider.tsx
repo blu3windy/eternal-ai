@@ -135,7 +135,7 @@ const MonitorProvider: React.FC<
             }
 
             const memInfo: any = memoryMap.get(container.ID);
-            if (memInfo) {
+            if (memInfo && matchingAgent) {
                // Parse memory values for totals
                const memUsage = memInfo.MemUsage.split('/');
                const memUsed = parseFloat(memUsage[0]);
