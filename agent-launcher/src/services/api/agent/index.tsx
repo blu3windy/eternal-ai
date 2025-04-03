@@ -19,7 +19,7 @@ const handleStreamResponse = async (
    }
 
    const contentType = response.headers.get('content-type');
-   
+
    if (contentType?.includes('text/event-stream')) {
       // Handle streaming response
       const reader = response.body?.getReader();
@@ -28,25 +28,31 @@ const handleStreamResponse = async (
       }
       return await parseStreamAIResponse(reader, streamHandlers);
    } else if (contentType?.includes('application/json')) {
-      // Handle non-streaming response
       const data = await response.json();
-      
-      // Check if the response has the expected structure
-      if (data && data.choices && data.choices[0] && data.choices[0].message) {
+      if (data.success === false) {
+         return {
+            success: false,
+            error: data.error || 'Unknown error occurred',
+            isStream: false
+         };
+      }
+
+      // Check for different response structures
+      if (data.choices?.[0]?.message?.content) {
          // Standard OpenAI format
          return {
             success: true,
-            data,
+            data: data,
             isStream: false
          };
-      } else if (data && data.data && data.data.choices && data.data.choices[0] && data.data.choices[0].message) {
+      } else if (data.data?.choices?.[0]?.message?.content) {
          // Nested data format
          return {
             success: true,
             data: data.data,
             isStream: false
          };
-      } else if (data && typeof data === 'string') {
+      } else if (typeof data === 'string') {
          // Simple string response
          return {
             success: true,
@@ -60,22 +66,33 @@ const handleStreamResponse = async (
             isStream: false
          };
       } else {
-         // Unknown format, try to extract content
-         console.warn('Unexpected response format:', data);
+         // Unknown format, return as is
          return {
             success: true,
-            data: {
-               choices: [{
-                  message: {
-                     content: JSON.stringify(data)
-                  }
-               }]
-            },
+            data: data,
             isStream: false
          };
       }
+   } else if (contentType?.includes('text/plain')) {
+      const text = await response.text();
+      return {
+         success: true,
+         data: {
+            choices: [{
+               message: {
+                  content: text
+               }
+            }]
+         },
+         isStream: false
+      };
    } else {
-      throw new Error(`Unsupported content type: ${contentType}`);
+      // Unknown content type
+      return {
+         success: false,
+         error: `Unsupported content type: ${contentType}`,
+         isStream: false
+      };
    }
 };
 
