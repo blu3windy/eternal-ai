@@ -5,9 +5,10 @@ import { ContractParams } from "@contract/interfaces";
 import { ERC20 } from "@contract/interfaces/ERC20";
 import { IToken } from "@interfaces/token";
 import { useAuth } from "@pages/authen/provider";
-import { BigNumber, ethers } from "ethers";
+import { ethers } from "ethers";
 import { formatEther, parseEther } from "ethers/lib/utils";
 import { isNativeToken } from "./constants";
+import BigNumber from "bignumber.js";
 
 class CTokenContract extends GenericContract {
   private erc20: ERC20 | undefined = undefined;
@@ -138,6 +139,48 @@ class CTokenContract extends GenericContract {
 
     return tx;
   };
+
+  async getEstimateGas({
+    from,
+    to,
+    transferAmount,
+    tokenAddress,
+    chain = CHAIN_TYPE.BASE
+  }: {
+    from: string;
+    to: string;
+    transferAmount: string;
+    tokenAddress?: string;
+    chain?: CHAIN_TYPE;
+  }) {
+    try {
+      const provider = this.getProviderByChain(chain);
+      const value = parseEther(
+        new BigNumber(transferAmount).toString()
+      );
+
+      if (tokenAddress && !isNativeToken(tokenAddress)) {
+        // For ERC20 tokens
+        const contract = this.getERC20Contract({
+          contractAddress: tokenAddress,
+          chain,
+        });
+        const estimateGas = await contract.estimateGas.transfer(to, value);
+        return formatEther(estimateGas).toString();
+      } else {
+        // For native token
+        const estimateGas = await provider.estimateGas({
+          from: from,
+          to: to,
+          value: value,
+        });
+        return formatEther(estimateGas).toString();
+      }
+    } catch (e) {
+      console.log("Error estimating gas:", e);
+      return "0";
+    }
+  }
 }
 
 export default CTokenContract;
