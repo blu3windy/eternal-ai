@@ -609,7 +609,9 @@ const AgentProvider: React.FC<
                isStarting: false,
                isRunning: true,
             });
-            dispatch(requestReloadMonitor());
+            setTimeout(() => {
+               dispatch(requestReloadMonitor());
+            }, 1000);
          }
 
          console.timeEnd('LEON: startAgent');
