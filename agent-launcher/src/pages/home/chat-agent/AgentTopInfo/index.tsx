@@ -108,7 +108,7 @@ const AgentTopInfo = () => {
          checkVersionCode();
          checkIsLiked();
       }
-   }, [selectedAgent, isRunning]);
+   }, [selectedAgent, isRunning, isInstalled]);
 
    useEffect(() => {
       if (selectedAgent) {
@@ -126,6 +126,7 @@ const AgentTopInfo = () => {
             AgentType.CustomPrompt,
             AgentType.ModelOnline,
          ].includes(selectedAgent.agent_type)
+         && isInstalled
       ) {
          const chainId = selectedAgent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({
