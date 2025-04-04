@@ -35,16 +35,25 @@ function HandleProcessingMessage({
                      } as any);
 
                      if (res?.status !== 102) {
-                        updateMessage(data.id, {
-                           status: "received",
-                           msg: res.data || res,
-                        });
+                        console.log('__________res__________', res);
+                        try {
+                           updateMessage(data.id, {
+                              status: "received",
+                              msg: res.choices[0].message.content,
+                           });
+                        } catch (e) {
+                           updateMessage(data.id, {
+                              status: "received",
+                           });
+                           console.log('__________e__________', e);
+                        }
                      } else {
                         setTimeout(() => {
                            checkProcessingTask();
                         }, 10000);
                      }
                   } catch (e) {
+                     console.log('__________e__________', e);
                      let errorMessage = (e as any)?.response?.data?.error;
                      if (!errorMessage && (e as any)?.response?.data && typeof (e as any)?.response?.data === "string") {
                         errorMessage = (e as any)?.response?.data;
