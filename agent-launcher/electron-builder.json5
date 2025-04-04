@@ -14,6 +14,11 @@
       "from": "public",
       "to": "public",
       "filter": ["**/*"] // Includes all files inside public/
+    },
+    {
+      "from": "electron/workers",
+      "to": "workers",
+      "filter": ["**/*.js"]
     }
   ],
   "mac": {
@@ -49,6 +54,10 @@
     {
       "from": "public",
       "to": "public"
+    },
+    {
+      "from": "electron/workers",
+      "to": "workers"
     }
   ]
 }

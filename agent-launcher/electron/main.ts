@@ -1,9 +1,10 @@
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow, screen, ipcMain } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 import command from "./share/command-tool.ts";
+import { dockerBuildService } from './services/docker-build.service';
 
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
 
@@ -208,3 +209,38 @@ app.on("activate", () => {
 });
 
 app.whenReady().then(createWindow);
+
+// Example of using the DockerBuildService
+ipcMain.handle('start-docker-build', async (event, options) => {
+   try {
+      dockerBuildService.startBuild(options);
+
+      // Set up event listeners
+      dockerBuildService.on('build-update', (data) => {
+         event.sender.send('docker-build-update', data);
+      });
+
+      dockerBuildService.on('build-complete', (data) => {
+         event.sender.send('docker-build-complete', data);
+      });
+
+      dockerBuildService.on('build-error', (data) => {
+         event.sender.send('docker-build-error', data);
+      });
+
+      return { success: true };
+   } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { success: false, error: errorMessage };
+   }
+});
+
+ipcMain.handle('stop-docker-build', async () => {
+   try {
+      dockerBuildService.stopBuild();
+      return { success: true };
+   } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      return { success: false, error: errorMessage };
+   }
+});

@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+      "target": "esnext",
+      "module": "esnext",
+      "outDir": "dist-electron/workers",
+      "rootDir": "electron/workers",
+      "strict": true,
+      "moduleResolution": "node",
+      "esModuleInterop": true,
+      "skipLibCheck": true
+    },
+    "include": ["electron/workers/docker-build-worker.ts"]
+  }

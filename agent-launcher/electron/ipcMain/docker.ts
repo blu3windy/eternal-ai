@@ -1,6 +1,6 @@
 import { app, ipcMain } from "electron";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
-import path from "path";
+import path, { dirname } from "path";
 import {
    SCRIPTS_NAME,
    USER_DATA_FOLDER_NAME
@@ -8,6 +8,8 @@ import {
 import command from "../share/command-tool.ts";
 import { CodeLanguage, DockerInfoAction } from "../types.ts";
 import { copyFiles, copyPublicToUserData } from "../share/scripts.ts";
+import { Worker } from 'worker_threads';
+import { fileURLToPath } from "url";
 
 const DOCKER_NAME = 'agent';
 const DOCKER_SERVER_JS = `${DOCKER_NAME}-js`
@@ -17,6 +19,9 @@ const userDataPath = app.getPath("userData");
 const folderPath = path.join(userDataPath, USER_DATA_FOLDER_NAME.AGENT_DATA);
 const infoScriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_INFO_SCRIPT);
 const actionScriptPath = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER, SCRIPTS_NAME.DOCKER_ACTION_SCRIPT);
+
+
+const buildWorkers: Map<string, Worker> = new Map(); // Track workers by build ID
 
 export const getDnsHost = (chainId: string, agentName: string) => {
    return `${chainId}-${agentName}`.toLowerCase();
@@ -51,7 +56,6 @@ const ipcMainDocker = () => {
          const folderPathDocker = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER);
 
          const containers = [
-            // `agent-js:${DOCKER_SERVER_JS}:`,
             `agent-router:${DOCKER_ROUTER_NAME}:33030`,
          ];
          const containerArgs = containers.map(c => `--container "${c}"`).join(' ');
@@ -59,56 +63,6 @@ const ipcMainDocker = () => {
          await command.execAsyncStream(
             `bash "${folderPathDocker}/${SCRIPTS_NAME.DOCKER_BUILD_SCRIPT}" --folder-path "${folderPath}" ${containerArgs}`
          );
-
-         //
-         // const docker = await getDocker();
-         // console.log(EMIT_EVENT_NAME.DOCKER_BUILD, {
-         //    folderPath
-         // });
-         //
-         // await command.execAsyncDockerDir(
-         //    `cd "${folderPath}" && ${docker} build -t ${DOCKER_SERVER_JS} ./${USER_DATA_FOLDER_NAME.AGENT_JS}`
-         // );
-         //
-         // await command.execAsyncDockerDir(
-         //    `cd "${folderPath}" && ${docker} build -t ${DOCKER_ROUTER_NAME} ./${USER_DATA_FOLDER_NAME.AGENT_ROUTER}`
-         // );
-         //
-         // try {
-         //    await command.execAsyncDockerDir(
-         //       `${docker} network create network-agent-external`
-         //    );
-         // } catch (error) {
-         //    console.log('error', error);
-         // }
-         //
-         // try {
-         //    await command.execAsyncDockerDir(
-         //       `${docker} stop ${DOCKER_ROUTER_NAME}`
-         //    );
-         // } catch (error) {
-         //    console.log('error', error);
-         // }
-         //
-         // try {
-         //    await command.execAsyncDockerDir(
-         //       `${docker} rm ${DOCKER_ROUTER_NAME}`
-         //    );
-         // } catch (error) {
-         //    console.log('error', error);
-         // }
-         //
-         // try {
-         //    await command.execAsyncDockerDir(
-         //       `${docker} run -d -p 33030:80 --network=network-agent-external --add-host=localmodel:host-gateway --name ${DOCKER_ROUTER_NAME} ${DOCKER_ROUTER_NAME}`
-         //    );
-         // } catch (error) {
-         //    console.log('error', error);
-         // }
-         // docker network create --internal network-agent-internal
-         // docker network create network-agent-external
-         //
-         // docker run -d -p 33033:80 --network=network-agent-internal --network=network-agent-external --name agentrouter agentrouter
          console.log('docker build done');
       } catch (error) {
          console.log('error', error);
@@ -130,6 +84,7 @@ const ipcMainDocker = () => {
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUN_AGENT, async (_event, agentName: string, chainId: string, options) => {
       try {
+         console.log('DOCKER_RUN_AGENT', agentName, chainId, options);
          const dnsHost = getDnsHost(chainId, agentName);
          const _options = typeof options === 'string' ? JSON.parse(options) : options;
          const type = (_options?.type || 'custom-prompt') as CodeLanguage;
@@ -184,8 +139,48 @@ const ipcMainDocker = () => {
          ]
 
          const paramsStr = params.join(' ');
-         await command.execAsyncStream(`bash "${actionScriptPath}" run ${paramsStr}`);
+         const __filename = fileURLToPath(import.meta.url);
+         const __dirname = dirname(__filename);
+         const buildId = `${agentName}-${chainId}-${type}`;
+         const worker = new Worker(path.join(__dirname, 'workers', 'docker-build-worker.js'), {
+            workerData: {
+               buildId,
+               cmd: `bash "${actionScriptPath}" run ${paramsStr}`
+            }
+         })
+
+         console.log('worker', worker);
+
+         buildWorkers.set(buildId, worker);
+         // await command.execAsyncStream(`bash "${actionScriptPath}" run ${paramsStr}`);
+
+         worker.on('message', (message: { type: string; data: string }) => {
+            console.log('message', message);
+            const win = command.getBrowser();
+            if (!win) return;
+        
+            if (message.type === 'build-update') {
+               win.webContents.send(`docker-build-update-${buildId}`, message.data);
+            } else if (message.type === 'build-complete') {
+               win.webContents.send(`docker-build-complete-${buildId}`, message.data);
+               worker.terminate();
+               buildWorkers.delete(buildId);
+            } else if (message.type === 'build-error') {
+               win.webContents.send(`docker-build-error-${buildId}`, message.data);
+               worker.terminate();
+               buildWorkers.delete(buildId);
+            }
+         });
+        
+         worker.on('error', (err) => {
+            console.log('worker error', err);
+            const win = command.getBrowser();
+            if (win) win.webContents.send(`docker-build-error-${buildId}`, err.message);
+            buildWorkers.delete(buildId);
+         });
+         return { status: `Build ${buildId} started` };
       } catch (error) {
+         console.log('error', error);
          throw error;
       }
    });
@@ -292,18 +287,18 @@ const ipcMainDocker = () => {
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_RUNNING_PORT, async (_event, agentName: string, chainId: string, ) => {
-      const dnsHost = getDnsHost(chainId, agentName);
-      const params = [
-         `--container-name "${dnsHost}"`,
-      ]
-      const paramsStr = params.join(' ');
-      const stdout = await command.execAsync(`bash "${actionScriptPath}" get-port ${paramsStr}`);
-      const messages = stdout.split('\n');
-      const port = messages[messages.length - 2].trim();
-      if (Number.isNaN(Number(port))) {
-         throw new Error(`Port is not a number: ${port}`);
-      }
-      return port;
+      // const dnsHost = getDnsHost(chainId, agentName);
+      // const params = [
+      //    `--container-name "${dnsHost}"`,
+      // ]
+      // const paramsStr = params.join(' ');
+      // const stdout = await command.execAsync(`bash "${actionScriptPath}" get-port ${paramsStr}`);
+      // const messages = stdout.split('\n');
+      // const port = messages[messages.length - 2].trim();
+      // if (Number.isNaN(Number(port))) {
+      //    throw new Error(`Port is not a number: ${port}`);
+      // }
+      // return port;
    });
 
    ipcMain.handle(EMIT_EVENT_NAME.DOCKER_INFO, async (_event, action: DockerInfoAction) => {

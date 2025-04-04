@@ -37,6 +37,6 @@
       "@providers/*": ["src/providers/*"],
     }
   },
-  "include": ["src", "electron"],
+  "include": ["src", "electron", "electron/workers/docker-build-worker.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
