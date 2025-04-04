@@ -125,7 +125,11 @@ app.post('/:agentName/prompt', async (req, res) => {
                result = responseData;
             }
 
-            res.status(proxyResponse.statusCode).json(normalizeResponse(payload?.id || '', result, agentName));
+            if (!!payload.ping) {
+               res.status(proxyResponse.statusCode).json(result);
+            } else {
+               res.status(proxyResponse.statusCode).json(normalizeResponse(payload?.id || '', result, agentName));
+            }
          });
       }
    });
