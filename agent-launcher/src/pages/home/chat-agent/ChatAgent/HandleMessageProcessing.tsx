@@ -35,9 +35,10 @@ function HandleProcessingMessage({
                      } as any);
 
                      if (res?.status !== 102) {
+                        console.log('__________res__________', res);
                         updateMessage(data.id, {
                            status: "received",
-                           msg: res.data || res,
+                           msg: res.choices[0].message.content,
                         });
                      } else {
                         setTimeout(() => {
@@ -45,6 +46,7 @@ function HandleProcessingMessage({
                         }, 10000);
                      }
                   } catch (e) {
+                     console.log('__________e__________', e);
                      let errorMessage = (e as any)?.response?.data?.error;
                      if (!errorMessage && (e as any)?.response?.data && typeof (e as any)?.response?.data === "string") {
                         errorMessage = (e as any)?.response?.data;

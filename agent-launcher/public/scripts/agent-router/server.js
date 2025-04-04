@@ -37,10 +37,152 @@ const tryToParseStringJson = (data) => {
 
 
 const isStreamingResponse = (headers) => {
-   return headers['content-type']?.includes('text/event-stream') || 
-          headers['content-type']?.includes('application/x-ndjson') ||
-          headers['transfer-encoding']?.includes('chunked');
- };
+   return headers['content-type']?.includes('text/event-stream') ||
+      headers['content-type']?.includes('application/x-ndjson') ||
+      headers['transfer-encoding']?.includes('chunked');
+};
+
+
+const logDir = path.join(process.cwd(), 'data', 'requests');
+
+const getRequestFilePath = (agentName) => {
+   return `${logDir}/${agentName}`;
+};
+
+const checkLogDir = async (agentName) => {
+   try {
+      // Create log directory if it doesn't exist
+      await fs.mkdir(getRequestFilePath(agentName), { recursive: true });
+   } catch (e) {
+      //
+   }
+};
+
+const getFileName = (id) => {
+   return `${id}.json`;
+};
+
+const readLogFile = async (id, agentName) => {
+   try {
+      const filename = getFileName(id);
+      const filepath = path.join(getRequestFilePath(agentName), filename);
+      const fileContent = await fs.readFile(filepath, 'utf-8');
+      return JSON.parse(fileContent);
+   } catch (error) {
+      return null;
+   }
+};
+
+const writeRequestStartLogger = async (id, payload, agentName) => {
+   try {
+      if (!id) {
+         return null;
+      }
+      await checkLogDir(agentName);
+      const existedLog = await readLogFile(id, agentName);
+      if (existedLog) {
+         return existedLog;
+      }
+      const log = {
+         createdAt: new Date().toISOString(),
+         body: payload,
+         status: 102,
+      };
+
+      // Create filename with timestamp
+      const filename = getFileName(id);
+      const filepath = path.join(getRequestFilePath(agentName), filename);
+
+      // Write log to file
+      await fs.writeFile(filepath, JSON.stringify(log, null, 2), 'utf-8');
+   } catch (error) {
+      console.error('Error logging request:', error);
+   }
+   return null;
+};
+
+const writeRequestEndLogger = async (id, data, status, agentName) => {
+   try {
+      if (!id) {
+         return null;
+      }
+      await checkLogDir(agentName);
+      const existingLog = await readLogFile(id, agentName);
+      if (!existingLog) {
+         return;
+      }
+
+      const updatedLog = {
+         ...existingLog,
+         status,
+         updatedAt: new Date().toISOString(),
+         data: data,
+      };
+
+      const filename = getFileName(id, agentName);
+      const filepath = path.join(getRequestFilePath(agentName), filename);
+      await fs.writeFile(filepath, JSON.stringify(updatedLog, null, 2), 'utf-8');
+   } catch (error) {
+      console.error('Error logging request:', error);
+   }
+   return;
+};
+
+const pingToServer = async (options, id, agentName) => {
+   try {
+      const payloadString = JSON.stringify({
+         ping: true,
+      });
+
+      const timeout = 30 * 1000; // 30s
+      // Try pinging the server to check if it's still processing
+      const pingOptions = {
+         ...options,
+         timeout: timeout,
+         headers: {
+            ...options.headers,
+            'Content-Length': Buffer.byteLength(payloadString),
+         },
+      };
+
+      const pingRequest = http.request(pingOptions, (pingResponse) => {
+         if (pingResponse.statusCode !== 200) {
+            writeRequestEndLogger(id || '', 'Server is not responding', 500, agentName);
+         }
+      });
+
+      // Set timeout handler
+      pingRequest.setTimeout(timeout, () => {
+         pingRequest.destroy();
+      });
+
+      pingRequest.on('error', () => {
+         writeRequestEndLogger(id || '', 'Server is not responding', 500, agentName);
+      });
+
+      pingRequest.write(payloadString);
+      pingRequest.end();
+   } catch (error) {
+      //
+   }
+};
+
+const setRequestToErrorIfLargerThanTimeout = async (options, id, agentName, existedLog) => {
+   try {
+      // Check if request has been running for more than 30 minutes
+      const now = new Date();
+      const createdAt = new Date(existedLog.createdAt);
+      const diffMinutes = (now - createdAt) / (1000 * 60);
+
+      if (diffMinutes > REQUEST_TIMEOUT) {
+         writeRequestEndLogger(id || '', 'Server is not responding', 500, agentName);
+      } else {
+         pingToServer(options, id, agentName, existedLog);
+      }
+   } catch (error) {
+      //
+   }
+};
 
 const normalizeResponse = (id, data, agentName) => {
    if (typeof data === 'string') {
@@ -64,6 +206,22 @@ const normalizeResponse = (id, data, agentName) => {
    }
    return data;
 };
+
+const parseDataFromStream = (data) => {
+   let content = '';
+   try {
+      const jsonChunk = tryToParseStringJson(
+         data.toString().replace?.('data: ', ''),
+      );
+      let chunk = '';
+      if (jsonChunk.choices && jsonChunk.choices[0].delta) {
+         chunk = jsonChunk?.choices?.[0]?.delta?.content || '';
+         content += chunk;
+      }
+   } catch (err) {
+   }
+   return content;
+}
 
 app.post('/:agentName/prompt', async (req, res) => {
    const { agentName } = req.params;
@@ -91,24 +249,59 @@ app.post('/:agentName/prompt', async (req, res) => {
       },
    };
 
+   if (payload?.id && !payload?.ping) {
+      try {
+         const existedLog = await writeRequestStartLogger(payload?.id || '', payload, agentName);
+
+         if (existedLog?.status) {
+            if (existedLog?.status === 102) {
+               res.status(200).json({
+                  status: 102,
+               });
+
+               // try pinging the server to check if it's still processing
+               setRequestToErrorIfLargerThanTimeout(options, payload?.id || '', agentName, existedLog);
+               return;
+            }
+            if (existedLog?.status === 500) {
+               res.status(500).json(tryToParseStringJson(existedLog.data));
+               return;
+            }
+            res.status(200).json(normalizeResponse(payload?.id || '', tryToParseStringJson(existedLog.data), agentName));
+            return;
+         }
+      } catch (error) {
+         //
+      }
+   }
+
    const proxyRequest = http.request(options, (proxyResponse) => {
       const isStreaming = isStreamingResponse(proxyResponse.headers);
       if (isStreaming) {
+         let responseData = '';
          // Handle as streaming response
          res.writeHead(proxyResponse.statusCode, proxyResponse.headers);
          // proxyResponse.pipe(res);
          proxyResponse.on('data', (chunk) => {
             res.write(chunk);
 
+            responseData += parseDataFromStream(chunk);
+
             if (chunk.toString().includes('[DONE]')) {
                res.end();
+               if (payload?.id) {
+                  writeRequestEndLogger(payload.id, responseData, proxyResponse.statusCode, agentName);
+               }
             }
          });
 
          proxyResponse.on('end', () => {
             res.end();
+            if (payload?.id) {
+               writeRequestEndLogger(payload.id, responseData, proxyResponse.statusCode, agentName);
+            }
          });
-         } else {
+      } else {
          // Handle as regular response
          let responseData = '';
 
@@ -128,7 +321,11 @@ app.post('/:agentName/prompt', async (req, res) => {
             if (!!payload.ping) {
                res.status(proxyResponse.statusCode).json(result);
             } else {
-               res.status(proxyResponse.statusCode).json(normalizeResponse(payload?.id || '', result, agentName));
+               const normalizedResponse = normalizeResponse(payload?.id || '', result, agentName)
+               res.status(proxyResponse.statusCode).json(normalizedResponse);
+               if (payload?.id) {
+                  writeRequestEndLogger(payload?.id || '', normalizedResponse, proxyResponse.statusCode, agentName);
+               }
             }
          });
       }
@@ -145,6 +342,9 @@ app.post('/:agentName/prompt', async (req, res) => {
       res.status(500).json({
          error: 'Internal Server Error',
       });
+      if (payload?.id) {
+         writeRequestEndLogger(payload?.id || '', 'Internal Server Error', 500, agentName);
+      }
    });
 
    // Write the request body to the proxy request
@@ -154,7 +354,47 @@ app.post('/:agentName/prompt', async (req, res) => {
 });
 
 
+const cleanupOldFiles = async () => {
+   try {
+      const now = new Date();
+      const files = await fs.readdir(logDir);
+
+      const readLogFileFromPath = async (pathOfFile) => {
+         try {
+            const fileContent = await fs.readFile(pathOfFile, 'utf-8');
+            return JSON.parse(fileContent);
+         } catch (error) {
+            return null;
+         }
+      };
+
+      for (const agentDir of files) {
+         const agentPath = path.join(logDir, agentDir);
+         const agentFiles = await fs.readdir(agentPath);
+
+         for (const file of agentFiles) {
+            const filePath = path.join(agentPath, file);
+            const stats = await fs.stat(filePath);
+            const hoursOld = (now - stats.mtime) / (1000 * 60 * 60);
+
+            if (hoursOld > FILE_RETENTION_HOURS) {
+               const existedLog = await readLogFileFromPath(filePath);
+               if (existedLog && existedLog.status !== 102) {
+                  await fs.unlink(filePath);
+                  console.log(`Deleted old file: ${filePath}`);
+               }
+            }
+         }
+      }
+   } catch (error) {
+      // console.error('Error cleaning up old files:', error);
+   }
+};
+
 const PORT = 80;
 app.listen(PORT, '0.0.0.0', () => {
    console.log(`Proxy server running on http://localhost:${PORT}`);
+
+   // Run initial cleanup
+   cleanupOldFiles();
 });
