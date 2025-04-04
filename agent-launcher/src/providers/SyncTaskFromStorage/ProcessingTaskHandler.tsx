@@ -11,6 +11,7 @@ function ProcessingItem({ data }: { data: TaskItem }) {
    const dispatch = useDispatch();
 
    useEffect(() => {
+      let timeout: NodeJS.Timeout;
       const checkProcessingTask = async () => {
          if (data.id) {
             const threadId = `${data.agent?.id}-${data.agent?.agent_name}`;
@@ -31,7 +32,7 @@ function ProcessingItem({ data }: { data: TaskItem }) {
                         })
                      );
                   } else {
-                     setTimeout(() => {
+                     timeout = setTimeout(() => {
                         checkProcessingTask();
                      }, 30000);
                   }
@@ -74,9 +75,15 @@ function ProcessingItem({ data }: { data: TaskItem }) {
             }
          }
       };
-      setTimeout(() => {
+      timeout = setTimeout(() => {
          checkProcessingTask();
       }, 30000);
+
+      return () => {
+         if (timeout) {
+            clearTimeout(timeout);
+         }
+      }
    }, []);
 
    return <></>;

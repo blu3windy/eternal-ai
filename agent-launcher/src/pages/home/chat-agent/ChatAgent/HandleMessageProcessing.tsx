@@ -18,6 +18,7 @@ function HandleProcessingMessage({
 }) {
    const cPumpAPI = new CAgentTokenAPI();
    useEffect(() => {
+      let timeout: NodeJS.Timeout;
       const checkProcessingTask = async () => {
          if (data.id) {
             if ([AgentType.Infra, AgentType.CustomPrompt].includes(agent?.agent_type as any)) {
@@ -67,16 +68,22 @@ function HandleProcessingMessage({
                      });
                   }
                } catch (e) {
-                  setTimeout(() => {
+                  timeout = setTimeout(() => {
                      checkProcessingTask();
                   }, 10000);
                }
             }
          }
       };
-      setTimeout(() => {
+      timeout = setTimeout(() => {
          checkProcessingTask();
       }, 1000);
+
+      return () => {
+         if (timeout) {
+            clearTimeout(timeout);
+         }
+      }
    }, []);
 
    return <></>;
