@@ -119,7 +119,7 @@ const writeRequestEndLogger = async (id, data, status, agentName) => {
          data: data,
       };
 
-      const filename = getFileName(id, agentName);
+      const filename = getFileName(id);
       const filepath = path.join(getRequestFilePath(agentName), filename);
       await fs.writeFile(filepath, JSON.stringify(updatedLog, null, 2), 'utf-8');
    } catch (error) {
@@ -172,12 +172,12 @@ const setRequestToErrorIfLargerThanTimeout = async (options, id, agentName, exis
       // Check if request has been running for more than 30 minutes
       const now = new Date();
       const createdAt = new Date(existedLog.createdAt);
-      const diffMinutes = (now - createdAt) / (1000 * 60);
+      const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
 
       if (diffMinutes > REQUEST_TIMEOUT) {
          writeRequestEndLogger(id || '', 'Server is not responding', 500, agentName);
       } else {
-         pingToServer(options, id, agentName, existedLog);
+         pingToServer(options, id, agentName);
       }
    } catch (error) {
       //
