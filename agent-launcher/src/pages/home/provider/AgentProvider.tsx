@@ -841,17 +841,12 @@ const AgentProvider: React.FC<
 
       if (dependAgents.length > 0) {
          await Promise.all(dependAgents.map(async (agent) => {
-            try {
-               if (needUpdateCode) {
-                  await handleStopDockerAgent(agent);
-                  const lang = getUtilityAgentCodeLanguage(agent);
-                  await globalThis.electronAPI.dockerDeleteImage(agent.agent_name?.toLowerCase(), agent.network_id?.toString(), lang);
-                  await handleRunDockerAgent(agent);
-               } else {
-                  await handleRunDockerAgent(agent);
-               }
-            } catch (error) {
+            if (needUpdateCode) {
+               await handleStopDockerAgent(agent);
+               const lang = getUtilityAgentCodeLanguage(agent);
+               await globalThis.electronAPI.dockerDeleteImage(agent.agent_name?.toLowerCase(), agent.network_id?.toString(), lang);
             }
+            await handleRunDockerAgent(agent);
          }));
       }
       console.timeEnd('LEON: startDependAgents');
