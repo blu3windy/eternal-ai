@@ -4,6 +4,7 @@ const url = require('url');
 const cors = require('cors');
 const fs = require('fs/promises');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 
@@ -177,6 +178,29 @@ const setRequestToErrorIfLargerThanTimeout = async (options, id, agentName, exis
    }
 };
 
+const normalizeResponse = (id, data, agentName) => {
+   if (typeof data === 'string') {
+      return {
+         id: id || uuidv4(),
+         object: "chat.completion",
+         created: new Date().getTime(),
+         model: agentName,
+         choices: [
+           {
+             index: 0,
+             delta: {
+               content: data,
+             },
+             logprobs: null,
+             finish_reason: "stop",
+             stop_reason: null,
+           },
+         ],
+      };
+   }
+   return data;
+};
+
 app.post('/:agentName/prompt', async (req, res) => {
    const { agentName } = req.params;
    console.log('agentName:', agentName);
@@ -202,27 +226,28 @@ app.post('/:agentName/prompt', async (req, res) => {
          'Content-Length': Buffer.byteLength(payloadString),
       },
    };
+   
 
    if (payload?.id && !payload?.ping) {
-      const existedLog = await writeRequestStartLogger(payload?.id || '', payload, agentName);
+      // const existedLog = await writeRequestStartLogger(payload?.id || '', payload, agentName);
 
-      if (existedLog?.status) {
-         if (existedLog?.status === 102) {
-            res.status(200).json({
-               status: 102,
-            });
+      // if (existedLog?.status) {
+      //    if (existedLog?.status === 102) {
+      //       res.status(200).json({
+      //          status: 102,
+      //       });
 
-            // try pinging the server to check if it's still processing
-            setRequestToErrorIfLargerThanTimeout(options, payload?.id || '', agentName, existedLog);
-            return;
-         }
-         if (existedLog?.status === 500) {
-            res.status(500).json(tryToParseStringJson(existedLog.data));
-            return;
-         }
-         res.status(200).json(tryToParseStringJson(existedLog.data));
-         return;
-      }
+      //       // try pinging the server to check if it's still processing
+      //       setRequestToErrorIfLargerThanTimeout(options, payload?.id || '', agentName, existedLog);
+      //       return;
+      //    }
+      //    if (existedLog?.status === 500) {
+      //       res.status(500).json(tryToParseStringJson(existedLog.data));
+      //       return;
+      //    }
+      //    res.status(200).json(tryToParseStringJson(existedLog.data));
+      //    return;
+      // }
 
       if (payload?.stream === true) {
          const proxyRequest = http.request(options, (proxyResponse) => {
@@ -286,7 +311,7 @@ app.post('/:agentName/prompt', async (req, res) => {
                   result = responseData;
                }
 
-               res.status(proxyResponse.statusCode).json(result);
+               res.status(proxyResponse.statusCode).json(normalizeResponse(payload?.id || '', result, agentName));
                // writeRequestEndLogger(payload?.id || '', result, proxyResponse.statusCode, agentName);
             });
          });
@@ -300,7 +325,6 @@ app.post('/:agentName/prompt', async (req, res) => {
          proxyRequest.on('error', (err) => {
             console.error('Proxy request error:', err);
             res.status(500).json({
-               status: 500,
                error: 'Internal Server Error',
             });
             // writeRequestEndLogger(payload?.id || '', 'Internal Server Error', 500, agentName);
@@ -358,10 +382,7 @@ app.post('/:agentName/prompt', async (req, res) => {
                   result = responseData;
                }
 
-               res.status(proxyResponse.statusCode).json({
-                  status: 200,
-                  data: result,
-               });
+               res.status(proxyResponse.statusCode).json(normalizeResponse(payload?.id || '', result, agentName));
             });
          });
 
@@ -374,7 +395,6 @@ app.post('/:agentName/prompt', async (req, res) => {
          proxyRequest.on('error', (err) => {
             console.error('Proxy request error:', err);
             res.status(500).json({
-               status: 500,
                error: 'Internal Server Error',
             });
          });
@@ -420,7 +440,7 @@ const cleanupOldFiles = async () => {
          }
       }
    } catch (error) {
-      console.error('Error cleaning up old files:', error);
+      // console.error('Error cleaning up old files:', error);
    }
 };
 
