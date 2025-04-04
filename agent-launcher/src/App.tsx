@@ -7,14 +7,14 @@ import { AuthProvider } from "./pages/authen/provider.tsx";
 import Home from "./pages/home";
 import Mine from "./pages/mine";
 
-import { Provider } from "react-redux";
-import { PersistGate } from "redux-persist/integration/react";
 import SyncTaskFromStorage from "@providers/SyncTaskFromStorage/index.tsx";
 import { useEffect, useState } from "react";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
 import s from "./styles/styles.module.scss";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { Box, Text, Button, Spinner, Flex } from "@chakra-ui/react";
+import { Box, Flex, Spinner, Text } from "@chakra-ui/react";
+import { motion } from "framer-motion";
 
 function App() {
    const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -50,13 +50,15 @@ function App() {
 
 
    const handleUpdateDownloaded = () => {
+      setUpdateDownloadProcessing({
+         percent: 0
+      });
       globalThis.electronAPI.onUpdateDownloaded();
    }
 
 
    return (
       <>
-
          <Provider store={store}>
             <PersistGate loading={null} persistor={persistor}>
                <SyncTaskFromStorage />

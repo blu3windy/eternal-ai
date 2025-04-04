@@ -118,7 +118,7 @@ const ItemToken = ({
                            agent?.agent_type === AgentType.ModelOnline ? "Online" : `${modelSize} GB`
                         }
                      </Text>
-                     {
+                     {/* {
                         agent.agent_type !== AgentType.ModelOnline && (
                            <>
                               <svg width="6" height="6" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -129,7 +129,7 @@ const ItemToken = ({
                               </Text>
                            </>
                         )
-                     }
+                     } */}
                   </Flex>
                </Flex>
             </Flex>
