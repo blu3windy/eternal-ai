@@ -13,6 +13,8 @@ import { useDropzone } from 'react-dropzone';
 import cx from "clsx";
 import AgentTradeProvider from "@pages/home/trade-agent/provider";
 import AgentWallet from "@components/AgentWallet";
+import { useDispatch } from "react-redux";
+import { requestReloadRecentAgents } from "@stores/states/common/reducer";
 
 interface IProps {
    inputRef?: any;
@@ -46,6 +48,7 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
    const [message, setMessage] = useState('');
    const [attachments, setAttachments] = useState<File[]>([]);
    const fileInputRef = useRef<HTMLInputElement>(null);
+   const dispatch = useDispatch();
 
    const onDrop = useCallback((acceptedFiles: File[]) => {
       const imageFiles = acceptedFiles.filter(file => file.type.startsWith('image/'));
@@ -111,6 +114,8 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
       }
 
       await localStorageService.setItem(STORAGE_KEYS.RECENT_AGENTS, JSON.stringify(recentAgents));
+
+      dispatch(requestReloadRecentAgents());
 
       await cPumpAPI.saveRecentAgents({ ids: recentAgents })
    };

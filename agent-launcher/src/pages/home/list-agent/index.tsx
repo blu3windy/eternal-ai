@@ -1,7 +1,6 @@
 import {
    Box,
    Button,
-   Center,
    Divider,
    Flex,
    Grid,
@@ -17,8 +16,9 @@ import {
    useDisclosure,
    VStack
 } from '@chakra-ui/react';
-import BaseModal from '@components/BaseModal/index.tsx';
 import IcHelp from '@components/InfoTooltip/IcHelp.tsx';
+import installAgentStorage from '@storage/InstallAgentStorage.ts';
+import { commonSelector } from '@stores/states/common/selector.ts';
 import { compareString } from '@utils/string.ts';
 import cx from 'clsx';
 import debounce from 'lodash.debounce';
@@ -26,13 +26,13 @@ import throttle from 'lodash.throttle';
 import uniqBy from 'lodash.uniqby';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import { useDispatch, useSelector } from 'react-redux';
 import AppLoading from "../../../components/AppLoading";
 import CAgentTokenAPI from "../../../services/api/agents-token";
 import { IAgentToken } from "../../../services/api/agents-token/interface.ts";
 import { AgentContext } from "../provider/AgentContext.tsx";
-import AddTestAgent from './AddTestAgent/index.tsx';
 import AgentItem from './AgentItem';
-import AgentMonitor from './AgentMonitor/index.tsx';
+import BottomBar from './BottomBar/index.tsx';
 import {
    AgentOptions,
    AgentType,
@@ -44,10 +44,6 @@ import {
    SortOption
 } from './constants';
 import s from './styles.module.scss';
-import BottomBar from './BottomBar/index.tsx';
-import installAgentStorage from '@storage/InstallAgentStorage.ts';
-import { commonSelector } from '@stores/states/common/selector.ts';
-import { useSelector } from 'react-redux';
 
 
 const AgentsList = () => {
@@ -68,7 +64,7 @@ const AgentsList = () => {
    const [latestAgent, setLatestAgent] = useState<IAgentToken | null>(null);
    const refLatestInterval = useRef<any>(null);
 
-   const { needReloadList } = useSelector(commonSelector);
+   const { needReloadList, needReloadRecentAgents } = useSelector(commonSelector);
 
    const { 
       setSelectedAgent, 
@@ -246,6 +242,20 @@ const AgentsList = () => {
    useEffect(() => {
       throttleGetTokens(true, true);
    }, [needReloadList]);
+
+   useEffect(() => {
+      if (needReloadRecentAgents) {
+         if (selectedAgent && agents.length > 0) {
+            const selectedAgentIndex = agents.findIndex(agent => agent.id === selectedAgent.id);
+            if (selectedAgentIndex > 0) {
+               const reorderedAgents = [...agents];
+               const [selectedAgentItem] = reorderedAgents.splice(selectedAgentIndex, 1);
+               reorderedAgents.unshift(selectedAgentItem);
+               setAgents(reorderedAgents);
+            }
+         }
+      }
+   }, [needReloadRecentAgents]);
 
    const handleCategorySelect = (categoryOption: CategoryOption) => {
       refParams.current = {

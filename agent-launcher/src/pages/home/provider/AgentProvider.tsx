@@ -1,33 +1,33 @@
+import { showMessage } from "@components/Toast/toast.tsx";
 import { BASE_CHAIN_ID } from "@constants/chains";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 import CAgentContract from "@contract/agent/index.ts";
-import { checkFileExistsOnLocal, getFilePathOnLocal, writeFileToLocal, } from "@contract/file";
+import { checkFileExistsOnLocal, writeFileToLocal } from "@contract/file";
+import { useDebounce } from '@hooks/useDebounce';
 import { useAuth } from "@pages/authen/provider.tsx";
 import { AgentType, CategoryOption, SortOption } from "@pages/home/list-agent/constants.ts";
+import { MonitorContext } from "@providers/Monitor/MonitorContext.tsx";
+import { ContainerData } from "@providers/Monitor/interface.ts";
+import installAgentStorage from "@storage/InstallAgentStorage.ts";
 import storageModel from "@storage/StorageModel.ts";
+import { requestReloadListAgent, requestReloadMonitor } from "@stores/states/common/reducer.ts";
 import { setReadyPort } from "@utils/agent.ts";
 import { compareString, isBase64, splitBase64 } from "@utils/string.ts";
 import { Wallet } from "ethers";
 import uniq from "lodash.uniq";
+import uniqBy from "lodash.uniqby";
 import throttle from "lodash/throttle";
 import React, { PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useDispatch } from "react-redux";
 import { ModelInfo } from "../../../../electron/share/model.ts";
 import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
 import CAgentTokenAPI from "../../../services/api/agents-token/index.ts";
 import { IAgentToken, } from "../../../services/api/agents-token/interface.ts";
 import localStorageService from "../../../storage/LocalStorageService.ts";
 import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
-import { ETradePlatform } from "./interface.ts";
 import { AgentContext } from "./AgentContext.tsx";
-import { useDebounce } from '@hooks/useDebounce';
-import installAgentStorage from "@storage/InstallAgentStorage.ts";
-import { useDispatch } from "react-redux";
-import { requestReloadListAgent, requestReloadMonitor } from "@stores/states/common/reducer.ts";
-import uniqBy from "lodash.uniqby";
-import { MonitorContext } from "@providers/Monitor/MonitorContext.tsx";
-import { ContainerData } from "@providers/Monitor/interface.ts";
-import { showMessage } from "@components/Toast/toast.tsx";
-import { toast } from "react-hot-toast";
+import { ETradePlatform } from "./interface.ts";
 
 const AgentProvider: React.FC<
     PropsWithChildren & { tokenAddress?: string }
@@ -1138,7 +1138,7 @@ const AgentProvider: React.FC<
 
    const setSelectedAgent = useCallback((newAgent: IAgentToken) => {
       _setSelectedAgent(newAgent);
-
+      
       const isInstalled = agentStates[newAgent.id]?.isInstalled || false;
       const isRunning = agentStates[newAgent.id]?.isRunning || false;
       const isStarting = agentStates[newAgent.id]?.isStarting || false;
