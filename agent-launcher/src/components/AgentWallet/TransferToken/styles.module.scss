@@ -1,4 +1,10 @@
 .container {
   padding: 24px 0;
   width: 100%;
+
+  :global {
+    .chakra-popover__popper {
+      width: 100% !important;
+    }
+  }
 } 

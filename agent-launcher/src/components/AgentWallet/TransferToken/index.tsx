@@ -178,7 +178,7 @@ const TransferTokenForm = ({
                                 </svg>
                             </Flex>
                         </PopoverTrigger>
-                        <PopoverContent width="400px" maxHeight="300px" overflowY="auto">
+                        <PopoverContent width="89%" maxHeight="300px" overflowY="auto">
                             <PopoverBody p={0}>
                                 <VStack align="stretch" spacing={0}>
                                     {tokens.map((token, index) => {
