@@ -5,11 +5,14 @@ import { AgentType, AgentTypeName } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { formatCurrency } from "@utils/format.ts";
 import cs from "classnames";
-import { useContext, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import s from "./styles.module.scss";
 import SetupEnvModel from "../SetupEnvironment";
 import BaseModal from "@components/BaseModal";
 import storageModel from "@storage/StorageModel";
+import { BASE_CHAIN_ID } from "@constants/chains";
+import CAgentContract from "@contract/agent";
+import localStorageService from "@storage/LocalStorageService";
 
 const AgentDetail = () => {
    const {
@@ -20,8 +23,61 @@ const AgentDetail = () => {
       isRunning,
       isStarting,
       startAgent,
+      isStopping,
+      stopAgent,
+      unInstallAgent,
+      setSelectedAgent,
    } = useContext(AgentContext);
+
    const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
+   const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
+   const [isClickUpdateCode, setIsClickUpdateCode] = useState(false);
+
+   useEffect(() => {
+      setHaveNewVersionCode(false);
+      if (selectedAgent || !isRunning) {
+         checkVersionCode();
+      }
+   }, [selectedAgent, isRunning, isInstalled]);
+
+   const checkVersionCode = async () => {
+      if (
+         selectedAgent?.agent_type
+         && [
+            AgentType.Infra,
+            AgentType.CustomUI,
+            AgentType.CustomPrompt,
+            AgentType.ModelOnline,
+         ].includes(selectedAgent.agent_type)
+         && isInstalled
+      ) {
+         const chainId = selectedAgent?.network_id || BASE_CHAIN_ID;
+         const cAgent = new CAgentContract({
+            contractAddress: selectedAgent?.agent_contract_address || '',
+            chainId: chainId,
+         });
+         const codeVersion = await cAgent.getCurrentVersion();
+         const values = await localStorageService.getItem(selectedAgent.agent_contract_address);
+         const oldCodeVersion = values ? Number(values) : 1;
+         if (codeVersion > 1 && codeVersion > oldCodeVersion) {
+            setHaveNewVersionCode(true);
+         } else {
+            setHaveNewVersionCode(false);
+         }
+      }
+   };
+
+   const handleUpdateCode = async () => {
+      setIsClickUpdateCode(true);
+      if (!selectedAgent) return;
+      await stopAgent(selectedAgent, true);
+      await unInstallAgent(selectedAgent, false);
+      
+      setIsClickUpdateCode(false);
+      checkVersionCode();
+      await installAgent(selectedAgent, true);
+   };
+
 
    const {
       parsedLog,
@@ -62,14 +118,14 @@ const AgentDetail = () => {
    const requirements = selectedAgent?.required_info;
 
 
-   const handleInstall =  async () => {
+   const handleInstall = async () => {
       if (isInstalled) return;
       if (!selectedAgent) return;
-      
+
       if (selectedAgent?.env_example) {
          const environment = await storageModel.getEnvironment({ contractAddress: selectedAgent?.agent_contract_address, chainId: selectedAgent?.network_id });
          console.log('environment', environment);
-         
+
          if (!environment) {
             setIsShowSetupEnvModel(true);
             return;
@@ -83,9 +139,9 @@ const AgentDetail = () => {
       if (!selectedAgent) return;
       startAgent(selectedAgent);
    };
-   
+
    console.log('LEON selectedAgent', selectedAgent?.env_example);
-   
+
 
    return (
       <>
@@ -105,33 +161,47 @@ const AgentDetail = () => {
                         </Text>
                         <Text className={s.nameText} opacity={0.5}>{selectedAgent?.token_symbol ? `$${selectedAgent?.token_symbol}` : ''}</Text>
                      </Flex>
-                     {
-                        isInstalled ? (
-                           <Button
-                              className={s.btnInstall}
-                              onClick={handleStartAgent}
-                              isLoading={isStarting || (selectedAgent?.agent_type === AgentType.CustomUI && !isRunning)}
-                              isDisabled={isStarting}
-                              loadingText={"Starting..."}
-                           >
-                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                 <path d="M15.5507 11.989L7.15397 17.1274C5.48314 18.1499 3.33398 16.9506 3.33398 14.9956V5.00479C3.33398 3.04979 5.48314 1.85074 7.15397 2.87324L15.5507 8.01158C17.0382 8.92242 17.0382 11.079 15.5507 11.989Z" fill="black" />
-                              </svg>
+                     <Flex gap={"24px"}>
+                        {
+                           isInstalled ? (
+                              <Button
+                                 className={s.btnInstall}
+                                 onClick={handleStartAgent}
+                                 isLoading={isStarting || (selectedAgent?.agent_type === AgentType.CustomUI && !isRunning)}
+                                 isDisabled={isStarting}
+                                 loadingText={"Starting..."}
+                              >
+                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M15.5507 11.989L7.15397 17.1274C5.48314 18.1499 3.33398 16.9506 3.33398 14.9956V5.00479C3.33398 3.04979 5.48314 1.85074 7.15397 2.87324L15.5507 8.01158C17.0382 8.92242 17.0382 11.079 15.5507 11.989Z" fill="black" />
+                                 </svg>
 
-                           Start
-                           </Button>
-                        ) : (
+                                 Start
+                              </Button>
+                           ) : (
+                              <Button
+                                 className={s.btnInstall}
+                                 onClick={handleInstall}
+                                 isLoading={isInstalling}
+                                 isDisabled={isInstalling}
+                                 loadingText={totalStep > 0 ? `${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : 'Installing...'}
+                              >
+                                 Get
+                              </Button>
+                           )
+                        }
+                        {hasNewVersionCode && isInstalled && (
                            <Button
-                              className={s.btnInstall}
-                              onClick={handleInstall}
-                              isLoading={isInstalling}
-                              isDisabled={isInstalling}
-                              loadingText={totalStep > 0 ? `${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : 'Installing...'}
+                              className={s.btnUpdate}
+                              onClick={handleUpdateCode}
+                              isLoading={isClickUpdateCode}
+                              isDisabled={isClickUpdateCode}
+                              loadingText={'Updating...'}
                            >
-                           Get
+                              Update
                            </Button>
-                        )
-                     }
+                        )}
+                     </Flex>
+
                   </Flex>
                </Flex>
 
@@ -140,7 +210,7 @@ const AgentDetail = () => {
             <Flex gap={"20px"} justifyContent={'space-between'}>
                <Flex className={s.infoBox}>
                   <Text className={s.infoText}>
-                  Type
+                     Type
                   </Text>
                   <Text className={s.infoValue}>
                      {AgentTypeName[selectedAgent?.agent_type]}
@@ -151,7 +221,7 @@ const AgentDetail = () => {
                   requirements?.disk && (
                      <Flex className={s.infoBox}>
                         <Text className={s.infoText}>
-                     Storage
+                           Storage
                         </Text>
                         <Text className={s.infoValue}>
                            {requirements?.disk} GB
@@ -164,7 +234,7 @@ const AgentDetail = () => {
                   requirements?.ram && (
                      <Flex className={s.infoBox}>
                         <Text className={s.infoText}>
-                     RAM
+                           RAM
                         </Text>
                         <Text className={s.infoValue}>
                            {requirements?.ram} GB
@@ -177,7 +247,7 @@ const AgentDetail = () => {
                   selectedAgent?.meme?.market_cap && (
                      <Flex className={s.infoBox}>
                         <Text className={s.infoText}>
-                        Market cap
+                           Market cap
                         </Text>
                         <Text className={s.infoValue}>
                            {Number(selectedAgent?.meme?.market_cap) > 0
@@ -197,7 +267,7 @@ const AgentDetail = () => {
 
                <Flex className={s.infoBox}>
                   <Text className={s.infoText}>
-                  installed
+                     installed
                   </Text>
                   <Text className={s.infoValue}>
                      {formatCurrency(selectedAgent?.installed_count, 0, 0)}
@@ -206,7 +276,7 @@ const AgentDetail = () => {
 
                <Flex className={s.infoBox}>
                   <Text className={s.infoText}>
-                  likes
+                     likes
                   </Text>
                   <Text className={s.infoValue}>
                      {formatCurrency(selectedAgent?.likes, 0, 0)}

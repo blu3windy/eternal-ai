@@ -74,8 +74,8 @@ const AgentItem = ({ token, isLatest }: IProps) => {
       await unInstallAgent(token, false);
       await installAgent(token, true);
       setIsClickUpdateCode(false);
+      checkVersionCode();
    };
-
 
    const description = useMemo(() => {
       if ([AgentType.Infra, AgentType.Model, AgentType.CustomPrompt].includes(token.agent_type)) {
@@ -205,7 +205,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                         {formatLongAddress(token?.creator)}
                      </Text>
                   </Flex>
-                  {true && (
+                  {hasNewVersionCode && isInstalled && (
                      <Button
                         className={s.btnUpdate}
                         onClick={handleUpdateCode}
