@@ -68,14 +68,16 @@ const AgentDetail = () => {
    };
 
    const handleUpdateCode = async () => {
-      setIsClickUpdateCode(true);
       if (!selectedAgent) return;
+      
+      setIsClickUpdateCode(true);
       await stopAgent(selectedAgent, true);
       await unInstallAgent(selectedAgent, false);
       
       setIsClickUpdateCode(false);
-      checkVersionCode();
+      setHaveNewVersionCode(false);
       await installAgent(selectedAgent, true);
+      checkVersionCode();
    };
 
 

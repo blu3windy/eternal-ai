@@ -68,11 +68,13 @@ const AgentItem = ({ token, isLatest }: IProps) => {
    };
 
    const handleUpdateCode = async () => {
-      setIsClickUpdateCode(true);
       if (!token) return;
+      setIsClickUpdateCode(true);
+
       await stopAgent(token, true);
       await unInstallAgent(token, false);
       await installAgent(token, true);
+      
       setIsClickUpdateCode(false);
       checkVersionCode();
    };
