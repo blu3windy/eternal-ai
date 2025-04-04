@@ -37,13 +37,16 @@ function HandleProcessingMessage({
                      if (res?.status !== 102) {
                         console.log('__________res__________', res);
                         try {
-                        updateMessage(data.id, {
-                           status: "received",
-                           msg: res.choices[0].message.content,
-                        });
-                     } catch (e) {
-                        console.log('__________e__________', e);
-                     }
+                           updateMessage(data.id, {
+                              status: "received",
+                              msg: res.choices[0].message.content,
+                           });
+                        } catch (e) {
+                           updateMessage(data.id, {
+                              status: "received",
+                           });
+                           console.log('__________e__________', e);
+                        }
                      } else {
                         setTimeout(() => {
                            checkProcessingTask();
