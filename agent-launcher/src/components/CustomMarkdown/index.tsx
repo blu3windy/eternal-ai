@@ -9,6 +9,7 @@ import { THINK_TAG_REGEX } from "./constants";
 import CustomLink from "./Link";
 import ContentReplay from "./Content";
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton, Input, Flex, IconButton, Box, useDisclosure } from "@chakra-ui/react";
+import Processing from "./Processing";
 
 const preprocessMarkdown = (content: string) => {
    try {
@@ -80,6 +81,9 @@ function CustomMarkdown({
          },
          p: (props) => {
             return <ContentReplay {...props} />;
+         },
+         processing: (props: any) => {
+            return <Processing {...props} />;
          },
          ...components,
       } satisfies any;

@@ -81,6 +81,18 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
       }
    }, [message]);
 
+   const renderMessage = useMemo(() => {
+      if (message.status === 'received') {
+         // return message.msg.replace(/<processing>(.*?)<\/processing>/g, (match, p1) => {
+         //    return `<processing>${p1}</processing>`
+         // })
+
+         // remove processing tag
+         return `${message.msg || ''}`.replace(/<processing>(.*?)<\/processing>/g, '')
+      }
+      return message.msg;
+   }, [message])
+
    const renderContent = () => {
       return (
          <>
@@ -160,14 +172,14 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
                      <Text>Export to PDF</Text>
                   </motion.div>
                </div>
-               <CustomMarkdown id={markdownId} content={message?.msg} isLight={false} removeThink={initialMessage} />
+               <CustomMarkdown id={markdownId} content={renderMessage} isLight={false} removeThink={initialMessage} />
             </div>
          );
       }
 
       return (
          <div className={cs(s.markdown, "markdown-body")}>
-            <CustomMarkdown id={markdownId} content={message?.msg} isLight={false} removeThink={initialMessage} />
+            <CustomMarkdown id={markdownId} content={renderMessage} isLight={false} removeThink={initialMessage} />
          </div>
       );
    };
