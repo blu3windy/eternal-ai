@@ -117,6 +117,12 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		inferFee := numeric.NewBigFloatFromString(*req.InferFee)
 		agent.InferFee = inferFee
 	}
+	if req.DisplayName != "" {
+		agent.DisplayName = req.DisplayName
+	}
+	if req.ShortDescription != "" {
+		agent.ShortDescription = req.ShortDescription
+	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
 
@@ -531,6 +537,12 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				}
 				if req.TokenImageUrl != "" {
 					agent.TokenImageUrl = req.TokenImageUrl
+				}
+				if req.DisplayName != "" {
+					agent.DisplayName = req.DisplayName
+				}
+				if req.ShortDescription != "" {
+					agent.ShortDescription = req.ShortDescription
 				}
 
 				if agent.TokenStatus == "" && agent.TokenAddress == "" {
