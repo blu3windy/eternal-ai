@@ -251,46 +251,41 @@ app.post('/:agentName/prompt', async (req, res) => {
 
       if (payload?.stream === true) {
          const proxyRequest = http.request(options, (proxyResponse) => {
-            // Forward status code and headers
-            res.writeHead(proxyResponse.statusCode, proxyResponse.headers);
+            let responseData = '';
 
-            // Collect streaming data chunks, write to log and pipe to client
             proxyResponse.on('data', (chunk) => {
-               res.write(chunk);
-
-               if (chunk.toString().includes('[DONE]')) {
-                  res.end();
-                  // if (payload?.id) {
-                  //    writeRequestEndLogger(payload.id, 'Streaming request completed', proxyResponse.statusCode, agentName);
-                  // }
-               }
+               responseData += chunk;
             });
 
             proxyResponse.on('end', () => {
-               res.end();
-               // if (payload?.id) {
-               //    writeRequestEndLogger(payload.id, 'Streaming request completed', proxyResponse.statusCode, agentName);
-               // }
-            });
-         });
+               let result;
+               try {
+                  result = tryToParseStringJson(responseData);
+               } catch (e) {
+                  console.error('Error parsing response:', e);
+                  result = responseData;
+               }
 
-         proxyRequest.on('error', (err) => {
-            console.error('Streaming proxy request error:', err);
-            res.status(500).json({
-               error: 'Streaming proxy request failed',
+               res.status(proxyResponse.statusCode).json(normalizeResponse(payload?.id || '', result, agentName));
+               // writeRequestEndLogger(payload?.id || '', result, proxyResponse.statusCode, agentName);
             });
-            // if (payload?.id) {
-            //    writeRequestEndLogger(payload.id, 'Streaming request failed', 500, agentName);
-            // }
          });
 
          // Set timeout handler
          proxyRequest.setTimeout(timeout, () => {
-            console.log('Streaming request timed out!');
+            console.log('Request timed out!');
             proxyRequest.destroy();
          });
 
-         // Write payload and end request
+         proxyRequest.on('error', (err) => {
+            console.error('Proxy request error:', err);
+            res.status(500).json({
+               error: 'Internal Server Error',
+            });
+            // writeRequestEndLogger(payload?.id || '', 'Internal Server Error', 500, agentName);
+         });
+
+         // Write the request body to the proxy request
          proxyRequest.write(payloadString);
          proxyRequest.end();
          return;
@@ -339,29 +334,39 @@ app.post('/:agentName/prompt', async (req, res) => {
       // Handle streaming requests
       if (payload?.stream === true) {
          const proxyRequest = http.request(options, (proxyResponse) => {
-            // Forward status code and headers
-            res.writeHead(proxyResponse.statusCode, proxyResponse.headers);
+            let responseData = '';
 
-            // Pipe the response directly to client
-            proxyResponse.pipe(res);
+            proxyResponse.on('data', (chunk) => {
+               responseData += chunk;
+            });
 
-            proxyResponse.on('end', () => {});
-         });
+            proxyResponse.on('end', () => {
+               let result;
+               try {
+                  result = tryToParseStringJson(responseData);
+               } catch (e) {
+                  console.error('Error parsing response:', e);
+                  result = responseData;
+               }
 
-         proxyRequest.on('error', (err) => {
-            console.error('Streaming proxy request error:', err);
-            res.status(500).json({
-               error: 'Streaming proxy request failed',
+               res.status(proxyResponse.statusCode).json(normalizeResponse(payload?.id || '', result, agentName));
             });
          });
 
          // Set timeout handler
          proxyRequest.setTimeout(timeout, () => {
-            console.log('Streaming request timed out!');
+            console.log('Request timed out!');
             proxyRequest.destroy();
          });
 
-         // Write payload and end request
+         proxyRequest.on('error', (err) => {
+            console.error('Proxy request error:', err);
+            res.status(500).json({
+               error: 'Internal Server Error',
+            });
+         });
+
+         // Write the request body to the proxy request
          proxyRequest.write(payloadString);
          proxyRequest.end();
          return;
