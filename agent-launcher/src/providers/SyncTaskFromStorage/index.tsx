@@ -35,7 +35,7 @@ function SyncTaskFromStorage() {
 
    return (
       <>
-         <ProcessingTaskHandler />
+         {/* <ProcessingTaskHandler /> */}
       </>
    );
 }
