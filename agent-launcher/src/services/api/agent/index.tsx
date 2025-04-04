@@ -19,6 +19,9 @@ const handleStreamResponse = async (
    }
 
    const contentType = response.headers.get('content-type');
+   
+   console.log('contentType response.headers', response.headers);
+   console.log('contentType hihi', contentType);
 
    if (contentType?.includes('text/event-stream')) {
       // Handle streaming response
@@ -73,7 +76,8 @@ const handleStreamResponse = async (
             isStream: false
          };
       }
-   } else if (contentType?.includes('text/plain')) {
+   // } else if (contentType?.includes('text/plain')) {
+   } else {
       const text = await response.text();
       return {
          success: true,
@@ -86,13 +90,13 @@ const handleStreamResponse = async (
          },
          isStream: false
       };
-   } else {
-      // Unknown content type
-      return {
-         success: false,
-         error: `Unsupported content type: ${contentType}`,
-         isStream: false
-      };
+   // } else {
+   //    // Unknown content type
+   //    return {
+   //       success: false,
+   //       error: `Unsupported content type: ${contentType}`,
+   //       isStream: false
+   //    };
    }
 };
 
