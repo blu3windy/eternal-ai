@@ -1,7 +1,6 @@
 import { Center, Image } from "@chakra-ui/react";
 import BackgroundWrapper from "@components/BackgroundWrapper";
 import BaseButton from "@components/BaseButton";
-import LoadingText from "@components/LoadingText";
 import { getSetupAgents } from "@pages/authen/ChooseModel/utils.ts";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
 import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
@@ -141,7 +140,6 @@ const Starter = (props: IProps) => {
          return (
             <Center flexDirection="column" gap="12px">
                <LoadingIcon />
-               <LoadingText dataText="Initializing..." />
                <StarterLogs />
                {hasError && (
                   <BaseButton 
