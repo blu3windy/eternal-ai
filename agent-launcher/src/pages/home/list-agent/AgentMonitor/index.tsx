@@ -258,7 +258,7 @@ const AgentMonitor: React.FC = () => {
                                        borderRadius="full"
                                        bg={(agentStates[container?.agent?.id || '']?.isRunning || container.state === 'running') ? '#4ADE80' : 'lightgray'}
                                     />
-                                    <Text color="white">{container.agent?.agent_name || container.name}</Text>
+                                    <Text color="white">{container.agent?.display_name || container.agent?.agent_name}</Text>
                                  </Flex>
                               </Td>
                               <Td>
@@ -355,7 +355,7 @@ const AgentMonitor: React.FC = () => {
             </Box>
          </BaseModal>
          <DeleteAgentModal 
-            agentName={deleteAgent?.agent_name || deleteContainer?.name || ''} 
+            agentName={deleteAgent?.display_name || deleteAgent?.agent_name || deleteContainer?.name || ''} 
             isOpen={!!deleteAgent || !!deleteContainer} 
             onClose={() => {
                setDeleteAgent(undefined);

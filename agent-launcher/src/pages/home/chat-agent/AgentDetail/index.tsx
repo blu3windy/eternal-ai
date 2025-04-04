@@ -101,7 +101,7 @@ const AgentDetail = () => {
                   <Flex direction={"column"} gap={"16px"}>
                      <Flex gap={"6px"}>
                         <Text className={s.nameText}>
-                           {selectedAgent?.agent_name}{' '}
+                           {selectedAgent?.display_name || selectedAgent?.agent_name}{' '}
                         </Text>
                         <Text className={s.nameText} opacity={0.5}>{selectedAgent?.token_symbol ? `$${selectedAgent?.token_symbol}` : ''}</Text>
                      </Flex>

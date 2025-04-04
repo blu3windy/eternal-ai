@@ -150,7 +150,7 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
                         mdpdfmake(message.msg).then((docDefinition) => {
                            console.log(docDefinition);
                            // Use docDefinition with a PDFMake instance to generate a PDF
-                           pdfMake.createPdf(docDefinition).download(`${selectedAgent?.agent_name || "Agent"}-${dayjs().format("YYYY-MM-DD-hh:mm:ss")}.pdf`);
+                           pdfMake.createPdf(docDefinition).download(`${selectedAgent?.display_name || selectedAgent?.agent_name || "Agent"}-${dayjs().format("YYYY-MM-DD-hh:mm:ss")}.pdf`);
                         });
                      }}
                      style={{

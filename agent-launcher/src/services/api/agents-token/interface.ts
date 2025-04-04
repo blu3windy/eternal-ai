@@ -35,6 +35,7 @@ export interface IAgentToken {
   agent_contract_id: string;
   agent_contract_address: string;
   agent_name: string;
+  display_name: string;
   network_id: number;
   network_name: string;
   eth_address: string;

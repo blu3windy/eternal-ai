@@ -240,7 +240,7 @@ const AgentTopInfo = () => {
                                  >
                                     <Flex direction={'column'} gap={'8px'}>
                                        <Text fontSize={'16px'} fontWeight={500}>
-                                          {selectedAgent?.agent_name}
+                                          {selectedAgent?.display_name || selectedAgent?.agent_name}
                                        </Text>
                                        <Flex
                                           alignItems="center"
@@ -427,7 +427,7 @@ const AgentTopInfo = () => {
                         showIcon
                      >
                         <Flex ml={'4px'} cursor={'pointer'} gap={'6px'} alignItems={'center'}>
-                           <Text className={s.text}>{selectedAgent?.agent_name}</Text>
+                           <Text className={s.text}>{selectedAgent?.display_name || selectedAgent?.agent_name}</Text>
                            <Text className={s.text} opacity={0.7}>
                               ${selectedAgent?.token_symbol}
                            </Text>
@@ -471,7 +471,7 @@ const AgentTopInfo = () => {
             </DrawerContent>
          </Drawer>
          <DeleteAgentModal
-            agentName={deleteAgent?.agent_name}
+            agentName={deleteAgent?.display_name || deleteAgent?.agent_name}
             isOpen={!!deleteAgent}
             onClose={() => {
                setDeleteAgent(undefined);

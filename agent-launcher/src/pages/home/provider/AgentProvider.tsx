@@ -743,7 +743,7 @@ const AgentProvider: React.FC<
             if (needRemoveStorage) {
                dispatch(requestReloadListAgent());
                showMessage({
-                  message: `Delete ${agent?.agent_name} successfully.`,
+                  message: `Delete ${agent?.display_name || agent?.agent_name} successfully.`,
                   status: 'success',
                });
             }
