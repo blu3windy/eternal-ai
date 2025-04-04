@@ -1517,12 +1517,14 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 							Address:     strings.ToLower(address),
 							AgentInfoID: agentInfo.ID,
 						}
-						_ = s.dao.Create(tx, inst)
-
-						err = tx.Model(agentInfo).Update("installed_count", gorm.Expr("installed_count + 1")).Error
-						if err != nil {
-							return errs.NewError(err)
+						err = s.dao.Create(tx, inst)
+						if err == nil {
+							err = tx.Model(agentInfo).Update("installed_count", gorm.Expr("installed_count + 1")).Error
+							if err != nil {
+								return errs.NewError(err)
+							}
 						}
+
 					}
 					resp = append(resp, agentInfo.ID)
 				}
@@ -1543,13 +1545,15 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 							Address:     strings.ToLower(address),
 							AgentInfoID: agentID,
 						}
-						_ = s.dao.Create(tx, inst)
+						err := s.dao.Create(tx, inst)
+						if err == nil {
+							err = tx.Model(&models.AgentInfo{}).Where("id = ?", agentID).Update("installed_count", gorm.Expr("installed_count + 1")).Error
+							if err != nil {
+								return errs.NewError(err)
+							}
+						}
 						resp = append(resp, agentID)
 
-						err := tx.Model(&models.AgentInfo{}).Where("id = ?", agentID).Update("installed_count", gorm.Expr("installed_count + 1")).Error
-						if err != nil {
-							return errs.NewError(err)
-						}
 					}
 				}
 			}
