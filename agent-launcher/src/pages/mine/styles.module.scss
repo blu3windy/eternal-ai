@@ -1,3 +1,7 @@
+.layoutContainer {
+  background: #FFF;;
+}
+
 .container {
   height: 100vh;
   max-width: 1200px;
@@ -118,3 +122,27 @@
   font-size: 12px;
   color: #666666;
 } 
+
+.actionButton {
+  flex: 1;
+  background: black;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+  }
+}
