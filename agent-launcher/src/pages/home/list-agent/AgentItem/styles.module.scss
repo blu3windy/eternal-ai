@@ -42,18 +42,19 @@
   }
 
   .btnInstall {
-    background-color: #000;
-    color: #fff;
+    background-color: #FFF;
+    color: #000;
     border-radius: 4px;
-    width: 46px;
-    height: 18px;
+    width: 67px;
+    height: 24px;
     font-size: 12px;
-    font-weight: 400;
+    font-weight: 500;
   }
 
   &.isSelected {
     //color: #FFF;
     background-color: #FFFFFFB2;
+    
 
     .infoText {
       //color: #FFF;

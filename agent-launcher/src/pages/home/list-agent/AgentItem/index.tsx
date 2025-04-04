@@ -1,12 +1,15 @@
-import { Flex, Grid, Image, Text } from '@chakra-ui/react';
+import { Button, Flex, Grid, Image, Text } from '@chakra-ui/react';
 import CustomMarkdown from "@components/CustomMarkdown";
 import { DefaultAvatar } from "@components/DefaultAvatar";
+import { BASE_CHAIN_ID } from '@constants/chains';
+import CAgentContract from '@contract/agent';
 import { AgentType } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
-import { formatCurrency } from "@utils/format.ts";
+import localStorageService from '@storage/LocalStorageService';
+import { formatCurrency, formatLongAddress } from "@utils/format.ts";
 import cs from "clsx";
-import { useContext, useMemo } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import s from './styles.module.scss';
 
 interface IProps {
@@ -15,7 +18,64 @@ interface IProps {
 }
 
 const AgentItem = ({ token, isLatest }: IProps) => {
-   const { selectedAgent, setSelectedAgent } = useContext(AgentContext);
+   const {
+      selectedAgent,
+      isStopping,
+      stopAgent,
+      isRunning,
+      isStarting,
+      isInstalled,
+      unInstallAgent,
+      installAgent,
+      setSelectedAgent,
+   } = useContext(AgentContext);
+
+   const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
+   const [isClickUpdateCode, setIsClickUpdateCode] = useState(false);
+
+   useEffect(() => {
+      setHaveNewVersionCode(false);
+      if (token || !isRunning) {
+         checkVersionCode();
+      }
+   }, [token, isRunning, isInstalled]);
+
+   const checkVersionCode = async () => {
+      if (
+         token?.agent_type
+         && [
+            AgentType.Infra,
+            AgentType.CustomUI,
+            AgentType.CustomPrompt,
+            AgentType.ModelOnline,
+         ].includes(token.agent_type)
+         && isInstalled
+      ) {
+         const chainId = token?.network_id || BASE_CHAIN_ID;
+         const cAgent = new CAgentContract({
+            contractAddress: token?.agent_contract_address || '',
+            chainId: chainId,
+         });
+         const codeVersion = await cAgent.getCurrentVersion();
+         const values = await localStorageService.getItem(token.agent_contract_address);
+         const oldCodeVersion = values ? Number(values) : 1;
+         if (codeVersion > 1 && codeVersion > oldCodeVersion) {
+            setHaveNewVersionCode(true);
+         } else {
+            setHaveNewVersionCode(false);
+         }
+      }
+   };
+
+   const handleUpdateCode = async () => {
+      setIsClickUpdateCode(true);
+      if (!token) return;
+      await stopAgent(token, true);
+      await unInstallAgent(token, false);
+      await installAgent(token, true);
+      setIsClickUpdateCode(false);
+   };
+
 
    const description = useMemo(() => {
       if ([AgentType.Infra, AgentType.Model, AgentType.CustomPrompt].includes(token.agent_type)) {
@@ -53,26 +113,26 @@ const AgentItem = ({ token, isLatest }: IProps) => {
          w={'100%'}
       >
          <Flex position={"absolute"} top={"14px"} right={"24px"}>
-         <Flex gap={"8px"}>
+            <Flex gap={"8px"}>
                <Flex gap="4px" alignItems={'center'}>
-                           <Image src="icons/ic-mc.png" w="15px" h="15px" />
-                           <Text as={'span'} color="#657786" fontSize="12px" fontWeight="400">
-                              {Number(token?.meme?.market_cap) > 0
-                                 ? `$${formatCurrency(
-                                    token?.meme?.market_cap,
-                                    0,
-                                    3,
-                                    'BTC',
-                                    false,
-                                    true,
-                                 )}`
-                                 : '$0'}
-                           </Text>
+                  <Image src="icons/ic-mc.png" w="15px" h="15px" />
+                  <Text as={'span'} color="#657786" fontSize="12px" fontWeight="400">
+                     {Number(token?.meme?.market_cap) > 0
+                        ? `$${formatCurrency(
+                           token?.meme?.market_cap,
+                           0,
+                           3,
+                           'BTC',
+                           false,
+                           true,
+                        )}`
+                        : '$0'}
+                  </Text>
                </Flex>
-                  <Flex gap="4px" alignItems={'center'}>
-                     <Image src="icons/ic-downloaded.svg" w="15px" h="15px" />
-                     <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.installed_count, 0, 0)}</Text>
-                  </Flex>
+               <Flex gap="4px" alignItems={'center'}>
+                  <Image src="icons/ic-downloaded.svg" w="15px" h="15px" />
+                  <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.installed_count, 0, 0)}</Text>
+               </Flex>
             </Flex>
          </Flex>
          <Grid
@@ -138,6 +198,25 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                      </div>
                   )
                }
+               <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
+                  <Flex gap={"6px"}>
+                     <Image src="icons/ic-creator.svg" w="14px" h="14px" />
+                     <Text fontSize={"12px"} fontWeight={"500"} color={"#000"} opacity={0.7}>
+                        {formatLongAddress(token?.creator)}
+                     </Text>
+                  </Flex>
+                  {hasNewVersionCode && isInstalled && (
+                     <Button
+                        className={s.btnInstall}
+                        onClick={handleUpdateCode}
+                        isLoading={(isStopping || isStarting) && isClickUpdateCode}
+                        isDisabled={(isStopping || isStarting) && isClickUpdateCode}
+                        loadingText={isStarting ? 'Starting...' : 'Updating...'}
+                     >
+                        Update
+                     </Button>
+                  )}
+               </Flex>
             </Flex>
          </Grid >
       </Flex >
