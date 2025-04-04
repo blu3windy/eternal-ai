@@ -50,15 +50,15 @@ const normalizeResponse = (id, data, agentName) => {
          created: new Date().getTime(),
          model: agentName,
          choices: [
-           {
-             index: 0,
-             delta: {
-               content: data,
-             },
-             logprobs: null,
-             finish_reason: "stop",
-             stop_reason: null,
-           },
+            {
+               index: 0,
+               message: {
+                  role: 'assistant',
+                  content: data,
+               },
+               finish_reason: 'stop',
+               stop_reason: null,
+            },
          ],
       };
    }
