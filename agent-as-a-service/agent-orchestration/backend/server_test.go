@@ -45,8 +45,10 @@ func init() {
 
 func Test_JOB(t *testing.T) {
 
-	data, err := ts.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), "man opens shirt and shows his fat belly")
-	fmt.Println(data, err)
+	ts.CallWssDexScreener()
+
+	// data, err := ts.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), "man opens shirt and shows his fat belly")
+	// fmt.Println(data, err)
 	// ts.MemeEventsByTransaction(context.Background(), 56, "")
 	// ts.AgentSnapshotPostCreate(context.Background(), 59166, "", "")
 	// ts.JobScanAgentTwitterPostForTA(context.Background())
@@ -104,7 +106,7 @@ func Test_OpenAI(t *testing.T) {
 }
 
 func Test_SRV(t *testing.T) {
-	ts.TestPrivy(context.Background())
+	ts.TestCrawlDexScreener(context.Background())
 	// ts.JobRobotScanBalanceSOL(context.Background())
 	// ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 35409)
 }

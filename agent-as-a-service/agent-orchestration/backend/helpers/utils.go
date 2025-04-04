@@ -25,6 +25,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
+	"github.com/go-rod/stealth"
 	"github.com/gocolly/colly"
 	"github.com/leekchan/accounting"
 	"mvdan.cc/xurls/v2"
@@ -624,6 +625,40 @@ func RodContentHtmlByUrl(rawUrl string) string {
 	browser := rod.New().ControlURL(u)
 
 	page := browser.MustConnect().MustPage(rawUrl)
+	page.MustWaitLoad()
+
+	i := 0
+	for i <= 5 {
+		page.MustEval(`() => window.scrollTo(0, document.body.scrollHeight)`)
+		time.Sleep(1 * time.Second)
+		i += 1
+	}
+
+	page.MustWaitStable()
+	page.MustEval(`() => document.querySelectorAll("[crossorigin]").forEach((el) => el.removeAttribute('crossorigin'))
+	`)
+
+	htmlStr, err := page.HTML()
+	if err != nil {
+		return ""
+	}
+	htmlStr, err = MinifyHTML(htmlStr)
+	return htmlStr
+}
+
+func RodContentHtmlByUrlV2(rawUrl string) string {
+	path, has := launcher.LookPath()
+	if !has {
+		return ""
+	}
+	spew.Dump(path)
+
+	u := launcher.New().Bin(path).Headless(true).MustLaunch()
+	browser := rod.New().ControlURL(u).MustConnect()
+
+	fmt.Printf("js: %x\n\n", md5.Sum([]byte(stealth.JS)))
+	page := stealth.MustPage(browser)
+	// page := browser.MustConnect().MustPage(rawUrl)
 	page.MustWaitLoad()
 
 	i := 0

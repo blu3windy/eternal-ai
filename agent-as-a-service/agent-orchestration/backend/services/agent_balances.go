@@ -702,11 +702,6 @@ func (s *Service) PostTwitterAferCreateToken(ctx context.Context, agentInfoID ui
 
 func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses []string, userAddress string, networkID uint64, agentType int, agentTypes []int,
 	tokenAddress, search, agentModel string, installed *bool, ids, exludeIds []uint, sortListStr []string, page, limit int) ([]*models.AgentInfo, uint, error) {
-	sortDefault := "ifnull(agent_infos.priority, 0) desc, meme_market_cap desc"
-	if len(sortListStr) > 0 {
-		sortDefault = strings.Join(sortListStr, ", ")
-	}
-
 	selected := []string{
 		`ifnull(agent_infos.reply_latest_time, agent_infos.updated_at) reply_latest_time`,
 		"agent_infos.*",
@@ -732,7 +727,6 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 		`: {},
 		`agent_infos.token_address != "" and ifnull(memes.status, "") not in ("created", "pending")`: {},
 		`agent_infos.agent_type != ?`: {models.AgentInfoAgentTypeVideo},
-		// `is_public = 1`:               {},
 	}
 
 	if search != "" {
@@ -831,6 +825,24 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 		filters["agent_infos.id not in (?)"] = []any{exludeIds}
 	}
 
+	if userAddress != "" {
+		joinFilters = map[string][]any{
+			`
+			left join memes on agent_infos.id = memes.agent_info_id and memes.deleted_at IS NULL
+			left join agent_token_infos on agent_token_infos.id = agent_infos.token_info_id
+			left join twitter_users on twitter_users.twitter_id = agent_infos.tmp_twitter_id and  agent_infos.tmp_twitter_id is not null
+			join agent_utility_installs on agent_utility_installs.agent_info_id = agent_infos.id
+					and agent_utility_installs.deleted_at IS NULL and agent_utility_installs.address = ?
+			left join agent_utility_recent_chats on agent_utility_recent_chats.agent_info_id = agent_infos.id
+					and agent_utility_recent_chats.address = ?
+		`: {strings.ToLower(userAddress), strings.ToLower(userAddress)},
+		}
+	}
+
+	sortDefault := "ifnull(agent_infos.priority, 0) desc, meme_market_cap desc"
+	if len(sortListStr) > 0 {
+		sortDefault = strings.Join(sortListStr, ", ")
+	}
 	agents, err := s.dao.FindAgentInfoJoinSelect(
 		daos.GetDBMainCtx(ctx),
 		selected,

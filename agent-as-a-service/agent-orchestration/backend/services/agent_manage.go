@@ -1557,11 +1557,16 @@ func (s *Service) MarkRecentChatUtilityAgent(ctx context.Context, address string
 		daos.GetDBMainCtx(ctx),
 		func(tx *gorm.DB) error {
 			for _, agentID := range req.Ids {
+				now := helpers.TimeNow()
 				inst := &models.AgentUtilityRecentChat{
 					Address:     strings.ToLower(address),
 					AgentInfoID: agentID,
 				}
-				_ = s.dao.Create(tx, inst)
+				inst.UpdatedAt = *now
+				err := s.dao.Save(tx, inst)
+				if err != nil {
+					_ = tx.Model(&models.AgentUtilityRecentChat{}).Where("address = ? and agent_info_id = ?", strings.ToLower(address), agentID).Update("updated_at", now).Error
+				}
 			}
 			return nil
 		},
