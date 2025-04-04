@@ -100,6 +100,7 @@ func (s *Service) GetListAgentInfos(ctx context.Context, networkID uint64, creat
 			"TokenInfo":                        {},
 			"KnowledgeBase":                    {},
 			"KnowledgeBase.KnowledgeBaseFiles": {},
+			"AgentCategory":                    {},
 		},
 		[]string{"created_at desc"}, page, limit,
 	)
