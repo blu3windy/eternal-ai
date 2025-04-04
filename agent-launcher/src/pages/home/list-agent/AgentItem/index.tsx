@@ -19,9 +19,9 @@ const AgentItem = ({ token, isLatest }: IProps) => {
 
    const description = useMemo(() => {
       if ([AgentType.Infra, AgentType.Model, AgentType.CustomPrompt].includes(token.agent_type)) {
-         return token?.personality;
+         return token?.short_description || token?.personality;
       } else {
-         return token?.token_desc || token?.twitter_info?.description;
+         return token?.short_description || token?.token_desc || token?.twitter_info?.description;
       }
    }, [token]);
 
