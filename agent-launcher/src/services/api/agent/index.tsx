@@ -1,5 +1,5 @@
 import { AgentInfo, ChatCompletionPayload, ChatCompletionStreamHandler } from "./types.ts";
-import { RequestPromptPayload } from 'agent-server-definition'
+import { RequestPromptPayload, Content } from 'agent-server-definition'
 import { IMAGINE_URL } from "../../../config.ts";
 import { THINK_TAG_REGEX } from "@components/CustomMarkdown/constants.ts";
 import { parseStreamAIResponse } from "@utils/api.ts";
@@ -8,6 +8,24 @@ import CApiClient from "../agents-token/apiClient.ts";
 import { IAgentToken } from "../agents-token/interface.ts";
 
 import qs from 'query-string';
+
+const normalizedContent = (content: Content) => {
+   if (typeof content === 'string') {
+      return content.replace(THINK_TAG_REGEX, '');
+   }
+   if (Array.isArray(content)) {
+      return content.map((item) => {
+         if (item.type === 'text') {
+            return {
+               ...item,
+               text: item.text.replace(THINK_TAG_REGEX, ''),
+            };
+         }
+         return item;
+      });
+   }
+   return content;
+}
 
 // Utility function to handle API responses
 const handleStreamResponse = async (
@@ -158,7 +176,7 @@ const AgentAPI = {
          const headers = await getClientHeaders();
          const messages = payload.messages.map((item) => ({
             ...item,
-            content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
+            content: normalizedContent(item.content)
          }));
          
          // Try with stream first
@@ -188,7 +206,7 @@ const AgentAPI = {
       const headers = await getClientHeaders();
       const messages = payload.messages.map((item) => ({
          ...item,
-         content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
+         content: normalizedContent(item.content)
       }));
       const response = await fetch(`http://localhost:65534/v1/chat/completions`, {
          method: 'POST',
@@ -236,10 +254,11 @@ const AgentAPI = {
       prvKey?: string;
    }): Promise<any> => {
       try {
+         
          const headers = await getClientHeaders();
          const messages = payload.messages.map((item) => ({
             ...item,
-            content: `${item.content}`.replace(THINK_TAG_REGEX, ''),
+            content: normalizedContent(item.content)
          }));
          
          // Try with stream first
@@ -278,7 +297,7 @@ const AgentAPI = {
       const headers = await getClientHeaders();
       const messages = payload.messages.map((item) => ({
          ...item,
-         content: typeof item.content === 'string' ? `${item.content}`.replace(THINK_TAG_REGEX, '') : item.content,
+         content: normalizedContent(item.content)
       }));
       console.log('chatStreamCompletions messages', messages);
       const response = await fetch(`${IMAGINE_URL}/api/agent/preview/v1`, {
