@@ -90,8 +90,8 @@ function App() {
                      updateDownloadProcessing ? <>
                         <Spinner size="sm" />
                         <Box>
-                           <Text fontWeight={700} fontSize={"16px"}>Downloading {updateDownloadProcessing?.percent?.toFixed(0)}%</Text>
-                           <Text fontSize={"12px"} opacity={0.7}>App will auto restart when finished.</Text>
+                           <Text fontWeight={700} fontSize={"16px"}>Downloading... {updateDownloadProcessing?.percent?.toFixed(0)}%</Text>
+                           <Text fontSize={"12px"} opacity={0.7}>The app will automatically restart when finished.</Text>
                         </Box>
 
                      </> : <>

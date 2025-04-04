@@ -186,7 +186,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             type: "ai",
             replyTo: userMessageId,
             is_reply: true,
-            name: selectedAgent?.agent_name || "Agent",
+            name: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
          };
 
          setMessages((prev) => [...prev, responseMsg]);
@@ -305,7 +305,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                id: messageId,
                status: "failed",
                message: sendTxt,
-               title: selectedAgent?.agent_name || "Agent",
+               title: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
                agent: selectedAgent!,
                agentType: selectedAgent?.agent_type || AgentType.Normal,
             } as TaskItem);
@@ -438,7 +438,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                id: messageId,
                status: "processing",
                message: content as any,
-               title: selectedAgent?.agent_name || "Agent",
+               title: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
                agent: selectedAgent!,
                agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
@@ -465,7 +465,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   id: messageId,
                   status: "failed",
                   message: sendTxt,
-                  title: selectedAgent?.agent_name || "Agent",
+                  title: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
                   agent: selectedAgent!,
                   agentType: selectedAgent?.agent_type || AgentType.Normal,
                } as TaskItem);
@@ -475,7 +475,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                id: messageId,
                status: "processing",
                message: sendTxt,
-               title: selectedAgent?.agent_name || "Agent",
+               title: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
                agent: selectedAgent!,
                agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
@@ -496,7 +496,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   id: messageId,
                   status: "failed",
                   message: sendTxt,
-                  title: selectedAgent?.agent_name || "Agent",
+                  title: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
                   agent: selectedAgent!,
                   agentType: selectedAgent?.agent_type || AgentType.Normal,
                } as TaskItem);
@@ -506,7 +506,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                id: messageId,
                status: "processing",
                message: sendTxt,
-               title: selectedAgent?.agent_name || "Agent",
+               title: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
                agent: selectedAgent!,
                agentType: selectedAgent?.agent_type || AgentType.Normal,
             });
@@ -610,7 +610,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                status: "waiting",
                type: "ai",
                replyTo: userMessageId,
-               name: selectedAgent?.agent_name || "Agent",
+               name: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
                is_reply: true,
             };
 
@@ -668,7 +668,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    return (
       <ChatAgentProviderContext.Provider value={value}>
          {children}
-         <HandleMessageProcessing updateMessage={updateMessage} />
+         {/* <HandleMessageProcessing updateMessage={updateMessage} /> */}
       </ChatAgentProviderContext.Provider>
    );
 };

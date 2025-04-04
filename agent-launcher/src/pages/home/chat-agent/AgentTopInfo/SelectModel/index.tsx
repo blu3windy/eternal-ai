@@ -110,7 +110,7 @@ const ItemToken = ({
 
                <Flex direction="column" gap="4px">
                   <Text className={s.itemTitle}>
-                     {agent?.agent_name}
+                     {agent?.display_name || agent?.agent_name}
                   </Text>
                   <Flex gap={"4px"} alignItems={"center"}>
                      <Text className={s.itemAmount}>
@@ -254,7 +254,7 @@ const SelectModel = ({
                   >
                      <Box flex={1}>
                         <Text className={s.title} color={color}>
-                           {activeModel?.agent_name}
+                           {activeModel?.display_name || activeModel?.agent_name}
                         </Text>
                         {showDescription && (
                            <Text className={s.amount} color={color}>

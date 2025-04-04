@@ -31,6 +31,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "@stores/index";
 import { totalPendingTasksSelector } from "@stores/states/agent-chat/selector";
 import ProcessingTaskModal from "./ProcessingTaskModal";
+import ROUTERS from "@constants/route-path";
+import { useNavigate } from "react-router-dom";
 
 const ProcessingTaskIcon = () => {
    return (
@@ -64,6 +66,7 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
    const { signer } = useAuth();
    const { onCopy } = useClipboard(signer?.address || "");
    const [isOpen, setIsOpen] = useState(false);
+   const navigate = useNavigate();
 
    const [isOpenProcessingTask, setIsOpenProcessingTask] = useState(false);
 
@@ -85,7 +88,7 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
    return (
       <Box className={s.bottomBar}>
          <Flex className={s.addressContainer}>
-            <Text className={s.addressText}>{formatAddressCenter(signer?.address || "")}</Text>
+            <Text className={s.addressText} onClick={() => navigate(ROUTERS.MINE)} cursor={"pointer"}>{formatAddressCenter(signer?.address || "")}</Text>
             <Box className={s.copyIcon} onClick={handleCopy}>
                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path

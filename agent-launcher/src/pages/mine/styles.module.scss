@@ -1,0 +1,120 @@
+.container {
+  height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.backButton {
+  margin-bottom: 24px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.addressContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copyButton {
+  padding: 4px 8px;
+}
+
+.balanceContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.mainBalance {
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.usdBalance {
+  font-size: 16px;
+  color: #666666;
+}
+
+.tokenList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.tokenItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
+  border-radius: 8px;
+  width: 100%;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #f7f7f7;
+  }
+}
+
+.tokenInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tokenIcon {
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+}
+
+.tokenDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.tokenSymbol {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tokenName {
+  font-size: 12px;
+  font-weight: 400;
+  color: #666666;
+}
+
+.tokenBalance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+}
+
+.balanceText {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.usdValue {
+  font-size: 12px;
+  color: #666666;
+} 

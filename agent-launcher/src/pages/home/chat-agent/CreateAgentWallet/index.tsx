@@ -28,7 +28,7 @@ const CreateAgentWallet = () => {
             <path opacity="0.7" d="M2.5 15C3.79686 14.0237 5.37675 13.4971 7 13.5H34C35.688 13.5 37.246 14.058 38.5 15C38.5 14.4091 38.3836 13.8239 38.1575 13.2779C37.9313 12.732 37.5998 12.2359 37.182 11.818C36.7641 11.4002 36.268 11.0687 35.7221 10.8425C35.1761 10.6164 34.5909 10.5 34 10.5H7C5.80653 10.5 4.66193 10.9741 3.81802 11.818C2.97411 12.6619 2.5 13.8065 2.5 15Z" fill="white"/>
             <path opacity="0.3" d="M2.5 9.00098C3.79686 8.02471 5.37675 7.49807 7 7.50098H34C35.688 7.50098 37.246 8.05898 38.5 9.00098C38.5 8.41003 38.3836 7.82487 38.1575 7.2789C37.9313 6.73294 37.5998 6.23686 37.182 5.819C36.7641 5.40113 36.268 5.06966 35.7221 4.84352C35.1761 4.61737 34.5909 4.50098 34 4.50098H7C5.80653 4.50098 4.66193 4.97508 3.81802 5.819C2.97411 6.66291 2.5 7.8075 2.5 9.00098Z" fill="white"/>
          </svg>
-         <Text fontSize={"24px"} fontWeight={500} color={"#FFF"}>Create {selectedAgent?.agent_name} wallet</Text>
+         <Text fontSize={"24px"} fontWeight={500} color={"#FFF"}>Create {selectedAgent?.display_name || selectedAgent?.agent_name} wallet</Text>
          <Text className={s.walletText}>
             A separate wallet is needed to use this agent. You'll have full control by exporting the private key to MetaMask, ensuring your assets remain secure and fully under your management.
          </Text>

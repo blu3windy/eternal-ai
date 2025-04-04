@@ -75,7 +75,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                   <DefaultAvatar
                      width={iconSize}
                      height={iconSize}
-                     name={token?.agent_name}
+                     name={token?.display_name || token?.agent_name}
                      fontSize={14}
                   />
                )}
@@ -89,7 +89,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
                   <Flex gap={"6px"}>
                      <Text className={s.nameText}>
-                        {token?.agent_name}{' '}
+                        {token?.display_name || token?.agent_name}{' '}
                      </Text>
                      {/* <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text> */}
                   </Flex>

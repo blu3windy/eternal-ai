@@ -20,7 +20,7 @@ const TradeAgent = () => {
           {/* <Flex gap={"8px"} p={"24px"} flexDirection={"column"}>
             <Flex alignItems={"center"} justifyContent={"space-between"}>
               <Text fontSize={"16px"} fontWeight={"500"}>
-                {selectedAgent?.agent_name}{" "}
+                {selectedAgent?.display_name || selectedAgent?.agent_name}{" "}
                 <Text as={"span"} opacity={0.7}>
                   ${selectedAgent?.token_symbol}
                 </Text>
