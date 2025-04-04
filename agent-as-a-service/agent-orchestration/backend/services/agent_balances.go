@@ -46,7 +46,7 @@ func (s *Service) GetListAgentCategory(ctx context.Context, page, limit int) ([]
 		daos.GetDBMainCtx(ctx),
 		filters,
 		nil,
-		[]string{"priority DESC", "id DESC"},
+		[]string{"priority DESC", "id ASC"},
 		page,
 		limit,
 	)
