@@ -800,25 +800,26 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 	if len(ids) > 0 {
 		filters["agent_infos.id in (?)"] = []any{ids}
 	} else {
+		filters["agent_infos.is_public = 1"] = []any{}
 		//filter instlled app
-		if installed != nil && userAddress != "" {
-			if *installed {
-				joinFilters = map[string][]any{
-					`
-					left join memes on agent_infos.id = memes.agent_info_id and memes.deleted_at IS NULL
-					left join agent_token_infos on agent_token_infos.id = agent_infos.token_info_id
-					left join twitter_users on twitter_users.twitter_id = agent_infos.tmp_twitter_id and  agent_infos.tmp_twitter_id is not null
-					join agent_utility_installs on agent_utility_installs.agent_info_id = agent_infos.id
-							and agent_utility_installs.deleted_at IS NULL and agent_utility_installs.address = ?
-				`: {strings.ToLower(userAddress)},
-				}
-			} else {
-				filters["agent_infos.id not in (select agent_info_id from agent_utility_installs where address = ?)"] = []any{strings.ToLower(userAddress)}
-				filters["agent_infos.is_public = 1"] = []any{}
-			}
-		} else {
-			filters["agent_infos.is_public = 1"] = []any{}
-		}
+		// if installed != nil && userAddress != "" {
+		// 	if *installed {
+		// 		joinFilters = map[string][]any{
+		// 			`
+		// 			left join memes on agent_infos.id = memes.agent_info_id and memes.deleted_at IS NULL
+		// 			left join agent_token_infos on agent_token_infos.id = agent_infos.token_info_id
+		// 			left join twitter_users on twitter_users.twitter_id = agent_infos.tmp_twitter_id and  agent_infos.tmp_twitter_id is not null
+		// 			join agent_utility_installs on agent_utility_installs.agent_info_id = agent_infos.id
+		// 					and agent_utility_installs.deleted_at IS NULL and agent_utility_installs.address = ?
+		// 		`: {strings.ToLower(userAddress)},
+		// 		}
+		// 	} else {
+		// 		filters["agent_infos.id not in (select agent_info_id from agent_utility_installs where address = ?)"] = []any{strings.ToLower(userAddress)}
+		// 		filters["agent_infos.is_public = 1"] = []any{}
+		// 	}
+		// } else {
+		// 	filters["agent_infos.is_public = 1"] = []any{}
+		// }
 	}
 
 	if len(exludeIds) > 0 {
@@ -831,12 +832,15 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 			left join memes on agent_infos.id = memes.agent_info_id and memes.deleted_at IS NULL
 			left join agent_token_infos on agent_token_infos.id = agent_infos.token_info_id
 			left join twitter_users on twitter_users.twitter_id = agent_infos.tmp_twitter_id and  agent_infos.tmp_twitter_id is not null
-			join agent_utility_installs on agent_utility_installs.agent_info_id = agent_infos.id
-					and agent_utility_installs.deleted_at IS NULL and agent_utility_installs.address = ?
 			left join agent_utility_recent_chats on agent_utility_recent_chats.agent_info_id = agent_infos.id
 					and agent_utility_recent_chats.address = ?
-		`: {strings.ToLower(userAddress), strings.ToLower(userAddress)},
+		`: {strings.ToLower(userAddress)},
 		}
+		sortRecentChat := "ifnull(agent_utility_recent_chats.updated_at, now() - interval 100 day) desc"
+		newSortListStr := make([]string, 0, len(sortListStr)+1)
+		newSortListStr = append(newSortListStr, sortRecentChat)
+		newSortListStr = append(newSortListStr, sortListStr...)
+		sortListStr = newSortListStr
 	}
 
 	sortDefault := "ifnull(agent_infos.priority, 0) desc, meme_market_cap desc"
