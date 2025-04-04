@@ -205,9 +205,9 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                         {formatLongAddress(token?.creator)}
                      </Text>
                   </Flex>
-                  {hasNewVersionCode && isInstalled && (
+                  {true && (
                      <Button
-                        className={s.btnInstall}
+                        className={s.btnUpdate}
                         onClick={handleUpdateCode}
                         isLoading={(isStopping || isStarting) && isClickUpdateCode}
                         isDisabled={(isStopping || isStarting) && isClickUpdateCode}
