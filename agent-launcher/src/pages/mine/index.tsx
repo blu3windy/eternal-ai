@@ -12,6 +12,10 @@ import { IToken } from "@interfaces/token";
 import { formatCurrency, formatLongAddress } from "@utils/format";
 import s from "./styles.module.scss";
 import { useAuth } from "@pages/authen/provider";
+import useERC20Balance from '@components/ERC20Balance/useERC20Balance';
+import { CHAIN_CONFIG, CHAIN_TYPE } from '@constants/chains';
+import { NATIVE_TOKEN_ADDRESS } from '@contract/token/constants';
+import { ChainIdToChainType } from '@pages/home/trade-agent/provider/constant';
 
 const MIN_DECIMAL = 2;
 const MAX_DECIMAL = 2;
@@ -19,17 +23,14 @@ const MAX_DECIMAL = 2;
 const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: number }) => {
   const { currentChain } = useSelector(agentsTradeSelector);
   const [balance, setBalance] = useState<string | undefined>("0");
-  const { selectedAgent, coinPrices } = useContext(AgentContext);
+  const { coinPrices } = useContext(AgentContext);
 
   const priceUsd = useMemo(() => {
-    if (token.symbol === selectedAgent?.token_symbol) {
-      return selectedAgent?.meme?.price_usd || 0;
-    }
     if (token.symbol === 'EAI') {
       return coinPrices?.find(p => p.symbol === "EAI")?.price || 0;
     }
     return 0;
-  }, [coinPrices, token?.symbol, selectedAgent?.meme?.price_usd, selectedAgent?.token_symbol]);
+  }, [coinPrices, token?.symbol]);
 
   const usdValue = useMemo(() => {
     return Number(balance || 0) * (priceUsd || 0);
@@ -78,12 +79,35 @@ const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: 
 
 const Mine = () => {
   const navigate = useNavigate();
-  const { selectedAgent } = useContext(AgentContext);
+  const { coinPrices } = useContext(AgentContext);
   const { signer } = useAuth();
 
   const { onCopy } = useClipboard(signer?.address || "");
   const toast = useToast();
 
+  const chainType = CHAIN_TYPE.BASE;
+
+  const chainConfig = useMemo(() => {
+    return CHAIN_CONFIG[chainType];
+  }, [chainType]);
+
+  const nativeToken = useMemo(() => {
+    return {
+      address: NATIVE_TOKEN_ADDRESS,
+      name: chainConfig?.nativeCurrency?.name || "Ethereum",
+      symbol: chainConfig?.nativeCurrency?.symbol || "ETH",
+    }
+  }, [chainConfig]);
+
+  const { balance: nativeBalance } = useERC20Balance({
+    token: nativeToken,
+    chain: chainType,
+    walletAddress: signer?.address,
+  });
+
+  const usdValue = useMemo(() => {
+    return Number(nativeBalance || 0) * (coinPrices?.[nativeToken?.symbol as string] || 0);
+  }, [nativeBalance, coinPrices, nativeToken?.symbol]);
 
   const handleCopy = () => {
     onCopy();
@@ -101,8 +125,8 @@ const Mine = () => {
   };
 
   const tokenIcon = useMemo(() => {
-    return getTokenIconUrl(selectedAgent);
-  }, [selectedAgent]);
+    return getTokenIconUrl({ symbol: "EAI" });
+  }, []);
 
   const handleDeposit = () => {
     // setDepositAgentID(selectedAgent?.id);
@@ -153,10 +177,12 @@ const Mine = () => {
               </HStack>
               <VStack align="start" spacing={'12px'}>
                 <Text fontSize="48px" fontWeight="500">
-                  {selectedAgent?.balance || "0"} {selectedAgent?.token_symbol}
+                  {Number(nativeBalance) === 0 || !nativeBalance
+                    ? "0"
+                    : formatCurrency(nativeBalance, MIN_DECIMAL, MAX_DECIMAL)} {nativeToken?.symbol}
                 </Text>
                 <Text fontSize="16px" fontWeight={400} color="#000" opacity={0.7}>
-                  ${((Number(selectedAgent?.balance || 0) * (selectedAgent?.meme?.price_usd || 0)).toFixed(2))}
+                  ${formatCurrency(usdValue, MIN_DECIMAL, MIN_DECIMAL)}
                 </Text>
               </VStack>
             </Flex>
@@ -199,10 +225,10 @@ const Mine = () => {
           <VStack spacing={2} align="stretch" mt={'48px'}>
             <TokenItem
               token={{
-                symbol: selectedAgent?.token_symbol,
-                name: selectedAgent?.token_name,
-                icon: tokenIcon,
-                address: selectedAgent?.token_address
+                symbol: "ETH",
+                name: "Ethereum",
+                icon: getTokenIconUrl({ symbol: "ETH" }),
+                address: NATIVE_TOKEN_ADDRESS
               }}
               index={0}
             />
@@ -211,7 +237,7 @@ const Mine = () => {
                 symbol: "EAI",
                 name: "Eternal AI",
                 icon: getTokenIconUrl({ symbol: "EAI" }),
-                address: selectedAgent?.eai_token_address
+                address: ""
               }}
               index={1}
             />
