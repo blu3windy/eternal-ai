@@ -6,6 +6,10 @@ import {
 } from "@chakra-ui/react";
 import useParseLogs from "@hooks/useParseLogs";
 import { motion } from "framer-motion";
+import LoadingText from '@components/LoadingText';
+
+
+const TOTAL_STEP = 30;
 
 const StarterLogs = () => {
    const scrollRef = useRef<HTMLDivElement>(null);
@@ -70,110 +74,123 @@ const StarterLogs = () => {
          </Text>
       );
    };
+   
+   const percentage = useMemo(() => {
+      if (uniqueLogs?.length === TOTAL_STEP) {
+         return 99;
+      }
+      return Math.round(((uniqueLogs?.length || 1) / TOTAL_STEP) * 100) + 5;
+   }, [uniqueLogs?.length]);
 
    return (
-      <Box 
-         position="relative" 
-         height="256px"
-         width="100%"
-         maxWidth="500px"
-         overflow="hidden"
-         alignSelf="center"
-         borderRadius="2xl"
-      >
-         {/* Top gradient */}
-         {displayedLogs?.length > 1 && (
-            <Box
+      <>
+         <LoadingText 
+            dataText={`Initializing ${percentage}%`}
+         />
+
+         <Box 
+            position="relative" 
+            height="256px"
+            width="100%"
+            maxWidth="500px"
+            overflow="hidden"
+            alignSelf="center"
+            borderRadius="2xl"
+         >
+            {/* Top gradient */}
+            {displayedLogs?.length > 1 && (
+               <Box
+                  position="absolute"
+                  top={0}
+                  left={0}
+                  right={0}
+                  height="32px"
+                  zIndex={2}
+                  pointerEvents="none"
+                  background="linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.9) 50%, rgba(255, 255, 255, 0) 100%)"
+               />
+            )}
+
+            {/* Logs container */}
+            <VStack
+               ref={scrollRef}
+               spacing={2.5}
+               align="stretch"
+               height="100%"
+               overflowY="auto"
                position="absolute"
                top={0}
-               left={0}
                right={0}
-               height="32px"
-               zIndex={2}
-               pointerEvents="none"
-               background="linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.9) 50%, rgba(255, 255, 255, 0) 100%)"
-            />
-         )}
-
-         {/* Logs container */}
-         <VStack
-            ref={scrollRef}
-            spacing={2.5}
-            align="stretch"
-            height="100%"
-            overflowY="auto"
-            position="absolute"
-            top={0}
-            right={0}
-            left={0}
-            padding="16px"
-            sx={{
-               '&::-webkit-scrollbar': {
-                  width: '0px',
-               },
-               '&::-webkit-scrollbar-track': {
-                  background: 'transparent',
-               },
-               '&::-webkit-scrollbar-thumb': {
-                  background: 'rgba(0, 0, 0, 0.1)',
-                  borderRadius: 'full',
-               },
-            }}
-            onScroll={handleScroll}
-         >
-            {displayedLogs.map((log, index) => (
-               <motion.div
-                  key={`${log.values.message}${log.values.error}${log.values.step}-${index}`}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-               >
-                  <Box
-                     py={1.5}
-                     px={3}
-                     bg={log.values.error ? "red.50" : "gray.50"}
-                     borderRadius="lg"
-                     borderLeft="3px solid"
-                     borderLeftColor={log.values.error ? "red.500" : "blue.500"}
+               left={0}
+               padding="16px"
+               sx={{
+                  '&::-webkit-scrollbar': {
+                     width: '0px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                     background: 'transparent',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                     background: 'rgba(0, 0, 0, 0.1)',
+                     borderRadius: 'full',
+                  },
+               }}
+               onScroll={handleScroll}
+            >
+               {displayedLogs.map((log, index) => (
+                  <motion.div
+                     key={`${log.values.message}${log.values.error}${log.values.step}-${index}`}
+                     initial={{ opacity: 0, y: 5 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ duration: 0.2, ease: "easeOut" }}
                   >
-                     {log.values.error ? (
-                        <Text
-                           color="red.600"
-                           fontSize="13px"
-                           fontWeight="500"
-                           width="100%"
-                        >
-                           {log.values.error}
-                        </Text>
-                     ) : renderMessage(log.values.message, log.values.step)}
-                  </Box>
-               </motion.div>
-            ))}
+                     <Box
+                        py={1.5}
+                        px={3}
+                        bg={log.values.error ? "red.50" : "gray.50"}
+                        borderRadius="lg"
+                        borderLeft="3px solid"
+                        borderLeftColor={log.values.error ? "red.500" : "blue.500"}
+                     >
+                        {log.values.error ? (
+                           <Text
+                              color="red.600"
+                              fontSize="13px"
+                              fontWeight="500"
+                              width="100%"
+                           >
+                              {log.values.error}
+                           </Text>
+                        ) : renderMessage(log.values.message, log.values.step)}
+                     </Box>
+                  </motion.div>
+               ))}
 
-            {/* Show More Button */}
-            {uniqueLogs.length > 1 && (
-               <Box
-                  position="sticky"
-                  bottom="0"
-                  left="0"
-                  right="0"
-                  color="#5400FB"
-                  opacity="0.8"
-                  backgroundColor="transparent"
-                  _hover={{ opacity: "0.5" }}
-                  onClick={() => setShowAllLogs(!showAllLogs)}
-                  fontSize="13px"
-                  fontWeight="400"
-                  cursor="pointer"
-                  textAlign="center"
-                  py={2}
-                  mt={2}
-               >
-                  {showAllLogs ? "Show Less" : `Show More (${uniqueLogs.length - 1})`}
-               </Box>
-            )}
-         </VStack>
-      </Box>
+               {/* Show More Button */}
+               {uniqueLogs.length > 1 && (
+                  <Box
+                     position="sticky"
+                     bottom="0"
+                     left="0"
+                     right="0"
+                     color="#5400FB"
+                     opacity="0.8"
+                     backgroundColor="transparent"
+                     _hover={{ opacity: "0.5" }}
+                     onClick={() => setShowAllLogs(!showAllLogs)}
+                     fontSize="13px"
+                     fontWeight="400"
+                     cursor="pointer"
+                     textAlign="center"
+                     py={2}
+                     mt={2}
+                  >
+                     {showAllLogs ? "Hide Details" : `Show Details`}
+                  </Box>
+               )}
+            </VStack>
+         </Box>
+      </>
    );
 };
 
