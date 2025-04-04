@@ -1,17 +1,17 @@
 import { Flex, Grid, Image, Text } from '@chakra-ui/react';
 import CustomMarkdown from "@components/CustomMarkdown";
 import { DefaultAvatar } from "@components/DefaultAvatar";
-import { AgentType, AgentTypeName } from "@pages/home/list-agent/constants";
+import { AgentType } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
-import { formatCurrency, labelAmountOrNumberAdds } from "@utils/format.ts";
+import { formatCurrency } from "@utils/format.ts";
 import cs from "clsx";
 import { useContext, useMemo } from 'react';
 import s from './styles.module.scss';
 
 interface IProps {
-  token: IAgentToken;
-  isLatest?: boolean;
+   token: IAgentToken;
+   isLatest?: boolean;
 }
 
 const AgentItem = ({ token, isLatest }: IProps) => {
@@ -26,9 +26,9 @@ const AgentItem = ({ token, isLatest }: IProps) => {
    }, [token]);
 
    const avatarUrl
-    = token?.thumbnail
-    || token?.token_image_url
-    || token?.twitter_info?.twitter_avatar;
+      = token?.thumbnail
+      || token?.token_image_url
+      || token?.twitter_info?.twitter_avatar;
 
    const handleGoToChat = (e: any, token_address?: any) => {
       if (token_address) {
@@ -52,8 +52,28 @@ const AgentItem = ({ token, isLatest }: IProps) => {
          }
          w={'100%'}
       >
-         <Flex position={"absolute"} top={"14px"} right={"24px"} className={s.testingStatus}>
-            <Text>{AgentTypeName[token.agent_type]}</Text>
+         <Flex position={"absolute"} top={"14px"} right={"24px"}>
+         <Flex gap={"8px"}>
+               <Flex gap="4px" alignItems={'center'}>
+                           <Image src="icons/ic-mc.svg" w="15px" h="15px" />
+                           <Text as={'span'} color="#657786" fontSize="12px" fontWeight="400">
+                              {Number(token?.meme?.market_cap) > 0
+                                 ? `$${formatCurrency(
+                                    token?.meme?.market_cap,
+                                    0,
+                                    3,
+                                    'BTC',
+                                    false,
+                                    true,
+                                 )}`
+                                 : '$0'}
+                           </Text>
+               </Flex>
+                  <Flex gap="4px" alignItems={'center'}>
+                     <Image src="icons/ic-downloaded.svg" w="15px" h="15px" />
+                     <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.installed_count, 0, 0)}</Text>
+                  </Flex>
+            </Flex>
          </Flex>
          <Grid
             className={s.content}
@@ -118,32 +138,9 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                      </div>
                   )
                }
-               <Flex gap={"8px"}>
-                  <Text className={s.infoText}>
-                     {token?.meme?.market_cap && (
-                        <>
-                           <Text as={'span'}>
-                              {Number(token?.meme?.market_cap) > 0
-                                 ? `$${formatCurrency(
-                                    token?.meme?.market_cap,
-                                    0,
-                                    3,
-                                    'BTC',
-                                    false,
-                                    true,
-                                 )}`
-                                 : '$0'}
-                           </Text>
-                           {' '}<Text as={'span'} color={"#657786"}>MC</Text>
-                        </>
-                     )}
-                  </Text>
-                  <Text className={s.infoText}>{formatCurrency(token.installed_count, 0, 0)}{' '}<Text as={'span'} color={"#657786"}>installed</Text></Text>
-                  {/* <Text className={s.infoText}>{formatCurrency(token.likes, 0, 0)}{' '}<Text as={'span'} color={"#657786"}>like{labelAmountOrNumberAdds(token.likes)}</Text></Text> */}
-               </Flex>
             </Flex>
-         </Grid>
-      </Flex>
+         </Grid >
+      </Flex >
    );
 };
 
