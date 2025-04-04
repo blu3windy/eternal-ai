@@ -668,7 +668,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    return (
       <ChatAgentProviderContext.Provider value={value}>
          {children}
-         <HandleMessageProcessing updateMessage={updateMessage} />
+         {/* <HandleMessageProcessing updateMessage={updateMessage} /> */}
       </ChatAgentProviderContext.Provider>
    );
 };
