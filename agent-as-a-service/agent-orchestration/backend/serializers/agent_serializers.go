@@ -144,6 +144,8 @@ type AgentInfoResp struct {
 	RequiredInfo              string                    `json:"required_info"`
 	InstalledCount            int64                     `json:"installed_count"`
 	EnvExample                string                    `json:"env_example"`
+	DisplayName               string                    `json:"display_name"`
+	ShortDescription          string                    `json:"short_description"`
 }
 
 type AgentTwitterPostResp struct {
@@ -317,6 +319,8 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		InstalledCount:       m.InstalledCount,
 		RequiredEnv:          m.RequiredEnv,
 		EnvExample:           m.EnvExample,
+		DisplayName:          m.DisplayName,
+		ShortDescription:     m.ShortDescription,
 	}
 
 	if m.NftTokenImage != "" {
