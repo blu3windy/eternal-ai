@@ -84,6 +84,7 @@ type AssistantsReq struct {
 	InferFee         *string `json:"infer_fee"`
 	DisplayName      string  `json:"display_name"`
 	ShortDescription string  `json:"short_description"`
+	IsForceUpdate    *bool   `json:"is_force_update"`
 }
 
 func (m *AssistantsReq) GetAssistantCharacter(character interface{}) string {

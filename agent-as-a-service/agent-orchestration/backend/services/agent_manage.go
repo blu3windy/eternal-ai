@@ -126,6 +126,9 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
+	if req.IsForceUpdate != nil {
+		agent.IsForceUpdate = *req.IsForceUpdate
+	}
 
 	tokenInfo, _ := s.GenerateTokenInfoFromSystemPrompt(ctx, req.AgentName, req.SystemContent)
 	if tokenInfo != nil && tokenInfo.TokenSymbol != "" {
@@ -547,6 +550,9 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				}
 				if req.CategoryID != 0 {
 					agent.AgentCategoryID = req.CategoryID
+				}
+				if req.IsForceUpdate != nil {
+					agent.IsForceUpdate = *req.IsForceUpdate
 				}
 
 				if agent.TokenStatus == "" && agent.TokenAddress == "" {

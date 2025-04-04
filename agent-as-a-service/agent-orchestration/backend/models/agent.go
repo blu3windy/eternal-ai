@@ -235,6 +235,7 @@ type AgentInfo struct {
 	EnvExample       string `gorm:"type:longtext"`
 	ShortDescription string `gorm:"type:longtext"`
 	DisplayName      string `gorm:"type:longtext"`
+	IsForceUpdate    bool   `gorm:"default:0"`
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string

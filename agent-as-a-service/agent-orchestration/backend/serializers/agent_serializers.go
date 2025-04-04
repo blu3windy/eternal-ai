@@ -171,6 +171,7 @@ type AgentInfoResp struct {
 	EnvExample                string                    `json:"env_example"`
 	DisplayName               string                    `json:"display_name"`
 	ShortDescription          string                    `json:"short_description"`
+	IsForceUpdate             bool                      `json:"is_force_update"`
 }
 
 type AgentTwitterPostResp struct {
@@ -348,6 +349,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		EnvExample:           m.EnvExample,
 		DisplayName:          m.DisplayName,
 		ShortDescription:     m.ShortDescription,
+		IsForceUpdate:        m.IsForceUpdate,
 	}
 
 	if m.NftTokenImage != "" {
