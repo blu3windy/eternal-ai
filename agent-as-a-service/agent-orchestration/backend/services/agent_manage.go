@@ -60,6 +60,7 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	}
 	agent := &models.AgentInfo{
 		Version:          "2",
+		AgentCategoryID:  req.CategoryID,
 		AgentType:        models.AgentInfoAgentTypeReasoning,
 		AgentID:          helpers.RandomBigInt(12).Text(16),
 		Status:           models.AssistantStatusPending,
@@ -543,6 +544,9 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				}
 				if req.ShortDescription != "" {
 					agent.ShortDescription = req.ShortDescription
+				}
+				if req.CategoryID != 0 {
+					agent.AgentCategoryID = req.CategoryID
 				}
 
 				if agent.TokenStatus == "" && agent.TokenAddress == "" {

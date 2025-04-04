@@ -26,6 +26,7 @@ type AssistantCharacter struct {
 
 type AssistantsReq struct {
 	ID                   uint                       `json:"id"`
+	CategoryID           uint                       `json:"category_id"`
 	AgentID              string                     `json:"agent_id"`
 	AgentName            string                     `json:"agent_name"`
 	Creator              string                     `json:"creator"`

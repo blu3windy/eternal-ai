@@ -42,7 +42,7 @@ func Init(dbURL string, migrateFunc func(db *gorm.DB) error, idleNum int, openNu
 }
 
 func MigrateDBMain(db *gorm.DB) error {
-	allTables := []interface{}{
+	allTables := []any{
 		(*models.BlockScanInfo)(nil),
 		(*models.AppConfig)(nil),
 		(*models.BTCL1InscribeTx)(nil),
@@ -53,6 +53,7 @@ func MigrateDBMain(db *gorm.DB) error {
 		(*models.Erc1155Holder)(nil),
 		(*models.TwitterPost)(nil),
 		(*models.TwitterInfo)(nil),
+		(*models.AgentCategory)(nil),
 		(*models.AgentInfo)(nil),
 		(*models.AgentTwitterPost)(nil),
 		(*models.UserTwitterPost)(nil),

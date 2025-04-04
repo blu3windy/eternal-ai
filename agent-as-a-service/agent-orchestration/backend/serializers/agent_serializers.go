@@ -65,9 +65,34 @@ type AgentSnapshotMissionInfo struct {
 	LookupInterval      int                       `json:"lookup_interval"`
 }
 
+type AgentCategoryResp struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+func NewAgentCategoryResp(m *models.AgentCategory) *AgentCategoryResp {
+	if m == nil {
+		return nil
+	}
+	return &AgentCategoryResp{
+		ID:   m.ID,
+		Name: m.Name,
+	}
+}
+
+func NewAgentCategoryRespArry(arr []*models.AgentCategory) []*AgentCategoryResp {
+	resp := make([]*AgentCategoryResp, len(arr))
+	for i, m := range arr {
+		resp[i] = NewAgentCategoryResp(m)
+	}
+	return resp
+}
+
 type AgentInfoResp struct {
 	ID                        uint                        `json:"id"`
 	CreatedAt                 time.Time                   `json:"created_at"`
+	AgentCategoryID           uint                        `json:"agent_category_id"`
+	AgentCategory             *AgentCategoryResp          `json:"agent_category"`
 	TwitterInfoID             uint                        `json:"twitter_info_id"`
 	TwitterInfo               *TwitterInfoResp            `json:"twitter_info"`
 	AgentID                   string                      `json:"agent_id"`
@@ -257,6 +282,8 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 	resp := &AgentInfoResp{
 		ID:                   m.ID,
 		CreatedAt:            m.CreatedAt,
+		AgentCategoryID:      m.AgentCategoryID,
+		AgentCategory:        NewAgentCategoryResp(m.AgentCategory),
 		TwitterInfoID:        m.TwitterInfoID,
 		TwitterInfo:          NewTwitterInfoResp(m.TwitterInfo),
 		AgentContractID:      m.AgentContractID,

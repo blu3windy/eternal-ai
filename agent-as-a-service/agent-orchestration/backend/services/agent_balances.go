@@ -40,6 +40,22 @@ func (s *Service) FindAgentSnapshotPostAction(ctx context.Context, agentId uint)
 	return s.dao.FindAgentSnapshotPostAction(daos.GetDBMainCtx(ctx), filters, preloads, []string{"id DESC"}, 0, 50)
 }
 
+func (s *Service) GetListAgentCategory(ctx context.Context, page, limit int) ([]*models.AgentCategory, error) {
+	filters := map[string][]any{}
+	ms, err := s.dao.FindAgentCategory(
+		daos.GetDBMainCtx(ctx),
+		filters,
+		nil,
+		[]string{"priority DESC", "id DESC"},
+		page,
+		limit,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return ms, nil
+}
+
 func (s *Service) GetListAgentInfos(ctx context.Context, networkID uint64, creator string, agentTypes []uint, kbStatus int64, keyword string, page, limit int) ([]*models.AgentInfo, uint, error) {
 	selected := []string{
 		"agent_infos.*",

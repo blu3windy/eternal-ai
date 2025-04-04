@@ -187,3 +187,13 @@ func (d *DAO) FindClankerVideoToken(tx *gorm.DB, joins map[string][]interface{},
 	}
 	return ms, nil
 }
+
+func (d *DAO) FindAgentCategory(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string, page int, limit int) ([]*models.AgentCategory, error) {
+	offset := (page - 1) * limit
+	var ms []*models.AgentCategory
+	err := d.find(tx, &ms, filters, preloads, orders, offset, limit, false)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return ms, nil
+}

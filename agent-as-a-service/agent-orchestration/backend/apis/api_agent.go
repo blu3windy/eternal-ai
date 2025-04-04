@@ -12,6 +12,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func (s *Server) GetListAgentCategory(c *gin.Context) {
+	ctx := s.requestContext(c)
+	page, limit := s.pagingFromContext(c)
+	ms, err := s.nls.GetListAgentCategory(ctx, page, limit)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentCategoryRespArry(ms)})
+}
+
 func (s *Server) GetListAgent(c *gin.Context) {
 	ctx := s.requestContext(c)
 	page, limit := s.pagingFromContext(c)

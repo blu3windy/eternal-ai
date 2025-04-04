@@ -100,6 +100,12 @@ type SocialInfo struct {
 	Fee         float64 `json:"fee"`
 }
 
+type AgentCategory struct {
+	gorm.Model
+	Name     string `gorm:"unique_index"`
+	Priority int    `gorm:"default:0"`
+}
+
 type AgentInfo struct {
 	gorm.Model
 	Version              string `gorm:"default:'1'"`
@@ -107,6 +113,8 @@ type AgentInfo struct {
 	NetworkName          string
 	OauthClientId        string
 	OauthClientSecret    string
+	AgentCategoryID      uint `gorm:"index"`
+	AgentCategory        *AgentCategory
 	AgentID              string             `gorm:"unique_index"`
 	AgentType            AgentInfoAgentType `gorm:"default:0"`
 	TwitterInfoID        uint               `gorm:"index"`
@@ -212,19 +220,19 @@ type AgentInfo struct {
 	TwinTrainingProgress    float64 `json:"twin_training_progress"`
 	TwinTrainingMessage     string  `gorm:"type:longtext"`
 
-	SourceUrl      string `gorm:"type:text"` //ipfs_ || ethfs_
-	AuthenUrl      string `gorm:"type:text"`
-	DependAgents   string `gorm:"type:longtext"`
-	RequiredWallet bool   `gorm:"default:0"`
-	RequiredEnv    bool   `gorm:"default:0"`
-	IsOnchain      bool   `gorm:"default:0"`
-	IsCustomUi     bool   `gorm:"default:0"`
-	Likes          int64  `gorm:"default:0"`
-	IsPublic       bool   `gorm:"default:1"`
-	IsStreaming    bool   `gorm:"default:1"`
-	DockerPort     string
-	RequiredInfo   string `gorm:"type:longtext"`
-	EnvExample     string `gorm:"type:longtext"`
+	SourceUrl        string `gorm:"type:text"` //ipfs_ || ethfs_
+	AuthenUrl        string `gorm:"type:text"`
+	DependAgents     string `gorm:"type:longtext"`
+	RequiredWallet   bool   `gorm:"default:0"`
+	RequiredEnv      bool   `gorm:"default:0"`
+	IsOnchain        bool   `gorm:"default:0"`
+	IsCustomUi       bool   `gorm:"default:0"`
+	Likes            int64  `gorm:"default:0"`
+	IsPublic         bool   `gorm:"default:1"`
+	IsStreaming      bool   `gorm:"default:1"`
+	DockerPort       string
+	RequiredInfo     string `gorm:"type:longtext"`
+	EnvExample       string `gorm:"type:longtext"`
 	ShortDescription string `gorm:"type:longtext"`
 	DisplayName      string `gorm:"type:longtext"`
 
