@@ -331,8 +331,8 @@ export const Category = [
 ];
 
 export const AgentOptions = [
-   { value: FilterOption.Installed, label: 'Your swarms', description: 'Agents currently installed.', icon: undefined },
-   { value: FilterOption.All, label: 'Agent store', description: 'All available agents.', icon: 'icons/ic-store-agent-pc.svg' },
+   { value: FilterOption.Installed, label: 'Your Swarm', description: 'Agents currently installed.', icon: undefined },
+   { value: FilterOption.All, label: 'Agent Store', description: 'All available agents.', icon: 'icons/ic-store-agent-pc.svg' },
 ];
 
 export enum AgentType {
