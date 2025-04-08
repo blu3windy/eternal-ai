@@ -276,7 +276,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                      }))
                   }}
                >
-                  <SvgInset svgUrl="/icons/ic-computer.svg" size={16}/>
+                  <SvgInset svgUrl="icons/ic-computer.svg" size={16}/>
                </Box>
             )}
          </Box>
