@@ -502,11 +502,12 @@ const AgentProvider: React.FC<
       } catch (e) {
          console.log('installAgent e', e);
       } finally {
-         updateAgentState(agent.id, {
-            data: agent,
-            isInstalling: false,
-         });
-
+         setTimeout(() => {
+            updateAgentState(agent.id, {
+               data: agent,
+               isInstalling: false,
+            });
+         }, 1000);
          dispatch(requestReloadListAgent());
       }
    }
