@@ -25,12 +25,17 @@ import BaseModal from '@components/BaseModal';
 import ExportPrivateKey from '@pages/home/chat-agent/ExportPrivateKey';
 import { useDisclosure } from '@chakra-ui/react';
 import ImportToken from '@components/AgentWallet/ImportToken';
+import { AgentType } from "@pages/home/list-agent/constants";
+import localStorageService from '@storage/LocalStorageService';
 
 const MIN_DECIMAL = 2;
 const MAX_DECIMAL = 2;
 
-const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: number }) => {
-  const { currentChain } = useSelector(agentsTradeSelector);
+const TokenItem = ({ token, index, currentChain }: { 
+  token: IToken & { icon: string, price_usd: string | number }, 
+  index: number,
+  currentChain: CHAIN_TYPE 
+}) => {
   const [balance, setBalance] = useState<string | undefined>("0");
   const { coinPrices } = useContext(AgentContext);
 
@@ -38,7 +43,7 @@ const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: 
     if (token.symbol === 'EAI') {
       return coinPrices?.find(p => p.symbol === "EAI")?.price || 0;
     }
-    return 0;
+    return token?.price_usd || 0;
   }, [coinPrices, token?.symbol]);
 
   const usdValue = useMemo(() => {
@@ -119,10 +124,57 @@ const HandleMine = () => {
   }, [nativeBalance, coinPrices, nativeToken?.symbol]);
 
   const [installedAgents, setInstalledAgents] = useState<IAgentToken[]>([]);
-  const [agentTokens, setAgentTokens] = useState<(IToken & { icon: string })[]>([]);
+  const [agentTokens, setAgentTokens] = useState<(IToken & { icon: string, price_usd: string | number })[]>([]);
   const cPumpAPI = useMemo(() => new CAgentTokenAPI(), []);
 
   const { depositInfo, setDepositInfo } = useFundAgent();
+
+  const [importedTokens, setImportedTokens] = useState<IToken[]>([]);
+
+  const loadImportedTokens = async () => {
+    if (!signer?.address) return;
+    
+    try {
+      const storageKey = `imported_tokens_user_${signer.address}`;
+      const existingTokensStr = await localStorageService.getItem(storageKey);
+      const existingTokens: IToken[] = existingTokensStr ? JSON.parse(existingTokensStr) : [];
+      
+      const tokensWithIcons = existingTokens.map(token => ({
+        ...token,
+        icon: getTokenIconUrl(token) || TOKEN_ICON_DEFAULT,
+        price_usd: 0
+      }));
+      
+      setImportedTokens(tokensWithIcons);
+    } catch (error) {
+      console.error('Error loading imported tokens:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadImportedTokens();
+  }, [signer?.address]);
+
+  const userTokens: any[] = useMemo(() => {
+    return [
+      {
+        symbol: "ETH",
+        name: "Ethereum",
+        icon: getTokenIconUrl({ symbol: "ETH" }),
+        address: NATIVE_TOKEN_ADDRESS,
+        price_usd: 0
+      },
+      {
+        symbol: "EAI",
+        name: "Eternal AI",
+        icon: getTokenIconUrl({ symbol: "EAI" }),
+        address: "",
+        price_usd: 0
+      },
+      ...agentTokens,
+      ...importedTokens
+    ];
+  }, [agentTokens, importedTokens]);
 
   useEffect(() => {
     const fetchInstalledAgents = async () => {
@@ -136,12 +188,20 @@ const HandleMine = () => {
           page: 1,
           limit: 100,
           ids: installIds.join(','),
+          agent_types: [
+            AgentType.Model,
+            AgentType.ModelOnline,
+            AgentType.UtilityJS,
+            AgentType.UtilityPython,
+            AgentType.CustomUI,
+            AgentType.CustomPrompt,
+            AgentType.Infra
+          ].join(','),
         };
         
         const { agents } = await cPumpAPI.getAgentTokenList(params);
         setInstalledAgents(agents);
         
-        // Extract tokens from installed agents
         const tokens = agents
           .filter(agent => agent.token_address && agent.token_symbol)
           .map(agent => ({
@@ -154,7 +214,8 @@ const HandleMine = () => {
               icon: agent.token_image_url,
               image_url: agent.token_image_url
             }) || TOKEN_ICON_DEFAULT,
-            chain: agent.token_network_id ? ChainIdToChainType[agent.token_network_id] : CHAIN_TYPE.BASE
+            chain: agent.token_network_id ? ChainIdToChainType[agent.token_network_id] : CHAIN_TYPE.BASE,
+            price_usd: agent.meme?.price_usd || 0,
           }));
         
         setAgentTokens(tokens);
@@ -181,10 +242,6 @@ const HandleMine = () => {
     navigate(ROUTERS.HOME);
   };
 
-  const tokenIcon = useMemo(() => {
-    return getTokenIconUrl({ symbol: "EAI" });
-  }, []);
-
   const handleDeposit = () => {
     setDepositInfo({
       address: signer?.address || "",
@@ -207,10 +264,6 @@ const HandleMine = () => {
   const userAddress = useMemo(() => {
     return signer?.address || '';
   }, [signer?.address]);
-
-  const userTokens = useMemo(() => {
-    return [];
-  }, []);
 
   return (
     <FundAgentProvider>
@@ -291,29 +344,12 @@ const HandleMine = () => {
           </Flex>
 
           <VStack spacing={2} align="stretch" mt={'48px'}>
-            <TokenItem
-              token={{
-                symbol: "ETH",
-                name: "Ethereum",
-                icon: getTokenIconUrl({ symbol: "ETH" }),
-                address: NATIVE_TOKEN_ADDRESS
-              }}
-              index={0}
-            />
-            <TokenItem
-              token={{
-                symbol: "EAI",
-                name: "Eternal AI",
-                icon: getTokenIconUrl({ symbol: "EAI" }),
-                address: ""
-              }}
-              index={1}
-            />
-            {agentTokens.map((token, index) => (
+            {userTokens.map((token, index) => (
               <TokenItem
-                key={token.address}
+                key={`${token.address}_${index}`}
                 token={token}
-                index={index + 2}
+                index={index}
+                currentChain={chainType}
               />
             ))}
           </VStack>
@@ -336,10 +372,13 @@ const HandleMine = () => {
         className={s.modalContent}
       >
         <ImportToken 
-          onClose={onImportModalClose}
+          onClose={() => {
+            onImportModalClose();
+            loadImportedTokens();
+          }}
           pairs={userTokens}
           storageKey={`imported_tokens_user_${userAddress}`}
-          currentChain={CHAIN_TYPE.BASE}
+          currentChain={chainType}
         />
       </BaseModal>
     </FundAgentProvider>
