@@ -85,7 +85,7 @@ func (s *Server) Routers() {
 		// Agent management
 		agentAPI := rootAPI.Group("/agent")
 		{
-			agentAPI.GET("/category", s.GetListAgentCategory)
+			agentAPI.GET("/categories", s.GetListAgentCategory)
 			agentAPI.GET("/report", s.GetAgentSummaryReport)
 			agentAPI.GET("/list", s.GetListAgent)
 			agentAPI.GET("/unclaimed", s.GetListAgentUnClaimed)
