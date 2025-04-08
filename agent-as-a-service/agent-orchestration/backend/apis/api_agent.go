@@ -418,7 +418,7 @@ func (s *Server) GetDashBoardAgent(c *gin.Context) {
 		agentTypesInt = append(agentTypesInt, num)
 	}
 
-	contractAddressesStr := s.stringFromContextParam(c, "contract_addresses")
+	contractAddressesStr := s.stringFromContextQuery(c, "contract_addresses")
 	contractAddresses := []string{}
 	if contractAddressesStr != "" {
 		contractAddresses = strings.Split(contractAddressesStr, ",")
