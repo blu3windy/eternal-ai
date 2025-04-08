@@ -39,26 +39,51 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
    const [seconds, setSeconds] = useState<number | null>(0);
 
    useEffect(() => {
+      const createdAt = message?.createdAt ? new Date(message?.createdAt).getTime() : new Date().getTime();
+      const now = new Date().getTime();
+
+      const remainingTime = (now - createdAt) / 1000;
+
+      // console.log("__________message.status", message);
+      // if (message.status === "waiting" || message.status === "sync-waiting") {
+      //    console.log("__________remainingTime", remainingTime);
+      // }
+
       if (message.status === "waiting") {
-         const timeout = setTimeout(() => {
+         const waitingTime = 1000 * 60 * 3;
+         if (remainingTime < waitingTime) {
+            const timeout = setTimeout(() => {
+               updateMessage(message.id, {
+                  status: "sync-waiting",
+               });
+            }, waitingTime - remainingTime);
+
+            return () => {
+               clearTimeout(timeout);
+            };
+         } else {
             updateMessage(message.id, {
                status: "sync-waiting",
             });
-         }, 1000 * 60 * 3);
-
-         return () => {
-            clearTimeout(timeout);
-         };
+         }
       } else if (message.status === "sync-waiting") {
-         const timeout = setTimeout(() => {
+         const waitingTime = 1000 * 60 * 30;
+         if (remainingTime < waitingTime) {
+            const timeout = setTimeout(() => {
+               updateMessage(message.id, {
+                  status: "failed",
+                  msg: "Server is not responding",
+               });
+            }, waitingTime - remainingTime);
+            return () => {
+               clearTimeout(timeout);
+            };
+         } else {
             updateMessage(message.id, {
                status: "failed",
                msg: "Server is not responding",
             });
-         }, 1000 * 60 * 30);
-         return () => {
-            clearTimeout(timeout);
-         };
+         }
       }
    }, [message.status, updateMessage, message.id]);
 
