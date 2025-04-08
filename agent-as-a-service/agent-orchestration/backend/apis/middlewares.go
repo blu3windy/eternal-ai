@@ -780,10 +780,11 @@ func (s *Server) getUserAddress(c *gin.Context) string {
 	return c.GetHeader("XXX-Address")
 }
 
-func (s *Server) middlewareApiLimit(apiHash string, numRequest int, duration time.Duration) gin.HandlerFunc {
+func (s *Server) middlewareApiLimit(numRequest int, duration time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := s.getRequestIP(c)
-		limitKey := fmt.Sprintf("api_limit_%s_%s_%s", c.Request.Method, ip, apiHash)
+		apiPath := c.Request.URL.Path
+		limitKey := fmt.Sprintf("api_limit_%s_%s_%s", c.Request.Method, ip, apiPath)
 		var limit int
 		err := s.nls.GetRedisCachedWithKey(limitKey, &limit)
 		if err != nil {
