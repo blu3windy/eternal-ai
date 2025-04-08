@@ -9,7 +9,7 @@ const reducers = combineReducers(reducer);
 const persistConfig = getPersistConfig({
    key: "root",
    storage: persistLocalStorage,
-   blacklist: [],
+   blacklist: ['floatingWebView'],
    rootReducer: reducers,
 });
 

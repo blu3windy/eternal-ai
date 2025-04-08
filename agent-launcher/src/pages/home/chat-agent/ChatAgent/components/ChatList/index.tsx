@@ -58,13 +58,21 @@ const ChatList = ({ onRetryErrorMessage, isSending = false }: IProps) => {
                if (index === 0) {
                   return (
                      <Box key={message.id} ref={topMostRef}>
-                        <ChatMessage updateMessage={updateMessage} message={message} isLast={isLast} onRetryErrorMessage={onRetryErrorMessageOverride} isSending={isSending} />
+                        <ChatMessage
+                           messages={messages}
+                           updateMessage={updateMessage}
+                           message={message}
+                           isLast={isLast}
+                           onRetryErrorMessage={onRetryErrorMessageOverride}
+                           isSending={isSending}
+                        />
                      </Box>
                   );
                }
 
                return (
                   <ChatMessage
+                     messages={messages} 
                      updateMessage={updateMessage}
                      key={message.id}
                      message={message}

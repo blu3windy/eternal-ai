@@ -18,6 +18,8 @@ import { getExplorerByChain } from "@utils/helpers.ts";
 import { motion } from "framer-motion";
 import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/WaitingForGenerateText";
 import { v4 } from "uuid";
+import { useDispatch } from "react-redux";
+import { openWithUrl } from "@stores/states/floating-web-view/reducer";
 
 dayjs.extend(duration);
 
@@ -29,9 +31,11 @@ type Props = {
    isSending: boolean;
    initialMessage?: boolean;
    updateMessage: (id: string, data: Partial<IChatMessage>, isUpdateDB?: boolean) => void;
+   messages: IChatMessage[];
 };
 
-const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, initialMessage, updateMessage }: Props) => {
+const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSending, initialMessage, updateMessage }: Props) => {
+   const dispatch = useDispatch();
    const { selectedAgent } = useContext(AgentContext);
    const [markdownId, setMarkdownId] = useState<string>(v4());
    const [hours, setHours] = useState<number | null>(0);
@@ -43,11 +47,6 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
       const now = new Date().getTime();
 
       const remainingTime = (now - createdAt);
-
-      // // console.log("__________message.status", message);
-      // if (message.status === "waiting" || message.status === "sync-waiting") {
-      //    console.log("__________remainingTime", remainingTime, message.status);
-      // }
 
       if (message.status === "waiting") {
          const waitingTime = 1000 * 60 * 3;
@@ -107,16 +106,24 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
    }, [message]);
 
    const renderMessage = useMemo(() => {
-      if (message.status === 'received') {
-         // return message.msg.replace(/<processing>(.*?)<\/processing>/g, (match, p1) => {
-         //    return `<processing>${p1}</processing>`
-         // })
-
-         // remove processing tag
-         return `${message.msg || ''}`.replace(/<processing>(.*?)<\/processing>/g, '')
+      if(message.status === "receiving") {
+         return message.msg || '';
       }
-      return message.msg;
-   }, [message])
+      return `${message.msg || ''}`.replace(/<processing>(.*?)<\/processing>/g, '')
+   }, [message?.msg, message?.status])
+
+   const processingWebViewUrl = useMemo(() => {
+      try {
+         const matches = `${renderMessage || ''}`.match(/<processing>(.*?)<\/processing>/g);
+         if (matches?.length) {
+            let url = matches[0] || '';
+            url = url.replace('<processing>', '').replace('</processing>', '');
+            return url;
+         }
+      } catch (error) {
+         return null;
+      }
+   }, [renderMessage]);
 
    const renderContent = () => {
       return (
@@ -144,6 +151,10 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
 
    const renderMarkdown = () => {
       if (message.status === "waiting" || message.status === "sync-waiting") {
+         return <WaitingAnimation color={message?.is_reply ? "black" : "white"} />;
+      }
+
+      if (message.status === "receiving" && !!processingWebViewUrl) {
          return <WaitingAnimation color={message?.is_reply ? "black" : "white"} />;
       }
 
@@ -230,8 +241,41 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
          <Box
             className={cs(s.content, { [s.question]: !message?.is_reply }, { [s.reply]: message?.is_reply }, { [s.failed]: message?.status === "failed" })}
             alignSelf={message?.is_reply ? "flex-start" : "flex-end"}
+            position={"relative"}
          >
             {renderContent()}
+            {processingWebViewUrl && (
+               <Box
+                  position={"absolute"}
+                  right={"-40px"}
+                  bottom={0}
+                  borderRadius={"50%"}
+                  border="1px solid #F4F4F4"
+                  background={"white"}
+                  boxShadow={"2px 2px 8px 0px rgba(0, 0, 0, 0.15)"}
+                  width={"32px"}
+                  height={"32px"}
+                  display={"flex"}
+                  alignItems={"center"}
+                  justifyContent={"center"}
+                  transition={"all 0.2s ease-in-out"}
+                  _hover={{
+                     cursor: "pointer",
+                     transform: "translateY(-2px)",
+                     transition: "transform 0.2s ease-in-out",
+                  }}
+                  onClick={() => {
+                     const replyToMessage = messages.find(item => item.id === message.replyTo);
+                     dispatch(openWithUrl({
+                        url: processingWebViewUrl,
+                        task: 'Searching',
+                        taskProcessing: replyToMessage?.msg || ''
+                     }))
+                  }}
+               >
+                  <SvgInset svgUrl="/icons/ic-computer.svg" size={16}/>
+               </Box>
+            )}
          </Box>
 
          {(message.status === "receiving" || message.status === "waiting") && message.queryMessageState && !compareString(message.queryMessageState, "DONE") && (
