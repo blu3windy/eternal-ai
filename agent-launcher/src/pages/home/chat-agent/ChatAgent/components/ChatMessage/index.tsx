@@ -13,7 +13,7 @@ import duration from "dayjs/plugin/duration";
 import { IChatMessage } from "src/services/api/agent/types.ts";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import CustomMarkdown from "@components/CustomMarkdown";
-import { compareString } from "@utils/string.ts";
+import { compareString, removeInvalidTags } from "@utils/string.ts";
 import { getExplorerByChain } from "@utils/helpers.ts";
 import { motion } from "framer-motion";
 import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/WaitingForGenerateText";
@@ -106,15 +106,18 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
    }, [message]);
 
    const renderMessage = useMemo(() => {
+      const textStr = removeInvalidTags(message.msg || '')
       if(message.status === "receiving") {
-         return message.msg || '';
+         return textStr || '';
       }
-      return `${message.msg || ''}`.replace(/<processing>(.*?)<\/processing>/g, '')
+      return `${textStr || ''}`
+         .replace(/<processing>[\s\S]*?<\/processing>/g, '') // remove processing tag
+         .replace(/<think>[\s\S]*?<\/think>/g, '') // remove think tag
    }, [message?.msg, message?.status])
 
    const processingWebViewUrl = useMemo(() => {
       try {
-         const matches = `${renderMessage || ''}`.match(/<processing>(.*?)<\/processing>/g);
+         const matches = `${renderMessage || ''}`.match(/<processing>[\s\S]*?<\/processing>/g);
          if (matches?.length) {
             let url = matches[0] || '';
             url = url.replace('<processing>', '').replace('</processing>', '');
