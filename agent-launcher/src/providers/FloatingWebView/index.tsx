@@ -166,8 +166,8 @@ function FloatingWebView() {
                   borderRadius: isMaximized ? 0 : "8px",
                 }}
               >
-                <WebView
-                  url={url}
+                <iframe
+                  src={url}
                   height="100%"
                   width="100%"
                 />

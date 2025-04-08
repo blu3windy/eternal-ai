@@ -94,7 +94,7 @@ function HandleMessageProcessing({ updateMessage }: { updateMessage: (id: string
    const { messages } = useChatAgentProvider();
 
    const processingMessages = useMemo(() => {
-      return messages.filter((item) => item.status === "waiting" || item.status === "receiving" || item.status === "sync-waiting");
+      return messages.filter((item) => item.status === "waiting" || item.status === "receiving" || item.status === "sync-waiting" || item.status === "sync-receiving");
    }, [messages]);
 
    const renderTasks = () => {

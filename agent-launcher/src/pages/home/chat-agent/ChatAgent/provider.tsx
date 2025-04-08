@@ -105,16 +105,16 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                const filterMessages = items
                   .filter((item) => item.createdAt)
                   .map((item) => {
-                     if (item.status === "waiting") {
-                        const now = new Date();
-                        const createdAt = new Date(item.createdAt || "");
-                        const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
 
+                     const now = new Date();
+                     const createdAt = new Date(item.createdAt || "");
+                     const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+                     if (item.status === "waiting" || item.status === "receiving") {
                         if (diffMinutes >= 3) {
                            if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
                               const updateMessage = {
                                  ...item,
-                                 status: "sync-waiting",
+                                 status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
                               };
                               return updateMessage;
                            }
