@@ -86,6 +86,7 @@ const TokenItem = ({ token, index, showUsdValue = false }: { token: IToken & { i
             maxDecimal={5}
             onBalanceChange={(_amount) => setBalance(_amount)}
             chain={currentChain}
+            walletAddress={agentWallet?.address}
           />
           &nbsp;
           <Text color={"#000"} fontWeight={500} fontSize={"14px"}>
