@@ -201,7 +201,17 @@ const AgentsList = () => {
             }
          }
 
-         const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
+         const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params, (data) => {
+            if (isNew) {
+               setAgents(data.agents);
+            } else {
+               setAgents((prevTokens) =>
+                  uniqBy([...prevTokens, ...data.agents], (token) => token.id),
+               );
+            }
+            refLoading.current = false;
+            setLoaded(true);
+         });
 
          if (isNew) {
             setAgents(newTokens);
