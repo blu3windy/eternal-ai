@@ -779,3 +779,26 @@ func (s *Server) authCheckSignatureMiddleware() gin.HandlerFunc {
 func (s *Server) getUserAddress(c *gin.Context) string {
 	return c.GetHeader("XXX-Address")
 }
+
+func (s *Server) middlewareApiLimit(apiHash string, numRequest int, duration time.Duration) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ip := s.getRequestIP(c)
+		limitKey := fmt.Sprintf("api_limit_%s_%s_%s", c.Request.Method, ip, apiHash)
+		var limit int
+		err := s.nls.GetRedisCachedWithKey(limitKey, &limit)
+		if err != nil {
+			limit = 0
+		}
+		if limit >= numRequest {
+			ctxAbortWithStatusJSON(c, http.StatusTooManyRequests, &serializers.Resp{Error: errs.NewError(errors.New("too many requests"))})
+			return
+		}
+		expireTime := time.Now().Truncate(duration).Add(duration)
+		err = s.nls.SetRedisCachedWithKey(limitKey, limit+1, time.Until(expireTime))
+		if err != nil {
+			ctxAbortWithStatusJSON(c, http.StatusInternalServerError, &serializers.Resp{Error: errs.NewError(err)})
+			return
+		}
+		c.Next()
+	}
+}
