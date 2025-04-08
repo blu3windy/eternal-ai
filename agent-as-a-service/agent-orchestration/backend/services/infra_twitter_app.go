@@ -496,39 +496,24 @@ func (s *Service) TestSignature(ctx context.Context) {
 
 func (s *Service) InfraTwitterAppSearchRecentTweet(ctx context.Context, query, paginationToken string, maxResults int) (*twitter.TweetRecentSearch, error) {
 	var tweetRecentSearch twitter.TweetRecentSearch
-	var lookUps map[string]twitter.TweetLookup
-	var meta twitter.TweetRecentSearchMeta
-	cacheKey := fmt.Sprintf(`CacheAgentTerminalLatestLookUps_%s_%s`, query, paginationToken)
-	cacheKey1 := fmt.Sprintf(`CacheAgentTerminalLatestMeta_%s_%s`, query, paginationToken)
-	err := s.GetRedisCachedWithKey(cacheKey, &lookUps)
+	twitterInfo, err := s.dao.FirstTwitterInfo(daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"twitter_id = ?": {s.conf.TokenTwiterIdForInternal},
+		},
+		map[string][]interface{}{},
+		false,
+	)
 	if err != nil {
-		twitterInfo, err := s.dao.FirstTwitterInfo(daos.GetDBMainCtx(ctx),
-			map[string][]interface{}{
-				"twitter_id = ?": {s.conf.TokenTwiterIdForInternal},
-			},
-			map[string][]interface{}{},
-			false,
-		)
-		if err != nil {
-			return nil, errs.NewError(err)
-		}
-
-		if twitterInfo != nil {
-			tweetRecentSearch, err := s.twitterWrapAPI.SearchRecentTweet(query, paginationToken, twitterInfo.AccessToken, maxResults)
-			if err != nil {
-				return nil, errs.NewTwitterError(err)
-			}
-			lookUps = tweetRecentSearch.LookUps
-			meta = tweetRecentSearch.Meta
-			_ = s.SetRedisCachedWithKey(cacheKey, tweetRecentSearch.LookUps, 5*time.Minute)
-			_ = s.SetRedisCachedWithKey(cacheKey1, tweetRecentSearch.Meta, 5*time.Minute)
-			return tweetRecentSearch, nil
-		}
+		return nil, errs.NewError(err)
 	}
 
-	_ = s.GetRedisCachedWithKey(cacheKey1, &meta)
+	if twitterInfo != nil {
+		tweetRecentSearch, err := s.twitterWrapAPI.SearchRecentTweet(query, paginationToken, twitterInfo.AccessToken, maxResults)
+		if err != nil {
+			return nil, errs.NewTwitterError(err)
+		}
+		return tweetRecentSearch, nil
+	}
 
-	tweetRecentSearch.LookUps = lookUps
-	tweetRecentSearch.Meta = meta
 	return &tweetRecentSearch, nil
 }
