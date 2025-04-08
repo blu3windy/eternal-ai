@@ -8,7 +8,7 @@ import Store from 'electron-store';
 
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
 
-autoUpdater.autoDownload = false;
+autoUpdater.autoDownload = true;
 
 if (process.env.NODE_ENV === "development") {
    // autoUpdater.allowDowngrade = true;
@@ -156,8 +156,12 @@ function createWindow() {
       win?.webContents.send("update-downloaded");
       console.log("update-downloaded");
       // autoUpdater.downloadUpdate();
-      autoUpdater.quitAndInstall();
+      // autoUpdater.quitAndInstall();
    });
+
+   ipcMain.on("install-update", () => {
+      autoUpdater.quitAndInstall();
+   })
 
    autoUpdater.on("download-progress", (progress) => {
       win?.webContents.send("download-progress", progress);

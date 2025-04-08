@@ -16,17 +16,13 @@ import BaseButton from "@components/BaseButton";
 import ERC20Balance from '@components/ERC20Balance';
 import InputWrapper from '@components/Form/inputWrapper';
 import InputText from '@components/Input/InputText';
-import { CHAIN_CONFIG, CHAIN_TYPE } from '@constants/chains';
+import { CHAIN_TYPE } from '@constants/chains';
 import CTokenContract from '@contract/token';
 import { NATIVE_TOKEN_ADDRESS } from '@contract/token/constants';
 import { IToken } from '@interfaces/token';
 import { AgentContext } from '@pages/home/provider/AgentContext';
-import { AgentTradeContext } from '@pages/home/trade-agent/provider';
-import { ChainIdToChainType } from '@pages/home/trade-agent/provider/constant';
-import localStorageService from '@storage/LocalStorageService';
 import { agentsTradeSelector } from '@stores/states/agent-trade/selector';
 import { getExplorerByChain } from '@utils/helpers';
-import { getTokenIconUrl, TOKEN_ICON_DEFAULT } from '@utils/string';
 import { BigNumber } from 'ethers';
 import { parseEther } from 'ethers/lib/utils';
 import { Form, Formik } from 'formik';
@@ -36,12 +32,27 @@ import * as Yup from "yup";
 import s from './styles.module.scss';
 
 interface TransferTokenFormValues {
+    network: number;
     token: string;
     amount: string;
     toAddress: string;
 }
 
-const STORAGE_KEY_PREFIX = 'imported_tokens_';
+interface TransferTokenProps {
+    onClose: () => void;
+    availableNetworks: {
+        id: number,
+        name: string,
+        network: string,
+        nativeCurrency: { name: string, symbol: string, decimals: number },
+        rpcUrls: {
+          default: { http: string[] },
+          public: { http: string[] },
+        },
+      }[];
+    tokens: IToken[];
+    pairs: IToken[];
+}
 
 const TokenItem = ({ token, index, showUsdValue = false, onClick }: { token: IToken & { icon: string }, index: number, showUsdValue?: boolean, onClick?: () => void }) => {
     const { currentChain } = useSelector(agentsTradeSelector);
@@ -111,27 +122,38 @@ const TransferTokenForm = ({
     touched,
     errors,
     handleBlur,
+    availableNetworks,
     tokens,
     selectedTokenBalance,
     estimatedFee,
     isNativeToken,
-    nativeTokenSymbol
+    pairs,
 }: {
-    values: TransferTokenFormValues,
-    isSubmitting: boolean,
-    setFieldValue: (field: string, value: any) => void,
-    dirty: boolean,
-    touched: { [key: string]: boolean },
-    errors: { [key: string]: string },
-    handleBlur: (e: React.FocusEvent<any>) => void,
-    tokens: IToken[],
-    selectedTokenBalance: string,
-    estimatedFee: string,
-    isNativeToken: boolean,
-    nativeTokenSymbol: string
+    values: TransferTokenFormValues;
+    isSubmitting: boolean;
+    setFieldValue: (field: string, value: any) => void;
+    dirty: boolean;
+    touched: { [key: string]: boolean };
+    errors: { [key: string]: string };
+    handleBlur: (e: React.FocusEvent<any>) => void;
+    availableNetworks: TransferTokenProps['availableNetworks'];
+    tokens: IToken[];
+    selectedTokenBalance: string;
+    estimatedFee: string;
+    isNativeToken: boolean;
+    pairs: IToken[];
 }) => {
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const { pairs } = useContext(AgentTradeContext);
+    const { isOpen: isTokenOpen, onOpen: onTokenOpen, onClose: onTokenClose } = useDisclosure();
+    const { isOpen: isNetworkOpen, onOpen: onNetworkOpen, onClose: onNetworkClose } = useDisclosure();
+
+    const selectedNetwork = useMemo(() => {
+        return availableNetworks.find(network => network.id === values.network);
+    }, [availableNetworks, values.network]);
+
+    const selectedToken = useMemo(() => {
+        return tokens.find(token => token.address === values.token);
+    }, [tokens, values.token]);
+
     const isSubmitDisabled = !values.token ||
         !values.amount ||
         !values.toAddress ||
@@ -139,16 +161,70 @@ const TransferTokenForm = ({
         !dirty ||
         BigNumber.from(parseEther(values.amount || "0")).gt(BigNumber.from(parseEther(selectedTokenBalance || "0")));
 
-    const selectedToken = useMemo(() => {
-        return tokens.find(token => token.address === values.token);
-    }, [tokens, values.token]);
-
     return (
         <Form>
             <VStack spacing={4} align="stretch">
                 <Box>
+                    <Text fontSize="14px" fontWeight="500" mb="8px">Select Network</Text>
+                    <Popover isOpen={isNetworkOpen} onClose={onNetworkClose} placement="bottom-start">
+                        <PopoverTrigger>
+                            <Flex
+                                border="1px solid"
+                                borderColor={touched.network && errors.network ? "red.500" : "gray.200"}
+                                borderRadius="8px"
+                                p="10px 16px"
+                                justify="space-between"
+                                align="center"
+                                cursor="pointer"
+                                onClick={onNetworkOpen}
+                            >
+                                {selectedNetwork ? (
+                                    <HStack>
+                                        <Text fontSize={'14px'} fontWeight={500}>{selectedNetwork.name}</Text>
+                                    </HStack>
+                                ) : (
+                                    <Text fontSize={'14px'} color="gray.500">Select network</Text>
+                                )}
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M5 7.5L10 12.5L15 7.5" stroke="#686A6C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                            </Flex>
+                        </PopoverTrigger>
+                        <PopoverContent width="89%" maxHeight="300px" overflowY="auto">
+                            <PopoverBody p={0}>
+                                <VStack align="stretch" spacing={0}>
+                                    {availableNetworks.map((network, index) => (
+                                        <HStack
+                                            key={index}
+                                            justify="space-between"
+                                            cursor="pointer"
+                                            onClick={() => {
+                                                setFieldValue('network', network.id);
+                                                onNetworkClose();
+                                            }}
+                                            p={2}
+                                            borderRadius="8px"
+                                            _hover={{ bg: 'gray.100' }}
+                                        >
+                                            <HStack>
+                                                <Text fontSize={'14px'} fontWeight={500}>{network.name}</Text>
+                                            </HStack>
+                                        </HStack>
+                                    ))}
+                                </VStack>
+                            </PopoverBody>
+                        </PopoverContent>
+                    </Popover>
+                    {touched.network && errors.network && (
+                        <Text fontSize="12px" color="red" textAlign="left" mt="4px">
+                            {errors.network}
+                        </Text>
+                    )}
+                </Box>
+
+                <Box>
                     <Text fontSize="14px" fontWeight="500" mb="8px">Select Token</Text>
-                    <Popover isOpen={isOpen} onClose={onClose} placement="bottom-start">
+                    <Popover isOpen={isTokenOpen} onClose={onTokenClose} placement="bottom-start">
                         <PopoverTrigger>
                             <Flex
                                 border="1px solid"
@@ -158,7 +234,7 @@ const TransferTokenForm = ({
                                 justify="space-between"
                                 align="center"
                                 cursor="pointer"
-                                onClick={onOpen}
+                                onClick={onTokenOpen}
                             >
                                 {selectedToken ? (
                                     <HStack>
@@ -191,7 +267,7 @@ const TransferTokenForm = ({
                                                 showUsdValue={!isImportedToken}
                                                 onClick={() => {
                                                     setFieldValue('token', token.address);
-                                                    onClose();
+                                                    onTokenClose();
                                                 }}
                                             />
                                         );
@@ -262,7 +338,7 @@ const TransferTokenForm = ({
                 {selectedToken && values.amount && (
                     <Box>
                         <Text fontSize="12px" color="gray.500">
-                            Estimated Fee: {estimatedFee} {isNativeToken ? selectedToken.symbol : nativeTokenSymbol}
+                            Estimated Fee: {estimatedFee} {isNativeToken ? selectedToken.symbol : selectedNetwork?.nativeCurrency.symbol}
                         </Text>
                     </Box>
                 )}
@@ -281,65 +357,19 @@ const TransferTokenForm = ({
     );
 };
 
-const TransferToken = ({ onClose }: { onClose: () => void }) => {
+const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetworks, tokens, pairs }) => {
     const toast = useToast();
     const { selectedAgent, agentWallet } = useContext(AgentContext);
-    const { pairs } = useContext(AgentTradeContext);
-    const [importedTokens, setImportedTokens] = useState<IToken[]>([]);
     const { currentChain } = useSelector(agentsTradeSelector);
     const [selectedTokenBalance, setSelectedTokenBalance] = useState<string>("0");
     const [estimatedFee, setEstimatedFee] = useState<string>("0");
     const [isNativeToken, setIsNativeToken] = useState<boolean>(false);
     const cTokenContract = useRef(new CTokenContract()).current;
 
-    const chainType = useMemo(() => {
-        if (!selectedAgent?.network_id) return CHAIN_TYPE.BASE;
-        return ChainIdToChainType[selectedAgent.network_id] || CHAIN_TYPE.BASE;
-    }, [selectedAgent?.network_id]);
-
-    const chainConfig = useMemo(() => {
-        return CHAIN_CONFIG[chainType];
-    }, [chainType]);
-
-    const nativeToken = useMemo(() => {
-        return {
-            address: NATIVE_TOKEN_ADDRESS,
-            name: chainConfig?.nativeCurrency?.name || "Ethereum",
-            symbol: chainConfig?.nativeCurrency?.symbol || "ETH",
-            icon: getTokenIconUrl({ symbol: chainConfig?.nativeCurrency?.symbol || "ETH" }) || TOKEN_ICON_DEFAULT
-        }
-    }, [chainConfig]);
-
-    useEffect(() => {
-        const loadImportedTokens = async () => {
-            if (!selectedAgent?.id) return;
-
-            try {
-                const storageKey = `${STORAGE_KEY_PREFIX}${selectedAgent.id}`;
-                const existingTokensStr = await localStorageService.getItem(storageKey);
-                const existingTokens: IToken[] = existingTokensStr ? JSON.parse(existingTokensStr) : [];
-                setImportedTokens(existingTokens.map(token => ({
-                    ...token,
-                    icon: getTokenIconUrl(token) || TOKEN_ICON_DEFAULT
-                })));
-            } catch (error) {
-                console.error('Error loading imported tokens:', error);
-            }
-        };
-
-        loadImportedTokens();
-    }, [selectedAgent?.id]);
-
-    const tokens = useMemo(() => {
-        const pairTokens = pairs.map(p => ({
-            ...p,
-            icon: p.symbol === 'EAI' ? getTokenIconUrl(p) : getTokenIconUrl(selectedAgent)
-        }));
-
-        return [nativeToken, ...pairTokens, ...importedTokens];
-    }, [pairs, selectedAgent, importedTokens, nativeToken]);
-
     const validationSchema = Yup.object().shape({
+        network: Yup.number()
+            .required('Network is required')
+            .oneOf(availableNetworks.map(n => n.id), 'Invalid network'),
         token: Yup.string()
             .required('Token is required'),
         amount: Yup.number()
@@ -422,6 +452,7 @@ const TransferToken = ({ onClose }: { onClose: () => void }) => {
         <Box className={s.container}>
             <Formik
                 initialValues={{
+                    network: availableNetworks[0].id,
                     token: '',
                     amount: '',
                     toAddress: '',
@@ -504,11 +535,12 @@ const TransferToken = ({ onClose }: { onClose: () => void }) => {
                             touched={touched}
                             errors={errors}
                             handleBlur={handleBlur}
+                            availableNetworks={availableNetworks}
                             tokens={tokens}
                             selectedTokenBalance={selectedTokenBalance}
                             estimatedFee={estimatedFee}
                             isNativeToken={isNativeToken}
-                            nativeTokenSymbol={nativeToken.symbol}
+                            pairs={pairs}
                         />
                     );
                 }}

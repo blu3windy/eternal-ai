@@ -11,6 +11,7 @@ export interface ItemBalanceProps {
   onBalanceChange?: (_amount: string | undefined) => void;
   maxDecimal?: number;
   chain?: CHAIN_TYPE;
+  walletAddress?: string;
 }
 
 const ERC20Balance = (props: ItemBalanceProps) => {
@@ -19,12 +20,14 @@ const ERC20Balance = (props: ItemBalanceProps) => {
     onBalanceChange,
     maxDecimal = MAX_DECIMAL,
     chain = CHAIN_TYPE.BASE,
+    walletAddress,
   } = props;
 
   const { balance, loading } = useERC20Balance({
     token,
     onBalanceChange,
     chain,
+    walletAddress,
   });
 
   return (

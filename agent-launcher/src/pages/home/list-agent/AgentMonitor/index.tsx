@@ -258,7 +258,7 @@ const AgentMonitor: React.FC = () => {
                                        borderRadius="full"
                                        bg={(agentStates[container?.agent?.id || '']?.isRunning || container.state === 'running') ? '#4ADE80' : 'lightgray'}
                                     />
-                                    <Text color="white">{container.agent?.display_name || container.agent?.agent_name}</Text>
+                                    <Text color="white">{container.agent?.display_name || container.agent?.agent_name || container.name}</Text>
                                  </Flex>
                               </Td>
                               <Td>

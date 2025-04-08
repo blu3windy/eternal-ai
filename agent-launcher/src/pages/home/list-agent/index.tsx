@@ -14,7 +14,8 @@ import {
    Tabs,
    Text,
    useDisclosure,
-   VStack
+   VStack,
+   useToast
 } from '@chakra-ui/react';
 import IcHelp from '@components/InfoTooltip/IcHelp.tsx';
 import installAgentStorage from '@storage/InstallAgentStorage.ts';
@@ -44,10 +45,14 @@ import {
    SortOption
 } from './constants';
 import s from './styles.module.scss';
+import { AnimatePresence, motion } from 'framer-motion';
 
 
 const AgentsList = () => {
    const refInput = useRef<HTMLInputElement | null>(null);
+   const toast = useToast();
+   const [runningTime, setRunningTime] = useState<number>(0);
+   const runningTimeRef = useRef<NodeJS.Timeout>();
 
    const {
       isOpen,
@@ -80,7 +85,7 @@ const AgentsList = () => {
 
    const refParams = useRef({
       page: 1,
-      limit: 50,
+      limit: 10,
       sort,
       category,
       filter,
@@ -201,7 +206,17 @@ const AgentsList = () => {
             }
          }
 
-         const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
+         const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params, (data) => {
+            if (isNew) {
+               setAgents(data.agents);
+            } else {
+               setAgents((prevTokens) =>
+                  uniqBy([...prevTokens, ...data.agents], (token) => token.id),
+               );
+            }
+            refLoading.current = false;
+            setLoaded(true);
+         });
 
          if (isNew) {
             setAgents(newTokens);
@@ -693,7 +708,29 @@ const AgentsList = () => {
                   gridRowGap={"8px"}
                   overflow={'hidden !important'}
                >
-                  {!loaded && <AppLoading />}
+                  <AnimatePresence>
+                     {!loaded && (
+                        <motion.div
+                           initial={{ opacity: 0 }}
+                           animate={{ opacity: 1 }}
+                           exit={{ opacity: 0 }}
+                           transition={{ duration: 0.3 }}
+                           style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              width: "fit-content",
+                              height: "fit-content",
+                              marginLeft: "auto",
+                              marginRight: "auto",
+                           }}
+                        >
+                           <AppLoading />
+                        </motion.div>
+                     )}
+                  </AnimatePresence>
                   {agents?.map((item: IAgentToken) => (
                      <GridItem key={item.id}>
                         <AgentItem token={item} />
@@ -705,95 +742,144 @@ const AgentsList = () => {
       );
    };
 
+   // Add timer effect
+   useEffect(() => {
+      runningTimeRef.current = setInterval(() => {
+         setRunningTime(prev => {
+            const newTime = prev + 1;
+            if (newTime === 15 * 60) { // 15 minutes in seconds
+               toast({
+                  title: "Long Running Session",
+                  description: "Your agent has been running for 15 minutes. Consider saving your work.",
+                  status: "warning",
+                  duration: 10000,
+                  isClosable: true,
+                  position: "top-right"
+               });
+            }
+            return newTime;
+         });
+      }, 1000);
+
+      return () => {
+         if (runningTimeRef.current) {
+            clearInterval(runningTimeRef.current);
+         }
+      };
+   }, []);
+
    return (
-      <Box className={s.container} position={'relative'}>
-         <Flex
-            direction={"column"}
-            w="100%"
-            p={"24px"}
-         >
+      <AnimatePresence>
+
+         <Box className={s.container} position={'relative'}>
             <Flex
-               flexDirection="column"
-               justifyContent="flex-start"
-               gap="16px"
+               direction={"column"}
+               w="100%"
+               p={"24px"}
             >
-               {renderSearch()}
+               <Flex
+                  flexDirection="column"
+                  justifyContent="flex-start"
+                  gap="16px"
+               >
+                  {renderSearch()}
+               </Flex>
+               {!isSearchMode && (
+                  <>
+                     <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
+                        {renderFilterOptions()}
+                     </Flex>
+                  </>
+               )}
             </Flex>
-            {!isSearchMode && (
+
+            {isSearchMode ? (
+               renderSearchMode()
+            ) : (
                <>
-                  <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
-                     {renderFilterOptions()}
-                  </Flex>
+                  <Box h={'8px'} />
+                  <InfiniteScroll
+                     className={s.listContainer}
+                     key={agents?.length}
+                     dataLength={agents?.length}
+                     next={() => {
+                        debounceGetTokens(false);
+                     }}
+                     hasMore
+                     loader={<></>}
+                  >
+                     <Grid
+                        w="100%"
+                        templateColumns={"1fr"}
+                        gridRowGap={"8px"}
+                        overflow={'hidden !important'}
+                     >
+                        {!loaded && (
+                           <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.5 }}
+                              style={{
+                                 position: 'absolute',
+                                 top: 0,
+                                 left: 0,
+                                 right: 0,
+                                 bottom: 0,
+                                 width: "fit-content",
+                                 height: "fit-content",
+                                 marginLeft: "auto",
+                                 marginRight: "auto",       
+                              }}
+                           >
+                              <AppLoading />
+                           </motion.div>
+                        )}
+                        {agents?.map((item: IAgentToken, i) => (
+                           <GridItem key={item.id}>
+                              <AgentItem token={item} />
+                           </GridItem>
+                        ))}
+                        {filter === FilterOption.Installed && loaded && agents.length === 0 && (
+                           <VStack 
+                              height="full" 
+                              justify="center" 
+                              spacing={3} 
+                              p={4} 
+                              textAlign="center"
+                           >
+                              <Text fontSize="lg" fontWeight="bold">
+                              No agents installed?
+                              </Text>
+                              <Text>
+                              Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
+                              </Text>
+                           </VStack>
+                        )}
+                     </Grid>
+                  </InfiniteScroll>
                </>
             )}
-         </Flex>
 
-         {isSearchMode ? (
-            renderSearchMode()
-         ) : (
-            <>
-               <Box h={'8px'} />
-               <InfiniteScroll
-                  className={s.listContainer}
-                  key={agents?.length}
-                  dataLength={agents?.length}
-                  next={() => {
-                     debounceGetTokens(false);
-                  }}
-                  hasMore
-                  loader={<></>}
-               >
-                  <Grid
-                     w="100%"
-                     templateColumns={"1fr"}
-                     gridRowGap={"8px"}
-                     overflow={'hidden !important'}
-                  >
-                     {!loaded && <AppLoading />}
-                     {agents?.map((item: IAgentToken, i) => (
-                        <GridItem key={item.id}>
-                           <AgentItem token={item} />
-                        </GridItem>
-                     ))}
-                     {filter === FilterOption.Installed && loaded && agents.length === 0 && (
-                        <VStack 
-                           height="full" 
-                           justify="center" 
-                           spacing={3} 
-                           p={4} 
-                           textAlign="center"
-                        >
-                           <Text fontSize="lg" fontWeight="bold">
-No agents installed?
-                           </Text>
-                           <Text>
-                     Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
-                           </Text>
-                        </VStack>
-                     )}
-                  </Grid>
-               </InfiniteScroll>
-            </>
-         )}
+            <BottomBar  onAddAgentSuccess={(address: string) => {
+               refAddAgentTestCA.current = address;
+               onClose();
+               setFilter(FilterOption.Installed);
+               refParams.current = {
+                  ...refParams.current,
+                  filter: FilterOption.Installed,
+               };
+               throttleGetTokens(true);
+               setIsSearchMode(false);
+            }}  />
 
-         <BottomBar  onAddAgentSuccess={(address: string) => {
-            refAddAgentTestCA.current = address;
-            onClose();
-            setFilter(FilterOption.Installed);
-            refParams.current = {
-               ...refParams.current,
-               filter: FilterOption.Installed,
-            };
-            throttleGetTokens(true);
-            setIsSearchMode(false);
-         }}  />
-
-         {/* <Flex className={s.addTestBtn} onClick={onOpen}>
+            {/* <Flex className={s.addTestBtn} onClick={onOpen}>
             <Center w={'100%'}>
                <Text textAlign={'center'}>+ Add test agent</Text>
             </Center>
          </Flex> */}
-      </Box>
+         </Box>
+      </AnimatePresence>
    );
 };
 

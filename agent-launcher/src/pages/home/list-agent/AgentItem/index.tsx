@@ -11,6 +11,10 @@ import { formatCurrency, formatLongAddress } from "@utils/format.ts";
 import cs from "clsx";
 import { useContext, useEffect, useMemo, useState } from 'react';
 import s from './styles.module.scss';
+import { MonitorContext } from '@providers/Monitor/MonitorContext';
+import { ContainerData } from '@providers/Monitor/interface';
+import { compareString } from '@utils/string';
+import { motion } from 'framer-motion';
 
 interface IProps {
    token: IAgentToken;
@@ -20,18 +24,46 @@ interface IProps {
 const AgentItem = ({ token, isLatest }: IProps) => {
    const {
       selectedAgent,
-      isStopping,
       stopAgent,
-      isRunning,
-      isStarting,
       isInstalled,
       unInstallAgent,
       installAgent,
       setSelectedAgent,
+      agentStates,
    } = useContext(AgentContext);
+   const { containers } = useContext(MonitorContext);
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
    const [isClickUpdateCode, setIsClickUpdateCode] = useState(false);
+
+   const isStarting = useMemo(() => {
+      if (token) {
+         return agentStates[token.id]?.isStarting || false;
+      }
+
+      return false;
+   }, [token, agentStates]);
+
+   const isStopping = useMemo(() => {
+      if (token) {
+         return agentStates[token.id]?.isStopping || false;
+      }
+
+      return false;
+   }, [token, agentStates]);
+
+   const isRunning = useMemo(() => {
+      if (token) {
+         const matchingContainer = containers?.find((container: ContainerData) => compareString(container.agent?.agent_name, token?.agent_name));
+         if (matchingContainer?.agent && [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(matchingContainer?.agent?.agent_type)) {
+            return matchingContainer ? matchingContainer?.state === 'running' || false : agentStates[token.id]?.isRunning;
+         } else {
+            return matchingContainer?.state === 'running' || agentStates[token.id]?.isRunning || false;
+         }
+      }
+
+      return false;
+   }, [token, agentStates, containers]);
 
    useEffect(() => {
       setHaveNewVersionCode(false);
@@ -49,7 +81,6 @@ const AgentItem = ({ token, isLatest }: IProps) => {
             AgentType.CustomPrompt,
             AgentType.ModelOnline,
          ].includes(token.agent_type)
-         && isInstalled
       ) {
          const chainId = token?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({
@@ -58,8 +89,8 @@ const AgentItem = ({ token, isLatest }: IProps) => {
          });
          const codeVersion = await cAgent.getCurrentVersion();
          const values = await localStorageService.getItem(token.agent_contract_address);
-         const oldCodeVersion = values ? Number(values) : 1;
-         if (codeVersion > 1 && codeVersion > oldCodeVersion) {
+         const oldCodeVersion = values ? Number(values) : -1;
+         if (oldCodeVersion > 0 && codeVersion > 1 && codeVersion > oldCodeVersion) {
             setHaveNewVersionCode(true);
          } else {
             setHaveNewVersionCode(false);
@@ -105,6 +136,11 @@ const AgentItem = ({ token, isLatest }: IProps) => {
 
    return (
       <Flex
+         as={motion.div}
+         initial={{ opacity: 0 }}
+         animate={{ opacity: 1 }}
+         exit={{ opacity: 0 }}
+         transition={{ duration: "0.5s" }}
          key={token.id}
          className={cs(s.container, token?.id === selectedAgent?.id ? s.isSelected : '')}
          flexDirection="column"
@@ -207,7 +243,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                         {formatLongAddress(token?.creator)}
                      </Text>
                   </Flex>
-                  {hasNewVersionCode && isInstalled && (
+                  {hasNewVersionCode && (
                      <Button
                         className={s.btnUpdate}
                         onClick={handleUpdateCode}

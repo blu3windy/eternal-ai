@@ -1,3 +1,4 @@
-export type IFundAgent = {
-  agentID: string;
+export type IDepositInfo = {
+  address: string;
+  networkName: string;
 };
