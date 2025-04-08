@@ -428,7 +428,7 @@ func (s *Server) Routers() {
 		{
 			// infraTwitterApp.GET("/install", s.InfraTwitterAppAuthenInstall)
 			infraTwitterApp.GET("/callback", s.InfraTwitterAppAuthenCallback)
-			infraTwitterApp.GET("/tweets/search", s.middlewareApiLimit("infra-twitter-app-search", 3, 1*time.Second), s.InfraTwitterAppSearchRecentTweet)
+			infraTwitterApp.GET("/tweets/search", s.middlewareApiLimit(3, 1*time.Second), s.InfraTwitterAppSearchRecentTweet)
 		}
 
 		// storeTradingApp := rootAPI.Group("/store-defi-app")
