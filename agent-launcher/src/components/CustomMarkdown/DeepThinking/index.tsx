@@ -8,9 +8,11 @@ function DeepThinking({
    children,
    isLight = false,
    removeThink = false,
+   status = "waiting",
 }: CustomComponentProps & {
-  isLight?: boolean;
-  removeThink?: boolean;
+   isLight?: boolean;
+   removeThink?: boolean;
+   status?: string;
 }) {
    if (removeThink) {
       return <></>;
@@ -18,14 +20,14 @@ function DeepThinking({
    return (
       <details className={cx(s.details, isLight ? s.isLight : '')} open={true}>
          <summary>
-            <Image
+            {/* <Image
                src={
                   isLight
                      ? 'icons/agent/brain-dark.svg'
                      : 'icons/agent/brain.svg'
                }
-            />
-            <Text>Think</Text>
+            /> */}
+            <Text>{(status === "receiving" || status === "sync-receiving") ? "Thinking..." : "Think"}</Text>
          </summary>
          <p className={s.thinkText}>{children}</p>
       </details>

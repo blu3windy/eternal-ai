@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow, ipcMain, screen } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
@@ -7,7 +7,7 @@ import command from "./share/command-tool.ts";
 
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
 
-autoUpdater.autoDownload = false;
+autoUpdater.autoDownload = true;
 
 if (process.env.NODE_ENV === "development") {
    // autoUpdater.allowDowngrade = true;
@@ -155,8 +155,12 @@ function createWindow() {
       win?.webContents.send("update-downloaded");
       console.log("update-downloaded");
       // autoUpdater.downloadUpdate();
-      autoUpdater.quitAndInstall();
+      // autoUpdater.quitAndInstall();
    });
+
+   ipcMain.on("install-update", () => {
+      autoUpdater.quitAndInstall();
+    })
 
    autoUpdater.on("download-progress", (progress) => {
       win?.webContents.send("download-progress", progress);

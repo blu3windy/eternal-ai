@@ -127,7 +127,6 @@ const AgentTopInfo = () => {
             AgentType.CustomPrompt,
             AgentType.ModelOnline,
          ].includes(selectedAgent.agent_type)
-         && isInstalled
       ) {
          const chainId = selectedAgent?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({
@@ -136,8 +135,8 @@ const AgentTopInfo = () => {
          });
          const codeVersion = await cAgent.getCurrentVersion();
          const values = await localStorageService.getItem(selectedAgent.agent_contract_address);
-         const oldCodeVersion = values ? Number(values) : 1;
-         if (codeVersion > 1 && codeVersion > oldCodeVersion) {
+         const oldCodeVersion = values ? Number(values) : -1;
+         if (oldCodeVersion > 0 && codeVersion > 1 && codeVersion > oldCodeVersion) {
             setHaveNewVersionCode(true);
          } else {
             setHaveNewVersionCode(false);
@@ -291,9 +290,9 @@ const AgentTopInfo = () => {
                                     />
                                  </Flex>
 
-                                 <Text fontSize={'14px'} fontWeight={400} opacity={0.7}>
+                                 {/* <Text fontSize={'14px'} fontWeight={400} opacity={0.7}>
                                     {description}
-                                 </Text>
+                                 </Text> */}
                               </Flex>
                               <Divider color={'#E2E4E8'} my={'16px'} />
                               <AgentOnChainInfo />
@@ -406,7 +405,7 @@ const AgentTopInfo = () => {
                                     </Button>
                                  </>
                               )}
-                              {hasNewVersionCode && isInstalled && (
+                              {hasNewVersionCode && (
                                  <>
                                     <Divider color={'#E2E4E8'} mt={'16px'} mb={'8px'} />
                                     <Button

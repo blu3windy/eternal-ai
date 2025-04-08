@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import Markdown, { Components } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from 'remark-breaks'
 import GeneralCode from "./GenerateCode";
 import DeepThinking from "./DeepThinking";
 import { CustomComponentProps } from "./types";
@@ -61,12 +62,14 @@ function CustomMarkdown({
    components = {},
    isLight = true,
    removeThink = false,
+   status = "waiting",
 }: {
    id: string;
    content: string;
    components?: ComponentExtended;
    isLight?: boolean;
    removeThink?: boolean;
+   status?: string;
 }) {
    const customComponents = useMemo(() => {
       return {
@@ -74,7 +77,7 @@ function CustomMarkdown({
             return <GeneralCode {...props} />;
          },
          think: (props: any) => {
-            return <DeepThinking {...props} isLight={isLight} removeThink={removeThink} />;
+            return <DeepThinking {...props} status={status} isLight={isLight} removeThink={removeThink} />;
          },
          a: (props) => {
             return <CustomLink {...props} />;
@@ -87,7 +90,7 @@ function CustomMarkdown({
          },
          ...components,
       } satisfies any;
-   }, [components, isLight, removeThink]);
+   }, [components, isLight, removeThink, status]);
 
    const children = useMemo(() => preprocessMarkdown(content), [content]);
    const { isOpen, onOpen, onClose } = useDisclosure();
@@ -115,7 +118,7 @@ function CustomMarkdown({
             id={id}
          >
             <Markdown
-               remarkPlugins={[remarkGfm]} // Enables GitHub Flavored Markdown
+               remarkPlugins={[remarkGfm, remarkBreaks]} // Enables GitHub Flavored Markdown
                rehypePlugins={[rehypeRaw]} // Enables raw HTML parsing
                children={children}
                components={customComponents as Components}

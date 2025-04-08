@@ -146,3 +146,14 @@
     stroke: currentColor;
   }
 }
+
+.modalContent {
+  :global {
+    .chakra-modal__header {
+      margin-top: 0 !important;
+    }
+    .modal-content {
+      max-width: 480px;
+    }
+  }
+}

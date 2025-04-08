@@ -5,22 +5,22 @@ import useFundAgent from "../useFundAgent.ts";
 import s from './styles.module.scss';
 
 const DepositModal = React.memo(() => {
-   const { depositAgentID, setDepositAgentID, depositAgentInfo } = useFundAgent();
+   const { depositInfo, setDepositInfo } = useFundAgent();
 
    const onClose = () => {
-      setDepositAgentID(undefined);
+      setDepositInfo(undefined);
    };
 
    return (
       <BaseModal
-         isShow={!!depositAgentID}
+         isShow={!!depositInfo}
          onHide={onClose}
          title={'Deposit'}
          size="small"
          description={''}
          className={s.modalContent}
       >
-         <DepositBox agentID={depositAgentID || ''} />
+         <DepositBox address={depositInfo?.address || ''} networkName={depositInfo?.networkName || ''} />
       </BaseModal>
    );
 });

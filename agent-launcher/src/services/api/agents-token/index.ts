@@ -17,6 +17,16 @@ const envToJson = (str) => {
 
 class CAgentTokenAPI extends CApiClient {
    private prefix = (url: string) => `/meme/${url}`;
+   private agentTokenListCache = new Map<string, { agents: IAgentToken[] }>();
+
+   private getCacheKey(params: any): string {
+      const _params = {
+         ...params,
+         exlude_ids: ""
+      }
+      return JSON.stringify(_params);
+   }
+
    public getChainList = async (): Promise<IChainConnected[] | null> => {
       try {
          const res: IChainConnected[] = await this.api.get(
@@ -38,32 +48,53 @@ class CAgentTokenAPI extends CApiClient {
    };
 
    public getAgentTokenList = async (
-      params: any
+      params: any,
+      callback?: (data: { agents: IAgentToken[] }) => void
    ): Promise<{ agents: IAgentToken[] }> => {
-      const response = (await this.api.get("/agent/dashboard", {
-         params,
-      })) as any;
+      const cacheKey = this.getCacheKey(params);
+      const cachedData = this.agentTokenListCache.get(cacheKey);
 
-      const agents = (response?.rows || []).map((agent: any) => {
-         if (agent?.required_info && typeof agent?.required_info === "string") {
-            agent.required_info = JSON.parse(agent?.required_info);
-         }
+      // Return cached data via callback if available
+      if (cachedData && callback) {
+         callback(cachedData);
+      }
 
-         if (agent?.env_example && typeof agent?.env_example === "string") {
-            console.log('LEON agent.env_example 000', agent.agent_name, agent.env_example);
-            agent.env_example = envToJson(agent?.env_example);
+      try {
+         const response = (await this.api.get("/agent/dashboard", {
+            params,
+         })) as any;
 
-            if (agent.env_example && Object.keys(agent.env_example).length === 0) {
-               agent.env_example = undefined;
+         const agents = (response?.rows || []).map((agent: any) => {
+            if (agent?.required_info && typeof agent?.required_info === "string") {
+               agent.required_info = JSON.parse(agent?.required_info);
             }
 
-            console.log('LEON agent.env_example 111', agent.env_example);
+            if (agent?.env_example && typeof agent?.env_example === "string") {
+               console.log('LEON agent.env_example 000', agent.agent_name, agent.env_example);
+               agent.env_example = envToJson(agent?.env_example);
 
+               if (agent.env_example && Object.keys(agent.env_example).length === 0) {
+                  agent.env_example = undefined;
+               }
+
+               console.log('LEON agent.env_example 111', agent.env_example);
+            }
+            return agent;
+         });
+
+         const result = { agents };
+         
+         // Update cache with new data
+         this.agentTokenListCache.set(cacheKey, result);
+
+         return result;
+      } catch (error) {
+         // If there's cached data, return it on error
+         if (cachedData) {
+            return cachedData;
          }
-         return agent;
-      });
-
-      return { agents };
+         throw error;
+      }
    };
 
    public getAgentTokenDetail = async (

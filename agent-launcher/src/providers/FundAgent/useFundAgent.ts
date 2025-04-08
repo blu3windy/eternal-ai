@@ -1,23 +1,15 @@
 import { create } from "zustand";
-import { AgentInfo } from "../../services/api/agent/types.ts";
+import { IDepositInfo } from "./types.ts";
 
 interface IProps {
-  depositAgentID?: string;
-  setDepositAgentID: (_?: string) => void;
-
-  depositAgentInfo?: AgentInfo;
-  setDepositAgentInfo: (_?: AgentInfo) => void;
+  depositInfo?: IDepositInfo;
+  setDepositInfo: (_?: IDepositInfo) => void;
 }
 
 const useFundAgent = create<IProps, any>((set, get) => ({
-   depositAgentID: '',
-   setDepositAgentID: (depositAgentID) => {
-      set({ depositAgentID });
-   },
-
-   depositAgentInfo: undefined,
-   setDepositAgentInfo: (depositAgentInfo) => {
-      set({ depositAgentInfo });
+   depositInfo: undefined,
+   setDepositInfo: (depositInfo) => {
+      set({ depositInfo: depositInfo });
    },
 }));
 

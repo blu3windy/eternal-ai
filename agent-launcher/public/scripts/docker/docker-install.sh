@@ -80,7 +80,7 @@ fi
 
 # Step 4: Start Colima
 log_message "Starting Colima Docker runtime..."
-if colima start; then
+if colima start --cpu 4 --memory 6; then
     log_message "Colima started successfully"
 
 else

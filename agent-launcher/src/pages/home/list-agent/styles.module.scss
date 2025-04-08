@@ -111,6 +111,21 @@
 .listContainer {
   padding-bottom: 52px;
   max-height: calc(100dvh - 150px);
+  position: relative;
+
+  /* Custom scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
 }
 
 .tableData {

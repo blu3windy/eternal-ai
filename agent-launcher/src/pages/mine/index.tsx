@@ -1,30 +1,43 @@
-import MainLayout from "../../components/layout";
 import { Box, Button, Flex, HStack, IconButton, Image, Menu, MenuButton, MenuItem, MenuList, Text, useClipboard, useToast, VStack } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
-import ROUTERS from "@constants/route-path";
-import { AgentContext } from "@pages/home/provider/AgentContext";
-import { useContext, useMemo, useState, useEffect } from "react";
-import { getTokenIconUrl, formatName, parseSymbolName, TOKEN_ICON_DEFAULT } from "@utils/string";
 import ERC20Balance from "@components/ERC20Balance";
-import { useSelector } from "react-redux";
-import { agentsTradeSelector } from "@stores/states/agent-trade/selector";
-import { IToken } from "@interfaces/token";
-import { formatCurrency, formatLongAddress } from "@utils/format";
-import s from "./styles.module.scss";
-import { useAuth } from "@pages/authen/provider";
 import useERC20Balance from '@components/ERC20Balance/useERC20Balance';
-import { CHAIN_CONFIG, CHAIN_TYPE } from '@constants/chains';
+import { CHAIN_INFO, CHAIN_TYPE } from '@constants/chains';
+import ROUTERS from "@constants/route-path";
 import { NATIVE_TOKEN_ADDRESS } from '@contract/token/constants';
-import { ChainIdToChainType } from '@pages/home/trade-agent/provider/constant';
-import installAgentStorage from '@storage/InstallAgentStorage.ts';
+import { IToken } from "@interfaces/token";
+import { useAuth } from "@pages/authen/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
+import { ChainIdToChainType, InfoToChainType } from '@pages/home/trade-agent/provider/constant';
+import FundAgentProvider from "@providers/FundAgent";
+import useFundAgent from "@providers/FundAgent/useFundAgent";
 import CAgentTokenAPI from '@services/api/agents-token/index.ts';
 import { IAgentToken } from '@services/api/agents-token/interface.ts';
+import installAgentStorage from '@storage/InstallAgentStorage.ts';
+import { agentsTradeSelector } from "@stores/states/agent-trade/selector";
+import { formatCurrency, formatLongAddress } from "@utils/format";
+import { formatName, getTokenIconUrl, parseSymbolName, TOKEN_ICON_DEFAULT } from "@utils/string";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import MainLayout from "../../components/layout";
+import s from "./styles.module.scss";
+import BaseModal from '@components/BaseModal';
+import ExportPrivateKey from '@pages/home/chat-agent/ExportPrivateKey';
+import { useDisclosure } from '@chakra-ui/react';
+import ImportToken from '@components/AgentWallet/ImportToken';
+import { AgentType } from "@pages/home/list-agent/constants";
+import localStorageService from '@storage/LocalStorageService';
+import TransferToken from "@components/AgentWallet/TransferToken";
+import { Wallet } from "ethers";
 
 const MIN_DECIMAL = 2;
 const MAX_DECIMAL = 2;
 
-const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: number }) => {
-  const { currentChain } = useSelector(agentsTradeSelector);
+const TokenItem = ({ token, index, currentChain }: { 
+  token: IToken & { icon: string, price_usd: string | number }, 
+  index: number,
+  currentChain: CHAIN_TYPE 
+}) => {
   const [balance, setBalance] = useState<string | undefined>("0");
   const { coinPrices } = useContext(AgentContext);
 
@@ -32,7 +45,7 @@ const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: 
     if (token.symbol === 'EAI') {
       return coinPrices?.find(p => p.symbol === "EAI")?.price || 0;
     }
-    return 0;
+    return token?.price_usd || 0;
   }, [coinPrices, token?.symbol]);
 
   const usdValue = useMemo(() => {
@@ -80,19 +93,20 @@ const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: 
   );
 };
 
-const Mine = () => {
+const HandleMine = () => {
   const navigate = useNavigate();
   const { coinPrices } = useContext(AgentContext);
   const { signer } = useAuth();
+  const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
+  const { isOpen: isImportModalOpen, onOpen: onImportModalOpen, onClose: onImportModalClose } = useDisclosure();
+  const { isOpen: isTransferModalOpen, onOpen: onTransferModalOpen, onClose: onTransferModalClose } = useDisclosure();
 
   const { onCopy } = useClipboard(signer?.address || "");
   const toast = useToast();
 
   const chainType = CHAIN_TYPE.BASE;
 
-  const chainConfig = useMemo(() => {
-    return CHAIN_CONFIG[chainType];
-  }, [chainType]);
+  const chainConfig = CHAIN_INFO[chainType];
 
   const nativeToken = useMemo(() => {
     return {
@@ -113,27 +127,83 @@ const Mine = () => {
   }, [nativeBalance, coinPrices, nativeToken?.symbol]);
 
   const [installedAgents, setInstalledAgents] = useState<IAgentToken[]>([]);
-  const [agentTokens, setAgentTokens] = useState<(IToken & { icon: string })[]>([]);
+  const [agentTokens, setAgentTokens] = useState<(IToken & { icon: string, price_usd: string | number })[]>([]);
   const cPumpAPI = useMemo(() => new CAgentTokenAPI(), []);
+
+  const { depositInfo, setDepositInfo } = useFundAgent();
+
+  const [importedTokens, setImportedTokens] = useState<IToken[]>([]);
+
+  const loadImportedTokens = async () => {
+    if (!signer?.address) return;
+    
+    try {
+      const storageKey = `imported_tokens_user_${signer.address}`;
+      const existingTokensStr = await localStorageService.getItem(storageKey);
+      const existingTokens: IToken[] = existingTokensStr ? JSON.parse(existingTokensStr) : [];
+      
+      const tokensWithIcons = existingTokens.map(token => ({
+        ...token,
+        icon: getTokenIconUrl(token) || TOKEN_ICON_DEFAULT,
+        price_usd: 0
+      }));
+      
+      setImportedTokens(tokensWithIcons);
+    } catch (error) {
+      console.error('Error loading imported tokens:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadImportedTokens();
+  }, [signer?.address]);
+
+  const userTokens: any[] = useMemo(() => {
+    return [
+      {
+        symbol: "ETH",
+        name: "Ethereum",
+        icon: getTokenIconUrl({ symbol: "ETH" }),
+        address: NATIVE_TOKEN_ADDRESS,
+        price_usd: 0
+      },
+      {
+        symbol: "EAI",
+        name: "Eternal AI",
+        icon: getTokenIconUrl({ symbol: "EAI" }),
+        address: InfoToChainType[chainType]?.nativeAddress,
+        price_usd: 0
+      },
+      ...agentTokens,
+      ...importedTokens
+    ];
+  }, [agentTokens, importedTokens, chainType]);
 
   useEffect(() => {
     const fetchInstalledAgents = async () => {
       try {
         const installIds = await installAgentStorage.getAgentIds();
 
-        console.log('installIds', installIds);
         if (installIds.length === 0) return;
 
         const params: any = {
           page: 1,
           limit: 100,
           ids: installIds.join(','),
+          agent_types: [
+            AgentType.Model,
+            AgentType.ModelOnline,
+            AgentType.UtilityJS,
+            AgentType.UtilityPython,
+            AgentType.CustomUI,
+            AgentType.CustomPrompt,
+            AgentType.Infra
+          ].join(','),
         };
         
         const { agents } = await cPumpAPI.getAgentTokenList(params);
         setInstalledAgents(agents);
         
-        // Extract tokens from installed agents
         const tokens = agents
           .filter(agent => agent.token_address && agent.token_symbol)
           .map(agent => ({
@@ -146,7 +216,8 @@ const Mine = () => {
               icon: agent.token_image_url,
               image_url: agent.token_image_url
             }) || TOKEN_ICON_DEFAULT,
-            chain: agent.token_network_id ? ChainIdToChainType[agent.token_network_id] : CHAIN_TYPE.BASE
+            chain: agent.token_network_id ? ChainIdToChainType[agent.token_network_id] : CHAIN_TYPE.BASE,
+            price_usd: agent.meme?.price_usd || 0,
           }));
         
         setAgentTokens(tokens);
@@ -173,28 +244,53 @@ const Mine = () => {
     navigate(ROUTERS.HOME);
   };
 
-  const tokenIcon = useMemo(() => {
-    return getTokenIconUrl({ symbol: "EAI" });
-  }, []);
-
   const handleDeposit = () => {
-    // setDepositAgentID(selectedAgent?.id);
+    setDepositInfo({
+      address: signer?.address || "",
+      networkName: chainConfig?.name || ''
+    });
   };
 
   const handleTransfer = () => {
-    // onTransferModalOpen();
+    onTransferModalOpen();
   };
 
   const handleExportPrvKey = () => {
-    // onModalOpen();
+    onModalOpen();
   };
 
   const handleImportToken = () => {
-    // onImportModalOpen();
+    onImportModalOpen();
   };
 
+  const userAddress = useMemo(() => {
+    return signer?.address || '';
+  }, [signer?.address]);
+
+  const availableNetworks = useMemo(() => {
+    return [CHAIN_INFO[chainType]];
+  }, [chainType]);
+
+  const transferTokens = useMemo(() => {
+    const baseTokens = [
+      {
+        ...nativeToken,
+        icon: getTokenIconUrl({ symbol: nativeToken.symbol }) || TOKEN_ICON_DEFAULT
+      },
+      {
+        symbol: "EAI",
+        name: "Eternal AI",
+        icon: getTokenIconUrl({ symbol: "EAI" }) || TOKEN_ICON_DEFAULT,
+        address: InfoToChainType[chainType]?.nativeAddress,
+        price_usd: 0
+      }
+    ];
+
+    return [...baseTokens, ...agentTokens, ...importedTokens];
+  }, [nativeToken, agentTokens, importedTokens, chainType]);
+
   return (
-    <MainLayout className={s.layoutContainer}>
+    <FundAgentProvider>
       <Box className={s.container}>
         <Box mb={6}>
           <Button variant="ghost" onClick={handleBack} leftIcon={
@@ -272,34 +368,67 @@ const Mine = () => {
           </Flex>
 
           <VStack spacing={2} align="stretch" mt={'48px'}>
-            <TokenItem
-              token={{
-                symbol: "ETH",
-                name: "Ethereum",
-                icon: getTokenIconUrl({ symbol: "ETH" }),
-                address: NATIVE_TOKEN_ADDRESS
-              }}
-              index={0}
-            />
-            <TokenItem
-              token={{
-                symbol: "EAI",
-                name: "Eternal AI",
-                icon: getTokenIconUrl({ symbol: "EAI" }),
-                address: ""
-              }}
-              index={1}
-            />
-            {agentTokens.map((token, index) => (
+            {userTokens.map((token, index) => (
               <TokenItem
-                key={token.address}
+                key={`${token.address}_${index}`}
                 token={token}
-                index={index + 2}
+                index={index}
+                currentChain={chainType}
               />
             ))}
           </VStack>
         </Box>
       </Box>
+      <BaseModal 
+        isShow={isModalOpen} 
+        onHide={onModalClose} 
+        title={'Export private key'} 
+        size="small"
+        className={s.modalContent}
+      >
+        <ExportPrivateKey privateKey={signer?.privateKey || ''} />
+      </BaseModal>
+      <BaseModal 
+        isShow={isImportModalOpen} 
+        onHide={onImportModalClose} 
+        title={'Import Token'} 
+        size="small"
+        className={s.modalContent}
+      >
+        <ImportToken 
+          onClose={() => {
+            onImportModalClose();
+            loadImportedTokens();
+          }}
+          pairs={userTokens}
+          storageKey={`imported_tokens_user_${userAddress}`}
+          currentChain={chainType}
+        />
+      </BaseModal>
+      <BaseModal 
+        isShow={isTransferModalOpen} 
+        onHide={onTransferModalClose} 
+        title={'Transfer Token'} 
+        size="small"
+        className={s.modalContent}
+      >
+        <TransferToken 
+          onClose={onTransferModalClose} 
+          availableNetworks={availableNetworks} 
+          tokens={transferTokens} 
+          pairs={[...agentTokens, ...importedTokens]}
+          currentChain={chainType}
+          wallet={signer as Wallet}
+        />
+      </BaseModal>
+    </FundAgentProvider>
+  );
+};
+
+const Mine = () => {
+  return (
+    <MainLayout className={s.layoutContainer}>
+      <HandleMine />
     </MainLayout>
   );
 };

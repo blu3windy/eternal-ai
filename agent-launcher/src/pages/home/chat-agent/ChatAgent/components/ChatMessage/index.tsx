@@ -13,11 +13,13 @@ import duration from "dayjs/plugin/duration";
 import { IChatMessage } from "src/services/api/agent/types.ts";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import CustomMarkdown from "@components/CustomMarkdown";
-import { compareString } from "@utils/string.ts";
+import { compareString, removeInvalidTags } from "@utils/string.ts";
 import { getExplorerByChain } from "@utils/helpers.ts";
 import { motion } from "framer-motion";
 import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/WaitingForGenerateText";
 import { v4 } from "uuid";
+import { useDispatch } from "react-redux";
+import { openWithUrl } from "@stores/states/floating-web-view/reducer";
 
 dayjs.extend(duration);
 
@@ -29,9 +31,11 @@ type Props = {
    isSending: boolean;
    initialMessage?: boolean;
    updateMessage: (id: string, data: Partial<IChatMessage>, isUpdateDB?: boolean) => void;
+   messages: IChatMessage[];
 };
 
-const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, initialMessage, updateMessage }: Props) => {
+const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSending, initialMessage, updateMessage }: Props) => {
+   const dispatch = useDispatch();
    const { selectedAgent } = useContext(AgentContext);
    const [markdownId, setMarkdownId] = useState<string>(v4());
    const [hours, setHours] = useState<number | null>(0);
@@ -39,26 +43,46 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
    const [seconds, setSeconds] = useState<number | null>(0);
 
    useEffect(() => {
-      if (message.status === "waiting") {
-         const timeout = setTimeout(() => {
-            updateMessage(message.id, {
-               status: "sync-waiting",
-            });
-         }, 1000 * 60 * 3);
+      const createdAt = message?.createdAt ? new Date(message?.createdAt).getTime() : new Date().getTime();
+      const now = new Date().getTime();
 
-         return () => {
-            clearTimeout(timeout);
-         };
-      } else if (message.status === "sync-waiting") {
-         const timeout = setTimeout(() => {
+      const remainingTime = (now - createdAt);
+
+      if (message.status === "waiting" || message.status === "receiving") {
+         const waitingTime = 1000 * 60 * 3;
+         if (remainingTime < waitingTime) {
+            const timeout = setTimeout(() => {
+               updateMessage(message.id, {
+                  status: message.status === "waiting" ? "sync-waiting" : "sync-receiving",
+               });
+            }, waitingTime - remainingTime);
+
+            return () => {
+               clearTimeout(timeout);
+            };
+         } else {
+            updateMessage(message.id, {
+               status: message.status === "waiting" ? "sync-waiting" : "sync-receiving",
+            });
+         }
+      } else if (message.status === "sync-waiting" || message.status === "sync-receiving") {
+         const waitingTime = 1000 * 60 * 30;
+         if (remainingTime < waitingTime) {
+            const timeout = setTimeout(() => {
+               updateMessage(message.id, {
+                  status: "failed",
+                  msg: "Server is not responding",
+               });
+            }, waitingTime - remainingTime);
+            return () => {
+               clearTimeout(timeout);
+            };
+         } else {
             updateMessage(message.id, {
                status: "failed",
                msg: "Server is not responding",
             });
-         }, 1000 * 60 * 30);
-         return () => {
-            clearTimeout(timeout);
-         };
+         }
       }
    }, [message.status, updateMessage, message.id]);
 
@@ -82,16 +106,27 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
    }, [message]);
 
    const renderMessage = useMemo(() => {
-      if (message.status === 'received') {
-         // return message.msg.replace(/<processing>(.*?)<\/processing>/g, (match, p1) => {
-         //    return `<processing>${p1}</processing>`
-         // })
-
-         // remove processing tag
-         return `${message.msg || ''}`.replace(/<processing>(.*?)<\/processing>/g, '')
+      const textStr = removeInvalidTags(message.msg || '')
+      if(message.status === "receiving" || message.status === "sync-receiving") {
+         return textStr || '';
       }
-      return message.msg;
-   }, [message])
+      return `${textStr || ''}`
+         .replace(/<processing>[\s\S]*?<\/processing>/g, '') // remove processing tag
+         .replace(/<think>[\s\S]*?<\/think>/g, '') // remove think tag
+   }, [message?.msg, message?.status])
+
+   const processingWebViewUrl = useMemo(() => {
+      try {
+         const matches = `${renderMessage || ''}`.match(/<processing>[\s\S]*?<\/processing>/g);
+         if (matches?.length) {
+            let url = matches[0] || '';
+            url = url.replace('<processing>', '').replace('</processing>', '');
+            return url;
+         }
+      } catch (error) {
+         return null;
+      }
+   }, [renderMessage]);
 
    const renderContent = () => {
       return (
@@ -119,6 +154,10 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
 
    const renderMarkdown = () => {
       if (message.status === "waiting" || message.status === "sync-waiting") {
+         return <WaitingAnimation color={message?.is_reply ? "black" : "white"} />;
+      }
+
+      if ((message.status === "receiving" || message.status === "sync-receiving") && !!processingWebViewUrl) {
          return <WaitingAnimation color={message?.is_reply ? "black" : "white"} />;
       }
 
@@ -172,14 +211,14 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
                      <Text>Export to PDF</Text>
                   </motion.div>
                </div>
-               <CustomMarkdown id={markdownId} content={renderMessage} isLight={false} removeThink={initialMessage} />
+               <CustomMarkdown id={markdownId} status={message.status} content={renderMessage} isLight={false} removeThink={initialMessage} />
             </div>
          );
       }
 
       return (
          <div className={cs(s.markdown, "markdown-body")}>
-            <CustomMarkdown id={markdownId} content={renderMessage} isLight={false} removeThink={initialMessage} />
+            <CustomMarkdown status={message.status} id={markdownId} content={renderMessage} isLight={false} removeThink={initialMessage} />
          </div>
       );
    };
@@ -205,8 +244,41 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
          <Box
             className={cs(s.content, { [s.question]: !message?.is_reply }, { [s.reply]: message?.is_reply }, { [s.failed]: message?.status === "failed" })}
             alignSelf={message?.is_reply ? "flex-start" : "flex-end"}
+            position={"relative"}
          >
             {renderContent()}
+            {processingWebViewUrl && (
+               <Box
+                  position={"absolute"}
+                  right={"-40px"}
+                  bottom={0}
+                  borderRadius={"50%"}
+                  border="1px solid #F4F4F4"
+                  background={"white"}
+                  boxShadow={"2px 2px 8px 0px rgba(0, 0, 0, 0.15)"}
+                  width={"32px"}
+                  height={"32px"}
+                  display={"flex"}
+                  alignItems={"center"}
+                  justifyContent={"center"}
+                  transition={"all 0.2s ease-in-out"}
+                  _hover={{
+                     cursor: "pointer",
+                     transform: "translateY(-2px)",
+                     transition: "transform 0.2s ease-in-out",
+                  }}
+                  onClick={() => {
+                     const replyToMessage = messages.find(item => item.id === message.replyTo);
+                     dispatch(openWithUrl({
+                        url: processingWebViewUrl,
+                        task: 'Searching',
+                        taskProcessing: replyToMessage?.msg || ''
+                     }))
+                  }}
+               >
+                  <SvgInset svgUrl="icons/ic-computer.svg" size={16}/>
+               </Box>
+            )}
          </Box>
 
          {(message.status === "receiving" || message.status === "waiting") && message.queryMessageState && !compareString(message.queryMessageState, "DONE") && (

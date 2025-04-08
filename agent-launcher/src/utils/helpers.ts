@@ -1,4 +1,4 @@
-import { BASE_CHAIN_ID } from "@constants/chains";
+import { BASE_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID } from "@constants/chains";
 import dayjs from "dayjs";
 import { BigNumber } from "ethers";
 
@@ -29,6 +29,7 @@ export const getExplorerByChain = ({
     // [ChainId.Tron]: 'trx',
     // [ChainId.MonadTestnet]: 'monad-testnet',
     // [ChainId.MegaETHTestnet]: 'megaeth-testnet',
+    [BASE_SEPOLIA_CHAIN_ID]: 'base-sepolia',
   };
 
   switch (chainId?.toString?.()) {
@@ -56,6 +57,9 @@ export const getExplorerByChain = ({
     // case ChainId.MegaETHTestnet: {
     //   return ``;
     // }
+    case BASE_SEPOLIA_CHAIN_ID.toString(): {
+      return `https://sepolia.basescan.org/${type}/${address}`;
+    }
     default: {
       if (chainIdToChainName?.[chainId?.toString?.()]) {
         return `https://www.okx.com/web3/explorer/${

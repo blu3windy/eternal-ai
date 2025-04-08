@@ -105,16 +105,16 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                const filterMessages = items
                   .filter((item) => item.createdAt)
                   .map((item) => {
-                     if (item.status === "waiting") {
-                        const now = new Date();
-                        const createdAt = new Date(item.createdAt || "");
-                        const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
 
+                     const now = new Date();
+                     const createdAt = new Date(item.createdAt || "");
+                     const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+                     if (item.status === "waiting" || item.status === "receiving") {
                         if (diffMinutes >= 3) {
                            if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
                               const updateMessage = {
                                  ...item,
-                                 status: "sync-waiting",
+                                 status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
                               };
                               return updateMessage;
                            }
@@ -165,17 +165,17 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             is_reply: false,
             name: "You",
             attachments,
+            createdAt: new Date().getTime()
          };
-
-         setMessages((prev) => [...prev, newMessage]);
-         setTimeout(() => {
-            scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-         }, 0);
 
          chatAgentDatabase.addChatItem({
             ...newMessage,
             threadId: threadId,
          });
+         setMessages((prev) => [...prev, newMessage]);
+         setTimeout(() => {
+            scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+         }, 0);
 
          const messageId = v4();
          const responseMsg: IChatMessage = {
@@ -187,16 +187,17 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             replyTo: userMessageId,
             is_reply: true,
             name: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
+            createdAt: new Date().getTime()
          };
-
-         setMessages((prev) => [...prev, responseMsg]);
 
          setTimeout(() => {
             chatAgentDatabase.addChatItem({
                ...responseMsg,
                threadId: threadId,
             });
-         }, 10);
+         }, 5);
+
+         setMessages((prev) => [...prev, responseMsg]);
 
          await sendMessageToServer(messageId, Number(id), message, attachments);
 
@@ -593,14 +594,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             const newMessage: IChatMessage = {
                ...targetMessage,
                id: userMessageId,
+               createdAt: new Date().getTime()
             };
-
-            setMessages((prev) => [...prev, newMessage]);
 
             chatAgentDatabase.addChatItem({
                ...newMessage,
                threadId: threadId,
             });
+
+            setMessages((prev) => [...prev, newMessage]);
 
             const messageId = v4();
             const responseMsg: IChatMessage = {
@@ -612,14 +614,17 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                replyTo: userMessageId,
                name: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
                is_reply: true,
+               createdAt: new Date().getTime()
             };
 
-            setMessages((prev) => [...prev, responseMsg]);
+            setTimeout(() => {
+               chatAgentDatabase.addChatItem({
+                  ...responseMsg,
+                  threadId: threadId,
+               });
+            }, 5)
 
-            chatAgentDatabase.addChatItem({
-               ...responseMsg,
-               threadId: threadId,
-            });
+            setMessages((prev) => [...prev, responseMsg]);
 
             await sendMessageToServer(messageId, Number(id), targetMessage?.msg, targetMessage.attachments);
          }
