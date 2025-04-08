@@ -13,7 +13,7 @@ import duration from "dayjs/plugin/duration";
 import { IChatMessage } from "src/services/api/agent/types.ts";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import CustomMarkdown from "@components/CustomMarkdown";
-import { compareString } from "@utils/string.ts";
+import { compareString, removeInvalidTags } from "@utils/string.ts";
 import { getExplorerByChain } from "@utils/helpers.ts";
 import { motion } from "framer-motion";
 import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/WaitingForGenerateText";
@@ -48,12 +48,12 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
 
       const remainingTime = (now - createdAt);
 
-      if (message.status === "waiting") {
+      if (message.status === "waiting" || message.status === "receiving") {
          const waitingTime = 1000 * 60 * 3;
          if (remainingTime < waitingTime) {
             const timeout = setTimeout(() => {
                updateMessage(message.id, {
-                  status: "sync-waiting",
+                  status: message.status === "waiting" ? "sync-waiting" : "sync-receiving",
                });
             }, waitingTime - remainingTime);
 
@@ -62,10 +62,10 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
             };
          } else {
             updateMessage(message.id, {
-               status: "sync-waiting",
+               status: message.status === "waiting" ? "sync-waiting" : "sync-receiving",
             });
          }
-      } else if (message.status === "sync-waiting") {
+      } else if (message.status === "sync-waiting" || message.status === "sync-receiving") {
          const waitingTime = 1000 * 60 * 30;
          if (remainingTime < waitingTime) {
             const timeout = setTimeout(() => {
@@ -106,15 +106,18 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
    }, [message]);
 
    const renderMessage = useMemo(() => {
-      if(message.status === "receiving") {
-         return message.msg || '';
+      const textStr = removeInvalidTags(message.msg || '')
+      if(message.status === "receiving" || message.status === "sync-receiving") {
+         return textStr || '';
       }
-      return `${message.msg || ''}`.replace(/<processing>(.*?)<\/processing>/g, '')
+      return `${textStr || ''}`
+         .replace(/<processing>[\s\S]*?<\/processing>/g, '') // remove processing tag
+         .replace(/<think>[\s\S]*?<\/think>/g, '') // remove think tag
    }, [message?.msg, message?.status])
 
    const processingWebViewUrl = useMemo(() => {
       try {
-         const matches = `${renderMessage || ''}`.match(/<processing>(.*?)<\/processing>/g);
+         const matches = `${renderMessage || ''}`.match(/<processing>[\s\S]*?<\/processing>/g);
          if (matches?.length) {
             let url = matches[0] || '';
             url = url.replace('<processing>', '').replace('</processing>', '');
@@ -154,7 +157,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          return <WaitingAnimation color={message?.is_reply ? "black" : "white"} />;
       }
 
-      if (message.status === "receiving" && !!processingWebViewUrl) {
+      if ((message.status === "receiving" || message.status === "sync-receiving") && !!processingWebViewUrl) {
          return <WaitingAnimation color={message?.is_reply ? "black" : "white"} />;
       }
 
