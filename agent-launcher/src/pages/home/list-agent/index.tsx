@@ -774,10 +774,10 @@ const AgentsList = () => {
                            textAlign="center"
                         >
                            <Text fontSize="lg" fontWeight="bold">
-No agents installed?
+                              No agents installed?
                            </Text>
                            <Text>
-                     Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
+                              Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
                            </Text>
                         </VStack>
                      )}
