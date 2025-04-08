@@ -425,7 +425,7 @@ func (s *Server) GetDashBoardAgent(c *gin.Context) {
 	}
 
 	model := s.stringFromContextQuery(c, "model")
-	userAddress, err := s.getUserAddressFromTK1Token(c)
+	userAddress, _ := s.getUserAddressFromTK1Token(c)
 	installed, _ := s.boolFromContextQuery(c, "installed")
 	ids, _ := s.uintArrayFromContextQuery(c, "ids")
 	exludeIds, _ := s.uintArrayFromContextQuery(c, "exlude_ids")
@@ -450,7 +450,7 @@ func (s *Server) GetDashBoardAgentDetail(c *gin.Context) {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrBadRequest)})
 		return
 	}
-	userAddress, err := s.getUserAddressFromTK1Token(c)
+	userAddress, _ := s.getUserAddressFromTK1Token(c)
 	ms, _, err := s.nls.GetDashboardAgentInfos(ctx, []string{}, userAddress, chain, -1, []int{}, tokenAddress, search, "",
 		nil, []uint{}, []uint{}, sortStr, page, limit)
 
@@ -463,7 +463,6 @@ func (s *Server) GetDashBoardAgentDetail(c *gin.Context) {
 		return
 	}
 	ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrTokenNotFound)})
-	return
 }
 
 func (s *Server) GetTokenInfoByContract(c *gin.Context) {
