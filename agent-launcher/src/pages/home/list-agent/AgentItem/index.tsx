@@ -36,33 +36,33 @@ const AgentItem = ({ token, isLatest }: IProps) => {
    const [isClickUpdateCode, setIsClickUpdateCode] = useState(false);
 
    const isStarting = useMemo(() => {
-      if (selectedAgent) {
-         return agentStates[selectedAgent.id]?.isStarting || false;
+      if (token) {
+         return agentStates[token.id]?.isStarting || false;
       }
 
       return false;
-   }, [selectedAgent, agentStates]);
+   }, [token, agentStates]);
 
    const isStopping = useMemo(() => {
-      if (selectedAgent) {
-         return agentStates[selectedAgent.id]?.isStopping || false;
+      if (token) {
+         return agentStates[token.id]?.isStopping || false;
       }
 
       return false;
-   }, [selectedAgent, agentStates]);
+   }, [token, agentStates]);
 
    const isRunning = useMemo(() => {
-      if (selectedAgent) {
-         const matchingContainer = containers?.find((container: ContainerData) => compareString(container.agent?.agent_name, selectedAgent?.agent_name));
+      if (token) {
+         const matchingContainer = containers?.find((container: ContainerData) => compareString(container.agent?.agent_name, token?.agent_name));
          if (matchingContainer?.agent && [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(matchingContainer?.agent?.agent_type)) {
-            return matchingContainer ? matchingContainer?.state === 'running' || false : agentStates[selectedAgent.id]?.isRunning;
+            return matchingContainer ? matchingContainer?.state === 'running' || false : agentStates[token.id]?.isRunning;
          } else {
-            return matchingContainer?.state === 'running' || agentStates[selectedAgent.id]?.isRunning || false;
+            return matchingContainer?.state === 'running' || agentStates[token.id]?.isRunning || false;
          }
       }
 
       return false;
-   }, [selectedAgent, agentStates, containers]);
+   }, [token, agentStates, containers]);
 
    useEffect(() => {
       setHaveNewVersionCode(false);
