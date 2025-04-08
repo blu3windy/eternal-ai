@@ -168,15 +168,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             createdAt: new Date().getTime()
          };
 
-         setMessages((prev) => [...prev, newMessage]);
-         setTimeout(() => {
-            scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-         }, 0);
-
          chatAgentDatabase.addChatItem({
             ...newMessage,
             threadId: threadId,
          });
+         setMessages((prev) => [...prev, newMessage]);
+         setTimeout(() => {
+            scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+         }, 0);
 
          const messageId = v4();
          const responseMsg: IChatMessage = {
@@ -191,14 +190,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             createdAt: new Date().getTime()
          };
 
-         setMessages((prev) => [...prev, responseMsg]);
-
          setTimeout(() => {
             chatAgentDatabase.addChatItem({
                ...responseMsg,
                threadId: threadId,
             });
-         }, 10);
+         }, 5);
+
+         setMessages((prev) => [...prev, responseMsg]);
 
          await sendMessageToServer(messageId, Number(id), message, attachments);
 
@@ -598,12 +597,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                createdAt: new Date().getTime()
             };
 
-            setMessages((prev) => [...prev, newMessage]);
-
             chatAgentDatabase.addChatItem({
                ...newMessage,
                threadId: threadId,
             });
+
+            setMessages((prev) => [...prev, newMessage]);
 
             const messageId = v4();
             const responseMsg: IChatMessage = {
@@ -618,12 +617,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                createdAt: new Date().getTime()
             };
 
-            setMessages((prev) => [...prev, responseMsg]);
+            setTimeout(() => {
+               chatAgentDatabase.addChatItem({
+                  ...responseMsg,
+                  threadId: threadId,
+               });
+            }, 5)
 
-            chatAgentDatabase.addChatItem({
-               ...responseMsg,
-               threadId: threadId,
-            });
+            setMessages((prev) => [...prev, responseMsg]);
 
             await sendMessageToServer(messageId, Number(id), targetMessage?.msg, targetMessage.attachments);
          }
