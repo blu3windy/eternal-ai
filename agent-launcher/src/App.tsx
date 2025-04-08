@@ -13,14 +13,9 @@ import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import s from "./styles/styles.module.scss";
 
-<<<<<<< Updated upstream
 import { Box, Flex, Spinner, Text } from "@chakra-ui/react";
 import { motion } from "framer-motion";
-=======
-import { motion, AnimatePresence } from "framer-motion";
-import { Box, Text, Button, Spinner, Flex } from "@chakra-ui/react";
 import { InitializeProvider } from "@pages/initialize/provider.tsx";
->>>>>>> Stashed changes
 
 function App() {
    const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -61,35 +56,6 @@ function App() {
 
    return (
       <>
-<<<<<<< Updated upstream
-         <Provider store={store}>
-            <PersistGate loading={null} persistor={persistor}>
-               <SyncTaskFromStorage />
-               <AuthProvider>
-                  <Router basename="/">
-                     <Routes>
-                        <Route path={ROUTERS.HOME} element={<Home />} />
-                        <Route path={ROUTERS.MINE} element={<Mine />} />
-                        {/* Wildcard route to catch all unmatched paths */}
-                        <Route path="*" element={<Navigate to={ROUTERS.HOME} />} />
-                     </Routes>
-                  </Router>
-               </AuthProvider>
-            </PersistGate>
-         </Provider>
-         {(updateAvailable) && (
-            <motion.div
-               initial={{ y: 0, opacity: 0 }}
-               animate={{ y: 0, opacity: 1 }}
-               exit={{ y: 0, opacity: 0 }}
-               transition={{ duration: 0.3, ease: "easeOut" }}
-               className={`${s.snackbar}`}
-               onClick={updateDownloadProcessing ? undefined : handleUpdateDownloaded}
-               style={{
-                  cursor: updateDownloadProcessing ? "default" : "pointer"
-               }}
-            >
-=======
          <InitializeProvider>
             <Provider store={store}>
                <PersistGate loading={null} persistor={persistor}>
@@ -127,8 +93,6 @@ function App() {
                               <Text fontWeight={700} fontSize={"16px"}>Downloading... {updateDownloadProcessing?.percent?.toFixed(0)}%</Text>
                               <Text fontSize={"12px"} opacity={0.7}>The app will automatically restart when finished.</Text>
                            </Box>
->>>>>>> Stashed changes
-
                         </> : <>
                         🎉
                            <Box>
