@@ -27,6 +27,7 @@ import { useDisclosure } from '@chakra-ui/react';
 import ImportToken from '@components/AgentWallet/ImportToken';
 import { AgentType } from "@pages/home/list-agent/constants";
 import localStorageService from '@storage/LocalStorageService';
+import TransferToken from "@components/AgentWallet/TransferToken";
 
 const MIN_DECIMAL = 2;
 const MAX_DECIMAL = 2;
@@ -97,6 +98,7 @@ const HandleMine = () => {
   const { signer } = useAuth();
   const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
   const { isOpen: isImportModalOpen, onOpen: onImportModalOpen, onClose: onImportModalClose } = useDisclosure();
+  const { isOpen: isTransferModalOpen, onOpen: onTransferModalOpen, onClose: onTransferModalClose } = useDisclosure();
 
   const { onCopy } = useClipboard(signer?.address || "");
   const toast = useToast();
@@ -249,7 +251,7 @@ const HandleMine = () => {
   };
 
   const handleTransfer = () => {
-    // onTransferModalOpen();
+    onTransferModalOpen();
   };
 
   const handleExportPrvKey = () => {
@@ -263,6 +265,28 @@ const HandleMine = () => {
   const userAddress = useMemo(() => {
     return signer?.address || '';
   }, [signer?.address]);
+
+  const availableNetworks = useMemo(() => {
+    return [CHAIN_INFO[chainType]];
+  }, [chainType]);
+
+  const transferTokens = useMemo(() => {
+    const baseTokens = [
+      {
+        ...nativeToken,
+        icon: getTokenIconUrl({ symbol: nativeToken.symbol }) || TOKEN_ICON_DEFAULT
+      },
+      {
+        symbol: "EAI",
+        name: "Eternal AI",
+        icon: getTokenIconUrl({ symbol: "EAI" }) || TOKEN_ICON_DEFAULT,
+        address: InfoToChainType[chainType]?.nativeAddress,
+        price_usd: 0
+      }
+    ];
+
+    return [...baseTokens, ...agentTokens, ...importedTokens];
+  }, [nativeToken, agentTokens, importedTokens, chainType]);
 
   return (
     <FundAgentProvider>
@@ -377,6 +401,21 @@ const HandleMine = () => {
           }}
           pairs={userTokens}
           storageKey={`imported_tokens_user_${userAddress}`}
+          currentChain={chainType}
+        />
+      </BaseModal>
+      <BaseModal 
+        isShow={isTransferModalOpen} 
+        onHide={onTransferModalClose} 
+        title={'Transfer Token'} 
+        size="small"
+        className={s.modalContent}
+      >
+        <TransferToken 
+          onClose={onTransferModalClose} 
+          availableNetworks={availableNetworks} 
+          tokens={transferTokens} 
+          pairs={[...agentTokens]}
           currentChain={chainType}
         />
       </BaseModal>

@@ -342,7 +342,7 @@ const availableNetworks = useMemo(() => {
       </BaseModal>
 
       <BaseModal isShow={isTransferModalOpen} onHide={onTransferModalClose} title={'Transfer Token'} size="small" className={s.modalContent}>
-        <TransferToken onClose={onTransferModalClose} availableNetworks={availableNetworks} tokens={transferTokens} pairs={pairs} />
+        <TransferToken onClose={onTransferModalClose} availableNetworks={availableNetworks} tokens={transferTokens} pairs={pairs} currentChain={chainType}/>
       </BaseModal>
     </>
   );

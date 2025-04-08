@@ -52,10 +52,10 @@ interface TransferTokenProps {
       }[];
     tokens: IToken[];
     pairs: IToken[];
+    currentChain: CHAIN_TYPE;
 }
 
-const TokenItem = ({ token, index, showUsdValue = false, onClick }: { token: IToken & { icon: string }, index: number, showUsdValue?: boolean, onClick?: () => void }) => {
-    const { currentChain } = useSelector(agentsTradeSelector);
+const TokenItem = ({ token, index, showUsdValue = false, onClick, currentChain }: { token: IToken & { icon: string }, index: number, showUsdValue?: boolean, onClick?: () => void, currentChain: CHAIN_TYPE }) => {
     const [balance, setBalance] = useState<string | undefined>("0");
     const { selectedAgent, coinPrices } = useContext(AgentContext);
 
@@ -128,6 +128,7 @@ const TransferTokenForm = ({
     estimatedFee,
     isNativeToken,
     pairs,
+    currentChain,
 }: {
     values: TransferTokenFormValues;
     isSubmitting: boolean;
@@ -142,6 +143,7 @@ const TransferTokenForm = ({
     estimatedFee: string;
     isNativeToken: boolean;
     pairs: IToken[];
+    currentChain: CHAIN_TYPE;
 }) => {
     const { isOpen: isTokenOpen, onOpen: onTokenOpen, onClose: onTokenClose } = useDisclosure();
     const { isOpen: isNetworkOpen, onOpen: onNetworkOpen, onClose: onNetworkClose } = useDisclosure();
@@ -269,6 +271,7 @@ const TransferTokenForm = ({
                                                     setFieldValue('token', token.address);
                                                     onTokenClose();
                                                 }}
+                                                currentChain={currentChain}
                                             />
                                         );
                                     })}
@@ -357,10 +360,9 @@ const TransferTokenForm = ({
     );
 };
 
-const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetworks, tokens, pairs }) => {
+const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetworks, tokens, pairs, currentChain }) => {
     const toast = useToast();
     const { selectedAgent, agentWallet } = useContext(AgentContext);
-    const { currentChain } = useSelector(agentsTradeSelector);
     const [selectedTokenBalance, setSelectedTokenBalance] = useState<string>("0");
     const [estimatedFee, setEstimatedFee] = useState<string>("0");
     const [isNativeToken, setIsNativeToken] = useState<boolean>(false);
@@ -541,6 +543,7 @@ const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetwork
                             estimatedFee={estimatedFee}
                             isNativeToken={isNativeToken}
                             pairs={pairs}
+                            currentChain={currentChain}
                         />
                     );
                 }}
