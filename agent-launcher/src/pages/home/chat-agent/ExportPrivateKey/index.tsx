@@ -1,15 +1,15 @@
 import {Box, Flex, Text} from "@chakra-ui/react";
 import s from './styles.module.scss';
-import React, {useContext} from "react";
-import { AgentContext } from "@pages/home/provider/AgentContext";
+import React from "react";
 import copy from "copy-to-clipboard";
 import toast from "react-hot-toast";
+interface ExportPrivateKeyProps {
+  privateKey: string;
+}
 
-const ExportPrivateKey = () => {
-  const { agentWallet, } = useContext(AgentContext);
-
-  const onClickCopy = (address: string) => {
-    copy(address);
+const ExportPrivateKey: React.FC<ExportPrivateKeyProps> = ({ privateKey }) => {
+  const onClickCopy = (value: string) => {
+    copy(value);
     toast.success('Copied.');
   };
 
@@ -17,8 +17,8 @@ const ExportPrivateKey = () => {
     <Flex className={s.container} h={"100%"} direction={"column"} justifyContent={"center"} alignItems={"center"} gap={"32px"} py={"24px"}>
       <Flex direction={"column"} gap={"12px"} w={"100%"}>
         <Flex direction={"column"} gap={"20px"} w={'100%'} borderRadius={"28px"} border={"1px dashed #E1DDDD"} p={"50px 50px"}>
-          <Text fontSize={"16px"} fontWeight={400} textAlign={"center"} opacity={0.6}>{agentWallet?.privateKey}</Text>
-          <Flex className={s.copyBox} alignItems={"center"} gap={"0px"} onClick={() => onClickCopy(agentWallet?.privateKey || '')}>
+          <Text fontSize={"16px"} fontWeight={400} textAlign={"center"} opacity={0.6}>{privateKey}</Text>
+          <Flex className={s.copyBox} alignItems={"center"} gap={"0px"} onClick={() => onClickCopy(privateKey || '')}>
             <Text color="#000" fontSize="14px" fontWeight={400}>
               Copy
             </Text>

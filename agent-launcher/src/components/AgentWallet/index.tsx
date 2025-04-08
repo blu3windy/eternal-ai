@@ -323,7 +323,7 @@ const availableNetworks = useMemo(() => {
       </Popover>
 
       <BaseModal isShow={isModalOpen} onHide={onModalClose} title={'Export private key'} size="small" className={s.modalContent}>
-        <ExportPrivateKey />
+        <ExportPrivateKey privateKey={agentWallet?.privateKey || ''}/>
       </BaseModal>
 
       <BaseModal isShow={isImportModalOpen} onHide={onImportModalClose} title={'Import Token'} size="small" className={s.modalContent}>
