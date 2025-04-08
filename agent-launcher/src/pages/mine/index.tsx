@@ -7,7 +7,7 @@ import { NATIVE_TOKEN_ADDRESS } from '@contract/token/constants';
 import { IToken } from "@interfaces/token";
 import { useAuth } from "@pages/authen/provider";
 import { AgentContext } from "@pages/home/provider/AgentContext";
-import { ChainIdToChainType } from '@pages/home/trade-agent/provider/constant';
+import { ChainIdToChainType, InfoToChainType } from '@pages/home/trade-agent/provider/constant';
 import FundAgentProvider from "@providers/FundAgent";
 import useFundAgent from "@providers/FundAgent/useFundAgent";
 import CAgentTokenAPI from '@services/api/agents-token/index.ts';
@@ -168,20 +168,19 @@ const HandleMine = () => {
         symbol: "EAI",
         name: "Eternal AI",
         icon: getTokenIconUrl({ symbol: "EAI" }),
-        address: "",
+        address: InfoToChainType[chainType]?.nativeAddress,
         price_usd: 0
       },
       ...agentTokens,
       ...importedTokens
     ];
-  }, [agentTokens, importedTokens]);
+  }, [agentTokens, importedTokens, chainType]);
 
   useEffect(() => {
     const fetchInstalledAgents = async () => {
       try {
         const installIds = await installAgentStorage.getAgentIds();
 
-        console.log('installIds', installIds);
         if (installIds.length === 0) return;
 
         const params: any = {
