@@ -53,6 +53,8 @@ const Starter = (props: IProps) => {
    const [hasError, setHasError] = useState(false);
    const agentCtx = useContext(AgentContext);
 
+   const { setIsFinished } = useStarter();
+
    const setDefaultAgent = async () => {
       const {
          agents
@@ -75,6 +77,7 @@ const Starter = (props: IProps) => {
 
    const onInit = async (ignoreCopy?: boolean) => {
       try {
+         setIsFinished(false);
          console.time("FULL_LOAD_TIME");
          await onCheckHasUser();
          if (!ignoreCopy) {
@@ -128,6 +131,7 @@ const Starter = (props: IProps) => {
          setHasError(true);
       } finally {
          console.timeEnd("FULL_LOAD_TIME");
+         setIsFinished(true);
       }
    }
    const renderContent = () => {
