@@ -27,7 +27,7 @@ function DeepThinking({
                      : 'icons/agent/brain.svg'
                }
             /> */}
-            <Text>{status === "receiving" ? "Thinking..." : "Think"}</Text>
+            <Text>{(status === "receiving" || status === "sync-receiving") ? "Thinking..." : "Think"}</Text>
          </summary>
          <p className={s.thinkText}>{children}</p>
       </details>

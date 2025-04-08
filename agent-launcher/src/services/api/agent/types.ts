@@ -124,7 +124,8 @@ export interface IChatMessage {
       | 'failed'
       | 'pre-done'
       | 'done'
-      | 'sync-waiting';
+      | 'sync-waiting'
+      | 'sync-receiving';
    queryMessageState?: string;
 
    createdAt?: number;
