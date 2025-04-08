@@ -10,7 +10,6 @@ import CAgentTradeContract from "@contract/agent-trade";
 import { useDebounce } from '@hooks/useDebounce';
 import { IToken } from '@interfaces/token';
 import { AgentContext } from '@pages/home/provider/AgentContext';
-import { AgentTradeContext } from '@pages/home/trade-agent/provider';
 import localStorageService from '@storage/LocalStorageService';
 import { agentsTradeSelector } from '@stores/states/agent-trade/selector';
 import { compareString } from '@utils/string';
@@ -19,6 +18,11 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import * as Yup from "yup";
 import s from './styles.module.scss';
+
+interface ImportTokenProps {
+  onClose: () => void;
+  pairs: IToken[];
+}
 
 interface ImportTokenFormValues {
   address: string;
@@ -35,7 +39,8 @@ const ImportTokenForm = ({
   dirty,
   touched,
   errors,
-  handleBlur
+  handleBlur,
+  pairs
 }: {
   values: ImportTokenFormValues,
   isSubmitting: boolean,
@@ -43,9 +48,9 @@ const ImportTokenForm = ({
   dirty: boolean,
   touched: { [key: string]: boolean },
   errors: { [key: string]: string },
-  handleBlur: (e: React.FocusEvent<any>) => void
+  handleBlur: (e: React.FocusEvent<any>) => void,
+  pairs: IToken[]
 }) => {
-  const { pairs } = useContext(AgentTradeContext);
   const { selectedAgent } = useContext(AgentContext);
   const [isSearching, setIsSearching] = useState(false);
   const [tokenInfo, setTokenInfo] = useState<IToken | null>(null);
@@ -206,10 +211,9 @@ const ImportTokenForm = ({
   );
 };
 
-const ImportToken = ({ onClose }: { onClose: () => void }) => {
+const ImportToken: React.FC<ImportTokenProps> = ({ onClose, pairs }) => {
   const toast = useToast();
   const { selectedAgent } = useContext(AgentContext);
-  const { pairs } = useContext(AgentTradeContext);
 
   const validationSchema = Yup.object().shape({
     address: Yup.string()
@@ -294,6 +298,7 @@ const ImportToken = ({ onClose }: { onClose: () => void }) => {
             touched={touched}
             errors={errors}
             handleBlur={handleBlur}
+            pairs={pairs}
           />
         )}
       </Formik>

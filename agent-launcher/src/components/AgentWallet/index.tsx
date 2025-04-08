@@ -139,7 +139,10 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
   // console.log('balanceETH', nativeBalance);
   // console.log('nativeToken', nativeToken);
   // console.log('coinPrices', coinPrices);
-  // console.log('=== == ')
+  console.log('selectedAgent', selectedAgent);
+  console.log('chainType', chainType);
+  console.log('chainConfig', chainConfig);
+  console.log('=== == ')
 
   const handleExportPrvKey = () => {
     onModalOpen();
@@ -327,7 +330,7 @@ const availableNetworks = useMemo(() => {
       </BaseModal>
 
       <BaseModal isShow={isImportModalOpen} onHide={onImportModalClose} title={'Import Token'} size="small" className={s.modalContent}>
-        <ImportToken onClose={onImportModalClose} />
+        <ImportToken onClose={onImportModalClose} pairs={pairs} />
       </BaseModal>
 
       <BaseModal isShow={isTransferModalOpen} onHide={onTransferModalClose} title={'Transfer Token'} size="small" className={s.modalContent}>
