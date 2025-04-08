@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import Markdown, { Components } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from 'remark-breaks'
 import GeneralCode from "./GenerateCode";
 import DeepThinking from "./DeepThinking";
 import { CustomComponentProps } from "./types";
@@ -117,7 +118,7 @@ function CustomMarkdown({
             id={id}
          >
             <Markdown
-               remarkPlugins={[remarkGfm]} // Enables GitHub Flavored Markdown
+               remarkPlugins={[remarkGfm, remarkBreaks]} // Enables GitHub Flavored Markdown
                rehypePlugins={[rehypeRaw]} // Enables raw HTML parsing
                children={children}
                components={customComponents as Components}

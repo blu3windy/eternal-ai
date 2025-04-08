@@ -80,6 +80,7 @@
     "redux-deep-persist": "^1.0.7",
     "redux-persist": "^6.0.0",
     "rehype-raw": "^7.0.0",
+    "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "sass": "^1.85.0",
     "swiper": "^11.2.5",
