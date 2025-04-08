@@ -118,7 +118,7 @@ const AgentDetail = () => {
    }, [selectedAgent]);
 
    const shortDescription = useMemo(() => {
-      if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.Model, AgentType.CustomPrompt, AgentType.CustomUI].includes(selectedAgent.agent_type)) {
+      if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.Model, AgentType.CustomPrompt, AgentType.CustomUI].includes(selectedAgent?.agent_type)) {
          return selectedAgent?.short_description || selectedAgent?.personality;
       } else {
          return selectedAgent?.short_description || selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
