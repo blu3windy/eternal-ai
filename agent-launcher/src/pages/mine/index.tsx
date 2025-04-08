@@ -1,24 +1,26 @@
-import MainLayout from "../../components/layout";
 import { Box, Button, Flex, HStack, IconButton, Image, Menu, MenuButton, MenuItem, MenuList, Text, useClipboard, useToast, VStack } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
-import ROUTERS from "@constants/route-path";
-import { AgentContext } from "@pages/home/provider/AgentContext";
-import { useContext, useMemo, useState, useEffect } from "react";
-import { getTokenIconUrl, formatName, parseSymbolName, TOKEN_ICON_DEFAULT } from "@utils/string";
 import ERC20Balance from "@components/ERC20Balance";
-import { useSelector } from "react-redux";
-import { agentsTradeSelector } from "@stores/states/agent-trade/selector";
-import { IToken } from "@interfaces/token";
-import { formatCurrency, formatLongAddress } from "@utils/format";
-import s from "./styles.module.scss";
-import { useAuth } from "@pages/authen/provider";
 import useERC20Balance from '@components/ERC20Balance/useERC20Balance';
-import { CHAIN_CONFIG, CHAIN_TYPE } from '@constants/chains';
+import { CHAIN_INFO, CHAIN_TYPE } from '@constants/chains';
+import ROUTERS from "@constants/route-path";
 import { NATIVE_TOKEN_ADDRESS } from '@contract/token/constants';
+import { IToken } from "@interfaces/token";
+import { useAuth } from "@pages/authen/provider";
+import { AgentContext } from "@pages/home/provider/AgentContext";
 import { ChainIdToChainType } from '@pages/home/trade-agent/provider/constant';
-import installAgentStorage from '@storage/InstallAgentStorage.ts';
+import FundAgentProvider from "@providers/FundAgent";
+import useFundAgent from "@providers/FundAgent/useFundAgent";
 import CAgentTokenAPI from '@services/api/agents-token/index.ts';
 import { IAgentToken } from '@services/api/agents-token/interface.ts';
+import installAgentStorage from '@storage/InstallAgentStorage.ts';
+import { agentsTradeSelector } from "@stores/states/agent-trade/selector";
+import { formatCurrency, formatLongAddress } from "@utils/format";
+import { formatName, getTokenIconUrl, parseSymbolName, TOKEN_ICON_DEFAULT } from "@utils/string";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import MainLayout from "../../components/layout";
+import s from "./styles.module.scss";
 
 const MIN_DECIMAL = 2;
 const MAX_DECIMAL = 2;
@@ -80,7 +82,7 @@ const TokenItem = ({ token, index }: { token: IToken & { icon: string }, index: 
   );
 };
 
-const Mine = () => {
+const HandleMine = () => {
   const navigate = useNavigate();
   const { coinPrices } = useContext(AgentContext);
   const { signer } = useAuth();
@@ -90,9 +92,7 @@ const Mine = () => {
 
   const chainType = CHAIN_TYPE.BASE;
 
-  const chainConfig = useMemo(() => {
-    return CHAIN_CONFIG[chainType];
-  }, [chainType]);
+  const chainConfig = CHAIN_INFO[chainType];
 
   const nativeToken = useMemo(() => {
     return {
@@ -115,6 +115,8 @@ const Mine = () => {
   const [installedAgents, setInstalledAgents] = useState<IAgentToken[]>([]);
   const [agentTokens, setAgentTokens] = useState<(IToken & { icon: string })[]>([]);
   const cPumpAPI = useMemo(() => new CAgentTokenAPI(), []);
+
+  const { depositInfo, setDepositInfo } = useFundAgent();
 
   useEffect(() => {
     const fetchInstalledAgents = async () => {
@@ -178,7 +180,10 @@ const Mine = () => {
   }, []);
 
   const handleDeposit = () => {
-    // setDepositAgentID(selectedAgent?.id);
+    setDepositInfo({
+      address: signer?.address || "",
+      networkName: chainConfig?.name || ''
+    });
   };
 
   const handleTransfer = () => {
@@ -192,9 +197,8 @@ const Mine = () => {
   const handleImportToken = () => {
     // onImportModalOpen();
   };
-
   return (
-    <MainLayout className={s.layoutContainer}>
+    <FundAgentProvider>
       <Box className={s.container}>
         <Box mb={6}>
           <Button variant="ghost" onClick={handleBack} leftIcon={
@@ -300,6 +304,14 @@ const Mine = () => {
           </VStack>
         </Box>
       </Box>
+    </FundAgentProvider>
+  );
+};
+
+const Mine = () => {
+  return (
+    <MainLayout className={s.layoutContainer}>
+      <HandleMine />
     </MainLayout>
   );
 };
