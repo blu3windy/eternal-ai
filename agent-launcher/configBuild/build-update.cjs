@@ -4,7 +4,7 @@ const fs = require("fs");
 // 🕒 Generate timestamped version (YYYYMMDD-HHMM)
 const now = new Date();
 const timestamp = now.toISOString().replace(/[-T:]/g, "").slice(0, 13); // "YYYYMMDD-HHMM"
-const version = `1.0.10-${timestamp}`;
+const version = `1.0.1-${timestamp}`;
 
 console.log(`🚀 Building version: ${version}...`);
 
