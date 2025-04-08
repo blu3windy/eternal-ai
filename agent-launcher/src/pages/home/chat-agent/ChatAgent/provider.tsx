@@ -165,6 +165,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             is_reply: false,
             name: "You",
             attachments,
+            createdAt: new Date().getTime()
          };
 
          setMessages((prev) => [...prev, newMessage]);
@@ -187,6 +188,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             replyTo: userMessageId,
             is_reply: true,
             name: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
+            createdAt: new Date().getTime()
          };
 
          setMessages((prev) => [...prev, responseMsg]);
@@ -593,6 +595,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             const newMessage: IChatMessage = {
                ...targetMessage,
                id: userMessageId,
+               createdAt: new Date().getTime()
             };
 
             setMessages((prev) => [...prev, newMessage]);
@@ -612,6 +615,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                replyTo: userMessageId,
                name: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
                is_reply: true,
+               createdAt: new Date().getTime()
             };
 
             setMessages((prev) => [...prev, responseMsg]);

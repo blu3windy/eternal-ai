@@ -49,7 +49,6 @@ const AgentItem = ({ token, isLatest }: IProps) => {
             AgentType.CustomPrompt,
             AgentType.ModelOnline,
          ].includes(token.agent_type)
-         && isInstalled
       ) {
          const chainId = token?.network_id || BASE_CHAIN_ID;
          const cAgent = new CAgentContract({
@@ -58,8 +57,8 @@ const AgentItem = ({ token, isLatest }: IProps) => {
          });
          const codeVersion = await cAgent.getCurrentVersion();
          const values = await localStorageService.getItem(token.agent_contract_address);
-         const oldCodeVersion = values ? Number(values) : 1;
-         if (codeVersion > 1 && codeVersion > oldCodeVersion) {
+         const oldCodeVersion = values ? Number(values) : -1;
+         if (oldCodeVersion > 0 && codeVersion > 1 && codeVersion > oldCodeVersion) {
             setHaveNewVersionCode(true);
          } else {
             setHaveNewVersionCode(false);
@@ -207,7 +206,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                         {formatLongAddress(token?.creator)}
                      </Text>
                   </Flex>
-                  {hasNewVersionCode && isInstalled && (
+                  {hasNewVersionCode && (
                      <Button
                         className={s.btnUpdate}
                         onClick={handleUpdateCode}
