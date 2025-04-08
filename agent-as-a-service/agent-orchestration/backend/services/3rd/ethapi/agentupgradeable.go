@@ -50,3 +50,23 @@ func (c *Client) AgentUpgradeableCodeVersion(agentAddr string) (int, error) {
 	}
 	return int(version), nil
 }
+
+func (c *Client) AgentUpgradeableDepsAgents(agentAddr string) ([]string, error) {
+	client, err := c.getClient()
+	if err != nil {
+		return nil, err
+	}
+	instance, err := agentupgradeable.NewAgentUpgradeable(helpers.HexToAddress(agentAddr), client)
+	if err != nil {
+		return nil, err
+	}
+	deps, err := instance.GetDepsAgents(&bind.CallOpts{}, 0)
+	if err != nil {
+		return nil, err
+	}
+	depsStr := []string{}
+	for _, dep := range deps {
+		depsStr = append(depsStr, dep.Hex())
+	}
+	return depsStr, nil
+}
