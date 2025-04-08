@@ -360,13 +360,8 @@ func (s *Service) UpdateAgentUpgradeableCodeVersion(ctx context.Context, agentIn
 	if err != nil {
 		return errs.NewError(err)
 	}
-	if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
-		agentInfo.AgentType != models.AgentInfoAgentTypeModelOnline &&
-		agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
-		agentInfo.AgentType != models.AgentInfoAgentTypeInfa &&
-		agentInfo.AgentType != models.AgentInfoAgentTypePython &&
-		agentInfo.AgentType != models.AgentInfoAgentTypeCustomUi &&
-		agentInfo.AgentType != models.AgentInfoAgentTypeCustomPrompt {
+	if agentInfo.AgentContractAddress == "" ||
+		agentInfo.AgentContractID == "" {
 		return errs.NewError(errs.ErrBadRequest)
 	}
 	codeVersion, err := s.GetEthereumClient(ctx, agentInfo.NetworkID).AgentUpgradeableCodeVersion(agentInfo.AgentContractAddress)
