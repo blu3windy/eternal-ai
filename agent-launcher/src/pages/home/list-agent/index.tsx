@@ -71,12 +71,12 @@ const AgentsList = () => {
 
    const { needReloadList, needReloadRecentAgents } = useSelector(commonSelector);
 
-   const { 
-      setSelectedAgent, 
-      selectedAgent, 
-      isSearchMode, 
-      setIsSearchMode, 
-      category, 
+   const {
+      setSelectedAgent,
+      selectedAgent,
+      isSearchMode,
+      setIsSearchMode,
+      category,
       setCategory,
       installedAgentIds,
       startAgent,
@@ -158,7 +158,7 @@ const AgentsList = () => {
             }
             refLoading.current = true;
          }
-         
+
          refParams.current = {
             ...refParams.current,
             page: isNew ? 1 : refParams.current.page + 1,
@@ -181,7 +181,7 @@ const AgentsList = () => {
          } else if (refParams.current.category === CategoryOption.Infra) {
             params.agent_types = [AgentType.Infra].join(',');
          } else {
-            params.agent_types = [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(','); 
+            params.agent_types = [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(',');
          }
 
          if (!isSearchMode) {
@@ -294,8 +294,8 @@ const AgentsList = () => {
                </Box>
             )} */}
 
-            <Tabs 
-               className={s.tabContainer} 
+            <Tabs
+               className={s.tabContainer}
                isFitted
                index={CATEGORIES.findIndex(c => c.id === category)}
                onChange={(index) => {
@@ -307,22 +307,22 @@ const AgentsList = () => {
             >
                <TabList>
                   {CATEGORIES.map((cat) => (
-                     <Tab 
+                     <Tab
                         key={cat.id}
                      >
                         <Text>{cat.name}</Text>
                         <Popover trigger="hover" placement="bottom">
                            <PopoverTrigger>
-                              <Box 
+                              <Box
                                  onClick={(e) => e.stopPropagation()}
                                  onMouseDown={(e) => e.stopPropagation()}
                               >
-                                 <IcHelp color={'black'}/>
+                                 <IcHelp color={'black'} />
                               </Box>
                            </PopoverTrigger>
-                           <PopoverContent 
-                              width="300px" 
-                              bg="white" 
+                           <PopoverContent
+                              width="300px"
+                              bg="white"
                               border="1px solid #E5E7EB"
                               boxShadow="0px 4px 6px -2px rgba(16, 24, 40, 0.03), 0px 12px 16px -4px rgba(16, 24, 40, 0.08)"
                               borderRadius="8px"
@@ -373,10 +373,10 @@ const AgentsList = () => {
          <Flex flex={1} gap={'24px'} alignItems={'center'}>
             {
                isSearchMode && (
-                  <Image 
-                     src="icons/ic-arrow-left.svg" 
-                     w="16px" 
-                     h="16px" 
+                  <Image
+                     src="icons/ic-arrow-left.svg"
+                     w="16px"
+                     h="16px"
                      cursor={'pointer'}
                      onClick={(e) => {
                         e.preventDefault();
@@ -389,7 +389,7 @@ const AgentsList = () => {
                               search: '',
                            };
                            setCategory(CategoryOption.All);
-               
+
                            setIsSearchMode(false);
                         }
                      }}
@@ -416,11 +416,11 @@ const AgentsList = () => {
                   onFocus={() => {
                      if (category === CategoryOption.All) {
                         setCategory(CategoryOption.Utility);
-                     // refParams.current.category = category;
+                        // refParams.current.category = category;
                      }
-                  
+
                      setIsSearchMode(true);
-                  // debounceGetTokens(true);
+                     // debounceGetTokens(true);
                   }}
                   // onBlur={() => {
                   //    // Delay hiding search mode to allow clicking category
@@ -434,18 +434,19 @@ const AgentsList = () => {
                      onSearch(event.target.value);
                   }}
                />
-               <Flex
-                  cursor="pointer"
-                  position="absolute"
-                  top="0"
-                  bottom="0"
-                  right="16px"
-                  marginTop="auto"
-                  marginBottom="auto"
-                  justifyContent="center"
-                  alignItems="center"
-               >
-                  {isSearchMode && (
+
+               {isSearchMode && refInput?.current?.value && refInput.current.value.length > 0 && (
+                  <Flex
+                     cursor="pointer"
+                     position="absolute"
+                     top="0"
+                     bottom="0"
+                     right="16px"
+                     marginTop="auto"
+                     marginBottom="auto"
+                     justifyContent="center"
+                     alignItems="center"
+                  >
                      <Image
                         width="20px"
                         src="icons/ic_search_close.svg"
@@ -458,17 +459,17 @@ const AgentsList = () => {
                               refParams.current = {
                                  ...refParams.current,
                                  search: '',
-                              // category: CategoryOption.All,
+                                 // category: CategoryOption.All,
                               };
                               // setCategory(CategoryOption.All);
-                  
+
                               // setIsSearchMode(false);
                               debounceGetTokens(true);
                            }
                         }}
                      />
-                  )}
-               </Flex>
+                  </Flex>
+               )}
             </Flex>
          </Flex>
       );
@@ -531,7 +532,7 @@ const AgentsList = () => {
                fontWeight={'400'}
                whiteSpace={"nowrap"}
             >
-          Category
+               Category
             </Text>
             <Popover styleConfig={{ width: "100%" }} placement="bottom-end" isOpen={isOpenFilter} onClose={onCloseFilter}>
                <PopoverTrigger>
@@ -610,7 +611,7 @@ const AgentsList = () => {
                fontWeight={'400'}
                whiteSpace={"nowrap"}
             >
-          Sort by
+               Sort by
             </Text>
             <Popover styleConfig={{ width: "100%" }} placement="bottom-end" isOpen={isOpenSort} onClose={onCloseSort}>
                <PopoverTrigger>
@@ -829,7 +830,7 @@ const AgentsList = () => {
                                  width: "fit-content",
                                  height: "fit-content",
                                  marginLeft: "auto",
-                                 marginRight: "auto",       
+                                 marginRight: "auto",
                               }}
                            >
                               <AppLoading />
@@ -841,18 +842,18 @@ const AgentsList = () => {
                            </GridItem>
                         ))}
                         {filter === FilterOption.Installed && loaded && agents.length === 0 && (
-                           <VStack 
-                              height="full" 
-                              justify="center" 
-                              spacing={3} 
-                              p={4} 
+                           <VStack
+                              height="full"
+                              justify="center"
+                              spacing={3}
+                              p={4}
                               textAlign="center"
                            >
                               <Text fontSize="lg" fontWeight="bold">
-                              No agents installed?
+                                 No agents installed?
                               </Text>
                               <Text>
-                              Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
+                                 Browse <Text as="span" onClick={() => { setFilter(FilterOption.All) }} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
                               </Text>
                            </VStack>
                         )}
@@ -861,7 +862,7 @@ const AgentsList = () => {
                </>
             )}
 
-            <BottomBar  onAddAgentSuccess={(address: string) => {
+            <BottomBar onAddAgentSuccess={(address: string) => {
                refAddAgentTestCA.current = address;
                onClose();
                setFilter(FilterOption.Installed);
@@ -871,7 +872,7 @@ const AgentsList = () => {
                };
                throttleGetTokens(true);
                setIsSearchMode(false);
-            }}  />
+            }} />
 
             {/* <Flex className={s.addTestBtn} onClick={onOpen}>
             <Center w={'100%'}>
