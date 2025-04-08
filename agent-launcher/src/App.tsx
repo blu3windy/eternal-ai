@@ -59,7 +59,7 @@ function App() {
          <InitializeProvider>
             <Provider store={store}>
                <PersistGate loading={null} persistor={persistor}>
-                  {/* <SyncTaskFromStorage /> */}
+                  <SyncTaskFromStorage />
                   <AuthProvider>
                      <Router basename="/">
                         <Routes>
