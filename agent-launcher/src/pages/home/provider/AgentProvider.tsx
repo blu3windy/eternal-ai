@@ -611,7 +611,7 @@ const AgentProvider: React.FC<
                   isStarting: false,
                   isRunning: true,
                });
-            }, 1000);
+            }, 3000);
          }
 
          console.timeEnd('LEON: startAgent');
