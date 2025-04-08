@@ -42,11 +42,11 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
       const createdAt = message?.createdAt ? new Date(message?.createdAt).getTime() : new Date().getTime();
       const now = new Date().getTime();
 
-      const remainingTime = (now - createdAt) / 1000;
+      const remainingTime = (now - createdAt);
 
-      // console.log("__________message.status", message);
+      // // console.log("__________message.status", message);
       // if (message.status === "waiting" || message.status === "sync-waiting") {
-      //    console.log("__________remainingTime", remainingTime);
+      //    console.log("__________remainingTime", remainingTime, message.status);
       // }
 
       if (message.status === "waiting") {
