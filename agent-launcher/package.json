@@ -2,7 +2,7 @@
   "name": "agent-launcher",
   "productName": "Vibe",
   "private": true,
-  "version": "1.0.10-2025040408343",
+  "version": "1.0.10-2025040804534",
   "type": "module",
   "scripts": {
     "dev": "vite",
