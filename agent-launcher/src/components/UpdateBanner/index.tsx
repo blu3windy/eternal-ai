@@ -3,10 +3,13 @@ import { Flex } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import s from "./styles.module.scss";
 import { motion } from "framer-motion";
+import useStarter from "@pages/authen/hooks/useStarter";
 
 const UpdateBanner = () => {
  
   const [updateAvailable, setUpdateAvailable] = useState(false);
+
+  const {isFinished} = useStarter()
 
   useEffect(() => {
 
@@ -31,9 +34,10 @@ const UpdateBanner = () => {
   globalThis.electronAPI.installUpdate();
 }
 
-if (!updateAvailable) {
-  return null;
-}
+
+  if (!updateAvailable || !isFinished) {
+    return null;
+  }
 
 
   return  (
