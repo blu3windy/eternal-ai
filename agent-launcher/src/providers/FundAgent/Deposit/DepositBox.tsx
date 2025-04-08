@@ -1,53 +1,27 @@
 import { Center, Divider, Flex, Image, Text } from '@chakra-ui/react';
 import Loading from "@components/Loading";
 import QRCodeGenerator from '@components/QRCodeGenerator';
-import { AgentContext } from "@pages/home/provider/AgentContext.tsx";
 import copy from 'copy-to-clipboard';
-import React, { useContext } from 'react';
+import React from 'react';
 import toast from 'react-hot-toast';
-import AgentAPI from "../../../services/api/agent";
-import { IFundAgent } from "../types.ts";
-import useFundAgent from '../useFundAgent.ts';
+import { IDepositInfo } from "../types.ts";
 import s from './styles.module.scss';
 
-interface IExplorer {
-   name: string;
-   url: string;
-   icon: string;
+interface IDepositBoxProps extends IDepositInfo {
 }
 
-const DepositBox: React.FC<IFundAgent> = ({ agentID }) => {
-   const { depositAgentInfo, setDepositAgentInfo } = useFundAgent();
-   const { agentWallet } = useContext(AgentContext);
-
-   const getDepositAddress = async () => {
-      if (!agentID) {
-         setDepositAgentInfo(undefined);
-         return;
-      }
-      try {
-         const agent = await AgentAPI.getAgent(agentID);
-         setDepositAgentInfo(agent);
-      } catch (error) {
-         setDepositAgentInfo(undefined);
-      }
-   };
-
+const DepositBox: React.FC<IDepositBoxProps> = ({ address, networkName }) => {
    const onClickCopy = (address: string) => {
       copy(address);
       toast.success('Copied.');
    };
-
-   React.useEffect(() => {
-      getDepositAddress();
-   }, [agentID]);
 
    const handleShowTransaction = () => {
 
    }
 
    const renderContent = () => {
-      if (!depositAgentInfo || !agentID) {
+      if (!address) {
          return (
             <Center flex={1} minHeight='150px'>
                <Loading />
@@ -73,7 +47,7 @@ const DepositBox: React.FC<IFundAgent> = ({ agentID }) => {
                         Network
                      </Text>
                      <Text color="#000" fontSize="16px" fontWeight={500} textTransform={"capitalize"}>
-                        {depositAgentInfo?.network_name?.toLowerCase()}
+                        {networkName?.toLowerCase()}
                      </Text>
                   </Flex>
                   <Divider variant="dashed" />
@@ -83,13 +57,13 @@ const DepositBox: React.FC<IFundAgent> = ({ agentID }) => {
                      </Text>
                      <Flex alignItems={"center"} justifyContent={"space-between"}>
                         <Text color="#000" fontSize="16px" fontWeight={500} w={"100%"}>
-                           {agentWallet?.address}
+                           {address}
                         </Text>
                         <Image
                            h={'16px'}
                            src={`icons/ic-copy.svg`}
                            className={s.addressBox_iconCopy}
-                           onClick={() => onClickCopy(agentWallet?.address || '')}
+                           onClick={() => onClickCopy(address || '')}
                         />
                      </Flex>
                   </Flex>
@@ -100,7 +74,7 @@ const DepositBox: React.FC<IFundAgent> = ({ agentID }) => {
                   <QRCodeGenerator
                      bgColor="#FFFFFF"
                      size={'100%' as unknown as number}
-                     value={agentWallet?.address as string}
+                     value={address}
                   />
                </Flex>
             </Flex>

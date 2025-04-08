@@ -106,7 +106,7 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
 
   const [importedTokens, setImportedTokens] = useState<IToken[]>([]);
 
-  const { setDepositAgentID } = useFundAgent();
+  const { setDepositInfo } = useFundAgent();
 
   const chainType = useMemo(() => {
     if (!selectedAgent?.network_id) return CHAIN_TYPE.BASE;
@@ -161,7 +161,10 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
   };
 
   const handleDeposit = () => {
-    setDepositAgentID(selectedAgent?.id);
+    setDepositInfo({
+      address: agentWallet?.address || '',
+      networkName: selectedAgent?.network_name || ''
+    });
   };
 
   const handleTransfer = () => {
