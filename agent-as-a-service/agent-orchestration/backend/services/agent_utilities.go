@@ -361,7 +361,7 @@ func (s *Service) UpdateAgentUpgradeableCodeVersion(ctx context.Context, agentIn
 		return errs.NewError(err)
 	}
 	if agentInfo.AgentContractAddress == "" ||
-		agentInfo.AgentContractID == "" {
+		agentInfo.AgentContractID != "0" {
 		return errs.NewError(errs.ErrBadRequest)
 	}
 	codeVersion, err := s.GetEthereumClient(ctx, agentInfo.NetworkID).AgentUpgradeableCodeVersion(agentInfo.AgentContractAddress)
