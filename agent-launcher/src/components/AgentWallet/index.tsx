@@ -44,6 +44,8 @@ interface Props {
   color?: string;
 }
 
+const STORAGE_KEY_PREFIX = 'imported_tokens_';
+
 const TokenItem = ({ token, index, showUsdValue = false }: { token: IToken & { icon: string }, index: number, showUsdValue?: boolean }) => {
   const { currentChain } = useSelector(agentsTradeSelector);
   const [balance, setBalance] = useState<string | undefined>("0");
@@ -330,7 +332,12 @@ const availableNetworks = useMemo(() => {
       </BaseModal>
 
       <BaseModal isShow={isImportModalOpen} onHide={onImportModalClose} title={'Import Token'} size="small" className={s.modalContent}>
-        <ImportToken onClose={onImportModalClose} pairs={pairs} />
+        <ImportToken 
+          onClose={onImportModalClose} 
+          pairs={pairs} 
+          storageKey={`${STORAGE_KEY_PREFIX}${selectedAgent?.id}`}
+          currentChain={chainType}
+        />
       </BaseModal>
 
       <BaseModal isShow={isTransferModalOpen} onHide={onTransferModalClose} title={'Transfer Token'} size="small" className={s.modalContent}>

@@ -9,19 +9,19 @@ import InputText from '@components/Input/InputText';
 import CAgentTradeContract from "@contract/agent-trade";
 import { useDebounce } from '@hooks/useDebounce';
 import { IToken } from '@interfaces/token';
-import { AgentContext } from '@pages/home/provider/AgentContext';
+import { CHAIN_TYPE } from '@constants/chains';
 import localStorageService from '@storage/LocalStorageService';
-import { agentsTradeSelector } from '@stores/states/agent-trade/selector';
 import { compareString } from '@utils/string';
 import { Form, Formik } from 'formik';
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useCallback, useEffect, useState } from 'react';
 import * as Yup from "yup";
 import s from './styles.module.scss';
 
 interface ImportTokenProps {
   onClose: () => void;
   pairs: IToken[];
+  storageKey: string;
+  currentChain: CHAIN_TYPE;
 }
 
 interface ImportTokenFormValues {
@@ -30,7 +30,18 @@ interface ImportTokenFormValues {
   decimals?: string;
 }
 
-const STORAGE_KEY_PREFIX = 'imported_tokens_';
+interface ImportTokenFormProps {
+  values: ImportTokenFormValues;
+  isSubmitting: boolean;
+  setFieldValue: (field: string, value: any) => void;
+  dirty: boolean;
+  touched: { [key: string]: boolean };
+  errors: { [key: string]: string };
+  handleBlur: (e: React.FocusEvent<any>) => void;
+  pairs: IToken[];
+  storageKey: string;
+  currentChain: CHAIN_TYPE;
+}
 
 const ImportTokenForm = ({
   values,
@@ -40,22 +51,13 @@ const ImportTokenForm = ({
   touched,
   errors,
   handleBlur,
-  pairs
-}: {
-  values: ImportTokenFormValues,
-  isSubmitting: boolean,
-  setFieldValue: (field: string, value: any) => void,
-  dirty: boolean,
-  touched: { [key: string]: boolean },
-  errors: { [key: string]: string },
-  handleBlur: (e: React.FocusEvent<any>) => void,
-  pairs: IToken[]
-}) => {
-  const { selectedAgent } = useContext(AgentContext);
+  pairs,
+  storageKey,
+  currentChain
+}: ImportTokenFormProps) => {
   const [isSearching, setIsSearching] = useState(false);
   const [tokenInfo, setTokenInfo] = useState<IToken | null>(null);
   const [storedTokens, setStoredTokens] = useState<IToken[]>([]);
-  const { currentChain } = useSelector(agentsTradeSelector);
   const agentContract = new CAgentTradeContract();
   const debouncedAddress = useDebounce(values.address, 500);
 
@@ -67,10 +69,7 @@ const ImportTokenForm = ({
 
   useEffect(() => {
     const loadStoredTokens = async () => {
-      if (!selectedAgent?.id) return;
-
       try {
-        const storageKey = `${STORAGE_KEY_PREFIX}${selectedAgent.id}`;
         const existingTokensStr = await localStorageService.getItem(storageKey);
         const existingTokens: IToken[] = existingTokensStr ? JSON.parse(existingTokensStr) : [];
         setStoredTokens(existingTokens);
@@ -80,7 +79,7 @@ const ImportTokenForm = ({
     };
 
     loadStoredTokens();
-  }, [selectedAgent?.id]);
+  }, [storageKey]);
 
   useEffect(() => {
     const getTokenInfo = async () => {
@@ -211,9 +210,8 @@ const ImportTokenForm = ({
   );
 };
 
-const ImportToken: React.FC<ImportTokenProps> = ({ onClose, pairs }) => {
+const ImportToken: React.FC<ImportTokenProps> = ({ onClose, pairs, storageKey, currentChain }) => {
   const toast = useToast();
-  const { selectedAgent } = useContext(AgentContext);
 
   const validationSchema = Yup.object().shape({
     address: Yup.string()
@@ -224,9 +222,8 @@ const ImportToken: React.FC<ImportTokenProps> = ({ onClose, pairs }) => {
         return !pairs.some(token => compareString(token.address, value));
       })
       .test('not-imported', 'Token already imported previously', async function (value) {
-        if (!value || !selectedAgent?.id) return true;
+        if (!value) return true;
         try {
-          const storageKey = `${STORAGE_KEY_PREFIX}${selectedAgent.id}`;
           const existingTokensStr = await localStorageService.getItem(storageKey);
           const existingTokens: IToken[] = existingTokensStr ? JSON.parse(existingTokensStr) : [];
           return !existingTokens.some(token => compareString(token.address, value));
@@ -245,8 +242,6 @@ const ImportToken: React.FC<ImportTokenProps> = ({ onClose, pairs }) => {
 
   const handleSubmit = async (values: ImportTokenFormValues) => {
     try {
-      const storageKey = `${STORAGE_KEY_PREFIX}${selectedAgent?.id}`;
-
       const existingTokensStr = await localStorageService.getItem(storageKey);
       const existingTokens: IToken[] = existingTokensStr ? JSON.parse(existingTokensStr) : [];
 
@@ -299,6 +294,8 @@ const ImportToken: React.FC<ImportTokenProps> = ({ onClose, pairs }) => {
             errors={errors}
             handleBlur={handleBlur}
             pairs={pairs}
+            storageKey={storageKey}
+            currentChain={currentChain}
           />
         )}
       </Formik>
