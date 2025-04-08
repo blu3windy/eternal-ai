@@ -16,7 +16,7 @@ import BaseButton from "@components/BaseButton";
 import ERC20Balance from '@components/ERC20Balance';
 import InputWrapper from '@components/Form/inputWrapper';
 import InputText from '@components/Input/InputText';
-import { CHAIN_TYPE } from '@constants/chains';
+import { CHAIN_NAME_TO_ID, CHAIN_TYPE } from '@constants/chains';
 import CTokenContract from '@contract/token';
 import { NATIVE_TOKEN_ADDRESS } from '@contract/token/constants';
 import { IToken } from '@interfaces/token';
@@ -56,17 +56,14 @@ interface TransferTokenProps {
 
 const TokenItem = ({ token, index, showUsdValue = false, onClick, currentChain }: { token: IToken & { icon: string }, index: number, showUsdValue?: boolean, onClick?: () => void, currentChain: CHAIN_TYPE }) => {
     const [balance, setBalance] = useState<string | undefined>("0");
-    const { selectedAgent, coinPrices } = useContext(AgentContext);
+    const { coinPrices } = useContext(AgentContext);
 
     const priceUsd = useMemo(() => {
-        if (token.symbol === selectedAgent?.token_symbol) {
-            return selectedAgent?.meme?.price_usd || 0;
-        }
         if (token.symbol === 'EAI') {
             return coinPrices?.[token.symbol] || 0;
         }
         return 0;
-    }, [coinPrices, token?.symbol, selectedAgent?.meme?.price_usd, selectedAgent?.token_symbol]);
+    }, [coinPrices, token?.symbol]);
 
     const usdValue = useMemo(() => {
         return Number(balance || 0) * (priceUsd || 0);
@@ -363,7 +360,6 @@ const TransferTokenForm = ({
 
 const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetworks, tokens, pairs, currentChain, wallet }) => {
     const toast = useToast();
-    const { selectedAgent } = useContext(AgentContext);
     const [selectedTokenBalance, setSelectedTokenBalance] = useState<string>("0");
     const [estimatedFee, setEstimatedFee] = useState<string>("0");
     const [isNativeToken, setIsNativeToken] = useState<boolean>(false);
@@ -413,7 +409,7 @@ const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetwork
             });
 
             const explorerUrl = getExplorerByChain({
-                chainId: selectedAgent?.network_id || "",
+                chainId: CHAIN_NAME_TO_ID[currentChain]?.toString(),
                 type: "tx",
                 address: txHash
             });
