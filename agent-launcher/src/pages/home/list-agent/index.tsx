@@ -80,7 +80,7 @@ const AgentsList = () => {
 
    const refParams = useRef({
       page: 1,
-      limit: 50,
+      limit: 10,
       sort,
       category,
       filter,
