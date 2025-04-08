@@ -15,6 +15,7 @@ import s from "./styles/styles.module.scss";
 
 import { Box, Flex, Spinner, Text } from "@chakra-ui/react";
 import { motion } from "framer-motion";
+import FloatingWebView from "@providers/FloatingWebView/index.tsx";
 
 function App() {
    const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -62,6 +63,7 @@ function App() {
          <Provider store={store}>
             <PersistGate loading={null} persistor={persistor}>
                <SyncTaskFromStorage />
+               <FloatingWebView />
                <AuthProvider>
                   <Router basename="/">
                      <Routes>
