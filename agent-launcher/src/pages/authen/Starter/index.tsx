@@ -11,6 +11,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import AgentProvider from "@pages/home/provider/AgentProvider";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { setReadyPort } from "@utils/agent.ts";
+import localStorageService from "@storage/LocalStorageService";
 
 interface IProps {
    loadingUser: boolean;

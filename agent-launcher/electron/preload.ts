@@ -84,14 +84,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
    onUpdateDownloadProcessing: (callback) => ipcRenderer.on("download-progress", (_, progress) => callback(progress)),
    restartApp: () => ipcRenderer.invoke("quit-and-install"),
 
-
    storeSetItem: (key: string, value: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_SET_ITEM, key, value),
    storeGetItem: (key: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_GET_ITEM, key),
    storeRemoveItem: (key: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_REMOVE_ITEM, key),
    storeClear: () => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_CLEAR),
+   storeGetAll: () => ipcRenderer.invoke(EMIT_EVENT_NAME.STORE_GET_ALL),
 
    osContext: () => ipcRenderer.invoke(EMIT_EVENT_NAME.OS_CONTEXT),
-
 
    getInitialDockerData: () => ipcRenderer.invoke('get-initial-docker-data'),
    onContainersUpdate: (callback) =>

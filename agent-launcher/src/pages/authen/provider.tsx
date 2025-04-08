@@ -55,24 +55,6 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
    const [loading, setLoading] = useState<boolean>(true);
    const { checking } = useStarter();
 
-   useEffect(() => {
-      if (signer) {
-         const getAndSaveAuthen = async () => {
-            const authenToken = await getAuthenToken(signer.privateKey);
-
-            if (authenToken) {
-               await localStorageService.setItem(STORAGE_KEYS.AUTHEN_TOKEN, authenToken);
-               await localStorageService.setItem(
-                  STORAGE_KEYS.WALLET_ADDRESS,
-                  signer.address
-               );
-            }
-         };
-
-         getAndSaveAuthen();
-      }
-   }, [signer]);
-
    const onLogin = async (pass: string) => {
       try {
          const prvKey = await EaiSigner.getStorageKey({ pass });
@@ -213,6 +195,24 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 
       return <></>;
    };
+
+   useEffect(() => {
+      if (signer) {
+         const getAndSaveAuthen = async () => {
+            const authenToken = await getAuthenToken(signer.privateKey);
+
+            if (authenToken) {
+               await localStorageService.setItem(STORAGE_KEYS.AUTHEN_TOKEN, authenToken);
+               await localStorageService.setItem(
+                  STORAGE_KEYS.WALLET_ADDRESS,
+                  signer.address
+               );
+            }
+         };
+
+         getAndSaveAuthen();
+      }
+   }, [signer]);
 
    return (
       <AuthContext.Provider value={values}>

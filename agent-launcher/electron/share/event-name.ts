@@ -52,6 +52,7 @@ const EMIT_EVENT_NAME = {
    STORE_GET_ITEM: "store-get-item",
    STORE_REMOVE_ITEM: "store-remove-item",
    STORE_CLEAR: "store-clear",
+   STORE_GET_ALL: "store-get-all",
 
 
    OS_CONTEXT: "os-context",

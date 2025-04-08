@@ -1,9 +1,10 @@
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow, screen, ipcMain } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 import command from "./share/command-tool.ts";
+import Store from 'electron-store';
 
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
 
@@ -207,3 +208,15 @@ app.on("activate", () => {
 });
 
 app.whenReady().then(createWindow);
+
+// Add this near your other IPC handlers
+ipcMain.handle('store-get-all', async () => {
+   try {
+      const store = new Store();
+      return store.store;
+   } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error getting all store items:', errorMessage);
+      return {};
+   }
+});
