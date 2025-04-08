@@ -88,7 +88,8 @@ class ChatAgentDatabase {
       try {
          await this.db?.messages.add({
             ...newItem,
-            createdAt: newItem.createdAt ? new Date(newItem.createdAt).getTime() : new Date().getTime(),
+            // createdAt: newItem.createdAt ? new Date(newItem.createdAt).getTime() : new Date().getTime(),
+            createdAt: new Date().getTime()
          });
          return newItem;
       } catch (e) {
@@ -100,7 +101,8 @@ class ChatAgentDatabase {
       try {
          await this.db?.messages.update(updatedItem.id, {
             ...updatedItem,
-            updatedAt: updatedItem.updatedAt ? new Date(updatedItem.updatedAt).getTime() : new Date().getTime(),
+            // updatedAt: updatedItem.updatedAt ? new Date(updatedItem.updatedAt).getTime() : new Date().getTime(),
+            updatedAt: new Date().getTime()
          });
          return updatedItem;
       } catch (e) {

@@ -197,14 +197,14 @@ const ChatMessage = ({ message, ref, isLast, onRetryErrorMessage, isSending, ini
                      <Text>Export to PDF</Text>
                   </motion.div>
                </div>
-               <CustomMarkdown id={markdownId} content={renderMessage} isLight={false} removeThink={initialMessage} />
+               <CustomMarkdown id={markdownId} status={message.status} content={renderMessage} isLight={false} removeThink={initialMessage} />
             </div>
          );
       }
 
       return (
          <div className={cs(s.markdown, "markdown-body")}>
-            <CustomMarkdown id={markdownId} content={renderMessage} isLight={false} removeThink={initialMessage} />
+            <CustomMarkdown status={message.status} id={markdownId} content={renderMessage} isLight={false} removeThink={initialMessage} />
          </div>
       );
    };

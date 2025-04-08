@@ -61,12 +61,14 @@ function CustomMarkdown({
    components = {},
    isLight = true,
    removeThink = false,
+   status = "waiting",
 }: {
    id: string;
    content: string;
    components?: ComponentExtended;
    isLight?: boolean;
    removeThink?: boolean;
+   status?: string;
 }) {
    const customComponents = useMemo(() => {
       return {
@@ -74,7 +76,7 @@ function CustomMarkdown({
             return <GeneralCode {...props} />;
          },
          think: (props: any) => {
-            return <DeepThinking {...props} isLight={isLight} removeThink={removeThink} />;
+            return <DeepThinking {...props} status={status} isLight={isLight} removeThink={removeThink} />;
          },
          a: (props) => {
             return <CustomLink {...props} />;
@@ -87,7 +89,7 @@ function CustomMarkdown({
          },
          ...components,
       } satisfies any;
-   }, [components, isLight, removeThink]);
+   }, [components, isLight, removeThink, status]);
 
    const children = useMemo(() => preprocessMarkdown(content), [content]);
    const { isOpen, onOpen, onClose } = useDisclosure();
