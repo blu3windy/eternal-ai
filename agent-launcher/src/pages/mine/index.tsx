@@ -31,8 +31,11 @@ import localStorageService from '@storage/LocalStorageService';
 const MIN_DECIMAL = 2;
 const MAX_DECIMAL = 2;
 
-const TokenItem = ({ token, index }: { token: IToken & { icon: string, price_usd: string | number }, index: number }) => {
-  const { currentChain } = useSelector(agentsTradeSelector);
+const TokenItem = ({ token, index, currentChain }: { 
+  token: IToken & { icon: string, price_usd: string | number }, 
+  index: number,
+  currentChain: CHAIN_TYPE 
+}) => {
   const [balance, setBalance] = useState<string | undefined>("0");
   const { coinPrices } = useContext(AgentContext);
 
@@ -346,6 +349,7 @@ const HandleMine = () => {
                 key={`${token.address}_${index}`}
                 token={token}
                 index={index}
+                currentChain={chainType}
               />
             ))}
           </VStack>
@@ -374,7 +378,7 @@ const HandleMine = () => {
           }}
           pairs={userTokens}
           storageKey={`imported_tokens_user_${userAddress}`}
-          currentChain={CHAIN_TYPE.BASE}
+          currentChain={chainType}
         />
       </BaseModal>
     </FundAgentProvider>
