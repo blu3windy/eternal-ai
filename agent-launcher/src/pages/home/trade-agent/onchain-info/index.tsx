@@ -8,6 +8,8 @@ import s from "./styles.module.scss";
 const AgentOnChainInfo = () => {
    const { selectedAgent } = useContext(AgentContext);
 
+   console.log("selectedAgent", selectedAgent);
+
    return (
       <Box>
          <Text fontSize={"16px"} fontWeight={500}>Agent onchain data</Text>
@@ -35,11 +37,20 @@ const AgentOnChainInfo = () => {
             <Text className={s.left}>Contract</Text>
             <Text
                target="_blank"
-               href={`${getExplorerByChain({
-                  chainId: selectedAgent?.network_id as any,
-                  type: "address",
-                  address: selectedAgent?.agent_contract_address || "",
-               })}`}
+               // href={`${getExplorerByChain({
+               //    chainId: selectedAgent?.network_id as any,
+               //    type: "address",
+               //    address: selectedAgent?.agent_contract_address || "",
+               // })}`}
+               onClick={() => {
+                  globalThis.electronAPI.openExternal(
+                     `${getExplorerByChain({
+                        chainId: selectedAgent?.network_id as any,
+                        type: "address",
+                        address: selectedAgent?.agent_contract_address || "",
+                     })}`
+                  );
+               }}
                className={s.right}
                as={"a"}
             >
