@@ -18,13 +18,13 @@ function DeepThinking({
    return (
       <details className={cx(s.details, isLight ? s.isLight : '')} open={true}>
          <summary>
-            <Image
+            {/* <Image
                src={
                   isLight
                      ? 'icons/agent/brain-dark.svg'
                      : 'icons/agent/brain.svg'
                }
-            />
+            /> */}
             <Text>Think</Text>
          </summary>
          <p className={s.thinkText}>{children}</p>
