@@ -373,7 +373,7 @@ func (s *Service) UpdateAgentUpgradeableCodeVersion(ctx context.Context, agentIn
 	if err != nil {
 		return errs.NewError(err)
 	}
-	depsAgents, err := s.GetEthereumClient(ctx, agentInfo.NetworkID).AgentUpgradeableDepsAgents(agentInfo.AgentContractAddress)
+	depsAgents, err := s.GetEthereumClient(ctx, agentInfo.NetworkID).AgentUpgradeableDepsAgents(agentInfo.AgentContractAddress, codeVersion)
 	if err != nil {
 		return errs.NewError(err)
 	}

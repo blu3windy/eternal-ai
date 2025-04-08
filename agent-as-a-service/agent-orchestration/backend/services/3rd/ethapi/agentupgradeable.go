@@ -51,7 +51,7 @@ func (c *Client) AgentUpgradeableCodeVersion(agentAddr string) (int, error) {
 	return int(version), nil
 }
 
-func (c *Client) AgentUpgradeableDepsAgents(agentAddr string) ([]string, error) {
+func (c *Client) AgentUpgradeableDepsAgents(agentAddr string, version int) ([]string, error) {
 	client, err := c.getClient()
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (c *Client) AgentUpgradeableDepsAgents(agentAddr string) ([]string, error) 
 	if err != nil {
 		return nil, err
 	}
-	deps, err := instance.GetDepsAgents(&bind.CallOpts{}, 0)
+	deps, err := instance.GetDepsAgents(&bind.CallOpts{}, uint16(version))
 	if err != nil {
 		return nil, err
 	}
