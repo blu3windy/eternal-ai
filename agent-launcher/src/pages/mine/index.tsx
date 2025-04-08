@@ -28,6 +28,7 @@ import ImportToken from '@components/AgentWallet/ImportToken';
 import { AgentType } from "@pages/home/list-agent/constants";
 import localStorageService from '@storage/LocalStorageService';
 import TransferToken from "@components/AgentWallet/TransferToken";
+import { Wallet } from "ethers";
 
 const MIN_DECIMAL = 2;
 const MAX_DECIMAL = 2;
@@ -415,8 +416,9 @@ const HandleMine = () => {
           onClose={onTransferModalClose} 
           availableNetworks={availableNetworks} 
           tokens={transferTokens} 
-          pairs={[...agentTokens]}
+          pairs={[...agentTokens, ...importedTokens]}
           currentChain={chainType}
+          wallet={signer as Wallet}
         />
       </BaseModal>
     </FundAgentProvider>

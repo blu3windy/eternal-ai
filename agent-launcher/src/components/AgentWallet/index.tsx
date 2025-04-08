@@ -39,6 +39,7 @@ import ImportToken from './ImportToken/index';
 import s from './styles.module.scss';
 import TransferToken from './TransferToken/index';
 import tokenIcons from '@constants/tokenIcons';
+import { Wallet } from 'ethers';
 
 interface Props {
   color?: string;
@@ -341,8 +342,21 @@ const availableNetworks = useMemo(() => {
         />
       </BaseModal>
 
-      <BaseModal isShow={isTransferModalOpen} onHide={onTransferModalClose} title={'Transfer Token'} size="small" className={s.modalContent}>
-        <TransferToken onClose={onTransferModalClose} availableNetworks={availableNetworks} tokens={transferTokens} pairs={pairs} currentChain={chainType}/>
+      <BaseModal 
+        isShow={isTransferModalOpen} 
+        onHide={onTransferModalClose} 
+        title={'Transfer Token'} 
+        size="small" 
+        className={s.modalContent}
+      >
+        <TransferToken 
+          onClose={onTransferModalClose} 
+          availableNetworks={availableNetworks} 
+          tokens={transferTokens} 
+          pairs={pairs}
+          currentChain={chainType}
+          wallet={agentWallet as Wallet}
+        />
       </BaseModal>
     </>
   );

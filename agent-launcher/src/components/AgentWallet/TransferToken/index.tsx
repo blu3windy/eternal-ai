@@ -21,13 +21,11 @@ import CTokenContract from '@contract/token';
 import { NATIVE_TOKEN_ADDRESS } from '@contract/token/constants';
 import { IToken } from '@interfaces/token';
 import { AgentContext } from '@pages/home/provider/AgentContext';
-import { agentsTradeSelector } from '@stores/states/agent-trade/selector';
 import { getExplorerByChain } from '@utils/helpers';
-import { BigNumber } from 'ethers';
+import { BigNumber, Wallet } from 'ethers';
 import { parseEther } from 'ethers/lib/utils';
 import { Form, Formik } from 'formik';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
 import * as Yup from "yup";
 import s from './styles.module.scss';
 
@@ -53,6 +51,7 @@ interface TransferTokenProps {
     tokens: IToken[];
     pairs: IToken[];
     currentChain: CHAIN_TYPE;
+    wallet: Wallet;
 }
 
 const TokenItem = ({ token, index, showUsdValue = false, onClick, currentChain }: { token: IToken & { icon: string }, index: number, showUsdValue?: boolean, onClick?: () => void, currentChain: CHAIN_TYPE }) => {
@@ -129,6 +128,7 @@ const TransferTokenForm = ({
     isNativeToken,
     pairs,
     currentChain,
+    wallet,
 }: {
     values: TransferTokenFormValues;
     isSubmitting: boolean;
@@ -144,6 +144,7 @@ const TransferTokenForm = ({
     isNativeToken: boolean;
     pairs: IToken[];
     currentChain: CHAIN_TYPE;
+    wallet: Wallet;
 }) => {
     const { isOpen: isTokenOpen, onOpen: onTokenOpen, onClose: onTokenClose } = useDisclosure();
     const { isOpen: isNetworkOpen, onOpen: onNetworkOpen, onClose: onNetworkClose } = useDisclosure();
@@ -360,9 +361,9 @@ const TransferTokenForm = ({
     );
 };
 
-const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetworks, tokens, pairs, currentChain }) => {
+const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetworks, tokens, pairs, currentChain, wallet }) => {
     const toast = useToast();
-    const { selectedAgent, agentWallet } = useContext(AgentContext);
+    const { selectedAgent } = useContext(AgentContext);
     const [selectedTokenBalance, setSelectedTokenBalance] = useState<string>("0");
     const [estimatedFee, setEstimatedFee] = useState<string>("0");
     const [isNativeToken, setIsNativeToken] = useState<boolean>(false);
@@ -399,7 +400,7 @@ const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetwork
         try {
             console.log('Transfer values:', values);
 
-            if (!agentWallet?.privateKey) {
+            if (!wallet?.privateKey) {
                 throw new Error('Private key not available');
             }
 
@@ -408,7 +409,7 @@ const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetwork
                 amount: values.amount,
                 tokenAddress: values.token,
                 chain: currentChain,
-                privateKey: agentWallet.privateKey
+                privateKey: wallet.privateKey
             });
 
             const explorerUrl = getExplorerByChain({
@@ -474,7 +475,8 @@ const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetwork
                             try {
                                 const balance = await cTokenContract.getTokenBalance(
                                     values.token,
-                                    currentChain
+                                    currentChain,
+                                    wallet.address
                                 );
                                 setSelectedTokenBalance(balance || "0");
                             } catch (error) {
@@ -484,7 +486,7 @@ const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetwork
                         };
 
                         updateBalance();
-                    }, [values.token, currentChain]);
+                    }, [values.token, currentChain, wallet.address]);
 
                     // Update fee when amount changes
                     useEffect(() => {
@@ -495,14 +497,13 @@ const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetwork
                             }
 
                             try {
-                                const walletAddress = agentWallet?.address;
-                                if (!walletAddress) {
+                                if (!wallet.address) {
                                     setEstimatedFee("0");
                                     return;
                                 }
 
                                 const fee = await cTokenContract.getEstimateGas({
-                                    from: walletAddress,
+                                    from: wallet.address,
                                     to: values.toAddress,
                                     transferAmount: values.amount,
                                     tokenAddress: values.token,
@@ -517,7 +518,7 @@ const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetwork
                         };
 
                         updateFee();
-                    }, [values.token, values.amount, values.toAddress, selectedAgent?.wallet_address, currentChain]);
+                    }, [values.token, values.amount, values.toAddress, wallet.address, currentChain]);
 
                     // Update isNativeToken when token changes
                     useEffect(() => {
@@ -544,6 +545,7 @@ const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetwork
                             isNativeToken={isNativeToken}
                             pairs={pairs}
                             currentChain={currentChain}
+                            wallet={wallet}
                         />
                     );
                 }}
