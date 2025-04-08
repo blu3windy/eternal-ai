@@ -21,27 +21,30 @@ import {
 import BaseModal from '@components/BaseModal';
 import ERC20Balance from '@components/ERC20Balance';
 import useERC20Balance from '@components/ERC20Balance/useERC20Balance';
-import { CHAIN_CONFIG, CHAIN_TYPE, MAX_DECIMAL, MIN_DECIMAL } from '@constants/chains';
+import { CHAIN_INFO, CHAIN_TYPE, MAX_DECIMAL, MIN_DECIMAL, SYMBIOSIS_RPC } from '@constants/chains';
 import { NATIVE_TOKEN_ADDRESS } from '@contract/token/constants';
 import { IToken } from '@interfaces/token';
 import ExportPrivateKey from '@pages/home/chat-agent/ExportPrivateKey';
 import { AgentContext } from '@pages/home/provider/AgentContext';
 import { AgentTradeContext } from '@pages/home/trade-agent/provider';
 import { ChainIdToChainType } from '@pages/home/trade-agent/provider/constant';
+import useFundAgent from '@providers/FundAgent/useFundAgent';
+import localStorageService from '@storage/LocalStorageService';
 import { agentsTradeSelector } from '@stores/states/agent-trade/selector';
 import { formatCurrency } from '@utils/format';
 import { formatName, getTokenIconUrl, parseSymbolName, TOKEN_ICON_DEFAULT } from '@utils/string';
-import React, { useContext, useMemo, useState, useEffect } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import s from './styles.module.scss';
 import ImportToken from './ImportToken/index';
+import s from './styles.module.scss';
 import TransferToken from './TransferToken/index';
-import useFundAgent from '@providers/FundAgent/useFundAgent';
-import localStorageService from '@storage/LocalStorageService';
+import tokenIcons from '@constants/tokenIcons';
 
 interface Props {
   color?: string;
 }
+
+const STORAGE_KEY_PREFIX = 'imported_tokens_';
 
 const TokenItem = ({ token, index, showUsdValue = false }: { token: IToken & { icon: string }, index: number, showUsdValue?: boolean }) => {
   const { currentChain } = useSelector(agentsTradeSelector);
@@ -113,15 +116,14 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
     return ChainIdToChainType[selectedAgent.network_id] || CHAIN_TYPE.BASE;
   }, [selectedAgent?.network_id]);
 
-  const chainConfig = useMemo(() => {
-    return CHAIN_CONFIG[chainType];
-  }, [chainType]);
+  const chainConfig = CHAIN_INFO[chainType];
 
   const nativeToken = useMemo(() => {
     return {
       address: NATIVE_TOKEN_ADDRESS,
       name: chainConfig?.nativeCurrency?.name || "Ethereum",
       symbol: chainConfig?.nativeCurrency?.symbol || "ETH",
+      icon: tokenIcons?.[(chainConfig?.nativeCurrency?.symbol || "ETH").toLowerCase()],
     }
   }, [chainConfig]);
 
@@ -139,7 +141,10 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
   // console.log('balanceETH', nativeBalance);
   // console.log('nativeToken', nativeToken);
   // console.log('coinPrices', coinPrices);
-  // console.log('=== == ')
+  console.log('selectedAgent', selectedAgent);
+  console.log('chainType', chainType);
+  console.log('chainConfig', chainConfig);
+  console.log('=== == ')
 
   const handleExportPrvKey = () => {
     onModalOpen();
@@ -200,6 +205,20 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
 
     return [...pairTokens, ...importedTokens];
   }, [pairs, selectedAgent, importedTokens]);
+
+  const transferTokens = useMemo(() => {
+    const pairTokens = pairs.map(p => ({
+        ...p,
+        icon: p.symbol === 'EAI' ? getTokenIconUrl(p) : getTokenIconUrl(selectedAgent)
+    }));
+
+    return [nativeToken, ...pairTokens, ...importedTokens];
+}, [pairs, selectedAgent, importedTokens, nativeToken]);
+
+const availableNetworks = useMemo(() => {
+  return [chainConfig];
+}, [chainConfig]);
+
 
   const WalletContent = () => (
     <Box className={s.walletCard}>
@@ -309,15 +328,20 @@ const AgentWallet: React.FC<Props> = ({ color }) => {
       </Popover>
 
       <BaseModal isShow={isModalOpen} onHide={onModalClose} title={'Export private key'} size="small" className={s.modalContent}>
-        <ExportPrivateKey />
+        <ExportPrivateKey privateKey={agentWallet?.privateKey || ''}/>
       </BaseModal>
 
       <BaseModal isShow={isImportModalOpen} onHide={onImportModalClose} title={'Import Token'} size="small" className={s.modalContent}>
-        <ImportToken onClose={onImportModalClose} />
+        <ImportToken 
+          onClose={onImportModalClose} 
+          pairs={pairs} 
+          storageKey={`${STORAGE_KEY_PREFIX}${selectedAgent?.id}`}
+          currentChain={chainType}
+        />
       </BaseModal>
 
       <BaseModal isShow={isTransferModalOpen} onHide={onTransferModalClose} title={'Transfer Token'} size="small" className={s.modalContent}>
-        <TransferToken onClose={onTransferModalClose} />
+        <TransferToken onClose={onTransferModalClose} availableNetworks={availableNetworks} tokens={transferTokens} pairs={pairs} />
       </BaseModal>
     </>
   );
