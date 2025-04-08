@@ -117,6 +117,14 @@ const AgentDetail = () => {
       }
    }, [selectedAgent]);
 
+   const shortDescription = useMemo(() => {
+      if ([AgentType.UtilityJS, AgentType.UtilityPython, AgentType.Infra, AgentType.Model, AgentType.CustomPrompt, AgentType.CustomUI].includes(selectedAgent.agent_type)) {
+         return selectedAgent?.short_description || selectedAgent?.personality;
+      } else {
+         return selectedAgent?.short_description || selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
+      }
+   }, [selectedAgent]);
+
    const requirements = selectedAgent?.required_info;
 
 
@@ -156,14 +164,15 @@ const AgentDetail = () => {
             <Flex w={"100%"} justifyContent={"space-between"} alignItems={"center"}>
                <Flex gap={"16px"} alignItems={"center"}>
                   <Image w="100px" h="100px" src={avatarUrl} borderRadius={"50%"} objectFit={'cover'} />
-                  <Flex direction={"column"} gap={"16px"}>
+                  <Flex direction={"column"} gap={"4px"}>
                      <Flex gap={"6px"}>
                         <Text className={s.nameText}>
                            {selectedAgent?.display_name || selectedAgent?.agent_name}{' '}
                         </Text>
                         <Text className={s.nameText} opacity={0.5}>{selectedAgent?.token_symbol ? `$${selectedAgent?.token_symbol}` : ''}</Text>
                      </Flex>
-                     <Flex gap={"24px"}>
+                     <Text className={s.shortDescription}>{shortDescription}</Text>
+                     <Flex gap={"24px"} mt={"12px"}>
                         {
                            isInstalled ? (
                               <Button

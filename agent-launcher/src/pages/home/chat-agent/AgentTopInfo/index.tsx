@@ -290,9 +290,9 @@ const AgentTopInfo = () => {
                                     />
                                  </Flex>
 
-                                 <Text fontSize={'14px'} fontWeight={400} opacity={0.7}>
+                                 {/* <Text fontSize={'14px'} fontWeight={400} opacity={0.7}>
                                     {description}
-                                 </Text>
+                                 </Text> */}
                               </Flex>
                               <Divider color={'#E2E4E8'} my={'16px'} />
                               <AgentOnChainInfo />
