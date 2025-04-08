@@ -11,6 +11,9 @@ import { formatCurrency, formatLongAddress } from "@utils/format.ts";
 import cs from "clsx";
 import { useContext, useEffect, useMemo, useState } from 'react';
 import s from './styles.module.scss';
+import { MonitorContext } from '@providers/Monitor/MonitorContext';
+import { ContainerData } from '@providers/Monitor/interface';
+import { compareString } from '@utils/string';
 
 interface IProps {
    token: IAgentToken;
@@ -20,18 +23,46 @@ interface IProps {
 const AgentItem = ({ token, isLatest }: IProps) => {
    const {
       selectedAgent,
-      isStopping,
       stopAgent,
-      isRunning,
-      isStarting,
       isInstalled,
       unInstallAgent,
       installAgent,
       setSelectedAgent,
+      agentStates,
    } = useContext(AgentContext);
+   const { containers } = useContext(MonitorContext);
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
    const [isClickUpdateCode, setIsClickUpdateCode] = useState(false);
+
+   const isStarting = useMemo(() => {
+      if (selectedAgent) {
+         return agentStates[selectedAgent.id]?.isStarting || false;
+      }
+
+      return false;
+   }, [selectedAgent, agentStates]);
+
+   const isStopping = useMemo(() => {
+      if (selectedAgent) {
+         return agentStates[selectedAgent.id]?.isStopping || false;
+      }
+
+      return false;
+   }, [selectedAgent, agentStates]);
+
+   const isRunning = useMemo(() => {
+      if (selectedAgent) {
+         const matchingContainer = containers?.find((container: ContainerData) => compareString(container.agent?.agent_name, selectedAgent?.agent_name));
+         if (matchingContainer?.agent && [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(matchingContainer?.agent?.agent_type)) {
+            return matchingContainer ? matchingContainer?.state === 'running' || false : agentStates[selectedAgent.id]?.isRunning;
+         } else {
+            return matchingContainer?.state === 'running' || agentStates[selectedAgent.id]?.isRunning || false;
+         }
+      }
+
+      return false;
+   }, [selectedAgent, agentStates, containers]);
 
    useEffect(() => {
       setHaveNewVersionCode(false);
