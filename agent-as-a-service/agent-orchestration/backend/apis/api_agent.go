@@ -703,3 +703,14 @@ func (s *Server) GetListUserVideo(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewUserVideoRespArray(insts)})
 }
+
+func (s *Server) UpdateAgentCodeVersion(c *gin.Context) {
+	ctx := s.requestContext(c)
+	agentID := s.uintFromContextParam(c, "id")
+	err := s.nls.UpdateAgentUpgradeableCodeVersion(ctx, agentID)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: true})
+}

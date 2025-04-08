@@ -1,5 +1,11 @@
 package ethapi
 
+import (
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/agentupgradeable"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+)
+
 // func (c *Client) DeployAgentUpgradeable(prkHex string) (string, string, error) {
 // 	_, prk, err := c.parsePrkAuth(prkHex)
 // 	if err != nil {
@@ -28,3 +34,19 @@ package ethapi
 // 	}
 // 	return address.Hex(), tx.Hash().Hex(), nil
 // }
+
+func (c *Client) AgentUpgradeableCodeVersion(agentAddr string) (int, error) {
+	client, err := c.getClient()
+	if err != nil {
+		return 0, err
+	}
+	instance, err := agentupgradeable.NewAgentUpgradeable(helpers.HexToAddress(agentAddr), client)
+	if err != nil {
+		return 0, err
+	}
+	version, err := instance.GetCurrentVersion(&bind.CallOpts{})
+	if err != nil {
+		return 0, err
+	}
+	return int(version), nil
+}

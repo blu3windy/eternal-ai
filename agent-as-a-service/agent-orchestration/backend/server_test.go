@@ -45,7 +45,7 @@ func init() {
 
 func Test_JOB(t *testing.T) {
 
-	ts.CallWssDexScreener()
+	ts.JobUpdateAgentUpgradeableCodeVersion(context.Background())
 
 	// data, err := ts.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), "man opens shirt and shows his fat belly")
 	// fmt.Println(data, err)

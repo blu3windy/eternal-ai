@@ -94,6 +94,7 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		AuthenUrl:        req.AuthenUrl,
 		DependAgents:     req.DependAgents,
 		EnvExample:       req.EnvExample,
+		CodeVersion:      1,
 	}
 	if req.RequiredEnv != nil {
 		agent.RequiredEnv = *req.RequiredEnv
