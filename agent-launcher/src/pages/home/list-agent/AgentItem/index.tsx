@@ -14,6 +14,7 @@ import s from './styles.module.scss';
 import { MonitorContext } from '@providers/Monitor/MonitorContext';
 import { ContainerData } from '@providers/Monitor/interface';
 import { compareString } from '@utils/string';
+import { motion } from 'framer-motion';
 
 interface IProps {
    token: IAgentToken;
@@ -135,6 +136,11 @@ const AgentItem = ({ token, isLatest }: IProps) => {
 
    return (
       <Flex
+         as={motion.div}
+         initial={{ opacity: 0 }}
+         animate={{ opacity: 1 }}
+         exit={{ opacity: 0 }}
+         transition={{ duration: "0.5s" }}
          key={token.id}
          className={cs(s.container, token?.id === selectedAgent?.id ? s.isSelected : '')}
          flexDirection="column"
