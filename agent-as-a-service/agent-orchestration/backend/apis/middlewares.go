@@ -788,13 +788,25 @@ func (s *Server) middlewareApiLimit(numRequest int, duration time.Duration) gin.
 		var limit int
 		err := s.nls.GetRedisCachedWithKey(limitKey, &limit)
 		if err != nil {
-			limit = 0
+			// Only set limit to 0 if key doesn't exist, not on other redis errors
+			if err.Error() == "redis: nil" {
+				limit = 0
+			} else {
+				ctxAbortWithStatusJSON(c, http.StatusInternalServerError, &serializers.Resp{Error: errs.NewError(err)})
+				return
+			}
 		}
 		if limit >= numRequest {
 			ctxAbortWithStatusJSON(c, http.StatusTooManyRequests, &serializers.Resp{Error: errs.NewError(errors.New("too many requests"))})
 			return
 		}
-		expireTime := time.Now().Truncate(duration).Add(duration)
+
+		// Calculate expiration time from start of current window
+		now := time.Now()
+		windowStart := now.Truncate(duration)
+		expireTime := windowStart.Add(duration)
+
+		// Only increment if we can set the value
 		err = s.nls.SetRedisCachedWithKey(limitKey, limit+1, time.Until(expireTime))
 		if err != nil {
 			ctxAbortWithStatusJSON(c, http.StatusInternalServerError, &serializers.Resp{Error: errs.NewError(err)})
