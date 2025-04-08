@@ -79,9 +79,14 @@ function FloatingWebView() {
             }
           >
             <div className={styles.header}>
-              <Text>Liveview</Text>
+              <Text
+                fontSize={"14px"}
+                color="black"
+                fontWeight={"600"}
+                lineHeight={"20px"}
+              >Liveview</Text>
               <Flex gap="12px" alignItems="center">
-                {isMaximized ?  (
+                {isMaximized ? (
                   <SvgInset 
                     className={styles.icon} 
                     size={20} 
@@ -113,7 +118,11 @@ function FloatingWebView() {
                   padding={"12px"}
                   background={"#F8F9FA"}
                 >
-                  <SvgInset svgUrl="/icons/ic-search.svg" size={16} />
+                  <div
+                    className={styles.searchingIcon}
+                  >
+                    <SvgInset svgUrl="/icons/ic-search.svg" size={16} />
+                  </div>
                 </Box>
                 <Flex
                   flexDirection={"column"}

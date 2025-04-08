@@ -1,3 +1,24 @@
+// @keyframes follow-circle {
+//   0% {
+//     transform: translate(0, 0);
+//   }
+//   20% {
+//     transform: translate(6px, -10px);
+//   }
+//   40% {
+//     transform: translate(12px, -4px);
+//   }
+//   60% {
+//     transform: translate(16px, 0);
+//   }
+//   80% {
+//     transform: translate(12px, 4px);
+//   }
+//   100% {
+//     transform: translate(0, 0);
+//   }
+// }
+
 .floatingWebView {
   position: fixed;
   z-index: 1000;
@@ -27,6 +48,12 @@
 
       }
     }
+
+
+  }
+
+  .searchingIcon {
+    // animation: follow-circle 500ms infinite;
   }
 
   .content {
