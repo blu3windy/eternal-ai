@@ -80,7 +80,7 @@ const AgentsList = () => {
 
    const refParams = useRef({
       page: 1,
-      limit: 50,
+      limit: 10,
       sort,
       category,
       filter,
@@ -201,7 +201,17 @@ const AgentsList = () => {
             }
          }
 
-         const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params);
+         const { agents: newTokens } = await cPumpAPI.getAgentTokenList(params, (data) => {
+            if (isNew) {
+               setAgents(data.agents);
+            } else {
+               setAgents((prevTokens) =>
+                  uniqBy([...prevTokens, ...data.agents], (token) => token.id),
+               );
+            }
+            refLoading.current = false;
+            setLoaded(true);
+         });
 
          if (isNew) {
             setAgents(newTokens);
@@ -764,10 +774,10 @@ const AgentsList = () => {
                            textAlign="center"
                         >
                            <Text fontSize="lg" fontWeight="bold">
-No agents installed?
+                              No agents installed?
                            </Text>
                            <Text>
-                     Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
+                              Browse <Text as="span" onClick={() => {setFilter(FilterOption.All)}} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
                            </Text>
                         </VStack>
                      )}

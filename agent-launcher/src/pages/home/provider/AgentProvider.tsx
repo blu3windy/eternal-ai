@@ -603,7 +603,7 @@ const AgentProvider: React.FC<
                   data: agent,
                   isStarting: false,
                });
-            }, 3000);
+            }, 4000);
          } else {
             dispatch(requestReloadMonitor());
             setTimeout(() => {
@@ -618,6 +618,7 @@ const AgentProvider: React.FC<
          console.timeEnd('LEON: startAgent');
          // await sleep(2000);
       } catch (e: any) {
+
          console.log('startAgent e', e);
 
          if ([AgentType.Model, AgentType.ModelOnline].includes(agent.agent_type)) {
@@ -1165,7 +1166,7 @@ const AgentProvider: React.FC<
          ].join(',');
          const utilityParams: any = {
             page: 1,
-            limit: 100,
+            limit: 200,
             sort_col: SortOption.CreatedAt,
             agent_types: agent_types,
             chain: '',

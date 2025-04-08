@@ -99,8 +99,13 @@ class ChatAgentDatabase {
 
    async updateChatItem(updatedItem: PersistedMessageType) {
       try {
+         const normalizedItem = {
+            ...updatedItem
+         }
+
+         delete normalizedItem.createdAt;
          await this.db?.messages.update(updatedItem.id, {
-            ...updatedItem,
+            ...normalizedItem,
             // updatedAt: updatedItem.updatedAt ? new Date(updatedItem.updatedAt).getTime() : new Date().getTime(),
             updatedAt: new Date().getTime()
          });

@@ -53,6 +53,8 @@ const Starter = (props: IProps) => {
    const [hasError, setHasError] = useState(false);
    const agentCtx = useContext(AgentContext);
 
+   const { setIsFinished } = useStarter();
+
    const setDefaultAgent = async () => {
       const {
          agents
@@ -75,6 +77,7 @@ const Starter = (props: IProps) => {
 
    const onInit = async (ignoreCopy?: boolean) => {
       try {
+         setIsFinished(false);
          console.time("FULL_LOAD_TIME");
          await onCheckHasUser();
          if (!ignoreCopy) {
@@ -100,19 +103,15 @@ const Starter = (props: IProps) => {
             await setDefaultAgent();
          } else {
             try {
-               try {
-                  await agentAPI.current.checkAgentModelServiceRunning();
-               } catch (error) {
-                  switch (activeModel.agent_type) {
-                  case AgentType.ModelOnline: {
-                     await agentCtx.startAgent(activeModel, false);
-                     break;
-                  }
-                  case AgentType.Model:
-                     await setReadyPort();
-                     await globalThis.electronAPI.modelInstallBaseModel(activeModel.hash);
-                     break;
-                  }
+               switch (activeModel.agent_type) {
+               case AgentType.ModelOnline: {
+                  await agentCtx.startAgent(activeModel, true);
+                  break;
+               }
+               case AgentType.Model:
+                  await setReadyPort();
+                  await globalThis.electronAPI.modelInstallBaseModel(activeModel.hash);
+                  break;
                }
             } catch (error) {
                await setDefaultAgent();
@@ -132,6 +131,7 @@ const Starter = (props: IProps) => {
          setHasError(true);
       } finally {
          console.timeEnd("FULL_LOAD_TIME");
+         setIsFinished(true);
       }
    }
    const renderContent = () => {
