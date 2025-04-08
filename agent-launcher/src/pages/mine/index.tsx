@@ -24,6 +24,7 @@ import s from "./styles.module.scss";
 import BaseModal from '@components/BaseModal';
 import ExportPrivateKey from '@pages/home/chat-agent/ExportPrivateKey';
 import { useDisclosure } from '@chakra-ui/react';
+import ImportToken from '@components/AgentWallet/ImportToken';
 
 const MIN_DECIMAL = 2;
 const MAX_DECIMAL = 2;
@@ -89,6 +90,8 @@ const HandleMine = () => {
   const navigate = useNavigate();
   const { coinPrices } = useContext(AgentContext);
   const { signer } = useAuth();
+  const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
+  const { isOpen: isImportModalOpen, onOpen: onImportModalOpen, onClose: onImportModalClose } = useDisclosure();
 
   const { onCopy } = useClipboard(signer?.address || "");
   const toast = useToast();
@@ -193,15 +196,22 @@ const HandleMine = () => {
     // onTransferModalOpen();
   };
 
-  const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
-
   const handleExportPrvKey = () => {
     onModalOpen();
   };
 
   const handleImportToken = () => {
-    // onImportModalOpen();
+    onImportModalOpen();
   };
+
+  const userAddress = useMemo(() => {
+    return signer?.address || '';
+  }, [signer?.address]);
+
+  const userTokens = useMemo(() => {
+    return [];
+  }, []);
+
   return (
     <FundAgentProvider>
       <Box className={s.container}>
@@ -317,6 +327,20 @@ const HandleMine = () => {
         className={s.modalContent}
       >
         <ExportPrivateKey privateKey={signer?.privateKey || ''} />
+      </BaseModal>
+      <BaseModal 
+        isShow={isImportModalOpen} 
+        onHide={onImportModalClose} 
+        title={'Import Token'} 
+        size="small"
+        className={s.modalContent}
+      >
+        <ImportToken 
+          onClose={onImportModalClose}
+          pairs={userTokens}
+          storageKey={`imported_tokens_user_${userAddress}`}
+          currentChain={CHAIN_TYPE.BASE}
+        />
       </BaseModal>
     </FundAgentProvider>
   );
