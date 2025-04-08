@@ -12,6 +12,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/twitter"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 	"github.com/jinzhu/gorm"
 )
@@ -491,4 +492,43 @@ func (s *Service) TestSignature(ctx context.Context) {
 	//	1741061954
 	//
 	// eab561ca350c4ae7c3a020b2444840ca402e29a006da937ba9817fd90d42a6b755caf4f341b322ff8c299cb93ff37d83127ce20490bbcfdeac46c7a4ed8be5251c
+}
+
+func (s *Service) InfraTwitterAppSearchRecentTweet(ctx context.Context, query, paginationToken string, maxResults int) (*twitter.TweetRecentSearch, error) {
+	var tweetRecentSearch twitter.TweetRecentSearch
+	var lookUps map[string]twitter.TweetLookup
+	var meta twitter.TweetRecentSearchMeta
+	cacheKey := fmt.Sprintf(`CacheAgentTerminalLatestLookUps_%s_%s`, query, paginationToken)
+	cacheKey1 := fmt.Sprintf(`CacheAgentTerminalLatestMeta_%s_%s`, query, paginationToken)
+	err := s.GetRedisCachedWithKey(cacheKey, &lookUps)
+	if err != nil {
+		twitterInfo, err := s.dao.FirstTwitterInfo(daos.GetDBMainCtx(ctx),
+			map[string][]interface{}{
+				"twitter_id = ?": {s.conf.TokenTwiterIdForInternal},
+			},
+			map[string][]interface{}{},
+			false,
+		)
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+
+		if twitterInfo != nil {
+			tweetRecentSearch, err := s.twitterWrapAPI.SearchRecentTweet(query, paginationToken, twitterInfo.AccessToken, maxResults)
+			if err != nil {
+				return nil, errs.NewTwitterError(err)
+			}
+			lookUps = tweetRecentSearch.LookUps
+			meta = tweetRecentSearch.Meta
+			_ = s.SetRedisCachedWithKey(cacheKey, tweetRecentSearch.LookUps, 5*time.Minute)
+			_ = s.SetRedisCachedWithKey(cacheKey1, tweetRecentSearch.Meta, 5*time.Minute)
+			return tweetRecentSearch, nil
+		}
+	}
+
+	_ = s.GetRedisCachedWithKey(cacheKey1, &meta)
+
+	tweetRecentSearch.LookUps = lookUps
+	tweetRecentSearch.Meta = meta
+	return &tweetRecentSearch, nil
 }

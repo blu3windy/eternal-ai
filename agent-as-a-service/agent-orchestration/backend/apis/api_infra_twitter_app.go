@@ -69,3 +69,16 @@ func (s *Server) UtilityTwitterVerifyDeposit(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
 }
+
+func (s *Server) InfraTwitterAppSearchRecentTweet(c *gin.Context) {
+	ctx := s.requestContext(c)
+	query := s.stringFromContextQuery(c, "query")
+	paginationToken := s.stringFromContextQuery(c, "pagination_token")
+	maxResults := s.maxResultFromContextQuery(c)
+	user, err := s.nls.InfraTwitterAppSearchRecentTweet(ctx, query, paginationToken, maxResults)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: user})
+}
