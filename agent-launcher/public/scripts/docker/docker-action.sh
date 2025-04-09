@@ -170,15 +170,9 @@ run_container_open_ai() {
     docker_build
     log_message "Docker image ${IMAGE_NAME} built successfully."
 
-    # check if network is external add --network network-agent-external, always has network-agent-internal
-    if [ "$NETWORK" == "external" ]; then
-      NETWORK_EXTERNAL="--network network-agent-external"
-    else
-      NETWORK_EXTERNAL=""
-    fi
-
     docker run -d -p $DEFAULT_PORT:$DEFAULT_PORT \
       --network network-agent-internal \
+      --network network-agent-external \
       $NETWORK_EXTERNAL \
       --name "$CONTAINER_NAME" \
       "$IMAGE_NAME"
@@ -200,6 +194,7 @@ run_container_custom_ui() {
     docker run -d -p 0:8080 \
       --network network-agent-internal \
       $NETWORK_EXTERNAL \
+      --add-host=localmodel:host-gateway \
       -e PRIVATE_KEY="$PRIVATE_KEY" \
       -e WALLET_ADDRESS="$WALLET_ADDRESS" \
       --name "$CONTAINER_NAME" \
