@@ -15,6 +15,7 @@ import AgentAPI from "../../../../services/api/agent";
 import { ChatCompletionPayload, IChatMessage } from "../../../../services/api/agent/types.ts";
 import { INIT_WELCOME_MESSAGE } from "./constants";
 import HandleMessageProcessing from "./HandleMessageProcessing.tsx";
+import { useDebounce } from "@hooks/useDebounce.ts";
 
 type IChatAgentProviderContext = {
    isStopReceiving?: boolean;
@@ -73,8 +74,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
    const id = selectedAgent?.id;
    const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
+   const refLoadChatItems = useRef(false);
 
-   const cPumpAPI = new CAgentTokenAPI();
 
    const isAllowChat = useMemo(() => {
       return true;
@@ -86,12 +87,13 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    }, []);
 
    useEffect(() => {
-      if (threadId) {
+      if (threadId && !refLoadChatItems.current) {
+         refLoadChatItems.current = true;
          setMessages([]);
 
          chatAgentDatabase.loadChatItems(threadId).then((items) => {
             if (items?.length === 0) {
-               //  publishEvent(INIT_WELCOME_MESSAGE);
+                publishEvent(INIT_WELCOME_MESSAGE);
             } else {
                // const filterMessages = items
                //    ?.filter((item) => item.status !== 'failed')
