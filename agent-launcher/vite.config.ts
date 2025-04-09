@@ -2,10 +2,12 @@ import { defineConfig } from 'vite'
 import path from 'node:path'
 import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
+import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig({
    plugins: [
       react(),
+      visualizer({open: true}),
       electron({
          main: {
             entry: 'electron/main.ts',
@@ -24,6 +26,7 @@ export default defineConfig({
                   rollupOptions: {
                      external: ['keytar', 'dockerode'], // ✅ Exclude from bundling
                   },
+                  
                },
             },
          },
@@ -49,6 +52,22 @@ export default defineConfig({
    },
    build: {
       minify: 'esbuild', // ✅ Use esbuild for fast minification
+      rollupOptions: {
+         output: {
+            manualChunks(id) {
+               if (id.includes('node_modules')) {
+                  if (id.includes('react')) return 'react';
+                  if (id.includes('ethers')) return 'ethers';
+                  if (id.includes('firebase')) return 'firebase';
+                  if (id.includes('moment')) return 'moment';
+                  return 'vendor';
+               }
+            },
+         },
+         input: {
+            preload: 'electron/preload.ts',
+         }
+      },
    },
    esbuild: {
       drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [], // ✅ Drop console logs in production only
