@@ -40,6 +40,22 @@
     padding: 0;
   }
 
+  .btnClearHistory {
+    min-height: 24px;
+    height: 100%;
+    min-width: 250px;
+    background: transparent !important;
+
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #000;
+    padding: 0;
+  }
+
   .btnUpdateCode {
     padding: 0;
     display: flex;

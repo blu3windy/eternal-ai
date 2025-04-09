@@ -4,7 +4,7 @@
 import { AgentType } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext.tsx";
 import CAgentTokenAPI from "@services/api/agents-token";
-import { addOrUpdateTaskItem, removeTaskItem } from "@stores/states/agent-chat/reducer.ts";
+import { addOrUpdateTaskItem, removeTaskByAgentId, removeTaskItem } from "@stores/states/agent-chat/reducer.ts";
 import { TaskItem } from "@stores/states/agent-chat/type.ts";
 import React, { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -141,6 +141,16 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                setMessages(filterMessages as any);
             }
          });
+
+         (window as any).clearChatHistory = () => {
+            chatAgentDatabase.clearChatItems(threadId);
+            setMessages([]);
+            dispatch(removeTaskByAgentId({ id: threadId }));
+         };
+
+         return () => {
+            (window as any).clearChatHistory = undefined;
+         };
       }
    }, [threadId]);
 

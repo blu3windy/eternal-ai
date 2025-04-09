@@ -67,9 +67,23 @@ const slice = createSlice({
          // update storage
          localStorageService.setItem(CHAT_AGENT_TASKS_STATE_STORAGE_KEY, JSON.stringify(state.agentTasks));
       },
+      removeTaskItemByItemId: (state: AgentChatState, action: { payload: { id: string; itemId: string } }) => {
+         const { id, itemId } = action.payload;
+         state.agentTasks[id] = [...(state.agentTasks[id] || []).filter((item) => item.id !== itemId)];
+         // update storage
+         localStorageService.setItem(CHAT_AGENT_TASKS_STATE_STORAGE_KEY, JSON.stringify(state.agentTasks));
+      },
+      removeTaskByAgentId: (state: AgentChatState, action: { payload: { id: string; } }) => {
+         const { id } = action.payload;
+         if (state.agentTasks[id]) {
+            delete state.agentTasks[id];
+            // update storage
+            localStorageService.setItem(CHAT_AGENT_TASKS_STATE_STORAGE_KEY, JSON.stringify(state.agentTasks));
+         }
+      },
    },
 });
 
-export const { initTaskItems, addOrUpdateTaskItem, removeTaskItem } = slice.actions;
+export const { initTaskItems, addOrUpdateTaskItem, removeTaskItem, removeTaskItemByItemId, removeTaskByAgentId } = slice.actions;
 
 export default slice.reducer;
