@@ -300,9 +300,9 @@ const AgentsList = () => {
 
       return (
          <Box>
-            <Flex p="0 24px" gap="24px">
+            <Flex p="0 24px 32px" gap="24px">
                {renderCategoryMenu()}
-               <Box w="1px" h="20px" bg="#000" opacity="0.2" margin={"auto 0"} pb={"32px"}/>
+               <Box w="1px" h="20px" bg="#000" opacity="0.2" margin={"auto 0"} />
                {renderSortMenu()}
             </Flex>
             {/* {latestAgent && (

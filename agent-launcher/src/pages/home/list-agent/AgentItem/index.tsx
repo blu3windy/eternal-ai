@@ -3,7 +3,7 @@ import CustomMarkdown from "@components/CustomMarkdown";
 import { DefaultAvatar } from "@components/DefaultAvatar";
 import { BASE_CHAIN_ID } from '@constants/chains';
 import CAgentContract from '@contract/agent';
-import { AgentType } from "@pages/home/list-agent/constants";
+import { AgentType, AgentTypeName } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import localStorageService from '@storage/LocalStorageService';
@@ -72,6 +72,24 @@ const AgentItem = ({ token, isLatest }: IProps) => {
 
       return false;
    }, [token, agentStates]);
+
+   const agentType = useMemo(() => {
+      if (token) {
+         return AgentTypeName[token.agent_type];
+      }
+
+      return '';
+   }, [token]);
+
+   const agentTypeAdditional = useMemo(() => {
+      if (token) {
+         if (token.agent_type === AgentType.ModelOnline) {
+            return 'Online';
+         }
+      }
+
+      return '';
+   }, [token]);
 
    useEffect(() => {
       setHaveNewVersionCode(false);
@@ -228,7 +246,9 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                   )
                }
                <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
-                  <Flex gap={"6px"}>
+                  <Flex gap={"8px"}>
+                     {agentType && <Text className={s.agentTypeTag}>{agentType}</Text>}
+                     {agentTypeAdditional && <Text className={s.agentTypeTag}>{agentTypeAdditional}</Text>}
                      {/* <Image src="icons/ic-creator.svg" w="14px" h="14px" />
                      <Text fontSize={"12px"} fontWeight={"500"} color={"#000"} opacity={0.7}>
                         {formatLongAddress(token?.creator)}
