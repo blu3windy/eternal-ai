@@ -38,9 +38,9 @@ execSync(
   `cp -R release/${version}/latest-mac.yml ~/Documents/dapps/electron-update-server/updates/latest-mac.yml`,
   { stdio: "inherit" }
 );
-execSync(
-  `cd ~/Documents/dapps/electron-update-server && git add . && git commit -m "Update latest-mac.yml" && git push`,
-  { stdio: "inherit" }
-);
+// execSync(
+//   `cd ~/Documents/dapps/electron-update-server && git add . && git commit -m "Update latest-mac.yml" && git push`,
+//   { stdio: "inherit" }
+// );
 
 console.log("✅ Build & notarization complete!"); 
