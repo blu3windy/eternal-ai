@@ -47,7 +47,7 @@ const AgentProvider: React.FC<
    const [isModelRequirementSetup, setIsModelRequirementSetup] = useState(false);
    const [liveViewUrl, setLiveViewUrl] = useState<string>('');
    const [isSearchMode, setIsSearchMode] = useState(false);
-   const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
+   const [category, setCategory] = useState<number>(0);
 
    const refInstalledUtilityAgents = useRef<string[]>([]);
    const refInstalledUtilityAgentIds = useRef<number[]>([]);
@@ -71,6 +71,7 @@ const AgentProvider: React.FC<
       isUnInstalling: boolean;
       isStarting: boolean;
       isStopping: boolean;
+      isUpdating: boolean;
       isInstalled: boolean;
       customUIPort?: string;
     }>>({});
@@ -158,6 +159,14 @@ const AgentProvider: React.FC<
       return false;
    }, [selectedAgent, agentStates]);
 
+   const isUpdating = useMemo(() => {
+      if (selectedAgent) {
+         return agentStates[selectedAgent.id]?.isUpdating || false;
+      }
+
+      return false;
+   }, [selectedAgent, agentStates]);
+
    useEffect(() => {
       const fetchUtilityAgentIds = async () => {
          try {
@@ -236,6 +245,7 @@ const AgentProvider: React.FC<
    // console.log('stephen installedModelAgents', installedModelAgents);
    // console.log('stephen agentStates', agentStates);
    // console.log("stephen: customUIPort", customUIPort);
+   // console.log('stephen agentCategories', agentCategories);
    // console.log("==============================");
 
    useEffect(() => {
@@ -272,6 +282,7 @@ const AgentProvider: React.FC<
       isUnInstalling?: boolean;
       isStarting?: boolean;
       isStopping?: boolean;
+      isUpdating?: boolean;
       isInstalled?: boolean;
       customUIPort?: string;
     }) => {
@@ -443,7 +454,7 @@ const AgentProvider: React.FC<
    const fetchAgentCategories = async () => {
       try {
          const res: any = await cPumpAPI.getAgentCategories();
-         setAgentCategories(res);
+         setAgentCategories([{id: 0, name: 'All'}, ...res]);
       } catch (error) {}
    };
 
@@ -1181,6 +1192,20 @@ const AgentProvider: React.FC<
       }
    }
 
+   const handleUpdateCode = async (agent: IAgentToken) => {
+      updateAgentState(agent.id, {
+         data: agent,
+         isUpdating: true,
+      });
+      await stopAgent(agent, true);
+      await unInstallAgent(agent, false);
+      await installAgent(agent, true);
+      updateAgentState(agent.id, {
+         data: agent,
+         isUpdating: false,
+      });
+   };
+
    const checkInstalledModelAgentsRunning = async () => {
       // Check model agents
       const activeModel = await storageModel.getActiveModel();
@@ -1253,6 +1278,7 @@ const AgentProvider: React.FC<
          isInstalling,
          isStarting,
          isStopping,
+         isUpdating,
          isTrade,
          setIsTrade,
          agentWallet,
@@ -1282,6 +1308,7 @@ const AgentProvider: React.FC<
          setCategory,
          currentActiveModel,
          installedAgentIds,
+         handleUpdateCode,
          agentCategories,
       };
    }, [
@@ -1295,6 +1322,7 @@ const AgentProvider: React.FC<
       isInstalling,
       isStarting,
       isStopping,
+      isUpdating,
       isTrade,
       setIsTrade,
       agentWallet,
@@ -1323,6 +1351,7 @@ const AgentProvider: React.FC<
       setCategory,
       currentActiveModel,
       installedAgentIds,
+      handleUpdateCode,
       agentCategories,
    ]);
 

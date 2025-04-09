@@ -53,8 +53,9 @@ const AgentTopInfo = () => {
       isInstalled,
       unInstallAgent,
       isUnInstalling,
-      installAgent,
+      isUpdating,
       installedModelAgents,
+      handleUpdateCode
    } = useContext(AgentContext);
 
    const [infoTooltipKey, setInfoTooltipKey] = useState(0);
@@ -68,7 +69,6 @@ const AgentTopInfo = () => {
    const [deleteAgent, setDeleteAgent] = useState<IAgentToken | undefined>();
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
-   const [isClickUpdateCode, setIsClickUpdate] = useState(false);
 
    const cAgentTokenAPI = new CAgentTokenAPI();
 
@@ -160,15 +160,6 @@ const AgentTopInfo = () => {
 
       await cAgentTokenAPI.likeAgent(selectedAgent.id);
       setIsLiked(true);
-   };
-
-   const handleUpdateCode = async () => {
-      setIsClickUpdate(true);
-      if (!selectedAgent) return;
-      await stopAgent(selectedAgent, true);
-      await unInstallAgent(selectedAgent, false);
-      await installAgent(selectedAgent, true);
-      setIsClickUpdate(false);
    };
 
    const handleExportPrvKey = () => {
@@ -335,7 +326,7 @@ const AgentTopInfo = () => {
                                     <Button
                                        className={s.btnStop}
                                        onClick={handleStopAgent}
-                                       isLoading={isStopping && !isClickUpdateCode}
+                                       isLoading={isStopping && !isUpdating}
                                        isDisabled={isStopping}
                                        loadingText={'Stopping...'}
                                     >
@@ -386,7 +377,7 @@ const AgentTopInfo = () => {
                                     <Button
                                        className={s.btnStop}
                                        onClick={() => setDeleteAgent(selectedAgent)}
-                                       isLoading={isUnInstalling && !isClickUpdateCode}
+                                       isLoading={isUnInstalling && !isUpdating}
                                        isDisabled={isUnInstalling}
                                        loadingText={'Deleting...'}
                                     >
@@ -445,9 +436,9 @@ const AgentTopInfo = () => {
                                     <Divider color={'#E2E4E8'} mt={'16px'} mb={'8px'} />
                                     <Button
                                        className={s.btnUpdateCode}
-                                       onClick={handleUpdateCode}
-                                       isLoading={(isStopping || isStarting) && isClickUpdateCode}
-                                       isDisabled={(isStopping || isStarting) && isClickUpdateCode}
+                                       onClick={() => handleUpdateCode(selectedAgent)}
+                                       isLoading={isUpdating}
+                                       isDisabled={isUpdating}
                                        loadingText={isStarting ? 'Starting...' : 'Updating...'}
                                     >
                                        A new code version is available. Update now?

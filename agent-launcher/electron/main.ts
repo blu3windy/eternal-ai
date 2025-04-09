@@ -5,88 +5,31 @@ import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 import command from "./share/command-tool.ts";
 import { listenToDockerEvents, getInitialDockerData } from "./ipcMain/docker-listener.ts";
+import log from 'electron-log';
 
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
 
 autoUpdater.autoDownload = true;
+
+log.transports.file.level = 'info';
+autoUpdater.logger = log;
 
 if (process.env.NODE_ENV === "development") {
    // autoUpdater.allowDowngrade = true;
    autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
 }
 
+// autoUpdater.setFeedURL({
+//    provider: "generic",
+//    url: "https://electron-update-server-production.up.railway.app/updates/",
+// });
+
 autoUpdater.setFeedURL({
-   provider: "generic",
-   url: "https://electron-update-server-production.up.railway.app/updates/",
-});
-
-// autoUpdater.on("update-available", (info) => {
-//   dialog
-//     .showMessageBox({
-//       type: "info",
-//       title: "Update Available",
-//       message: `A new version (v${info.version}) is available. Download now?`,
-//       buttons: ["Update", "Later"],
-//     })
-//     .then(({ response }) => {
-//       if (response === 0) {
-//         // User clicked "Update"
-//         autoUpdater.downloadUpdate().catch((err) => {
-//           console.error("Download failed:", err);
-//           dialog.showMessageBox({
-//             type: "info",
-//             title: "Update Ready",
-//             message: `Download failed: ${JSON.stringify(err)}`,
-//           });
-//         });
-//       }
-//     });
-// });
-
-// autoUpdater.on("update-not-available", () => {
-//   dialog.showMessageBox({
-//     message: "No update available.",
-//   });
-// });
-
-// autoUpdater.on("error", (err) => {
-//   console.error("Update error:", err);
-// });
-
-// 🔹 Event: When update is downloaded
-// autoUpdater.on("update-downloaded", (info) => {
-//   console.log(`Update downloaded: v${info.version}`);
-//   dialog
-//     .showMessageBox({
-//       type: "info",
-//       title: "Update Ready",
-//       message: `Version ${info.version} is downloaded. Restart to apply?`,
-//       buttons: ["Restart", "Later"],
-//     })
-//     .then(({ response }) => {
-//       if (response === 0) {-
-//         // User clicked "Restart"
-//         // Delay to ensure update applies correctly
-//         setTimeout(() => {
-//           autoUpdater.quitAndInstall();
-//         }, 3000);
-//       }
-//     });
-// });
-
-// // 🔹 Track download progress
-// autoUpdater.on("download-progress", (progress) => {
-// //   let percentage = Math.round(progress.percent);
-//   //   dialog.showMessageBox({
-//   //     type: "info",
-//   //     title: "Processing",
-//   //     message: `Downloading... ${percentage}% (${(
-//   //       progress.transferred /
-//   //       1024 /
-//   //       1024
-//   //     ).toFixed(2)} MB / ${(progress.total / 1024 / 1024).toFixed(2)} MB)`,
-//   //   });
-// });
+   provider: "github",
+   owner: "eternalai-org",
+   repo: "eternal-ai",
+   releaseType: 'release' // optional, default is "release"
+ })
 
 // const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -117,6 +60,8 @@ runIpcMain();
 
 function createWindow() {
    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+   autoUpdater.checkForUpdatesAndNotify();
 
    win = new BrowserWindow({
       icon: path.join(process.env.VITE_PUBLIC as any, "app-logo.png"),
@@ -150,13 +95,15 @@ function createWindow() {
    getInitialDockerData(win);
 
    // Events to notify the Renderer process (UI)
-   autoUpdater.on("update-available", () => {
+   autoUpdater.on("update-available", (info) => {
       console.log("update-available");
+      log.info('Update available', info);
       win?.webContents.send("update-available");
    });
 
    autoUpdater.on("update-downloaded", () => {
       win?.webContents.send("update-downloaded");
+      log.info('Update downloaded');
       console.log("update-downloaded");
       // autoUpdater.downloadUpdate();
       // autoUpdater.quitAndInstall();

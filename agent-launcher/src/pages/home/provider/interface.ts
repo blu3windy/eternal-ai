@@ -18,6 +18,7 @@ export interface IAgentContext {
   isInstalling: boolean;
   isStarting: boolean;
   isStopping: boolean;
+  isUpdating: boolean;
   runningAgents: number[];
   isTrade: boolean;
   setIsTrade: (v: any) => void;
@@ -47,14 +48,15 @@ export interface IAgentContext {
     isUnInstalling: boolean;
     isStarting: boolean;
     isStopping: boolean;
+    isUpdating: boolean;
     isInstalled: boolean;
     customUIPort?: string;
   }>;
   liveViewUrl?: string;
   isSearchMode: boolean;
   setIsSearchMode: (value: boolean) => void;
-  category: CategoryOption;
-  setCategory: (category: CategoryOption) => void;
+  category: number;
+  setCategory: (category: number) => void;
   installedAgentIds: {
     utility: number[];
     model: number[];
@@ -65,5 +67,6 @@ export interface IAgentContext {
     agent: IAgentToken | undefined,
     dependAgents: string[];
   };
+  handleUpdateCode: any;
   agentCategories: {id: number, name: string}[];
 }

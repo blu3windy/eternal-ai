@@ -10,8 +10,6 @@ import s from "./styles.module.scss";
 import SetupEnvModel from "../SetupEnvironment";
 import BaseModal from "@components/BaseModal";
 import storageModel from "@storage/StorageModel";
-import { BASE_CHAIN_ID } from "@constants/chains";
-import CAgentContract from "@contract/agent";
 import localStorageService from "@storage/LocalStorageService";
 
 const AgentDetail = () => {
@@ -23,15 +21,12 @@ const AgentDetail = () => {
       isRunning,
       isStarting,
       startAgent,
-      isStopping,
-      stopAgent,
-      unInstallAgent,
-      setSelectedAgent,
+      isUpdating,
+      handleUpdateCode
    } = useContext(AgentContext);
 
    const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
-   const [isClickUpdateCode, setIsClickUpdateCode] = useState(false);
 
    useEffect(() => {
       setHaveNewVersionCode(false);
@@ -61,20 +56,6 @@ const AgentDetail = () => {
          }
       }
    };
-
-   const handleUpdateCode = async () => {
-      if (!selectedAgent) return;
-      
-      setIsClickUpdateCode(true);
-      await stopAgent(selectedAgent, true);
-      await unInstallAgent(selectedAgent, false);
-      
-      setIsClickUpdateCode(false);
-      setHaveNewVersionCode(false);
-      await installAgent(selectedAgent, true);
-      checkVersionCode();
-   };
-
 
    const {
       parsedLog,
@@ -170,7 +151,7 @@ const AgentDetail = () => {
                               <Button
                                  className={s.btnInstall}
                                  onClick={handleStartAgent}
-                                 isLoading={isStarting}
+                                 isLoading={isStarting && !isUpdating}
                                  isDisabled={isStarting}
                                  loadingText={"Starting..."}
                               >
@@ -195,9 +176,9 @@ const AgentDetail = () => {
                         {hasNewVersionCode && isInstalled && (
                            <Button
                               className={s.btnUpdate}
-                              onClick={handleUpdateCode}
-                              isLoading={isStarting || isStopping}
-                              isDisabled={isClickUpdateCode}
+                              onClick={() => handleUpdateCode(selectedAgent)}
+                              isLoading={isUpdating}
+                              isDisabled={isUpdating}
                               loadingText={'Updating...'}
                            >
                               Update

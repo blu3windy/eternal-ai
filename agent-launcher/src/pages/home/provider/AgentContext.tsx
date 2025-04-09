@@ -1,4 +1,3 @@
-import { CategoryOption } from '@pages/home/list-agent/constants';
 import React from "react";
 import { ETradePlatform, IAgentContext } from "./interface";
 
@@ -12,6 +11,7 @@ const initialValue: IAgentContext = {
    isInstalling: false,
    isStarting: false,
    isStopping: false,
+   isUpdating: false,
    runningAgents: [],
    isTrade: false,
    setIsTrade(v) { },
@@ -38,7 +38,7 @@ const initialValue: IAgentContext = {
    liveViewUrl: '',
    isSearchMode: false,
    setIsSearchMode: () => { },
-   category: CategoryOption.All,
+   category: 0,
    setCategory: () => { },
    getDependAgents: () => { },
    currentActiveModel: { agent: undefined, dependAgents: [] },
@@ -47,6 +47,7 @@ const initialValue: IAgentContext = {
       model: [],
       social: []
    },
+   handleUpdateCode: () => { },
    agentCategories: [],
 };
 
