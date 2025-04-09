@@ -114,6 +114,7 @@ function createWindow() {
    })
 
    autoUpdater.on("download-progress", (progress) => {
+      log.info('Download progress', progress);
       win?.webContents.send("download-progress", progress);
    });
 
