@@ -36,7 +36,8 @@
   .agentTypeTag {
     font-size: 12px;
     font-weight: 400;
-    background: #0000000D;
+    color: rgba(0, 0, 0, 0.5); 
+    background: rgba(0, 0, 0, 0.05);    
     padding: 4px 8px;
     border-radius: 100px;
   }
@@ -49,6 +50,7 @@
     height: 24px;
     font-size: 12px;
     font-weight: 500;
+    border: 1px solid #000;
   }
 
   &.isSelected {

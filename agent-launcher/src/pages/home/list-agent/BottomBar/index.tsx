@@ -1,38 +1,28 @@
 import {
    Box,
+   Button,
    Flex,
+   Popover,
+   PopoverBody,
+   PopoverContent,
+   PopoverTrigger,
    Text,
    useClipboard,
-   useDisclosure,
-   useToast,
-   Menu,
-   MenuButton,
-   MenuList,
-   MenuItem,
-   Divider,
-   Popover,
-   PopoverTrigger,
-   PopoverContent,
-   PopoverBody,
-   Button,
+   useToast
 } from "@chakra-ui/react";
-import { useAuth } from "@pages/authen/provider";
-import { formatAddressCenter } from "@utils/format";
-import { useContext, useMemo, useRef, useState } from "react";
-import { AgentContext } from "@pages/home/provider/AgentContext";
-import s from "./styles.module.scss";
 import BaseModal from "@components/BaseModal";
-import { FilterOption } from "../constants";
+import Loaders from "@components/Loaders";
+import ROUTERS from "@constants/route-path";
+import { useAuth } from "@pages/authen/provider";
+import { totalPendingTasksSelector } from "@stores/states/agent-chat/selector";
+import { formatAddressCenter } from "@utils/format";
+import { useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import AddTestAgent from "../AddTestAgent";
 import AgentMonitor from "../AgentMonitor";
-import FundAgentProvider from "@providers/FundAgent";
-import Loaders from "@components/Loaders";
-import { useSelector } from "react-redux";
-import { RootState } from "@stores/index";
-import { totalPendingTasksSelector } from "@stores/states/agent-chat/selector";
 import ProcessingTaskModal from "./ProcessingTaskModal";
-import ROUTERS from "@constants/route-path";
-import { useNavigate } from "react-router-dom";
+import s from "./styles.module.scss";
 
 const ProcessingTaskIcon = () => {
    return (
