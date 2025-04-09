@@ -3,17 +3,22 @@ const fs = require("fs");
 
 // 🕒 Generate timestamped version (YYYYMMDD-HHMM)
 const now = new Date();
-const timestamp = now.toISOString().replace(/[-T:]/g, "").slice(0, 13); // "YYYYMMDD-HHMM"
-const version = `1.1.0-${timestamp}`;
+const pad = (n) => String(n).padStart(2, '0');
+const version = `1.1.1`;
+
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+
+const versionSuffix = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 
 console.log(`🚀 Building version: ${version}...`);
 
+
+pkg.version = `${version}-${versionSuffix}`;
+
 // ✅ Update `package.json` with the new version
 const packageJsonPath = "./package.json";
-const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-packageJson.version = version;
-fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
-console.log(`✅ Updated package.json version to: ${version}`);
+fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2));
+console.log(`✅ Updated package.json version to: ${pkg.version}`);
 
 // ✅ Run TypeScript & Vite build
 console.log("🏗️ Running TypeScript & Vite build...");
@@ -27,7 +32,7 @@ execSync(
 );
 
 // ✅ Notarize app (if enabled)
-const notarizePath = `release/${version}/Vibe-${version}-universal.dmg`;
+const notarizePath = `release/${pkg.version}/Vibe-${pkg.version}-universal.dmg`;
 console.log(`📝 Notarizing: ${notarizePath}...`);
 execSync(
   `xcrun notarytool submit "${notarizePath}" --keychain-profile "notarytool-profile" --wait`,
