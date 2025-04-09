@@ -247,8 +247,8 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                }
                <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
                   <Flex gap={"8px"}>
-                     {agentType && <Text className={s.agentTypeTag}>{agentType}</Text>}
-                     {agentTypeAdditional && <Text className={s.agentTypeTag}>{agentTypeAdditional}</Text>}
+                     {/* {agentType && <Text className={s.agentTypeTag}>{agentType}</Text>} */}
+                     {/* {agentTypeAdditional && <Text className={s.agentTypeTag}>{agentTypeAdditional}</Text>} */}
                      {/* <Image src="icons/ic-creator.svg" w="14px" h="14px" />
                      <Text fontSize={"12px"} fontWeight={"500"} color={"#000"} opacity={0.7}>
                         {formatLongAddress(token?.creator)}
