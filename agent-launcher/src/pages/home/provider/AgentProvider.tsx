@@ -1307,7 +1307,7 @@ const AgentProvider: React.FC<
          setCategory,
          currentActiveModel,
          installedAgentIds,
-         handleUpdateCode
+         handleUpdateCode,
          agentCategories,
       };
    }, [
@@ -1350,7 +1350,7 @@ const AgentProvider: React.FC<
       setCategory,
       currentActiveModel,
       installedAgentIds,
-      handleUpdateCode
+      handleUpdateCode,
       agentCategories,
    ]);
 
