@@ -63,9 +63,6 @@ export default defineConfig({
                   return 'vendor';
                }
             },
-         },
-         input: {
-            preload: 'electron/preload.ts',
          }
       },
    },
