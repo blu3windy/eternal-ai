@@ -257,6 +257,8 @@ func (c *DexScreenerClient) readLoop(ctx context.Context) {
 			return
 		default:
 			_, message, err := c.conn.ReadMessage()
+
+			fmt.Printf("message: %s\n", string(message))
 			if err != nil {
 				if c.debug {
 					log.Printf("Error reading message: %v", err)

@@ -646,6 +646,21 @@ func RodContentHtmlByUrl(rawUrl string) string {
 	return htmlStr
 }
 
+func printReport(page *rod.Page) {
+	_ = page.MustElement(".ds-dex-table-row")
+	// for _, row := range el.MustParents("table").First().MustElements("tr:nth-child(n+2)") {
+	// 	cells := row.MustElements("td")
+	// 	key := cells[0].MustProperty("textContent")
+	// 	if strings.HasPrefix(key.String(), "User Agent") {
+	// 		fmt.Printf("\t\t%s: %t\n\n", key, !strings.Contains(cells[1].MustProperty("textContent").String(), "HeadlessChrome/"))
+	// 	} else {
+	// 		fmt.Printf("\t\t%s: %s\n\n", key, cells[1].MustProperty("textContent"))
+	// 	}
+	// }
+
+	page.MustScreenshot("")
+}
+
 func RodContentHtmlByUrlV2(rawUrl string) string {
 	path, has := launcher.LookPath()
 	if !has {
@@ -658,19 +673,21 @@ func RodContentHtmlByUrlV2(rawUrl string) string {
 
 	fmt.Printf("js: %x\n\n", md5.Sum([]byte(stealth.JS)))
 	page := stealth.MustPage(browser)
-	// page := browser.MustConnect().MustPage(rawUrl)
-	page.MustWaitLoad()
+	page.MustNavigate(rawUrl)
+	// page.MustWaitLoad()
+	// time.Sleep(15 * time.Second)
 
-	i := 0
-	for i <= 5 {
-		page.MustEval(`() => window.scrollTo(0, document.body.scrollHeight)`)
-		time.Sleep(1 * time.Second)
-		i += 1
-	}
+	printReport(page)
+	// i := 0
+	// for i <= 5 {
+	// 	page.MustEval(`() => window.scrollTo(0, document.body.scrollHeight)`)
+	// 	time.Sleep(1 * time.Second)
+	// 	i += 1
+	// }
 
-	page.MustWaitStable()
-	page.MustEval(`() => document.querySelectorAll("[crossorigin]").forEach((el) => el.removeAttribute('crossorigin'))
-	`)
+	// page.MustWaitStable()
+	// page.MustEval(`() => document.querySelectorAll("[crossorigin]").forEach((el) => el.removeAttribute('crossorigin'))
+	// `)
 
 	htmlStr, err := page.HTML()
 	if err != nil {
