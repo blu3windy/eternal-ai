@@ -69,10 +69,10 @@ const AgentsList = () => {
    const {
       setSelectedAgent,
       selectedAgent,
-      isSearchMode,
-      setIsSearchMode,
-      category,
-      setCategory,
+      // isSearchMode,
+      // setIsSearchMode,
+      // category,
+      // setCategory,
       installedAgentIds,
       startAgent,
       installAgent,
@@ -83,10 +83,11 @@ const AgentsList = () => {
       page: 1,
       limit: 10,
       sort,
-      category,
+      category: 0,
       filter,
       // order: OrderOption.Desc,
       search: '',
+      isSearchMode: false
    });
    const refAddAgentTestCA = useRef('')
 
@@ -97,54 +98,55 @@ const AgentsList = () => {
 
    const [hasMore, setHasMore] = useState(true);
 
-   useEffect(() => {
-      getLatestAgent();
-      refLatestInterval.current = setInterval(() => {
-         getLatestAgent();
-      }, 30000);
 
-      return () => {
-         if (refLatestInterval.current) {
-            clearInterval(refLatestInterval.current);
-         }
-      };
-   }, []);
+   // useEffect(() => {
+   //    getLatestAgent();
+   //    refLatestInterval.current = setInterval(() => {
+   //       getLatestAgent();
+   //    }, 30000);
 
-   useEffect(() => {
-      refParams.current.category = category;
-      debounceGetTokens(true);
-   }, [category]);
+   //    return () => {
+   //       if (refLatestInterval.current) {
+   //          clearInterval(refLatestInterval.current);
+   //       }
+   //    };
+   // }, []);
 
-   const getLatestAgent = async () => {
-      try {
-         const params: any = {
-            page: 1,
-            limit: 1,
-            sort_col: SortOption.CreatedAt,
-            sort_type: 'desc',
-            chain: '',
-            agent_types: [
-               AgentType.Model,
-               AgentType.ModelOnline,
-               AgentType.UtilityJS,
-               AgentType.UtilityPython,
-               AgentType.CustomUI,
-               AgentType.CustomPrompt,
-               AgentType.Infra
-            ].join(','),
-         };
+   // useEffect(() => {
+   //    refParams.current.category = category;
+   //    debounceGetTokens(true);
+   // }, [category]);
 
-         const { agents } = await cPumpAPI.getAgentTokenList(params);
-         if (agents && agents.length > 0) {
-            const agent = agents[0];
-            if (!latestAgent || agent.id !== latestAgent.id) {
-               setLatestAgent(agent);
-            }
-         }
-      } catch (error) {
-         console.error('Error fetching latest agent:', error);
-      }
-   };
+   // const getLatestAgent = async () => {
+   //    try {
+   //       const params: any = {
+   //          page: 1,
+   //          limit: 1,
+   //          sort_col: SortOption.CreatedAt,
+   //          sort_type: 'desc',
+   //          chain: '',
+   //          agent_types: [
+   //             AgentType.Model,
+   //             AgentType.ModelOnline,
+   //             AgentType.UtilityJS,
+   //             AgentType.UtilityPython,
+   //             AgentType.CustomUI,
+   //             AgentType.CustomPrompt,
+   //             AgentType.Infra
+   //          ].join(','),
+   //       };
+
+   //       const { agents } = await cPumpAPI.getAgentTokenList(params);
+   //       if (agents && agents.length > 0) {
+   //          const agent = agents[0];
+   //          if (!latestAgent || agent.id !== latestAgent.id) {
+   //             setLatestAgent(agent);
+   //          }
+   //       }
+   //    } catch (error) {
+   //       console.error('Error fetching latest agent:', error);
+   //    }
+   // };
 
    const getTokens = async (isNew: boolean, isNoLoading?: boolean) => {
       if (refLoading.current) return;
@@ -171,19 +173,19 @@ const AgentsList = () => {
             chain: '',
          };
 
-         if (refParams.current.category === CategoryOption.Character) {
-            params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
-         } else if (refParams.current.category === CategoryOption.Model) {
-            params.agent_types = [AgentType.Model, AgentType.ModelOnline].join(',');
-         } else if (refParams.current.category === CategoryOption.Utility) {
-            params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].join(',');
-         } else if (refParams.current.category === CategoryOption.Infra) {
-            params.agent_types = [AgentType.Infra].join(',');
-         } else {
+         // if (refParams.current.category === CategoryOption.Character) {
+         //    params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
+         // } else if (refParams.current.category === CategoryOption.Model) {
+         //    params.agent_types = [AgentType.Model, AgentType.ModelOnline].join(',');
+         // } else if (refParams.current.category === CategoryOption.Utility) {
+         //    params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].join(',');
+         // } else if (refParams.current.category === CategoryOption.Infra) {
+         //    params.agent_types = [AgentType.Infra].join(',');
+         // } else {
             params.agent_types = [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(',');
-         }
+         // }
 
-         if (!isSearchMode) {
+         if (!refParams.current.isSearchMode) {
             const installIds = await installAgentStorage.getAgentIds();
 
             const allInstalledIds = [
@@ -202,6 +204,12 @@ const AgentsList = () => {
                if (allInstalledIds.length > 0) {
                   params.exlude_ids = allInstalledIds.join(',');
                }
+            }
+         } else {
+            if (refParams.current.category === 0) {
+               params.category_ids = '';
+            } else {
+               params.category_ids = refParams.current.category;
             }
          }
 
@@ -249,8 +257,8 @@ const AgentsList = () => {
       }
    };
 
-   const throttleGetTokens = useCallback(throttle(getTokens, 500), [isSearchMode, installedAgentIds]);
-   const debounceGetTokens = useCallback(debounce(getTokens, 500), [isSearchMode, installedAgentIds]);
+   const throttleGetTokens = useCallback(throttle(getTokens, 500), [installedAgentIds]);
+   const debounceGetTokens = useCallback(debounce(getTokens, 500), [installedAgentIds]);
 
    const onSearch = (searchText: string) => {
       refParams.current = {
@@ -278,16 +286,17 @@ const AgentsList = () => {
       }
    }, [needReloadRecentAgents]);
 
-   const handleCategorySelect = (categoryOption: number) => {
-      refParams.current = {
-         ...refParams.current,
-         category: categoryOption,
-      };
-      throttleGetTokens(true);
-   };
+   // const handleCategorySelect = (categoryOption: number) => {
+   //    console.log('stephen handleCategorySelect', categoryOption);
+   //    refParams.current = {
+   //       ...refParams.current,
+   //       category: categoryOption,
+   //    };
+   //    throttleGetTokens(true);
+   // };
 
    const renderSearchMode = () => {
-      if (!isSearchMode) return null;
+      if (!refParams?.current?.isSearchMode) return null;
 
       return (
          <Box>
@@ -383,7 +392,7 @@ const AgentsList = () => {
       return (
          <Flex flex={1} gap={'24px'} alignItems={'center'}>
             {
-               isSearchMode && (
+               refParams?.current?.isSearchMode && (
                   <Image
                      src="icons/ic-arrow-left.svg"
                      w="16px"
@@ -398,10 +407,11 @@ const AgentsList = () => {
                            refParams.current = {
                               ...refParams.current,
                               search: '',
+                              isSearchMode: false
                            };
-                           setCategory(CategoryOption.All);
+                           // setCategory(CategoryOption.All);
 
-                           setIsSearchMode(false);
+                           throttleGetTokens(true);
                         }
                      }}
                   />
@@ -425,13 +435,15 @@ const AgentsList = () => {
                   autoFocus={false}
                   // autoFocus
                   onFocus={() => {
-                     if (category === CategoryOption.All) {
-                        setCategory(CategoryOption.Utility);
+                     // if (category === CategoryOption.All) {
+                        // setCategory(CategoryOption.Utility);
                         // refParams.current.category = category;
-                     }
+                     // }
 
-                     setIsSearchMode(true);
-                     // debounceGetTokens(true);
+                     if(!refParams?.current?.isSearchMode) {
+                        refParams.current.isSearchMode = true;
+                        throttleGetTokens(true);
+                     }
                   }}
                   // onBlur={() => {
                   //    // Delay hiding search mode to allow clicking category
@@ -446,7 +458,7 @@ const AgentsList = () => {
                   }}
                />
 
-               {isSearchMode && refInput?.current?.value && refInput.current.value.length > 0 && (
+               {refParams?.current?.isSearchMode && refInput?.current?.value && refInput.current.value.length > 0 && (
                   <Flex
                      cursor="pointer"
                      position="absolute"
@@ -552,8 +564,8 @@ const AgentsList = () => {
                      as={Button}
                      onClick={onToggleFilter}
                   >
-                     <Text fontSize={'14px'} fontWeight={500}>
-                        {Category.find(s => s.value === category)?.label}
+                     <Text fontSize={'14px'} fontWeight={500} maxW={"100px"} textOverflow={"ellipsis"} overflow={"hidden"} whiteSpace={"nowrap"}>
+                        {agentCategories.find(s => s.id === refParams?.current?.category)?.name}
                      </Text>
                      <Image
                         src={'icons/ic-angle-down.svg'}
@@ -582,7 +594,10 @@ const AgentsList = () => {
                            cursor="pointer"
                            onClick={(e) => {
                               const _category = option.id;
-                              handleCategorySelect(_category);
+                              // handleCategorySelect(_category);
+                              // setCategory(_category);
+                              refParams.current.category = _category;
+                              debounceGetTokens(true);
                               onCloseFilter();
                            }}
                         >
@@ -798,7 +813,7 @@ const AgentsList = () => {
                >
                   {renderSearch()}
                </Flex>
-               {!isSearchMode && (
+               {!refParams?.current?.isSearchMode && (
                   <>
                      <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
                         {renderFilterOptions()}
@@ -807,7 +822,7 @@ const AgentsList = () => {
                )}
             </Flex>
 
-            {isSearchMode ? (
+            {refParams?.current?.isSearchMode ? (
                renderSearchMode()
             ) : (
                <>
@@ -890,9 +905,9 @@ const AgentsList = () => {
                refParams.current = {
                   ...refParams.current,
                   filter: FilterOption.Installed,
+                  isSearchMode: false
                };
                throttleGetTokens(true);
-               setIsSearchMode(false);
             }} />
 
             {/* <Flex className={s.addTestBtn} onClick={onOpen}>
