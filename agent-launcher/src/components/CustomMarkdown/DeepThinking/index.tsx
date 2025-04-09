@@ -2,8 +2,11 @@ import SvgInset from '@components/SvgInset';
 import { CustomComponentProps } from '../types';
 import s from './styles.module.scss';
 import cx from 'clsx';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Box } from '@chakra-ui/react';
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from 'remark-breaks'
 
 function DeepThinking({
    node,
@@ -13,10 +16,32 @@ function DeepThinking({
    status?: string;
 }) {
    const [isExpanded, setIsExpanded] = useState(status === "receiving");
+
+   const getChildrenContent = () => {
+      try {
+         if (Array.isArray(children)) {
+            return children.join('')
+         }
+         return children
+      } catch(error){
+         return children
+      }
+   }
+
+   const renderChildren = () => {
+      const content = getChildrenContent();
+      if (typeof content === 'string') {
+         return <Markdown
+            remarkPlugins={[remarkGfm, remarkBreaks]}
+            children={content as string}
+         />
+      }
+      return content;
+   }
+
    return (
       <div className={cx(s.deepthinking)}>
          <div className={s.title} onClick={() => setIsExpanded(!isExpanded)}>
-            
             {(status === "receiving" || status === "sync-receiving") ? (
                <span className={cx(s.titleText, s.thinking)}>Thinking...</span>
             ) : (
@@ -31,7 +56,7 @@ function DeepThinking({
          </div>
          {!!isExpanded && (
             <div className={s.content}>
-               <p className={s.thinkText}>{children}</p>
+               <p className={s.thinkText}>{renderChildren()}</p>
             </div>
          )}
       </div>
