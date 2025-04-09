@@ -508,3 +508,49 @@ func NewUserVideoRespArray(arr []*models.ClankerVideoToken) []*UserVideoResp {
 	}
 	return resps
 }
+
+type TrendingTokenResp struct {
+	ChainId        string     `json:"chain_id"`
+	TokenAddress   string     `json:"token_address"`
+	Name           string     `json:"name"`
+	Symbol         string     `json:"symbol"`
+	Decimals       int        `json:"decimals"`
+	Logo           string     `json:"logo"`
+	UsdPrice       float64    `json:"usd_price"`
+	MarketCap      float64    `json:"market_cap"`
+	LiquidityUsd   float64    `json:"liquidity_usd"`
+	Holders        int        `json:"holders"`
+	MintAt         *time.Time `json:"mint_at"`
+	Volume1h       float64    `json:"volume1h"`
+	Transactions1h int        `json:"transactions1h"`
+	Buyers1h       int        `json:"buyers1h"`
+}
+
+func NewTrendingTokenResp(m *models.TrendingToken) *TrendingTokenResp {
+	if m == nil {
+		return nil
+	}
+	return &TrendingTokenResp{
+		TokenAddress:   m.TokenAddress,
+		Name:           m.Name,
+		Symbol:         m.Symbol,
+		Decimals:       m.Decimals,
+		Logo:           m.Logo,
+		UsdPrice:       m.UsdPrice,
+		MarketCap:      m.MarketCap,
+		LiquidityUsd:   m.LiquidityUsd,
+		Holders:        m.Holders,
+		MintAt:         m.MintAt,
+		Volume1h:       m.Volume1h,
+		Transactions1h: m.Transactions1h,
+		Buyers1h:       m.Buyers1h,
+	}
+}
+
+func NewTrendingTokenRespArray(arr []*models.TrendingToken) []*TrendingTokenResp {
+	resps := []*TrendingTokenResp{}
+	for _, m := range arr {
+		resps = append(resps, NewTrendingTokenResp(m))
+	}
+	return resps
+}

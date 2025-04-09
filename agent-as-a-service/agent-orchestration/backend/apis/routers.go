@@ -56,6 +56,7 @@ func (s *Server) Routers() {
 		rootAPI.GET("/eai/supply/total", s.GetEAISupplyTotal)
 		rootAPI.GET("/eai/supply/circulating", s.GetEAISupplyCirculating)
 		rootAPI.GET("/coin-prices", s.GetTokenPrice)
+		rootAPI.GET("/trending-tokens", s.GetListTrendingTokens)
 
 		webhookAPI := rootAPI.Group("/webhook")
 		{
