@@ -93,6 +93,7 @@ func (s *Server) Routers() {
 			agentAPI.GET("/admin/:id", s.GetAgentDetailByAgentID)
 			agentAPI.GET("/by-contract/:address/:id", s.GetAgentDetailByContract)
 			agentAPI.GET("/detail/:id", s.GetAgentDetail)
+			agentAPI.POST("/update-code-version/:id", s.UpdateAgentCodeVersion)
 
 			agentAPI.GET("/post", s.GetListAgentTwitterPost)
 			agentAPI.GET("/post/:id", s.GetAgentTwitterPostDetail)

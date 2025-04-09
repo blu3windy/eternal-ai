@@ -289,3 +289,101 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 	}
 	return nil
 }
+
+func (s *Service) JobUpdateAgentUpgradeableCodeVersion(ctx context.Context) error {
+	agents, err := s.dao.FindAgentInfo(
+		daos.GetDBMainCtx(ctx),
+		map[string][]any{
+			"agent_contract_address != ?": {""},
+			"agent_type in (?)": {
+				[]models.AgentInfoAgentType{
+					models.AgentInfoAgentTypeModel,
+					models.AgentInfoAgentTypeModelOnline,
+					models.AgentInfoAgentTypeJs,
+					models.AgentInfoAgentTypePython,
+					models.AgentInfoAgentTypeInfa,
+					models.AgentInfoAgentTypeCustomUi,
+					models.AgentInfoAgentTypeCustomPrompt,
+				},
+			},
+			"network_id in (?)": {
+				[]uint64{
+					models.SHARDAI_CHAIN_ID,
+					models.ETHEREUM_CHAIN_ID,
+					models.BITTENSOR_CHAIN_ID,
+					models.BASE_CHAIN_ID,
+					models.HERMES_CHAIN_ID,
+					models.ARBITRUM_CHAIN_ID,
+					models.ZKSYNC_CHAIN_ID,
+					models.POLYGON_CHAIN_ID,
+					models.BSC_CHAIN_ID,
+					models.APE_CHAIN_ID,
+					models.AVALANCHE_C_CHAIN_ID,
+					models.ABSTRACT_TESTNET_CHAIN_ID,
+					models.DUCK_CHAIN_ID,
+					models.TRON_CHAIN_ID,
+					models.MODE_CHAIN_ID,
+					models.ZETA_CHAIN_ID,
+					models.STORY_CHAIN_ID,
+					models.HYPE_CHAIN_ID,
+					models.MONAD_TESTNET_CHAIN_ID,
+					models.MEGAETH_TESTNET_CHAIN_ID,
+					models.CELO_CHAIN_ID,
+					models.BASE_SEPOLIA_CHAIN_ID,
+				},
+			},
+		},
+		map[string][]any{},
+		[]string{},
+		0,
+		999999,
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	for _, agent := range agents {
+		err = s.UpdateAgentUpgradeableCodeVersion(ctx, agent.ID)
+		if err != nil {
+			return errs.NewError(err)
+		}
+	}
+	return nil
+}
+
+func (s *Service) UpdateAgentUpgradeableCodeVersion(ctx context.Context, agentInfoID uint) error {
+	agentInfo, err := s.dao.FirstAgentInfoByID(
+		daos.GetDBMainCtx(ctx),
+		agentInfoID,
+		map[string][]any{},
+		false,
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	if agentInfo.AgentContractAddress == "" ||
+		agentInfo.AgentContractID != "0" {
+		return errs.NewError(errs.ErrBadRequest)
+	}
+	codeVersion, err := s.GetEthereumClient(ctx, agentInfo.NetworkID).AgentUpgradeableCodeVersion(agentInfo.AgentContractAddress)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	depsAgents, err := s.GetEthereumClient(ctx, agentInfo.NetworkID).AgentUpgradeableDepsAgents(agentInfo.AgentContractAddress, codeVersion)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	if codeVersion != agentInfo.CodeVersion || !strings.EqualFold(strings.Join(depsAgents, ","), agentInfo.DependAgents) {
+		err = daos.GetDBMainCtx(ctx).
+			Model(agentInfo).
+			Updates(
+				map[string]any{
+					"code_version":  codeVersion,
+					"depend_agents": strings.ToLower(strings.Join(depsAgents, ",")),
+				},
+			).Error
+		if err != nil {
+			return errs.NewError(err)
+		}
+	}
+	return nil
+}
