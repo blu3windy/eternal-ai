@@ -140,7 +140,7 @@ const AgentProvider: React.FC<
       if (selectedAgent) {
          const matchingContainer = containers?.find((container: ContainerData) => compareString(container.agent?.agent_name, selectedAgent?.agent_name));
          if (matchingContainer?.agent && [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI].includes(matchingContainer?.agent?.agent_type)) {
-            return matchingContainer ? matchingContainer?.state === 'running' || false : agentStates[selectedAgent.id]?.isRunning;
+            return matchingContainer ? matchingContainer?.state === 'running' || false : agentStates[selectedAgent.id]?.isRunning; 
          } else {
             return matchingContainer?.state === 'running' || agentStates[selectedAgent.id]?.isRunning || false;
          }
@@ -550,7 +550,7 @@ const AgentProvider: React.FC<
 
             const tasks: Promise<void>[] = []
 
-            tasks.push(startDependAgents(agent, needUpdateCode));
+            tasks.push(startDependAgents(agent));
             tasks.push(handleRunDockerAgent(agent));
 
             console.time('LEON: run tasks');
@@ -834,21 +834,16 @@ const AgentProvider: React.FC<
       }
    };
 
-   const startDependAgents = async (agent: IAgentToken, needUpdateCode?: boolean) => {
+   const startDependAgents = async (agent: IAgentToken) => {
       console.time('LEON: startDependAgents');
       console.time('LEON: getDependAgents');
-      const dependAgents = await getDependAgents(agent, needUpdateCode);
+      const dependAgents = await getDependAgents(agent);
       console.timeEnd('LEON: getDependAgents');
       console.log('LEON: getDependAgents', dependAgents);
 
       if (dependAgents.length > 0) {
          await Promise.all(dependAgents.map(async (agent) => {
-            if (needUpdateCode) {
-               await handleStopDockerAgent(agent);
-               const lang = getUtilityAgentCodeLanguage(agent);
-               await globalThis.electronAPI.dockerDeleteImage(agent.agent_name?.toLowerCase(), agent.network_id?.toString(), lang);
-            }
-            await handleRunDockerAgent(agent);
+            await wrapCheckForceUpdateThenStartAgent(agent);
          }));
       }
       console.timeEnd('LEON: startDependAgents');
@@ -866,144 +861,50 @@ const AgentProvider: React.FC<
       }
    };
 
-   const getDependAgents = async (agent: IAgentToken, needUpdateCode?: boolean) => {
-      const dependAgents = await storageModel.getDependAgents({
-         contractAddress: agent.agent_contract_address,
-         chainId: agent.network_id
-      });
-
-      if (dependAgents && dependAgents.length > 0 && !needUpdateCode) {
-         return dependAgents;
-      }
+   const getDependAgents = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
-         const chainId = agent?.network_id || BASE_CHAIN_ID;
-         const cAgent = new CAgentContract({ contractAddress: agent.agent_contract_address, chainId: chainId });
-         const codeVersion = await cAgent.getCurrentVersion();
-
-         const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
+         const depsAgentStrs = agent.depend_agents ? agent.depend_agents.split(',').map(addr => addr.trim()) : [];
          if (depsAgentStrs.length > 0) {
-            const dependAgents = await installDependAgents(depsAgentStrs, chainId, needUpdateCode);
-            await storageModel.setDependAgents({
-               contractAddress: agent.agent_contract_address,
-               chainId: agent.network_id
-            }, dependAgents);
+            const dependAgents = await installDependAgents(depsAgentStrs);
             return dependAgents;
          }
       }
       return [];
    };
 
-   const installDependAgents = async (agents: string[], chainId: number, needUpdateCode?: boolean) => {
+   const installDependAgents = async (agents: string[]) => {
       const installedAgents = new Set<string>();
+      const cPumpAPI = new CAgentTokenAPI();
+      const agent_types = [
+            AgentType.CustomUI, 
+            AgentType.CustomPrompt,
+            AgentType.ModelOnline,
+            AgentType.Model
+         ].join(',');
 
       const agentsData = await Promise.all(agents.map(async (agentContractAddr) => {
          if (installedAgents.has(agentContractAddr)) {
             return null; 
          }
-
          installedAgents.add(agentContractAddr);
 
-         const cAgent = new CAgentContract({
-            contractAddress: agentContractAddr,
-            chainId: chainId
-         });
-         const codeVersion = await cAgent.getCurrentVersion();
-
-         const depsAgentStrs = await cAgent.getDepsAgents(codeVersion);
-         const agentName = await cAgent.getAgentName();
-         const codeLanguage = await cAgent.getCodeLanguage();
-
-         let agent_type = AgentType.CustomPrompt;
-         switch (codeLanguage) {
-         case 'custom_ui':
-            agent_type = AgentType.CustomUI
-            break;
-         case 'custom_prompt':
-            agent_type = AgentType.CustomPrompt
-            break;
-         case 'model_online':
-            agent_type = AgentType.ModelOnline
-            break;
-         case 'model':
-            agent_type = AgentType.Model
-            break;
-         case 'python':
-            agent_type = AgentType.UtilityPython
-            break;
-         case 'javascript':
-            agent_type = AgentType.Infra
-            break;
-         default:
-            break;
+         
+         const { agents } = (await cPumpAPI.getAgentTokenList({ contract_addresses: agentContractAddr, page: 1, limit: 1, agent_types }));
+         const agent = agents?.[0];
+         if (!agent) {
+            return null;
          }
 
          let dependAgents: any[] = [];
+         const depsAgentStrs = agent.depend_agents ? agent.depend_agents.split(',').map(addr => addr.trim()) : [];
+
          if (depsAgentStrs.length > 0) {
-            dependAgents = await installDependAgents(depsAgentStrs, chainId);
+            dependAgents = await installDependAgents(depsAgentStrs);
          }
-
-         let fileNameOnLocal = 'prompt.js';
-         if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent_type)) {
-            fileNameOnLocal = 'app.zip';
-         }
-
-
-         const values = await localStorageService.getItem(agentContractAddr);
-         const oldCodeVersion = values ? Number(values) : 0;
-
-         const folderNameOnLocal = `${chainId}-${agentName}`;
-
-         let filePath: string | undefined = "";
-         const isExisted = await checkFileExistsOnLocal(
-            fileNameOnLocal,
-            folderNameOnLocal
-         );
-
-         if (isExisted && !needUpdateCode) {
-            return [
-               ...dependAgents,
-               {
-                  agent_name: agentName,
-                  network_id: chainId,
-                  agent_contract_address: agentContractAddr
-               }
-            ];
-         }
-
-         if (!isExisted || needUpdateCode || oldCodeVersion <= 0) {
-            const rawCode = await cAgent.getAgentCode(codeVersion);
-            if ([AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.ModelOnline].includes(agent_type)) {
-               filePath = await globalThis.electronAPI.writezipFile(fileNameOnLocal, folderNameOnLocal, rawCode, agent_type === AgentType.UtilityPython ? 'app' : undefined);
-               await localStorageService.setItem(agentContractAddr, codeVersion.toString());
-               console.log('filePath New', filePath);
-
-               if (agent_type === AgentType.UtilityPython) {
-                  await globalThis.electronAPI.copyRequireRunPython(folderNameOnLocal);
-               }
-               if (filePath) {
-                  globalThis.electronAPI.unzipFile(filePath, filePath.replaceAll(`/${fileNameOnLocal}`, ''));
-               }
-            } else {
-               const base64Array = splitBase64(rawCode);
-               const code = base64Array.reverse().map(item => isBase64(item) ? atob(item) : item).join('\n');
-
-               filePath = await writeFileToLocal(fileNameOnLocal, folderNameOnLocal, `${code || ''}`);
-               await localStorageService.setItem(agentContractAddr, codeVersion.toString());
-               console.log('filePath New', filePath);
-            }
-         } else {
-            // filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
-            // console.log('filePath isExisted', filePath)
-         }
-         
 
          return [
             ...dependAgents,
-            {
-               agent_name: agentName,
-               network_id: chainId,
-               agent_contract_address: agentContractAddr
-            }
+            agent
          ];
       }));
       
@@ -1166,7 +1067,7 @@ const AgentProvider: React.FC<
          ].join(',');
          const utilityParams: any = {
             page: 1,
-            limit: 200,
+            limit: installIds?.length || 200,
             sort_col: SortOption.CreatedAt,
             agent_types: agent_types,
             chain: '',
@@ -1249,7 +1150,27 @@ const AgentProvider: React.FC<
       }
    }
 
+   const wrapCheckForceUpdateThenStartAgent = async (agent: IAgentToken) => {
+      if (!agent.is_force_update) {
+         startAgent(agent);
+         return;
+      }
+      let codeVersion = agent?.code_version ? Number(agent?.code_version) : 0;
+      const values = await localStorageService.getItem(agent.agent_contract_address);
+      const oldCodeVersion = values ? Number(values) : undefined;
 
+      if (!oldCodeVersion || (codeVersion > 1 && codeVersion > oldCodeVersion)) {
+         updateAgentState(agent.id, {
+            data: agent,
+            isStarting: true,
+         });
+         await stopAgent(agent, true);
+         await unInstallAgent(agent, false);
+         await installAgent(agent, true);
+      } else {
+         startAgent(agent);
+      }
+   }
 
    const checkInstalledModelAgentsRunning = async () => {
       // Check model agents
@@ -1318,7 +1239,7 @@ const AgentProvider: React.FC<
          selectedAgent,
          setSelectedAgent,
          installAgent,
-         startAgent,
+         startAgent: wrapCheckForceUpdateThenStartAgent,
          stopAgent,
          isInstalling,
          isStarting,
@@ -1359,6 +1280,7 @@ const AgentProvider: React.FC<
       setSelectedAgent,
       installAgent,
       startAgent,
+      wrapCheckForceUpdateThenStartAgent,
       stopAgent,
       isInstalling,
       isStarting,

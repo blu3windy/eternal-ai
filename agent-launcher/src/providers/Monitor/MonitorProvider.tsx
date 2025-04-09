@@ -43,7 +43,7 @@ const MonitorProvider: React.FC<
             AgentType.Model
          ].join(',');
          const [{ agents }, { agents: agentsAll }] = await Promise.all([
-            cPumpAPI.getAgentTokenList({ page: 1, limit: 200, ids: installIds.length > 0 ? installIds.join(',') : '', agent_types }),
+            cPumpAPI.getAgentTokenList({ page: 1, limit: installIds?.length || 200, ids: installIds.length > 0 ? installIds.join(',') : '', agent_types }),
             cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
          ]);
          agentsRef.current = uniqBy([...agents, ...agentsAll], 'id');

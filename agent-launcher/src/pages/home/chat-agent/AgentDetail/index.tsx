@@ -51,12 +51,7 @@ const AgentDetail = () => {
          ].includes(selectedAgent.agent_type)
          && isInstalled
       ) {
-         const chainId = selectedAgent?.network_id || BASE_CHAIN_ID;
-         const cAgent = new CAgentContract({
-            contractAddress: selectedAgent?.agent_contract_address || '',
-            chainId: chainId,
-         });
-         const codeVersion = await cAgent.getCurrentVersion();
+         const codeVersion = selectedAgent?.code_version ? Number(selectedAgent?.code_version) : 0;
          const values = await localStorageService.getItem(selectedAgent.agent_contract_address);
          const oldCodeVersion = values ? Number(values) : 1;
          if (codeVersion > 1 && codeVersion > oldCodeVersion) {
@@ -204,7 +199,7 @@ const AgentDetail = () => {
                            <Button
                               className={s.btnUpdate}
                               onClick={handleUpdateCode}
-                              isLoading={isClickUpdateCode}
+                              isLoading={isStarting || isStopping}
                               isDisabled={isClickUpdateCode}
                               loadingText={'Updating...'}
                            >

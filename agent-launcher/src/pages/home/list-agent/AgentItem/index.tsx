@@ -82,12 +82,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
             AgentType.ModelOnline,
          ].includes(token.agent_type)
       ) {
-         const chainId = token?.network_id || BASE_CHAIN_ID;
-         const cAgent = new CAgentContract({
-            contractAddress: token?.agent_contract_address || '',
-            chainId: chainId,
-         });
-         const codeVersion = await cAgent.getCurrentVersion();
+         const codeVersion = token?.code_version ? Number(token?.code_version) : 0;
          const values = await localStorageService.getItem(token.agent_contract_address);
          const oldCodeVersion = values ? Number(values) : -1;
          if (oldCodeVersion > 0 && codeVersion > 1 && codeVersion > oldCodeVersion) {

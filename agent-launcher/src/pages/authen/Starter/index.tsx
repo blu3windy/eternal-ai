@@ -69,7 +69,7 @@ const Starter = (props: IProps) => {
          throw new Error("No model only found");
       }
       const newAgent = _agents[0];
-      await agentCtx.startAgent(newAgent, false);
+      await agentCtx.startAgent(newAgent);
       await storageModel.setActiveModel({
          ...newAgent,
          hash: ""
@@ -116,7 +116,7 @@ const Starter = (props: IProps) => {
             try {
                switch (activeModel.agent_type) {
                case AgentType.ModelOnline: {
-                  await agentCtx.startAgent(activeModel, true);
+                  await agentCtx.startAgent(activeModel);
                   break;
                }
                case AgentType.Model:

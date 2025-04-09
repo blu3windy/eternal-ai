@@ -105,7 +105,7 @@ const AgentTopInfo = () => {
    };
 
    useEffect(() => {
-       setHaveNewVersionCode(false);
+      setHaveNewVersionCode(false);
       if (selectedAgent || !isRunning) {
          checkVersionCode();
          checkIsLiked();
@@ -128,14 +128,18 @@ const AgentTopInfo = () => {
             AgentType.ModelOnline,
          ].includes(selectedAgent.agent_type)
       ) {
-         const chainId = selectedAgent?.network_id || BASE_CHAIN_ID;
-         const cAgent = new CAgentContract({
-            contractAddress: selectedAgent?.agent_contract_address || '',
-            chainId: chainId,
-         });
-         const codeVersion = await cAgent.getCurrentVersion();
+         let codeVersion = selectedAgent?.code_version ? Number(selectedAgent?.code_version) : 0;
+         if (codeVersion === 0) {
+            const chainId = selectedAgent?.network_id || BASE_CHAIN_ID;
+            const cAgent = new CAgentContract({
+               contractAddress: selectedAgent?.agent_contract_address || '',
+               chainId: chainId,
+            });
+            codeVersion = await cAgent.getCurrentVersion();
+         }
          const values = await localStorageService.getItem(selectedAgent.agent_contract_address);
          const oldCodeVersion = values ? Number(values) : -1;
+
          if (oldCodeVersion > 0 && codeVersion > 1 && codeVersion > oldCodeVersion) {
             setHaveNewVersionCode(true);
          } else {
