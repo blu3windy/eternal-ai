@@ -4,7 +4,7 @@ const fs = require("fs");
 // 🕒 Generate timestamped version (YYYYMMDD-HHMM)
 const now = new Date();
 const timestamp = now.toISOString().replace(/[-T:]/g, "").slice(0, 13); // "YYYYMMDD-HHMM"
-const version = `1.0.10-${timestamp}`;
+const version = `1.1.0-${timestamp}`;
 
 console.log(`🚀 Building version: ${version}...`);
 
@@ -35,7 +35,11 @@ execSync(
 );
 console.log(`📝 Move to release: ${notarizePath}...`);
 execSync(
-  `cp -R release/${version}/${timestamp}-mac.yml ~/Documents/dapps/electron-update-server/updates/latest-mac.yml`,
+  `cp -R release/${version}/latest-mac.yml ~/Documents/dapps/electron-update-server/updates/latest-mac.yml`,
+  { stdio: "inherit" }
+);
+execSync(
+  `cd ~/Documents/dapps/electron-update-server && git add . && git commit -m "Update latest-mac.yml" && git push`,
   { stdio: "inherit" }
 );
 
