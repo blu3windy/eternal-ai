@@ -9,15 +9,11 @@ import {
    Popover,
    PopoverContent,
    PopoverTrigger,
-   Tab,
-   TabList,
-   Tabs,
    Text,
    useDisclosure,
    useToast,
    VStack
 } from '@chakra-ui/react';
-import IcHelp from '@components/InfoTooltip/IcHelp.tsx';
 import installAgentStorage from '@storage/InstallAgentStorage.ts';
 import { commonSelector } from '@stores/states/common/selector.ts';
 import { compareString } from '@utils/string.ts';
@@ -38,7 +34,6 @@ import BottomBar from './BottomBar/index.tsx';
 import {
    AgentOptions,
    AgentType,
-   CATEGORIES,
    Category,
    CategoryOption,
    FilterOption,
@@ -80,7 +75,8 @@ const AgentsList = () => {
       setCategory,
       installedAgentIds,
       startAgent,
-      installAgent
+      installAgent,
+      agentCategories
    } = useContext(AgentContext);
 
    const refParams = useRef({
@@ -282,7 +278,7 @@ const AgentsList = () => {
       }
    }, [needReloadRecentAgents]);
 
-   const handleCategorySelect = (categoryOption: CategoryOption) => {
+   const handleCategorySelect = (categoryOption: number) => {
       refParams.current = {
          ...refParams.current,
          category: categoryOption,
@@ -295,6 +291,11 @@ const AgentsList = () => {
 
       return (
          <Box>
+            <Flex p="0 24px" gap="24px">
+               {renderCategoryMenu()}
+               <Box w="1px" h="20px" bg="#000" opacity="0.2" margin={"auto 0"} pb={"32px"}/>
+               {renderSortMenu()}
+            </Flex>
             {/* {latestAgent && (
                <Box mb="32px">
                   <Text fontSize="24px" fontWeight="600" mb="16px">New & Updates</Text>
@@ -304,7 +305,7 @@ const AgentsList = () => {
                </Box>
             )} */}
 
-            <Tabs
+            {/* <Tabs
                className={s.tabContainer}
                isFitted
                index={CATEGORIES.findIndex(c => c.id === category)}
@@ -347,7 +348,7 @@ const AgentsList = () => {
                      </Tab>
                   ))}
                </TabList>
-            </Tabs>
+            </Tabs> */}
             {renderSearchResults()}
             {/* <Box>
                <Text fontSize="24px" fontWeight="600" mb="16px">Categories</Text>
@@ -568,7 +569,7 @@ const AgentsList = () => {
                   borderRadius={'16px'}
                   background={'#fff'}
                >
-                  {Category.map((option, index) => (
+                  {agentCategories.map((option, index) => (
                      <>
                         <Flex
                            direction={"column"}
@@ -580,21 +581,21 @@ const AgentsList = () => {
                            }}
                            cursor="pointer"
                            onClick={(e) => {
-                              const _category = option.value as CategoryOption;
+                              const _category = option.id;
                               handleCategorySelect(_category);
                               onCloseFilter();
                            }}
                         >
                            <Text fontSize={'13px'} fontWeight={500}>
-                              {option.label}
+                              {option.name}
                            </Text>
-                           {
+                           {/* {
                               option.description && (
                                  <Text fontSize={'12px'} fontWeight={400} opacity={0.7}>
                                     {option.description}
                                  </Text>
                               )
-                           }
+                           } */}
                         </Flex>
                         {index < SortBy.length && (
                            <Divider orientation={'horizontal'} my={'0px'} />

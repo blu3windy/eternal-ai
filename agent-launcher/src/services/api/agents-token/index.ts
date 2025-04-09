@@ -205,6 +205,15 @@ class CAgentTokenAPI extends CApiClient {
          throw e;
       }
    };
+
+   public getAgentCategories = async (): Promise<any> => {
+      try {
+         const res: any = await this.api.get(`agent/categories`,);
+         return res;
+      } catch (e) {
+         throw e;
+      }
+   };
 }
 
 export default CAgentTokenAPI;
