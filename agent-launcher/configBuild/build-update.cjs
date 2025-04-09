@@ -1,22 +1,26 @@
 const { execSync } = require("child_process");
 const fs = require("fs");
 
-// 🕒 Generate timestamped version (YYYYMMDD-HHMM)
-const now = new Date();
-const pad = (n) => String(n).padStart(2, '0');
-const version = `1.1.1`;
 
-const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const packageJsonPath = "./package.json";
+const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
-const versionSuffix = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+let [major, minor, patch] = pkg.version.split('.').map(Number);
 
-console.log(`🚀 Building version: ${version}...`);
+patch++;
+if (patch >= 100) {
+  patch = 0;
+  minor++;
+}
+
+pkg.version = `${major}.${minor}.${patch}`;
+
+console.log(`🚀 Building version: ${pkg.version}...`);
 
 
-pkg.version = `${version}-${versionSuffix}`;
 
 // ✅ Update `package.json` with the new version
-const packageJsonPath = "./package.json";
+
 fs.writeFileSync(packageJsonPath, JSON.stringify(pkg, null, 2));
 console.log(`✅ Updated package.json version to: ${pkg.version}`);
 

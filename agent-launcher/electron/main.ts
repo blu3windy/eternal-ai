@@ -8,7 +8,9 @@ import log from 'electron-log';
 
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
 
+autoUpdater.allowPrerelease = true;
 autoUpdater.autoDownload = true;
+
 
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
