@@ -13,13 +13,6 @@ interface WebViewElement extends HTMLElement {
 }
 
 // Declare the electron API type
-declare global {
-  interface Window {
-    electronAPI: {
-      openExternal: (url: string) => void;
-    };
-  }
-}
 
 const WebView: React.FC<WebViewProps> = ({ url, width = '100%', height = '600px', className }) => {
    const webviewRef = useRef<WebViewElement>(null);
@@ -49,13 +42,13 @@ const WebView: React.FC<WebViewProps> = ({ url, width = '100%', height = '600px'
       const handleConsoleMessage = (e: any) => {
          console.log('Console message received:', e);
          // Only log actual errors, not our debug messages or non-critical warnings
-         if (e.message && 
-             !e.message.includes('Link clicked:') && 
-             !e.message.includes('Third-party cookie') &&
-             !e.message.includes('Content Security Policy') &&
-             !e.message.includes('CORS policy') &&
-             !e.message.includes('Access-Control-Allow-Origin') 
-            ) {
+         if (e.message 
+             && !e.message.includes('Link clicked:') 
+             && !e.message.includes('Third-party cookie')
+             && !e.message.includes('Content Security Policy')
+             && !e.message.includes('CORS policy')
+             && !e.message.includes('Access-Control-Allow-Origin') 
+         ) {
             console.error('WebView error:', e);
 
             if (e.message.includes('External link clicked in webview')){

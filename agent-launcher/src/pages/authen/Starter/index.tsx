@@ -78,11 +78,10 @@ const Starter = (props: IProps) => {
 
 
    const onInit = async (ignoreCopy?: boolean) => {
-
       const loaded = await localStorage.getItem("loaded");
-      const time = (loaded ? 15 : 50) * 60 * 1000;
+      const time = (loaded ? 15 : 50) * 60 * 1000; // 15 minutes for loaded users, 50 minutes for new users
 
-      // Start the 15-minute timer
+      // Start the timer based on whether user is loaded or not
       initTimerRef.current = setTimeout(() => {
          setIsShowWarning(true);
       }, time);
@@ -96,17 +95,11 @@ const Starter = (props: IProps) => {
          }
 
          console.time("DOCKER_INSTALL");
-
          await globalThis.electronAPI.dockerInstall();
-         // await tryExecFunction(2, globalThis.electronAPI.dockerInstall);
-         // await globalThis.electronAPI.dockerInstall();
          console.timeEnd("DOCKER_INSTALL");
-
 
          console.time("DOCKER_BUILD");
          await globalThis.electronAPI.dockerBuild();
-         // await tryExecFunction(2, globalThis.electronAPI.dockerBuild);
-         // await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
 
          const activeModel = await storageModel.getActiveModel();
@@ -129,34 +122,25 @@ const Starter = (props: IProps) => {
             }
          }
 
-         // console.time("MODEL_BASE");
-         // await tryExecFunction(2, async () => {
-         //    await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
-         // });
-         // // await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
-         // console.timeEnd("MODEL_BASE");
-
          setChecking(false);
          localStorage.setItem("loaded", "true");
       } catch (error: any) {
-         // alert(error?.message || "Something went wrong.");
          setHasError(true);
       } finally {
          console.timeEnd("FULL_LOAD_TIME");
          setIsFinished(true);
-         // Clear the timer if init completes before 15 minutes
+         // Clear the timer if init completes before timeout
          if (initTimerRef.current) {
             clearTimeout(initTimerRef.current);
          }
       }
-   }
-
+   };
 
    const onClearCounter = () => {
       if (initTimerRef.current) {
          clearTimeout(initTimerRef.current);
       }
-   }
+   };
 
    const onRetry = () => {
       setHasError(false);
@@ -164,7 +148,7 @@ const Starter = (props: IProps) => {
       setIsShowWarning(false);
       onClearCounter();
       onInit(true).then().catch();
-   }
+   };
 
    // Cleanup timer on unmount
    useEffect(() => {

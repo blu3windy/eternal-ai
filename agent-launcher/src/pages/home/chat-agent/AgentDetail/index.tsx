@@ -145,9 +145,6 @@ const AgentDetail = () => {
       startAgent(selectedAgent);
    };
 
-   console.log('LEON selectedAgent', selectedAgent?.env_example);
-
-
    return (
       <>
          <Flex
