@@ -4,10 +4,14 @@ import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 import command from "./share/command-tool.ts";
+import log from 'electron-log';
 
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
 
 autoUpdater.autoDownload = true;
+
+log.transports.file.level = 'info';
+autoUpdater.logger = log;
 
 if (process.env.NODE_ENV === "development") {
    // autoUpdater.allowDowngrade = true;
@@ -22,7 +26,8 @@ if (process.env.NODE_ENV === "development") {
 autoUpdater.setFeedURL({
    provider: "github",
    owner: "eternalai-org",
-   repo: "eternal-ai"
+   repo: "eternal-ai",
+   releaseType: 'release' // optional, default is "release"
  })
 
 // const require = createRequire(import.meta.url);
@@ -55,6 +60,8 @@ runIpcMain();
 function createWindow() {
    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
+   autoUpdater.checkForUpdatesAndNotify();
+
    win = new BrowserWindow({
       icon: path.join(process.env.VITE_PUBLIC as any, "app-logo.png"),
       // icon: path.join(__dirname, "../public/icon.png"), // Use icon from public
@@ -84,13 +91,15 @@ function createWindow() {
    });
 
    // Events to notify the Renderer process (UI)
-   autoUpdater.on("update-available", () => {
+   autoUpdater.on("update-available", (info) => {
       console.log("update-available");
+      log.info('Update available', info);
       win?.webContents.send("update-available");
    });
 
    autoUpdater.on("update-downloaded", () => {
       win?.webContents.send("update-downloaded");
+      log.info('Update downloaded');
       console.log("update-downloaded");
       // autoUpdater.downloadUpdate();
       // autoUpdater.quitAndInstall();
