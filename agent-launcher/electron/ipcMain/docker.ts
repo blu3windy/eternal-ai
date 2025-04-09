@@ -133,7 +133,6 @@ const ipcMainDocker = () => {
          const dnsHost = getDnsHost(chainId, agentName);
          const _options = typeof options === 'string' ? JSON.parse(options) : options;
          const type = (_options?.type || 'custom-prompt') as CodeLanguage;
-         const network = (_options?.network || 'external') as 'internal' | 'external';
 
          let imageName = "";
          let port = "";
@@ -181,8 +180,7 @@ const ipcMainDocker = () => {
             `--private-key "${_options?.privateKey || ""}"`,
             `--wallet-address "${_options?.address || ""}"`,
             `--port "${port || ""}"`,
-            `--environment "${_options?.environment ? convertJsonToDockerEnv(_options?.environment) : ""}"`,
-            `--network "${network}"`,
+            `--environment "${_options?.environment ? convertJsonToDockerEnv(_options?.environment) : ""}"`
          ]
 
          const paramsStr = params.join(' ');
