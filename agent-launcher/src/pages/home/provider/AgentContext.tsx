@@ -49,6 +49,7 @@ const initialValue: IAgentContext = {
       social: []
    },
    handleUpdateCode: () => { },
+   agentCategories: [],
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);

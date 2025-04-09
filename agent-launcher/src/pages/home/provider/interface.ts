@@ -68,4 +68,5 @@ export interface IAgentContext {
     dependAgents: string[];
   };
   handleUpdateCode: any;
+  agentCategories: {id: number, name: string}[];
 }
