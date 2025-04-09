@@ -45,7 +45,9 @@ func init() {
 
 func Test_JOB(t *testing.T) {
 
-	ts.JobUpdateAgentUpgradeableCodeVersion(context.Background())
+	fmt.Println(
+		ts.MemeAddPositionInternal(context.Background(), 182532),
+	)
 
 	// data, err := ts.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), "man opens shirt and shows his fat belly")
 	// fmt.Println(data, err)
