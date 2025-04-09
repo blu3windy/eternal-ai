@@ -30,11 +30,11 @@ const AgentItem = ({ token, isLatest }: IProps) => {
       installAgent,
       setSelectedAgent,
       agentStates,
+      handleUpdateCode
    } = useContext(AgentContext);
    const { containers } = useContext(MonitorContext);
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
-   const [isClickUpdateCode, setIsClickUpdateCode] = useState(false);
 
    const isStarting = useMemo(() => {
       if (token) {
@@ -65,6 +65,14 @@ const AgentItem = ({ token, isLatest }: IProps) => {
       return false;
    }, [token, agentStates, containers]);
 
+   const isUpdating = useMemo(() => {
+      if (token) {
+         return agentStates[token.id]?.isUpdating || false;
+      }
+
+      return false;
+   }, [token, agentStates]);
+
    useEffect(() => {
       setHaveNewVersionCode(false);
       if (token || !isRunning) {
@@ -91,18 +99,6 @@ const AgentItem = ({ token, isLatest }: IProps) => {
             setHaveNewVersionCode(false);
          }
       }
-   };
-
-   const handleUpdateCode = async () => {
-      if (!token) return;
-      setIsClickUpdateCode(true);
-
-      await stopAgent(token, true);
-      await unInstallAgent(token, false);
-      await installAgent(token, true);
-      
-      setIsClickUpdateCode(false);
-      checkVersionCode();
    };
 
    const description = useMemo(() => {
@@ -233,17 +229,17 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                }
                <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
                   <Flex gap={"6px"}>
-                     <Image src="icons/ic-creator.svg" w="14px" h="14px" />
+                     {/* <Image src="icons/ic-creator.svg" w="14px" h="14px" />
                      <Text fontSize={"12px"} fontWeight={"500"} color={"#000"} opacity={0.7}>
                         {formatLongAddress(token?.creator)}
-                     </Text>
+                     </Text> */}
                   </Flex>
                   {hasNewVersionCode && (
                      <Button
                         className={s.btnUpdate}
-                        onClick={handleUpdateCode}
-                        isLoading={(isStopping || isStarting) && isClickUpdateCode}
-                        isDisabled={(isStopping || isStarting) && isClickUpdateCode}
+                        onClick={() => handleUpdateCode(token)}
+                        isLoading={isUpdating}
+                        isDisabled={isUpdating}
                         loadingText={isStarting ? 'Starting...' : 'Updating...'}
                      >
                         Update

@@ -71,6 +71,7 @@ const AgentProvider: React.FC<
       isUnInstalling: boolean;
       isStarting: boolean;
       isStopping: boolean;
+      isUpdating: boolean;
       isInstalled: boolean;
       customUIPort?: string;
     }>>({});
@@ -153,6 +154,14 @@ const AgentProvider: React.FC<
    const isInstalled = useMemo(() => {
       if (selectedAgent) {
          return agentStates[selectedAgent.id]?.isInstalled || false;
+      }
+
+      return false;
+   }, [selectedAgent, agentStates]);
+
+   const isUpdating = useMemo(() => {
+      if (selectedAgent) {
+         return agentStates[selectedAgent.id]?.isUpdating || false;
       }
 
       return false;
@@ -272,6 +281,7 @@ const AgentProvider: React.FC<
       isUnInstalling?: boolean;
       isStarting?: boolean;
       isStopping?: boolean;
+      isUpdating?: boolean;
       isInstalled?: boolean;
       customUIPort?: string;
     }) => {
@@ -1181,6 +1191,20 @@ const AgentProvider: React.FC<
       }
    }
 
+   const handleUpdateCode = async (agent: IAgentToken) => {
+      updateAgentState(agent.id, {
+         data: agent,
+         isUpdating: true,
+      });
+      await stopAgent(agent, true);
+      await unInstallAgent(agent, false);
+      await installAgent(agent, true);
+      updateAgentState(agent.id, {
+         data: agent,
+         isUpdating: false,
+      });
+   };
+
    const checkInstalledModelAgentsRunning = async () => {
       // Check model agents
       const activeModel = await storageModel.getActiveModel();
@@ -1253,6 +1277,7 @@ const AgentProvider: React.FC<
          isInstalling,
          isStarting,
          isStopping,
+         isUpdating,
          isTrade,
          setIsTrade,
          agentWallet,
@@ -1282,6 +1307,7 @@ const AgentProvider: React.FC<
          setCategory,
          currentActiveModel,
          installedAgentIds,
+         handleUpdateCode
          agentCategories,
       };
    }, [
@@ -1295,6 +1321,7 @@ const AgentProvider: React.FC<
       isInstalling,
       isStarting,
       isStopping,
+      isUpdating,
       isTrade,
       setIsTrade,
       agentWallet,
@@ -1323,6 +1350,7 @@ const AgentProvider: React.FC<
       setCategory,
       currentActiveModel,
       installedAgentIds,
+      handleUpdateCode
       agentCategories,
    ]);
 

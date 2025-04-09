@@ -12,6 +12,7 @@ const initialValue: IAgentContext = {
    isInstalling: false,
    isStarting: false,
    isStopping: false,
+   isUpdating: false,
    runningAgents: [],
    isTrade: false,
    setIsTrade(v) { },
@@ -47,6 +48,7 @@ const initialValue: IAgentContext = {
       model: [],
       social: []
    },
+   handleUpdateCode: () => { },
    agentCategories: [],
 };
 

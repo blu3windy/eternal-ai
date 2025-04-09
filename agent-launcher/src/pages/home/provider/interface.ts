@@ -18,6 +18,7 @@ export interface IAgentContext {
   isInstalling: boolean;
   isStarting: boolean;
   isStopping: boolean;
+  isUpdating: boolean;
   runningAgents: number[];
   isTrade: boolean;
   setIsTrade: (v: any) => void;
@@ -47,6 +48,7 @@ export interface IAgentContext {
     isUnInstalling: boolean;
     isStarting: boolean;
     isStopping: boolean;
+    isUpdating: boolean;
     isInstalled: boolean;
     customUIPort?: string;
   }>;
@@ -65,5 +67,6 @@ export interface IAgentContext {
     agent: IAgentToken | undefined,
     dependAgents: string[];
   };
+  handleUpdateCode: any;
   agentCategories: {id: number, name: string}[];
 }
