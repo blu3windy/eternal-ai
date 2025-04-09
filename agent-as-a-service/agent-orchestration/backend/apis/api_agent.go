@@ -405,6 +405,7 @@ func (s *Server) GetDashBoardAgent(c *gin.Context) {
 	search := s.stringFromContextQuery(c, "search")
 	agentType := s.intFromContextQuery(c, "agent_type")
 	agentTypes := s.stringFromContextQuery(c, "agent_types")
+	categoryIds := s.stringArrayFromContextQuery(c, "category_ids")
 
 	agentTypesStr := strings.Split(agentTypes, ",")
 
@@ -430,7 +431,7 @@ func (s *Server) GetDashBoardAgent(c *gin.Context) {
 	ids, _ := s.uintArrayFromContextQuery(c, "ids")
 	exludeIds, _ := s.uintArrayFromContextQuery(c, "exlude_ids")
 	ms, count, err := s.nls.GetDashboardAgentInfos(ctx, contractAddresses, userAddress, chain, agentType, agentTypesInt, "", search, model,
-		installed, ids, exludeIds, sortStr, page, limit)
+		installed, ids, exludeIds, categoryIds, sortStr, page, limit)
 
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
@@ -452,7 +453,7 @@ func (s *Server) GetDashBoardAgentDetail(c *gin.Context) {
 	}
 	userAddress, _ := s.getUserAddressFromTK1Token(c)
 	ms, _, err := s.nls.GetDashboardAgentInfos(ctx, []string{}, userAddress, chain, -1, []int{}, tokenAddress, search, "",
-		nil, []uint{}, []uint{}, sortStr, page, limit)
+		nil, []uint{}, []uint{}, []string{}, sortStr, page, limit)
 
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
