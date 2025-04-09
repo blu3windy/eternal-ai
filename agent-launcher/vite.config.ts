@@ -56,10 +56,11 @@ export default defineConfig({
          output: {
             manualChunks(id) {
                if (id.includes('node_modules')) {
-                  if (id.includes('react')) return 'react';
                   if (id.includes('ethers')) return 'ethers';
-                  if (id.includes('firebase')) return 'firebase';
                   if (id.includes('moment')) return 'moment';
+                  if (id.includes('axios')) return 'axios';
+                  if (id.includes('bignumber.js')) return 'bignumber.js';
+                  if (id.includes('crypto-js')) return 'crypto-js';
                   return 'vendor';
                }
             },
