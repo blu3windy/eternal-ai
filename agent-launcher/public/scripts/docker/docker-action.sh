@@ -65,6 +65,10 @@ while [[ "$#" -gt 0 ]]; do
       ENVIRONMENT="$2"
       shift 2
       ;;
+    --network)
+      NETWORK="$2"
+      shift 2
+      ;;
     *)
       echo "Unknown option: $1"
       usage
@@ -138,6 +142,13 @@ run_container_custom_prompt() {
     cd_docker_build_source_path
     docker_build
 
+    # check if network is external add --network network-agent-external, always has network-agent-internal
+    if [ "$NETWORK" == "external" ]; then
+      NETWORK_EXTERNAL="--network network-agent-external"
+    else
+      NETWORK_EXTERNAL=""
+    fi
+
     # Construct the docker run command with environment variables
     docker run -d \
       ${PORT} \
@@ -147,7 +158,8 @@ run_container_custom_prompt() {
       done) \
       -e PRIVATE_KEY="$PRIVATE_KEY" \
       -e WALLET_ADDRESS="$WALLET_ADDRESS" \
-      --network network-agent-external \
+      --network network-agent-internal \
+      $NETWORK_EXTERNAL \
       --add-host=localmodel:host-gateway \
       --name "$CONTAINER_NAME" \
       "$IMAGE_NAME"
@@ -157,14 +169,36 @@ run_container_open_ai() {
     cd_docker_build_source_path
     docker_build
     log_message "Docker image ${IMAGE_NAME} built successfully."
-    docker run -d -p $DEFAULT_PORT:$DEFAULT_PORT --network network-agent-external --name "$CONTAINER_NAME" "$IMAGE_NAME"
+
+    docker run -d -p $DEFAULT_PORT:$DEFAULT_PORT \
+      --network network-agent-internal \
+      --network network-agent-external \
+      $NETWORK_EXTERNAL \
+      --name "$CONTAINER_NAME" \
+      "$IMAGE_NAME"
     log_message "Running Docker container ${CONTAINER_NAME} with port ${DEFAULT_PORT}..."
 }
 
 run_container_custom_ui() {
     cd_docker_build_source_path
     docker_build
-    docker run -d -p 0:8080 --network network-agent-external -e PRIVATE_KEY="$PRIVATE_KEY" -e WALLET_ADDRESS="$WALLET_ADDRESS" --name "$CONTAINER_NAME" "$IMAGE_NAME"
+    log_message "Docker image ${IMAGE_NAME} built successfully."
+
+    # check if network is external add --network network-agent-external, always has network-agent-internal
+    if [ "$NETWORK" == "external" ]; then
+      NETWORK_EXTERNAL="--network network-agent-external"
+    else
+      NETWORK_EXTERNAL=""
+    fi
+
+    docker run -d -p 0:8080 \
+      --network network-agent-internal \
+      $NETWORK_EXTERNAL \
+      --add-host=localmodel:host-gateway \
+      -e PRIVATE_KEY="$PRIVATE_KEY" \
+      -e WALLET_ADDRESS="$WALLET_ADDRESS" \
+      --name "$CONTAINER_NAME" \
+      "$IMAGE_NAME"
 }
 
 run_container() {

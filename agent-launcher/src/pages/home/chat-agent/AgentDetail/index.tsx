@@ -273,8 +273,6 @@ const AgentDetail = () => {
                   <div className={cs(s.descriptionText, "markdown")}>
                      <CustomMarkdown
                         content={description}
-                        isLight={false}
-                        removeThink={false}
                      />
                   </div>
                )}

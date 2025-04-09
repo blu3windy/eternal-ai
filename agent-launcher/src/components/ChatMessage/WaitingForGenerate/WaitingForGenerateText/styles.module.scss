@@ -16,9 +16,9 @@
 
   // padding-left: 24px;
 
-  @include max-md {
-    flex-direction: column;
-  }
+  // @include max-md {
+  //   flex-direction: column;
+  // }
 
   .imageWrapper {
     position: relative;
@@ -199,5 +199,15 @@
     text-transform: uppercase;
     width: 100%;
     cursor: pointer;
+  }
+}
+
+.container {
+  svg {
+    > g {
+      > g:last-child {
+        display: none !important;
+      }
+    }
   }
 }
