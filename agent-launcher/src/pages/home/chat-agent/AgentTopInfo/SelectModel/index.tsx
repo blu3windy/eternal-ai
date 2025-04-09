@@ -90,7 +90,6 @@ const ItemToken = ({
          )}
          onClick={() => {
             onSelect(agent);
-            onClose();
          }}
       >
          <Flex alignItems={'center'} justifyContent={'space-between'}>
@@ -279,8 +278,9 @@ const SelectModel = ({
                         <ItemToken
                            key={t.id}
                            agent={t}
-                           onSelect={(agent: IAgentToken) => {
-                              startAgent(agent);
+                           onSelect={async (agent: IAgentToken) => {
+                              await startAgent(agent);
+                              onClose();
                            }}
                            onClose={onClose}
                            models={models}

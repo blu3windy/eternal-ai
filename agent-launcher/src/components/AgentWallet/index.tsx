@@ -39,6 +39,7 @@ import ImportToken from './ImportToken/index';
 import s from './styles.module.scss';
 import TransferToken from './TransferToken/index';
 import tokenIcons from '@constants/tokenIcons';
+import { Wallet } from 'ethers';
 
 interface Props {
   color?: string;
@@ -86,6 +87,7 @@ const TokenItem = ({ token, index, showUsdValue = false }: { token: IToken & { i
             maxDecimal={5}
             onBalanceChange={(_amount) => setBalance(_amount)}
             chain={currentChain}
+            walletAddress={agentWallet?.address}
           />
           &nbsp;
           <Text color={"#000"} fontWeight={500} fontSize={"14px"}>
@@ -340,8 +342,21 @@ const availableNetworks = useMemo(() => {
         />
       </BaseModal>
 
-      <BaseModal isShow={isTransferModalOpen} onHide={onTransferModalClose} title={'Transfer Token'} size="small" className={s.modalContent}>
-        <TransferToken onClose={onTransferModalClose} availableNetworks={availableNetworks} tokens={transferTokens} pairs={pairs} />
+      <BaseModal 
+        isShow={isTransferModalOpen} 
+        onHide={onTransferModalClose} 
+        title={'Transfer Token'} 
+        size="small" 
+        className={s.modalContent}
+      >
+        <TransferToken 
+          onClose={onTransferModalClose} 
+          availableNetworks={availableNetworks} 
+          tokens={transferTokens} 
+          pairs={pairs}
+          currentChain={chainType}
+          wallet={agentWallet as Wallet}
+        />
       </BaseModal>
     </>
   );

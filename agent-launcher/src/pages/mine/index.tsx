@@ -7,7 +7,7 @@ import { NATIVE_TOKEN_ADDRESS } from '@contract/token/constants';
 import { IToken } from "@interfaces/token";
 import { useAuth } from "@pages/authen/provider";
 import { AgentContext } from "@pages/home/provider/AgentContext";
-import { ChainIdToChainType } from '@pages/home/trade-agent/provider/constant';
+import { ChainIdToChainType, InfoToChainType } from '@pages/home/trade-agent/provider/constant';
 import FundAgentProvider from "@providers/FundAgent";
 import useFundAgent from "@providers/FundAgent/useFundAgent";
 import CAgentTokenAPI from '@services/api/agents-token/index.ts';
@@ -27,6 +27,8 @@ import { useDisclosure } from '@chakra-ui/react';
 import ImportToken from '@components/AgentWallet/ImportToken';
 import { AgentType } from "@pages/home/list-agent/constants";
 import localStorageService from '@storage/LocalStorageService';
+import TransferToken from "@components/AgentWallet/TransferToken";
+import { Wallet } from "ethers";
 
 const MIN_DECIMAL = 2;
 const MAX_DECIMAL = 2;
@@ -97,6 +99,7 @@ const HandleMine = () => {
   const { signer } = useAuth();
   const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
   const { isOpen: isImportModalOpen, onOpen: onImportModalOpen, onClose: onImportModalClose } = useDisclosure();
+  const { isOpen: isTransferModalOpen, onOpen: onTransferModalOpen, onClose: onTransferModalClose } = useDisclosure();
 
   const { onCopy } = useClipboard(signer?.address || "");
   const toast = useToast();
@@ -168,20 +171,19 @@ const HandleMine = () => {
         symbol: "EAI",
         name: "Eternal AI",
         icon: getTokenIconUrl({ symbol: "EAI" }),
-        address: "",
+        address: InfoToChainType[chainType]?.nativeAddress,
         price_usd: 0
       },
       ...agentTokens,
       ...importedTokens
     ];
-  }, [agentTokens, importedTokens]);
+  }, [agentTokens, importedTokens, chainType]);
 
   useEffect(() => {
     const fetchInstalledAgents = async () => {
       try {
         const installIds = await installAgentStorage.getAgentIds();
 
-        console.log('installIds', installIds);
         if (installIds.length === 0) return;
 
         const params: any = {
@@ -250,7 +252,7 @@ const HandleMine = () => {
   };
 
   const handleTransfer = () => {
-    // onTransferModalOpen();
+    onTransferModalOpen();
   };
 
   const handleExportPrvKey = () => {
@@ -264,6 +266,28 @@ const HandleMine = () => {
   const userAddress = useMemo(() => {
     return signer?.address || '';
   }, [signer?.address]);
+
+  const availableNetworks = useMemo(() => {
+    return [CHAIN_INFO[chainType]];
+  }, [chainType]);
+
+  const transferTokens = useMemo(() => {
+    const baseTokens = [
+      {
+        ...nativeToken,
+        icon: getTokenIconUrl({ symbol: nativeToken.symbol }) || TOKEN_ICON_DEFAULT
+      },
+      {
+        symbol: "EAI",
+        name: "Eternal AI",
+        icon: getTokenIconUrl({ symbol: "EAI" }) || TOKEN_ICON_DEFAULT,
+        address: InfoToChainType[chainType]?.nativeAddress,
+        price_usd: 0
+      }
+    ];
+
+    return [...baseTokens, ...agentTokens, ...importedTokens];
+  }, [nativeToken, agentTokens, importedTokens, chainType]);
 
   return (
     <FundAgentProvider>
@@ -379,6 +403,22 @@ const HandleMine = () => {
           pairs={userTokens}
           storageKey={`imported_tokens_user_${userAddress}`}
           currentChain={chainType}
+        />
+      </BaseModal>
+      <BaseModal 
+        isShow={isTransferModalOpen} 
+        onHide={onTransferModalClose} 
+        title={'Transfer Token'} 
+        size="small"
+        className={s.modalContent}
+      >
+        <TransferToken 
+          onClose={onTransferModalClose} 
+          availableNetworks={availableNetworks} 
+          tokens={transferTokens} 
+          pairs={[...agentTokens, ...importedTokens]}
+          currentChain={chainType}
+          wallet={signer as Wallet}
         />
       </BaseModal>
     </FundAgentProvider>

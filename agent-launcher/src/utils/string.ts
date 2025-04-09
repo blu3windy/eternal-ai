@@ -109,4 +109,13 @@ const splitBase64 = (content: string) => {
       .filter((line) => line.length > 0);
 };
 
-export { compareString, getAvatarName, addressFormater, tryToParseJsonString, getFileExtension, parseSymbolName, formatName, getTokenIconUrl, isBase64, splitBase64 };
+function removeInvalidTags(htmlString) {
+   try {
+      const doc = new DOMParser().parseFromString(htmlString, 'text/html');
+      return doc.body.innerHTML; 
+   } catch(e) {
+      return htmlString;
+   }
+ }
+
+export {removeInvalidTags, compareString, getAvatarName, addressFormater, tryToParseJsonString, getFileExtension, parseSymbolName, formatName, getTokenIconUrl, isBase64, splitBase64 };

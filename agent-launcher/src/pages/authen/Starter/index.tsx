@@ -1,4 +1,4 @@
-import { Center, Image } from "@chakra-ui/react";
+import { Center, Image, Box } from "@chakra-ui/react";
 import BackgroundWrapper from "@components/BackgroundWrapper";
 import BaseButton from "@components/BaseButton";
 import { getSetupAgents } from "@pages/authen/ChooseModel/utils.ts";
@@ -49,9 +49,13 @@ const Starter = (props: IProps) => {
    const agentAPI = useRef(new CAgentTokenAPI());
 
    const [step] = useState<Step>("INITIALIZING");
+   const [isShowWarning, setIsShowWarning] = useState(false);
+   const initTimerRef = useRef<NodeJS.Timeout>();
 
    const [hasError, setHasError] = useState(false);
    const agentCtx = useContext(AgentContext);
+
+   const { setIsFinished } = useStarter();
 
    const setDefaultAgent = async () => {
       const {
@@ -74,7 +78,17 @@ const Starter = (props: IProps) => {
 
 
    const onInit = async (ignoreCopy?: boolean) => {
+
+      const loaded = await localStorage.getItem("loaded");
+      const time = (loaded ? 15 : 50) * 60 * 1000;
+
+      // Start the 15-minute timer
+      initTimerRef.current = setTimeout(() => {
+         setIsShowWarning(true);
+      }, time);
+
       try {
+         setIsFinished(false);
          console.time("FULL_LOAD_TIME");
          await onCheckHasUser();
          if (!ignoreCopy) {
@@ -101,15 +115,15 @@ const Starter = (props: IProps) => {
          } else {
             try {
                switch (activeModel.agent_type) {
-                  case AgentType.ModelOnline: {
-                     await agentCtx.startAgent(activeModel);
-                     break;
-                  }
-                  case AgentType.Model:
-                     await setReadyPort();
-                     await globalThis.electronAPI.modelInstallBaseModel(activeModel.hash);
-                     break;
-                  }
+               case AgentType.ModelOnline: {
+                  await agentCtx.startAgent(activeModel);
+                  break;
+               }
+               case AgentType.Model:
+                  await setReadyPort();
+                  await globalThis.electronAPI.modelInstallBaseModel(activeModel.hash);
+                  break;
+               }
             } catch (error) {
                await setDefaultAgent();
             }
@@ -123,32 +137,50 @@ const Starter = (props: IProps) => {
          // console.timeEnd("MODEL_BASE");
 
          setChecking(false);
+         localStorage.setItem("loaded", "true");
       } catch (error: any) {
          // alert(error?.message || "Something went wrong.");
          setHasError(true);
       } finally {
          console.timeEnd("FULL_LOAD_TIME");
+         setIsFinished(true);
+         // Clear the timer if init completes before 15 minutes
+         if (initTimerRef.current) {
+            clearTimeout(initTimerRef.current);
+         }
       }
    }
+
+
+   const onClearCounter = () => {
+      if (initTimerRef.current) {
+         clearTimeout(initTimerRef.current);
+      }
+   }
+
+   const onRetry = () => {
+      setHasError(false);
+      setChecking(true);
+      setIsShowWarning(false);
+      onClearCounter();
+      onInit(true).then().catch();
+   }
+
+   // Cleanup timer on unmount
+   useEffect(() => {
+      return () => {
+         onClearCounter();
+      };
+   }, []);
+
+
    const renderContent = () => {
       switch (step) {
       case "INITIALIZING": {
          return (
             <Center flexDirection="column" gap="12px">
                <LoadingIcon />
-               <StarterLogs />
-               {hasError && (
-                  <BaseButton 
-                     maxWidth="120px"
-                     onClick={() => {
-                        setHasError(false);
-                        setChecking(true);
-                        onInit(true).then().catch();
-                     }}
-                  >
-                     Try again
-                  </BaseButton>
-               )}
+               <StarterLogs isShowWarning={isShowWarning || hasError} hasError={hasError} onRetry={onRetry}/>
             </Center>
          )
       }}

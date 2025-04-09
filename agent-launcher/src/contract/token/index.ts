@@ -151,6 +151,7 @@ class CTokenContract extends GenericContract {
     tokenAddress?: string;
     chain?: CHAIN_TYPE;
   }) {
+    console.log("getEstimateGas", from, to, transferAmount, tokenAddress, chain);
     try {
       const provider = this.getProviderByChain(chain);
       const value = parseEther(
@@ -179,7 +180,7 @@ class CTokenContract extends GenericContract {
       }
     } catch (e) {
       console.log("Error estimating gas:", e);
-      return "0.001";
+      return "0.00001";
     }
   }
 

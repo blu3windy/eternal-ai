@@ -90,14 +90,14 @@ function FloatingWebView() {
                   <SvgInset 
                     className={styles.icon} 
                     size={20} 
-                    svgUrl={'/icons/ic-minimize.svg'} 
+                    svgUrl={'icons/ic-minimize.svg'} 
                     onClick={() => dispatch(toggleMaximize(false))}
                   />
                 ) : (
                   <SvgInset 
                     className={styles.icon} 
                     size={20} 
-                    svgUrl={'/icons/ic-maximize.svg'} 
+                    svgUrl={'icons/ic-maximize.svg'} 
                     onClick={() => dispatch(toggleMaximize(true))}
                   />
                 )}
@@ -105,7 +105,7 @@ function FloatingWebView() {
                 <SvgInset 
                   className={styles.icon} 
                   size={20} 
-                  svgUrl={'/icons/ic-close.svg'}
+                  svgUrl={'icons/ic-close.svg'}
                   onClick={() => dispatch(reset())}
                 />
               </Flex>
@@ -121,7 +121,7 @@ function FloatingWebView() {
                   <div
                     className={styles.searchingIcon}
                   >
-                    <SvgInset svgUrl="/icons/ic-search.svg" size={16} />
+                    <SvgInset svgUrl="icons/ic-search.svg" size={16} />
                   </div>
                 </Box>
                 <Flex
@@ -166,8 +166,8 @@ function FloatingWebView() {
                   borderRadius: isMaximized ? 0 : "8px",
                 }}
               >
-                <WebView
-                  url={url}
+                <iframe
+                  src={url}
                   height="100%"
                   width="100%"
                 />

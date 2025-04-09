@@ -1049,6 +1049,8 @@ const AgentProvider: React.FC<
       console.log("stephen: setSelectedAgent agentStates", { agentStates });
 
       if (isInstalled && !isRunning && !isStarting && newAgent?.agent_type !== AgentType.ModelOnline) {
+         console.log();
+         
          startAgent(newAgent);
       }
    }, [agentStates]);
