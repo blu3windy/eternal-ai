@@ -21,6 +21,7 @@ import { v4 } from "uuid";
 import { useDispatch } from "react-redux";
 import { openWithUrl } from "@stores/states/floating-web-view/reducer";
 import { PROCESSING_TAG_REGEX, THINK_TAG_REGEX } from "@components/CustomMarkdown/constants";
+import ProcessingTaskModal from "@pages/home/list-agent/BottomBar/ProcessingTaskModal";
 
 dayjs.extend(duration);
 
@@ -41,6 +42,9 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
    const [hours, setHours] = useState<number | null>(0);
    const [minutes, setMinutes] = useState<number | null>(0);
    const [seconds, setSeconds] = useState<number | null>(0);
+   const [showTaskText, setShowTaskText] = useState(false);
+
+   const [isOpenProcessingTask, setIsOpenProcessingTask] = useState(false);
 
    useEffect(() => {
       const createdAt = message?.createdAt ? new Date(message?.createdAt).getTime() : new Date().getTime();
@@ -86,6 +90,24 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
       }
    }, [message.status, updateMessage, message.id]);
 
+   useEffect(() => {
+      let timer: NodeJS.Timeout;
+
+      if (message?.status === 'waiting' || message?.status === 'receiving') {
+         timer = setTimeout(() => {
+            setShowTaskText(true);
+         }, 5000);
+      } else {
+         setShowTaskText(false);
+      }
+
+      return () => {
+         if (timer) {
+            clearTimeout(timer);
+         }
+      };
+   }, [message?.status]);
+
    const calcTime = () => {
       const diff = dayjs.duration(dayjs(message?.updatedAt).diff(dayjs(message?.createdAt)));
       if (diff.milliseconds() <= 0) {
@@ -107,7 +129,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
 
    const renderMessage = useMemo(() => {
       const textStr = removeInvalidTags(message.msg || '')
-      if(message.status === "receiving" || message.status === "sync-receiving") {
+      if (message.status === "receiving" || message.status === "sync-receiving") {
          return textStr || '';
       }
       return `${textStr || ''}`
@@ -156,13 +178,31 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
       );
    };
 
+   const renderWaitingMessage = () => {
+      return (
+         <Flex gap="8px" alignItems="center">
+            <WaitingAnimation color={message?.is_reply ? "black" : "white"} />
+            {showTaskText && (
+               <Text
+                  position={'absolute'}
+                  left={'70px'}
+                  whiteSpace={'nowrap'}
+                  fontSize="16px"
+                  fontWeight="400"
+                  color={message?.is_reply ? "black" : "white"}
+               >{selectedAgent?.display_name} is getting it done. Check the progress in your tasks <Text as={'span'} cursor={'pointer'} textDecoration={'underline'} onClick={() => setIsOpenProcessingTask(true)}>here</Text>.</Text>
+            )}
+         </Flex>
+      );
+   }
+
    const renderMarkdown = () => {
       if (message.status === "waiting" || message.status === "sync-waiting") {
-         return <WaitingAnimation color={message?.is_reply ? "black" : "white"} />;
+         return renderWaitingMessage();
       }
 
       if ((message.status === "receiving" || message.status === "sync-receiving") && !!processingWebViewUrl) {
-         return <WaitingAnimation color={message?.is_reply ? "black" : "white"} />;
+         return renderWaitingMessage();
       }
 
       if (message.status === "failed") {
@@ -229,92 +269,102 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
    }
 
    return (
-      <div className={s.wrapper} ref={ref}>
-         {message?.is_reply && (
-            <Flex direction="row" alignItems="center" gap="6px" width="100%" justifyContent={message?.is_reply ? "flex-start" : "flex-end"}>
-               <Flex gap="8px" alignItems="center" width="100%" flexDirection={message?.is_reply ? "row" : "row-reverse"}>
-                  {message?.is_reply && selectedAgent?.token_image_url && <Image src={selectedAgent.token_image_url} width="24px" height="24px" borderRadius="24px" />}
-                  <Text fontSize="15px" fontWeight="600" width="fit-content">
-                     {message.name}
-                  </Text>
+      <>
+         <div className={s.wrapper} ref={ref}>
+            {message?.is_reply && (
+               <Flex direction="row" alignItems="center" gap="6px" width="100%" justifyContent={message?.is_reply ? "flex-start" : "flex-end"}>
+                  <Flex gap="8px" alignItems="center" width="100%" flexDirection={message?.is_reply ? "row" : "row-reverse"}>
+                     {message?.is_reply && selectedAgent?.token_image_url && <Image src={selectedAgent.token_image_url} width="24px" height="24px" borderRadius="24px" />}
+                     <Text fontSize="15px" fontWeight="600" width="fit-content">
+                        {message.name}
+                     </Text>
+                  </Flex>
                </Flex>
-            </Flex>
-         )}
-         <Box
-            className={cs(s.content, { [s.question]: !message?.is_reply }, { [s.reply]: message?.is_reply }, { [s.failed]: message?.status === "failed" })}
-            alignSelf={message?.is_reply ? "flex-start" : "flex-end"}
-            position={"relative"}
-         >
-            {renderContent()}
-            {processingWebViewUrl && (
-               <Box
-                  position={"absolute"}
-                  right={"-40px"}
-                  bottom={0}
-                  borderRadius={"50%"}
-                  border="1px solid #F4F4F4"
-                  background={"white"}
-                  boxShadow={"2px 2px 8px 0px rgba(0, 0, 0, 0.15)"}
-                  width={"32px"}
-                  height={"32px"}
-                  display={"flex"}
-                  alignItems={"center"}
-                  justifyContent={"center"}
-                  transition={"all 0.2s ease-in-out"}
-                  _hover={{
-                     cursor: "pointer",
-                     transform: "translateY(-2px)",
-                     transition: "transform 0.2s ease-in-out",
-                  }}
-                  onClick={() => {
-                     const replyToMessage = messages.find(item => item.id === message.replyTo);
-                     dispatch(openWithUrl({
-                        url: processingWebViewUrl,
-                        task: 'Searching',
-                        taskProcessing: replyToMessage?.msg || ''
-                     }))
-                  }}
-               >
-                  <SvgInset svgUrl="icons/ic-computer.svg" size={16}/>
+            )}
+            <Box
+               className={cs(s.content, { [s.question]: !message?.is_reply }, { [s.reply]: message?.is_reply }, { [s.failed]: message?.status === "failed" })}
+               alignSelf={message?.is_reply ? "flex-start" : "flex-end"}
+               position={"relative"}
+            >
+               {renderContent()}
+               {processingWebViewUrl && (
+                  <Box
+                     position={"absolute"}
+                     right={"-40px"}
+                     bottom={0}
+                     borderRadius={"50%"}
+                     border="1px solid #F4F4F4"
+                     background={"white"}
+                     boxShadow={"2px 2px 8px 0px rgba(0, 0, 0, 0.15)"}
+                     width={"32px"}
+                     height={"32px"}
+                     display={"flex"}
+                     alignItems={"center"}
+                     justifyContent={"center"}
+                     transition={"all 0.2s ease-in-out"}
+                     _hover={{
+                        cursor: "pointer",
+                        transform: "translateY(-2px)",
+                        transition: "transform 0.2s ease-in-out",
+                     }}
+                     onClick={() => {
+                        const replyToMessage = messages.find(item => item.id === message.replyTo);
+                        dispatch(openWithUrl({
+                           url: processingWebViewUrl,
+                           task: 'Searching',
+                           taskProcessing: replyToMessage?.msg || ''
+                        }))
+                     }}
+                  >
+                     <SvgInset svgUrl="icons/ic-computer.svg" size={16} />
+                  </Box>
+               )}
+            </Box>
+
+            {(message.status === "receiving" || message.status === "waiting") && message.queryMessageState && !compareString(message.queryMessageState, "DONE") && (
+               <Box paddingLeft={"12px"}>
+                  <Text opacity={"0.6"} color="#fff" fontSize={"12px"} fontWeight={"400"} lineHeight={"120%"}>
+                     {message.queryMessageState}
+                  </Text>
                </Box>
             )}
-         </Box>
+            {message?.tx_hash && (
+               <Box display={"flex"} alignItems={"center"} gap={"12px"} justifyContent={message?.is_reply ? "flex-start" : "flex-end"} mt={message?.is_reply ? "0px" : "-20px"}>
+                  {message?.is_reply && !!message?.createdAt && !!message?.updatedAt && (
+                     <>
+                        <Text className={s.txLink}>{`${minutes && minutes > 0 ? `${minutes}m` : ""} ${seconds && seconds > 0 ? `${seconds}s` : ""}`}</Text>
+                        <svg width="4" height="4" viewBox="0 0 4 4" fill="none" xmlns="http://www.w3.org/2000/svg">
+                           <circle cx="2" cy="2" r="2" fill="white" fill-opacity="0.6" />
+                        </svg>
+                     </>
+                  )}
+                  <a
+                     className={s.txLink}
+                     href={
+                        getExplorerByChain({
+                           chainId: selectedAgent?.network_id as any,
+                           address: message?.tx_hash,
+                           type: "tx",
+                        }) as any
+                     }
+                     target="_blank"
+                     rel="noopener noreferrer"
+                  >
+                     {formatLongAddress(message?.tx_hash)}
+                     <Image src="/svg/ic-arrow-top-right-gray.svg" />
+                  </a>
+               </Box>
+            )}
+         </div>
+         <ProcessingTaskModal
+            key={`processing-task-${isOpenProcessingTask}`}
+            isOpen={isOpenProcessingTask}
+            setIsOpen={() => {
+               setIsOpenProcessingTask((prev) => !prev);
+            }}
+         />
+      </>
 
-         {(message.status === "receiving" || message.status === "waiting") && message.queryMessageState && !compareString(message.queryMessageState, "DONE") && (
-            <Box paddingLeft={"12px"}>
-               <Text opacity={"0.6"} color="#fff" fontSize={"12px"} fontWeight={"400"} lineHeight={"120%"}>
-                  {message.queryMessageState}
-               </Text>
-            </Box>
-         )}
-         {message?.tx_hash && (
-            <Box display={"flex"} alignItems={"center"} gap={"12px"} justifyContent={message?.is_reply ? "flex-start" : "flex-end"} mt={message?.is_reply ? "0px" : "-20px"}>
-               {message?.is_reply && !!message?.createdAt && !!message?.updatedAt && (
-                  <>
-                     <Text className={s.txLink}>{`${minutes && minutes > 0 ? `${minutes}m` : ""} ${seconds && seconds > 0 ? `${seconds}s` : ""}`}</Text>
-                     <svg width="4" height="4" viewBox="0 0 4 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="2" cy="2" r="2" fill="white" fill-opacity="0.6" />
-                     </svg>
-                  </>
-               )}
-               <a
-                  className={s.txLink}
-                  href={
-                     getExplorerByChain({
-                        chainId: selectedAgent?.network_id as any,
-                        address: message?.tx_hash,
-                        type: "tx",
-                     }) as any
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-               >
-                  {formatLongAddress(message?.tx_hash)}
-                  <Image src="/svg/ic-arrow-top-right-gray.svg" />
-               </a>
-            </Box>
-         )}
-      </div>
    );
 };
 

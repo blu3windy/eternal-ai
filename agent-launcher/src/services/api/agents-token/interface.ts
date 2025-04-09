@@ -1,4 +1,4 @@
-import { AgentType } from "../../../pages/home/list-agent/constants";
+import { AgentStatus, AgentType } from "../../../pages/home/list-agent/constants";
 
 export interface TwitterInfo {
   twitter_id: string;
@@ -97,6 +97,7 @@ export interface IAgentToken {
   env_example?: string;
   code_version?: number;
   is_force_update?: boolean;
+  run_status?: AgentStatus;
 }
 
 export interface Meme {

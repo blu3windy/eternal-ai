@@ -3,7 +3,7 @@ import CustomMarkdown from "@components/CustomMarkdown";
 import { DefaultAvatar } from "@components/DefaultAvatar";
 import { BASE_CHAIN_ID } from '@constants/chains';
 import CAgentContract from '@contract/agent';
-import { AgentType, AgentTypeName } from "@pages/home/list-agent/constants";
+import { AgentStatus, AgentStatusLabel, AgentType, AgentTypeName } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import localStorageService from '@storage/LocalStorageService';
@@ -73,9 +73,9 @@ const AgentItem = ({ token, isLatest }: IProps) => {
       return false;
    }, [token, agentStates]);
 
-   const agentType = useMemo(() => {
+   const runStatus = useMemo(() => {
       if (token) {
-         return AgentTypeName[token.agent_type];
+         return AgentStatusLabel[token.run_status as AgentStatus];
       }
 
       return '';
@@ -245,7 +245,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                }
                <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
                   <Flex gap={"8px"}>
-                     {/* {agentType && <Text className={s.agentTypeTag}>{agentType}</Text>} */}
+                     {token?.run_status && <Text className={token?.run_status === AgentStatus.Local ? s.onChainTag : s.agentTypeTag}>{runStatus}</Text>}
                      {/* {agentTypeAdditional && <Text className={s.agentTypeTag}>{agentTypeAdditional}</Text>} */}
                      {/* <Image src="icons/ic-creator.svg" w="14px" h="14px" />
                      <Text fontSize={"12px"} fontWeight={"500"} color={"#000"} opacity={0.7}>

@@ -57,6 +57,7 @@
 .scroll {
   // scroll-behavior: smooth;
   // -webkit-scroll-behavior: smooth;
+  overflow-x: hidden;
 
   scrollbar-color: gray transparent;
   scrollbar-width: thin;
