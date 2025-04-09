@@ -129,7 +129,7 @@ type TrendingToken struct {
 }
 
 func (c *Client) GetTrendingTokens(chain string) ([]TrendingToken, error) {
-	url := fmt.Sprintf("https://deep-index.moralis.io/api/v2.2/tokens/trending?chain=%s", url.QueryEscape(chain))
+	url := fmt.Sprintf("https://deep-index.moralis.io/api/v2.2/tokens/trending?chain=%s&limit=100", url.QueryEscape(chain))
 
 	var tokens []TrendingToken
 	_, err := c.getJSON(

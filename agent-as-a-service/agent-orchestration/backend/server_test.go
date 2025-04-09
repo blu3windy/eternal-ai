@@ -72,15 +72,16 @@ func Test_JOB(t *testing.T) {
 }
 
 func Test_UTIL(t *testing.T) {
-	ts.JobCreateTokenInfo(context.Background())
-	resp := map[string]interface{}{
-		"method": "getUserByUsername",
-		"params": map[string]interface{}{
-			"username": "Uniswap",
-		},
-	}
-	jsonString, _ := json.Marshal(resp)
-	fmt.Println(jsonString)
+	// ts.JobCreateTokenInfo(context.Background())
+	// resp := map[string]interface{}{
+	// 	"method": "getUserByUsername",
+	// 	"params": map[string]interface{}{
+	// 		"username": "Uniswap",
+	// 	},
+	// }
+	// jsonString, _ := json.Marshal(resp)
+	// fmt.Println(jsonString)
+	ts.JobUpdateTrendingTokens(context.Background())
 }
 
 func Test_OpenAI(t *testing.T) {
