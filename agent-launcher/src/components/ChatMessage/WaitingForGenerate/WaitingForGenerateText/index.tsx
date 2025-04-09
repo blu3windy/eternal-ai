@@ -2,6 +2,8 @@ import Lottie from 'lottie-react';
 import animation from './voice-animation.json';
 import animationBlack from './voice-animation-black.json';
 import s from './styles.module.scss';
+import { Text } from '@chakra-ui/react';
+
 export function WaitingAnimation({ size = 24, color = 'white' }: { size?: number, color?: string }) {
    return (
       <div
