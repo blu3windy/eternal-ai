@@ -8,8 +8,6 @@ import s from "./styles.module.scss";
 const AgentOnChainInfo = () => {
    const { selectedAgent } = useContext(AgentContext);
 
-   console.log("selectedAgent", selectedAgent);
-
    return (
       <Box>
          <Text fontSize={"16px"} fontWeight={500}>Agent onchain data</Text>

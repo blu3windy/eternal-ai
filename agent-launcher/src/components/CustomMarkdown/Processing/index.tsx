@@ -4,10 +4,7 @@ import s from './styles.module.scss';
 function Processing({
    children,
    ...rest
-}: CustomComponentProps & {
-   isLight?: boolean;
-   removeThink?: boolean;
-}) {
+}: CustomComponentProps) {
 
    // const href = (children as any)?.props?.children;
    // if (href && typeof href === 'string') {
