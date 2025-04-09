@@ -360,7 +360,7 @@ const AgentTopInfo = () => {
                                     </Button>
                                  </>
                               )}
-                              {!!isCanChat && !!selectedAgent && (
+                              {!!isRunning && !!isCanChat && !!selectedAgent && (
                                  <>
                                     <Divider color={'#E2E4E8'} my={'16px'} />
                                     <Button
