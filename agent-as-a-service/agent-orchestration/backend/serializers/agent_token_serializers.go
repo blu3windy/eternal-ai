@@ -544,6 +544,7 @@ func NewTrendingTokenResp(m *models.TrendingToken) *TrendingTokenResp {
 		Volume1h:       m.Volume1h,
 		Transactions1h: m.Transactions1h,
 		Buyers1h:       m.Buyers1h,
+		ChainId:        m.ChainId,
 	}
 }
 

@@ -844,7 +844,7 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 	}
 
 	if len(categoryIds) > 0 {
-		filters["agent_infos.category_id in (?)"] = []any{categoryIds}
+		filters["agent_infos.agent_category_id in (?)"] = []any{categoryIds}
 	}
 
 	if userAddress != "" {

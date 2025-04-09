@@ -210,6 +210,23 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 								status = models.MemeStatusAddPoolLevel2
 							}
 						}
+						// check token address exist in db
+						{
+							memeCheck, err := s.dao.FirstMeme(
+								daos.GetDBMainCtx(ctx),
+								map[string][]any{
+									"token_address = ?": {strings.ToLower(tokenAddress)},
+								},
+								map[string][]any{},
+								false,
+							)
+							if err != nil {
+								return errs.NewError(err)
+							}
+							if memeCheck != nil {
+								return errs.NewError(errs.ErrBadRequest)
+							}
+						}
 						err = daos.GetDBMainCtx(ctx).Model(&m).
 							Updates(
 								map[string]any{
