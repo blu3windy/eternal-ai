@@ -32,7 +32,7 @@ import storageModel from '@storage/StorageModel';
 import { formatCurrency } from '@utils/format.ts';
 import { addressFormater, compareString } from '@utils/string';
 import cx from 'clsx';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import SetupEnvModel from '../SetupEnvironment';
 import s from './styles.module.scss';
@@ -57,6 +57,7 @@ const AgentTopInfo = () => {
       installedModelAgents,
    } = useContext(AgentContext);
 
+   const [infoTooltipKey, setInfoTooltipKey] = useState(0);
    const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
    const [environments, setEnvironments] = useState<JSON>();
 
@@ -191,6 +192,15 @@ const AgentTopInfo = () => {
          window.open(`https://x.com/${selectedAgent?.tmp_twitter_info?.twitter_username}`);
    };
 
+   const handleClearHistory = useCallback(() => {
+      // TODO: clear history
+      // TODO: need refactor chat to global state
+      if ((window as any).clearChatHistory) {
+         (window as any).clearChatHistory();
+      }
+      setInfoTooltipKey(prev => prev + 1);
+   }, []);
+
    const showSelectModel = useMemo(() => {
       return isCanChat && installedModelAgents && installedModelAgents.length > 0 && [AgentType.Infra, AgentType.CustomPrompt].includes(
          selectedAgent?.agent_type as AgentType
@@ -232,6 +242,7 @@ const AgentTopInfo = () => {
                <Flex gap={'6px'} justifyContent={'space-between'} alignItems={'center'}>
                   <Flex gap={'6px'} alignItems={'center'} className={s.content}>
                      <InfoTooltip
+                        key={`info-tooltip-${selectedAgent?.id}-${infoTooltipKey}`}
                         iconSize="20px"
                         label={
                            <Flex direction={'column'} p={'8px'}>
@@ -346,6 +357,26 @@ const AgentTopInfo = () => {
                                           <path d="M6 18V6H18V18H6Z" fill="black" />
                                        </svg>
                                        Stop
+                                    </Button>
+                                 </>
+                              )}
+                              {!!isRunning && !!isCanChat && !!selectedAgent && (
+                                 <>
+                                    <Divider color={'#E2E4E8'} my={'16px'} />
+                                    <Button
+                                       className={s.btnClearHistory}
+                                       onClick={() => {
+                                          handleClearHistory();
+                                       }}
+                                    >
+                                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M24 13H17V15H24V13Z" fill="black"/>
+                                          <path d="M24 17H17V19H24V17Z" fill="black"/>
+                                          <path d="M24 21H18V23H24V21Z" fill="black"/>
+                                          <path d="M21.404 1.83019L19.83 0.596191L13.076 9.20819C12.741 9.07819 12.38 9.00019 12 9.00019C11.564 9.00019 11.14 9.02419 10.725 9.06719C10.279 9.59119 10 10.2602 10 11.0002C10 12.6542 11.346 14.0002 13 14.0002C13.603 14.0002 14.163 13.8182 14.633 13.5102C14.671 13.4172 14.698 13.3222 14.74 13.2312C14.872 12.8662 14.958 12.4842 15 12.0002C15 11.4582 14.844 10.9562 14.592 10.5162L21.404 1.83019Z" fill="black"/>
+                                          <path d="M14.004 15.8983C13.679 15.9643 13.344 16.0003 13 16.0003C10.243 16.0003 8 13.7573 8 11.0003C8 10.5233 8.089 10.0713 8.214 9.63428C3.737 11.2203 1 15.7213 1 22.0003V23.0003H15.995L15.123 21.4983C14.135 19.7963 13.764 17.8333 14.005 15.8983H14.004Z" fill="black"/>
+                                       </svg>
+                                       Clear history
                                     </Button>
                                  </>
                               )}

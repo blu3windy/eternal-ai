@@ -130,6 +130,14 @@ class ChatAgentDatabase {
          //
       }
    }
+
+   async clearChatItems(threadId: string) {
+      try {
+         await this.db?.messages.where("threadId").equals(threadId).delete();
+      } catch (e) {
+         console.log('_________clearChatItems', e);
+      }
+   }
 }
 
 const chatAgentDatabase = new ChatAgentDatabase();
