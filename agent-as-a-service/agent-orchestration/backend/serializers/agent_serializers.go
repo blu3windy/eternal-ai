@@ -353,6 +353,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		ShortDescription:     m.ShortDescription,
 		IsForceUpdate:        m.IsForceUpdate,
 		CodeVersion:          m.CodeVersion,
+		RunStatus:            m.RunStatus,
 	}
 
 	if m.NftTokenImage != "" {
@@ -453,18 +454,6 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 	case models.AgentInfoAgentTypeModelOnline:
 		{
 			resp.RunStatus = "online"
-		}
-	case models.AgentInfoAgentTypeJs,
-		models.AgentInfoAgentTypePython,
-		models.AgentInfoAgentTypeInfa,
-		models.AgentInfoAgentTypeCustomUi,
-		models.AgentInfoAgentTypeCustomPrompt:
-		{
-			if resp.IsOnchain {
-				resp.RunStatus = "onchain"
-			} else {
-				resp.RunStatus = "offchain"
-			}
 		}
 	}
 	return resp
