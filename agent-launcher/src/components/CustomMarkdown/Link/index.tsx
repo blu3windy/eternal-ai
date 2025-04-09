@@ -5,10 +5,8 @@ import s from "./styles.module.scss";
 const CustomLink = ({
   node,
   children,
-  isLight = false,
   href,
 }: CustomComponentProps & {
-  isLight?: boolean;
   href: string;
 }) => {
   const formatMessage = useMemo(() => {

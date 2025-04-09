@@ -20,6 +20,7 @@ import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/Wai
 import { v4 } from "uuid";
 import { useDispatch } from "react-redux";
 import { openWithUrl } from "@stores/states/floating-web-view/reducer";
+import { PROCESSING_TAG_REGEX, THINK_TAG_REGEX } from "@components/CustomMarkdown/constants";
 
 dayjs.extend(duration);
 
@@ -37,7 +38,6 @@ type Props = {
 const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSending, initialMessage, updateMessage }: Props) => {
    const dispatch = useDispatch();
    const { selectedAgent } = useContext(AgentContext);
-   const [markdownId, setMarkdownId] = useState<string>(v4());
    const [hours, setHours] = useState<number | null>(0);
    const [minutes, setMinutes] = useState<number | null>(0);
    const [seconds, setSeconds] = useState<number | null>(0);
@@ -111,13 +111,17 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          return textStr || '';
       }
       return `${textStr || ''}`
-         .replace(/<processing>[\s\S]*?<\/processing>/g, '') // remove processing tag
-         .replace(/<think>[\s\S]*?<\/think>/g, '') // remove think tag
-   }, [message?.msg, message?.status])
+         .replace(PROCESSING_TAG_REGEX, '')
+   }, [message?.msg, message?.status]);
+
+   const resultMessage = useMemo(() => {
+      return `${renderMessage || ''}`
+         .replace(THINK_TAG_REGEX, '');
+   }, [renderMessage])
 
    const processingWebViewUrl = useMemo(() => {
       try {
-         const matches = `${renderMessage || ''}`.match(/<processing>[\s\S]*?<\/processing>/g);
+         const matches = `${renderMessage || ''}`.match(PROCESSING_TAG_REGEX);
          if (matches?.length) {
             let url = matches[0] || '';
             url = url.replace('<processing>', '').replace('</processing>', '');
@@ -183,13 +187,14 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          );
       }
 
-      if (message.status === "received" && message.type === "ai") {
-         return (
-            <div
-               className={cs(s.markdown, "markdown-body", {
-                  [s.markdown__received]: true,
-               })}
-            >
+      const isPdfExport = message.status === "received" && message.type === "ai" && !!resultMessage;
+      return (
+         <div
+            className={cs(s.markdown, "markdown-body", {
+               [s.markdown__received]: message.status === "received",
+            })}
+         >
+            {isPdfExport && (
                <div className={s.exportPdf}>
                   <motion.div
                      initial={{ y: 0, opacity: 0 }}
@@ -211,14 +216,8 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                      <Text>Export to PDF</Text>
                   </motion.div>
                </div>
-               <CustomMarkdown id={markdownId} status={message.status} content={renderMessage} isLight={false} removeThink={initialMessage} />
-            </div>
-         );
-      }
-
-      return (
-         <div className={cs(s.markdown, "markdown-body")}>
-            <CustomMarkdown status={message.status} id={markdownId} content={renderMessage} isLight={false} removeThink={initialMessage} />
+            )}
+            <CustomMarkdown id={message.id} status={message.status} content={renderMessage} />
          </div>
       );
    };
