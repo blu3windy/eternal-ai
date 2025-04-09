@@ -1,7 +1,5 @@
-import { createContext, useCallback, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useRef } from 'react';
 import useDockerMonitorState from './useDockerMonitorState';
-import debounce from 'lodash.debounce';
-
 interface DockerContextType {
    containers: any[];
    images: any[];
@@ -16,25 +14,13 @@ const DockerMonitorContext = createContext<DockerContextType>(initialState);
 
 const DockerMonitorProvider = ({ children }) => {
    const { images, setImages, containers, setContainers } = useDockerMonitorState();
+   const initRef = useRef(false);
 
-   // debounce the setContainers and setImages
-   const debouncedSetContainers = useCallback(debounce(setContainers, 300), [setContainers]);
-   const debouncedSetImages = useCallback(debounce(setImages, 300), [setImages]);  
-
-   useEffect(() => {
-
-      console.log('LEON useEffect');   
-      // Fetch initial Docker data
-      window.electronAPI.getInitialDockerData().then(({ containers, images }) => {
-         console.log('LEON getInitialDockerData', { containers, images });
-         debouncedSetContainers(containers);
-         debouncedSetImages(images);
-      });
-
+   const listener = () => {
       // Listen for container updates
       const containerUpdateListener = (updatedContainers) => {
          console.log('LEON containerUpdateListener', updatedContainers);
-         debouncedSetContainers(updatedContainers);
+         setContainers(updatedContainers);
       };
 
       window.electronAPI.onContainersUpdate(containerUpdateListener);
@@ -42,15 +28,16 @@ const DockerMonitorProvider = ({ children }) => {
       // Listen for image updates
       const imageUpdateListener = (updatedImages) => {
          console.log('LEON imageUpdateListener', updatedImages);
-         debouncedSetImages(updatedImages);
+         setImages(updatedImages);
       };
       
       window.electronAPI.onImagesUpdate(imageUpdateListener);
+   }
 
-      // Cleanup listeners on unmount
-      return () => {
-         // Note: Cleanup logic for listeners can be added here if needed
-      };
+   useEffect(() => {
+      if (initRef.current) return;
+      initRef.current = true;
+      listener();
    }, []);
 
    return (

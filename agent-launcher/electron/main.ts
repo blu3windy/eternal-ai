@@ -29,7 +29,7 @@ autoUpdater.setFeedURL({
    owner: "eternalai-org",
    repo: "eternal-ai",
    releaseType: 'release' // optional, default is "release"
- })
+})
 
 // const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

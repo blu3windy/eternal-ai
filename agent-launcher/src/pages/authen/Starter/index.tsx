@@ -11,7 +11,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import AgentProvider from "@pages/home/provider/AgentProvider";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { setReadyPort } from "@utils/agent.ts";
-
+import useDockerMonitorState from "@providers/DockerMonitor/useDockerMonitorState";
 interface IProps {
    loadingUser: boolean;
    onCheckHasUser: () => Promise<void>;
@@ -28,25 +28,16 @@ const LoadingIcon = () => (
    />
 )
 
-const tryExecFunction = async (maxRun: number, func: any) => {
-   // Try to execute the function
-   // If function has error, try to execute the function again maxRun times
-   for (let i = 0; i < maxRun; i++) {
-      try {
-         await func();
-      } catch (error) {
-         if (i === maxRun - 1) {
-            throw error;
-         }
-      }
-   }
-}
-
 const Starter = (props: IProps) => {
    const { onCheckHasUser } = props;
    const { setChecking } = useStarter();
    const initRef = useRef(false);
    const agentAPI = useRef(new CAgentTokenAPI());
+
+   const { setContainers, setImages, containers, images } = useDockerMonitorState();
+
+   console.log('LEON HIHI containers', containers);
+   console.log('LEON HIHI images', images);
 
    const [step] = useState<Step>("INITIALIZING");
    const [isShowWarning, setIsShowWarning] = useState(false);
@@ -121,6 +112,11 @@ const Starter = (props: IProps) => {
                await setDefaultAgent();
             }
          }
+
+         const { containers, images } = await window.electronAPI.getInitialDockerData();
+
+         setContainers(containers);
+         setImages(images);
 
          setChecking(false);
          localStorage.setItem("loaded", "true");
