@@ -36,9 +36,6 @@ const Starter = (props: IProps) => {
 
    const { setContainers, setImages, containers, images } = useDockerMonitorState();
 
-   console.log('LEON HIHI containers', containers);
-   console.log('LEON HIHI images', images);
-
    const [step] = useState<Step>("INITIALIZING");
    const [isShowWarning, setIsShowWarning] = useState(false);
    const initTimerRef = useRef<NodeJS.Timeout>();
@@ -114,6 +111,7 @@ const Starter = (props: IProps) => {
          }
 
          const { containers, images } = await window.electronAPI.getInitialDockerData();
+         console.log('LEON HIHI 000', { containers, images });
 
          setContainers(containers);
          setImages(images);

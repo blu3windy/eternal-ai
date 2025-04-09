@@ -79,7 +79,7 @@ const MonitorProvider: React.FC<
             globalThis.electronAPI.dockerInfo("memory").then(data => JSON.parse(data)),
          ]);
 
-         console.log('LEON HIHI 000', { imageData, containerData, memoryData });
+         console.log('LEON HIHI 111', { imageData, containerData, memoryData });
 
          // Calculate total memory and CPU usage
          let totalMemUsed = 0;

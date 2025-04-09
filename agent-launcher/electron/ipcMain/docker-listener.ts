@@ -3,12 +3,36 @@ import { BrowserWindow, ipcMain } from 'electron';
 import { EMIT_EVENT_NAME } from '../share/event-name';
 import debounce from 'lodash.debounce';
 
-const docker = new Docker();
+const docker = new Docker({ socketPath: '/var/run/docker.sock' }); // Adjust for your OS
+
+const getContainers = async () => {
+   const containers = await docker.listContainers({ all: true });
+   const detailedContainers: any[] = [];
+
+   for (const containerInfo of containers) {
+      const container = docker.getContainer(containerInfo.Id);
+
+      // const inspectData = await container.inspect();
+      console.log('LEON inspectData', container);
+      // const container = docker.getContainer(containerInfo.Id);
+      // const inspectData = await container.inspect();
+      detailedContainers.push({
+         ...containerInfo,
+         // SizeRw: inspectData.SizeRw || 0, // Writable layer size in bytes
+         // SizeRootFs: inspectData.SizeRootFs || 0
+      });
+   }
+   return detailedContainers;
+}
+
+const getImages = async () => {
+   return await docker.listImages();
+}  
 
 // Fetch and send updated container list
 async function updateContainers(win: BrowserWindow) {
    try {
-      const containers = await docker.listContainers({ all: true });
+      const containers = await getContainers();
       win.webContents.send(EMIT_EVENT_NAME.ON_CONTAINERS_UPDATE, containers);
    } catch (err) {
       console.error('Error fetching containers:', err);
@@ -18,7 +42,7 @@ async function updateContainers(win: BrowserWindow) {
 // Fetch and send updated image list, debounce the function
 async function updateImages(win: BrowserWindow) {
    try {
-      const images = await docker.listImages();
+      const images = await getImages();
       win.webContents.send(EMIT_EVENT_NAME.ON_IMAGES_UPDATE, images);
    } catch (err) {
       console.error('Error fetching images:', err);
@@ -32,32 +56,22 @@ const debouncedUpdateContainers = debounce(updateContainers, 300);
 async function getInitialDockerData(win: BrowserWindow) {
    try {
       // Get containers
-      const containers = await docker.listContainers({ all: true });
+      const containers = await getContainers();
       
       // Get images
-      const images = await docker.listImages();
+      const images = await getImages();
       
-      // Get Docker info
-      const info = await docker.info();
-      
-      // Get Docker version
-      const version = await docker.version();
-
-      console.log('LEON getInitialDockerData', { containers, images, info, version });
+      console.log('LEON getInitialDockerData', { containers, images });
       
       // Send initial data to renderer
       win.webContents.send(EMIT_EVENT_NAME.GET_INITIAL_DOCKER_DATA, {
          containers,
          images,
-         info,
-         version
       });
       
       return {
          containers,
          images,
-         info,
-         version
       };
    } catch (error) {
       const err = error as Error;
