@@ -173,6 +173,7 @@ type AgentInfoResp struct {
 	ShortDescription          string                    `json:"short_description"`
 	IsForceUpdate             bool                      `json:"is_force_update"`
 	CodeVersion               int                       `json:"code_version"`
+	RunStatus                 string                    `json:"run_status"`
 }
 
 type AgentTwitterPostResp struct {
@@ -442,6 +443,28 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 	if len(m.AgentSnapshotMission) > 0 {
 		for _, item := range m.AgentSnapshotMission {
 			resp.AgentSnapshotMission = append(resp.AgentSnapshotMission, NewAgentSnapshotMissionResp(item))
+		}
+	}
+	switch m.AgentType {
+	case models.AgentInfoAgentTypeModel:
+		{
+			resp.RunStatus = "local"
+		}
+	case models.AgentInfoAgentTypeModelOnline:
+		{
+			resp.RunStatus = "online"
+		}
+	case models.AgentInfoAgentTypeJs,
+		models.AgentInfoAgentTypePython,
+		models.AgentInfoAgentTypeInfa,
+		models.AgentInfoAgentTypeCustomUi,
+		models.AgentInfoAgentTypeCustomPrompt:
+		{
+			if resp.IsOnchain {
+				resp.RunStatus = "onchain"
+			} else {
+				resp.RunStatus = "offchain"
+			}
 		}
 	}
 	return resp
