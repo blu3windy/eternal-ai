@@ -59,7 +59,7 @@ const MonitorProvider: React.FC<
       return `${numericValue.toFixed(2)}MB`;
    };
 
-    const onGetCpuData = async () => {
+   const onGetCpuData = async () => {
       try {
          // Fetch both container and memory data concurrently
          const [cpuCores] = await Promise.all([
@@ -79,11 +79,13 @@ const MonitorProvider: React.FC<
             globalThis.electronAPI.dockerInfo("memory").then(data => JSON.parse(data)),
          ]);
 
+         console.log('LEON HIHI 000', { imageData, containerData, memoryData });
+
          // Calculate total memory and CPU usage
          let totalMemUsed = 0;
          let totalMemMax = 0;
          let totalCPUUsed = 0;
-         let totalCPUMax = cpuCoresRef.current * 100; // Each core can use 100% CPU
+         const totalCPUMax = cpuCoresRef.current * 100; // Each core can use 100% CPU
 
          // Create a map of memory data for quick lookup
          const memoryMap = new Map(
@@ -102,19 +104,19 @@ const MonitorProvider: React.FC<
 
             let agentType = '-';
             switch (matchingAgent?.agent_type) {
-               case AgentType.Model:
-               case AgentType.ModelOnline:
-                  agentType = 'Model'
-                  break;
-               case AgentType.CustomPrompt:
-               case AgentType.CustomUI:
-                  agentType = 'Utility'
-                  break;
-               case AgentType.Infra:
-                  agentType = 'Infra'
-                  break;
-               default:
-                  break;
+            case AgentType.Model:
+            case AgentType.ModelOnline:
+               agentType = 'Model'
+               break;
+            case AgentType.CustomPrompt:
+            case AgentType.CustomUI:
+               agentType = 'Utility'
+               break;
+            case AgentType.Infra:
+               agentType = 'Infra'
+               break;
+            default:
+               break;
             }
 
             if (!container) {
@@ -235,10 +237,10 @@ const MonitorProvider: React.FC<
    
    const contextValues: any = useMemo(() => {
       return {
-        containers,
-        totalMemory,
-        totalCPU,
-        installedAgents: agentsRef.current,
+         containers,
+         totalMemory,
+         totalCPU,
+         installedAgents: agentsRef.current,
       };
    }, [
       containers,
