@@ -47,7 +47,7 @@ const AgentProvider: React.FC<
    const [isModelRequirementSetup, setIsModelRequirementSetup] = useState(false);
    const [liveViewUrl, setLiveViewUrl] = useState<string>('');
    const [isSearchMode, setIsSearchMode] = useState(false);
-   const [category, setCategory] = useState<CategoryOption>(CategoryOption.All);
+   const [category, setCategory] = useState<number>(0);
 
    const refInstalledUtilityAgents = useRef<string[]>([]);
    const refInstalledUtilityAgentIds = useRef<number[]>([]);
@@ -245,6 +245,7 @@ const AgentProvider: React.FC<
    // console.log('stephen installedModelAgents', installedModelAgents);
    // console.log('stephen agentStates', agentStates);
    // console.log("stephen: customUIPort", customUIPort);
+   // console.log('stephen agentCategories', agentCategories);
    // console.log("==============================");
 
    useEffect(() => {
@@ -453,7 +454,7 @@ const AgentProvider: React.FC<
    const fetchAgentCategories = async () => {
       try {
          const res: any = await cPumpAPI.getAgentCategories();
-         setAgentCategories(res);
+         setAgentCategories([{id: 0, name: 'All'}, ...res]);
       } catch (error) {}
    };
 

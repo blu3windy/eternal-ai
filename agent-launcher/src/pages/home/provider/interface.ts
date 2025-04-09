@@ -55,8 +55,8 @@ export interface IAgentContext {
   liveViewUrl?: string;
   isSearchMode: boolean;
   setIsSearchMode: (value: boolean) => void;
-  category: CategoryOption;
-  setCategory: (category: CategoryOption) => void;
+  category: number;
+  setCategory: (category: number) => void;
   installedAgentIds: {
     utility: number[];
     model: number[];

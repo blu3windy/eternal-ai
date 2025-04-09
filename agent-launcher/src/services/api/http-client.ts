@@ -3,7 +3,7 @@ import axios, { AxiosHeaders } from 'axios';
 import localStorageService from "../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
 
-export const TIMEOUT = 5 * 60000;
+export const TIMEOUT = 120 * 60000;
 export const HEADERS = { 'Content-Type': 'application/json' };
 
 export const getAuthenToken = async () => {

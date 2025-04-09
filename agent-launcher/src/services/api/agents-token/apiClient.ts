@@ -12,7 +12,7 @@ class CApiClient {
    private address: string | undefined = undefined; // Initialize as null
    protected requestConfig: AxiosRequestConfig = {
       baseURL: `${IMAGINE_URL}/api`,
-      timeout: 30 * 60000,
+      timeout: 120 * 60000,
       headers: {
          'Content-Type': 'application/json',
       } as any,
