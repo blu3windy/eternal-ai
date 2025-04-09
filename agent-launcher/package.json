@@ -2,7 +2,7 @@
   "name": "agent-launcher",
   "productName": "Vibe",
   "private": true,
-  "version": "1.0.10-2025040810113",
+  "version": "1.1.0-2025040907144",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -124,8 +124,10 @@
     ],
     "publish": [
       {
-        "provider": "generic",
-        "url": "https://electron-update-server-production.up.railway.app/updates/"
+        "provider": "github",
+        "owner": "eternalai-org",
+        "repo": "eternal-ai",
+        "releaseType": "release"
       }
     ],
     "files": [

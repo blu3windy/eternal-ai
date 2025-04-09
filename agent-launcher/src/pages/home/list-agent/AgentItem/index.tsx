@@ -30,11 +30,11 @@ const AgentItem = ({ token, isLatest }: IProps) => {
       installAgent,
       setSelectedAgent,
       agentStates,
+      handleUpdateCode
    } = useContext(AgentContext);
    const { containers } = useContext(MonitorContext);
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
-   const [isClickUpdateCode, setIsClickUpdateCode] = useState(false);
 
    const isStarting = useMemo(() => {
       if (token) {
@@ -65,6 +65,14 @@ const AgentItem = ({ token, isLatest }: IProps) => {
       return false;
    }, [token, agentStates, containers]);
 
+   const isUpdating = useMemo(() => {
+      if (token) {
+         return agentStates[token.id]?.isUpdating || false;
+      }
+
+      return false;
+   }, [token, agentStates]);
+
    useEffect(() => {
       setHaveNewVersionCode(false);
       if (token || !isRunning) {
@@ -91,18 +99,6 @@ const AgentItem = ({ token, isLatest }: IProps) => {
             setHaveNewVersionCode(false);
          }
       }
-   };
-
-   const handleUpdateCode = async () => {
-      if (!token) return;
-      setIsClickUpdateCode(true);
-
-      await stopAgent(token, true);
-      await unInstallAgent(token, false);
-      await installAgent(token, true);
-      
-      setIsClickUpdateCode(false);
-      checkVersionCode();
    };
 
    const description = useMemo(() => {
@@ -241,9 +237,9 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                   {hasNewVersionCode && (
                      <Button
                         className={s.btnUpdate}
-                        onClick={handleUpdateCode}
-                        isLoading={(isStopping || isStarting) && isClickUpdateCode}
-                        isDisabled={(isStopping || isStarting) && isClickUpdateCode}
+                        onClick={() => handleUpdateCode(token)}
+                        isLoading={isUpdating}
+                        isDisabled={isUpdating}
                         loadingText={isStarting ? 'Starting...' : 'Updating...'}
                      >
                         Update
