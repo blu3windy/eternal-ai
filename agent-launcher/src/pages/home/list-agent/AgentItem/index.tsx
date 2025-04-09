@@ -233,10 +233,10 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                }
                <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
                   <Flex gap={"6px"}>
-                     <Image src="icons/ic-creator.svg" w="14px" h="14px" />
+                     {/* <Image src="icons/ic-creator.svg" w="14px" h="14px" />
                      <Text fontSize={"12px"} fontWeight={"500"} color={"#000"} opacity={0.7}>
                         {formatLongAddress(token?.creator)}
-                     </Text>
+                     </Text> */}
                   </Flex>
                   {hasNewVersionCode && (
                      <Button
