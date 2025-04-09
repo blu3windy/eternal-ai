@@ -14,20 +14,21 @@ import {
    Tabs,
    Text,
    useDisclosure,
-   VStack,
-   useToast
+   useToast,
+   VStack
 } from '@chakra-ui/react';
 import IcHelp from '@components/InfoTooltip/IcHelp.tsx';
 import installAgentStorage from '@storage/InstallAgentStorage.ts';
 import { commonSelector } from '@stores/states/common/selector.ts';
 import { compareString } from '@utils/string.ts';
 import cx from 'clsx';
+import { AnimatePresence, motion } from 'framer-motion';
 import debounce from 'lodash.debounce';
 import throttle from 'lodash.throttle';
 import uniqBy from 'lodash.uniqby';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import AppLoading from "../../../components/AppLoading";
 import CAgentTokenAPI from "../../../services/api/agents-token";
 import { IAgentToken } from "../../../services/api/agents-token/interface.ts";
@@ -45,7 +46,6 @@ import {
    SortOption
 } from './constants';
 import s from './styles.module.scss';
-import { AnimatePresence, motion } from 'framer-motion';
 
 
 const AgentsList = () => {
@@ -85,7 +85,7 @@ const AgentsList = () => {
 
    const refParams = useRef({
       page: 1,
-      limit: 50,
+      limit: 10,
       sort,
       category,
       filter,
@@ -98,6 +98,8 @@ const AgentsList = () => {
    const { isOpen: isOpenSort, onClose: onCloseSort, onToggle: onToggleSort } = useDisclosure();
 
    const cPumpAPI = new CAgentTokenAPI();
+
+   const [hasMore, setHasMore] = useState(true);
 
    useEffect(() => {
       getLatestAgent();
@@ -155,6 +157,7 @@ const AgentsList = () => {
             setLoaded(false);
             if (isNew) {
                setAgents([]);
+               setHasMore(true);
             }
             refLoading.current = true;
          }
@@ -214,6 +217,9 @@ const AgentsList = () => {
                   uniqBy([...prevTokens, ...data.agents], (token) => token.id),
                );
             }
+            
+            setHasMore(data.agents.length === refParams.current.limit);
+            
             refLoading.current = false;
             setLoaded(true);
          });
@@ -235,8 +241,12 @@ const AgentsList = () => {
                uniqBy([...prevTokens, ...newTokens], (token) => token.id),
             );
          }
+
+         setHasMore(newTokens.length === refParams.current.limit);
+
       } catch (error) {
          console.error('Error fetching tokens:', error);
+         setHasMore(false);
       } finally {
          refLoading.current = false;
          setLoaded(true);
@@ -675,7 +685,7 @@ const AgentsList = () => {
 
    const renderSearchResults = () => {
       return (
-         <>
+         <Box id="agent-list-scroll" className={s.listContainer}>
             {/* <Flex align="center" mb="20px" px="24px">
                <Button 
                   leftIcon={<Image src="icons/ic-arrow-left.svg" w="16px" h="16px" />}
@@ -694,14 +704,16 @@ const AgentsList = () => {
                </Button>
             </Flex> */}
             <InfiniteScroll
-               className={s.listContainer}
                key={agents?.length}
                dataLength={agents?.length}
                next={() => {
-                  debounceGetTokens(false);
+                  if (hasMore) {
+                     debounceGetTokens(false);
+                  }
                }}
-               hasMore
-               loader={<></>}
+               hasMore={hasMore}
+               loader={<AppLoading />}
+               scrollableTarget="agent-list-scroll"
             >
                <Grid
                   w="100%"
@@ -739,7 +751,7 @@ const AgentsList = () => {
                   ))}
                </Grid>
             </InfiniteScroll>
-         </>
+         </Box>
       );
    };
 
@@ -799,66 +811,74 @@ const AgentsList = () => {
             ) : (
                <>
                   <Box h={'8px'} />
-                  <InfiniteScroll
-                     className={s.listContainer}
-                     key={agents?.length}
-                     dataLength={agents?.length}
-                     next={() => {
-                        debounceGetTokens(false);
-                     }}
-                     hasMore
-                     loader={<></>}
-                  >
-                     <Grid
-                        w="100%"
-                        templateColumns={"1fr"}
-                        gridRowGap={"8px"}
-                        overflow={'hidden !important'}
+                  <Box id="agent-list-scroll" className={s.listContainer}>
+                     <InfiniteScroll
+                        key={agents?.length}
+                        dataLength={agents?.length}
+                        next={() => {
+                           console.log('next hasMore', hasMore);
+                           if (hasMore) {
+                              debounceGetTokens(false);
+                           }
+                        }}
+                        hasMore={hasMore}
+                        loader={<AppLoading />}
+                        // height="calc(100vh - 200px)"
+                        // style={{ overflow: 'auto' }}
+                        // scrollThreshold="100px" 
+                        scrollableTarget="agent-list-scroll"
                      >
-                        {!loaded && (
-                           <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.5 }}
-                              style={{
-                                 position: 'absolute',
-                                 top: 0,
-                                 left: 0,
-                                 right: 0,
-                                 bottom: 0,
-                                 width: "fit-content",
-                                 height: "fit-content",
-                                 marginLeft: "auto",
-                                 marginRight: "auto",
-                              }}
-                           >
-                              <AppLoading />
-                           </motion.div>
-                        )}
-                        {agents?.map((item: IAgentToken, i) => (
-                           <GridItem key={item.id}>
-                              <AgentItem token={item} />
-                           </GridItem>
-                        ))}
-                        {filter === FilterOption.Installed && loaded && agents.length === 0 && (
-                           <VStack
-                              height="full"
-                              justify="center"
-                              spacing={3}
-                              p={4}
-                              textAlign="center"
-                           >
-                              <Text fontSize="lg" fontWeight="bold">
-                                 No agents installed?
-                              </Text>
-                              <Text>
-                                 Browse <Text as="span" onClick={() => { setFilter(FilterOption.All) }} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
-                              </Text>
-                           </VStack>
-                        )}
-                     </Grid>
-                  </InfiniteScroll>
+                        <Grid
+                           w="100%"
+                           templateColumns={"1fr"}
+                           gridRowGap={"8px"}
+                           overflow={'hidden !important'}
+                        >
+                           {!loaded && (
+                              <motion.div
+                                 initial={{ opacity: 0 }}
+                                 animate={{ opacity: 1 }}
+                                 exit={{ opacity: 0 }}
+                                 transition={{ duration: 0.5 }}
+                                 style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    width: "fit-content",
+                                    height: "fit-content",
+                                    marginLeft: "auto",
+                                    marginRight: "auto",
+                                 }}
+                              >
+                                 <AppLoading />
+                              </motion.div>
+                           )}
+                           {agents?.map((item: IAgentToken, i) => (
+                              <GridItem key={item.id}>
+                                 <AgentItem token={item} />
+                              </GridItem>
+                           ))}
+                           {filter === FilterOption.Installed && loaded && agents.length === 0 && (
+                              <VStack
+                                 height="full"
+                                 justify="center"
+                                 spacing={3}
+                                 p={4}
+                                 textAlign="center"
+                              >
+                                 <Text fontSize="lg" fontWeight="bold">
+                                    No agents installed?
+                                 </Text>
+                                 <Text>
+                                    Browse <Text as="span" onClick={() => { setFilter(FilterOption.All) }} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
+                                 </Text>
+                              </VStack>
+                           )}
+                        </Grid>
+                     </InfiniteScroll>
+                  </Box>
                </>
             )}
 
