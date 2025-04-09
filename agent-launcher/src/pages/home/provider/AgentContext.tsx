@@ -47,6 +47,7 @@ const initialValue: IAgentContext = {
       model: [],
       social: []
    },
+   agentCategories: [],
 };
 
 export const AgentContext = React.createContext<IAgentContext>(initialValue);

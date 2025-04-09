@@ -65,4 +65,5 @@ export interface IAgentContext {
     agent: IAgentToken | undefined,
     dependAgents: string[];
   };
+  agentCategories: {id: number, name: string}[];
 }

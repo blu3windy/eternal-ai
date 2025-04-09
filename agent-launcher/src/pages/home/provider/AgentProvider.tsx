@@ -41,6 +41,7 @@ const AgentProvider: React.FC<
    const [isTrade, setIsTrade] = useState(false);
    const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
    const [coinPrices, setCoinPrices] = useState([]);
+   const [agentCategories, setAgentCategories] = useState([]);
    const refInterval = useRef<any>();
    const [isBackupedPrvKey, setIsBackupedPrvKey] = useState(false);
    const [isModelRequirementSetup, setIsModelRequirementSetup] = useState(false);
@@ -241,7 +242,9 @@ const AgentProvider: React.FC<
       fetchCoinPrices();
       fetchAvailableModelAgents();
       fetchInstalledUtilityAgents();
+      fetchAgentCategories();
       // loadAgentStates();
+
    }, []);
 
    useEffect(() => {
@@ -437,6 +440,12 @@ const AgentProvider: React.FC<
       } catch (error) {}
    };
 
+   const fetchAgentCategories = async () => {
+      try {
+         const res: any = await cPumpAPI.getAgentCategories();
+         setAgentCategories(res);
+      } catch (error) {}
+   };
 
    const setAgentInstalled = (agent: IAgentToken) => {
       console.log("stephen: setAgentInstalled", agent);
@@ -1273,6 +1282,7 @@ const AgentProvider: React.FC<
          setCategory,
          currentActiveModel,
          installedAgentIds,
+         agentCategories,
       };
    }, [
       loading,
@@ -1313,6 +1323,7 @@ const AgentProvider: React.FC<
       setCategory,
       currentActiveModel,
       installedAgentIds,
+      agentCategories,
    ]);
 
    return (
