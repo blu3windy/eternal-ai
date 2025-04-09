@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
@@ -76,6 +77,9 @@ func (s *Service) JobUpdateTrendingTokens(ctx context.Context) error {
 
 					// Process each token
 					for _, token := range tokens {
+						// Convert CreatedAt int64 timestamp to time.Time
+						mintAt := time.Unix(token.CreatedAt, 0)
+
 						trendingToken := &models.TrendingToken{
 							ChainId:      token.ChainId,
 							TokenAddress: token.TokenAddress,
@@ -87,7 +91,7 @@ func (s *Service) JobUpdateTrendingTokens(ctx context.Context) error {
 							MarketCap:    token.MarketCap,
 							LiquidityUsd: token.LiquidityUsd,
 							Holders:      token.Holders,
-
+							MintAt:       &mintAt,
 							// Price changes
 							PriceChange1h:  token.PricePercentChange.OneHour,
 							PriceChange4h:  token.PricePercentChange.FourHour,

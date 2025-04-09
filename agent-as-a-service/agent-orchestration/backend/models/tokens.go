@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 	"github.com/jinzhu/gorm"
 )
@@ -49,6 +51,7 @@ type TrendingToken struct {
 	MarketCap    float64 `gorm:"index"`
 	LiquidityUsd float64
 	Holders      int `gorm:"index"`
+	MintAt       *time.Time
 
 	// Time-based metrics (1h, 4h, 12h, 24h)
 	PriceChange1h  float64
