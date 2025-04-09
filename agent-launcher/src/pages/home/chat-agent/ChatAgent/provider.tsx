@@ -151,6 +151,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          };
 
          return () => {
+            refLoadChatItems.current = false;
             (window as any).clearChatHistory = undefined;
          };
       }
