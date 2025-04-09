@@ -60,6 +60,7 @@ cd "$FOLDER_PATH" || {
 
 # Create network silently
 docker network create network-agent-external || true
+docker network create --internal network-agent-internal || true
 
 # Track overall success and running containers
 build_success=true
@@ -98,13 +99,13 @@ for container in "${DOCKER_CONTAINERS[@]}"; do
     if [ -n "$port" ]; then
         log_message "Starting $container_name..."
         if [ "$container_name" = "agent-router" ]; then
-            if ! docker run -d -p "${port}:80" --network=network-agent-external --add-host=localmodel:host-gateway --name "${container_name}" -v "${FOLDER_PATH}/${container_name}/data:/app/data" "${container_name}"; then
+            if ! docker run -d -p "${port}:80" --network=network-agent-external --network=network-agent-internal --add-host=localmodel:host-gateway --name "${container_name}" -v "${FOLDER_PATH}/${container_name}/data:/app/data" "${container_name}"; then
                 log_error "Failed to start $container_name with mount"
                 build_success=false
                 continue
             fi
         else
-            if ! docker run -d -p "${port}:80" --network=network-agent-external --add-host=localmodel:host-gateway --name "${container_name}" "${container_name}"; then
+            if ! docker run -d -p "${port}:80" --network=network-agent-external --network=network-agent-internal --add-host=localmodel:host-gateway --name "${container_name}" "${container_name}"; then
                 log_error "Failed to start $container_name"
                 build_success=false
                 continue
@@ -130,14 +131,14 @@ if [ "$build_success" = true ]; then
         fi
     done
 
-    log_message "Pulling agent-base-node..."
-    docker pull eternalpersonalagi/agent-base-node
-    log_message "Pulling agent-base-node done"
+    # log_message "Pulling agent-base-node..."
+    # docker pull eternalpersonalagi/agent-base-node
+    # log_message "Pulling agent-base-node done"
 
 
-    log_message "Pulling agent-base-python..."
-    docker pull eternalpersonalagi/agent-base-python
-    log_message "Pulling agent-base-python done"
+    # log_message "Pulling agent-base-python..."
+    # docker pull eternalpersonalagi/agent-base-python
+    # log_message "Pulling agent-base-python done"
 
     exit 0
 else
