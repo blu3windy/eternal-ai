@@ -180,7 +180,7 @@ const ipcMainDocker = () => {
             `--private-key "${_options?.privateKey || ""}"`,
             `--wallet-address "${_options?.address || ""}"`,
             `--port "${port || ""}"`,
-            `--environment "${_options?.environment ? convertJsonToDockerEnv(_options?.environment) : ""}"`,
+            `--environment "${_options?.environment ? convertJsonToDockerEnv(_options?.environment) : ""}"`
          ]
 
          const paramsStr = params.join(' ');

@@ -939,7 +939,8 @@ const AgentProvider: React.FC<
 
       const options: any = {
          type: lang,
-         port: agent.docker_port
+         port: agent.docker_port,
+         // network: agent?.is_onchain ? 'external' : 'internal',
       };
 
       const environment = await storageModel.getEnvironment({

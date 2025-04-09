@@ -60,6 +60,7 @@ cd "$FOLDER_PATH" || {
 
 # Create network silently
 docker network create network-agent-external || true
+docker network create --internal network-agent-internal || true
 
 # Track overall success and running containers
 build_success=true
@@ -130,14 +131,14 @@ if [ "$build_success" = true ]; then
         fi
     done
 
-    log_message "Pulling agent-base-node..."
-    docker pull eternalpersonalagi/agent-base-node
-    log_message "Pulling agent-base-node done"
+    # log_message "Pulling agent-base-node..."
+    # docker pull eternalpersonalagi/agent-base-node
+    # log_message "Pulling agent-base-node done"
 
 
-    log_message "Pulling agent-base-python..."
-    docker pull eternalpersonalagi/agent-base-python
-    log_message "Pulling agent-base-python done"
+    # log_message "Pulling agent-base-python..."
+    # docker pull eternalpersonalagi/agent-base-python
+    # log_message "Pulling agent-base-python done"
 
     exit 0
 else
