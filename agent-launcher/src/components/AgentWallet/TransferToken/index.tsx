@@ -420,10 +420,10 @@ const TransferToken: React.FC<TransferTokenProps> = ({ onClose, availableNetwork
                     <Text>
                         Transaction hash:{" "}
                         <a
-                            href={explorerUrl}
+                            onClick={() => {globalThis.electronAPI.openExternal(explorerUrl)}}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{ color: "blue", textDecoration: "underline" }}
+                            style={{ color: "blue", textDecoration: "underline", cursor: "pointer" }}
                         >
                             {txHash}
                         </a>
