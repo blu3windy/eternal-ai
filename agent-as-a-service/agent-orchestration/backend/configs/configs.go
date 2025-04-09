@@ -313,14 +313,14 @@ func (cf *Config) GetConfigKeyString(networkID uint64, name string) string {
 	networkIDStr := fmt.Sprintf("%d", networkID)
 	n, ok := cf.Networks[networkIDStr]
 	if !ok {
-		panic("not found")
+		panic(fmt.Sprintf("not found %d %s", networkID, name))
 	}
 	v, ok := n[name]
 	if !ok {
-		panic("not found")
+		panic(fmt.Sprintf("not found %d %s", networkID, name))
 	}
 	if v == "" {
-		panic("not found")
+		panic(fmt.Sprintf("not found %d %s", networkID, name))
 	}
 	return v
 }
@@ -329,7 +329,7 @@ func (cf *Config) GetConfigKeyBool(networkID uint64, name string) bool {
 	networkIDStr := fmt.Sprintf("%d", networkID)
 	n, ok := cf.Networks[networkIDStr]
 	if !ok {
-		panic("not found")
+		panic(fmt.Sprintf("not found %d %s", networkID, name))
 	}
 	v, ok := n[name]
 	if !ok {
