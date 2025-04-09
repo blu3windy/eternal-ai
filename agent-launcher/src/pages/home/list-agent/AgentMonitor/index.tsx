@@ -27,6 +27,8 @@ import { compareString } from '@utils/string';
 import React, { useContext, useEffect, useState } from 'react';
 import DeleteAgentModal from './DeleteAgentModal';
 import s from './styles.module.scss';
+import { useDispatch } from 'react-redux';
+import { requestReloadMonitor } from '@stores/states/common/reducer';
 
 interface ContainerActionState {
    isLoading: boolean;
@@ -36,6 +38,7 @@ interface ContainerActionState {
 type StateActions = Record<string, ContainerActionState>;
 
 const AgentMonitor: React.FC = () => {
+   const dispatch = useDispatch();
    const { isOpen, onToggle, onClose } = useDisclosure();
    const [searchTerm, setSearchTerm] = useState('');
    const [showRunningOnly, setShowRunningOnly] = useState(false);
@@ -118,6 +121,12 @@ const AgentMonitor: React.FC = () => {
    useEffect(() => {
       onFilterData();
    }, [searchTerm, showRunningOnly, containers, agentStates]); // Empty dependency array means this effect runs once on mount
+
+   useEffect(() => {
+      if (isOpen) {
+         dispatch(requestReloadMonitor());
+      }
+   }, [isOpen]);
 
    return (
       <>

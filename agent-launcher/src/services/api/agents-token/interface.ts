@@ -95,6 +95,8 @@ export interface IAgentToken {
   is_public?: boolean;
   is_streaming?: boolean;
   env_example?: string;
+  code_version?: number;
+  is_force_update?: boolean;
 }
 
 export interface Meme {

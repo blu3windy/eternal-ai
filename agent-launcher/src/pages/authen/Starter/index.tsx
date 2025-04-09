@@ -65,7 +65,7 @@ const Starter = (props: IProps) => {
          throw new Error("No model only found");
       }
       const newAgent = _agents[0];
-      await agentCtx.startAgent(newAgent, false);
+      await agentCtx.startAgent(newAgent);
       await storageModel.setActiveModel({
          ...newAgent,
          hash: ""
@@ -100,12 +100,9 @@ const Starter = (props: IProps) => {
             await setDefaultAgent();
          } else {
             try {
-               try {
-                  await agentAPI.current.checkAgentModelServiceRunning();
-               } catch (error) {
-                  switch (activeModel.agent_type) {
+               switch (activeModel.agent_type) {
                   case AgentType.ModelOnline: {
-                     await agentCtx.startAgent(activeModel, false);
+                     await agentCtx.startAgent(activeModel);
                      break;
                   }
                   case AgentType.Model:
@@ -113,7 +110,6 @@ const Starter = (props: IProps) => {
                      await globalThis.electronAPI.modelInstallBaseModel(activeModel.hash);
                      break;
                   }
-               }
             } catch (error) {
                await setDefaultAgent();
             }
