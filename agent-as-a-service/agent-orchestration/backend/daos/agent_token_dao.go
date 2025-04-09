@@ -482,3 +482,11 @@ func (d *DAO) FirstMemeSeen(tx *gorm.DB, filters map[string][]interface{}, prelo
 	}
 	return &m, nil
 }
+
+func (d *DAO) FindTrendingToken(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string, offset int, limit int) ([]*models.TrendingToken, error) {
+	var tokens []*models.TrendingToken
+	if err := d.find(tx, &tokens, filters, preloads, orders, offset, limit, false); err != nil {
+		return nil, err
+	}
+	return tokens, nil
+}

@@ -147,3 +147,24 @@ func (s *Service) JobUpdateTrendingTokens(ctx context.Context) error {
 		},
 	)
 }
+
+func (s *Service) GetListTrendingTokens(ctx context.Context) ([]*models.TrendingToken, error) {
+	tokens, err := s.dao.FindTrendingToken(
+		daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"mint_at >= now() - interval 1 day ": []interface{}{},
+			"market_cap >= 200000":               []interface{}{},
+			"volume1h >= 1000000":                []interface{}{},
+			"buyers1h >= 1000":                   []interface{}{},
+			"transactions1h >= 1000":             []interface{}{},
+		},
+		map[string][]interface{}{},
+		[]string{},
+		0,
+		100,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return tokens, nil
+}
