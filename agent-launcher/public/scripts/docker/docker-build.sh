@@ -99,13 +99,13 @@ for container in "${DOCKER_CONTAINERS[@]}"; do
     if [ -n "$port" ]; then
         log_message "Starting $container_name..."
         if [ "$container_name" = "agent-router" ]; then
-            if ! docker run -d -p "${port}:80" --network=network-agent-external --network=network-agent-internal --add-host=localmodel:host-gateway --name "${container_name}" -v "${FOLDER_PATH}/${container_name}/data:/app/data" "${container_name}"; then
+            if ! docker run -d -p "${port}:80" --network=network-agent-external --add-host=localmodel:host-gateway --name "${container_name}" -v "${FOLDER_PATH}/${container_name}/data:/app/data" "${container_name}"; then
                 log_error "Failed to start $container_name with mount"
                 build_success=false
                 continue
             fi
         else
-            if ! docker run -d -p "${port}:80" --network=network-agent-external --network=network-agent-internal --add-host=localmodel:host-gateway --name "${container_name}" "${container_name}"; then
+            if ! docker run -d -p "${port}:80" --network=network-agent-external --add-host=localmodel:host-gateway --name "${container_name}" "${container_name}"; then
                 log_error "Failed to start $container_name"
                 build_success=false
                 continue
