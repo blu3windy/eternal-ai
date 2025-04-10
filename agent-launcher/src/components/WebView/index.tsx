@@ -8,14 +8,8 @@ interface WebViewProps {
   className?: string;
 }
 
-interface WebViewElement extends HTMLElement {
-  executeJavaScript: (code: string) => void;
-}
-
-// Declare the electron API type
-
 const WebView: React.FC<WebViewProps> = ({ url, width = '100%', height = '600px', className }) => {
-   const webviewRef = useRef<WebViewElement>(null);
+   const iframeRef = useRef<HTMLIFrameElement>(null);
 
    // Validate URL
    const isValidUrl = (urlString: string): boolean => {
@@ -28,97 +22,71 @@ const WebView: React.FC<WebViewProps> = ({ url, width = '100%', height = '600px'
    };
 
    useEffect(() => {
-      const webview = webviewRef.current;
-      if (!webview) return;
+      const iframe = iframeRef.current;
+      if (!iframe) return;
 
-      console.log('WebView component mounted');
+      // Handle iframe load event
+      const handleLoad = () => {
+         try {
+            const iframeDocument = iframe.contentDocument || iframe.contentWindow?.document;
+            if (!iframeDocument) return;
 
-      // Validate URL before setting
-      if (!isValidUrl(url)) {
-         console.error('Invalid URL provided to WebView');
-         return;
-      }
-
-      const handleConsoleMessage = (e: any) => {
-         console.log('Console message received:', e);
-         // Only log actual errors, not our debug messages or non-critical warnings
-         if (e.message 
-             && !e.message.includes('Link clicked:') 
-             && !e.message.includes('Third-party cookie')
-             && !e.message.includes('Content Security Policy')
-             && !e.message.includes('CORS policy')
-             && !e.message.includes('Access-Control-Allow-Origin') 
-         ) {
-            console.error('WebView error:', e);
-
-            if (e.message.includes('External link clicked in webview')){
-               console.log('External link clicked in webview:', e.message);
-               if (window.electronAPI && window.electronAPI.openExternal) {
-                  window.electronAPI.openExternal(e.message.replace('External link clicked in webview:', ''));
-               } else {
-                  console.error('electronAPI not available');
-               }
-            }
-         }
-      };
-
-      // Add event listeners
-      webview.addEventListener('console-message', handleConsoleMessage);
-
-      // Set security headers and preferences
-      const webPreferences = [
-         'contextIsolation=true',
-         'nodeIntegration=false',
-         'sandbox=true',
-         'webSecurity=true',
-         'allowRunningInsecureContent=false',
-         'webviewTag=true'
-      ].join(',');
-
-      webview.setAttribute('webpreferences', webPreferences);
-      webview.setAttribute('webSecurity', 'true');
-
-      // Debug: Log when webview is ready
-      webview.addEventListener('dom-ready', () => {
-         console.log('WebView DOM is ready');
-         // Set CSP headers
-         webview.executeJavaScript(`
-            const meta = document.createElement('meta');
-            meta.httpEquiv = 'Content-Security-Policy';
-            meta.content = "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval';";
-            document.head.appendChild(meta);
-
-            // Add click event listener to all links
-            document.addEventListener('click', function(e) {
-               const link = e.target.closest('a');
+            // Add click event listener to all links in iframe
+            iframeDocument.addEventListener('click', (e) => {
+               const link = (e.target as HTMLElement).closest('a');
                if (link) {
-                  console.log('Link clicked in webview:', link.href);
-                  if (link.target === '_blank') {
-                     console.log('External link clicked in webview:', link.href);
-                     e.preventDefault();
-                     e.stopPropagation();
+                  e.preventDefault();
+                  const href = link.href;
+                  
+                  // Handle external links
+                  if (link.target === '_blank' || !href.startsWith(window.location.origin)) {
+                     console.log('External link clicked:', href);
+                     // Use electron API if available
+                     if (window.electronAPI?.openExternal) {
+                        window.electronAPI.openExternal(href);
+                     } else {
+                        // Fallback to window.open
+                        window.open(href, '_blank', 'noopener,noreferrer');
+                     }
+                  } else {
+                     // Handle internal navigation
+                     iframe.src = href;
                   }
                }
             }, true);
-         `);
-      });
+         } catch (error) {
+            // Handle cross-origin restrictions
+            console.warn('Cannot access iframe content due to same-origin policy:', error);
+         }
+      };
+
+      iframe.addEventListener('load', handleLoad);
 
       return () => {
-         webview.removeEventListener('console-message', handleConsoleMessage);
+         iframe.removeEventListener('load', handleLoad);
       };
-   }, [url]);
+   }, []);
+
+   if (!isValidUrl(url)) {
+      console.error('Invalid URL provided to WebView');
+      return null;
+   }
 
    return (
       <Box width={width} height={height} className={className}>
-         <webview
-            ref={webviewRef}
+         <iframe
+            ref={iframeRef}
             src={url}
-            style={{ width: '100%', height: '100%' }}
+            style={{ 
+               width: '100%', 
+               height: '100%',
+               border: 'none'
+            }}
             // Security attributes
-            webpreferences="contextIsolation=true, nodeIntegration=false, sandbox=true, webSecurity=true, allowRunningInsecureContent=false, webviewTag=true"
-            security="true"
-            // Additional security headers
-            partition="persist:main"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            referrerPolicy="no-referrer"
+            loading="lazy"
+            title="Web content"
          />
       </Box>
    );
