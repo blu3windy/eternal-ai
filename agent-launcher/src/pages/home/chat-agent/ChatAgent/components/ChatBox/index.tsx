@@ -67,7 +67,7 @@ const ChatBox = () => {
             // }
          >
             {
-               true ? (
+               isCustomUI ? (
                   <Box width="100%">
                      <WebView 
                         url={`http://localhost:${customUIPort}${params ? `?${params}` : ''}`}
