@@ -2,48 +2,85 @@ import SvgInset from '@components/SvgInset';
 import { CustomComponentProps } from '../types';
 import s from './styles.module.scss';
 import cx from 'clsx';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Box } from '@chakra-ui/react';
+import { TASK_TAG_REGEX } from '../constants';
+import Task, { TaskType } from './Task';
+import { v4 as uuidv4 } from 'uuid';
+import { AnimatePresence, motion } from 'framer-motion';
+
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from 'remark-breaks'
 
+const parseJsonString = (str: string): TaskType | string=> {
+   try {
+      const result = JSON.parse(str) as TaskType;
+      if (!result.id) {
+         result.id = uuidv4();
+      }
+      return result;
+   } catch (error) {
+      return str;
+   }
+};
+
 function DeepThinking({
-   node,
-   children,
    status = "waiting",
-   thinkTag,
+   content,
 }: CustomComponentProps & {
    status?: string;
-   thinkTag?: string;
+   content: string;
 }) {
    const [isExpanded, setIsExpanded] = useState(status === "receiving");
 
-   const getChildrenContent = () => {
-      if (thinkTag) {
-         return thinkTag
-      }
+   const tasks = useMemo(() => {
       try {
-         if (Array.isArray(children)) {
-            return children.join('')
-         }
-         return children
-      } catch(error){
-         return children
-      }
-   }
+         const parserTasks = content
+            .match(TASK_TAG_REGEX)
+            ?.map(task => task.replace(/<\/?task>/g, ''))
+            ?.map(task => parseJsonString(task as string))
+            ?.filter(task => !!task) as TaskType[];
 
-   const renderChildren = () => {
-      const content = getChildrenContent();
-
-      if (typeof content === 'string') {
-         return <Markdown
-            remarkPlugins={[remarkGfm, remarkBreaks]}
-            children={content as string}
-         />
+         const mergedTasks = parserTasks?.reduce((acc: TaskType[], curr: TaskType) => {
+            const existingTask = acc.find(task => task.id === curr.id);
+            if (existingTask) {
+               // Merge the tasks if they have the same id
+               return acc.map(task => 
+                  task.id === curr.id 
+                     ? { ...task, ...curr }
+                     : task
+               );
+            }
+            return [...acc, curr];
+         }, []);
+         return mergedTasks;
+      } catch (error) {
+         return [];
       }
-      return content;
-   }
+   }, [content]);
+
+   const renderTasks = () => {
+      if (!tasks?.length && !!content && typeof content === 'string') {
+         return (
+            <Markdown
+               remarkPlugins={[remarkGfm, remarkBreaks]}
+               children={content as string}
+            />
+         )
+      }
+      return (
+         <motion.div
+            className={s.content}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+         >
+            {tasks.map(task => <Task data={task} />)}
+         </motion.div>
+      )
+   };
 
    return (
       <div className={cx(s.deepthinking)}>
@@ -60,11 +97,9 @@ function DeepThinking({
                <SvgInset svgUrl="icons/ic-cheron-down.svg" size={10} />
             </Box>
          </div>
-         {!!isExpanded && (
-            <div className={s.content}>
-               <p className={s.thinkText}>{renderChildren()}</p>
-            </div>
-         )}
+         <AnimatePresence>
+            {!!isExpanded && renderTasks()}
+         </AnimatePresence>
       </div>
    )
 }
