@@ -1,6 +1,5 @@
 import { Center, Image, Box } from "@chakra-ui/react";
 import BackgroundWrapper from "@components/BackgroundWrapper";
-import BaseButton from "@components/BaseButton";
 import { getSetupAgents } from "@pages/authen/ChooseModel/utils.ts";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
 import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
@@ -11,7 +10,12 @@ import { useContext, useEffect, useRef, useState } from "react";
 import AgentProvider from "@pages/home/provider/AgentProvider";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { setReadyPort } from "@utils/agent.ts";
-import useDockerMonitorState from "@providers/DockerMonitor/useDockerMonitorState";
+import installAgentStorage from "@storage/InstallAgentStorage";
+import { WHITE_LIST_CONTAINER_NAMES } from "@providers/GarbageDocker/constants";
+import { getAgentContainerName } from "@providers/GarbageDocker/helpers";
+import useAgentState from "@pages/home/provider/useAgentState";
+// import useDockerMonitorState from "@providers/DockerMonitor/useDockerMonitorState";
+
 interface IProps {
    loadingUser: boolean;
    onCheckHasUser: () => Promise<void>;
@@ -33,8 +37,34 @@ const Starter = (props: IProps) => {
    const { setChecking } = useStarter();
    const initRef = useRef(false);
    const agentAPI = useRef(new CAgentTokenAPI());
+   const { addActiveAgents } = useAgentState();
 
-   const { setContainers, setImages } = useDockerMonitorState();
+   // const { setContainers, setImages } = useDockerMonitorState();
+
+   const getTokens = async () => {
+      const installIds = await installAgentStorage.getAgentIds();
+
+      const params: any = {
+         page: 1,
+         limit: 100,
+         sort_col: 'created_at',
+         agent_types: [AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(','),
+         ids: installIds.join(','),
+      };
+      const {
+         agents
+      } = await agentAPI.current.getAgentTokenList(params);
+
+      // ignore in white list
+      
+      const _agents = agents.filter((agent) => {
+         return !WHITE_LIST_CONTAINER_NAMES.includes(getAgentContainerName(agent));
+      });
+
+      console.log('LEON getTokens', { _agents });
+
+      return _agents
+   }
 
    const [step] = useState<Step>("INITIALIZING");
    const [isShowWarning, setIsShowWarning] = useState(false);
@@ -115,6 +145,12 @@ const Starter = (props: IProps) => {
 
          // setContainers(containers);
          // setImages(images);
+         try {
+            const agents = await getTokens();
+            addActiveAgents(agents);
+         } catch (error) {
+            console.log('LEON getTokens error', error);
+         }
 
          setChecking(false);
          localStorage.setItem("loaded", "true");
