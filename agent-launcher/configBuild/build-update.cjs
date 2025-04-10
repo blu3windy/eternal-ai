@@ -60,6 +60,18 @@ function transformUrls(data, version) {
   return data;
 }
 
+function runGitCommands() {
+  try {
+    const TARGET_DIR = '../electron-update-server';
+    execSync('git add latest-mac.yml', { cwd: TARGET_DIR });
+    execSync(`git commit -m "chore: update latest-mac.yml for auto-update"`, { cwd: TARGET_DIR });
+    execSync('git push', { cwd: TARGET_DIR });
+    console.log('✅ Git push completed!');
+  } catch (err) {
+    console.error('❌ Git error:', err.message);
+  }
+}
+
 try {
   const content = fs.readFileSync(ymlPath, 'utf8');
   const data = yaml.load(content);
@@ -67,10 +79,17 @@ try {
   const version = data.version;
   const transformed = transformUrls(data, version);
 
-  const newYml = yaml.dump(transformed);
+  const newYml = yaml.dump(transformed, {
+    lineWidth: -1,       // don't fold long lines (prevents >-)
+    quotingType: '"',    // use double quotes
+    forceQuotes: true    // quote everything
+  });
   fs.writeFileSync(outputPath, newYml, 'utf8');
 
   console.log(`✅ updated latest-mac.yml → ${outputPath}`);
+
+  // Run Git after update
+  runGitCommands();
 } catch (err) {
   console.error('❌ Failed to process latest-mac.yml', err);
 }
