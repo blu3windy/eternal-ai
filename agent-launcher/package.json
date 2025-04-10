@@ -4,7 +4,7 @@
   "description": "Personal AGI, locally on your device.",
   "author": "Eternal AI Limited",
   "private": true,
-  "version": "25.0.15",
+  "version": "25.0.16",
   "type": "module",
   "scripts": {
     "dev": "vite",
