@@ -82,6 +82,8 @@ export type ChatCompletionPayload = {
    agentId?: number;
    kb_id?: string;
    model_name?: string;
+   name?: string;
+   description?: string;
 };
 
 export interface IOnchainData {
