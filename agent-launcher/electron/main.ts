@@ -9,16 +9,16 @@ import log from 'electron-log';
 
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
 
-autoUpdater.allowPrerelease = true;
-autoUpdater.autoDownload = true;
+
 
 
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
 
 if (process.env.NODE_ENV === "development") {
+   autoUpdater.autoDownload = false;
    // autoUpdater.allowDowngrade = true;
-   autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
+   // autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
 }
 
 autoUpdater.setFeedURL({
@@ -63,7 +63,9 @@ runIpcMain();
 function createWindow() {
    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
-   autoUpdater.checkForUpdatesAndNotify();
+   if (process.env.NODE_ENV !== "development") {
+      autoUpdater.checkForUpdatesAndNotify();
+   }
 
    win = new BrowserWindow({
       icon: path.join(process.env.VITE_PUBLIC as any, "app-logo.png"),

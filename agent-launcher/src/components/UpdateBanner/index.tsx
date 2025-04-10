@@ -13,19 +13,23 @@ const UpdateBanner = () => {
 
   useEffect(() => {
 
-    if (globalThis.electronAPI) {
-       globalThis.electronAPI.onCheckForUpdate();
-       globalThis.electronAPI.onUpdateDownloaded(() => {
-          setUpdateAvailable(true);
-       });
-    }
+   if (process.env.NODE_ENV !== "development") {
+      if (globalThis.electronAPI) {
+         globalThis.electronAPI.onCheckForUpdate();
+         globalThis.electronAPI.onUpdateDownloaded(() => {
+            setUpdateAvailable(true);
+         });
+      }
+  
+  
+      // 1 min = ? milisecond
+      const oneMinute = 60000;
+      setInterval(() => {
+         globalThis.electronAPI.onCheckForUpdate();
+      }, oneMinute);
+   }
 
-
-    // 1 min = ? milisecond
-    const oneMinute = 60000;
-    setInterval(() => {
-       globalThis.electronAPI.onCheckForUpdate();
-    }, oneMinute);
+    
 
 
  }, []);

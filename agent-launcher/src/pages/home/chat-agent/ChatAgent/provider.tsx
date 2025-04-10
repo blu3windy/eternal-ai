@@ -430,6 +430,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             messages: historyMessages,
             agentId: agentId,
             model_name: selectedAgent?.agent_base_model,
+            name: selectedAgent?.display_name || selectedAgent?.agent_name,
+            description: selectedAgent?.short_description,
          };
          if (selectedAgent?.kb_id) {
             const kbId = `${selectedAgent?.kb_id}`.replace("kb-", "");

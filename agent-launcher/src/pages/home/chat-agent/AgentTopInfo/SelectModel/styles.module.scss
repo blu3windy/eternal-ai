@@ -129,5 +129,39 @@
 }
 
 .poperContainer {
+  width: 100%;
   border: 1px solid #e5e7eb;
+  box-shadow: 0px 0px 24px -6px #0000001F;
+  border-radius: 16px;
+  background: #fff;
+  min-width: 600px;
+  max-height: 400px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+
+  /* For Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.agentDetailModalContent {
+  background: linear-gradient(117deg, #000 12.51%, #666 87.43%) !important;
+
+  :global {
+    .chakra-modal__header {
+      display: none;
+    }
+  }
 }

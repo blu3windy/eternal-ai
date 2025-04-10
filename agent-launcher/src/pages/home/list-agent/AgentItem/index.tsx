@@ -25,7 +25,6 @@ const AgentItem = ({ token, isLatest }: IProps) => {
    const {
       selectedAgent,
       stopAgent,
-      isInstalled,
       unInstallAgent,
       installAgent,
       setSelectedAgent,
@@ -68,6 +67,14 @@ const AgentItem = ({ token, isLatest }: IProps) => {
    const isUpdating = useMemo(() => {
       if (token) {
          return agentStates[token.id]?.isUpdating || false;
+      }
+
+      return false;
+   }, [token, agentStates]);
+
+   const isInstalled = useMemo(() => {
+      if (token) {
+         return agentStates[token.id]?.isInstalled || false;
       }
 
       return false;
@@ -142,6 +149,10 @@ const AgentItem = ({ token, isLatest }: IProps) => {
    };
 
    const iconSize = '60px';
+
+   if (!token.is_public && token.agent_name === 'Proxy') {
+      return <></>;
+   }
 
    return (
       <Flex
@@ -252,13 +263,13 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                         {formatLongAddress(token?.creator)}
                      </Text> */}
                   </Flex>
-                  {hasNewVersionCode && (
+                  {hasNewVersionCode && isInstalled && (
                      <Button
                         className={s.btnUpdate}
                         onClick={() => handleUpdateCode(token)}
                         isLoading={isUpdating}
                         isDisabled={isUpdating}
-                        loadingText={isStarting ? 'Starting...' : 'Updating...'}
+                        loadingText={'Updating...'}
                      >
                         Update
                      </Button>

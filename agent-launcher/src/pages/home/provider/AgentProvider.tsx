@@ -911,7 +911,7 @@ const AgentProvider: React.FC<
          installedAgents.add(agentContractAddr);
 
          
-         const { agents } = (await cPumpAPI.getAgentTokenList({ contract_addresses: agentContractAddr, page: 1, limit: 1, agent_types }));
+         const { agents } = (await cPumpAPI.getAgentTokenList({ contract_addresses: agentContractAddr, page: 1, limit: 1, agent_types, include_hidden: true }));
          const agent = agents?.[0];
          if (!agent) {
             return null;
