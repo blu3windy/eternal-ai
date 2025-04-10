@@ -12,12 +12,17 @@ function DeepThinking({
    node,
    children,
    status = "waiting",
+   thinkTag,
 }: CustomComponentProps & {
    status?: string;
+   thinkTag?: string;
 }) {
    const [isExpanded, setIsExpanded] = useState(status === "receiving");
 
    const getChildrenContent = () => {
+      if (thinkTag) {
+         return thinkTag
+      }
       try {
          if (Array.isArray(children)) {
             return children.join('')
@@ -30,6 +35,7 @@ function DeepThinking({
 
    const renderChildren = () => {
       const content = getChildrenContent();
+
       if (typeof content === 'string') {
          return <Markdown
             remarkPlugins={[remarkGfm, remarkBreaks]}
