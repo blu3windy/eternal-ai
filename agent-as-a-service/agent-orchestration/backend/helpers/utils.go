@@ -621,7 +621,10 @@ func RodContentHtmlByUrl(rawUrl string) string {
 	}
 	spew.Dump(path)
 
-	u := launcher.New().Bin(path).Headless(true).MustLaunch()
+	u := launcher.New().Bin(path).
+		Headless(true).
+		// Proxy("http://65.49.14.150:3128").
+		MustLaunch()
 	browser := rod.New().ControlURL(u)
 
 	page := browser.MustConnect().MustPage(rawUrl)

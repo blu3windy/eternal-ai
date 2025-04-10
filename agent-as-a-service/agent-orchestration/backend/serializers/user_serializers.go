@@ -88,3 +88,24 @@ func NewUserRespArr(arr []*models.User) []*UserResp {
 	}
 	return resps
 }
+
+type InfraTwitterAppInfoResp struct {
+	Address       string           `json:"address"`
+	EaiBalance    numeric.BigFloat `json:"eai_balance"`
+	TotalRequest  uint64           `json:"total_request"`
+	RemainRequest uint64           `json:"remain_request"`
+	ETHAddress    string           `json:"eth_address"`
+}
+
+func NewInfraTwitterAppInfoResp(m *models.InfraTwitterApp) *InfraTwitterAppInfoResp {
+	if m == nil {
+		return nil
+	}
+	return &InfraTwitterAppInfoResp{
+		Address:       m.Address,
+		EaiBalance:    m.EaiBalance,
+		TotalRequest:  m.TotalRequest,
+		RemainRequest: m.RemainRequest,
+		ETHAddress:    m.ETHAddress,
+	}
+}

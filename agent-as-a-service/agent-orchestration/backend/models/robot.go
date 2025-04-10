@@ -1,6 +1,7 @@
 package models
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
@@ -19,6 +20,8 @@ type RobotProject struct {
 	MintHash      string
 	Signature     string
 	TotalBalance  numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
+
+	SolPrice *big.Float `gorm:"-"`
 }
 
 type RobotSaleWallet struct {

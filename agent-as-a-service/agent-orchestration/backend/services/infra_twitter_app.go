@@ -200,8 +200,13 @@ func (s *Service) InfraTwitterAppAuthenInstall(ctx context.Context, userAddress 
 			return errs.NewError(err)
 		}
 		if infraTwitterApp == nil {
+			ethAddress, err := s.CreateETHAddress(ctx)
+			if err != nil {
+				return errs.NewError(err)
+			}
 			infraTwitterApp = &models.InfraTwitterApp{
-				Address: strings.ToLower(userAddress),
+				Address:    strings.ToLower(userAddress),
+				ETHAddress: strings.ToLower(ethAddress),
 			}
 			err = s.dao.Create(daos.GetDBMainCtx(ctx), infraTwitterApp)
 			if err != nil {
@@ -301,6 +306,13 @@ func (s *Service) InfraTwitterAppAuthenCallback(ctx context.Context, address str
 			}
 			if infraTwitterApp == nil {
 				return nil, errs.NewError(errs.ErrBadRequest)
+			}
+			if infraTwitterApp.ETHAddress == "" {
+				ethAddress, err := s.CreateETHAddress(ctx)
+				if err != nil {
+					return nil, errs.NewError(err)
+				}
+				infraTwitterApp.ETHAddress = strings.ToLower(ethAddress)
 			}
 			infraTwitterApp.TwitterInfoID = twitterInfo.ID
 			infraTwitterApp.TwitterInfo = twitterInfo
@@ -480,6 +492,43 @@ func (s *Service) UtilityTwitterVerifyDeposit(ctx context.Context, userAddress, 
 		return false, errs.NewError(err)
 	}
 	return true, nil
+}
+
+func (s *Service) GetInfraTwitterAppInfo(ctx context.Context, userAddress string) (*models.InfraTwitterApp, error) {
+	infraTwitterApp, err := s.dao.FirstInfraTwitterApp(daos.GetDBMainCtx(ctx),
+		map[string][]any{
+			"address = ?": {strings.ToLower(userAddress)},
+		},
+		map[string][]any{},
+		[]string{},
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	if infraTwitterApp == nil {
+		return nil, errs.NewError(errs.ErrAgentUtilityNotFound)
+	}
+
+	if infraTwitterApp.ETHAddress == "" {
+		infraTwitterApp, _ = s.dao.FirstInfraTwitterAppByID(
+			daos.GetDBMainCtx(ctx), infraTwitterApp.ID,
+			map[string][]any{},
+			true,
+		)
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+		ethAddress, err := s.CreateETHAddress(ctx)
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+		infraTwitterApp.ETHAddress = strings.ToLower(ethAddress)
+		err = s.dao.Save(daos.GetDBMainCtx(ctx), infraTwitterApp)
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+	}
+	return infraTwitterApp, nil
 }
 
 func (s *Service) TestSignature(ctx context.Context) {

@@ -50,9 +50,8 @@ func (s *Service) CallWssDexScreener() {
 
 func (s *Service) TestCrawlDexScreener(ctx context.Context) {
 	link := "https://dexscreener.com/solana?rankBy=trendingScoreH24&order=desc"
-	txt := helpers.RodContentHtmlByUrlV2(link)
+	txt := helpers.RodContentHtmlByUrl(link)
 	fmt.Printf("Crawled dexscreener: %s\n", txt)
-
 }
 
 func (s *Service) JobUpdateTrendingTokens(ctx context.Context) error {

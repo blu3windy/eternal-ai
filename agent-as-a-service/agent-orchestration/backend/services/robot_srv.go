@@ -99,6 +99,7 @@ func (s *Service) GetRobotProject(ctx context.Context, projectID string) (*model
 	if err != nil {
 		return nil, errs.NewError(err)
 	}
+	robotProject.SolPrice = s.GetTokenMarketPrice(daos.GetDBMainCtx(ctx), "SOL")
 	return robotProject, nil
 }
 

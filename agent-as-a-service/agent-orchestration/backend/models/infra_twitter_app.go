@@ -13,6 +13,7 @@ type InfraTwitterApp struct {
 	EaiBalance    numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	TotalRequest  uint64
 	RemainRequest uint64
+	ETHAddress    string `gorm:"index"`
 }
 
 type InfraTwitterTopupTx struct {

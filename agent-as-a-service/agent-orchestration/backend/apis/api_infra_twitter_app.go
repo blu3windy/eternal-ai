@@ -82,3 +82,14 @@ func (s *Server) InfraTwitterAppSearchRecentTweet(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: user})
 }
+
+func (s *Server) GetInfraTwitterAppInfo(c *gin.Context) {
+	ctx := s.requestContext(c)
+	userAddress := s.getUserAddress(c)
+	info, err := s.nls.GetInfraTwitterAppInfo(ctx, userAddress)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: *serializers.NewInfraTwitterAppInfoResp(info)})
+}
