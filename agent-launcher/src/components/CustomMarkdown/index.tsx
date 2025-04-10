@@ -11,15 +11,15 @@ import ContentReplay from "./Content";
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton, Input, Flex, IconButton, Box, useDisclosure } from "@chakra-ui/react";
 import Processing from "./Processing";
 
-// const preprocessMarkdown = (content: string) => {
-//    try {
-//       const result = content?.replace?.(THINK_TAG_REGEX, (_, innerText) => `<think>${innerText.trim().replace(/\n/g, "<br />")}</think>`);
+const preprocessMarkdown = (content: string) => {
+   try {
+      const result = content?.replace?.(THINK_TAG_REGEX, (_, innerText) => `<think>${innerText.trim()}</think>`);
 
-//       return result;
-//    } catch (error) {
-//       return "";
-//    }
-// };
+      return result;
+   } catch (error) {
+      return "";
+   }
+};
 
 interface WebviewModalProps {
    url: string;
@@ -56,13 +56,13 @@ function CustomMarkdown({
       } satisfies any;
    }, [status]);
 
-   // const children = useMemo(() => preprocessMarkdown(content), [content]);
+   const children = useMemo(() => preprocessMarkdown(content), [content]);
 
    return (
       <Markdown
          remarkPlugins={[remarkGfm, remarkBreaks]} // Enables GitHub Flavored Markdown
          rehypePlugins={[rehypeRaw]} // Enables raw HTML parsing
-         children={content}
+         children={children}
          components={customComponents as Components}
          urlTransform={(value: string) => value}
       />

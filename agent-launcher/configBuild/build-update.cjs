@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 const semver = require('semver');
+const yaml = require('js-yaml');
 
 const pkgPath = './package.json';
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
@@ -38,4 +39,37 @@ execSync(
 
 console.log("✅ Build & notarization complete!"); 
 
-// const GITHUB_BASE = 'https://github.com/eternalai-org/eternal-ai/releases/download'; 
+const GITHUB_BASE = 'https://github.com/eternalai-org/eternal-ai/releases/download'; 
+
+const ymlPath = `release/${pkg.version}/latest-mac.yml`; // input
+const outputPath = '/Users/wilfred23/Documents/dapps/electron-update-server/updates/latest-mac.yml'; // output
+
+function transformUrls(data, version) {
+  const baseUrl = `${GITHUB_BASE}/v${version}`;
+
+  // Update files[].url
+  data.files = data.files.map(file => ({
+    ...file,
+    url: `${baseUrl}/${file.url}`
+  }));
+
+  // Update path
+  data.path = `${baseUrl}/${path.basename(data.path)}`;
+
+  return data;
+}
+
+try {
+  const content = fs.readFileSync(ymlPath, 'utf8');
+  const data = yaml.load(content);
+
+  const version = data.version;
+  const transformed = transformUrls(data, version);
+
+  const newYml = yaml.dump(transformed);
+  fs.writeFileSync(outputPath, newYml, 'utf8');
+
+  console.log(`✅ updated latest-mac.yml → ${outputPath}`);
+} catch (err) {
+  console.error('❌ Failed to process latest-mac.yml', err);
+}
