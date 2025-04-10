@@ -431,7 +431,7 @@ const AgentTopInfo = () => {
                                     </Button>
                                  </>
                               )}
-                              {hasNewVersionCode && (
+                              {hasNewVersionCode && isInstalled && (
                                  <>
                                     <Divider color={'#E2E4E8'} mt={'16px'} mb={'8px'} />
                                     <Button
