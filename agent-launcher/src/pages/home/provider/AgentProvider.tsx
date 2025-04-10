@@ -635,6 +635,10 @@ const AgentProvider: React.FC<
             }, 3000);
          }
 
+         if ([AgentType.Model, AgentType.ModelOnline].includes(agent.agent_type)) {
+            onGetCurrentModel();
+         }
+
          console.timeEnd('LEON: startAgent');
          // await sleep(2000);
       } catch (e: any) {
@@ -1244,7 +1248,7 @@ const AgentProvider: React.FC<
 
    useEffect(() => {
       onGetCurrentModel();
-   }, [selectedAgent, isRunning]);
+   }, []);
 
    const onGetCurrentModel = async () => {
       try {
