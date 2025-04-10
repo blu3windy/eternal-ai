@@ -43,7 +43,7 @@ console.log("✅ Build & notarization complete!");
 const GITHUB_BASE = 'https://github.com/eternalai-org/eternal-ai/releases/download'; 
 
 const ymlPath = `release/${pkg.version}/latest-mac.yml`; // input
-const outputPath = '/Users/wilfred23/Documents/dapps/electron-update-server/updates/latest-mac.yml'; // output
+const TARGET_DIR = '/Users/wilfred23/Documents/dapps/electron-update-server';
 
 function transformUrls(data, version) {
   const baseUrl = `${GITHUB_BASE}/v${version}`;
@@ -62,8 +62,8 @@ function transformUrls(data, version) {
 
 function runGitCommands() {
   try {
-    const TARGET_DIR = '../electron-update-server';
-    execSync('git add latest-mac.yml', { cwd: TARGET_DIR });
+    
+    execSync('git add .', { cwd: TARGET_DIR });
     execSync(`git commit -m "chore: update latest-mac.yml for auto-update"`, { cwd: TARGET_DIR });
     execSync('git push', { cwd: TARGET_DIR });
     console.log('✅ Git push completed!');
@@ -84,9 +84,9 @@ try {
     quotingType: '"',    // use double quotes
     forceQuotes: true    // quote everything
   });
-  fs.writeFileSync(outputPath, newYml, 'utf8');
+  fs.writeFileSync(`${TARGET_DIR}/updates/latest-mac.yml`, newYml, 'utf8');
 
-  console.log(`✅ updated latest-mac.yml → ${outputPath}`);
+  console.log(`✅ updated latest-mac.yml →  ${TARGET_DIR}/updates/latest-mac.yml`);
 
   // Run Git after update
   runGitCommands();
