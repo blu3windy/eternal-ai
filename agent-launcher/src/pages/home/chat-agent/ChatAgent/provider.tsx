@@ -69,6 +69,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
    const chatInputRef = React.useRef<any>();
    const [isFocusChatInput, setIsFocusChatInput] = React.useState(false);
+   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
 
    const { selectedAgent, agentWallet } = useContext(AgentContext);
 
@@ -91,17 +92,71 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
    const initialLoadChatItems = useCallback(async () => {
       refLoadChatItems.current = true;
-         setMessages([]);
+      setMessages([]);
+      setSessionId(undefined);
 
 
       const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
       const threadItems = await chatAgentDatabase.getSessions(threadId);
 
       if (threadItems?.length === 0) {
-         await chatAgentDatabase.createSession(threadId);
+         const sessionId = await chatAgentDatabase.createSession(threadId);
+         setSessionId(sessionId);
          await chatAgentDatabase.migrateMessages(threadId);
+      } else {
+         setSessionId(threadItems[0].id);
       }
    }, [selectedAgent]);
+
+   useEffect(() => {
+      if (sessionId) {
+         (async () => {
+            const items = await chatAgentDatabase.loadChatItems(sessionId);
+            if (items?.length === 0) {
+               publishEvent(INIT_WELCOME_MESSAGE);
+            } else {
+
+                  const filterMessages = items
+                     .filter((item) => item.createdAt)
+                     .map((item) => {
+   
+                        const now = new Date();
+                        const createdAt = new Date(item.createdAt || "");
+                        const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+                        if (item.status === "waiting" || item.status === "receiving") {
+                           if (diffMinutes >= 3) {
+                              if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
+                                 const updateMessage = {
+                                    ...item,
+                                    status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
+                                 };
+                                 return updateMessage;
+                              }
+   
+                              if (item.msg) {
+                                 const updateMessage = {
+                                    ...item,
+                                    status: "received",
+                                 };
+                                 return updateMessage;
+                              }
+   
+                              const updateMessage = {
+                                 ...item,
+                                 msg: "Something went wrong!",
+                                 status: "failed",
+                              };
+                              return updateMessage;
+                           }
+                        }
+                        return item;
+                     });
+   
+                  setMessages(filterMessages as any);
+               }
+         })();
+      }
+   }, [sessionId]);
 
    useEffect(() => {
       // Check if we're in Electron
@@ -109,7 +164,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isElectron.current = true;
       }
 
-      console.log('threadId', threadId, new Date().getTime());
       
       // Clear any existing timeout
       if (initTimeout.current) {
@@ -147,7 +201,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const isStopReceiving = lastMessage?.status === "receiving" || lastMessage?.status === "waiting";
 
    const publishEvent = async (message: string, attachments?: IChatMessage["attachments"]) => {
-      if (!message || lastMessage?.status === "waiting" || isStopReceiving) {
+      if (!message || lastMessage?.status === "waiting" || isStopReceiving || !sessionId) {
          return;
       }
       if (message) {
@@ -164,7 +218,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             is_reply: false,
             name: "You",
             attachments,
-            createdAt: new Date().getTime()
+            createdAt: new Date().getTime(),
+            uuid: sessionId
          };
 
          chatAgentDatabase.addChatItem({
@@ -186,7 +241,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             replyTo: userMessageId,
             is_reply: true,
             name: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
-            createdAt: new Date().getTime()
+            createdAt: new Date().getTime(),
+            uuid: sessionId
          };
 
          setTimeout(() => {
@@ -200,7 +256,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
          await sendMessageToServer(messageId, Number(id), message, attachments);
 
-         cPumpAPI.saveAgentPromptCount(Number(id));
+         // cPumpAPI.saveAgentPromptCount(Number(id));
       }
    };
 
@@ -532,6 +588,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
    const updateMessage = useCallback((id: string, data: Partial<IChatMessage>, isUpdateDB = true) => {
       try {
+         if (sessionId) {
+            data.uuid = sessionId;
+         }
          setMessages((prev) => {
             const matchedMessageIndex = prev.findLastIndex((i) => i.id === id);
             if (matchedMessageIndex !== -1) {
@@ -577,7 +636,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             });
          }, 200);
       }
-   }, []);
+   }, [sessionId]);
 
    const onRetryErrorMessage = useCallback(
       async (id: string) => {

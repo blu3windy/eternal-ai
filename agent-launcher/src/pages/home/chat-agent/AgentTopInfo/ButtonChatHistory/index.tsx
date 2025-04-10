@@ -10,6 +10,7 @@ const ButtonChatHistory = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [sessions, setSessions] = useState<ChatSession[]>([]);
     const { threadId } = useChatAgentProvider();
+    
 
     useEffect(() => {
         if (threadId && isOpen) {
@@ -29,6 +30,10 @@ const ButtonChatHistory = () => {
         await chatAgentDatabase.deleteSession(sessionId);
         loadSessions();
     };
+
+    if (sessions?.length < 2) {
+        return null;
+    }
 
     return (
         <>

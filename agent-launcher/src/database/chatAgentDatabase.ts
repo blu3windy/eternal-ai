@@ -78,9 +78,9 @@ class ChatAgentDatabase {
        await this.clearChatItems(sessionId);
    }
 
-   async loadChatItems(threadId: string, pagination?: { offset: number; limit: number }): Promise<IChatMessage[]> {
+   async loadChatItems(sessionId: string, pagination?: { offset: number; limit: number }): Promise<IChatMessage[]> {
       try {
-         const messages = await this.db?.messages.where("threadId").equals(threadId).sortBy("createdAt");
+         const messages = await this.db?.messages.where("uuid").equals(sessionId).sortBy("createdAt");
 
          const migrateMessages = messages.filter((item) => typeof item.createdAt === "string");
          setTimeout(() => {

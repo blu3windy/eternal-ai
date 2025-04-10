@@ -127,6 +127,7 @@ export interface IChatMessage {
       | 'sync-waiting'
       | 'sync-receiving';
    queryMessageState?: string;
+   uuid: string;
 
    createdAt?: number;
    updatedAt?: number;

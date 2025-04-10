@@ -20,10 +20,6 @@ import UpdateBanner from "@components/UpdateBanner/index.tsx";
 
 function App() {
 
-   useEffect(() => {
-      console.log('App');
-   }, []);
-
    return (
       <>
          <Provider store={store}>

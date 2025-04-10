@@ -7,19 +7,13 @@ import "@fontsource/inter";
 const isDev = import.meta.env.MODE === "development";
 
 const Root = () => {
-  return (
-    <>
-      {isDev ? (
-        <ChakraProvider>
-         <App />
+   return (
+      <>
+         <ChakraProvider>
+            <App />
          </ChakraProvider>
-      ) : (
-        <ChakraProvider>
-          <App />
-        </ChakraProvider>
-      )}
-    </>
-  );
+      </>
+   );
 };
 
 const rootElement = document.getElementById("root")!;
@@ -27,5 +21,5 @@ createRoot(rootElement).render(<Root />);
 
 // Electron's contextBridge event listener
 globalThis.ipcRenderer?.on("main-process-message", (_event, message) => {
-  console.log(message);
+   console.log(message);
 });
