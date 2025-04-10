@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -418,84 +417,84 @@ func (s *Service) UtilityPostTwitter(ctx context.Context, userAddress string, re
 	return resp, nil
 }
 
-func (s *Service) UtilityTwitterVerifyDeposit(ctx context.Context, userAddress, txHash string) (bool, error) {
-	err := daos.WithTransaction(
-		daos.GetDBMainCtx(ctx),
-		func(tx *gorm.DB) error {
-			eventResp, err := s.GetEthereumClient(ctx, models.BASE_CHAIN_ID).Erc20EventsByTransaction(txHash)
-			if err != nil {
-				return errs.NewError(err)
-			}
+// func (s *Service) UtilityTwitterVerifyDeposit(ctx context.Context, userAddress, txHash string) (bool, error) {
+// 	err := daos.WithTransaction(
+// 		daos.GetDBMainCtx(ctx),
+// 		func(tx *gorm.DB) error {
+// 			eventResp, err := s.GetEthereumClient(ctx, models.BASE_CHAIN_ID).Erc20EventsByTransaction(txHash)
+// 			if err != nil {
+// 				return errs.NewError(err)
+// 			}
 
-			if eventResp != nil && len(eventResp.Transfer) > 0 {
-				txEvent := eventResp.Transfer[0]
-				if !strings.EqualFold(s.conf.InfraTwitterApp.AgentAddress, txEvent.To) {
-					return errs.NewError(err)
-				}
+// 			if eventResp != nil && len(eventResp.Transfer) > 0 {
+// 				txEvent := eventResp.Transfer[0]
+// 				if !strings.EqualFold(s.conf.InfraTwitterApp.AgentAddress, txEvent.To) {
+// 					return errs.NewError(err)
+// 				}
 
-				eventID := fmt.Sprintf(`%s_%d`, strings.ToLower(txHash), txEvent.TxIndex)
-				topupTx, err := s.dao.FirstInfraTwitterTopupTx(
-					tx,
-					map[string][]any{
-						"event_id = ?": {eventID},
-					},
-					map[string][]any{},
-					[]string{},
-				)
+// 				eventID := fmt.Sprintf(`%s_%d`, strings.ToLower(txHash), txEvent.TxIndex)
+// 				topupTx, err := s.dao.FirstInfraTwitterTopupTx(
+// 					tx,
+// 					map[string][]any{
+// 						"event_id = ?": {eventID},
+// 					},
+// 					map[string][]any{},
+// 					[]string{},
+// 				)
 
-				if err != nil {
-					return errs.NewError(err)
-				}
+// 				if err != nil {
+// 					return errs.NewError(err)
+// 				}
 
-				if topupTx == nil {
-					infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
-						tx,
-						map[string][]any{
-							"address = ?": {strings.ToLower(userAddress)},
-						},
-						map[string][]any{},
-						[]string{},
-					)
-					if err != nil {
-						return errs.NewError(err)
-					}
-					if infraTwitterApp == nil {
-						return errs.NewError(errs.ErrAgentUtilityNotAuthen)
-					}
-					fBalance := models.ConvertWeiToBigFloat(txEvent.Value, 18)
-					topupTx := &models.InfraTwitterTopupTx{
-						InfraTwitterAppID: infraTwitterApp.ID,
-						NetworkID:         models.BASE_CHAIN_ID,
-						EventId:           eventID,
-						Type:              models.AgentEaiTopupTypeDeposit,
-						DepositAddress:    txEvent.From,
-						ToAddress:         txEvent.To,
-						TxHash:            txHash,
-						Amount:            numeric.NewBigFloatFromFloat(fBalance),
-					}
-					err = s.dao.Save(tx, topupTx)
-					if err != nil {
-						return errs.NewError(err)
-					}
-					tmpBlance, _ := fBalance.Float64()
-					newRequest := int(math.Round(tmpBlance))
-					err = tx.Model(infraTwitterApp).
-						UpdateColumn("eai_balance", gorm.Expr("eai_balance + ?", fBalance)).
-						UpdateColumn("total_request", gorm.Expr("total_request + ?", newRequest)).
-						UpdateColumn("remain_request", gorm.Expr("remain_request + ?", newRequest)).Error
-					if err != nil {
-						return errs.NewError(errs.ErrBadRequest)
-					}
-				}
-			}
-			return nil
-		},
-	)
-	if err != nil {
-		return false, errs.NewError(err)
-	}
-	return true, nil
-}
+// 				if topupTx == nil {
+// 					infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
+// 						tx,
+// 						map[string][]any{
+// 							"eth_address = ?": {strings.ToLower(txEvent.From)},
+// 						},
+// 						map[string][]any{},
+// 						[]string{},
+// 					)
+// 					if err != nil {
+// 						return errs.NewError(err)
+// 					}
+// 					if infraTwitterApp == nil {
+// 						return errs.NewError(errs.ErrAgentUtilityNotAuthen)
+// 					}
+// 					fBalance := models.ConvertWeiToBigFloat(txEvent.Value, 18)
+// 					topupTx := &models.InfraTwitterTopupTx{
+// 						InfraTwitterAppID: infraTwitterApp.ID,
+// 						NetworkID:         models.BASE_CHAIN_ID,
+// 						EventId:           eventID,
+// 						Type:              models.AgentEaiTopupTypeDeposit,
+// 						DepositAddress:    txEvent.From,
+// 						ToAddress:         txEvent.To,
+// 						TxHash:            txHash,
+// 						Amount:            numeric.NewBigFloatFromFloat(fBalance),
+// 					}
+// 					err = s.dao.Save(tx, topupTx)
+// 					if err != nil {
+// 						return errs.NewError(err)
+// 					}
+// 					tmpBlance, _ := fBalance.Float64()
+// 					newRequest := int(math.Round(tmpBlance))
+// 					err = tx.Model(infraTwitterApp).
+// 						UpdateColumn("eai_balance", gorm.Expr("eai_balance + ?", fBalance)).
+// 						UpdateColumn("total_request", gorm.Expr("total_request + ?", newRequest)).
+// 						UpdateColumn("remain_request", gorm.Expr("remain_request + ?", newRequest)).Error
+// 					if err != nil {
+// 						return errs.NewError(errs.ErrBadRequest)
+// 					}
+// 				}
+// 			}
+// 			return nil
+// 		},
+// 	)
+// 	if err != nil {
+// 		return false, errs.NewError(err)
+// 	}
+// 	return true, nil
+// }
 
 func (s *Service) UtilityTwitterHandleDeposit(tx *gorm.DB, networkID uint64, event *ethapi.Erc20TokenTransferEventResp) error {
 	eaiContractAddress := s.conf.GetConfigKeyString(networkID, "eai_contract_address")
