@@ -16,6 +16,7 @@ import { ChatCompletionPayload, IChatMessage } from "../../../../services/api/ag
 import { INIT_WELCOME_MESSAGE } from "./constants";
 import HandleMessageProcessing from "./HandleMessageProcessing.tsx";
 import { useDebounce } from "@hooks/useDebounce.ts";
+import { requestReload } from "@stores/states/common/reducer.ts";
 
 type IChatAgentProviderContext = {
    isStopReceiving?: boolean;
@@ -80,6 +81,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const isElectron = useRef(false);
    const initTimeout = useRef<NodeJS.Timeout | null>(null);
    const mountCount = useRef(0);
+   const [isFirstChat, setIsFirstChat] = useState(true);
+   const refEmptyMessage = useRef(true);
 
    const isAllowChat = useMemo(() => {
       return true;
@@ -105,17 +108,22 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          await chatAgentDatabase.migrateMessages(threadId);
       } else {
          setSessionId(threadItems[0].id);
+         setIsFirstChat(false)
       }
    }, [selectedAgent]);
 
    useEffect(() => {
       if (sessionId) {
          (async () => {
+            setMessages([]);
+            refEmptyMessage.current = true;
             const items = await chatAgentDatabase.loadChatItems(sessionId);
-            if (items?.length === 0) {
+            if (items.length > 0) {
+               refEmptyMessage.current = false;
+            }
+            if (items?.length === 0 && isFirstChat) {
                publishEvent(INIT_WELCOME_MESSAGE);
             } else {
-
                   const filterMessages = items
                      .filter((item) => item.createdAt)
                      .map((item) => {
@@ -375,6 +383,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
       try {
          let filteredMessages = messages.filter((item) => item.status !== "failed").filter((item) => !!item.msg);
+            console.log(sessionId, refEmptyMessage.current);
+            
+         if (sessionId && refEmptyMessage.current) {
+            chatAgentDatabase.updateSessionName(sessionId, sendTxt || "New Chat");
+            refEmptyMessage.current = false;
+         }
 
          // remove pair of welcome message
          if (filteredMessages.find((item) => item.msg === INIT_WELCOME_MESSAGE)) {
@@ -583,6 +597,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       } finally {
          setIsLoading(false);
          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+         dispatch(requestReload())
       }
    };
 
@@ -641,6 +656,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const onRetryErrorMessage = useCallback(
       async (id: string) => {
          if (isStopReceiving) return;
+         if (!sessionId) return;
 
          const targetMessage = messages.find((i) => i.id === id);
          if (targetMessage) {
@@ -648,7 +664,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             const newMessage: IChatMessage = {
                ...targetMessage,
                id: userMessageId,
-               createdAt: new Date().getTime()
+               createdAt: new Date().getTime(),
+               uuid: sessionId
             };
 
             chatAgentDatabase.addChatItem({
@@ -668,7 +685,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                replyTo: userMessageId,
                name: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
                is_reply: true,
-               createdAt: new Date().getTime()
+               createdAt: new Date().getTime(),
+               uuid: sessionId
             };
 
             setTimeout(() => {
@@ -704,7 +722,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isAllowChat,
          scrollRef,
          updateMessage,
-         threadId
+         threadId,
+         setSessionId
       };
    }, [
       messages,
@@ -723,7 +742,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       isAllowChat,
       scrollRef,
       updateMessage,
-      threadId
+      threadId,
+      setSessionId
    ]);
 
    return (

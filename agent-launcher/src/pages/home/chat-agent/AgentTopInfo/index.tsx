@@ -38,7 +38,7 @@ import SetupEnvModel from '../SetupEnvironment';
 import s from './styles.module.scss';
 import debounce from 'lodash.debounce';
 import ButtonChatHistory from "./ButtonChatHistory";
-
+import ButtonChatCreate from "./ButtonChatCreate";
 
 const AgentTopInfo = () => {
    const {
@@ -231,7 +231,7 @@ const AgentTopInfo = () => {
                   ) : (<Box />)
                }
 
-               <Flex gap={'6px'} justifyContent={'space-between'} alignItems={'center'}>
+               <Flex gap={'24px'} justifyContent={'space-between'} alignItems={'center'}>
 
                    <Flex gap={'6px'} alignItems={'center'} className={s.content}>
                      <InfoTooltip
@@ -478,6 +478,7 @@ const AgentTopInfo = () => {
                      </AgentTradeProvider>
                   )} */}
                   <ButtonChatHistory />
+                  <ButtonChatCreate />
                   <Button className={s.btnBuy} onClick={onOpenDrawer}>
                      Buy
                   </Button>
