@@ -374,10 +374,10 @@ export enum AgentStatus {
 }
 
 export const AgentStatusLabel = {
-   [AgentStatus.Local]: 'Local',
-   [AgentStatus.Online]: 'Online',
+   [AgentStatus.Local]: 'Local Model',
+   [AgentStatus.Online]: 'Online Model',
    [AgentStatus.OnChain]: 'Fully onchain',
-   [AgentStatus.OffChain]: 'Not fully onchain',
+   [AgentStatus.OffChain]: 'Offchain',
 }
 
 // export const CATEGORIES = [
