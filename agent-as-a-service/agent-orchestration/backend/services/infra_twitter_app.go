@@ -525,7 +525,7 @@ func (s *Service) UtilityTwitterHandleDeposit(tx *gorm.DB, networkID uint64, eve
 		return errs.NewError(err)
 	}
 	if infraTwitterApp != nil {
-		eventId := fmt.Sprintf(`%d_%s_%d`, networkID, strings.ToLower(event.TxHash), event.TxIndex)
+		eventId := fmt.Sprintf(`%d_%s_%d`, networkID, strings.ToLower(event.TxHash), event.Index)
 		topupTx, err := s.dao.FirstInfraTwitterTopupTx(
 			tx,
 			map[string][]any{
