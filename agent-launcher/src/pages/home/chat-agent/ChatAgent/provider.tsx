@@ -217,7 +217,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          setMessages((prev) => [...prev, responseMsg]);
 
          await sendMessageToServer(messageId, Number(id), message, attachments);
-
+         addActiveAgent(selectedAgent!);
          cPumpAPI.saveAgentPromptCount(Number(id));
       }
    };
