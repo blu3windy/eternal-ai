@@ -285,6 +285,7 @@ func (s *Server) Routers() {
 				robotAPI.GET("/project", s.GetRobotProject)
 				robotAPI.POST("/token", s.RobotCreateToken)
 				robotAPI.POST("/transfer", s.RobotTransferToken)
+				robotAPI.GET("/leaderboards", s.GetRobotProjectLeaderBoards)
 			}
 		}
 		// deprecated

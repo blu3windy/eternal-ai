@@ -24,6 +24,7 @@ type RobotSaleWalletResp struct {
 	UserAddress string           `json:"user_address"`
 	SOLAddress  string           `json:"sol_address"`
 	SolBalance  numeric.BigFloat `json:"sol_balance"`
+	Ranking     int              `json:"ranking"`
 }
 
 func NewRobotSaleWalletResp(m *models.RobotSaleWallet) *RobotSaleWalletResp {
@@ -32,7 +33,16 @@ func NewRobotSaleWalletResp(m *models.RobotSaleWallet) *RobotSaleWalletResp {
 		UserAddress: m.UserAddress,
 		SOLAddress:  m.SOLAddress,
 		SolBalance:  m.SOLBalance,
+		Ranking:     m.Ranking,
 	}
+}
+
+func NewRobotSaleWalletRespList(lst []*models.RobotSaleWallet) []*RobotSaleWalletResp {
+	ret := []*RobotSaleWalletResp{}
+	for _, m := range lst {
+		ret = append(ret, NewRobotSaleWalletResp(m))
+	}
+	return ret
 }
 
 type RobotProjectResp struct {

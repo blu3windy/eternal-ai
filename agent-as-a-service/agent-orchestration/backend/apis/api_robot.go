@@ -77,3 +77,16 @@ func (s *Server) RobotTransferToken(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewRobotTokenTransferResp(transfer)})
 }
+
+func (s *Server) GetRobotProjectLeaderBoards(c *gin.Context) {
+	ctx := s.requestContext(c)
+	projectID := s.stringFromContextQuery(c, "project_id")
+	userAddress := s.stringFromContextQuery(c, "user_address")
+	page, limit := s.pagingFromContext(c)
+	lstResp, err := s.nls.GetRobotProjectLeaderBoards(ctx, userAddress, projectID, page, limit)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewRobotSaleWalletRespList(lstResp)})
+}

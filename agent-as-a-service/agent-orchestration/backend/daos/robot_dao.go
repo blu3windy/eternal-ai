@@ -25,6 +25,17 @@ func (d *DAO) FindRobotSaleWallet(tx *gorm.DB, filters map[string][]interface{},
 	return ms, nil
 }
 
+func (d *DAO) FindRobotSaleWallet4Page(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string, page int, limit int) ([]*models.RobotSaleWallet, error) {
+	var (
+		offset = (page - 1) * limit
+	)
+	var ms []*models.RobotSaleWallet
+	if err := d.find(tx, &ms, filters, preloads, orders, offset, limit, false); err != nil {
+		return nil, errs.NewError(err)
+	}
+	return ms, nil
+}
+
 func (d *DAO) FindRobotSaleWalletJoinSelect(tx *gorm.DB, selected []string, joins map[string][]interface{}, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string, page int, limit int) ([]*models.RobotSaleWallet, error) {
 	var ms []*models.RobotSaleWallet
 	err := d.findJoinSelect(tx, &models.RobotSaleWallet{}, &ms, selected, joins, filters, preloads, orders, uint(page), uint(limit), false)

@@ -35,6 +35,7 @@ type RobotSaleWallet struct {
 	IsSOLTransferring bool             `gorm:"default:0"`
 	SOLRequestAt      *time.Time       `gorm:"index"`
 	SOLScanAt         *time.Time       `gorm:"index"`
+	Ranking           int              `gorm:"default:0"`
 }
 
 type RobotTokenTransfer struct {
