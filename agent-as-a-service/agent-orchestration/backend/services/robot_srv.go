@@ -196,6 +196,11 @@ func (s *Service) RobotScanBalanceByWallet(ctx context.Context, walletId uint) e
 					if err != nil {
 						return errs.NewError(err)
 					}
+
+					err = s.dao.UpdateRobotProjectRanking(tx, saleWallet.ProjectID)
+					if err != nil {
+						return errs.NewError(err)
+					}
 				}
 				return nil
 			},
@@ -337,3 +342,155 @@ func (s *Service) RobotTransferToken(ctx context.Context, req *serializers.Robot
 	}
 	return transfer, nil
 }
+
+func (s *Service) JobUpdateRobotProjectRanking(ctx context.Context) error {
+	err := s.JobRunCheck(
+		ctx,
+		"JobUpdateRobotProjectRanking",
+		func() error {
+			projects, err := s.dao.FindRobotProject(
+				daos.GetDBMainCtx(ctx),
+				map[string][]interface{}{
+					"scan_enabled = ?": {true},
+				},
+				nil,
+				[]string{"id asc"},
+				0,
+				100,
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+			var retErr error
+			for _, project := range projects {
+				err = s.UpdateRobotProjectRanking(ctx, project.ProjectID)
+				if err != nil {
+					retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, project.ID))
+				}
+			}
+			return retErr
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
+
+func (s *Service) UpdateRobotProjectRanking(ctx context.Context, projectID string) error {
+	return s.dao.UpdateRobotProjectRanking(daos.GetDBMainCtx(ctx), projectID)
+}
+
+// func (s *Service) GetRobotProjectLeaderBoards(ctx context.Context, address, search string, page, limit int) ([]*models.User, *models.EternalSaleSummary, error) {
+// 	saleSummary, err := s.eternalDao.GetEternalSaleSummary(daos.GetDBMainCtx(ctx))
+// 	if err != nil {
+// 		return nil, nil, errs.NewError(err)
+// 	}
+// 	if search != "" {
+// 		searchTwitters, err := s.SearchUserByTwitterInfo(ctx, search)
+// 		if err != nil {
+// 			return nil, nil, errs.NewError(err)
+// 		}
+// 		if len(searchTwitters) > 0 {
+// 			searchLst := []uint{}
+// 			for _, v := range searchTwitters {
+// 				searchLst = append(searchLst, v.ID)
+// 			}
+// 			lstUser, err := s.getEternalSaleLeaderBoards(ctx, searchLst, 99999, page, limit)
+// 			if err != nil {
+// 				return nil, nil, errs.NewError(err)
+// 			}
+// 			return lstUser, saleSummary, nil
+// 		}
+// 		return nil, saleSummary, nil
+// 	}
+
+// 	var lstUser []*models.User
+// 	if page == 1 {
+// 		err = s.RedisCached(
+// 			fmt.Sprintf("getEternalSaleLeaderBoards%d_%d", page, limit),
+// 			true,
+// 			10*time.Second,
+// 			&lstUser,
+// 			func() (interface{}, error) {
+// 				lstUser, err = s.getEternalSaleLeaderBoards(ctx, []uint{}, 99999, page, limit)
+// 				if err != nil {
+// 					return nil, errs.NewError(err)
+// 				}
+// 				return lstUser, nil
+// 			},
+// 		)
+// 		if err != nil {
+// 			return nil, nil, errs.NewError(err)
+// 		}
+// 	} else {
+// 		lstUser, err = s.getEternalSaleLeaderBoards(ctx, []uint{}, 99999, page, limit)
+// 		if err != nil {
+// 			return nil, nil, errs.NewError(err)
+// 		}
+// 	}
+// 	if lstUser == nil {
+// 		lstUser = []*models.User{}
+// 	}
+
+// 	if address != "" && page == 1 {
+// 		var you *models.User
+// 		isExist := false
+// 		for _, v := range lstUser {
+// 			if strings.EqualFold(v.Address, address) {
+// 				v.NeedActive = true
+// 				isExist = true
+// 				you = v
+// 				break
+// 			}
+// 		}
+// 		if !isExist {
+// 			var yous []*models.User
+// 			err = s.RedisCached(
+// 				fmt.Sprintf("getEternalSaleLeaderBoards_%s", address),
+// 				true,
+// 				10*time.Second,
+// 				&yous,
+// 				func() (interface{}, error) {
+// 					user, err := s.GetUserByAddress(ctx, network, address)
+// 					if err != nil {
+// 						return nil, errs.NewError(err)
+// 					}
+// 					if user != nil {
+// 						yous, err = s.getEternalSaleLeaderBoards(ctx, []uint{user.ID}, 99999, 1, 1)
+// 						if err != nil {
+// 							return nil, errs.NewError(err)
+// 						}
+// 						if len(yous) == 0 {
+// 							yous = append(yous, user)
+// 						}
+// 					}
+
+// 					return yous, nil
+// 				},
+// 			)
+// 			if err != nil {
+// 				return nil, nil, errs.NewError(err)
+// 			}
+// 			if len(yous) > 0 {
+// 				you = yous[0]
+// 				response := []*models.User{}
+// 				you.NeedActive = true
+// 				response = append(response, you)
+// 				response = append(response, lstUser...)
+// 				return response, saleSummary, nil
+// 			}
+// 		} else {
+// 			response := []*models.User{}
+// 			response = append(response, you)
+// 			for _, v := range lstUser {
+// 				if v.Address != address {
+// 					response = append(response, v)
+// 				}
+// 			}
+// 			return response, saleSummary, nil
+// 		}
+// 	}
+
+// 	return lstUser, saleSummary, nil
+// }
