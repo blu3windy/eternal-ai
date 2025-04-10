@@ -147,7 +147,7 @@ run_container_custom_prompt() {
       done) \
       -e PRIVATE_KEY="$PRIVATE_KEY" \
       -e WALLET_ADDRESS="$WALLET_ADDRESS" \
-      --network network-agent-internal \
+      --network=network-agent-external \
       --add-host=localmodel:host-gateway \
       --name "$CONTAINER_NAME" \
       "$IMAGE_NAME"
@@ -172,7 +172,7 @@ run_container_custom_ui() {
     log_message "Docker image ${IMAGE_NAME} built successfully."
 
     docker run -d -p 0:8080 \
-      --network network-agent-internal \
+      --network network-agent-external \
       --add-host=localmodel:host-gateway \
       -e PRIVATE_KEY="$PRIVATE_KEY" \
       -e WALLET_ADDRESS="$WALLET_ADDRESS" \
