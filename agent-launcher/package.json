@@ -4,7 +4,7 @@
   "description": "Personal AGI, locally on your device.",
   "author": "Eternal AI Limited",
   "private": true,
-  "version": "25.0.3",
+  "version": "25.0.15",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "build:install": "node configBuild/build-install.cjs",
-    "build:update": "node configBuild/build-update.cjs"
+    "build:update": "git pull && node configBuild/build-update.cjs"
   },
   "resolutions": {
     "react": "^18",
