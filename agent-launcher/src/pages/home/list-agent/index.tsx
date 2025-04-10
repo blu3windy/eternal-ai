@@ -45,9 +45,6 @@ import s from './styles.module.scss';
 
 const AgentsList = () => {
    const refInput = useRef<HTMLInputElement | null>(null);
-   const toast = useToast();
-   const [runningTime, setRunningTime] = useState<number>(0);
-   const runningTimeRef = useRef<NodeJS.Timeout>();
 
    const {
       isOpen,
@@ -771,31 +768,6 @@ const AgentsList = () => {
       );
    };
 
-   // Add timer effect
-   useEffect(() => {
-      runningTimeRef.current = setInterval(() => {
-         setRunningTime(prev => {
-            const newTime = prev + 1;
-            if (newTime === 15 * 60) { // 15 minutes in seconds
-               toast({
-                  title: "Long Running Session",
-                  description: "Your agent has been running for 15 minutes. Consider saving your work.",
-                  status: "warning",
-                  duration: 10000,
-                  isClosable: true,
-                  position: "top-right"
-               });
-            }
-            return newTime;
-         });
-      }, 1000);
-
-      return () => {
-         if (runningTimeRef.current) {
-            clearInterval(runningTimeRef.current);
-         }
-      };
-   }, []);
 
    return (
       <AnimatePresence>
