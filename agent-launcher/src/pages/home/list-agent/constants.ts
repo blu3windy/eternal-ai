@@ -366,29 +366,43 @@ export const AgentTypeName = {
    [AgentType.ModelOnline]: 'Model',
 }
 
-export const CATEGORIES = [
-   {
-      id: CategoryOption.Utility,
-      name: 'Utility',
-      description: 'Agents designed to help with everyday tasks and boost productivity.',
-      gradient: 'linear-gradient(270deg, #A94FD4 0%, #58296E 100%)',
-      icon: 'icons/ic-category-utility.svg'
-   },
-   {
-      id: CategoryOption.Model,
-      name: 'Model',
-      description: 'Agents that provide direct access to specific AI models (e.g., GPT, LLaMA, DeepSeek, and more).',
-      gradient: 'linear-gradient(270deg, #EF3B2F 0%, #89221B 100%)',
-      icon: 'icons/ic-category-model.svg'
-   },
-   // {
-   //    id: CategoryOption.Infra,
-   //    name: 'Infra',
-   //    description: 'Agents that offer APIs or services to build and manage other agents.',
-   //    gradient: 'linear-gradient(270deg, #3FBF5A 0%, #1D592A 100%)',
-   //    icon: 'icons/ic-category-infra.svg'
-   // }
-];
+export enum AgentStatus {
+   Local = 'local',
+   Online = 'online',
+   OnChain = 'onchain',
+   OffChain = 'offchain',
+}
+
+export const AgentStatusLabel = {
+   [AgentStatus.Local]: 'Local Model',
+   [AgentStatus.Online]: 'Online Model',
+   [AgentStatus.OnChain]: 'Fully onchain',
+   [AgentStatus.OffChain]: 'Offchain',
+}
+
+// export const CATEGORIES = [
+//    {
+//       id: CategoryOption.Utility,
+//       name: 'Utility',
+//       description: 'Agents designed to help with everyday tasks and boost productivity.',
+//       gradient: 'linear-gradient(270deg, #A94FD4 0%, #58296E 100%)',
+//       icon: 'icons/ic-category-utility.svg'
+//    },
+//    {
+//       id: CategoryOption.Model,
+//       name: 'Model',
+//       description: 'Agents that provide direct access to specific AI models (e.g., GPT, LLaMA, DeepSeek, and more).',
+//       gradient: 'linear-gradient(270deg, #EF3B2F 0%, #89221B 100%)',
+//       icon: 'icons/ic-category-model.svg'
+//    },
+//    // {
+//    //    id: CategoryOption.Infra,
+//    //    name: 'Infra',
+//    //    description: 'Agents that offer APIs or services to build and manage other agents.',
+//    //    gradient: 'linear-gradient(270deg, #3FBF5A 0%, #1D592A 100%)',
+//    //    icon: 'icons/ic-category-infra.svg'
+//    // }
+// ];
 
 
 export const SYSTEM_AGENTS = [14740];

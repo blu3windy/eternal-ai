@@ -9,7 +9,9 @@ import log from 'electron-log';
 
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
 
+autoUpdater.allowPrerelease = true;
 autoUpdater.autoDownload = true;
+
 
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
@@ -19,17 +21,17 @@ if (process.env.NODE_ENV === "development") {
    autoUpdater.forceDevUpdateConfig = true; // Force update check in dev mode
 }
 
-// autoUpdater.setFeedURL({
-//    provider: "generic",
-//    url: "https://electron-update-server-production.up.railway.app/updates/",
-// });
-
 autoUpdater.setFeedURL({
-   provider: "github",
-   owner: "eternalai-org",
-   repo: "eternal-ai",
-   releaseType: 'release' // optional, default is "release"
-})
+   provider: "generic",
+   url: "https://electron-update-server-production.up.railway.app/updates/",
+});
+
+// autoUpdater.setFeedURL({
+//    provider: "github",
+//    owner: "eternalai-org",
+//    repo: "eternal-ai",
+//    releaseType: 'release' // optional, default is "release"
+//  })
 
 // const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
