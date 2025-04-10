@@ -10,17 +10,16 @@ import {
    Text,
    useDisclosure
 } from '@chakra-ui/react';
+import BaseModal from "@components/BaseModal";
 import Loading from '@components/Loading';
-import { AgentStatus, AgentStatusLabel, AgentType, CategoryOption } from '@pages/home/list-agent/constants';
+import { AgentStatus, AgentStatusLabel, AgentType } from '@pages/home/list-agent/constants';
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
+import storageModel from '@storage/StorageModel';
 import cs from 'classnames';
 import { useContext, useEffect, useMemo, useState } from 'react';
-import CAgentTokenAPI from "../../../../../services/api/agents-token";
-import s from './styles.module.scss';
-import storageModel from '@storage/StorageModel';
-import BaseModal from "@components/BaseModal";
 import SetupEnvModel from '../../SetupEnvironment';
+import s from './styles.module.scss';
 
 export const RenameModels: any = {
    'NousResearch/Hermes-3-Llama-3.1-70B-FP8': 'Hermes 3 70B',
@@ -84,12 +83,17 @@ const ItemToken = ({
       return requirements?.disk || 0;
    }, [agent]);
 
-   const handleRemoveAgent = e => {
+   const handleRemoveAgent = (e: any) => {
       e?.preventDefault();
       e?.stopPropagation();
 
       onDelete(agent);
       onClose();
+   }
+
+   const handleViewDetail = (e: any) => {
+      e?.preventDefault();
+      e?.stopPropagation();
    }
 
    const handleInstall = async () => {
@@ -161,27 +165,19 @@ const ItemToken = ({
                         {
                            agent?.agent_type === AgentType.Model && (
                               <>
-                                 <svg width="6" height="6" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path opacity="0.7" d="M2.9375 5.13068C2.53646 5.13068 2.17022 5.03291 1.83878 4.83736C1.50734 4.63849 1.24219 4.37334 1.04332 4.0419C0.847775 3.71046 0.75 3.34422 0.75 2.94318C0.75 2.53883 0.847775 2.17259 1.04332 1.84446C1.24219 1.51302 1.50734 1.24953 1.83878 1.05398C2.17022 0.855113 2.53646 0.755682 2.9375 0.755682C3.34186 0.755682 3.7081 0.855113 4.03622 1.05398C4.36766 1.24953 4.63116 1.51302 4.8267 1.84446C5.02557 2.17259 5.125 2.53883 5.125 2.94318C5.125 3.34422 5.02557 3.71046 4.8267 4.0419C4.63116 4.37334 4.36766 4.63849 4.03622 4.83736C3.7081 5.03291 3.34186 5.13068 2.9375 5.13068Z" fill="black" />
-                                 </svg>
+                                 <Image src={`icons/ic-dot.svg`} w={'6px'} h={'6px'} />
                                  <Text className={s.itemAmount}>
                                     {modelSize} GB
                                  </Text>
                               </>
                            )
                         }
-                        {/* {
-                        agent.agent_type !== AgentType.ModelOnline && (
-                           <>
-                              <svg width="6" height="6" viewBox="0 0 6 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                 <path opacity="0.7" d="M2.9375 5.13068C2.53646 5.13068 2.17022 5.03291 1.83878 4.83736C1.50734 4.63849 1.24219 4.37334 1.04332 4.0419C0.847775 3.71046 0.75 3.34422 0.75 2.94318C0.75 2.53883 0.847775 2.17259 1.04332 1.84446C1.24219 1.51302 1.50734 1.24953 1.83878 1.05398C2.17022 0.855113 2.53646 0.755682 2.9375 0.755682C3.34186 0.755682 3.7081 0.855113 4.03622 1.05398C4.36766 1.24953 4.63116 1.51302 4.8267 1.84446C5.02557 2.17259 5.125 2.53883 5.125 2.94318C5.125 3.34422 5.02557 3.71046 4.8267 4.0419C4.63116 4.37334 4.36766 4.63849 4.03622 4.83736C3.7081 5.03291 3.34186 5.13068 2.9375 5.13068Z" fill="black"/>
-                              </svg>
-                              <Text className={s.itemAmount} textDecoration={"underline"} onClick={handleRemoveAgent}>
-                                 Remove
-                              </Text>
-                           </>
-                        )
-                     } */}
+                        <>
+                           <Image src={`icons/ic-dot.svg`} w={'6px'} h={'6px'} />
+                           <Text className={s.itemAmount} textDecoration={"underline"} onClick={handleViewDetail}>
+                              View detail
+                           </Text>
+                        </>
                      </Flex>
                   </Flex>
                </Flex>
@@ -347,17 +343,7 @@ const SelectModel = ({
                      <Image src={`icons/ic-angle-down${color === 'white' ? '-white' : ''}.svg`} />
                   </Flex>
                </PopoverTrigger>
-               <PopoverContent
-                  width={'100%'}
-                  className={s.poperContainer}
-                  border={'1px solid #E5E7EB'}
-                  boxShadow={'0px 0px 24px -6px #0000001F'}
-                  borderRadius={'16px'}
-                  background={'#fff'}
-                  minW={'600px'}
-                  maxH={'400px'}
-                  overflowY={'auto'}
-               >
+               <PopoverContent className={s.poperContainer}>
                   {models.map((t, _i) => (
                      <>
                         <ItemToken
