@@ -10,17 +10,18 @@ import AgentProvider from "./provider/AgentProvider";
 import { AgentContext } from "./provider/AgentContext";
 import s from "./styles.module.scss";
 import MonitorProvider from "@providers/Monitor/MonitorProvider";
+import { GarbageProvider } from "@providers/GarbageDocker";
 
 type Props = {
    // some props
 };
 
 const HandleHome = () => {
-   const { isCanChat, isBackupedPrvKey, selectedAgent, agentWallet, requireInstall, isRunning } =
-      useContext(AgentContext);
+   const { isCanChat, isBackupedPrvKey, selectedAgent, agentWallet, requireInstall, isRunning }
+      = useContext(AgentContext);
 
-   const showBackupPrvKey =
-      selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
+   const showBackupPrvKey
+      = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
    // const isAllowChat = useMemo(() => {
    //    return ![AgentType.Model].includes(selectedAgent?.agent_type);
@@ -56,9 +57,11 @@ const Home = (_props: Props) => {
       <MainLayout className={s.container}>
          <MonitorProvider>
             <AgentProvider>
-               <FundAgentProvider>
-                  <HandleHome />
-               </FundAgentProvider>
+               <GarbageProvider>
+                  <FundAgentProvider>
+                     <HandleHome />
+                  </FundAgentProvider>
+               </GarbageProvider>
             </AgentProvider>
          </MonitorProvider>
       </MainLayout>

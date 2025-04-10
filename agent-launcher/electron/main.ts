@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import runIpcMain from "./ipcMain";
 import { autoUpdater } from "electron-updater";
 import command from "./share/command-tool.ts";
+// import { listenToDockerEvents, getInitialDockerData } from "./ipcMain/docker-listener.ts";
 import log from 'electron-log';
 
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
@@ -94,6 +95,9 @@ function createWindow() {
       win?.webContents.send("main-process-message", new Date().toLocaleString());
    });
 
+   // listenToDockerEvents(win);
+   // getInitialDockerData(win);
+
    // Events to notify the Renderer process (UI)
    autoUpdater.on("update-available", (info) => {
       console.log("update-available");
@@ -111,7 +115,7 @@ function createWindow() {
 
    ipcMain.on("install-update", () => {
       autoUpdater.quitAndInstall();
-    })
+   })
 
    autoUpdater.on("download-progress", (progress) => {
       log.info('Download progress', progress);
@@ -124,7 +128,6 @@ function createWindow() {
       // win.loadFile('dist/index.html')
       win.loadFile(path.join(RENDERER_DIST, "index.html"));
    }
-   // listenToDockerEvents(win);
 
    win.on("closed", () => {
       win = null;
