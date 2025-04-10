@@ -29,6 +29,7 @@ import s from './styles.module.scss';
 import AgentDetail from '../../AgentDetail';
 import DeleteAgentModal from '@pages/home/list-agent/AgentMonitor/DeleteAgentModal';
 import { compareString } from '@utils/string';
+import { AgentDetailProvider } from './AgentDetailProvider';
 
 export const RenameModels: any = {
    'NousResearch/Hermes-3-Llama-3.1-70B-FP8': 'Hermes 3 70B',
@@ -447,7 +448,9 @@ const SelectModel = ({
                         </Menu>
                      </Flex>
                   )}
-                  <AgentDetail agent={agentDetail} />
+                  <AgentDetailProvider agent={agentDetail}>
+                     <AgentDetail />
+                  </AgentDetailProvider>
                </Box>
             </BaseModal>
          )}
