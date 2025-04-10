@@ -16,7 +16,11 @@ import { ChatCompletionPayload, IChatMessage } from "../../../../services/api/ag
 import { INIT_WELCOME_MESSAGE } from "./constants";
 import HandleMessageProcessing from "./HandleMessageProcessing.tsx";
 import { useDebounce } from "@hooks/useDebounce.ts";
+
+import { requestReload } from "@stores/states/common/reducer.ts";
+
 import useAgentState from "@pages/home/provider/useAgentState.ts";
+
 
 type IChatAgentProviderContext = {
    isStopReceiving?: boolean;
@@ -43,18 +47,18 @@ type IChatAgentProviderContext = {
 const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
    messages: [],
    isLoadingMessages: true,
-   setIsLoadingMessages: () => {},
-   publishEvent: () => {},
+   setIsLoadingMessages: () => { },
+   publishEvent: () => { },
    scrollableRef: { current: null },
    loading: false,
    info: undefined,
 
    chatInputRef: undefined,
    isFocusChatInput: false,
-   setIsFocusChatInput: () => {},
+   setIsFocusChatInput: () => { },
    isAllowChat: false,
    scrollRef: undefined,
-   updateMessage: () => {},
+   updateMessage: () => { },
 });
 
 export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
@@ -71,6 +75,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
    const chatInputRef = React.useRef<any>();
    const [isFocusChatInput, setIsFocusChatInput] = React.useState(false);
+   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
 
    const { selectedAgent, agentWallet } = useContext(AgentContext);
 
@@ -78,35 +83,49 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
    const refLoadChatItems = useRef(false);
 
+   const refInitialized = useRef(false);
+   const isElectron = useRef(false);
+   const initTimeout = useRef<NodeJS.Timeout | null>(null);
+   const mountCount = useRef(0);
+   const [isFirstChat, setIsFirstChat] = useState(true);
+   const refEmptyMessage = useRef(true);
+
    const cPumpAPI = new CAgentTokenAPI();
+
 
    const isAllowChat = useMemo(() => {
       return true;
-      // if(selectedAgent) {
-      //    return Number(selectedAgent?.wallet_balance) > 0;
-      // }
-      //
-      // return false;
    }, []);
 
-   useEffect(() => {
-      if (threadId && !refLoadChatItems.current) {
-         refLoadChatItems.current = true;
-         setMessages([]);
+   const initialLoadChatItems = useCallback(async () => {
+      refLoadChatItems.current = true;
+      setMessages([]);
+      setSessionId(undefined);
 
-         chatAgentDatabase.loadChatItems(threadId).then((items) => {
-            if (items?.length === 0) {
+      const threadItems = await chatAgentDatabase.getSessions(threadId);
+
+      if (threadItems?.length === 0) {
+         const sessionId = await chatAgentDatabase.createSession(threadId);
+         setSessionId(sessionId);
+         await chatAgentDatabase.migrateMessages(threadId);
+      } else {
+         setSessionId(threadItems[0].id);
+         setIsFirstChat(false)
+      }
+   }, [selectedAgent]);
+
+   useEffect(() => {
+      if (sessionId) {
+         (async () => {
+            setMessages([]);
+            refEmptyMessage.current = true;
+            const items = await chatAgentDatabase.loadChatItems(sessionId);
+            if (items.length > 0) {
+               refEmptyMessage.current = false;
+            }
+            if (items?.length === 0 && isFirstChat) {
                publishEvent(INIT_WELCOME_MESSAGE);
             } else {
-               // const filterMessages = items
-               //    ?.filter((item) => item.status !== 'failed')
-               //    // .filter((item) => item.status !== 'waiting')
-               //    .filter((item) => !!item.msg)
-               //    .map((item) => ({
-               //       ...item,
-               //       status: 'received',
-               //    }));
-
                const filterMessages = items
                   .filter((item) => item.createdAt)
                   .map((item) => {
@@ -145,16 +164,44 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
                setMessages(filterMessages as any);
             }
-         });
+         })();
+      }
+   }, [sessionId]);
 
-         (window as any).clearChatHistory = () => {
-            chatAgentDatabase.clearChatItems(threadId);
-            setMessages([]);
-            dispatch(removeTaskByAgentId({ id: threadId }));
-         };
+   useEffect(() => {
+      // Check if we're in Electron
+      if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
+         isElectron.current = true;
+      }
+
+
+      // Clear any existing timeout
+      if (initTimeout.current) {
+         clearTimeout(initTimeout.current);
+      }
+
+      if (threadId && !refLoadChatItems.current && !refInitialized.current) {
+         // For Electron, add a small delay to ensure we only run once
+         if (isElectron.current) {
+            initTimeout.current = setTimeout(() => {
+               if (!refInitialized.current) {
+                  refInitialized.current = true;
+                  refLoadChatItems.current = true;
+                  initialLoadChatItems();
+               }
+            }, 100);
+         } else {
+            refInitialized.current = true;
+            refLoadChatItems.current = true;
+            initialLoadChatItems();
+         }
 
          return () => {
+            if (initTimeout.current) {
+               clearTimeout(initTimeout.current);
+            }
             refLoadChatItems.current = false;
+            refInitialized.current = false;
             (window as any).clearChatHistory = undefined;
          };
       }
@@ -164,7 +211,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const isStopReceiving = lastMessage?.status === "receiving" || lastMessage?.status === "waiting";
 
    const publishEvent = async (message: string, attachments?: IChatMessage["attachments"]) => {
-      if (!message || lastMessage?.status === "waiting" || isStopReceiving) {
+      if (!message || lastMessage?.status === "waiting" || isStopReceiving || !sessionId) {
          return;
       }
       if (message) {
@@ -182,7 +229,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             is_reply: false,
             name: "You",
             attachments,
-            createdAt: new Date().getTime()
+            createdAt: new Date().getTime(),
+            uuid: sessionId
          };
 
          chatAgentDatabase.addChatItem({
@@ -204,7 +252,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             replyTo: userMessageId,
             is_reply: true,
             name: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
-            createdAt: new Date().getTime()
+            createdAt: new Date().getTime(),
+            uuid: sessionId
          };
 
          setTimeout(() => {
@@ -291,6 +340,13 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   id: messageId,
                   status: "done",
                } as TaskItem);
+               
+               if (sessionId && isFirstChat) {
+                  const match = content.match(/<\/think>\s*([\s\S]*)/);
+                  const result = match ? match[1].trim() : '';
+                  chatAgentDatabase.updateSessionName(sessionId, result || "New Chat");
+                  refEmptyMessage.current = false;
+               }
             },
             onFail: (err: any) => {
                // updateMessage(messageId, {
@@ -322,10 +378,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             updateTaskItem({
                id: messageId,
                status: "failed",
-               message: sendTxt,
-               title: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
-               agent: selectedAgent!,
-               agentType: selectedAgent?.agent_type || AgentType.Normal,
             } as TaskItem);
          } else {
             updateMessage(messageId, {
@@ -341,6 +393,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
       try {
          let filteredMessages = messages.filter((item) => item.status !== "failed").filter((item) => !!item.msg);
+         if (
+            sessionId
+         ) {
+
+            if (sessionId && refEmptyMessage.current && !isFirstChat) {
+               chatAgentDatabase.updateSessionName(sessionId, sendTxt || "New Chat");
+               refEmptyMessage.current = false;
+            }
+         }
 
          // remove pair of welcome message
          if (filteredMessages.find((item) => item.msg === INIT_WELCOME_MESSAGE)) {
@@ -551,11 +612,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       } finally {
          setIsLoading(false);
          scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+         dispatch(requestReload())
       }
    };
 
    const updateMessage = useCallback((id: string, data: Partial<IChatMessage>, isUpdateDB = true) => {
       try {
+         if (sessionId) {
+            data.uuid = sessionId;
+         }
          setMessages((prev) => {
             const matchedMessageIndex = prev.findLastIndex((i) => i.id === id);
             if (matchedMessageIndex !== -1) {
@@ -601,11 +666,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             });
          }, 200);
       }
-   }, []);
+   }, [sessionId]);
 
    const onRetryErrorMessage = useCallback(
       async (id: string) => {
          if (isStopReceiving) return;
+         if (!sessionId) return;
 
          const targetMessage = messages.find((i) => i.id === id);
          if (targetMessage) {
@@ -613,7 +679,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             const newMessage: IChatMessage = {
                ...targetMessage,
                id: userMessageId,
-               createdAt: new Date().getTime()
+               createdAt: new Date().getTime(),
+               uuid: sessionId
             };
 
             chatAgentDatabase.addChatItem({
@@ -633,7 +700,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                replyTo: userMessageId,
                name: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
                is_reply: true,
-               createdAt: new Date().getTime()
+               createdAt: new Date().getTime(),
+               uuid: sessionId
             };
 
             setTimeout(() => {
@@ -669,6 +737,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isAllowChat,
          scrollRef,
          updateMessage,
+         threadId,
+         setSessionId
       };
    }, [
       messages,
@@ -687,6 +757,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       isAllowChat,
       scrollRef,
       updateMessage,
+      threadId,
+      setSessionId
    ]);
 
    return (

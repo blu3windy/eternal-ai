@@ -43,7 +43,6 @@ const HandleHome = () => {
             )}
             flex={2}
          >
-            <AgentTopInfo />
             <Flex w={"clamp(600px, 81%, 1200px)"} mx={"auto"}>
                <ChatAgent />
             </Flex>
