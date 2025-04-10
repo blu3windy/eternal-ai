@@ -1070,7 +1070,7 @@ const AgentProvider: React.FC<
       const isRunning = agentStates[newAgent.id]?.isRunning || false;
       const isStarting = agentStates[newAgent.id]?.isStarting || false;
 
-      if (isInstalled && !isRunning && !isStarting && newAgent?.agent_type !== AgentType.ModelOnline) {
+      if (isInstalled && !isRunning && !isStarting && ![AgentType.ModelOnline, AgentType.Model].includes(newAgent?.agent_type)) {
          console.log();
          startAgent(newAgent);
       }

@@ -49,13 +49,13 @@ const AgentTopInfo = () => {
       stopAgent,
       requireInstall,
       isRunning,
-      isStarting,
       isInstalled,
       unInstallAgent,
       isUnInstalling,
       isUpdating,
       installedModelAgents,
-      handleUpdateCode
+      handleUpdateCode,
+      currentActiveModel
    } = useContext(AgentContext);
 
    const [infoTooltipKey, setInfoTooltipKey] = useState(0);
@@ -92,8 +92,10 @@ const AgentTopInfo = () => {
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
    const allowStopAgent = useMemo(() => {
-      return !SYSTEM_AGENTS.some(id => compareString(id, selectedAgent?.id));
-   }, [selectedAgent]);
+      const isAgentSystem = (compareString(selectedAgent?.agent_name, currentActiveModel?.agent?.agent_name) || 
+         currentActiveModel?.dependAgents?.find((address) => compareString(address, selectedAgent?.agent_contract_address)));
+      return !isAgentSystem && !SYSTEM_AGENTS.some(id => compareString(id, selectedAgent?.id));
+   }, [selectedAgent, currentActiveModel]);
 
    const getEnvironments = async () => {
       const storageEnv = await storageModel.getEnvironment({
