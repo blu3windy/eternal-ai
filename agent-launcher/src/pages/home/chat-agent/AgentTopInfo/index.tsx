@@ -439,7 +439,7 @@ const AgentTopInfo = () => {
                                        onClick={() => handleUpdateCode(selectedAgent)}
                                        isLoading={isUpdating}
                                        isDisabled={isUpdating}
-                                       loadingText={isStarting ? 'Starting...' : 'Updating...'}
+                                       loadingText={'Updating...'}
                                     >
                                        A new code version is available. Update now?
                                     </Button>
