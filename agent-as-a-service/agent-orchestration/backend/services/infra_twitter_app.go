@@ -505,7 +505,7 @@ func (s *Service) UtilityTwitterHandleDeposit(tx *gorm.DB, networkID uint64, eve
 	infraTwitterApp, err := s.dao.FirstInfraTwitterApp(
 		tx,
 		map[string][]any{
-			"deposit_address = ?": {strings.ToLower(event.To)},
+			"eth_address = ?": {strings.ToLower(event.To)},
 		},
 		map[string][]any{},
 		[]string{},
