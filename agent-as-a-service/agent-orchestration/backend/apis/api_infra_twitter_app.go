@@ -53,22 +53,21 @@ func (s *Server) UtilityPostTwitter(c *gin.Context) {
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
 }
 
-func (s *Server) UtilityTwitterVerifyDeposit(c *gin.Context) {
-	ctx := s.requestContext(c)
-	var req serializers.AgentUtilityTwitterReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
-		return
-	}
-
-	userAddress := s.getUserAddress(c)
-	resp, err := s.nls.UtilityTwitterVerifyDeposit(ctx, userAddress, req.TxHash)
-	if err != nil {
-		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err), Result: &resp})
-		return
-	}
-	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
-}
+// func (s *Server) UtilityTwitterVerifyDeposit(c *gin.Context) {
+// 	ctx := s.requestContext(c)
+// 	var req serializers.AgentUtilityTwitterReq
+// 	if err := c.ShouldBindJSON(&req); err != nil {
+// 		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+// 		return
+// 	}
+// 	userAddress := s.getUserAddress(c)
+// 	resp, err := s.nls.UtilityTwitterVerifyDeposit(ctx, userAddress, req.TxHash)
+// 	if err != nil {
+// 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err), Result: &resp})
+// 		return
+// 	}
+// 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+// }
 
 func (s *Server) InfraTwitterAppSearchRecentTweet(c *gin.Context) {
 	ctx := s.requestContext(c)

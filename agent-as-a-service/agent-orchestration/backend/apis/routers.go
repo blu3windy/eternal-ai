@@ -444,7 +444,7 @@ func (s *Server) Routers() {
 		{
 			utilityApi.GET("/infra-twitter/info", s.GetInfraTwitterAppInfo)
 			utilityApi.POST("/twitter/post", s.UtilityPostTwitter)
-			utilityApi.POST("/twitter/verify-deposit", s.UtilityTwitterVerifyDeposit)
+			// utilityApi.POST("/twitter/verify-deposit", s.UtilityTwitterVerifyDeposit)
 		}
 	}
 }

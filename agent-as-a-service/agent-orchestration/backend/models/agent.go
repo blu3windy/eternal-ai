@@ -237,6 +237,7 @@ type AgentInfo struct {
 	DisplayName      string `gorm:"type:longtext"`
 	IsForceUpdate    bool   `gorm:"default:0"`
 	CodeVersion      int    `gorm:"default:0"`
+	RunStatus        string
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string

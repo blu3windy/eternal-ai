@@ -173,6 +173,7 @@ type AgentInfoResp struct {
 	ShortDescription          string                    `json:"short_description"`
 	IsForceUpdate             bool                      `json:"is_force_update"`
 	CodeVersion               int                       `json:"code_version"`
+	RunStatus                 string                    `json:"run_status"`
 }
 
 type AgentTwitterPostResp struct {
@@ -352,6 +353,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		ShortDescription:     m.ShortDescription,
 		IsForceUpdate:        m.IsForceUpdate,
 		CodeVersion:          m.CodeVersion,
+		RunStatus:            m.RunStatus,
 	}
 
 	if m.NftTokenImage != "" {
@@ -442,6 +444,16 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 	if len(m.AgentSnapshotMission) > 0 {
 		for _, item := range m.AgentSnapshotMission {
 			resp.AgentSnapshotMission = append(resp.AgentSnapshotMission, NewAgentSnapshotMissionResp(item))
+		}
+	}
+	switch m.AgentType {
+	case models.AgentInfoAgentTypeModel:
+		{
+			resp.RunStatus = "local"
+		}
+	case models.AgentInfoAgentTypeModelOnline:
+		{
+			resp.RunStatus = "online"
 		}
 	}
 	return resp

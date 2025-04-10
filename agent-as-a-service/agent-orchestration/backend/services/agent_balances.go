@@ -878,6 +878,7 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 			"TmpTwitterInfo": {},
 			"Meme":           {`deleted_at IS NULL and status not in ("created", "pending")`},
 			"TokenInfo":      {},
+			"AgentCategory":  {},
 		},
 		[]string{sortDefault},
 		page, limit,
