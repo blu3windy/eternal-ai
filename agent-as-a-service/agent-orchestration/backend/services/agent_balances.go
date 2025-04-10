@@ -718,7 +718,7 @@ func (s *Service) PostTwitterAferCreateToken(ctx context.Context, agentInfoID ui
 }
 
 func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses []string, userAddress string, networkID uint64, agentType int, agentTypes []int,
-	tokenAddress, search, agentModel string, installed *bool, ids, exludeIds []uint, categoryIds []string, sortListStr []string, page, limit int) ([]*models.AgentInfo, uint, error) {
+	tokenAddress, search, agentModel string, installed *bool, ids, exludeIds []uint, categoryIds []string, includeHidden *bool, sortListStr []string, page, limit int) ([]*models.AgentInfo, uint, error) {
 	selected := []string{
 		`ifnull(agent_infos.reply_latest_time, agent_infos.updated_at) reply_latest_time`,
 		"agent_infos.*",
@@ -817,7 +817,9 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 	if len(ids) > 0 {
 		filters["agent_infos.id in (?)"] = []any{ids}
 	} else {
-		filters["agent_infos.is_public = 1"] = []any{}
+		if includeHidden == nil || !(*includeHidden) {
+			filters["agent_infos.is_public = 1"] = []any{}
+		}
 		//filter instlled app
 		// if installed != nil && userAddress != "" {
 		// 	if *installed {

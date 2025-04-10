@@ -1,6 +1,7 @@
 package serializers
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
@@ -41,6 +42,7 @@ type RobotProjectResp struct {
 	TokenName    string           `json:"token_name"`
 	TokenSupply  numeric.BigFloat `json:"token_supply"`
 	TotalBalance numeric.BigFloat `json:"sol_balance"`
+	SolPrice     *big.Float       `json:"sol_price"`
 }
 
 func NewRobotProjectResp(m *models.RobotProject) *RobotProjectResp {
@@ -51,6 +53,7 @@ func NewRobotProjectResp(m *models.RobotProject) *RobotProjectResp {
 		TokenName:    m.TokenName,
 		TokenSupply:  m.TokenSupply,
 		TotalBalance: m.TotalBalance,
+		SolPrice:     m.SolPrice,
 	}
 }
 

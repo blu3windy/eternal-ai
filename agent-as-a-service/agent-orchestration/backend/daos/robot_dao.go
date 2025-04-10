@@ -67,6 +67,14 @@ func (d *DAO) FirstRobotProjectByID(tx *gorm.DB, id uint, preloads map[string][]
 	return &m, nil
 }
 
+func (d *DAO) FindRobotProject(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string, offset int, limit int) ([]*models.RobotProject, error) {
+	var ms []*models.RobotProject
+	if err := d.find(tx, &ms, filters, preloads, orders, offset, limit, false); err != nil {
+		return nil, err
+	}
+	return ms, nil
+}
+
 func (d *DAO) UpdatePrijectTotalBalance(tx *gorm.DB, projectID string) error {
 	err := tx.Exec(`
 			update robot_projects 
@@ -80,4 +88,21 @@ func (d *DAO) UpdatePrijectTotalBalance(tx *gorm.DB, projectID string) error {
 			where robot_projects.project_id = ?
 	`, projectID, projectID).Error
 	return err
+}
+
+func (d *DAO) UpdateRobotProjectRanking(tx *gorm.DB, projectID string) error {
+	_ = tx.Exec(`
+		UPDATE robot_sale_wallets AS rsw
+		JOIN (
+			SELECT id,
+				RANK() OVER (ORDER BY sol_balance DESC, id) AS ranking
+			FROM robot_sale_wallets
+			WHERE sol_balance > 0
+			AND project_id = ?
+		) AS tmp ON rsw.id = tmp.id
+		SET rsw.ranking = tmp.ranking
+		WHERE rsw.sol_balance > 0
+		AND rsw.project_id = ?
+	`, projectID, projectID).Error
+	return nil
 }
