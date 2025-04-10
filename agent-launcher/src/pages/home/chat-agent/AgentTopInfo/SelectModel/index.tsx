@@ -448,7 +448,10 @@ const SelectModel = ({
                         </Menu>
                      </Flex>
                   )}
-                  <AgentDetailProvider agent={agentDetail}>
+                  <AgentDetailProvider 
+                     agent={agentDetail}
+                     agentStates={agentStates}
+                  >
                      <AgentDetail />
                   </AgentDetailProvider>
                </Box>
