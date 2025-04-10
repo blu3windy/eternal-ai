@@ -16,6 +16,7 @@ import { ChatCompletionPayload, IChatMessage } from "../../../../services/api/ag
 import { INIT_WELCOME_MESSAGE } from "./constants";
 import HandleMessageProcessing from "./HandleMessageProcessing.tsx";
 import { useDebounce } from "@hooks/useDebounce.ts";
+import useAgentState from "@pages/home/provider/useAgentState.ts";
 
 type IChatAgentProviderContext = {
    isStopReceiving?: boolean;
@@ -60,6 +61,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const dispatch = useDispatch();
    const scrollableRef = useRef<ScrollableFeed | null>(null);
    const scrollRef = useRef<any>(null);
+   const { addActiveAgent } = useAgentState();
 
    const [loading, setIsLoading] = useState(false);
    const [info, setInfo] = useState<{ name: string; personality: string } | undefined>(undefined);
@@ -93,7 +95,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
          chatAgentDatabase.loadChatItems(threadId).then((items) => {
             if (items?.length === 0) {
-                publishEvent(INIT_WELCOME_MESSAGE);
+               publishEvent(INIT_WELCOME_MESSAGE);
             } else {
                // const filterMessages = items
                //    ?.filter((item) => item.status !== 'failed')
@@ -165,6 +167,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          return;
       }
       if (message) {
+         addActiveAgent(selectedAgent!);
          setIsLoading(true);
 
          const userMessageId = v4();
@@ -407,18 +410,18 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                content:
                   sendTxt && attachments?.length
                      ? [
-                          {
-                             type: "text",
-                             text: sendTxt,
-                          },
-                          ...attachments.map((attachment) => ({
-                             type: "image_url",
-                             image_url: {
-                                url: attachment.url,
-                                detail: "",
-                             },
-                          })),
-                       ]
+                        {
+                           type: "text",
+                           text: sendTxt,
+                        },
+                        ...attachments.map((attachment) => ({
+                           type: "image_url",
+                           image_url: {
+                              url: attachment.url,
+                              detail: "",
+                           },
+                        })),
+                     ]
                      : sendTxt,
             },
          ];
@@ -434,18 +437,18 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          }
 
          if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-            const content =
-               sendTxt && attachments?.length
+            const content
+               = sendTxt && attachments?.length
                   ? [
-                       { type: "text", text: sendTxt },
-                       ...attachments.map((attachment) => ({
-                          type: "image_url",
-                          image_url: {
-                             url: attachment.url,
-                             detail: "",
-                          },
-                       })),
-                    ]
+                     { type: "text", text: sendTxt },
+                     ...attachments.map((attachment) => ({
+                        type: "image_url",
+                        image_url: {
+                           url: attachment.url,
+                           detail: "",
+                        },
+                     })),
+                  ]
                   : sendTxt;
 
             updateTaskItem({

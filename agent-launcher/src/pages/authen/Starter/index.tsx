@@ -34,7 +34,7 @@ const Starter = (props: IProps) => {
    const initRef = useRef(false);
    const agentAPI = useRef(new CAgentTokenAPI());
 
-   const { setContainers, setImages, containers, images } = useDockerMonitorState();
+   const { setContainers, setImages } = useDockerMonitorState();
 
    const [step] = useState<Step>("INITIALIZING");
    const [isShowWarning, setIsShowWarning] = useState(false);
@@ -119,6 +119,7 @@ const Starter = (props: IProps) => {
          setChecking(false);
          localStorage.setItem("loaded", "true");
       } catch (error: any) {
+         console.log('LEON HIHI 000', error);
          setHasError(true);
       } finally {
          console.timeEnd("FULL_LOAD_TIME");

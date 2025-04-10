@@ -1,7 +1,7 @@
 import { AgentType } from "@pages/home/list-agent/constants.ts";
 import CAgentTokenAPI from "@services/api/agents-token/index.ts";
 import { compareString } from "@utils/string.ts";
-import React, { PropsWithChildren, useEffect, useMemo, useRef, useState } from "react";
+import React, { PropsWithChildren, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ContainerData, DockerContainer, DockerImage, DockerMemory } from "./interface.ts";
 import { MonitorContext } from "./MonitorContext.tsx";
 import installAgentStorage from "@storage/InstallAgentStorage.ts";
@@ -9,6 +9,7 @@ import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import { commonSelector } from "@stores/states/common/selector.ts";
 import { useSelector } from "react-redux";
 import uniqBy from "lodash.uniqby";
+// import useDockerMonitorState from "@providers/DockerMonitor/useDockerMonitorState.ts";
 
 const MonitorProvider: React.FC<
     PropsWithChildren
@@ -163,7 +164,7 @@ const MonitorProvider: React.FC<
                   agent: matchingAgent,
                   agentType,
                   imageSize: image.Size,
-
+                  createdAt: container.CreatedAt,
                };
             }
 
@@ -179,6 +180,7 @@ const MonitorProvider: React.FC<
                agent: matchingAgent,
                agentType,
                imageSize: image.Size,
+               createdAt: container.CreatedAt,
             };
          });
 
