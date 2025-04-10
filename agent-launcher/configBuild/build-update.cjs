@@ -2,6 +2,7 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const semver = require('semver');
 const yaml = require('js-yaml');
+const path = require('path');
 
 const pkgPath = './package.json';
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
