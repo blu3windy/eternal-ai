@@ -12,6 +12,7 @@ import { useSelector } from 'react-redux';
 import { agentTasksProcessingSelector } from '@stores/states/agent-chat/selector';
 import { TaskItem } from '@stores/states/agent-chat/type';
 import { WHITE_LIST_CONTAINER_NAMES } from './constants';
+import { getAgentContainerName } from './helpers';
 
 interface IGarbageContext {
    checkInactiveContainers: (params: ICheckInactiveContainersParams) => void;
@@ -22,6 +23,9 @@ interface ICheckInactiveContainersParams {
    activeAgents: Set<ActiveAgent>;
    containers: ContainerData[];
 }
+
+const TIME_TO_CLEAN = 10 * 60 * 1000;
+const INTERVAL_TIME_CHECK = 2 * 60 * 1000;
 
 const GarbageContext = createContext<IGarbageContext | undefined>(undefined);
 
@@ -38,16 +42,12 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
       pendingTasksRef.current = pendingTasks;
    }, [pendingTasks]);
 
-   const getAgentContainerName = (agent: IAgentToken) => {
-      return `${agent?.network_id}-${agent?.agent_name}`?.toLowerCase();
-   }
-
    const checkInactiveContainers = async (params: ICheckInactiveContainersParams) => {
       const { selectedAgent, activeAgents, containers } = params;
 
       if (!selectedAgent) return;
       const now = Date.now();
-      const timeToCheck = 10 * 60 * 1000; // 10 minutes
+      const timeToClean = TIME_TO_CLEAN;
       console.log('containers', containers);
 
       const activeModel = await storageModel.getActiveModel();
@@ -66,8 +66,12 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
       // Check each active agent's timestamp
       activeAgents.forEach(async (activeAgent) => {
-         const isValidTime = new BigNumber(now).minus(activeAgent.timestamp).gt(timeToCheck);
-         console.log('LEON checkInactiveContainers activeAgent: ', getAgentContainerName(activeAgent.agent), isValidTime);
+         const isValidTime = new BigNumber(now).minus(activeAgent.timestamp).gt(timeToClean);
+         const remandTimeMinutes = new BigNumber(now).minus(activeAgent.timestamp).div(60).toNumber();
+         console.log('LEON checkInactiveContainers activeAgent: ', getAgentContainerName(activeAgent.agent), {
+            isValidTime, 
+            remandTimeMinutes
+         });
          if (whiteListContainerNames.includes(getAgentContainerName(activeAgent.agent))) return;
          if (compareString(activeAgent.agent.agent_id, selectedAgent?.agent_id)) return;
          if (pendingTasksRef.current.find(task => compareString(task.agent.agent_id, activeAgent.agent.agent_id))) return;
@@ -103,7 +107,7 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
       debounceCheckInactiveContainers({ selectedAgent, activeAgents, containers });
       intervalRef.current = setInterval(() => {
          debounceCheckInactiveContainers({ selectedAgent, activeAgents, containers });
-      }, 2 * 60 * 1000); // 2 minutes
+      }, INTERVAL_TIME_CHECK);
       return () => {
          if (intervalRef.current) {
             clearInterval(intervalRef.current);
