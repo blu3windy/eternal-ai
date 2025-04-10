@@ -110,11 +110,11 @@ const Starter = (props: IProps) => {
             }
          }
 
-         const { containers, images } = await window.electronAPI.getInitialDockerData();
-         console.log('LEON HIHI 000', { containers, images });
+         // const { containers, images } = await window.electronAPI.getInitialDockerData();
+         // console.log('LEON HIHI 000', { containers, images });
 
-         setContainers(containers);
-         setImages(images);
+         // setContainers(containers);
+         // setImages(images);
 
          setChecking(false);
          localStorage.setItem("loaded", "true");
