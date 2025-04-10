@@ -38,9 +38,6 @@ const handleStreamResponse = async (
 
    const contentType = response.headers.get('content-type');
    
-   console.log('contentType response.headers', response.headers);
-   console.log('contentType hihi', contentType);
-
    if (contentType?.includes('text/event-stream')) {
       // Handle streaming response
       const reader = response.body?.getReader();
@@ -185,7 +182,7 @@ const AgentAPI = {
             headers: {
                ...headers,
             },
-            body: JSON.stringify({ messages: messages, stream: true, seed: 0 })
+            body: JSON.stringify({ messages: messages, stream: true, seed: 0, name: payload.name, description: payload.description })
          });
 
          return await handleStreamResponse(response, streamHandlers);
@@ -213,7 +210,7 @@ const AgentAPI = {
          headers: {
             ...headers,
          },
-         body: JSON.stringify({ messages: messages })
+         body: JSON.stringify({ messages: messages, name: payload.name, description: payload.description })
       });
 
       if (response.status === 200) {
@@ -273,7 +270,9 @@ const AgentAPI = {
                stream: true, 
                seed: 0,
                privateKey: prvKey,
-               chainId: agent?.network_id
+               chainId: agent?.network_id,
+               name: payload?.name,
+               description: payload?.description
             })
          });
 
@@ -311,6 +310,8 @@ const AgentAPI = {
             kb_id: payload.kb_id,
             model_name: payload.model_name,
             stream: true,
+            name: payload.name,
+            description: payload.description,
          }),
       });
 

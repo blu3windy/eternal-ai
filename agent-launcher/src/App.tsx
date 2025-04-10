@@ -8,15 +8,12 @@ import Home from "./pages/home";
 import Mine from "./pages/mine";
 
 import SyncTaskFromStorage from "@providers/SyncTaskFromStorage/index.tsx";
-import { useEffect, useState } from "react";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
-import s from "./styles/styles.module.scss";
 
-import { Box, Flex, Spinner, Text } from "@chakra-ui/react";
-import { motion } from "framer-motion";
 import FloatingWebView from "@providers/FloatingWebView/index.tsx";
 import UpdateBanner from "@components/UpdateBanner/index.tsx";
+// import { DockerMonitorProvider } from "@providers/DockerMonitor/index.tsx";
 
 function App() {
 
@@ -27,9 +24,7 @@ function App() {
                <SyncTaskFromStorage />
                <FloatingWebView />
                <UpdateBanner />
-
                <AuthProvider>
-
                   <Router basename="/">
                      <Routes>
                         <Route path={ROUTERS.HOME} element={<Home />} />
@@ -38,11 +33,9 @@ function App() {
                         <Route path="*" element={<Navigate to={ROUTERS.HOME} />} />
                      </Routes>
                   </Router>
-
                </AuthProvider>
             </PersistGate>
          </Provider>
-
       </>
    );
 }

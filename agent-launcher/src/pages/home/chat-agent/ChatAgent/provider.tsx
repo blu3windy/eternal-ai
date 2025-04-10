@@ -16,7 +16,11 @@ import { ChatCompletionPayload, IChatMessage } from "../../../../services/api/ag
 import { INIT_WELCOME_MESSAGE } from "./constants";
 import HandleMessageProcessing from "./HandleMessageProcessing.tsx";
 import { useDebounce } from "@hooks/useDebounce.ts";
+
 import { requestReload } from "@stores/states/common/reducer.ts";
+
+import useAgentState from "@pages/home/provider/useAgentState.ts";
+
 
 type IChatAgentProviderContext = {
    isStopReceiving?: boolean;
@@ -61,6 +65,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const dispatch = useDispatch();
    const scrollableRef = useRef<ScrollableFeed | null>(null);
    const scrollRef = useRef<any>(null);
+   const { addActiveAgent } = useAgentState();
 
    const [loading, setIsLoading] = useState(false);
    const [info, setInfo] = useState<{ name: string; personality: string } | undefined>(undefined);
@@ -77,6 +82,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const id = selectedAgent?.id;
    const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
    const refLoadChatItems = useRef(false);
+
    const refInitialized = useRef(false);
    const isElectron = useRef(false);
    const initTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -84,13 +90,11 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const [isFirstChat, setIsFirstChat] = useState(true);
    const refEmptyMessage = useRef(true);
 
+   const cPumpAPI = new CAgentTokenAPI();
+
+
    const isAllowChat = useMemo(() => {
       return true;
-      // if(selectedAgent) {
-      //    return Number(selectedAgent?.wallet_balance) > 0;
-      // }
-      //
-      // return false;
    }, []);
 
    const initialLoadChatItems = useCallback(async () => {
@@ -98,8 +102,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       setMessages([]);
       setSessionId(undefined);
 
-
-      const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
       const threadItems = await chatAgentDatabase.getSessions(threadId);
 
       if (threadItems?.length === 0) {
@@ -213,6 +215,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          return;
       }
       if (message) {
+         addActiveAgent(selectedAgent!);
          setIsLoading(true);
 
          const userMessageId = v4();
@@ -263,8 +266,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          setMessages((prev) => [...prev, responseMsg]);
 
          await sendMessageToServer(messageId, Number(id), message, attachments);
-
-         // cPumpAPI.saveAgentPromptCount(Number(id));
+         addActiveAgent(selectedAgent!);
+         cPumpAPI.saveAgentPromptCount(Number(id));
       }
    };
 
@@ -489,6 +492,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             messages: historyMessages,
             agentId: agentId,
             model_name: selectedAgent?.agent_base_model,
+            name: selectedAgent?.display_name || selectedAgent?.agent_name,
+            description: selectedAgent?.short_description,
          };
          if (selectedAgent?.kb_id) {
             const kbId = `${selectedAgent?.kb_id}`.replace("kb-", "");
@@ -496,8 +501,8 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          }
 
          if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-            const content =
-               sendTxt && attachments?.length
+            const content
+               = sendTxt && attachments?.length
                   ? [
                      { type: "text", text: sendTxt },
                      ...attachments.map((attachment) => ({

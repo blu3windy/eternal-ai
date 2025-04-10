@@ -70,14 +70,12 @@ class CAgentTokenAPI extends CApiClient {
             }
 
             if (agent?.env_example && typeof agent?.env_example === "string") {
-               console.log('LEON agent.env_example 000', agent.agent_name, agent.env_example);
                agent.env_example = envToJson(agent?.env_example);
 
                if (agent.env_example && Object.keys(agent.env_example).length === 0) {
                   agent.env_example = undefined;
                }
 
-               console.log('LEON agent.env_example 111', agent.env_example);
             }
             return agent;
          });

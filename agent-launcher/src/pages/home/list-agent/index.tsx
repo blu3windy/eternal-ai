@@ -81,7 +81,7 @@ const AgentsList = () => {
 
    const refParams = useRef({
       page: 1,
-      limit: 10,
+      limit: 25,
       sort,
       category: 0,
       filter,
@@ -182,7 +182,7 @@ const AgentsList = () => {
          // } else if (refParams.current.category === CategoryOption.Infra) {
          //    params.agent_types = [AgentType.Infra].join(',');
          // } else {
-            params.agent_types = [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(',');
+         params.agent_types = [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(',');
          // }
 
          if (!refParams.current.isSearchMode) {
@@ -436,8 +436,8 @@ const AgentsList = () => {
                   // autoFocus
                   onFocus={() => {
                      // if (category === CategoryOption.All) {
-                        // setCategory(CategoryOption.Utility);
-                        // refParams.current.category = category;
+                     // setCategory(CategoryOption.Utility);
+                     // refParams.current.category = category;
                      // }
 
                      if(!refParams?.current?.isSearchMode) {

@@ -1,6 +1,5 @@
 import { Center, Image, Box } from "@chakra-ui/react";
 import BackgroundWrapper from "@components/BackgroundWrapper";
-import BaseButton from "@components/BaseButton";
 import { getSetupAgents } from "@pages/authen/ChooseModel/utils.ts";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
 import StarterLogs from "@pages/authen/Starter/Starter.logs.tsx";
@@ -11,6 +10,11 @@ import { useContext, useEffect, useRef, useState } from "react";
 import AgentProvider from "@pages/home/provider/AgentProvider";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { setReadyPort } from "@utils/agent.ts";
+import installAgentStorage from "@storage/InstallAgentStorage";
+import { WHITE_LIST_CONTAINER_NAMES } from "@providers/GarbageDocker/constants";
+import { getAgentContainerName } from "@providers/GarbageDocker/helpers";
+import useAgentState from "@pages/home/provider/useAgentState";
+// import useDockerMonitorState from "@providers/DockerMonitor/useDockerMonitorState";
 
 interface IProps {
    loadingUser: boolean;
@@ -28,25 +32,39 @@ const LoadingIcon = () => (
    />
 )
 
-const tryExecFunction = async (maxRun: number, func: any) => {
-   // Try to execute the function
-   // If function has error, try to execute the function again maxRun times
-   for (let i = 0; i < maxRun; i++) {
-      try {
-         await func();
-      } catch (error) {
-         if (i === maxRun - 1) {
-            throw error;
-         }
-      }
-   }
-}
-
 const Starter = (props: IProps) => {
    const { onCheckHasUser } = props;
    const { setChecking } = useStarter();
    const initRef = useRef(false);
    const agentAPI = useRef(new CAgentTokenAPI());
+   const { addActiveAgents } = useAgentState();
+
+   // const { setContainers, setImages } = useDockerMonitorState();
+
+   const getTokens = async () => {
+      const installIds = await installAgentStorage.getAgentIds();
+
+      const params: any = {
+         page: 1,
+         limit: 100,
+         sort_col: 'created_at',
+         agent_types: [AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(','),
+         ids: installIds.join(','),
+      };
+      const {
+         agents
+      } = await agentAPI.current.getAgentTokenList(params);
+
+      // ignore in white list
+      
+      const _agents = agents.filter((agent) => {
+         return !WHITE_LIST_CONTAINER_NAMES.includes(getAgentContainerName(agent));
+      });
+
+      console.log('LEON getTokens', { _agents });
+
+      return _agents
+   }
 
    const [step] = useState<Step>("INITIALIZING");
    const [isShowWarning, setIsShowWarning] = useState(false);
@@ -78,11 +96,10 @@ const Starter = (props: IProps) => {
 
 
    const onInit = async (ignoreCopy?: boolean) => {
-
       const loaded = await localStorage.getItem("loaded");
-      const time = (loaded ? 15 : 50) * 60 * 1000;
+      const time = (loaded ? 15 : 50) * 60 * 1000; // 15 minutes for loaded users, 50 minutes for new users
 
-      // Start the 15-minute timer
+      // Start the timer based on whether user is loaded or not
       initTimerRef.current = setTimeout(() => {
          setIsShowWarning(true);
       }, time);
@@ -96,17 +113,11 @@ const Starter = (props: IProps) => {
          }
 
          console.time("DOCKER_INSTALL");
-
          await globalThis.electronAPI.dockerInstall();
-         // await tryExecFunction(2, globalThis.electronAPI.dockerInstall);
-         // await globalThis.electronAPI.dockerInstall();
          console.timeEnd("DOCKER_INSTALL");
-
 
          console.time("DOCKER_BUILD");
          await globalThis.electronAPI.dockerBuild();
-         // await tryExecFunction(2, globalThis.electronAPI.dockerBuild);
-         // await globalThis.electronAPI.dockerBuild();
          console.timeEnd("DOCKER_BUILD");
 
          const activeModel = await storageModel.getActiveModel();
@@ -129,34 +140,38 @@ const Starter = (props: IProps) => {
             }
          }
 
-         // console.time("MODEL_BASE");
-         // await tryExecFunction(2, async () => {
-         //    await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
-         // });
-         // // await globalThis.electronAPI.modelInstallBaseModel(MODEL_HASH);
-         // console.timeEnd("MODEL_BASE");
+         // const { containers, images } = await window.electronAPI.getInitialDockerData();
+         // console.log('LEON HIHI 000', { containers, images });
+
+         // setContainers(containers);
+         // setImages(images);
+         try {
+            const agents = await getTokens();
+            addActiveAgents(agents);
+         } catch (error) {
+            console.log('LEON getTokens error', error);
+         }
 
          setChecking(false);
          localStorage.setItem("loaded", "true");
       } catch (error: any) {
-         // alert(error?.message || "Something went wrong.");
+         console.log('LEON HIHI 000', error);
          setHasError(true);
       } finally {
          console.timeEnd("FULL_LOAD_TIME");
          setIsFinished(true);
-         // Clear the timer if init completes before 15 minutes
+         // Clear the timer if init completes before timeout
          if (initTimerRef.current) {
             clearTimeout(initTimerRef.current);
          }
       }
-   }
-
+   };
 
    const onClearCounter = () => {
       if (initTimerRef.current) {
          clearTimeout(initTimerRef.current);
       }
-   }
+   };
 
    const onRetry = () => {
       setHasError(false);
@@ -164,7 +179,7 @@ const Starter = (props: IProps) => {
       setIsShowWarning(false);
       onClearCounter();
       onInit(true).then().catch();
-   }
+   };
 
    // Cleanup timer on unmount
    useEffect(() => {

@@ -98,6 +98,7 @@ export interface IAgentToken {
   code_version?: number;
   is_force_update?: boolean;
   run_status?: AgentStatus;
+  author?: string;
 }
 
 export interface Meme {

@@ -82,6 +82,11 @@ export interface IElectronAPI {
 
   // OS
   osContext: () => Promise<any>
+
+  // Docker monitor
+  getInitialDockerData: () => Promise<any>
+  onContainersUpdate: (callback: (data: any) => void) => void
+  onImagesUpdate: (callback: (data: any) => void) => void
 }
 
 declare global {

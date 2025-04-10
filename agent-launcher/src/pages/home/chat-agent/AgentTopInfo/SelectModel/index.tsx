@@ -1,9 +1,15 @@
 import {
    Box,
+   Button,
    Circle,
    Divider,
    Flex,
+   IconButton,
    Image,
+   Menu,
+   MenuButton,
+   MenuItem,
+   MenuList,
    Popover,
    PopoverContent,
    PopoverTrigger,
@@ -12,7 +18,7 @@ import {
 } from '@chakra-ui/react';
 import BaseModal from "@components/BaseModal";
 import Loading from '@components/Loading';
-import { AgentStatus, AgentStatusLabel, AgentType } from '@pages/home/list-agent/constants';
+import { AgentStatus, AgentStatusLabel, AgentType, SYSTEM_AGENTS } from '@pages/home/list-agent/constants';
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import storageModel from '@storage/StorageModel';
@@ -21,6 +27,9 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import SetupEnvModel from '../../SetupEnvironment';
 import s from './styles.module.scss';
 import AgentDetail from '../../AgentDetail';
+import DeleteAgentModal from '@pages/home/list-agent/AgentMonitor/DeleteAgentModal';
+import { compareString } from '@utils/string';
+import { AgentDetailProvider } from './AgentDetailProvider';
 
 export const RenameModels: any = {
    'NousResearch/Hermes-3-Llama-3.1-70B-FP8': 'Hermes 3 70B',
@@ -53,16 +62,18 @@ const ItemToken = ({
    onClose,
    agent,
    isSelected,
+   onShowSetupEnv,
+   onShowAgentDetail,
 }: {
    onSelect: any;
    onDelete: any;
    onClose: any;
-   agent: IAgentToken,
+   agent: IAgentToken;
    isSelected: boolean;
+   onShowSetupEnv: (agent: IAgentToken) => void;
+   onShowAgentDetail: (agent: IAgentToken) => void;
 }) => {
-   const { agentStates, installAgent } = useContext(AgentContext);
-   const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
-   const [isShowAgentDetail, setIsShowAgentDetail] = useState(false);
+   const { agentStates, installAgent, } = useContext(AgentContext);
 
    const isStarting = useMemo(() => {
       return agentStates[agent.id]?.isStarting;
@@ -76,6 +87,10 @@ const ItemToken = ({
       return agentStates[agent.id]?.isInstalled;
    }, [agentStates, agent]);
 
+   const isUnInstalling = useMemo(() => {
+      return agentStates[agent.id]?.isUnInstalling;
+   }, [agentStates, agent]);
+
    const avatarUrl
       = agent?.thumbnail
       || agent?.token_image_url
@@ -85,6 +100,10 @@ const ItemToken = ({
 
    const modelSize = useMemo(() => {
       return requirements?.disk || 0;
+   }, [agent]);
+
+   const allowStopAgent = useMemo(() => {
+      return !SYSTEM_AGENTS.some(id => compareString(id, agent?.id));
    }, [agent]);
 
    const handleRemoveAgent = (e: any) => {
@@ -98,8 +117,7 @@ const ItemToken = ({
    const handleViewDetail = (e: any) => {
       e?.preventDefault();
       e?.stopPropagation();
-
-      setIsShowAgentDetail(true);
+      onShowAgentDetail(agent);
    }
 
    const handleInstall = async () => {
@@ -111,7 +129,7 @@ const ItemToken = ({
          console.log('environment', environment);
 
          if (!environment) {
-            setIsShowSetupEnvModel(true);
+            onShowSetupEnv(agent);
             return;
          }
       }
@@ -194,7 +212,7 @@ const ItemToken = ({
                      </Circle>
                   ) : isStarting || isInstalling ? (
                      <Loading />
-                  ) : agent?.agent_type === AgentType.Model && !isInstalled ? (
+                  ) : !isInstalled ? (
                      <Box onClick={handleInstall}>
                         <Image src={`icons/ic-install.svg`} w={'24px'} h={'24px'} />
                      </Box>
@@ -204,33 +222,7 @@ const ItemToken = ({
                }
             </Flex>
          </Flex>
-         {isShowSetupEnvModel && (
-            <BaseModal
-               isShow={isShowSetupEnvModel}
-               onHide={() => setIsShowSetupEnvModel(false)}
-               size="small"
-               title="Setup Environment"
-            >
-               <SetupEnvModel
-                  environments={agent?.env_example}
-                  agent={agent}
-                  onSubmit={async () => {
-                     setIsShowSetupEnvModel(false);
-                     handleInstall();
-                  }}
-               />
-            </BaseModal>
-         )}
-         <BaseModal
-            isShow={isShowAgentDetail}
-            onHide={() => setIsShowAgentDetail(false)}
-            size="extra"
-            className={s.agentDetailModalContent}
-         >
-            <AgentDetail />
-         </BaseModal>
       </>
-
    );
 };
 
@@ -262,7 +254,7 @@ const SelectModel = ({
    className,
    showDescription = true,
 }: Props) => {
-   const { installedModelAgents, availableModelAgents, startAgent, unInstallAgent } = useContext(AgentContext);
+   const { installedModelAgents, availableModelAgents, startAgent, unInstallAgent, installAgent, agentStates } = useContext(AgentContext);
    const {
       selectedAgent,
       isCanChat,
@@ -271,9 +263,6 @@ const SelectModel = ({
       requireInstall,
       isRunning,
    } = useContext(AgentContext);
-
-   console.log('stephen: availableModelAgents', availableModelAgents);
-   console.log('stephen: installedModelAgents', installedModelAgents);
 
    const [activeModel, setActiveModel] = useState<any>(null);
    const [page, setPage] = useState<number>(0);
@@ -327,9 +316,21 @@ const SelectModel = ({
       return availableModelAgents.slice(0, (page + 1) * PAGE_SIZE);
    }, [page, availableModelAgents]);
 
-   console.log('stephen: page', page);
-   console.log('stephen: models', models);
-   console.log('stephen: showLoadMore', showLoadMore);
+   const [setupEnvAgent, setSetupEnvAgent] = useState<IAgentToken | null>(null);
+   const [agentDetail, setAgentDetail] = useState<IAgentToken | null>(null);
+   const [deleteAgent, setDeleteAgent] = useState<IAgentToken | undefined>();
+
+   const isInstalled = useMemo(() => {
+      return agentDetail ? agentStates[agentDetail.id]?.isInstalled : false;
+   }, [agentStates, agentDetail]);
+
+   const isUnInstalling = useMemo(() => {
+      return agentDetail ? agentStates[agentDetail.id]?.isUnInstalling : false;
+   }, [agentStates, agentDetail]);
+
+   const allowStopAgent = useMemo(() => {
+      return agentDetail ? !SYSTEM_AGENTS.some(id => compareString(id, agentDetail?.id)) : false;
+   }, [agentDetail]);
 
    return (
       <>
@@ -363,13 +364,14 @@ const SelectModel = ({
                            agent={t}
                            onSelect={async (agent: IAgentToken) => {
                               await startAgent(agent);
-                              // onClose();
                            }}
                            onClose={onClose}
                            isSelected={activeModel?.id === t.id}
                            onDelete={(agent: IAgentToken) => {
-                              unInstallAgent(agent);
+                              setDeleteAgent(agent);
                            }}
+                           onShowSetupEnv={(agent) => setSetupEnvAgent(agent)}
+                           onShowAgentDetail={(agent) => setAgentDetail(agent)}
                         />
                         <Divider color={'#E2E4E8'} my={'0px'} />
                      </>
@@ -382,6 +384,88 @@ const SelectModel = ({
                </PopoverContent>
             </Popover>
          </Box>
+
+         {setupEnvAgent && (
+            <BaseModal
+               isShow={!!setupEnvAgent}
+               onHide={() => setSetupEnvAgent(null)}
+               size="small"
+               title="Setup Environment"
+            >
+               <SetupEnvModel
+                  environments={setupEnvAgent?.env_example}
+                  agent={setupEnvAgent}
+                  onSubmit={async () => {
+                     setSetupEnvAgent(null);
+                     installAgent(setupEnvAgent);
+                  }}
+               />
+            </BaseModal>
+         )}
+
+         {agentDetail && (
+            <BaseModal
+               isShow={!!agentDetail}
+               onHide={() => setAgentDetail(null)}
+               size="extra"
+               className={s.agentDetailModalContent}
+            >
+               <Box w='100%'>
+                  {allowStopAgent && isInstalled && (
+                     <Flex justifyContent={'flex-end'}>
+                        <Menu>
+                           <MenuButton
+                              as={IconButton}
+                              aria-label="Options"
+                              icon={
+                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12.0197 5.5C11.1907 5.5 10.5146 4.829 10.5146 4C10.5146 3.171 11.1816 2.5 12.0096 2.5H12.0197C12.8487 2.5 13.5197 3.171 13.5197 4C13.5197 4.829 12.8487 5.5 12.0197 5.5ZM13.5197 12C13.5197 11.171 12.8487 10.5 12.0197 10.5H12.0096C11.1816 10.5 10.5146 11.171 10.5146 12C10.5146 12.829 11.1907 13.5 12.0197 13.5C12.8487 13.5 13.5197 12.829 13.5197 12ZM13.5197 20C13.5197 19.171 12.8487 18.5 12.0197 18.5H12.0096C11.1816 18.5 10.5146 19.171 10.5146 20C10.5146 20.829 11.1907 21.5 12.0197 21.5C12.8487 21.5 13.5197 20.829 13.5197 20Z" fill="#686A6C" />
+                                 </svg>
+                              }
+                              variant="ghost"
+                           />
+                           <MenuList>
+                              <MenuItem>
+                                 <Button
+                                    onClick={() => setDeleteAgent(agentDetail)}
+                                    isLoading={isUnInstalling}
+                                    isDisabled={isUnInstalling}
+                                    loadingText={'Deleting...'}
+                                    background={'transparent'}
+                                    w={'100%'}
+                                    _hover={{
+                                       background: 'transparent',
+                                    }}
+                                    justifyContent={'flex-start'}
+                                 >
+                                    Delete
+                                 </Button>
+                              </MenuItem>
+                           </MenuList>
+                        </Menu>
+                     </Flex>
+                  )}
+                  <AgentDetailProvider 
+                     agent={agentDetail}
+                     agentStates={agentStates}
+                  >
+                     <AgentDetail />
+                  </AgentDetailProvider>
+               </Box>
+            </BaseModal>
+         )}
+
+         <DeleteAgentModal
+            agentName={deleteAgent?.display_name || deleteAgent?.agent_name}
+            isOpen={!!deleteAgent}
+            onClose={() => setDeleteAgent(undefined)}
+            onDelete={() => {
+               if (deleteAgent) {
+                  unInstallAgent(deleteAgent);
+                  setDeleteAgent(undefined);
+               }
+            }}
+         />
       </>
    );
 };

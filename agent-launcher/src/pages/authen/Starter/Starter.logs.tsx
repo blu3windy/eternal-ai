@@ -42,7 +42,8 @@ const StarterLogs = ({ isShowWarning = false, hasError = false, onRetry }: IProp
 
    // Filter logs based on showAllLogs state
    const displayedLogs = useMemo(() => {
-      return showAllLogs ? uniqueLogs : uniqueLogs.slice(-1);
+      // return showAllLogs ? uniqueLogs : uniqueLogs.slice(-1);
+      return showAllLogs ? uniqueLogs : [];
    }, [uniqueLogs, showAllLogs]);
 
    useEffect(() => {
