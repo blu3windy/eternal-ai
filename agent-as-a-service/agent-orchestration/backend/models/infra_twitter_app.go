@@ -19,7 +19,7 @@ type InfraTwitterTopupTx struct {
 	gorm.Model
 	NetworkID         uint64
 	EventId           string `gorm:"unique_index"`
-	InfraTwitterAppID uint
+	InfraTwitterAppID uint   `gorm:"index"`
 	InfraTwitterApp   *InfraTwitterApp
 	Type              AgentEaiTopupType `gorm:"default:'deposit'"`
 	DepositAddress    string
