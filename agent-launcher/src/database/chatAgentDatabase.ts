@@ -1,61 +1,85 @@
 import Dexie, { type EntityTable } from "dexie";
 import { IChatMessage } from "../services/api/agent/types.ts";
 import orderBy from "lodash/orderBy";
+import { v4 } from "uuid";
+
+export type ChatSession = {
+    id: string;
+    name: string;
+    createdAt: number;
+    updatedAt: number;
+    lastMessage?: string;
+    threadId: string;
+};
 
 export type PersistedMessageType = {
    threadId: string;
-   // status: 'sending' | 'done' | 'thinking' | 'error';
+   uuid: string;
 } & IChatMessage;
 
 class ChatAgentDatabase {
    private databaseName = "chat-agent-database";
    private db;
+   
    constructor() {
       try {
          this.db = new Dexie(this.databaseName) as Dexie & {
             messages: EntityTable<PersistedMessageType, "id">;
+            sessions: EntityTable<ChatSession, "id">;
          };
 
-         // for version 1
-         this.db.version(1).stores({
-            messages: "id, threadId, is_reply, msg, name, createdAt",
+         // Upgrade to version 2 to add sessions
+         this.db.version(2).stores({
+            messages: "id, threadId, uuid, is_reply, msg, name, createdAt",
+            sessions: "id, threadId, createdAt, updatedAt"
          });
-
-         // // https://dexie.org/docs/Version/Version.upgrade()
-         // // for version n
-         // this.db
-         //     .version(n)
-         //     .stores({
-         //         // add new stores
-         //     })
-         //     .upgrade((trans) => {
-         //         var YEAR = 365 * 24 * 60 * 60 * 1000;
-         //         return trans
-         //             .table('friends')
-         //             .toCollection()
-         //             .modify((friend) => {
-         //                 friend.birthdate = new Date(Date.now() - friend.age * YEAR);
-         //                 delete friend.age;
-         //             });
-         //     });
       } catch (e) {
          //
       }
    }
 
+   // Add new methods for session management
+   async createSession(threadId: string): Promise<string> {
+       const sessionId = v4();
+       await this.db?.sessions.add({
+           id: sessionId,
+           threadId: threadId,
+           name: "New Chat",
+           createdAt: Date.now(),
+           updatedAt: Date.now(),
+       });
+       return sessionId;
+   }
+
+   async updateSessionName(sessionId: string, name: string) {
+       await this.db?.sessions.update(sessionId, {
+           name,
+           updatedAt: Date.now()
+       });
+   }
+
+   async updateSessionLastMessage(sessionId: string, lastMessage: string) {
+       await this.db?.sessions.update(sessionId, {
+           lastMessage,
+           updatedAt: Date.now()
+       });
+   }
+
+   async getSessions(threadId: string): Promise<ChatSession[]> {
+       return await this.db?.sessions
+           .where('threadId')
+           .equals(threadId)
+           .reverse()
+           .sortBy('updatedAt');
+   }
+
+   async deleteSession(sessionId: string) {
+       await this.db?.sessions.delete(sessionId);
+       await this.clearChatItems(sessionId);
+   }
+
    async loadChatItems(threadId: string, pagination?: { offset: number; limit: number }): Promise<IChatMessage[]> {
       try {
-         // this.db.messages.where('age').above(25).reverse().sortBy('name');
-
-         // if (pagination) {
-         //   return await this.db?.messages
-         //     .where('threadId')
-         //     .equals(threadId)
-         //     .sortBy('createdAt')
-         //     .offset(pagination.offset)
-         //     .limit(pagination.limit)
-         //     .toArray();
-         // }
          const messages = await this.db?.messages.where("threadId").equals(threadId).sortBy("createdAt");
 
          const migrateMessages = messages.filter((item) => typeof item.createdAt === "string");
@@ -88,7 +112,6 @@ class ChatAgentDatabase {
       try {
          await this.db?.messages.add({
             ...newItem,
-            // createdAt: newItem.createdAt ? new Date(newItem.createdAt).getTime() : new Date().getTime(),
             createdAt: new Date().getTime()
          });
          return newItem;
@@ -106,7 +129,6 @@ class ChatAgentDatabase {
          delete normalizedItem.createdAt;
          await this.db?.messages.update(updatedItem.id, {
             ...normalizedItem,
-            // updatedAt: updatedItem.updatedAt ? new Date(updatedItem.updatedAt).getTime() : new Date().getTime(),
             updatedAt: new Date().getTime()
          });
          return updatedItem;
@@ -138,6 +160,67 @@ class ChatAgentDatabase {
          console.log('_________clearChatItems', e);
       }
    }
+
+   // TODO: create new threadID with structure
+   // threadId: [{
+   //    uuid: string;
+   //    createdAt: number;
+   //    updatedAt: number;
+   //    messages: IChatMessage[];
+   // }]  
+   async createNewThreadId(threadId: string) {
+      try {
+         await this.db?.threads.add({
+            threadId: threadId,
+            uuid: v4(),
+            createdAt: new Date().getTime(),
+            updatedAt: new Date().getTime(),
+         });
+      } catch (e) {
+         //
+      }
+   }
+
+   // TODO: get all threadID buy threadId with structure
+   // threadId: [{
+   //    uuid: string;
+   //    createdAt: number;
+   //    updatedAt: number;
+   //    messages: IChatMessage[];
+   // }] 
+   async getAllThreadId(threadId: string) {
+      try {
+         return await this.db?.threads.where("threadId").equals(threadId).toArray();
+      } catch (e) {
+         //
+      }
+   }
+
+   // TODO: migrate messages with threadId, if message not exist uuid, then update uuid from threadId
+   // threadId: [{
+   //    uuid: string;
+   //    createdAt: number;
+   //    updatedAt: number;
+   //    messages: IChatMessage[];
+   // }]  
+   async migrateMessages(threadId: string) { 
+      try {
+         const threadItems = await this.getSessions(threadId);
+
+         if (threadItems?.length > 0) {
+            const messages = await this.loadChatItems(threadId);
+
+            if (messages?.length > 0) {
+               messages.forEach((message) => {
+                  this.updateChatItem({ ...message, threadId: threadId, uuid: threadItems[0].id });
+               });
+            }
+         }
+      } catch (e) {
+         //
+      }
+   }
+
 }
 
 const chatAgentDatabase = new ChatAgentDatabase();

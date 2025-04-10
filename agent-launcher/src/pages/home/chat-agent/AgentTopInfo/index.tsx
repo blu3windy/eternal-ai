@@ -37,6 +37,7 @@ import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import SetupEnvModel from '../SetupEnvironment';
 import s from './styles.module.scss';
 import debounce from 'lodash.debounce';
+import ButtonChatHistory from "./ButtonChatHistory";
 
 
 const AgentTopInfo = () => {
@@ -215,7 +216,7 @@ const AgentTopInfo = () => {
                   s.contentContainer,
                   showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : ''
                )}
-               w="clamp(600px, 81%, 1200px)"
+               w="clamp(600px, 100%, 1200px)"
                mx={'auto'}
             >
                {/* {isCanChat &&
@@ -231,7 +232,8 @@ const AgentTopInfo = () => {
                }
 
                <Flex gap={'6px'} justifyContent={'space-between'} alignItems={'center'}>
-                  <Flex gap={'6px'} alignItems={'center'} className={s.content}>
+
+                   <Flex gap={'6px'} alignItems={'center'} className={s.content}>
                      <InfoTooltip
                         key={`info-tooltip-${selectedAgent?.id}-${infoTooltipKey}`}
                         iconSize="20px"
@@ -475,6 +477,7 @@ const AgentTopInfo = () => {
                         <AgentWallet color={colorWallet}/>
                      </AgentTradeProvider>
                   )} */}
+                  <ButtonChatHistory />
                   <Button className={s.btnBuy} onClick={onOpenDrawer}>
                      Buy
                   </Button>

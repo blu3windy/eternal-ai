@@ -75,7 +75,10 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const id = selectedAgent?.id;
    const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
    const refLoadChatItems = useRef(false);
-
+   const refInitialized = useRef(false);
+   const isElectron = useRef(false);
+   const initTimeout = useRef<NodeJS.Timeout | null>(null);
+   const mountCount = useRef(0);
 
    const isAllowChat = useMemo(() => {
       return true;
@@ -86,72 +89,55 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       // return false;
    }, []);
 
-   useEffect(() => {
-      if (threadId && !refLoadChatItems.current) {
-         refLoadChatItems.current = true;
+   const initialLoadChatItems = useCallback(async () => {
+      refLoadChatItems.current = true;
          setMessages([]);
 
-         chatAgentDatabase.loadChatItems(threadId).then((items) => {
-            if (items?.length === 0) {
-                publishEvent(INIT_WELCOME_MESSAGE);
-            } else {
-               // const filterMessages = items
-               //    ?.filter((item) => item.status !== 'failed')
-               //    // .filter((item) => item.status !== 'waiting')
-               //    .filter((item) => !!item.msg)
-               //    .map((item) => ({
-               //       ...item,
-               //       status: 'received',
-               //    }));
 
-               const filterMessages = items
-                  .filter((item) => item.createdAt)
-                  .map((item) => {
+      const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
+      const threadItems = await chatAgentDatabase.getSessions(threadId);
 
-                     const now = new Date();
-                     const createdAt = new Date(item.createdAt || "");
-                     const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-                     if (item.status === "waiting" || item.status === "receiving") {
-                        if (diffMinutes >= 3) {
-                           if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-                              const updateMessage = {
-                                 ...item,
-                                 status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                              };
-                              return updateMessage;
-                           }
+      if (threadItems?.length === 0) {
+         await chatAgentDatabase.createSession(threadId);
+         await chatAgentDatabase.migrateMessages(threadId);
+      }
+   }, [selectedAgent]);
 
-                           if (item.msg) {
-                              const updateMessage = {
-                                 ...item,
-                                 status: "received",
-                              };
-                              return updateMessage;
-                           }
+   useEffect(() => {
+      // Check if we're in Electron
+      if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
+         isElectron.current = true;
+      }
 
-                           const updateMessage = {
-                              ...item,
-                              msg: "Something went wrong!",
-                              status: "failed",
-                           };
-                           return updateMessage;
-                        }
-                     }
-                     return item;
-                  });
+      console.log('threadId', threadId, new Date().getTime());
+      
+      // Clear any existing timeout
+      if (initTimeout.current) {
+         clearTimeout(initTimeout.current);
+      }
 
-               setMessages(filterMessages as any);
-            }
-         });
-
-         (window as any).clearChatHistory = () => {
-            chatAgentDatabase.clearChatItems(threadId);
-            setMessages([]);
-            dispatch(removeTaskByAgentId({ id: threadId }));
-         };
+      if (threadId && !refLoadChatItems.current && !refInitialized.current) {
+         // For Electron, add a small delay to ensure we only run once
+         if (isElectron.current) {
+            initTimeout.current = setTimeout(() => {
+               if (!refInitialized.current) {
+                  refInitialized.current = true;
+                  refLoadChatItems.current = true;
+                  initialLoadChatItems();
+               }
+            }, 100);
+         } else {
+            refInitialized.current = true;
+            refLoadChatItems.current = true;
+            initialLoadChatItems();
+         }
 
          return () => {
+            if (initTimeout.current) {
+               clearTimeout(initTimeout.current);
+            }
             refLoadChatItems.current = false;
+            refInitialized.current = false;
             (window as any).clearChatHistory = undefined;
          };
       }
@@ -318,10 +304,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             updateTaskItem({
                id: messageId,
                status: "failed",
-               message: sendTxt,
-               title: selectedAgent?.display_name || selectedAgent?.agent_name || "Agent",
-               agent: selectedAgent!,
-               agentType: selectedAgent?.agent_type || AgentType.Normal,
             } as TaskItem);
          } else {
             updateMessage(messageId, {
@@ -663,6 +645,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isAllowChat,
          scrollRef,
          updateMessage,
+         threadId
       };
    }, [
       messages,
@@ -681,6 +664,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       isAllowChat,
       scrollRef,
       updateMessage,
+      threadId
    ]);
 
    return (

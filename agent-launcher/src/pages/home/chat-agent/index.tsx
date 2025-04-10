@@ -7,6 +7,7 @@ import CreateAgentWallet from "@pages/home/chat-agent/CreateAgentWallet";
 import { AgentContext } from "../provider/AgentContext";
 import { useContext } from "react";
 import s from "./styles.module.scss";
+import AgentTopInfo from "./AgentTopInfo";
 
 function ChatAgent() {
    const {
@@ -29,6 +30,7 @@ function ChatAgent() {
          {/* <AgentTopInfo /> */}
          {isCanChat && isRunning ? (
             <ChatAgentProvider>
+               <AgentTopInfo />
                <ChatBox />
             </ChatAgentProvider>
          ) : (

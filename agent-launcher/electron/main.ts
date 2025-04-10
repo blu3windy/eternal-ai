@@ -82,11 +82,16 @@ function createWindow() {
       minWidth: 800,
    });
 
-   win.loadURL("http://localhost:5173");
+   // Only load once based on environment
+   if (VITE_DEV_SERVER_URL) {
+      win.loadURL(VITE_DEV_SERVER_URL);
+   } else {
+      win.loadFile(path.join(RENDERER_DIST, "index.html"));
+   }
 
    win.once("ready-to-show", () => {
       win?.show();
-      win?.focus(); // Ensure the app is focused before running AppleScript
+      win?.focus();
    });
 
    // Test active push message to Renderer-process.
@@ -118,12 +123,6 @@ function createWindow() {
       win?.webContents.send("download-progress", progress);
    });
 
-   if (VITE_DEV_SERVER_URL) {
-      win.loadURL(VITE_DEV_SERVER_URL);
-   } else {
-      // win.loadFile('dist/index.html')
-      win.loadFile(path.join(RENDERER_DIST, "index.html"));
-   }
    // listenToDockerEvents(win);
 
    win.on("closed", () => {
