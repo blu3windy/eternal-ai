@@ -8,7 +8,6 @@ import DeepThinking from "./DeepThinking";
 import { THINK_TAG_REGEX } from "./constants";
 import CustomLink from "./Link";
 import ContentReplay from "./Content";
-import Processing from "./Processing";
 
 const preprocessMarkdown = (content: string) => {
    try {
@@ -52,9 +51,6 @@ function CustomMarkdown({
          },
          p: (props) => {
             return <ContentReplay {...props} key={id}/>;
-         },
-         processing: (props: any) => {
-            return <Processing {...props} key={id}/>;
          },
       } satisfies any;
    }, [status, thinkTag]);
