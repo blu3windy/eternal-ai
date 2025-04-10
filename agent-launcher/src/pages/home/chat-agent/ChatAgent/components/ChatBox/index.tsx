@@ -11,7 +11,7 @@ import WebView from "@components/WebView";
 const ChatBox = () => {
    const { loading, onRetryErrorMessage } = useChatAgentProvider();
 
-   const { isRunning, requireInstall, selectedAgent, isCustomUI, customUIPort } = useContext(AgentContext);
+   const { isRunning, requireInstall, selectedAgent, isCustomUI, customUIPort, agentWallet } = useContext(AgentContext);
 
 
    const containerMaxHeight = useMemo(() => {
@@ -32,6 +32,21 @@ const ChatBox = () => {
     = selectedAgent?.thumbnail
     || selectedAgent?.token_image_url
     || selectedAgent?.twitter_info?.twitter_avatar;
+
+    const params = useMemo(() => {
+      if (!selectedAgent?.required_wallet) {
+         return '';
+      }
+
+      const queryParams = new URLSearchParams({
+         PRIVATE_KEY: agentWallet?.privateKey || '',
+         WALLET_ADDRESS: agentWallet?.address || ''
+      }).toString();
+
+      return queryParams;
+   }, [selectedAgent?.required_wallet, agentWallet?.privateKey, agentWallet?.address]);
+
+   const isRequireWallet = selectedAgent?.required_wallet && !!agentWallet;
 
    return (
       <motion.div
@@ -55,7 +70,7 @@ const ChatBox = () => {
                isCustomUI ? (
                   <Box width="100%">
                      <WebView 
-                        url={`http://localhost:${customUIPort}`}
+                        url={`http://localhost:${customUIPort}${params ? `?${params}` : ''}`}
                         height="calc(100vh - 100px)"
                         width="100%"
                      />
