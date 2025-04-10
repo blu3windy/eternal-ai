@@ -582,20 +582,15 @@ func (s *Service) GetInfraTwitterAppInfo(ctx context.Context, userAddress string
 	}
 
 	if infraTwitterApp.ETHAddress == "" {
-		infraTwitterApp, _ = s.dao.FirstInfraTwitterAppByID(
-			daos.GetDBMainCtx(ctx), infraTwitterApp.ID,
-			map[string][]any{},
-			true,
-		)
-		if err != nil {
-			return nil, errs.NewError(err)
-		}
 		ethAddress, err := s.CreateETHAddress(ctx)
 		if err != nil {
 			return nil, errs.NewError(err)
 		}
 		infraTwitterApp.ETHAddress = strings.ToLower(ethAddress)
-		err = s.dao.Save(daos.GetDBMainCtx(ctx), infraTwitterApp)
+		err = daos.GetDBMainCtx(ctx).
+			Model(infraTwitterApp).
+			Update("eth_address", ethAddress).
+			Error
 		if err != nil {
 			return nil, errs.NewError(err)
 		}
