@@ -613,10 +613,10 @@ func (s *Service) TestSignature(ctx context.Context) {
 func (s *Service) InfraTwitterAppSearchRecentTweet(ctx context.Context, query, paginationToken string, maxResults int) (*twitter.TweetRecentSearch, error) {
 	var tweetRecentSearch twitter.TweetRecentSearch
 	twitterInfo, err := s.dao.FirstTwitterInfo(daos.GetDBMainCtx(ctx),
-		map[string][]interface{}{
+		map[string][]any{
 			"twitter_id = ?": {s.conf.TokenTwiterIdForInternal},
 		},
-		map[string][]interface{}{},
+		map[string][]any{},
 		false,
 	)
 	if err != nil {
