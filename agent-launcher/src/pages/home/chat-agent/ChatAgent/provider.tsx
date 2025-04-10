@@ -43,18 +43,18 @@ type IChatAgentProviderContext = {
 const ChatAgentProviderContext = createContext<IChatAgentProviderContext>({
    messages: [],
    isLoadingMessages: true,
-   setIsLoadingMessages: () => {},
-   publishEvent: () => {},
+   setIsLoadingMessages: () => { },
+   publishEvent: () => { },
    scrollableRef: { current: null },
    loading: false,
    info: undefined,
 
    chatInputRef: undefined,
    isFocusChatInput: false,
-   setIsFocusChatInput: () => {},
+   setIsFocusChatInput: () => { },
    isAllowChat: false,
    scrollRef: undefined,
-   updateMessage: () => {},
+   updateMessage: () => { },
 });
 
 export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
@@ -124,44 +124,44 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             if (items?.length === 0 && isFirstChat) {
                publishEvent(INIT_WELCOME_MESSAGE);
             } else {
-                  const filterMessages = items
-                     .filter((item) => item.createdAt)
-                     .map((item) => {
-   
-                        const now = new Date();
-                        const createdAt = new Date(item.createdAt || "");
-                        const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-                        if (item.status === "waiting" || item.status === "receiving") {
-                           if (diffMinutes >= 3) {
-                              if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-                                 const updateMessage = {
-                                    ...item,
-                                    status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                                 };
-                                 return updateMessage;
-                              }
-   
-                              if (item.msg) {
-                                 const updateMessage = {
-                                    ...item,
-                                    status: "received",
-                                 };
-                                 return updateMessage;
-                              }
-   
+               const filterMessages = items
+                  .filter((item) => item.createdAt)
+                  .map((item) => {
+
+                     const now = new Date();
+                     const createdAt = new Date(item.createdAt || "");
+                     const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+                     if (item.status === "waiting" || item.status === "receiving") {
+                        if (diffMinutes >= 3) {
+                           if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
                               const updateMessage = {
                                  ...item,
-                                 msg: "Something went wrong!",
-                                 status: "failed",
+                                 status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
                               };
                               return updateMessage;
                            }
+
+                           if (item.msg) {
+                              const updateMessage = {
+                                 ...item,
+                                 status: "received",
+                              };
+                              return updateMessage;
+                           }
+
+                           const updateMessage = {
+                              ...item,
+                              msg: "Something went wrong!",
+                              status: "failed",
+                           };
+                           return updateMessage;
                         }
-                        return item;
-                     });
-   
-                  setMessages(filterMessages as any);
-               }
+                     }
+                     return item;
+                  });
+
+               setMessages(filterMessages as any);
+            }
          })();
       }
    }, [sessionId]);
@@ -172,7 +172,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isElectron.current = true;
       }
 
-      
+
       // Clear any existing timeout
       if (initTimeout.current) {
          clearTimeout(initTimeout.current);
@@ -337,6 +337,13 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   id: messageId,
                   status: "done",
                } as TaskItem);
+               
+               if (sessionId && isFirstChat) {
+                  const match = content.match(/<\/think>\s*([\s\S]*)/);
+                  const result = match ? match[1].trim() : '';
+                  chatAgentDatabase.updateSessionName(sessionId, result || "New Chat");
+                  refEmptyMessage.current = false;
+               }
             },
             onFail: (err: any) => {
                // updateMessage(messageId, {
@@ -383,11 +390,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
       try {
          let filteredMessages = messages.filter((item) => item.status !== "failed").filter((item) => !!item.msg);
-            console.log(sessionId, refEmptyMessage.current);
-            
-         if (sessionId && refEmptyMessage.current) {
-            chatAgentDatabase.updateSessionName(sessionId, sendTxt || "New Chat");
-            refEmptyMessage.current = false;
+         if (
+            sessionId
+         ) {
+
+            if (sessionId && refEmptyMessage.current && !isFirstChat) {
+               chatAgentDatabase.updateSessionName(sessionId, sendTxt || "New Chat");
+               refEmptyMessage.current = false;
+            }
          }
 
          // remove pair of welcome message
@@ -459,18 +469,18 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                content:
                   sendTxt && attachments?.length
                      ? [
-                          {
-                             type: "text",
-                             text: sendTxt,
-                          },
-                          ...attachments.map((attachment) => ({
-                             type: "image_url",
-                             image_url: {
-                                url: attachment.url,
-                                detail: "",
-                             },
-                          })),
-                       ]
+                        {
+                           type: "text",
+                           text: sendTxt,
+                        },
+                        ...attachments.map((attachment) => ({
+                           type: "image_url",
+                           image_url: {
+                              url: attachment.url,
+                              detail: "",
+                           },
+                        })),
+                     ]
                      : sendTxt,
             },
          ];
@@ -489,15 +499,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             const content =
                sendTxt && attachments?.length
                   ? [
-                       { type: "text", text: sendTxt },
-                       ...attachments.map((attachment) => ({
-                          type: "image_url",
-                          image_url: {
-                             url: attachment.url,
-                             detail: "",
-                          },
-                       })),
-                    ]
+                     { type: "text", text: sendTxt },
+                     ...attachments.map((attachment) => ({
+                        type: "image_url",
+                        image_url: {
+                           url: attachment.url,
+                           detail: "",
+                        },
+                     })),
+                  ]
                   : sendTxt;
 
             updateTaskItem({

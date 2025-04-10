@@ -34,10 +34,6 @@ const ButtonChatHistory = () => {
         loadSessions();
     };
 
-    if (sessions?.length < 2) {
-        return null;
-    }
-
     return (
         <>
             <IconButton
@@ -59,7 +55,7 @@ const ButtonChatHistory = () => {
 
                     <DrawerBody>
                         <VStack spacing={2} align="stretch">
-                            {sessions.map((session) => (
+                            {sessions.map((session, i) => (
                                 <Flex
                                     key={session.id}
                                     p={3}
@@ -82,13 +78,16 @@ const ButtonChatHistory = () => {
                                             </Text>
                                         )}
                                     </Box>
-                                    <IconButton
-                                        aria-label="Delete chat"
-                                        icon={<DeleteIcon />}
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => handleDeleteSession(session.id)}
-                                    />
+                                    {
+                                        sessions.length === 1 && i === 0 ? null :
+                                            <IconButton
+                                                aria-label="Delete chat"
+                                                icon={<DeleteIcon />}
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => handleDeleteSession(session.id)}
+                                            />
+                                    }
                                 </Flex>
                             ))}
                         </VStack>
