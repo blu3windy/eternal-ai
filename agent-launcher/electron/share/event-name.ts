@@ -55,6 +55,11 @@ const EMIT_EVENT_NAME = {
 
 
    OS_CONTEXT: "os-context",
+
+   // Docker monitor
+   GET_INITIAL_DOCKER_DATA: "get-initial-docker-data",
+   ON_CONTAINERS_UPDATE: "on-containers-update",
+   ON_IMAGES_UPDATE: "on-images-update",
 }
 
 export {

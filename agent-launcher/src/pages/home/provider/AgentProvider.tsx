@@ -21,13 +21,14 @@ import React, { PropsWithChildren, useCallback, useContext, useEffect, useMemo, 
 import { toast } from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { ModelInfo } from "../../../../electron/share/model.ts";
-import { EAgentTokenStatus } from "../../../services/api/agent/types.ts";
-import CAgentTokenAPI from "../../../services/api/agents-token/index.ts";
-import { IAgentToken, } from "../../../services/api/agents-token/interface.ts";
-import localStorageService from "../../../storage/LocalStorageService.ts";
+import { EAgentTokenStatus } from "@services/api/agent/types.ts";
+import CAgentTokenAPI from "@services/api/agents-token/index.ts";
+import { IAgentToken, } from "@services/api/agents-token/interface.ts";
+import localStorageService from "@storage/LocalStorageService.ts";
 import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
 import { AgentContext } from "./AgentContext.tsx";
 import { ETradePlatform } from "./interface.ts";
+import useAgentState from "./useAgentState.ts";
 
 const AgentProvider: React.FC<
     PropsWithChildren & { tokenAddress?: string }
@@ -37,7 +38,7 @@ const AgentProvider: React.FC<
 }: PropsWithChildren & { tokenAddress?: string }): React.ReactElement => {
    const dispatch = useDispatch();
    const [loading, setLoading] = useState(true);
-   const [selectedAgent, _setSelectedAgent] = useState<IAgentToken | undefined>(undefined);
+   const { selectedAgent, setSelectedAgent: _setSelectedAgent, addActiveAgent } = useAgentState();
    const [isTrade, setIsTrade] = useState(false);
    const [agentWallet, setAgentWallet] = useState<Wallet | undefined>(undefined);
    const [coinPrices, setCoinPrices] = useState([]);
@@ -60,7 +61,6 @@ const AgentProvider: React.FC<
    const debouncedModelAgents = useDebounce(refInstalledModelAgents.current, 300);
    const debouncedAvailableModelAgents = useDebounce(refAvailableModelAgents.current, 300);
    const debouncedSocialAgents = useDebounce(refInstalledSocialAgents.current, 300);
-
    const { containers, installedAgents } = useContext(MonitorContext);
 
 
@@ -454,7 +454,7 @@ const AgentProvider: React.FC<
    const fetchAgentCategories = async () => {
       try {
          const res: any = await cPumpAPI.getAgentCategories();
-         setAgentCategories([{id: 0, name: 'All'}, ...res]);
+         setAgentCategories([{ id: 0, name: 'All' }, ...res]);
       } catch (error) {}
    };
 
@@ -638,6 +638,7 @@ const AgentProvider: React.FC<
          if ([AgentType.Model, AgentType.ModelOnline].includes(agent.agent_type)) {
             onGetCurrentModel();
          }
+         addActiveAgent(agent);
 
          console.timeEnd('LEON: startAgent');
          // await sleep(2000);
@@ -900,11 +901,11 @@ const AgentProvider: React.FC<
       const installedAgents = new Set<string>();
       const cPumpAPI = new CAgentTokenAPI();
       const agent_types = [
-            AgentType.CustomUI, 
-            AgentType.CustomPrompt,
-            AgentType.ModelOnline,
-            AgentType.Model
-         ].join(',');
+         AgentType.CustomUI, 
+         AgentType.CustomPrompt,
+         AgentType.ModelOnline,
+         AgentType.Model
+      ].join(',');
 
       const agentsData = await Promise.all(agents.map(async (agentContractAddr) => {
          if (installedAgents.has(agentContractAddr)) {
@@ -1066,7 +1067,6 @@ const AgentProvider: React.FC<
 
    const setSelectedAgent = useCallback((newAgent: IAgentToken) => {
       _setSelectedAgent(newAgent);
-      
       const isInstalled = agentStates[newAgent.id]?.isInstalled || false;
       const isRunning = agentStates[newAgent.id]?.isRunning || false;
       const isStarting = agentStates[newAgent.id]?.isStarting || false;
@@ -1075,9 +1075,9 @@ const AgentProvider: React.FC<
 
       if (isInstalled && !isRunning && !isStarting && newAgent?.agent_type !== AgentType.ModelOnline) {
          console.log();
-         
          startAgent(newAgent);
       }
+      addActiveAgent(newAgent);
    }, [agentStates]);
 
    const checkInstalledUtilityAgentsRunning = async () => {
@@ -1180,7 +1180,7 @@ const AgentProvider: React.FC<
          startAgent(agent);
          return;
       }
-      let codeVersion = agent?.code_version ? Number(agent?.code_version) : 0;
+      const codeVersion = agent?.code_version ? Number(agent?.code_version) : 0;
       const values = await localStorageService.getItem(agent.agent_contract_address);
       const oldCodeVersion = values ? Number(values) : undefined;
 

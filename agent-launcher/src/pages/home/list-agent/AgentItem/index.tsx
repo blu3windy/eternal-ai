@@ -170,29 +170,6 @@ const AgentItem = ({ token, isLatest }: IProps) => {
          }
          w={'100%'}
       >
-         <Flex position={"absolute"} top={"14px"} right={"24px"}>
-            <Flex gap={"8px"}>
-               <Flex gap="4px" alignItems={'center'}>
-                  <Image src="icons/ic-mc.svg" w="15px" h="15px" />
-                  <Text as={'span'} color="#657786" fontSize="12px" fontWeight="400">
-                     {Number(token?.meme?.market_cap) > 0
-                        ? `$${formatCurrency(
-                           token?.meme?.market_cap,
-                           0,
-                           3,
-                           'BTC',
-                           false,
-                           true,
-                        )}`
-                        : '$0'}
-                  </Text>
-               </Flex>
-               <Flex gap="4px" alignItems={'center'}>
-                  <Image src="icons/ic-downloaded.svg" w="15px" h="15px" />
-                  <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.installed_count, 0, 0)}</Text>
-               </Flex>
-            </Flex>
-         </Flex>
          <Grid
             className={s.content}
             templateColumns={`${iconSize} 1fr`}
@@ -223,27 +200,37 @@ const AgentItem = ({ token, isLatest }: IProps) => {
             )
           }*/}
             </Flex>
-            <Flex flexDirection="column" w={'100%'} gap={"12px"}>
+            <Flex flexDirection="column" w={'100%'} gap={"8px"}>
                <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
-                  <Flex gap={"6px"}>
+                  <Flex gap={"4px"} direction={'column'}>
                      <Text className={s.nameText}>
                         {token?.display_name || token?.agent_name}{' '}
                      </Text>
-                     {/* <Text className={s.nameText} opacity={0.5}>{token?.token_symbol ? `$${token?.token_symbol}` : ''}</Text> */}
+                     {token?.author && <Text fontSize={"12px"} color={"#000"} opacity={0.5}><Text as={'span'} fontWeight={400}>by</Text> <Text as='span' fontWeight={600}>{token?.author}</Text></Text>}
                   </Flex>
-                  {/* { isInstalled && <Text className={s.agentTypeTag}>Installed</Text> } */}
-
-                  {/*{
-              isUtilityAgent && (
-                <Button
-                  className={s.btnInstall}
-                  onClick={handleInstall}
-                  isLoading={isStarting || isStopping}
-                  isDisabled={isStarting || isStopping}
-                  loadingText={isStarting ? 'Starting...' : 'Stopping...'}
-                >{isRunning ? 'Stop' : 'Start'}</Button>
-              )
-            }*/}
+                  <Flex>
+                     <Flex gap={"8px"}>
+                        <Flex gap="4px" alignItems={'center'}>
+                           <Image src="icons/ic-mc.svg" w="15px" h="15px" />
+                           <Text as={'span'} color="#657786" fontSize="12px" fontWeight="400">
+                              {Number(token?.meme?.market_cap) > 0
+                                 ? `$${formatCurrency(
+                                    token?.meme?.market_cap,
+                                    0,
+                                    3,
+                                    'BTC',
+                                    false,
+                                    true,
+                                 )}`
+                                 : '$0'}
+                           </Text>
+                        </Flex>
+                        <Flex gap="4px" alignItems={'center'}>
+                           <Image src="icons/ic-downloaded.svg" w="15px" h="15px" />
+                           <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.installed_count, 0, 0)}</Text>
+                        </Flex>
+                     </Flex>
+                  </Flex>
                </Flex>
                {
                   description && (
@@ -254,7 +241,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                      </div>
                   )
                }
-               <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"}>
+               <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"} mt={"4px"}>
                   <Flex gap={"8px"}>
                      {token?.run_status && <Text className={token?.run_status === AgentStatus.Local ? s.onChainTag : s.agentTypeTag}>{runStatus}</Text>}
                      {/* {agentTypeAdditional && <Text className={s.agentTypeTag}>{agentTypeAdditional}</Text>} */}
