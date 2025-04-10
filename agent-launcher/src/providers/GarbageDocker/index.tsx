@@ -24,7 +24,7 @@ interface ICheckInactiveContainersParams {
    containers: ContainerData[];
 }
 
-const TIME_TO_CLEAN = 3 * 60 * 1000; // 10 minutes
+const TIME_TO_CLEAN = 10 * 60 * 1000; // 10 minutes
 const INTERVAL_TIME_CHECK = 2 * 60 * 1000; // 2 minutes
 
 const GarbageContext = createContext<IGarbageContext | undefined>(undefined);
