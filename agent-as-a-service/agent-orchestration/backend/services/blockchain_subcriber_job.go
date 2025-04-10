@@ -838,7 +838,7 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 						switch networkID {
 						case models.BASE_CHAIN_ID:
 							{
-								_, err = s.UtilityTwitterHandleDeposit(ctx, networkID, event)
+								err = s.UtilityTwitterHandleDeposit(tx, networkID, event)
 								if err != nil {
 									return errs.NewError(err)
 								}
