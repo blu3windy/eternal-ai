@@ -238,6 +238,7 @@ type AgentInfo struct {
 	IsForceUpdate    bool   `gorm:"default:0"`
 	CodeVersion      int    `gorm:"default:0"`
 	RunStatus        string
+	Author           string
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string

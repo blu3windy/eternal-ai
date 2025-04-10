@@ -174,6 +174,7 @@ type AgentInfoResp struct {
 	IsForceUpdate             bool                      `json:"is_force_update"`
 	CodeVersion               int                       `json:"code_version"`
 	RunStatus                 string                    `json:"run_status"`
+	Author                    string                    `json:"author"`
 }
 
 type AgentTwitterPostResp struct {
@@ -354,6 +355,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		IsForceUpdate:        m.IsForceUpdate,
 		CodeVersion:          m.CodeVersion,
 		RunStatus:            m.RunStatus,
+		Author:               m.Author,
 	}
 
 	if m.NftTokenImage != "" {

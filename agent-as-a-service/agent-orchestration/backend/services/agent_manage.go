@@ -95,6 +95,7 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		DependAgents:     req.DependAgents,
 		EnvExample:       req.EnvExample,
 		CodeVersion:      1,
+		Author:           req.Author,
 	}
 	if req.RequiredEnv != nil {
 		agent.RequiredEnv = *req.RequiredEnv
@@ -554,6 +555,10 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				}
 				if req.IsForceUpdate != nil {
 					agent.IsForceUpdate = *req.IsForceUpdate
+				}
+
+				if req.Author != "" {
+					agent.Author = req.Author
 				}
 
 				if agent.TokenStatus == "" && agent.TokenAddress == "" {
