@@ -155,3 +155,13 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
+
+.agentDetailModalContent {
+  background: linear-gradient(117deg, #000 12.51%, #666 87.43%) !important;
+
+  :global {
+    .chakra-modal__header {
+      margin-top: 0px !important;
+    }
+  }
+}
