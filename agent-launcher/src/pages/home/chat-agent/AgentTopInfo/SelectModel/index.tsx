@@ -20,6 +20,7 @@ import cs from 'classnames';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import SetupEnvModel from '../../SetupEnvironment';
 import s from './styles.module.scss';
+import AgentDetail from '../../AgentDetail';
 
 export const RenameModels: any = {
    'NousResearch/Hermes-3-Llama-3.1-70B-FP8': 'Hermes 3 70B',
@@ -36,6 +37,8 @@ export const RenameDescriptionModels: any = {
    'NousResearch/DeepHermes-3-Llama-3-8B-Preview':
       'Enabled toggling between intuitive and reasoning-based response modes.',
 };
+
+const PAGE_SIZE = 5;
 
 type Props = {
    disabled?: boolean;
@@ -59,6 +62,7 @@ const ItemToken = ({
 }) => {
    const { agentStates, installAgent } = useContext(AgentContext);
    const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
+   const [isShowAgentDetail, setIsShowAgentDetail] = useState(false);
 
    const isStarting = useMemo(() => {
       return agentStates[agent.id]?.isStarting;
@@ -94,6 +98,8 @@ const ItemToken = ({
    const handleViewDetail = (e: any) => {
       e?.preventDefault();
       e?.stopPropagation();
+
+      setIsShowAgentDetail(true);
    }
 
    const handleInstall = async () => {
@@ -215,6 +221,14 @@ const ItemToken = ({
                />
             </BaseModal>
          )}
+         <BaseModal
+            isShow={isShowAgentDetail}
+            onHide={() => setIsShowAgentDetail(false)}
+            size="extra"
+            className={s.agentDetailModalContent}
+         >
+            <AgentDetail />
+         </BaseModal>
       </>
 
    );
@@ -242,8 +256,6 @@ const AddMoreRow = ({ onClose, onLoadMore }: { onClose: () => void, onLoadMore: 
       </Flex>
    );
 };
-
-const PAGE_SIZE = 5;
 
 const SelectModel = ({
    disabled,
