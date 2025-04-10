@@ -525,7 +525,7 @@ func (s *Service) UtilityTwitterHandleDeposit(tx *gorm.DB, networkID uint64, eve
 		return errs.NewError(err)
 	}
 	if infraTwitterApp != nil {
-		eventId := fmt.Sprintf(`%d_%s_%d`, networkID, strings.ToLower(event.TxHash), event.TxIndex)
+		eventId := fmt.Sprintf(`%d_%s_%d`, networkID, strings.ToLower(event.TxHash), event.Index)
 		topupTx, err := s.dao.FirstInfraTwitterTopupTx(
 			tx,
 			map[string][]any{
@@ -549,7 +549,7 @@ func (s *Service) UtilityTwitterHandleDeposit(tx *gorm.DB, networkID uint64, eve
 				TxHash:            event.TxHash,
 				Amount:            numeric.NewBigFloatFromFloat(fBalance),
 			}
-			err := s.dao.Save(tx, topupTx)
+			err = s.dao.Save(tx, topupTx)
 			if err != nil {
 				return errs.NewError(err)
 			}
@@ -582,20 +582,15 @@ func (s *Service) GetInfraTwitterAppInfo(ctx context.Context, userAddress string
 	}
 
 	if infraTwitterApp.ETHAddress == "" {
-		infraTwitterApp, _ = s.dao.FirstInfraTwitterAppByID(
-			daos.GetDBMainCtx(ctx), infraTwitterApp.ID,
-			map[string][]any{},
-			true,
-		)
-		if err != nil {
-			return nil, errs.NewError(err)
-		}
 		ethAddress, err := s.CreateETHAddress(ctx)
 		if err != nil {
 			return nil, errs.NewError(err)
 		}
 		infraTwitterApp.ETHAddress = strings.ToLower(ethAddress)
-		err = s.dao.Save(daos.GetDBMainCtx(ctx), infraTwitterApp)
+		err = daos.GetDBMainCtx(ctx).
+			Model(infraTwitterApp).
+			Update("eth_address", ethAddress).
+			Error
 		if err != nil {
 			return nil, errs.NewError(err)
 		}
