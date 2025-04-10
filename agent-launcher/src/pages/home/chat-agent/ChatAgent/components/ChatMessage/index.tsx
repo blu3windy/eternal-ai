@@ -244,7 +244,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                      transition={{ duration: 0.3, ease: "easeOut" }}
                      className={`${s.snackbar}`}
                      onClick={() => {
-                        mdpdfmake(message.msg).then((docDefinition) => {
+                        mdpdfmake(message.msg.replace(THINK_TAG_REGEX, '').replace(PROCESSING_TAG_REGEX, '')).then((docDefinition) => {
                            console.log(docDefinition);
                            // Use docDefinition with a PDFMake instance to generate a PDF
                            pdfMake.createPdf(docDefinition).download(`${selectedAgent?.display_name || selectedAgent?.agent_name || "Agent"}-${dayjs().format("YYYY-MM-DD-hh:mm:ss")}.pdf`);
