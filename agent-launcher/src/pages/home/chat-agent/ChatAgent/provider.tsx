@@ -78,6 +78,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
    const refLoadChatItems = useRef(false);
 
+   const cPumpAPI = new CAgentTokenAPI();
 
    const isAllowChat = useMemo(() => {
       return true;
