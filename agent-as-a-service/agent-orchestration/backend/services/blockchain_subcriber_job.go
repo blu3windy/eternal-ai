@@ -835,25 +835,36 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 						}
 					}
 					{
-						err = s.LaunchpadErc20TokenTransferEvent(tx, networkID, event)
-						if err != nil {
-							return errs.NewError(err)
-						}
-					}
-					{
 						switch networkID {
-						case models.ETHEREUM_CHAIN_ID,
-							models.BASE_CHAIN_ID:
+						case models.BASE_CHAIN_ID:
 							{
-								eventId := fmt.Sprintf("%d_%s_%d", networkID, event.TxHash, event.Index)
-								s.ProcessDeposit(ctx, networkID, eventId, event.TxHash, toAddress, event.Value)
-								err = s.LaunchpadErc20TokenTransferEvent(tx, networkID, event)
+								_, err = s.UtilityTwitterHandleDeposit(ctx, networkID, event)
 								if err != nil {
 									return errs.NewError(err)
 								}
 							}
 						}
 					}
+					// {
+					// 	err = s.LaunchpadErc20TokenTransferEvent(tx, networkID, event)
+					// 	if err != nil {
+					// 		return errs.NewError(err)
+					// 	}
+					// }
+					// {
+					// 	switch networkID {
+					// 	case models.ETHEREUM_CHAIN_ID,
+					// 		models.BASE_CHAIN_ID:
+					// 		{
+					// 			eventId := fmt.Sprintf("%d_%s_%d", networkID, event.TxHash, event.Index)
+					// 			s.ProcessDeposit(ctx, networkID, eventId, event.TxHash, toAddress, event.Value)
+					// 			err = s.LaunchpadErc20TokenTransferEvent(tx, networkID, event)
+					// 			if err != nil {
+					// 				return errs.NewError(err)
+					// 			}
+					// 		}
+					// 	}
+					// }
 					{
 						user, err := s.dao.FirstUser(
 							tx,
