@@ -549,7 +549,7 @@ func (s *Service) UtilityTwitterHandleDeposit(tx *gorm.DB, networkID uint64, eve
 				TxHash:            event.TxHash,
 				Amount:            numeric.NewBigFloatFromFloat(fBalance),
 			}
-			err := s.dao.Save(tx, topupTx)
+			err = s.dao.Save(tx, topupTx)
 			if err != nil {
 				return errs.NewError(err)
 			}
