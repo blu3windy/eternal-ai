@@ -550,7 +550,6 @@ const AgentProvider: React.FC<
    }, []);
 
    const startAgent = async (agent: IAgentToken, needUpdateCode?: boolean) => {
-      console.log("stephen: startAgent", agent);
       console.time('LEON: startAgent');
       try {
          updateAgentState(agent.id, {
@@ -1070,10 +1069,8 @@ const AgentProvider: React.FC<
       const isInstalled = agentStates[newAgent.id]?.isInstalled || false;
       const isRunning = agentStates[newAgent.id]?.isRunning || false;
       const isStarting = agentStates[newAgent.id]?.isStarting || false;
-      console.log("stephen: setSelectedAgent", { newAgent, isInstalled, isRunning });
-      console.log("stephen: setSelectedAgent agentStates", { agentStates });
 
-      if (isInstalled && !isRunning && !isStarting && newAgent?.agent_type !== AgentType.ModelOnline) {
+      if (isInstalled && !isRunning && !isStarting && ![AgentType.ModelOnline, AgentType.Model].includes(newAgent?.agent_type)) {
          console.log();
          startAgent(newAgent);
       }

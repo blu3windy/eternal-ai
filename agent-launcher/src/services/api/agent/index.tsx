@@ -38,9 +38,6 @@ const handleStreamResponse = async (
 
    const contentType = response.headers.get('content-type');
    
-   console.log('contentType response.headers', response.headers);
-   console.log('contentType hihi', contentType);
-
    if (contentType?.includes('text/event-stream')) {
       // Handle streaming response
       const reader = response.body?.getReader();

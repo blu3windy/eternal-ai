@@ -93,12 +93,16 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
    useEffect(() => {
       let timer: NodeJS.Timeout;
 
-      if (message?.status === 'waiting' || message?.status === 'receiving') {
+      if (message?.status === 'waiting') {
          timer = setTimeout(() => {
             setShowTaskText(true);
          }, 5000);
       } else {
          setShowTaskText(false);
+         
+         if (timer) {
+            clearTimeout(timer);
+         }
       }
 
       return () => {
@@ -131,7 +135,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
       // const textStr = removeInvalidTags(message.msg || '')
       const textStr = message.msg || '';
       if (message.status === "receiving" || message.status === "sync-receiving") {
-         return textStr || '';
+         return (textStr || ''); // replace computer use tag;
       }
       return `${textStr || ''}`
          .replace(PROCESSING_TAG_REGEX, '') // replace processing tag
@@ -210,7 +214,10 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
       }
 
       if ((message.status === "receiving" || message.status === "sync-receiving") && !!processingWebViewUrl) {
-         return renderWaitingMessage();
+         return (
+            <CustomMarkdown id={message.id} status={message.status} content={renderMessage.replace(PROCESSING_TAG_REGEX, '') // replace processing tag
+               .replace(COMPUTER_USE_TAG_REGEX, '')} />
+         );
       }
 
       if (message.status === "failed") {

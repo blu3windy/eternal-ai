@@ -264,9 +264,6 @@ const SelectModel = ({
       isRunning,
    } = useContext(AgentContext);
 
-   console.log('stephen: availableModelAgents', availableModelAgents);
-   console.log('stephen: installedModelAgents', installedModelAgents);
-
    const [activeModel, setActiveModel] = useState<any>(null);
    const [page, setPage] = useState<number>(0);
 
