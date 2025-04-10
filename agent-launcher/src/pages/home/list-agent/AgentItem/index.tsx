@@ -143,6 +143,10 @@ const AgentItem = ({ token, isLatest }: IProps) => {
 
    const iconSize = '60px';
 
+   if (!token.is_public && token.agent_name === 'Proxy') {
+      return <></>;
+   }
+
    return (
       <Flex
          as={motion.div}
@@ -258,7 +262,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
                         onClick={() => handleUpdateCode(token)}
                         isLoading={isUpdating}
                         isDisabled={isUpdating}
-                        loadingText={isStarting ? 'Starting...' : 'Updating...'}
+                        loadingText={'Updating...'}
                      >
                         Update
                      </Button>

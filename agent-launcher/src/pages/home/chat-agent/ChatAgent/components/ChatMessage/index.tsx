@@ -20,7 +20,7 @@ import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/Wai
 import { v4 } from "uuid";
 import { useDispatch } from "react-redux";
 import { openWithUrl } from "@stores/states/floating-web-view/reducer";
-import { PROCESSING_TAG_REGEX, THINK_TAG_REGEX } from "@components/CustomMarkdown/constants";
+import { PROCESSING_TAG_REGEX, THINK_TAG_REGEX, COMPUTER_USE_TAG_REGEX, MARKDOWN_TAGS } from "@components/CustomMarkdown/constants";
 import ProcessingTaskModal from "@pages/home/list-agent/BottomBar/ProcessingTaskModal";
 
 dayjs.extend(duration);
@@ -134,7 +134,8 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          return textStr || '';
       }
       return `${textStr || ''}`
-         .replace(PROCESSING_TAG_REGEX, '')
+         .replace(PROCESSING_TAG_REGEX, '') // replace processing tag
+         .replace(COMPUTER_USE_TAG_REGEX, ''); // replace computer use tag
    }, [message?.msg, message?.status]);
 
    const resultMessage = useMemo(() => {
@@ -144,10 +145,16 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
 
    const processingWebViewUrl = useMemo(() => {
       try {
-         const matches = `${renderMessage || ''}`.match(PROCESSING_TAG_REGEX);
+         let matches = `${renderMessage || ''}`.match(PROCESSING_TAG_REGEX);
          if (matches?.length) {
             let url = matches[0] || '';
-            url = url.replace('<processing>', '').replace('</processing>', '');
+            url = url.replace(`<${MARKDOWN_TAGS.PROCESSING}>`, '').replace(`</${MARKDOWN_TAGS.PROCESSING}>`, '');
+            return url;
+         }
+         matches = `${renderMessage || ''}`.match(COMPUTER_USE_TAG_REGEX);
+         if (matches?.length) {
+            let url = matches[0] || '';
+            url = url.replace(`<${MARKDOWN_TAGS.COMPUTER_USE}>`, '').replace(`</${MARKDOWN_TAGS.COMPUTER_USE}>`, '');
             return url;
          }
       } catch (error) {
