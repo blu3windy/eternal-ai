@@ -128,7 +128,8 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
    }, [message]);
 
    const renderMessage = useMemo(() => {
-      const textStr = removeInvalidTags(message.msg || '')
+      // const textStr = removeInvalidTags(message.msg || '')
+      const textStr = message.msg || '';
       if (message.status === "receiving" || message.status === "sync-receiving") {
          return textStr || '';
       }

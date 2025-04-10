@@ -60,7 +60,7 @@ cd "$FOLDER_PATH" || {
 
 # Create network silently
 docker network create network-agent-external || true
-docker network create --internal network-agent-internal || true
+# docker network create --internal network-agent-internal || true
 
 # Track overall success and running containers
 build_success=true
