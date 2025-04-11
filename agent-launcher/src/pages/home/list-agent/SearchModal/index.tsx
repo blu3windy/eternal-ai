@@ -14,7 +14,6 @@ import {
 } from '@chakra-ui/react';
 import { AgentContext } from '@pages/home/provider/AgentContext.tsx';
 import { IAgentToken } from '@services/api/agents-token/interface.ts';
-import { compareString } from '@utils/string.ts';
 import { AnimatePresence, motion } from 'framer-motion';
 import debounce from 'lodash.debounce';
 import throttle from 'lodash.throttle';
@@ -46,10 +45,7 @@ const SearchModal = (props: SearchModalProps) => {
    const [agents, setAgents] = useState<IAgentToken[]>([]);
 
    const {
-      setSelectedAgent,
-      selectedAgent,
       installedAgentIds,
-      installAgent,
       agentCategories
    } = useContext(AgentContext);
 
@@ -60,7 +56,6 @@ const SearchModal = (props: SearchModalProps) => {
       category: 0,
       search: '',
    });
-   const refAddAgentTestCA = useRef('')
 
    const { isOpen: isOpenFilter, onClose: onCloseFilter, onToggle: onToggleFilter } = useDisclosure();
    const { isOpen: isOpenSort, onClose: onCloseSort, onToggle: onToggleSort } = useDisclosure();
@@ -119,16 +114,6 @@ const SearchModal = (props: SearchModalProps) => {
 
          if (isNew) {
             setAgents(newTokens);
-            if ((!selectedAgent && newTokens.length > 0) || refAddAgentTestCA.current) {
-               const testAgent = newTokens.find((token) => compareString(refAddAgentTestCA.current, token.agent_contract_address));
-               if (testAgent) {
-                  refAddAgentTestCA.current = '';
-                  setSelectedAgent(testAgent);
-                  installAgent(testAgent, true);
-               } else {
-                  setSelectedAgent(newTokens[0]);
-               }
-            }
          } else {
             setAgents((prevTokens) =>
                uniqBy([...prevTokens, ...newTokens], (token) => token.id),
