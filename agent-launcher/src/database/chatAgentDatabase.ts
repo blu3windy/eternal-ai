@@ -70,7 +70,7 @@ class ChatAgentDatabase {
            .where('threadId')
            .equals(threadId)
            .reverse()
-           .sortBy('updatedAt');
+           .sortBy('createdAt');
    }
 
    async deleteSession(sessionId: string) {
