@@ -33,14 +33,34 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
    const { selectedAgent, activeAgents, removeActiveAgent } = useAgentState();
    const { containers } = useContext(MonitorContext);
    const { stopAgent } = useContext(AgentContext);
-   const intervalRef = useRef<NodeJS.Timeout | null>(null);
    const pendingTasks = useSelector(agentTasksProcessingSelector);
+
+   const initRef = useRef(false);
+   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+   const agentStateValueRef = useRef<{
+      selectedAgent: IAgentToken | undefined;
+      activeAgents: Set<ActiveAgent>;
+      containers: ContainerData[];
+   }>({
+      selectedAgent,
+      activeAgents,
+      containers: [],
+   });
+
    const pendingTasksRef = useRef<TaskItem[]>(pendingTasks);
 
    useEffect(() => {
       pendingTasksRef.current = pendingTasks;
-      console.log('LEON pendingTasksRef.current', pendingTasks);
    }, [pendingTasks]);
+
+   useEffect(() => {
+      agentStateValueRef.current = {
+         selectedAgent,
+         activeAgents,
+         containers,
+      };
+   }, [selectedAgent, activeAgents, containers]);
 
    const isContainerInWhiteList = async (containerName: string) => {
       const activeModel = await storageModel.getActiveModel();
@@ -51,19 +71,20 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
       return whiteListContainerNames.includes(containerName);
    };
 
-   const shouldSkipAgent = (activeAgent: ActiveAgent, selectedAgent?: IAgentToken) => {
+   const shouldSkipAgent = async (activeAgent: ActiveAgent, selectedAgent?: IAgentToken) => {
       const containerName = getAgentContainerName(activeAgent.agent);
-      const isInWhiteList = isContainerInWhiteList(containerName);
+      const isInWhiteList = await isContainerInWhiteList(containerName);
       const isSelectedAgent = compareString(activeAgent.agent.agent_id, selectedAgent?.agent_id);
       const hasPendingTasks = pendingTasksRef.current.find(task => 
          compareString(task.agent.agent_id, activeAgent.agent.agent_id) 
          && task.status === 'processing'
       );
-      return isInWhiteList || isSelectedAgent || hasPendingTasks;
+      return Boolean(isInWhiteList || isSelectedAgent || hasPendingTasks);
    };
 
-   const checkInactiveContainers = async (params: ICheckInactiveContainersParams) => {
-      const { selectedAgent, activeAgents, containers } = params;
+   const checkInactiveContainers = async () => {
+      const { selectedAgent, activeAgents, containers } = agentStateValueRef.current;
+      console.log('LEON checkInactiveContainers params: ', agentStateValueRef.current);
       if (!selectedAgent) return;
 
       const now = Date.now();
@@ -73,7 +94,8 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
       });
 
       for (const activeAgent of activeAgents) {
-         if (await shouldSkipAgent(activeAgent, selectedAgent)) continue;
+         const isSkip = await shouldSkipAgent(activeAgent, selectedAgent);
+         if (isSkip) continue;
 
          const isValidTime = new BigNumber(now).minus(activeAgent.timestamp).gt(TIME_TO_CLEAN);
          const remandTime = new BigNumber(TIME_TO_CLEAN).minus(new BigNumber(now).minus(activeAgent.timestamp))
@@ -102,29 +124,39 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
    };
 
    const debounceCheckInactiveContainers = debounce(
-      useCallback((params: ICheckInactiveContainersParams) => {
-         checkInactiveContainers(params);
+      useCallback(() => {
+         checkInactiveContainers();
       }, []),
-      5000
+      2000
    );
 
+   const cleanup = () => {
+      if (intervalRef.current) {
+         clearInterval(intervalRef.current);
+         intervalRef.current = null;
+      }
+   };
+
    useEffect(() => {
-      const cleanup = () => {
-         if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-         }
+      const params = agentStateValueRef.current;
+
+      if (!initRef.current && params.selectedAgent && params.containers?.length && !intervalRef.current) {
+         initRef.current = true;
+         debounceCheckInactiveContainers();
+         
+         intervalRef.current = setInterval(() => {
+            debounceCheckInactiveContainers();
+         }, INTERVAL_TIME_CHECK);
+      }
+   }, [containers, selectedAgent, debounceCheckInactiveContainers]);
+
+   // Add cleanup effect for component unmount
+   useEffect(() => {
+      return () => {
+         cleanup();
+         initRef.current = false;
       };
-
-      cleanup();
-      debounceCheckInactiveContainers({ selectedAgent, activeAgents, containers });
-      
-      intervalRef.current = setInterval(() => {
-         debounceCheckInactiveContainers({ selectedAgent, activeAgents, containers });
-      }, INTERVAL_TIME_CHECK);
-
-      return cleanup;
-   }, [containers, selectedAgent, activeAgents, debounceCheckInactiveContainers]);
+   }, []);
 
    return (
       <GarbageContext.Provider value={{ checkInactiveContainers }}>

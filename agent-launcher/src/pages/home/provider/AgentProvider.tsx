@@ -845,6 +845,7 @@ const AgentProvider: React.FC<
             // filePath = await getFilePathOnLocal(fileNameOnLocal, folderNameOnLocal);
             console.log('filePath isExisted')
          }
+         dispatch(requestReloadListAgent());
       }
    };
 

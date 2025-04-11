@@ -134,7 +134,7 @@ const AgentDetail = () => {
             justifyContent={"center"}
             w={"100%"}
          >
-            <Flex w={"100%"} justifyContent={"space-between"} alignItems={"center"}>
+            <Flex w={"100%"} justifyContent={"space-between"} alignItems={"center"} mb={'40px'}>
                <Flex gap={"16px"} alignItems={"center"}>
                   <Image w="100px" h="100px" src={avatarUrl} borderRadius={"50%"} objectFit={'cover'} />
                   <Flex direction={"column"} gap={"4px"}>
@@ -194,92 +194,94 @@ const AgentDetail = () => {
                </Flex>
 
             </Flex>
-            <Divider color={'rgba(255, 255, 255, 0.15)'} my={'40px'} />
-            <Flex gap={"20px"} justifyContent={'space-between'}>
-               <Flex className={s.infoBox}>
-                  <Text className={s.infoText}>
-                     Type
-                  </Text>
-                  <Text className={s.infoValue}>
-                     {AgentTypeName[selectedAgent?.agent_type]}
-                  </Text>
+            <Flex w={'100%'} direction="column" overflowY={'auto'}>
+               <Divider color={'rgba(255, 255, 255, 0.15)'} mb={'40px'} />
+               <Flex gap={"20px"} justifyContent={'space-between'}>
+                  <Flex className={s.infoBox}>
+                     <Text className={s.infoText}>
+                        Type
+                     </Text>
+                     <Text className={s.infoValue}>
+                        {AgentTypeName[selectedAgent?.agent_type]}
+                     </Text>
+                  </Flex>
+
+                  {
+                     requirements?.disk && (
+                        <Flex className={s.infoBox}>
+                           <Text className={s.infoText}>
+                              Storage
+                           </Text>
+                           <Text className={s.infoValue}>
+                              {requirements?.disk} GB
+                           </Text>
+                        </Flex>
+                     )
+                  }
+
+                  {
+                     requirements?.ram && (
+                        <Flex className={s.infoBox}>
+                           <Text className={s.infoText}>
+                              RAM
+                           </Text>
+                           <Text className={s.infoValue}>
+                              {requirements?.ram} GB
+                           </Text>
+                        </Flex>
+                     )
+                  }
+
+                  {
+                     selectedAgent?.meme?.market_cap && (
+                        <Flex className={s.infoBox}>
+                           <Text className={s.infoText}>
+                              Market cap
+                           </Text>
+                           <Text className={s.infoValue}>
+                              {Number(selectedAgent?.meme?.market_cap) > 0
+                                 ? `$${formatCurrency(
+                                    selectedAgent?.meme?.market_cap,
+                                    0,
+                                    3,
+                                    'BTC',
+                                    false,
+                                    true,
+                                 )}`
+                                 : '$0'}
+                           </Text>
+                        </Flex>
+                     )
+                  }
+
+                  <Flex className={s.infoBox}>
+                     <Text className={s.infoText}>
+                        installed
+                     </Text>
+                     <Text className={s.infoValue}>
+                        {formatCurrency(selectedAgent?.installed_count, 0, 0)}
+                     </Text>
+                  </Flex>
+
+                  <Flex className={s.infoBox}>
+                     <Text className={s.infoText}>
+                        likes
+                     </Text>
+                     <Text className={s.infoValue}>
+                        {formatCurrency(selectedAgent?.likes, 0, 0)}
+                     </Text>
+                  </Flex>
                </Flex>
-
-               {
-                  requirements?.disk && (
-                     <Flex className={s.infoBox}>
-                        <Text className={s.infoText}>
-                           Storage
-                        </Text>
-                        <Text className={s.infoValue}>
-                           {requirements?.disk} GB
-                        </Text>
-                     </Flex>
-                  )
-               }
-
-               {
-                  requirements?.ram && (
-                     <Flex className={s.infoBox}>
-                        <Text className={s.infoText}>
-                           RAM
-                        </Text>
-                        <Text className={s.infoValue}>
-                           {requirements?.ram} GB
-                        </Text>
-                     </Flex>
-                  )
-               }
-
-               {
-                  selectedAgent?.meme?.market_cap && (
-                     <Flex className={s.infoBox}>
-                        <Text className={s.infoText}>
-                           Market cap
-                        </Text>
-                        <Text className={s.infoValue}>
-                           {Number(selectedAgent?.meme?.market_cap) > 0
-                              ? `$${formatCurrency(
-                                 selectedAgent?.meme?.market_cap,
-                                 0,
-                                 3,
-                                 'BTC',
-                                 false,
-                                 true,
-                              )}`
-                              : '$0'}
-                        </Text>
-                     </Flex>
-                  )
-               }
-
-               <Flex className={s.infoBox}>
-                  <Text className={s.infoText}>
-                     installed
-                  </Text>
-                  <Text className={s.infoValue}>
-                     {formatCurrency(selectedAgent?.installed_count, 0, 0)}
-                  </Text>
+               <Divider color={'rgba(255, 255, 255, 0.15)'} my={'40px'} />
+               <Flex marginLeft={'8px'} marginBottom={'20px'} className={s.wDescription}>
+                  {description && (
+                     <div className={cs(s.descriptionText, "markdown")}>
+                        <CustomMarkdown
+                           content={description}
+                        />
+                     </div>
+                  )}
                </Flex>
-
-               <Flex className={s.infoBox}>
-                  <Text className={s.infoText}>
-                     likes
-                  </Text>
-                  <Text className={s.infoValue}>
-                     {formatCurrency(selectedAgent?.likes, 0, 0)}
-                  </Text>
-               </Flex>
-            </Flex>
-            <Divider color={'rgba(255, 255, 255, 0.15)'} my={'40px'} />
-            <Flex h={'100%'} overflow={'auto'} marginLeft={'8px'} marginBottom={'28px'} className={s.wDescription}>
-               {description && (
-                  <div className={cs(s.descriptionText, "markdown")}>
-                     <CustomMarkdown
-                        content={description}
-                     />
-                  </div>
-               )}
             </Flex>
          </Flex >
          {isShowSetupEnvModel && (
