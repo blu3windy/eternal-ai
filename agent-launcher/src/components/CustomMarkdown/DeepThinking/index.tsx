@@ -13,7 +13,9 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from 'remark-breaks'
 
-const parseJsonString = (str: string): TaskType | string=> {
+type TaskItem = TaskType | string;
+
+const parseJsonString = (str: string): TaskItem=> {
    try {
       const result = JSON.parse(str) as TaskType;
       if (!result.id) {
@@ -40,15 +42,18 @@ function DeepThinking({
             .match(TASK_TAG_REGEX)
             ?.map(task => task.replace(/<\/?task>/g, ''))
             ?.map(task => parseJsonString(task as string))
-            ?.filter(task => !!task) as TaskType[];
+            ?.filter(task => !!task) as TaskItem[];
 
-         const mergedTasks = parserTasks?.reduce((acc: TaskType[], curr: TaskType) => {
-            const existingTask = acc.find(task => task.id === curr.id);
+         const mergedTasks = parserTasks?.reduce((acc: TaskItem[], curr: TaskItem) => {
+            if (typeof curr === 'string') {
+               return [...acc, curr.replace(/<task>/g, '').replace(/<\/task>/g, '')];
+            }
+            const existingTask = acc.find(task => (task as TaskType).id === (curr as TaskType).id);
             if (existingTask) {
                // Merge the tasks if they have the same id
                return acc.map(task => 
-                  task.id === curr.id 
-                     ? { ...task, ...curr }
+                  (task as TaskType).id === (curr as TaskType).id 
+                     ? { ...(task as TaskType), ...(curr as TaskType) }
                      : task
                );
             }
@@ -61,7 +66,7 @@ function DeepThinking({
    }, [content]);
 
    const renderTasks = () => {
-      if (!tasks?.length && !!content && typeof content === 'string') {
+      if (!tasks?.length) {
          return (
             <Markdown
                remarkPlugins={[remarkGfm, remarkBreaks]}
@@ -69,17 +74,18 @@ function DeepThinking({
             />
          )
       }
-      return (
-         <motion.div
-            className={s.content}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-         >
-            {tasks.map(task => <Task data={task} />)}
-         </motion.div>
-      )
+      return tasks?.map(task => {
+         if (!!task && typeof task === 'string') {
+            return (
+               <Markdown
+                  remarkPlugins={[remarkGfm, remarkBreaks]}
+                  children={task as string}
+               />
+            )
+         }
+         return <Task data={task} />
+      })
+      
    };
 
    return (
@@ -98,7 +104,17 @@ function DeepThinking({
             </Box>
          </div>
          <AnimatePresence>
-            {!!isExpanded && renderTasks()}
+            {!!isExpanded && (
+               <motion.div
+                  className={s.content}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+               >
+                  {renderTasks()}
+               </motion.div>
+            )}
          </AnimatePresence>
       </div>
    )
