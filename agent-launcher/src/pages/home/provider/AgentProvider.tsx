@@ -771,6 +771,10 @@ const AgentProvider: React.FC<
       } finally {
          setTimeout(() => {
             dispatch(requestReloadMonitor());
+            updateAgentState(agent.id, {
+              data: agent,
+              isUnInstalling: false,
+            });
             if (needRemoveStorage) {
                deleteAgent(agent.id)
                dispatch(requestReloadListAgent());
