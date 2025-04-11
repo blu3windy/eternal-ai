@@ -38,7 +38,7 @@ const ButtonChatHistory = () => {
         <>
             <IconButton
                 aria-label="Chat history"
-                icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M2.125 12.125C2.125 17.6479 6.60215 22.125 12.125 22.125C17.6479 22.125 22.125 17.6479 22.125 12.125C22.125 6.60215 17.6479 2.125 12.125 2.125C8.02435 2.125 4.5002 4.59319 2.95708 8.125L3.03351 7.95445" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M2.625 3.125V8.125H7.625" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M12.125 6.125V12.125L17.125 17.125" stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>

@@ -153,9 +153,9 @@ class ChatAgentDatabase {
       }
    }
 
-   async clearChatItems(threadId: string) {
+   async clearChatItems(sessionId: string) {
       try {
-         await this.db?.messages.where("threadId").equals(threadId).delete();
+         await this.db?.messages.where("uuid").equals(sessionId).delete();
       } catch (e) {
          console.log('_________clearChatItems', e);
       }
@@ -211,7 +211,12 @@ class ChatAgentDatabase {
             const messages = await this.loadChatItems(threadId);
 
             if (messages?.length > 0) {
-               messages.forEach((message) => {
+               messages.forEach((message, i) => {
+                  if (i === 1) {
+                     const match = message.msg.match(/<\/think>\s*([\s\S]*)/);
+                     const result = match ? match[1].trim() : '';
+                     this.updateSessionName(threadItems[0].id, result || "New Chat");
+                  }
                   this.updateChatItem({ ...message, threadId: threadId, uuid: threadItems[0].id });
                });
             }
