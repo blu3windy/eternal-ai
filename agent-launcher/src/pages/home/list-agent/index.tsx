@@ -1,16 +1,10 @@
 import {
    Box,
-   Button,
-   Divider,
    Flex,
    Grid,
    GridItem,
    Image,
-   Popover,
-   PopoverContent,
-   PopoverTrigger,
    Text,
-   useDisclosure,
    useToast,
    VStack
 } from '@chakra-ui/react';
@@ -34,23 +28,15 @@ import BottomBar from './BottomBar/index.tsx';
 import {
    AgentOptions,
    AgentType,
-   Category,
-   CategoryOption,
    FilterOption,
-   SortBy,
    SortOption
 } from './constants';
 import s from './styles.module.scss';
+import SearchModal from './SearchModal/index.tsx';
 
 
 const AgentsList = () => {
    const refInput = useRef<HTMLInputElement | null>(null);
-
-   const {
-      isOpen,
-      onOpen,
-      onClose
-   } = useDisclosure();
 
    const [sort, setSort] = useState<SortOption>(SortOption.Installed);
    const [filter, setFilter] = useState<FilterOption>(FilterOption.Installed);
@@ -58,22 +44,15 @@ const AgentsList = () => {
    const refLoading = useRef(false);
 
    const [agents, setAgents] = useState<IAgentToken[]>([]);
-   const [latestAgent, setLatestAgent] = useState<IAgentToken | null>(null);
-   const refLatestInterval = useRef<any>(null);
+   const [isSearchMode, setIsSearchMode] = useState(false);
 
    const { needReloadList, needReloadRecentAgents } = useSelector(commonSelector);
 
    const {
       setSelectedAgent,
       selectedAgent,
-      // isSearchMode,
-      // setIsSearchMode,
-      // category,
-      // setCategory,
       installedAgentIds,
-      startAgent,
       installAgent,
-      agentCategories
    } = useContext(AgentContext);
 
    const refParams = useRef({
@@ -82,68 +61,13 @@ const AgentsList = () => {
       sort,
       category: 0,
       filter,
-      // order: OrderOption.Desc,
       search: '',
-      isSearchMode: false
    });
    const refAddAgentTestCA = useRef('')
-
-   const { isOpen: isOpenFilter, onClose: onCloseFilter, onToggle: onToggleFilter } = useDisclosure();
-   const { isOpen: isOpenSort, onClose: onCloseSort, onToggle: onToggleSort } = useDisclosure();
 
    const cPumpAPI = new CAgentTokenAPI();
 
    const [hasMore, setHasMore] = useState(true);
-
-
-   // useEffect(() => {
-   //    getLatestAgent();
-   //    refLatestInterval.current = setInterval(() => {
-   //       getLatestAgent();
-   //    }, 30000);
-
-   //    return () => {
-   //       if (refLatestInterval.current) {
-   //          clearInterval(refLatestInterval.current);
-   //       }
-   //    };
-   // }, []);
-
-   // useEffect(() => {
-   //    refParams.current.category = category;
-   //    debounceGetTokens(true);
-   // }, [category]);
-
-   // const getLatestAgent = async () => {
-   //    try {
-   //       const params: any = {
-   //          page: 1,
-   //          limit: 1,
-   //          sort_col: SortOption.CreatedAt,
-   //          sort_type: 'desc',
-   //          chain: '',
-   //          agent_types: [
-   //             AgentType.Model,
-   //             AgentType.ModelOnline,
-   //             AgentType.UtilityJS,
-   //             AgentType.UtilityPython,
-   //             AgentType.CustomUI,
-   //             AgentType.CustomPrompt,
-   //             AgentType.Infra
-   //          ].join(','),
-   //       };
-
-   //       const { agents } = await cPumpAPI.getAgentTokenList(params);
-   //       if (agents && agents.length > 0) {
-   //          const agent = agents[0];
-   //          if (!latestAgent || agent.id !== latestAgent.id) {
-   //             setLatestAgent(agent);
-   //          }
-   //       }
-   //    } catch (error) {
-   //       console.error('Error fetching latest agent:', error);
-   //    }
-   // };
 
    const getTokens = async (isNew: boolean, isNoLoading?: boolean) => {
       if (refLoading.current) return;
@@ -170,43 +94,18 @@ const AgentsList = () => {
             chain: '',
          };
 
-         // if (refParams.current.category === CategoryOption.Character) {
-         //    params.agent_types = [AgentType.Normal, AgentType.Reasoning, AgentType.KnowledgeBase, AgentType.Eliza, AgentType.Zerepy].join(',');
-         // } else if (refParams.current.category === CategoryOption.Model) {
-         //    params.agent_types = [AgentType.Model, AgentType.ModelOnline].join(',');
-         // } else if (refParams.current.category === CategoryOption.Utility) {
-         //    params.agent_types = [AgentType.UtilityJS, AgentType.UtilityPython, AgentType.CustomUI, AgentType.CustomPrompt].join(',');
-         // } else if (refParams.current.category === CategoryOption.Infra) {
-         //    params.agent_types = [AgentType.Infra].join(',');
-         // } else {
-         params.agent_types = [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI, AgentType.CustomPrompt, AgentType.Infra].join(',');
-         // }
+         params.agent_types = [AgentType.Model, AgentType.ModelOnline, AgentType.CustomUI, AgentType.CustomPrompt].join(',');
 
-         if (!refParams.current.isSearchMode) {
-            const installIds = await installAgentStorage.getAgentIds();
+         const installIds = await installAgentStorage.getAgentIds();
+         const allInstalledIds = installIds;
 
-            const allInstalledIds = [
-               // ...installedAgentIds.utility,
-               // ...installedAgentIds.model,
-               // ...installedAgentIds.social,
-               ...installIds
-            ];
-
-            if (FilterOption.Installed === refParams.current.filter) {
-               // params.installed = true;
-               if (allInstalledIds.length > 0) {
-                  params.ids = allInstalledIds.join(',');
-               }
-            } else {
-               if (allInstalledIds.length > 0) {
-                  params.exlude_ids = allInstalledIds.join(',');
-               }
+         if (FilterOption.Installed === refParams.current.filter) {
+            if (allInstalledIds.length > 0) {
+               params.ids = allInstalledIds.join(',');
             }
          } else {
-            if (refParams.current.category === 0) {
-               params.category_ids = '';
-            } else {
-               params.category_ids = refParams.current.category;
+            if (allInstalledIds.length > 0) {
+               params.exlude_ids = allInstalledIds.join(',');
             }
          }
 
@@ -283,137 +182,9 @@ const AgentsList = () => {
       }
    }, [needReloadRecentAgents]);
 
-   // const handleCategorySelect = (categoryOption: number) => {
-   //    console.log('stephen handleCategorySelect', categoryOption);
-   //    refParams.current = {
-   //       ...refParams.current,
-   //       category: categoryOption,
-   //    };
-   //    throttleGetTokens(true);
-   // };
-
-   const renderSearchMode = () => {
-      if (!refParams?.current?.isSearchMode) return null;
-
-      return (
-         <Box>
-            <Flex p="0 24px 32px" gap="24px">
-               {renderCategoryMenu()}
-               <Box w="1px" h="20px" bg="#000" opacity="0.2" margin={"auto 0"} />
-               {renderSortMenu()}
-            </Flex>
-            {/* {latestAgent && (
-               <Box mb="32px">
-                  <Text fontSize="24px" fontWeight="600" mb="16px">New & Updates</Text>
-                  <Box bg={'white'}  borderRadius={"8px"} overflow={"hidden"}>
-                     <AgentItem token={latestAgent} isLatest={true} />
-                  </Box>
-               </Box>
-            )} */}
-
-            {/* <Tabs
-               className={s.tabContainer}
-               isFitted
-               index={CATEGORIES.findIndex(c => c.id === category)}
-               onChange={(index) => {
-                  const selectedCategory = CATEGORIES[index];
-                  setCategory(selectedCategory.id);
-                  // refParams.current.category = selectedCategory.id;
-                  // debounceGetTokens(true);
-               }}
-            >
-               <TabList>
-                  {CATEGORIES.map((cat) => (
-                     <Tab
-                        key={cat.id}
-                     >
-                        <Text>{cat.name}</Text>
-                        <Popover trigger="hover" placement="bottom">
-                           <PopoverTrigger>
-                              <Box
-                                 onClick={(e) => e.stopPropagation()}
-                                 onMouseDown={(e) => e.stopPropagation()}
-                              >
-                                 <IcHelp color={'black'} />
-                              </Box>
-                           </PopoverTrigger>
-                           <PopoverContent
-                              width="300px"
-                              bg="white"
-                              border="1px solid #E5E7EB"
-                              boxShadow="0px 4px 6px -2px rgba(16, 24, 40, 0.03), 0px 12px 16px -4px rgba(16, 24, 40, 0.08)"
-                              borderRadius="8px"
-                           >
-                              <Box p="12px">
-                                 <Text fontSize="14px" color="#1F2937">
-                                    {cat.description}
-                                 </Text>
-                              </Box>
-                           </PopoverContent>
-                        </Popover>
-                     </Tab>
-                  ))}
-               </TabList>
-            </Tabs> */}
-            {renderSearchResults()}
-            {/* <Box>
-               <Text fontSize="24px" fontWeight="600" mb="16px">Categories</Text>
-               <SimpleGrid columns={1} spacing="16px">
-                  {CATEGORIES.map((category) => (
-                     <Flex
-                        key={category.id}
-                        className={s.categoryItem}
-                        bg={category.gradient}
-                        onClick={() => {
-                           refParams.current.category = category.id;
-                           setShowCategoryList(false);
-                           debounceGetTokens(true);
-                        }}
-                     >
-                        <Text fontSize="20px" fontWeight="500" color="#fff">
-                           {category.name}
-                        </Text>
-                        <Image
-                           src={category.icon}
-                           className={s.categoryImage}
-                        />
-                     </Flex>
-                  ))}
-               </SimpleGrid>
-            </Box> */}
-         </Box>
-      );
-   };
-
    const renderSearch = () => {
       return (
          <Flex flex={1} gap={'24px'} alignItems={'center'}>
-            {
-               refParams?.current?.isSearchMode && (
-                  <Image
-                     src="icons/ic-arrow-left.svg"
-                     w="16px"
-                     h="16px"
-                     cursor={'pointer'}
-                     onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (refInput?.current) {
-                           refInput.current.value = '';
-                           refInput.current.blur();
-                           refParams.current = {
-                              ...refParams.current,
-                              search: '',
-                              isSearchMode: false
-                           };
-                           // setCategory(CategoryOption.All);
-
-                           throttleGetTokens(true);
-                        }
-                     }}
-                  />
-               )
-            }
             <Flex
                flex={1}
                position="relative"
@@ -430,66 +201,15 @@ const AgentsList = () => {
                   placeholder={'Search agents'}
                   ref={refInput as any}
                   autoFocus={false}
-                  // autoFocus
                   onFocus={() => {
-                     // if (category === CategoryOption.All) {
-                     // setCategory(CategoryOption.Utility);
-                     // refParams.current.category = category;
-                     // }
-
-                     if(!refParams?.current?.isSearchMode) {
-                        refParams.current.isSearchMode = true;
-                        throttleGetTokens(true);
+                     if(!isSearchMode) {
+                        setIsSearchMode(true);
                      }
                   }}
-                  // onBlur={() => {
-                  //    // Delay hiding search mode to allow clicking category
-                  //    setTimeout(() => {
-                  //       if (!refParams.current.search) {
-                  //          setIsSearchMode(false);
-                  //       }
-                  //    }, 200);
-                  // }}
                   onChange={(event) => {
                      onSearch(event.target.value);
                   }}
                />
-
-               {refParams?.current?.isSearchMode && refInput?.current?.value && refInput.current.value.length > 0 && (
-                  <Flex
-                     cursor="pointer"
-                     position="absolute"
-                     top="0"
-                     bottom="0"
-                     right="16px"
-                     marginTop="auto"
-                     marginBottom="auto"
-                     justifyContent="center"
-                     alignItems="center"
-                  >
-                     <Image
-                        width="20px"
-                        src="icons/ic_search_close.svg"
-                        onClick={(e) => {
-                           e.preventDefault();
-                           e.stopPropagation();
-                           if (refInput?.current) {
-                              refInput.current.value = '';
-                              // refInput.current.blur();
-                              refParams.current = {
-                                 ...refParams.current,
-                                 search: '',
-                                 // category: CategoryOption.All,
-                              };
-                              // setCategory(CategoryOption.All);
-
-                              // setIsSearchMode(false);
-                              debounceGetTokens(true);
-                           }
-                        }}
-                     />
-                  </Flex>
-               )}
             </Flex>
          </Flex>
       );
@@ -532,215 +252,58 @@ const AgentsList = () => {
                   </Flex>
                );
             })}
-            {/* <AgentMonitor /> */}
-            {/* <AgentNotification /> */}
          </Flex>
       )
    }
 
-   const renderCategoryMenu = () => {
-      return (
-         <Flex
-            flex={1}
-            flexDirection={'row'}
-            className={s.select}
-            alignItems={'center'}
-         >
-            <Text
-               fontSize={'14px'}
-               opacity={'0.7'}
-               fontWeight={'400'}
-               whiteSpace={"nowrap"}
-            >
-               Category
-            </Text>
-            <Popover styleConfig={{ width: "100%" }} placement="bottom-end" isOpen={isOpenFilter} onClose={onCloseFilter}>
-               <PopoverTrigger>
-                  <Box
-                     className={s.btnTokenSetup}
-                     as={Button}
-                     onClick={onToggleFilter}
-                  >
-                     <Text fontSize={'14px'} fontWeight={500} maxW={"100px"} textOverflow={"ellipsis"} overflow={"hidden"} whiteSpace={"nowrap"}>
-                        {agentCategories.find(s => s.id === refParams?.current?.category)?.name}
-                     </Text>
-                     <Image
-                        src={'icons/ic-angle-down.svg'}
-                        alt={'add'}
-                     />
-                  </Box>
-               </PopoverTrigger>
-               <PopoverContent
-                  width={'100%'}
-                  className={s.menuTokenSetup}
-                  border={'1px solid #E5E7EB'}
-                  boxShadow={'0px 0px 24px -6px #0000001F'}
-                  borderRadius={'16px'}
-                  background={'#fff'}
-               >
-                  {agentCategories.map((option, index) => (
-                     <>
-                        <Flex
-                           direction={"column"}
-                           gap={'4px'}
-                           // alignItems={'center'}
-                           padding={'16px 16px'}
-                           _hover={{
-                              bg: '#5400FB0F',
-                           }}
-                           cursor="pointer"
-                           onClick={(e) => {
-                              const _category = option.id;
-                              // handleCategorySelect(_category);
-                              // setCategory(_category);
-                              refParams.current.category = _category;
-                              debounceGetTokens(true);
-                              onCloseFilter();
-                           }}
-                        >
-                           <Text fontSize={'13px'} fontWeight={500}>
-                              {option.name}
-                           </Text>
-                           {/* {
-                              option.description && (
-                                 <Text fontSize={'12px'} fontWeight={400} opacity={0.7}>
-                                    {option.description}
-                                 </Text>
-                              )
-                           } */}
-                        </Flex>
-                        {index < SortBy.length && (
-                           <Divider orientation={'horizontal'} my={'0px'} />
-                        )}
-                     </>
-                  ))}
-               </PopoverContent>
-            </Popover>
-         </Flex>
-      )
-   };
-
-   const renderSortMenu = () => {
-      return (
-         <Flex
-            flex={1}
-            flexDirection={'row'}
-            className={s.select}
-            alignItems={'center'}
-         >
-            <Text
-               fontSize={'14px'}
-               opacity={'0.7'}
-               fontWeight={'400'}
-               whiteSpace={"nowrap"}
-            >
-               Sort by
-            </Text>
-            <Popover styleConfig={{ width: "100%" }} placement="bottom-end" isOpen={isOpenSort} onClose={onCloseSort}>
-               <PopoverTrigger>
-                  <Box
-                     className={s.btnTokenSetup}
-                     as={Button}
-                     onClick={onToggleSort}
-                  >
-                     <Text fontSize={'14px'} fontWeight={500}>
-                        {SortBy.find(s => s.value === sort)?.label}
-                     </Text>
-                     <Image
-                        src={'icons/ic-angle-down.svg'}
-                        alt={'add'}
-                     />
-                  </Box>
-               </PopoverTrigger>
-               <PopoverContent
-                  width={'100%'}
-                  className={s.menuTokenSetup}
-                  border={'1px solid #E5E7EB'}
-                  boxShadow={'0px 0px 24px -6px #0000001F'}
-                  borderRadius={'16px'}
-                  background={'#fff'}
-               >
-                  {SortBy.map((option, index) => (
-                     <>
-                        <Flex
-                           gap={'12px'}
-                           alignItems={'center'}
-                           padding={'16px 16px'}
-                           _hover={{
-                              bg: '#5400FB0F',
-                           }}
-                           cursor="pointer"
-                           onClick={(e) => {
-                              const sort = option.value as SortOption;
-                              setSort(sort);
-                              refParams.current = {
-                                 ...refParams.current,
-                                 sort: sort,
-                              };
-                              throttleGetTokens(true);
-                              onCloseSort();
-                           }}
-                        >
-                           <Text fontSize={'13px'} fontWeight={500}>
-                              {option.label}
-                           </Text>
-                        </Flex>
-                        {index < SortBy.length - 1 && (
-                           <Divider orientation={'horizontal'} my={'0px'} />
-                        )}
-                     </>
-                  ))}
-               </PopoverContent>
-            </Popover>
-         </Flex>
-      )
-   };
-
-   const renderSearchResults = () => {
-      return (
-         <Box id="agent-list-scroll" className={s.listContainer}>
-            {/* <Flex align="center" mb="20px" px="24px">
-               <Button 
-                  leftIcon={<Image src="icons/ic-arrow-left.svg" w="16px" h="16px" />}
-                  variant="ghost"
-                  onClick={handleBackToCategories}
-                  fontSize={'20px'}
-                  fontWeight={'500'}
-                  p="0"
-                  _hover={{
-                     bg: 'transparent',
-                  }}
-               >
-                  {refParams.current.category !== CategoryOption.All ? (
-                     <>{Category.find(c => c.value === refParams.current.category)?.label}</>
-                  ) : 'Back'}
-               </Button>
-            </Flex> */}
-            <InfiniteScroll
-               key={agents?.length}
-               dataLength={agents?.length}
-               next={() => {
-                  if (hasMore) {
-                     debounceGetTokens(false);
-                  }
-               }}
-               hasMore={hasMore}
-               loader={<AppLoading />}
-               scrollableTarget="agent-list-scroll"
-            >
-               <Grid
+   return (
+      <AnimatePresence>
+         <Box className={s.container} position={'relative'} display={'flex'} dir={'column'} pos={'relative'}>
+            {!isSearchMode && (
+               <Flex
+                  direction={"column"}
                   w="100%"
-                  templateColumns={"1fr"}
-                  gridRowGap={"8px"}
-                  overflow={'hidden !important'}
+                  p={"24px"}
                >
-                  <AnimatePresence>
+                  <Flex
+                     flexDirection="column"
+                     justifyContent="flex-start"
+                     gap="16px"
+                  >
+                     {renderSearch()}
+                  </Flex>
+                  <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
+                     {renderFilterOptions()}
+                  </Flex>
+               </Flex>
+            )}
+            <SearchModal isOpen={isSearchMode} onClickClose={() => setIsSearchMode(false)} />
+            <Box id="agent-list-scroll" className={s.listContainer}>
+               <InfiniteScroll
+                  key={agents?.length}
+                  dataLength={agents?.length}
+                  next={() => {
+                     console.log('next hasMore', hasMore);
+                     if (hasMore) {
+                        debounceGetTokens(false);
+                     }
+                  }}
+                  hasMore={hasMore}
+                  loader={<AppLoading />}
+                  scrollableTarget="agent-list-scroll"
+               >
+                  <Grid
+                     w="100%"
+                     templateColumns={"1fr"}
+                     gridRowGap={"8px"}
+                     overflow={'hidden !important'}
+                  >
                      {!loaded && (
                         <motion.div
                            initial={{ opacity: 0 }}
                            animate={{ opacity: 1 }}
                            exit={{ opacity: 0 }}
-                           transition={{ duration: 0.3 }}
+                           transition={{ duration: 0.5 }}
                            style={{
                               position: 'absolute',
                               top: 0,
@@ -756,137 +319,40 @@ const AgentsList = () => {
                            <AppLoading />
                         </motion.div>
                      )}
-                  </AnimatePresence>
-                  {agents?.map((item: IAgentToken) => (
-                     <GridItem key={item.id}>
-                        <AgentItem token={item} />
-                     </GridItem>
-                  ))}
-               </Grid>
-            </InfiniteScroll>
-         </Box>
-      );
-   };
-
-
-   return (
-      <AnimatePresence>
-
-         <Box className={s.container} position={'relative'}>
-            <Flex
-               direction={"column"}
-               w="100%"
-               p={"24px"}
-            >
-               <Flex
-                  flexDirection="column"
-                  justifyContent="flex-start"
-                  gap="16px"
-               >
-                  {renderSearch()}
-               </Flex>
-               {!refParams?.current?.isSearchMode && (
-                  <>
-                     <Flex gap={"16px"} mt={"20px"} justifyContent={"space-between"}>
-                        {renderFilterOptions()}
-                     </Flex>
-                  </>
-               )}
-            </Flex>
-
-            {refParams?.current?.isSearchMode ? (
-               renderSearchMode()
-            ) : (
-               <>
-                  <Box h={'8px'} />
-                  <Box id="agent-list-scroll" className={s.listContainer}>
-                     <InfiniteScroll
-                        key={agents?.length}
-                        dataLength={agents?.length}
-                        next={() => {
-                           console.log('next hasMore', hasMore);
-                           if (hasMore) {
-                              debounceGetTokens(false);
-                           }
-                        }}
-                        hasMore={hasMore}
-                        loader={<AppLoading />}
-                        // height="calc(100vh - 200px)"
-                        // style={{ overflow: 'auto' }}
-                        // scrollThreshold="100px" 
-                        scrollableTarget="agent-list-scroll"
-                     >
-                        <Grid
-                           w="100%"
-                           templateColumns={"1fr"}
-                           gridRowGap={"8px"}
-                           overflow={'hidden !important'}
+                     {agents?.map((item: IAgentToken, i) => (
+                        <GridItem key={item.id}>
+                           <AgentItem token={item} />
+                        </GridItem>
+                     ))}
+                     {filter === FilterOption.Installed && loaded && agents.length === 0 && (
+                        <VStack
+                           height="full"
+                           justify="center"
+                           spacing={3}
+                           p={4}
+                           textAlign="center"
                         >
-                           {!loaded && (
-                              <motion.div
-                                 initial={{ opacity: 0 }}
-                                 animate={{ opacity: 1 }}
-                                 exit={{ opacity: 0 }}
-                                 transition={{ duration: 0.5 }}
-                                 style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    width: "fit-content",
-                                    height: "fit-content",
-                                    marginLeft: "auto",
-                                    marginRight: "auto",
-                                 }}
-                              >
-                                 <AppLoading />
-                              </motion.div>
-                           )}
-                           {agents?.map((item: IAgentToken, i) => (
-                              <GridItem key={item.id}>
-                                 <AgentItem token={item} />
-                              </GridItem>
-                           ))}
-                           {filter === FilterOption.Installed && loaded && agents.length === 0 && (
-                              <VStack
-                                 height="full"
-                                 justify="center"
-                                 spacing={3}
-                                 p={4}
-                                 textAlign="center"
-                              >
-                                 <Text fontSize="lg" fontWeight="bold">
-                                    No agents installed?
-                                 </Text>
-                                 <Text>
-                                    Browse <Text as="span" onClick={() => { setFilter(FilterOption.All) }} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
-                                 </Text>
-                              </VStack>
-                           )}
-                        </Grid>
-                     </InfiniteScroll>
-                  </Box>
-               </>
-            )}
+                           <Text fontSize="lg" fontWeight="bold">
+                              No agents installed?
+                           </Text>
+                           <Text>
+                              Browse <Text as="span" onClick={() => { setFilter(FilterOption.All) }} color="#5400FB" cursor="pointer">the agent store</Text>  to discover <br /> and install useful agents.
+                           </Text>
+                        </VStack>
+                     )}
+                  </Grid>
+               </InfiniteScroll>
+            </Box>
 
             <BottomBar onAddAgentSuccess={(address: string) => {
                refAddAgentTestCA.current = address;
-               onClose();
                setFilter(FilterOption.Installed);
                refParams.current = {
                   ...refParams.current,
                   filter: FilterOption.Installed,
-                  isSearchMode: false
                };
                throttleGetTokens(true);
             }} />
-
-            {/* <Flex className={s.addTestBtn} onClick={onOpen}>
-            <Center w={'100%'}>
-               <Text textAlign={'center'}>+ Add test agent</Text>
-            </Center>
-         </Flex> */}
          </Box>
       </AnimatePresence>
    );

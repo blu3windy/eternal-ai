@@ -76,7 +76,7 @@ export interface IAgentToken {
   agent_type: AgentType;
   kb_id?: number;
   source_url?: string;
-  depend_agents?: string;
+  depend_agents?: any;
   required_wallet?: boolean;
   is_onchain?: boolean;
   is_custom_ui?: boolean;
