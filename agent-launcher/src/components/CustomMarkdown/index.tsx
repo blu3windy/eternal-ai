@@ -9,18 +9,8 @@ import ContentReplay from "./Content";
 import { THINK_TAG_REGEX } from "./constants";
 import DeepThinking from "./DeepThinking";
 
-function CustomMarkdown({
-   id,
-   content,
-   status = "waiting",
-}: {
-   id?: string;
-   content: string;
-   status?: string;
-}) {
-   const thinkTag = useMemo(() => {
-      try {
-//          return `<think>
+
+// const THINK_TASK_MOCKUP = `<think>
 //   <task>{"id":"analysis1","type":"initial", "typeLabel": "Initial", "content":"Starting code analysis","result":"Beginning review of the codebase"}</task>
 // <task>{"id":"analysis1","type":"progress", "typeLabel": "Progress", "content":"Analyzing component structure","result":"Identified main components: DeepThinking, Task, and CustomMarkdown"}</task>
 // <task>{"id":"analysis1","type":"conclusion","content":"Finalizing analysis Starting code analysis Starting code analysis Starting code analysis √","result":"Found 3 key components with proper type definitions Finalizing analysis Starting code analysis Starting code analysis Starting code analysis √"}</task>
@@ -40,7 +30,41 @@ function CustomMarkdown({
 // <task>{"id":"ui1","type":"initial","content":"Reviewing UI components","result":"Examining DeepThinking component structure"}</task>
 // <task>{"id":"ui1","type":"progress","content":"Analyzing expand/collapse","result":"Found expandable section with chevron animation"}</task>
 // <task>{"id":"ui1","type":"conclusion","content":"UI analysis complete","result":"Component has proper expand/collapse functionality"}</task>
-// </think>`.replace(/<\/?think>/g, '');
+// </think>`;
+
+// const THINK_TAG_MOCKUP = `${THINK_TASK_MOCKUP}
+// 🔄 Starting attempt 1... I have 2 tools available (like search, read_webpage). I can try up to 10 times.
+// ❌ Oops! Something went wrong on attempt 1: Connection error.
+// 🔄 Starting attempt 2... I have 2 tools available (like search, read_webpage). I can try 9 more times if needed.
+// ❌ Oops! Something went wrong on attempt 2: Connection error.
+// 🔄 Starting attempt 3... I have 2 tools available (like search, read_webpage). I can try 8 more times if needed.
+// ❌ Oops! Something went wrong on attempt 3: Connection error.
+// 🔄 Starting attempt 4... I have 2 tools available (like search, read_webpage). I can try 7 more times if needed.
+// ❌ Oops! Something went wrong on attempt 4: Connection error.
+// 🔄 Starting attempt 5... I have 2 tools available (like search, read_webpage). I can try 6 more times if needed.
+// ❌ Oops! Something went wrong on attempt 5: Connection error.
+// 🔄 Starting attempt 6... I have 2 tools available (like search, read_webpage). I can try 5 more times if needed.
+// ❌ Oops! Something went wrong on attempt 6: Connection error.
+// 🔄 Starting attempt 7... I have 2 tools available (like search, read_webpage). I can try 4 more times if needed.
+// ❌ Oops! Something went wrong on attempt 7: Connection error.
+// 🔄 Starting attempt 8... I have 2 tools available (like search, read_webpage). I can try 3 more times if needed.
+// ❌ Oops! Something went wrong on attempt 8: Connection error.
+// 🔄 Starting attempt 9... I have 2 tools available (like search, read_webpage). I can try 2 more times if needed.
+// ❌ Oops! Something went wrong on attempt 9: Connection error.
+// 🔄 Starting attempt 10... I have 2 tools available (like search, read_webpage). I can try 1 more times if needed.
+// ❌ Oops! Something went wrong on attempt 10: Connection error.{"type":"error","error":"Connection error."}`
+
+function CustomMarkdown({
+   id,
+   content,
+   status = "waiting",
+}: {
+   id?: string;
+   content: string;
+   status?: string;
+}) {
+   const thinkTag = useMemo(() => {
+      try {
          return content.match(THINK_TAG_REGEX)?.[0]?.replace(/<\/?think>/g, '');
       } catch (error) {
          return null;
