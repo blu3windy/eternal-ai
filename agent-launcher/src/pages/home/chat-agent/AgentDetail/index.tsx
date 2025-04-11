@@ -272,7 +272,7 @@ const AgentDetail = () => {
                </Flex>
             </Flex>
             <Divider color={'rgba(255, 255, 255, 0.15)'} my={'40px'} />
-            <Flex h={'100%'} overflow={'auto'} marginLeft={'8px'} marginBottom={'28px'} className={s.wDescription}>
+            <Flex h={'100%'} overflow={'auto'} marginLeft={'8px'} marginBottom={'20px'} className={s.wDescription}>
                {description && (
                   <div className={cs(s.descriptionText, "markdown")}>
                      <CustomMarkdown
