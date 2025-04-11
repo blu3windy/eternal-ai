@@ -756,3 +756,8 @@ type AgentReactionHistory struct {
 	UserAddress string `gorm:"index"`
 	Reaction    string
 }
+
+type VibeWhiteList struct {
+	gorm.Model
+	Email string `gorm:"unique_index"`
+}
