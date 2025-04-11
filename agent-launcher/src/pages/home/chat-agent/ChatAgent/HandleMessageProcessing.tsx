@@ -1,7 +1,7 @@
 import { AgentType } from "@pages/home/list-agent/constants";
 import AgentAPI from "@services/api/agent";
 import { IChatMessage } from "@services/api/agent/types";
-import { useContext, useEffect, useMemo } from "react";
+import { useContext, useEffect, useMemo, useRef } from "react";
 import { useChatAgentProvider } from "./provider";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface";
@@ -17,6 +17,9 @@ function HandleProcessingMessage({
    agent: IAgentToken | undefined;
 }) {
    const cPumpAPI = new CAgentTokenAPI();
+   const isPongRef = useRef<boolean>(false);
+
+
    useEffect(() => {
       let timeout: NodeJS.Timeout;
       const checkProcessingTask = async () => {
@@ -25,9 +28,12 @@ function HandleProcessingMessage({
                // try to ping first
                // if error, try to start agent
                try {
-                  await cPumpAPI.checkAgentServiceRunning({
-                     agent,
-                  } as any);
+                  if (!isPongRef.current) {
+                     await cPumpAPI.checkAgentServiceRunning({
+                        agent,
+                     } as any);
+                     isPongRef.current = true;
+                  }
 
                   try {
                      const res = await AgentAPI.chatAgentUtility({
@@ -38,10 +44,19 @@ function HandleProcessingMessage({
                      if (res?.status !== 102) {
                         console.log('__________res__________', res);
                         try {
-                           updateMessage(data.id, {
-                              status: "received",
-                              msg: res.choices[0].message.content,
-                           });
+                           if (res.choices[0].message.content) {
+                              if (res.choices[0].message.content.length > data.msg?.length) {
+                                 updateMessage(data.id, {
+                                    status: "received",
+                                    msg: res.choices[0].message.content
+                                 });
+                              }
+                           } else {
+                              updateMessage(data.id, {
+                                 status: "received",
+                              });
+                           }
+                           
                         } catch (e) {
                            updateMessage(data.id, {
                               status: "received",
@@ -62,10 +77,12 @@ function HandleProcessingMessage({
                      if (!errorMessage) {
                         errorMessage = "Something went wrong!";
                      }
-                     updateMessage(data.id, {
-                        status: "failed",
-                        msg: errorMessage,
-                     });
+                     if (!data.msg) {
+                        updateMessage(data.id, {
+                           status: "failed",
+                           msg: errorMessage,
+                        });
+                     }
                   }
                } catch (e) {
                   timeout = setTimeout(() => {
@@ -84,7 +101,7 @@ function HandleProcessingMessage({
             clearTimeout(timeout);
          }
       }
-   }, []);
+   }, [data.msg]);
 
    return <></>;
 }
@@ -93,8 +110,11 @@ function HandleMessageProcessing({ updateMessage }: { updateMessage: (id: string
    const { selectedAgent } = useContext(AgentContext);
    const { messages } = useChatAgentProvider();
 
+   // const processingMessages = useMemo(() => {
+   //    return messages.filter((item) => item.status === "waiting" || item.status === "receiving" || item.status === "sync-waiting" || item.status === "sync-receiving");
+   // }, [messages]);
    const processingMessages = useMemo(() => {
-      return messages.filter((item) => item.status === "waiting" || item.status === "receiving" || item.status === "sync-waiting" || item.status === "sync-receiving");
+      return messages.filter((item) => item.status === "sync-waiting" || item.status === "sync-receiving");
    }, [messages]);
 
    const renderTasks = () => {

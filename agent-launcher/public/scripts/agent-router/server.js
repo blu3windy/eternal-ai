@@ -266,8 +266,6 @@ const parseDataFromStream = (data) => {
 
 app.post("/:agentName/prompt", async (req, res) => {
    const { agentName } = req.params;
-   console.log("agentName:", agentName);
-   console.log("Request body:", req.body); // Now you can access the body directly
 
    const targetUrl = "http://" + agentName + "/prompt";
    const parsedUrl = url.parse(targetUrl);
@@ -289,6 +287,12 @@ app.post("/:agentName/prompt", async (req, res) => {
          "Content-Length": Buffer.byteLength(payloadString),
       },
    };
+
+
+   if (payload?.messages?.length > 0) {
+      console.log("agentName:", agentName);
+      console.log("Request body:", req.body); // Now you can access the body directly
+   }
 
    if (payload?.id && !payload?.ping) {
       try {
@@ -333,24 +337,42 @@ app.post("/:agentName/prompt", async (req, res) => {
                   writeRequestEndLogger(payload.id, responseData, proxyResponse.statusCode, agentName);
                }
             } else {
-               const chunkObject = parseObjectFromStream(chunk);
-               const chunkText = parseDataFromStream(chunk);
+               res.write(chunk);
+               // Split the chunk by newlines to handle multiple events
+               try {
+                  const chunks = chunk.toString().split(/(?<=data: )\n\n/);
+                  // const sendChunks = [];
+                  for (const chunkData of chunks) {
+                     if (!chunkData.trim()) continue;
+                     // const chunkObject = parseObjectFromStream(chunkData);
+                     const chunkText = parseDataFromStream(chunkData);
 
-               responseData += chunkText;
-               if (typeof chunkObject === "string") {
-                  try {
-                     res.write(
-                        new TextEncoder().encode(
-                           `data: ${JSON.stringify(
-                              normalizeChunkResponse(payload.id, chunkText, agentName, false),
-                           )}\n\n`,
-                        ),
-                     );
-                  } catch (e) {
-                     //
+                     responseData += chunkText;
+                     // if (typeof chunkObject === "string") {
+                     //    try {
+                     //       sendChunks.push(
+                     //          new TextEncoder().encode(
+                     //             `data: ${JSON.stringify(
+                     //                normalizeChunkResponse(payload.id, chunkText, agentName, false),
+                     //             )}\n\n`,
+                     //          ),
+                     //       );
+                     //    } catch (e) {
+                     //       console.log("_________ERORR__ chunkObject error:", e);
+                     //    }
+                     // } else {
+                     //    sendChunks.push(
+                     //       new TextEncoder().encode(
+                     //          `${chunkData}\n\n`,
+                     //       ),
+                     //    );
+                     // }
                   }
-               } else {
-                  res.write(chunk);
+                  // if (sendChunks.length > 0) {
+                  //    res.write(Buffer.concat(sendChunks));
+                  // }
+               } catch (e) {
+                  // res.write(chunk);
                }
             }
          });

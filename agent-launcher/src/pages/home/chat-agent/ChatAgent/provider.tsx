@@ -139,14 +139,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                      const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
                      if (item.status === "waiting" || item.status === "receiving") {
                         if (diffMinutes >= 3) {
-                           if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-                              const updateMessage = {
-                                 ...item,
-                                 status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                              };
-                              return updateMessage;
-                           }
-
                            if (item.msg) {
                               const updateMessage = {
                                  ...item,
@@ -161,6 +153,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                               status: "failed",
                            };
                            return updateMessage;
+                        } else {
+                           if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
+                              const updateMessage = {
+                                 ...item,
+                                 status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
+                              };
+                              return updateMessage;
+                           }
                         }
                      }
                      return item;
