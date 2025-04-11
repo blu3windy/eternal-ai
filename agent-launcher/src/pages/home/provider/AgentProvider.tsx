@@ -771,8 +771,8 @@ const AgentProvider: React.FC<
       } finally {
          setTimeout(() => {
             dispatch(requestReloadMonitor());
-            deleteAgent(agent.id)
             if (needRemoveStorage) {
+               deleteAgent(agent.id)
                dispatch(requestReloadListAgent());
                showMessage({
                   message: `Delete ${agent?.display_name || agent?.agent_name} successfully.`,
