@@ -9,28 +9,28 @@ const UpdateBanner = () => {
  
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
-  const {isFinished} = useStarter()
+  const {isFinished} = useStarter();
+
+  const checkUpdateAndInstall = () => {
+    globalThis.electronAPI.onCheckForUpdate();
+    globalThis.electronAPI.onUpdateDownloaded(() => {
+      setUpdateAvailable(true);
+    });
+  }
 
   useEffect(() => {
 
    if (process.env.NODE_ENV !== "development") {
       if (globalThis.electronAPI) {
-         globalThis.electronAPI.onCheckForUpdate();
-         globalThis.electronAPI.onUpdateDownloaded(() => {
-            setUpdateAvailable(true);
-         });
+         checkUpdateAndInstall();
       }
-  
   
       // 1 min = ? milisecond
       const oneMinute = 60000;
       setInterval(() => {
-         globalThis.electronAPI.onCheckForUpdate();
+         checkUpdateAndInstall();
       }, oneMinute);
    }
-
-    
-
 
  }, []);
 

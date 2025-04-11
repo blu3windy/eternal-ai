@@ -229,11 +229,15 @@ const AgentTopInfo = () => {
                   )} */}
                {
                   showSelectModel ? (
-                     <SelectModel showDescription={false} />
+                     <Flex gap={'6px'} alignItems={'center'}>
+                       <SelectModel showDescription={false} />
+                        <ButtonChatHistory />
+                        <ButtonChatCreate />
+                     </Flex>
                   ) : (<Box />)
                }
 
-               <Flex gap={'24px'} justifyContent={'space-between'} alignItems={'center'}>
+               <Flex gap={'12px'} justifyContent={'space-between'} alignItems={'center'}>
 
                    <Flex gap={'6px'} alignItems={'center'} className={s.content}>
                      <InfoTooltip
@@ -479,8 +483,6 @@ const AgentTopInfo = () => {
                         <AgentWallet color={colorWallet}/>
                      </AgentTradeProvider>
                   )} */}
-                  <ButtonChatHistory />
-                  <ButtonChatCreate />
                   <Button className={s.btnBuy} onClick={onOpenDrawer}>
                      Buy
                   </Button>
