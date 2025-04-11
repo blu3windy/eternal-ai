@@ -756,7 +756,8 @@ func (s *Service) GetDashboardAgentInfos(ctx context.Context, contractAddresses 
 			or LOWER(agent_infos.agent_name) like ?
 			or ifnull(twitter_users.twitter_username, "") like ?
 			or ifnull(twitter_users.name, "") like ?
-		`] = []any{search, search, search, search, search, search, search}
+			or LOWER(agent_infos.display_name) like ? 
+		`] = []any{search, search, search, search, search, search, search, search}
 	}
 
 	//filter agent type
