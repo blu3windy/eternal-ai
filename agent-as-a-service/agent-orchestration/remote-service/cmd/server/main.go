@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -51,8 +52,43 @@ type UploadFileParams struct {
 	FileDataBase64 string `json:"file_data_base64"`
 }
 
+// DownloadFileParams represents the parameters for file download
+type DownloadFileParams struct {
+	FileUrl  string `json:"file_url"`
+	FileName string `json:"file_name"`
+}
+
+// DockerParams represents the parameters for docker command
 type DockerParams struct {
 	Command string `json:"command"`
+}
+
+type ProgressReader struct {
+	Id      int64
+	Method  string
+	Stream  pb.ScriptService_ExecuteRPCServer
+	Reader  io.Reader
+	Size    int64
+	Pos     int64
+	Percent int64
+}
+
+func (pr *ProgressReader) Read(p []byte) (int, error) {
+	n, err := pr.Reader.Read(p)
+	if err == nil {
+		pr.Pos += int64(n)
+		percent := pr.Pos * 100 / pr.Size
+		if percent != pr.Percent {
+			pr.Percent = percent
+			pr.Stream.Send(&pb.RPCResponse{
+				Id:      pr.Id,
+				Method:  pr.Method,
+				Output:  fmt.Sprintf("Downloading file %d bytes of %d (%d%%)", pr.Pos, pr.Size, percent),
+				IsError: false,
+			})
+		}
+	}
+	return n, err
 }
 
 func (s *server) ExecuteRPC(req *pb.RPCRequest, stream pb.ScriptService_ExecuteRPCServer) error {
@@ -219,6 +255,73 @@ func (s *server) ExecuteRPC(req *pb.RPCRequest, stream pb.ScriptService_ExecuteR
 			err = os.WriteFile(filePath, fileData, 0644)
 			if err != nil {
 				return s.responseError(stream, req, status.Error(codes.Internal, fmt.Sprintf("failed to write file: %v", err)))
+			}
+
+			stream.Send(&pb.RPCResponse{
+				Id:      req.Id,
+				Method:  req.Method,
+				Output:  filePath,
+				IsError: false,
+			})
+		}
+
+	case "download_file":
+		{
+			var params DownloadFileParams
+			if err := json.Unmarshal([]byte(req.Params), &params); err != nil {
+				return s.responseError(stream, req, status.Error(codes.InvalidArgument, fmt.Sprintf("invalid params: %v", err)))
+			}
+
+			// Download the file from the URL
+			resp, err := http.Get(params.FileUrl)
+			if err != nil {
+				return s.responseError(stream, req, status.Error(codes.Internal, fmt.Sprintf("failed to download file: %v", err)))
+			}
+			defer resp.Body.Close()
+
+			// Create directory if it doesn't exist
+			currentDir, err := os.Getwd()
+			if err != nil {
+				return s.responseError(stream, req, status.Error(codes.Internal, fmt.Sprintf("failed to get current directory: %v", err)))
+			}
+			err = os.MkdirAll(currentDir+"/uploads/", 0755)
+			if err != nil {
+				return s.responseError(stream, req, status.Error(codes.Internal, fmt.Sprintf("failed to create directory: %v", err)))
+			}
+
+			// Create file path
+			filePath := currentDir + "/uploads/" + strings.TrimPrefix(params.FileName, "/")
+			// Create directory if it doesn't exist
+			fileDir := filepath.Dir(filePath)
+			// check if directory exists
+			if _, err := os.Stat(fileDir); os.IsNotExist(err) {
+				err = os.MkdirAll(fileDir, 0755)
+				if err != nil {
+					return s.responseError(stream, req, status.Error(codes.Internal, fmt.Sprintf("failed to create directory: %v", err)))
+				}
+			}
+
+			// Create a new file
+			file, err := os.Create(filePath)
+			if err != nil {
+				return s.responseError(stream, req, status.Error(codes.Internal, fmt.Sprintf("failed to create file: %v", err)))
+			}
+
+			progressReader := &ProgressReader{
+				Id:     req.Id,
+				Method: req.Method,
+				Stream: stream,
+				Reader: resp.Body,
+				Size:   resp.ContentLength,
+			}
+			if _, err := io.Copy(file, progressReader); err != nil {
+				return s.responseError(stream, req, status.Error(codes.Internal, fmt.Sprintf("failed to copy file: %v", err)))
+			}
+
+			// Close the file
+			err = file.Close()
+			if err != nil {
+				return s.responseError(stream, req, status.Error(codes.Internal, fmt.Sprintf("failed to close file: %v", err)))
 			}
 
 			stream.Send(&pb.RPCResponse{
