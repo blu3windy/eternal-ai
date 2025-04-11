@@ -125,7 +125,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                refEmptyMessage.current = false;
             }
             if (items?.length === 0 && isFirstChat) {
-               publishEvent(INIT_WELCOME_MESSAGE);
+               // publishEvent(INIT_WELCOME_MESSAGE);
             } else {
                const filterMessages = items
                   .filter((item) => item.createdAt)
