@@ -97,6 +97,15 @@ const AgentProvider: React.FC<
    }, [debouncedCheckBackupPrvKey]);
 
 
+   const deleteAgent = useCallback((agentId: number) => {
+      setAgentStates(prev => {
+         const newStates = { ...prev };
+         delete newStates[agentId];
+         return newStates;
+      });
+   }, []);
+
+
    const requireInstall = useMemo(() => {
       return true;
       // if (selectedAgent) {
@@ -762,10 +771,7 @@ const AgentProvider: React.FC<
       } finally {
          setTimeout(() => {
             dispatch(requestReloadMonitor());
-            updateAgentState(agent.id, {
-               data: agent,
-               isUnInstalling: false,
-            });
+            deleteAgent(agent.id)
             if (needRemoveStorage) {
                dispatch(requestReloadListAgent());
                showMessage({
