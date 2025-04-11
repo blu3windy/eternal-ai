@@ -64,6 +64,7 @@ const ItemToken = ({
    isSelected,
    onShowSetupEnv,
    onShowAgentDetail,
+   isDisabled,
 }: {
    onSelect: any;
    onDelete: any;
@@ -72,6 +73,7 @@ const ItemToken = ({
    isSelected: boolean;
    onShowSetupEnv: (agent: IAgentToken) => void;
    onShowAgentDetail: (agent: IAgentToken) => void;
+   isDisabled?: boolean;
 }) => {
    const { agentStates, installAgent, } = useContext(AgentContext);
 
@@ -156,9 +158,10 @@ const ItemToken = ({
                s.itemToken,
                // compareString(model.name, 'chainId') && s.active,
                !allowSelect && s.disabled,
+               isDisabled && s.disabled,
             )}
             onClick={() => {
-               if (allowSelect) {
+               if (allowSelect && !isDisabled) {
                   onSelect(agent);
                }
             }}
@@ -361,6 +364,12 @@ const SelectModel = ({
       return disabled; // || Object.keys(supportModelObj || {}).length <= 1;
    }, [disabled]);
 
+   const isAnyInstalledAgentStarting = useMemo(() => {
+      if (!agentStates || !installedModelAgents) return false;
+      
+      return installedModelAgents.some(agent => agentStates[agent.id]?.isStarting);
+   }, [agentStates, installedModelAgents]);
+
    if (!availableModelAgents || availableModelAgents.length === 0) {
       return null;
    }
@@ -417,6 +426,9 @@ const SelectModel = ({
                            key={t.id}
                            agent={t}
                            onSelect={async (agent: IAgentToken) => {
+                              if (isAnyInstalledAgentStarting) {
+                                 return;
+                              }
                               await startAgent(agent);
                            }}
                            onClose={onClose}
@@ -426,6 +438,7 @@ const SelectModel = ({
                            }}
                            onShowSetupEnv={(agent) => setSetupEnvAgent(agent)}
                            onShowAgentDetail={(agent) => setAgentDetail(agent)}
+                           isDisabled={isAnyInstalledAgentStarting}
                         />
                         <Divider color={'#E2E4E8'} my={'0px'} />
                      </>
@@ -438,6 +451,9 @@ const SelectModel = ({
                            key={t.id}
                            agent={t}
                            onSelect={async (agent: IAgentToken) => {
+                              if (isAnyInstalledAgentStarting) {
+                                 return;
+                              }
                               await startAgent(agent);
                            }}
                            onClose={onClose}
@@ -447,6 +463,7 @@ const SelectModel = ({
                            }}
                            onShowSetupEnv={(agent) => setSetupEnvAgent(agent)}
                            onShowAgentDetail={(agent) => setAgentDetail(agent)}
+                           isDisabled={isAnyInstalledAgentStarting}
                         />
                         <Divider color={'#E2E4E8'} my={'0px'} />
                      </>
