@@ -162,3 +162,10 @@ func (s *Service) GetListUserTransactions(ctx context.Context, userAddress strin
 	}
 	return ms, 0, nil
 }
+
+func (s *Service) AddVibeWhiteList(ctx context.Context, email string) error {
+	whiteList := &models.VibeWhiteList{
+		Email: email,
+	}
+	return s.dao.Create(daos.GetDBMainCtx(ctx), whiteList)
+}
