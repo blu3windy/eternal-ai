@@ -99,7 +99,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          }, 5000);
       } else {
          setShowTaskText(false);
-         
+
          if (timer) {
             clearTimeout(timer);
          }
@@ -215,8 +215,14 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
 
       if ((message.status === "receiving" || message.status === "sync-receiving") && !!processingWebViewUrl) {
          return (
-            <CustomMarkdown id={message.id} status={message.status} content={renderMessage.replace(PROCESSING_TAG_REGEX, '') // replace processing tag
-               .replace(COMPUTER_USE_TAG_REGEX, '')} />
+            <div
+               className={cs(s.markdown, "markdown-body", {
+                  [s.markdown__received]: message.status === "received",
+               })}
+            >
+               <CustomMarkdown id={message.id} status={message.status} content={renderMessage.replace(PROCESSING_TAG_REGEX, '') // replace processing tag
+                  .replace(COMPUTER_USE_TAG_REGEX, '')} />
+            </div>
          );
       }
 

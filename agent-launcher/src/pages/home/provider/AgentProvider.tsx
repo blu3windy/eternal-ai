@@ -385,7 +385,7 @@ const AgentProvider: React.FC<
          const params: any = {
             page: 1,
             limit: 100,
-            sort_col: SortOption.CreatedAt,
+            sort_col: SortOption.Popuplar,
             agent_types: [AgentType.Model, AgentType.ModelOnline].join(','),
             chain: '',
          };
@@ -413,11 +413,11 @@ const AgentProvider: React.FC<
 
       let installedAgents: IAgentToken[] = refAvailableModelAgents.current?.filter((t, index) => installedHashes.includes(t.ipfsHash as string) || t.agent_type === AgentType.ModelOnline);
 
-      installedAgents = installedAgents?.sort((a, b) => {
-         if (a.agent_type === AgentType.ModelOnline) return -1;
-         if (b.agent_type === AgentType.ModelOnline) return 1;
-         return 0;
-      });
+      // installedAgents = installedAgents?.sort((a, b) => {
+      //    if (a.agent_type === AgentType.ModelOnline) return -1;
+      //    if (b.agent_type === AgentType.ModelOnline) return 1;
+      //    return 0;
+      // });
       
       installedAgents = installedAgents?.map(agent => {
          return {
@@ -885,9 +885,26 @@ const AgentProvider: React.FC<
       }
    };
 
+   const parseDependAgents = (depend_agents: any) => {
+      let depsAgentStrs: string[] = [];
+      if (typeof depend_agents === 'string') {
+         try {
+            const parsed = JSON.parse(depend_agents);
+            if (Array.isArray(parsed)) {
+               depsAgentStrs = parsed.map(addr => addr.trim());
+            } else if (typeof parsed === 'string') {
+               depsAgentStrs = [parsed.trim()];
+            }
+         } catch (err) {
+            depsAgentStrs = depend_agents.split(',').map(addr => addr.trim());
+         }
+      }
+      return depsAgentStrs;
+   };
+
    const getDependAgents = async (agent: IAgentToken) => {
       if (agent && !!agent.agent_contract_address) {
-         const depsAgentStrs = agent.depend_agents ? agent.depend_agents.split(',').map(addr => addr.trim()) : [];
+         const depsAgentStrs = parseDependAgents(agent.depend_agents);
          if (depsAgentStrs.length > 0) {
             const dependAgents = await installDependAgents(depsAgentStrs);
             return dependAgents;
@@ -912,7 +929,6 @@ const AgentProvider: React.FC<
          }
          installedAgents.add(agentContractAddr);
 
-         
          const { agents } = (await cPumpAPI.getAgentTokenList({ contract_addresses: agentContractAddr, page: 1, limit: 1, agent_types, include_hidden: true }));
          const agent = agents?.[0];
          if (!agent) {
@@ -920,7 +936,7 @@ const AgentProvider: React.FC<
          }
 
          let dependAgents: any[] = [];
-         const depsAgentStrs = agent.depend_agents ? agent.depend_agents.split(',').map(addr => addr.trim()) : [];
+         const depsAgentStrs = parseDependAgents(agent.depend_agents);
 
          if (depsAgentStrs.length > 0) {
             dependAgents = await installDependAgents(depsAgentStrs);

@@ -148,19 +148,23 @@ const AgentDetail = () => {
                      <Flex gap={"24px"} mt={"12px"}>
                         {
                            isInstalled ? (
-                              <Button
-                                 className={s.btnInstall}
-                                 onClick={handleStartAgent}
-                                 isLoading={isStarting && !isUpdating}
-                                 isDisabled={isStarting}
-                                 loadingText={"Starting..."}
-                              >
-                                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M15.5507 11.989L7.15397 17.1274C5.48314 18.1499 3.33398 16.9506 3.33398 14.9956V5.00479C3.33398 3.04979 5.48314 1.85074 7.15397 2.87324L15.5507 8.01158C17.0382 8.92242 17.0382 11.079 15.5507 11.989Z" fill="black" />
-                                 </svg>
+                              <>
+                                 {!isRunning && (
+                                    <Button
+                                       className={s.btnInstall}
+                                       onClick={handleStartAgent}
+                                       isLoading={isStarting && !isUpdating}
+                                       isDisabled={isStarting}
+                                       loadingText={"Starting..."}
+                                    >
+                                       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M15.5507 11.989L7.15397 17.1274C5.48314 18.1499 3.33398 16.9506 3.33398 14.9956V5.00479C3.33398 3.04979 5.48314 1.85074 7.15397 2.87324L15.5507 8.01158C17.0382 8.92242 17.0382 11.079 15.5507 11.989Z" fill="black" />
+                                       </svg>
 
-                                 Start
-                              </Button>
+                                       Start
+                                    </Button>
+                                 )}
+                              </>
                            ) : (
                               <Button
                                  className={s.btnInstall}

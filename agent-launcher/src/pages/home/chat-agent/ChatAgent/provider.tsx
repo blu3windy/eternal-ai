@@ -20,6 +20,7 @@ import { useDebounce } from "@hooks/useDebounce.ts";
 import { requestReload } from "@stores/states/common/reducer.ts";
 
 import useAgentState from "@pages/home/provider/useAgentState.ts";
+import storageModel from "@storage/StorageModel.ts";
 
 
 type IChatAgentProviderContext = {
@@ -268,6 +269,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          await sendMessageToServer(messageId, Number(id), message, attachments);
          addActiveAgent(selectedAgent!);
          cPumpAPI.saveAgentPromptCount(Number(id));
+
+         const activeModel = await storageModel.getActiveModel();
+         cPumpAPI.saveAgentPromptCount(Number(activeModel?.id));
       }
    };
 
