@@ -99,9 +99,10 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
          const isValidTime = new BigNumber(now).minus(activeAgent.timestamp).gt(TIME_TO_CLEAN);
          const remandTime = new BigNumber(TIME_TO_CLEAN).minus(new BigNumber(now).minus(activeAgent.timestamp))
+         const remandTimeMinutes = new BigNumber(remandTime).div(60000).toNumber() // Ensure remandTimeMinutes is calculated correctly in minutes
          console.log('LEON checkInactiveContainers activeAgent: ', getAgentContainerName(activeAgent.agent), {
             isValidTime, 
-            remandTimeMinutes: new BigNumber(remandTime).div(60000).toNumber() // Ensure remandTimeMinutes is calculated correctly in minutes
+            remandTimeMinutes
          });
 
          if (isValidTime) {
@@ -118,6 +119,9 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
                } catch (error) {
                   console.error('LEON checkInactiveContainers stopAgent error: ', error);
                }
+            } else if (remandTimeMinutes < -10) {
+               console.log('LEON checkInactiveContainers remove agent: ', getAgentContainerName(activeAgent.agent));
+               removeActiveAgent(activeAgent.agent.agent_id);
             }
          }
       }
