@@ -5,13 +5,22 @@
     margin-top: 8px;
     margin-bottom: 8px;
     display: flex;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 12px;
-    border: 1px solid var(--Color-newsystem-White-60, #F4F4F4);
-    background: var(--Color-newsystem-White-80, #FAFAFA);
-    width: 100%;
-    overflow: hidden;
+    
+    .bar {
+      display: flex;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--Color-newsystem-White-60, #F4F4F4);
+      background: var(--Color-newsystem-White-80, #FAFAFA);
+      width: fit-content;
+      overflow: hidden;
+
+    }
+
+    .empty {
+      flex: 1;
+    }
 
     .type {
       color: var(--Color-newsystem-Black-80, #2E2E2E);
