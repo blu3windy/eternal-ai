@@ -267,6 +267,67 @@ const SelectModel = ({
    const [activeModel, setActiveModel] = useState<any>(null);
    const [page, setPage] = useState<number>(0);
 
+   // Filter out installed agents from available agents
+   const filteredAvailableAgents = useMemo(() => {
+      if (!installedModelAgents || !availableModelAgents) return [];
+      
+      const installedIds = installedModelAgents.map(agent => agent.id);
+      return availableModelAgents.filter(agent => !installedIds.includes(agent.id));
+   }, [installedModelAgents, availableModelAgents]);
+
+   // Combine installed agents with available agents (up to PAGE_SIZE)
+   const models = useMemo(() => {
+      if (!installedModelAgents) return [];
+      
+      // Sort installed agents: ModelOnline first, then by prompt_calls (descending)
+      const sortedInstalledAgents = [...installedModelAgents].sort((a, b) => {
+         // ModelOnline agents come first
+         if (a.agent_type === AgentType.ModelOnline && b.agent_type !== AgentType.ModelOnline) return -1;
+         if (a.agent_type !== AgentType.ModelOnline && b.agent_type === AgentType.ModelOnline) return 1;
+         
+         // If both are ModelOnline or both are not, sort by prompt_calls
+         const aCalls = a.prompt_calls || 0;
+         const bCalls = b.prompt_calls || 0;
+         return bCalls - aCalls; // Descending order
+      });
+      
+      // Always show all installed agents
+      const result = [...sortedInstalledAgents];
+      
+      // If we have less than PAGE_SIZE installed agents, add from available
+      if (result.length < PAGE_SIZE) {
+         const remainingCount = PAGE_SIZE - result.length;
+         const availableToShow = filteredAvailableAgents.slice(0, remainingCount);
+         result.push(...availableToShow);
+      }
+      
+      return result;
+   }, [installedModelAgents, filteredAvailableAgents]);
+
+   // For load more functionality
+   const additionalModels = useMemo(() => {
+      if (page === 0) return [];
+      
+      // Calculate how many installed agents we've already shown
+      const shownInstalledCount = Math.min(installedModelAgents?.length || 0, PAGE_SIZE);
+      
+      // Calculate how many available agents we've already shown
+      const shownAvailableCount = Math.min(
+         filteredAvailableAgents.length,
+         Math.max(0, PAGE_SIZE - shownInstalledCount) + (page - 1) * PAGE_SIZE
+      );
+      
+      // Get the next batch of available agents
+      return filteredAvailableAgents.slice(shownAvailableCount, shownAvailableCount + PAGE_SIZE);
+   }, [page, installedModelAgents, filteredAvailableAgents]);
+
+   // Determine if we should show load more button
+   const showLoadMore = useMemo(() => {
+      const totalShown = models.length + additionalModels.length;
+      const totalAvailable = (installedModelAgents?.length || 0) + filteredAvailableAgents.length;
+      return totalShown < totalAvailable;
+   }, [models, additionalModels, installedModelAgents, filteredAvailableAgents]);
+
    const checkActiveModel = async () => {
       const model = await storageModel.getActiveModel();
       if (model?.id !== activeModel?.id) {
@@ -300,21 +361,13 @@ const SelectModel = ({
       return disabled; // || Object.keys(supportModelObj || {}).length <= 1;
    }, [disabled]);
 
-   if (!installedModelAgents || installedModelAgents.length === 0) {
+   if (!availableModelAgents || availableModelAgents.length === 0) {
       return null;
    }
 
    const handleLoadMore = () => {
       setPage(page + 1);
    }
-
-   const showLoadMore = useMemo(() => {
-      return (page + 1) * PAGE_SIZE < availableModelAgents.length;
-   }, [page, availableModelAgents]);
-
-   const models = useMemo(() => {
-      return availableModelAgents.slice(0, (page + 1) * PAGE_SIZE);
-   }, [page, availableModelAgents]);
 
    const [setupEnvAgent, setSetupEnvAgent] = useState<IAgentToken | null>(null);
    const [agentDetail, setAgentDetail] = useState<IAgentToken | null>(null);
@@ -357,6 +410,7 @@ const SelectModel = ({
                   </Flex>
                </PopoverTrigger>
                <PopoverContent className={s.poperContainer}>
+                  {/* Show installed and initial available agents */}
                   {models.map((t, _i) => (
                      <>
                         <ItemToken
@@ -376,11 +430,32 @@ const SelectModel = ({
                         <Divider color={'#E2E4E8'} my={'0px'} />
                      </>
                   ))}
-                  {
-                     showLoadMore && (
-                        <AddMoreRow onClose={onClose} onLoadMore={handleLoadMore} />
-                     )
-                  }
+                  
+                  {/* Show additional available agents when load more is clicked */}
+                  {additionalModels.map((t, _i) => (
+                     <>
+                        <ItemToken
+                           key={t.id}
+                           agent={t}
+                           onSelect={async (agent: IAgentToken) => {
+                              await startAgent(agent);
+                           }}
+                           onClose={onClose}
+                           isSelected={activeModel?.id === t.id}
+                           onDelete={(agent: IAgentToken) => {
+                              setDeleteAgent(agent);
+                           }}
+                           onShowSetupEnv={(agent) => setSetupEnvAgent(agent)}
+                           onShowAgentDetail={(agent) => setAgentDetail(agent)}
+                        />
+                        <Divider color={'#E2E4E8'} my={'0px'} />
+                     </>
+                  ))}
+                  
+                  {/* Show load more button if there are more agents to load */}
+                  {showLoadMore && (
+                     <AddMoreRow onClose={onClose} onLoadMore={handleLoadMore} />
+                  )}
                </PopoverContent>
             </Popover>
          </Box>

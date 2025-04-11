@@ -385,7 +385,7 @@ const AgentProvider: React.FC<
          const params: any = {
             page: 1,
             limit: 100,
-            sort_col: SortOption.CreatedAt,
+            sort_col: SortOption.Popuplar,
             agent_types: [AgentType.Model, AgentType.ModelOnline].join(','),
             chain: '',
          };
@@ -413,11 +413,11 @@ const AgentProvider: React.FC<
 
       let installedAgents: IAgentToken[] = refAvailableModelAgents.current?.filter((t, index) => installedHashes.includes(t.ipfsHash as string) || t.agent_type === AgentType.ModelOnline);
 
-      installedAgents = installedAgents?.sort((a, b) => {
-         if (a.agent_type === AgentType.ModelOnline) return -1;
-         if (b.agent_type === AgentType.ModelOnline) return 1;
-         return 0;
-      });
+      // installedAgents = installedAgents?.sort((a, b) => {
+      //    if (a.agent_type === AgentType.ModelOnline) return -1;
+      //    if (b.agent_type === AgentType.ModelOnline) return 1;
+      //    return 0;
+      // });
       
       installedAgents = installedAgents?.map(agent => {
          return {
