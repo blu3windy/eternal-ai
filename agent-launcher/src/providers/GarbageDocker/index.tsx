@@ -51,15 +51,15 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
       return whiteListContainerNames.includes(containerName);
    };
 
-   const shouldSkipAgent = (activeAgent: ActiveAgent, selectedAgent?: IAgentToken) => {
+   const shouldSkipAgent = async (activeAgent: ActiveAgent, selectedAgent?: IAgentToken) => {
       const containerName = getAgentContainerName(activeAgent.agent);
-      const isInWhiteList = isContainerInWhiteList(containerName);
+      const isInWhiteList = await isContainerInWhiteList(containerName);
       const isSelectedAgent = compareString(activeAgent.agent.agent_id, selectedAgent?.agent_id);
       const hasPendingTasks = pendingTasksRef.current.find(task => 
          compareString(task.agent.agent_id, activeAgent.agent.agent_id) 
          && task.status === 'processing'
       );
-      return isInWhiteList || isSelectedAgent || hasPendingTasks;
+      return Boolean(isInWhiteList || isSelectedAgent || hasPendingTasks);
    };
 
    const checkInactiveContainers = async (params: ICheckInactiveContainersParams) => {
@@ -73,7 +73,8 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
       });
 
       for (const activeAgent of activeAgents) {
-         if (await shouldSkipAgent(activeAgent, selectedAgent)) continue;
+         const isSkip = await shouldSkipAgent(activeAgent, selectedAgent);
+         if (isSkip) continue;
 
          const isValidTime = new BigNumber(now).minus(activeAgent.timestamp).gt(TIME_TO_CLEAN);
          const remandTime = new BigNumber(TIME_TO_CLEAN).minus(new BigNumber(now).minus(activeAgent.timestamp))
