@@ -64,13 +64,11 @@ type DockerParams struct {
 }
 
 type ProgressReader struct {
-	Id      int64
-	Method  string
-	Stream  pb.ScriptService_ExecuteRPCServer
-	Reader  io.Reader
-	Size    int64
-	Pos     int64
-	Percent int64
+	OnProgress func(pos int64, size int64, percent int64)
+	Reader     io.Reader
+	Size       int64
+	Pos        int64
+	Percent    int64
 }
 
 func (pr *ProgressReader) Read(p []byte) (int, error) {
@@ -80,12 +78,9 @@ func (pr *ProgressReader) Read(p []byte) (int, error) {
 		percent := pr.Pos * 100 / pr.Size
 		if percent != pr.Percent {
 			pr.Percent = percent
-			pr.Stream.Send(&pb.RPCResponse{
-				Id:      pr.Id,
-				Method:  pr.Method,
-				Output:  fmt.Sprintf("Downloading file %d bytes of %d (%d%%)", pr.Pos, pr.Size, percent),
-				IsError: false,
-			})
+			if pr.OnProgress != nil {
+				pr.OnProgress(pr.Pos, pr.Size, percent)
+			}
 		}
 	}
 	return n, err
@@ -307,12 +302,18 @@ func (s *server) ExecuteRPC(req *pb.RPCRequest, stream pb.ScriptService_ExecuteR
 				return s.responseError(stream, req, status.Error(codes.Internal, fmt.Sprintf("failed to create file: %v", err)))
 			}
 
+			// Create a progress reader
 			progressReader := &ProgressReader{
-				Id:     req.Id,
-				Method: req.Method,
-				Stream: stream,
 				Reader: resp.Body,
 				Size:   resp.ContentLength,
+				OnProgress: func(pos int64, size int64, percent int64) {
+					stream.Send(&pb.RPCResponse{
+						Id:      req.Id,
+						Method:  req.Method,
+						Output:  fmt.Sprintf("Downloading file %d bytes of %d (%d%%)", pos, size, percent),
+						IsError: false,
+					})
+				},
 			}
 			if _, err := io.Copy(file, progressReader); err != nil {
 				return s.responseError(stream, req, status.Error(codes.Internal, fmt.Sprintf("failed to copy file: %v", err)))
