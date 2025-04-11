@@ -16,7 +16,7 @@ export type TaskType = {
   type: "toolcall" | "searching" | "listing" | "getting" | string;
   typeLabel?: string;
   content: string;
-  result: string;
+  result?: string;
 }
 
 const TYPE_LABELS = {
@@ -39,7 +39,7 @@ function Task({
     switch (data.type) {
       case "searching":
         return <SearchingIcon />;
-      case "searching":
+      case "listing":
         return <ReadingIcon />;
       case "getting":
         return "⏳";
