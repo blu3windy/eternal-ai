@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 )
 
@@ -87,6 +88,17 @@ func (pr *ProgressReader) Read(p []byte) (int, error) {
 }
 
 func (s *server) ExecuteRPC(req *pb.RPCRequest, stream pb.ScriptService_ExecuteRPCServer) error {
+	// get request ip
+	p, ok := peer.FromContext(stream.Context())
+	if !ok || p == nil {
+		return s.responseError(stream, req, status.Error(codes.Internal, "failed to get peer info"))
+	}
+	ip, _, err := net.SplitHostPort(p.Addr.String())
+	if err != nil {
+		return s.responseError(stream, req, status.Error(codes.Internal, fmt.Sprintf("failed to get request ip: %v", err)))
+	}
+	fmt.Printf("ExecuteRPC: %s %v\n", ip, req)
+
 	// Get API key from metadata
 	md, ok := metadata.FromIncomingContext(stream.Context())
 	if !ok {
