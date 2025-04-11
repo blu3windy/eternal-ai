@@ -91,6 +91,7 @@ const AgentsList = () => {
                      fontSize='13px'
                      w="100%"
                      bg="white"
+                     border="1px solid transparent"
                   >
                      Your Swarm
                   </Tab>
@@ -105,6 +106,7 @@ const AgentsList = () => {
                      fontSize='13px'
                      w="100%"
                      bg="white"
+                     border="1px solid transparent"
                   >
                      Agent Store
                   </Tab>

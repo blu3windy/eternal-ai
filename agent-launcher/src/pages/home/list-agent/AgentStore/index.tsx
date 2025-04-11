@@ -107,9 +107,6 @@ const AgentStore = () => {
 
          if (isNew) {
             setAgents(newTokens);
-            if ((!selectedAgent && newTokens.length > 0)) {
-               setSelectedAgent(newTokens[0]);
-            }
          } else {
             setAgents((prevTokens) =>
                uniqBy([...prevTokens, ...newTokens], (token) => token.id),
