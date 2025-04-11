@@ -111,7 +111,7 @@ const AgentsList = () => {
                      Agent Store
                   </Tab>
                   </TabList>
-                  <TabPanels mt={'16px'}>
+                  <TabPanels mt={'20px'}>
                      <TabPanel p={0}>
                         <YourSwarm refAddAgentTestCA={refAddAgentTestCA} />
                      </TabPanel>
