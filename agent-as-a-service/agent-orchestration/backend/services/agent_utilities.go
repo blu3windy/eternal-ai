@@ -372,13 +372,17 @@ func (s *Service) UpdateAgentUpgradeableCodeVersion(ctx context.Context, agentIn
 	if err != nil {
 		return errs.NewError(err)
 	}
-	if codeVersion != agentInfo.CodeVersion || !strings.EqualFold(strings.Join(depsAgents, ","), agentInfo.DependAgents) {
+	depsAgentsJson, err := json.Marshal(depsAgents)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	if codeVersion != agentInfo.CodeVersion || !strings.EqualFold(string(depsAgentsJson), agentInfo.DependAgents) {
 		err = daos.GetDBMainCtx(ctx).
 			Model(agentInfo).
 			Updates(
 				map[string]any{
 					"code_version":  codeVersion,
-					"depend_agents": strings.ToLower(strings.Join(depsAgents, ",")),
+					"depend_agents": string(depsAgentsJson),
 				},
 			).Error
 		if err != nil {
