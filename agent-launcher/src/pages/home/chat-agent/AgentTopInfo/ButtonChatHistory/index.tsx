@@ -66,6 +66,7 @@ const ButtonChatHistory = () => {
                                     cursor="pointer"
                                 >
                                     <Box flex={1} onClick={() =>{
+                                         chatAgentDatabase.setSessionActive(session.id);
                                          setSessionId(session.id);
                                          onClose();
                                     }}>
