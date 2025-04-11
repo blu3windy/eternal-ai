@@ -226,6 +226,33 @@ class ChatAgentDatabase {
       }
    }
 
+   // TODO: get last session active, by threadId
+   async getLastSessionActive(threadId: string) {
+      try {
+         const sessions = await this.db?.sessions
+            .where("threadId")
+            .equals(threadId)
+            .toArray();
+         
+         if (sessions && sessions.length > 0) {
+            // Sort by updatedAt in descending order and get the first one
+            return sessions.sort((a, b) => b.updatedAt - a.updatedAt)[0];
+         }
+         return null;
+      } catch (error) {
+         console.error('Error getting last session:', error);
+         return null;
+      }
+   }
+
+   // TODO: set session active
+   async setSessionActive(sessionId: string) {
+      await this.db?.sessions.update(sessionId, {
+         updatedAt: new Date().getTime()
+      });
+   }
+
+
 }
 
 const chatAgentDatabase = new ChatAgentDatabase();

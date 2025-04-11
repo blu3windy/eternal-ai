@@ -110,7 +110,10 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          setSessionId(sessionId);
          await chatAgentDatabase.migrateMessages(threadId);
       } else {
-         setSessionId(threadItems[0].id);
+         const lastSessionActive = await chatAgentDatabase.getLastSessionActive(threadId);
+         console.log('lastSessionActive', lastSessionActive);
+         
+         setSessionId(lastSessionActive?.id);
          setIsFirstChat(false)
       }
    }, [selectedAgent]);

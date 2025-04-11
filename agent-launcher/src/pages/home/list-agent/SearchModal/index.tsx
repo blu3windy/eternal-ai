@@ -415,7 +415,7 @@ const SearchModal = (props: SearchModalProps) => {
                      )}
                   </AnimatePresence>
                   {agents?.map((item: IAgentToken) => (
-                     <GridItem key={item.id}>
+                     <GridItem key={`${item.id}-search`}>
                         <AgentItem token={item} />
                      </GridItem>
                   ))}
