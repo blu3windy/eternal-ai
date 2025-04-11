@@ -117,7 +117,7 @@ const InputText = ({ onFocus, btnSubmit, isSending }: IProps) => {
 
       dispatch(requestReloadRecentAgents());
 
-      await cPumpAPI.saveRecentAgents({ ids: recentAgents })
+      await cPumpAPI.saveRecentAgents({ ids: [selectedAgent?.id] })
    };
 
    const handleKeyDown = (e: React.KeyboardEvent) => {
