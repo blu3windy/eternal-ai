@@ -60,30 +60,34 @@ function Task({
   return (
     <div className={s.task}>
       <div className={s.process}>
-        <div className={s.type}>{data.typeLabel || TYPE_LABELS[data.type] || data.type}</div>
-        <div className={s.content}>
-          {!!data.result ? (
-            <span>{IconPicking}</span>
-          ) : (
-            <motion.span 
-              className={s.content_icon}
-              animate={{ 
-                scale: [0.9, 1.1, 0.9],
-                rotate: [0, 10, -10, 0],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear"
-              }}
-            >
-              {IconPicking}
-            </motion.span>
-          )}
-          <span className={s.content_text}>
-            {data.content}
-          </span>
+        <div className={s.bar}>
+          <div className={s.type}>{data.typeLabel || TYPE_LABELS[data.type] || data.type}</div>
+          <div className={s.content}>
+            {!!data.result ? (
+              <span>{IconPicking}</span>
+            ) : (
+              <motion.span 
+                className={s.content_icon}
+                animate={{ 
+                  scale: [0.9, 1.1, 0.9],
+                  rotate: [0, 10, -10, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              >
+                {IconPicking}
+              </motion.span>
+            )}
+            <span className={s.content_text}>
+              {data.content}
+            </span>
+          </div>
         </div>
+
+        <div className={s.empty}></div>
       </div>
       <div className={s.result}>
         {!!data.result ? (
