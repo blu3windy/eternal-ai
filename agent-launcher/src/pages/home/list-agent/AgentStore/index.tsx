@@ -129,7 +129,7 @@ const AgentStore = () => {
 
    useEffect(() => {
       throttleGetTokens(true, true);
-   }, [needReloadList]);
+   }, []);
 
    useEffect(() => {
       if (needReloadRecentAgents) {
