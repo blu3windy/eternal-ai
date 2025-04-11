@@ -198,7 +198,7 @@ const YourSwarm = (props: any) => {
                   </motion.div>
                )}
                {agents?.map((item: IAgentToken, i) => (
-                  <GridItem key={item.id}>
+                  <GridItem key={`${item.id}-your-swarm`}>
                      <AgentItem token={item} />
                   </GridItem>
                ))}

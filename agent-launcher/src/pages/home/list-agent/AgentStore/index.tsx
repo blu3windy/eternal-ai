@@ -188,7 +188,7 @@ const AgentStore = () => {
                   </motion.div>
                )}
                {agents?.map((item: IAgentToken, i) => (
-                  <GridItem key={item.id}>
+                  <GridItem key={`${item.id}-store`}>
                      <AgentItem token={item} />
                   </GridItem>
                ))}

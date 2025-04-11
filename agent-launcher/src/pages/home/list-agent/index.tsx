@@ -79,7 +79,7 @@ const AgentsList = () => {
                   justifyContent="center"
                   px={'20px'}
                   gap={'12px'}
-                  >
+               >
                   <Tab
                      _selected={{
                         border: "1px solid black",
@@ -110,15 +110,15 @@ const AgentsList = () => {
                   >
                      Agent Store
                   </Tab>
-                  </TabList>
-                  <TabPanels mt={'20px'}>
-                     <TabPanel p={0}>
-                        <YourSwarm refAddAgentTestCA={refAddAgentTestCA} />
-                     </TabPanel>
-                     <TabPanel p={0}>
-                        <AgentStore />
-                     </TabPanel>
-                  </TabPanels>
+               </TabList>
+               <TabPanels mt={'20px'}>
+                  <TabPanel p={0}>
+                     <YourSwarm refAddAgentTestCA={refAddAgentTestCA} />
+                  </TabPanel>
+                  <TabPanel p={0}>
+                     <AgentStore />
+                  </TabPanel>
+               </TabPanels>
             </Tabs>
             <SearchModal isOpen={isSearchMode} onClickClose={() => setIsSearchMode(false)} />
 
