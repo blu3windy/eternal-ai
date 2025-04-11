@@ -112,6 +112,10 @@ const writeRequestEndLogger = async (id, data, status, agentName) => {
       return;
     }
 
+    if (existingLog.status === 200 || existingLog.status === 500) {
+      return;
+    }
+
     const updatedLog = {
       ...existingLog,
       status,
