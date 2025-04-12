@@ -391,7 +391,16 @@ app.post("/:agentName/prompt", async (req, res) => {
           // Split the chunk by newlines to handle multiple events
           try {
             if (payload?.id) {
-              const chunks = chunk.toString().split(/(?<=data: )\n\n/);
+              const chunks = chunk
+                .toString()
+                .split(/(?:data: |\n\n|\n)/)
+                .filter((chunk) => {
+                  try {
+                    return chunk.trim() && JSON.parse(chunk);
+                  } catch {
+                    return false;
+                  }
+                });
               for (const chunkData of chunks) {
                 if (!chunkData.trim()) continue;
                 const chunkText = parseDataFromStream(chunkData);
