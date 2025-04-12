@@ -10,6 +10,7 @@ const app = express();
 
 const REQUEST_TIMEOUT = 30; // 30 minutes
 const FILE_RETENTION_HOURS = 72; // 72 hours
+const PROCESSING_REQUESTS = {};
 
 // Enable CORS for all origins
 app.use(
@@ -335,13 +336,15 @@ app.post("/:agentName/prompt", async (req, res) => {
             status: 102,
           });
 
-          // try pinging the server to check if it's still processing
-          setRequestToErrorIfLargerThanTimeout(
-            options,
-            payload?.id || "",
-            agentName,
-            existedLog
-          );
+          if (!PROCESSING_REQUESTS[payload?.id]) {
+            setRequestToErrorIfLargerThanTimeout(
+              options,
+              payload?.id || "",
+              agentName,
+              existedLog
+            );
+          }
+
           return;
         }
         if (existedLog?.status === 500) {
@@ -364,6 +367,7 @@ app.post("/:agentName/prompt", async (req, res) => {
     }
   }
 
+  PROCESSING_REQUESTS[payload?.id] = true;
   const proxyRequest = http.request(options, (proxyResponse) => {
     const isStreaming = isStreamingResponse(proxyResponse.headers);
     if (isStreaming) {
@@ -410,6 +414,7 @@ app.post("/:agentName/prompt", async (req, res) => {
       proxyResponse.on("end", () => {
         res.end();
         if (payload?.id) {
+          delete PROCESSING_REQUESTS[payload?.id];
           writeRequestEndLogger(
             payload.id,
             responseData,
@@ -475,6 +480,7 @@ app.post("/:agentName/prompt", async (req, res) => {
         500,
         agentName
       );
+      delete PROCESSING_REQUESTS[payload?.id];
     }
   });
 
