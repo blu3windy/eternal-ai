@@ -372,8 +372,8 @@ app.post("/:agentName/prompt", async (req, res) => {
       res.writeHead(proxyResponse.statusCode, proxyResponse.headers);
       // proxyResponse.pipe(res);
       proxyResponse.on("data", (chunk) => {
+        res.write(chunk);
         if (chunk.toString().includes("[DONE]")) {
-          res.write(chunk);
           res.end();
           if (payload?.id) {
             writeRequestEndLogger(
@@ -384,46 +384,26 @@ app.post("/:agentName/prompt", async (req, res) => {
             );
           }
         } else {
-          res.write(chunk);
           // Split the chunk by newlines to handle multiple events
           try {
-            const chunks = chunk.toString().split(/(?<=data: )\n\n/);
-            // const sendChunks = [];
-            for (const chunkData of chunks) {
-              if (!chunkData.trim()) continue;
-              // const chunkObject = parseObjectFromStream(chunkData);
-              const chunkText = parseDataFromStream(chunkData);
+            if (payload?.id) {
+              const chunks = chunk.toString().split(/(?<=data: )\n\n/);
+              for (const chunkData of chunks) {
+                if (!chunkData.trim()) continue;
+                const chunkText = parseDataFromStream(chunkData);
 
-              responseData += chunkText;
-              if (payload?.id) {
-                writeRequestEndLogger(payload.id, responseData, 102, agentName);
+                responseData += chunkText;
+                if (payload?.id) {
+                  writeRequestEndLogger(
+                    payload.id,
+                    responseData,
+                    102,
+                    agentName
+                  );
+                }
               }
-              // if (typeof chunkObject === "string") {
-              //    try {
-              //       sendChunks.push(
-              //          new TextEncoder().encode(
-              //             `data: ${JSON.stringify(
-              //                normalizeChunkResponse(payload.id, chunkText, agentName, false),
-              //             )}\n\n`,
-              //          ),
-              //       );
-              //    } catch (e) {
-              //       console.log("_________ERORR__ chunkObject error:", e);
-              //    }
-              // } else {
-              //    sendChunks.push(
-              //       new TextEncoder().encode(
-              //          `${chunkData}\n\n`,
-              //       ),
-              //    );
-              // }
             }
-            // if (sendChunks.length > 0) {
-            //    res.write(Buffer.concat(sendChunks));
-            // }
-          } catch (e) {
-            // res.write(chunk);
-          }
+          } catch (e) {}
         }
       });
 
