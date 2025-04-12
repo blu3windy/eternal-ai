@@ -10,6 +10,7 @@ const app = express();
 
 const REQUEST_TIMEOUT = 30; // 30 minutes
 const FILE_RETENTION_HOURS = 72; // 72 hours
+const PROCESSING_REQUESTS = {};
 
 // Enable CORS for all origins
 app.use(
@@ -328,20 +329,25 @@ app.post("/:agentName/prompt", async (req, res) => {
         payload,
         agentName
       );
-
       if (existedLog?.status) {
         if (existedLog?.status === 102) {
-          res.status(200).json({
-            status: 102,
-          });
+          if (PROCESSING_REQUESTS[payload?.id]) {
+            res.status(200).json({
+              status: 102,
+            });
+          } else {
+            writeRequestEndLogger(payload.id, existedLog.data, 200, agentName);
+            res
+              .status(200)
+              .json(
+                normalizeResponse(
+                  payload?.id || "",
+                  tryToParseStringJson(existedLog.data),
+                  agentName
+                )
+              );
+          }
 
-          // try pinging the server to check if it's still processing
-          setRequestToErrorIfLargerThanTimeout(
-            options,
-            payload?.id || "",
-            agentName,
-            existedLog
-          );
           return;
         }
         if (existedLog?.status === 500) {
@@ -358,12 +364,22 @@ app.post("/:agentName/prompt", async (req, res) => {
             )
           );
         return;
+      } else {
+        if (PROCESSING_REQUESTS[payload?.id]) {
+          res.status(200).json({
+            status: 102,
+          });
+          return;
+        }
       }
     } catch (error) {
       //
     }
   }
 
+  if (payload?.id && !payload?.ping) {
+    PROCESSING_REQUESTS[payload?.id] = true;
+  }
   const proxyRequest = http.request(options, (proxyResponse) => {
     const isStreaming = isStreamingResponse(proxyResponse.headers);
     if (isStreaming) {
@@ -372,64 +388,48 @@ app.post("/:agentName/prompt", async (req, res) => {
       res.writeHead(proxyResponse.statusCode, proxyResponse.headers);
       // proxyResponse.pipe(res);
       proxyResponse.on("data", (chunk) => {
+        res.write(chunk);
         if (chunk.toString().includes("[DONE]")) {
-          res.write(chunk);
           res.end();
           if (payload?.id) {
-            writeRequestEndLogger(
-              payload.id,
-              responseData,
-              proxyResponse.statusCode,
-              agentName
-            );
+            setTimeout(() => {
+              // delay 1s to ensure the responseData is complete
+              writeRequestEndLogger(
+                payload.id,
+                responseData,
+                proxyResponse.statusCode,
+                agentName
+              );
+            }, 1000);
           }
         } else {
-          res.write(chunk);
           // Split the chunk by newlines to handle multiple events
           try {
-            const chunks = chunk.toString().split(/(?<=data: )\n\n/);
-            // const sendChunks = [];
-            for (const chunkData of chunks) {
-              if (!chunkData.trim()) continue;
-              // const chunkObject = parseObjectFromStream(chunkData);
-              const chunkText = parseDataFromStream(chunkData);
+            if (payload?.id) {
+              const chunks = chunk.toString().split("\n\n");
+              for (const chunkData of chunks) {
+                if (!chunkData.trim()) continue;
+                const chunkText = parseDataFromStream(chunkData);
 
-              responseData += chunkText;
-              if (payload?.id) {
-                writeRequestEndLogger(payload.id, responseData, 102, agentName);
+                responseData += chunkText;
+                if (payload?.id) {
+                  writeRequestEndLogger(
+                    payload.id,
+                    responseData,
+                    102,
+                    agentName
+                  );
+                }
               }
-              // if (typeof chunkObject === "string") {
-              //    try {
-              //       sendChunks.push(
-              //          new TextEncoder().encode(
-              //             `data: ${JSON.stringify(
-              //                normalizeChunkResponse(payload.id, chunkText, agentName, false),
-              //             )}\n\n`,
-              //          ),
-              //       );
-              //    } catch (e) {
-              //       console.log("_________ERORR__ chunkObject error:", e);
-              //    }
-              // } else {
-              //    sendChunks.push(
-              //       new TextEncoder().encode(
-              //          `${chunkData}\n\n`,
-              //       ),
-              //    );
-              // }
             }
-            // if (sendChunks.length > 0) {
-            //    res.write(Buffer.concat(sendChunks));
-            // }
-          } catch (e) {
-            // res.write(chunk);
-          }
+          } catch (e) {}
         }
       });
 
       proxyResponse.on("end", () => {
         res.end();
         if (payload?.id) {
+          delete PROCESSING_REQUESTS[payload?.id];
           writeRequestEndLogger(
             payload.id,
             responseData,
@@ -495,6 +495,7 @@ app.post("/:agentName/prompt", async (req, res) => {
         500,
         agentName
       );
+      delete PROCESSING_REQUESTS[payload?.id];
     }
   });
 
