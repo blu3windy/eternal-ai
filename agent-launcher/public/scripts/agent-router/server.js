@@ -329,12 +329,24 @@ app.post("/:agentName/prompt", async (req, res) => {
         payload,
         agentName
       );
-
       if (existedLog?.status) {
         if (existedLog?.status === 102) {
-          res.status(200).json({
-            status: 102,
-          });
+          if (PROCESSING_REQUESTS[payload?.id]) {
+            res.status(200).json({
+              status: 102,
+            });
+          } else {
+            writeRequestEndLogger(payload.id, existedLog.data, 200, agentName);
+            res
+              .status(200)
+              .json(
+                normalizeResponse(
+                  payload?.id || "",
+                  tryToParseStringJson(existedLog.data),
+                  agentName
+                )
+              );
+          }
 
           if (!PROCESSING_REQUESTS[payload?.id]) {
             setRequestToErrorIfLargerThanTimeout(
@@ -361,6 +373,13 @@ app.post("/:agentName/prompt", async (req, res) => {
             )
           );
         return;
+      } else {
+        if (PROCESSING_REQUESTS[payload?.id]) {
+          res.status(200).json({
+            status: 102,
+          });
+          return;
+        }
       }
     } catch (error) {
       //
