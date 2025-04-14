@@ -1,0 +1,144 @@
+.wrapper {
+    // padding: 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    .content {
+        border-radius: 12px;
+        // padding: 16px;
+        max-width: calc(calc(100vw / 2) * 0.8);
+        width: fit-content;
+        gap: 8px;
+        &.question {
+            //margin-bottom: 0;
+            // border-radius: 16px 16px 0 16px;
+            // background: #f4f4f4;
+             :global {
+                .markdown {
+                    p {
+                        color: #000;
+                    }
+                }
+            }
+        }
+        &.reply {
+            //margin-bottom: 0;
+            // border-radius: 16px 16px 16px 16px;
+            // background: #F3F3F3;
+            // border: 1px solid #efefef;
+        }
+        &.failed {
+            background: transparent;
+        }
+
+        p, pre {
+            white-space: pre-wrap;
+            font-size: 13px;
+        }
+    }
+    .reply_to {
+        //margin-left: 30px;
+        color: white;
+    }
+    .txLink {
+        font-size: 12px;
+        font-weight: 400;
+        opacity: 0.6;
+        color: #000;
+        display: flex;
+        gap: 2px;
+    }
+}
+
+.markdown {
+    //margin-top: 8px;
+    //background: #000;
+    //border-radius: 12px;
+    //padding: 16px;
+    //padding-top: 0;
+    //padding-bottom: 0;
+    //border: 1px solid transparent;
+    &.markdown__failed {
+        // background: #ed8484;
+        // border: 1px solid #ed8484;
+        background: transparent;
+        padding: 16px;
+        color: #e92c2c;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        .retry {
+            cursor: pointer;
+            svg {
+                path {
+                    stroke: white;
+                }
+            }
+        }
+    }
+    &.markdown__json {
+        background: transparent;
+        padding: 0;
+    }
+    &.markdown__received {
+        position: relative;
+        &:hover {
+            .exportPdf {
+                display: flex;
+            }
+        }
+        .exportPdf {
+            position: absolute;
+            z-index: 1;
+            top: -16px;
+            right: -80px;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.5);
+            /* Green for success */
+            color: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(2px);
+            transition: opacity 0.3s ease-in-out;
+        }
+    }
+    pre {
+        code {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            white-space: pre-wrap;
+            hyphens: auto;
+        }
+    }
+    ol,
+    ul {
+        margin-left: 16px;
+    }
+     :global(.__json-string__) {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-all;
+        white-space: pre-wrap;
+        hyphens: auto;
+    }
+     :global(.__json-pretty__) {
+        background: transparent;
+    }
+
+    &.markdown__human {
+        p {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            white-space: pre-wrap;
+            hyphens: auto;
+        }
+    }
+}
