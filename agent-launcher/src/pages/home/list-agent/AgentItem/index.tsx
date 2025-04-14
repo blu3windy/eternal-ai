@@ -19,9 +19,10 @@ import { motion } from 'framer-motion';
 interface IProps {
    token: IAgentToken;
    isLatest?: boolean;
+   addActiveAgent?: (agent: IAgentToken) => void;
 }
 
-const AgentItem = ({ token, isLatest }: IProps) => {
+const AgentItem = ({ token, isLatest, addActiveAgent }: IProps) => {
    const {
       selectedAgent,
       stopAgent,
@@ -145,6 +146,7 @@ const AgentItem = ({ token, isLatest }: IProps) => {
          e?.stopPropagation();
 
          setSelectedAgent(token);
+         addActiveAgent && addActiveAgent(token);
       }
    };
 

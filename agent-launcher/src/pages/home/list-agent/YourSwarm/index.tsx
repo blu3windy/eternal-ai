@@ -53,6 +53,7 @@ const YourSwarm = (props: any) => {
    });
 
    const cPumpAPI = new CAgentTokenAPI();
+   const { addActiveAgent } = useContext(AgentContext);
 
    const [hasMore, setHasMore] = useState(true);
 
@@ -199,7 +200,7 @@ const YourSwarm = (props: any) => {
                )}
                {agents?.map((item: IAgentToken, i) => (
                   <GridItem key={`${item.id}-your-swarm`}>
-                     <AgentItem token={item} />
+                     <AgentItem token={item} addActiveAgent={addActiveAgent} />
                   </GridItem>
                ))}
                {filter === FilterOption.Installed && loaded && agents.length === 0 && (

@@ -1102,7 +1102,6 @@ const AgentProvider: React.FC<
          console.log();
          startAgent(newAgent);
       }
-      addActiveAgent(newAgent);
    }, [agentStates]);
 
    const checkInstalledUtilityAgentsRunning = async () => {
