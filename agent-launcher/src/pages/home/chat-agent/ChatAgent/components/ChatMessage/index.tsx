@@ -20,7 +20,7 @@ import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/Wai
 import { v4 } from "uuid";
 import { useDispatch } from "react-redux";
 import { openWithUrl } from "@stores/states/floating-web-view/reducer";
-import { THINK_TAG_REGEX, COMPUTER_USE_TAG_REGEX, MARKDOWN_TAGS } from "@components/CustomMarkdown/constants";
+import { THINK_TAG_REGEX, COMPUTER_USE_TAG_REGEX, MARKDOWN_TAGS, IMAGE_SLIDER_TAG_REGEX, IMAGE_SLIDE_ITEM_TAG_REGEX } from "@components/CustomMarkdown/constants";
 import ProcessingTaskModal from "@pages/home/list-agent/BottomBar/ProcessingTaskModal";
 
 dayjs.extend(duration);
@@ -278,7 +278,18 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                      transition={{ duration: 0.3, ease: "easeOut" }}
                      className={`${s.snackbar}`}
                      onClick={() => {
-                        mdpdfmake(message.msg.replace(THINK_TAG_REGEX, '').replace(COMPUTER_USE_TAG_REGEX, '')).then((docDefinition) => {
+                        const printContent = message.msg
+                           .replace(THINK_TAG_REGEX, '')
+                           .replace(COMPUTER_USE_TAG_REGEX, '')
+                           .replace(IMAGE_SLIDER_TAG_REGEX, (_, sliderInnerText) => {
+                              return sliderInnerText
+                                 .replace(/\n/g, "")
+                                 .match(IMAGE_SLIDE_ITEM_TAG_REGEX)
+                                 .map(item => item.replace(/<\/?slide-item>/g, ''))
+                                 .join('\n');
+                           });
+
+                        mdpdfmake(printContent).then((docDefinition) => {
                            console.log(docDefinition);
                            // Use docDefinition with a PDFMake instance to generate a PDF
                            pdfMake.createPdf(docDefinition).download(`${selectedAgent?.display_name || selectedAgent?.agent_name || "Agent"}-${dayjs().format("YYYY-MM-DD-hh:mm:ss")}.pdf`);

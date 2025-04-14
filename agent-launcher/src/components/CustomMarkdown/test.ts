@@ -46,7 +46,7 @@
 
 
 
-export const MSG_WITH_IMAGE_SLIDER = `"<think>
+export const MSG_WITH_IMAGE_SLIDER = `<think>
 <task>⏳ Processing your request...</task><task>🛠 Using this tool: airbnb_search(location: Ho Chi Minh, adults: 1)</task><task>📝 Here's what I found: { "searchUrl": "https://www.airbnb.com/s/Ho%20Chi%20Minh/homes?adults=1&children=0&infants=0&pets=0", "searchResults"...</task>
 </think>
 Here are the top 5住宿选项 in Ho Chi Minh City from Airbnb, based on guest ratings and reviews:
