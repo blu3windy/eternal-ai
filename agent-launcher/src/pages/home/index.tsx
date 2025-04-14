@@ -13,12 +13,16 @@ import MonitorProvider from "@providers/Monitor/MonitorProvider";
 import { GarbageProvider } from "@providers/GarbageDocker";
 import { ChatAgentProvider } from "./chat-agent/ChatAgent/provider";
 import useAgentState from "./provider/useAgentState";
+import { useSelector } from "react-redux";
+import { layoutViewSelector } from "@stores/states/layout-view/selector";
+import { motion, AnimatePresence } from 'framer-motion'
 
 type Props = {
    // some props
 };
 
 const HandleHome = () => {
+   const { isOpenAgentBar, isOpenRightBar, rightBarView } = useSelector(layoutViewSelector);
    const { isCanChat, isBackupedPrvKey, selectedAgent, agentWallet, requireInstall, isRunning }
       = useContext(AgentContext);
 
@@ -37,20 +41,57 @@ const HandleHome = () => {
 
    return (
       <Flex height={"100%"}>
-         <Box flex={1} maxW={"460px"} minW={"460px"}>
-            <AgentsList />
-         </Box>
+         <AnimatePresence>
+            {isOpenAgentBar && ( 
+               <Box
+                  flex={1}
+                  maxW={"460px"}
+                  minW={"460px"}
+                  as={motion.div}
+                  // initial={{ opacity: 0, x: -460 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -460 }}
+               >
+                  <AgentsList />
+               </Box>
+            )}
+         </AnimatePresence>
+
          <Box
             className={cx(
                s.detailContainer,
                isSearchMode || showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : ""
             )}
-            flex={2}
+            flex={1}
+            as={motion.div}
+            // initial={{ opacity: 0, x: 460 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 460 }}
          >
-            <Flex w={"clamp(600px, 81%, 1200px)"} mx={"auto"}>
+            <Flex
+               as={motion.div}
+               w={"clamp(600px, 81%, 1200px)"}
+               mx={"auto"}
+               // initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+            >
                <ChatAgent />
             </Flex>
          </Box>
+
+         <AnimatePresence>
+            {isOpenRightBar && ( 
+               <Box
+                  flex={1}
+                  as={motion.div}
+                  // initial={{ opacity: 0, x: '100%' }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: '100%' }}
+               >
+                  {rightBarView}
+               </Box>
+            )}
+         </AnimatePresence>
       </Flex>
    );
 };
