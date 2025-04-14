@@ -55,7 +55,7 @@ var (
 	ErrReferralCodeUsed  = &Error{Code: -2017, Message: "Referral code already used"}
 
 	ErrAgentUtilityNotAuthen       = &Error{Code: -3000, Message: "Please authentican with this link and try again"}
-	ErrAgentUtilityInvalidBalance  = &Error{Code: -3001, Message: "Insufficient balance! You need at least 10 $EAI to proceed with address {address} in Base."}
+	ErrAgentUtilityInvalidBalance  = &Error{Code: -3001, Message: "Insufficient balance! You need at least 1 $EAI to proceed with address {address} in Base."}
 	ErrAgentUtilityPostTweetFailed = &Error{Code: -3002, Message: "Post tweet failed. Please try again."}
 	ErrAgentUtilitySystemError     = &Error{Code: -3003, Message: "Something went wrong. Please try again."}
 	ErrAgentUtilityNotFound        = &Error{Code: -3004, Message: "Please authentican with this link and try again"}
