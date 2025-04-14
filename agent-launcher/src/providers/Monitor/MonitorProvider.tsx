@@ -9,6 +9,9 @@ import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import { commonSelector } from "@stores/states/common/selector.ts";
 import { useSelector } from "react-redux";
 import uniqBy from "lodash.uniqby";
+import { BASE_CHAIN_ID } from "@constants/chains.ts";
+import CAgentContract from "@contract/agent/index.ts";
+import localStorageService from "@storage/LocalStorageService.ts";
 // import useDockerMonitorState from "@providers/DockerMonitor/useDockerMonitorState.ts";
 
 const MonitorProvider: React.FC<
@@ -21,6 +24,7 @@ const MonitorProvider: React.FC<
    const [containers, setContainers] = useState<ContainerData[]>([]);
    const [totalMemory, setTotalMemory] = useState({ used: '0MB', total: '0GB' });
    const [totalCPU, setTotalCPU] = useState({ used: '0%', total: '800%' });
+   const [updateAgents, setUpdateAgents] = useState<IAgentToken[]>([]);
 
    const intervalRef = useRef<NodeJS.Timeout>();
    const intervalAgentRef = useRef<NodeJS.Timeout>();
@@ -48,9 +52,37 @@ const MonitorProvider: React.FC<
             cPumpAPI.getAgentTokenList({ page: 1, limit: 100, agent_types }),
          ]);
          agentsRef.current = uniqBy([...agents, ...agentsAll], 'id');
+         onGetUpdateAgents(agents);
       } catch {
       }
    }
+
+   const onGetUpdateAgents = async (agents: IAgentToken[]) => {
+      // Use Promise.all with map to handle async operations
+      const results = await Promise.all(agents.map(async (agent) => {
+         let codeVersion = agent?.code_version
+            ? Number(agent?.code_version)
+            : -1;
+         if (codeVersion === -1) {
+            const chainId = agent?.network_id || BASE_CHAIN_ID;
+            const cAgent = new CAgentContract({
+               contractAddress: agent?.agent_contract_address || "",
+               chainId: chainId,
+            });
+            codeVersion = await cAgent.getCurrentVersion();
+         }
+         const values = await localStorageService.getItem(
+            agent.agent_contract_address
+         );
+         const oldCodeVersion = values ? Number(values) : -1;
+
+         return oldCodeVersion > 0 && codeVersion > 1 && codeVersion > oldCodeVersion ? agent : null;
+      }));
+
+      // Filter out null values and set the state
+      const filterUpdateAgents = results.filter((agent): agent is IAgentToken => agent !== null);
+      setUpdateAgents(filterUpdateAgents);
+   };
 
    const convertMemoryToGB = (memoryValue: string) => {
       const numericValue = parseFloat(memoryValue);
@@ -243,13 +275,9 @@ const MonitorProvider: React.FC<
          totalMemory,
          totalCPU,
          installedAgents: agentsRef.current,
+         updateAgents,
       };
-   }, [
-      containers,
-      totalMemory,
-      totalCPU,
-      agentsRef.current
-   ]);
+   }, [containers, totalMemory, totalCPU, agentsRef.current, updateAgents]);
 
    return (
       <MonitorContext.Provider value={contextValues}>

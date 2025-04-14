@@ -71,4 +71,16 @@
       }
     }
   }
-} 
+}
+
+.modalContent {
+  :global {
+    .chakra-modal__header {
+      display: none;
+      margin-top: 0 !important;
+    }
+    .modal-content {
+      max-width: 480px;
+    }
+  }
+}

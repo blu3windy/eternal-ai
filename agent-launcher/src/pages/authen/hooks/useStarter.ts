@@ -1,20 +1,35 @@
+import EaiSigner from '@helpers/signer';
 import { create } from 'zustand';
 
 interface StarterState {
-    checking: boolean;
-    setChecking: (checking: boolean) => void;
-    
+    settingDocker: boolean;
+    setSettingDocker: (settingDocker: boolean) => void;
 
-    isFinished: boolean;
-    setIsFinished: (isFinished: boolean) => void;
+    dockerIsFinished: boolean;
+    setDockerIsFinished: (dockerIsFinished: boolean) => void;
+
+    inviteCode: string;
+    setInviteCode: (inviteCode: string) => void;
+    
+    hasUser: boolean;
+    setHasUser: (hasUser: boolean) => void;
 }
 
 const useStarter = create<StarterState>((set) => ({
-   checking: true,
-   setChecking: (checking: boolean) => set({ checking }),
+   settingDocker: true,
+   setSettingDocker: (settingDocker: boolean) => set({ settingDocker }),
 
-   isFinished: false,
-   setIsFinished: (isFinished: boolean) => set({ isFinished }),
+   dockerIsFinished: false,
+   setDockerIsFinished: (dockerIsFinished: boolean) => set({ dockerIsFinished }),
+
+   inviteCode: "",
+   setInviteCode: (inviteCode: string) => {
+      set({ inviteCode })
+      EaiSigner.setInviteCode(inviteCode);
+   },
+
+   hasUser: false,
+   setHasUser: (hasUser: boolean) => set({ hasUser }),
 }));
 
 export default useStarter;

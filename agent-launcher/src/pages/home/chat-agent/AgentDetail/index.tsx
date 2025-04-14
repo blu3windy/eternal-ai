@@ -11,6 +11,10 @@ import SetupEnvModel from "../SetupEnvironment";
 import BaseModal from "@components/BaseModal";
 import storageModel from "@storage/StorageModel";
 import localStorageService from "@storage/LocalStorageService";
+import RatingForm from "../Rating/RatingForm";
+import RatingList from "../Rating/List";
+import { IAgentToken } from "@services/api/agents-token/interface";
+import DependencyAgentItem from "./DependencyAgentItem";
 
 const AgentDetail = () => {
    const {
@@ -22,11 +26,16 @@ const AgentDetail = () => {
       isStarting,
       startAgent,
       isUpdating,
-      handleUpdateCode
+      handleUpdateCode,
+      getDependAgents,
    } = useContext(AgentContext);
 
    const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
+   const [dependAgents, setDependAgents] = useState<IAgentToken[]>([]);
+
+   // const [isShowRatingForm, setIsShowRatingForm] = useState(false);
+
 
    useEffect(() => {
       setHaveNewVersionCode(false);
@@ -103,6 +112,17 @@ const AgentDetail = () => {
 
    const requirements = selectedAgent?.required_info;
 
+   useEffect(() => {
+      const fetchDependAgents = async () => {
+         if (selectedAgent) {
+            const dependAgents = await getDependAgents(selectedAgent);
+            console.log('dependAgents aaaaaa', dependAgents);
+            setDependAgents(dependAgents);
+         }
+      }
+
+      fetchDependAgents();
+   }, [selectedAgent]);
 
    const handleInstall = async () => {
       if (isInstalled) return;
@@ -153,9 +173,9 @@ const AgentDetail = () => {
                                     <Button
                                        className={s.btnInstall}
                                        onClick={handleStartAgent}
-                                       isLoading={isStarting && !isUpdating}
-                                       isDisabled={isStarting}
-                                       loadingText={"Starting..."}
+                                       isLoading={isStarting || isUpdating}
+                                       isDisabled={isStarting || isUpdating}
+                                       loadingText={isUpdating ? "Updating..." : "Starting..."}
                                     >
                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                           <path d="M15.5507 11.989L7.15397 17.1274C5.48314 18.1499 3.33398 16.9506 3.33398 14.9956V5.00479C3.33398 3.04979 5.48314 1.85074 7.15397 2.87324L15.5507 8.01158C17.0382 8.92242 17.0382 11.079 15.5507 11.989Z" fill="black" />
@@ -177,7 +197,7 @@ const AgentDetail = () => {
                               </Button>
                            )
                         }
-                        {hasNewVersionCode && isInstalled && (
+                        {hasNewVersionCode && isInstalled && !isUpdating && (
                            <Button
                               className={s.btnUpdate}
                               onClick={() => handleUpdateCode(selectedAgent)}
@@ -192,11 +212,20 @@ const AgentDetail = () => {
 
                   </Flex>
                </Flex>
-
             </Flex>
+
             <Flex w={'100%'} direction="column" overflowY={'auto'} className={s.descriptionWrapper}>
                <Divider color={'rgba(255, 255, 255, 0.15)'} mb={'40px'} />
                <Flex gap={"20px"} justifyContent={'space-between'}>
+                  {/* <Flex className={s.infoBox}>
+                     <Text className={s.infoText}>
+                        123 Ratings
+                     </Text>
+                     <Text className={s.infoValue}>
+                        4.5
+                     </Text>
+                  </Flex> */}
+
                   <Flex className={s.infoBox}>
                      <Text className={s.infoText}>
                         Type
@@ -205,7 +234,6 @@ const AgentDetail = () => {
                         {AgentTypeName[selectedAgent?.agent_type]}
                      </Text>
                   </Flex>
-
                   {
                      requirements?.disk && (
                         <Flex className={s.infoBox}>
@@ -273,6 +301,23 @@ const AgentDetail = () => {
                   </Flex>
                </Flex>
                <Divider color={'rgba(255, 255, 255, 0.15)'} my={'40px'} />
+               {
+                  dependAgents.length > 0 && (
+                     <>
+                        <Flex direction={'column'} gap={'12px'}>
+                           <Text fontSize={'20px'} fontWeight={'500'} color={'white'}>Dependency Agent</Text>
+                           <Flex overflowX={'auto'} gap={'12px'}>
+                              {
+                                 dependAgents.map((agent) => (
+                                    <DependencyAgentItem token={agent} />
+                                 ))
+                              }
+                           </Flex>
+                        </Flex>
+                        <Divider color={'rgba(255, 255, 255, 0.15)'} my={'40px'} />
+                     </>
+                  )
+               }
                <Flex marginLeft={'8px'} marginBottom={'20px'} className={s.wDescription}>
                   {description && (
                      <div className={cs(s.descriptionText, "markdown")}>
@@ -282,6 +327,12 @@ const AgentDetail = () => {
                      </div>
                   )}
                </Flex>
+               {/* <Divider color={'rgba(255, 255, 255, 0.15)'} my={'40px'} />
+               <RatingList
+                  averageRating={4.9}
+                  totalRatings={208}
+                  theme="dark"
+               /> */}
             </Flex>
          </Flex >
          {isShowSetupEnvModel && (
@@ -301,6 +352,15 @@ const AgentDetail = () => {
                />
             </BaseModal>
          )}
+
+         {/* <BaseModal
+            isShow={isShowRatingForm}
+            onHide={() => setIsShowRatingForm(false)}
+            size="small"
+            title="Rating"
+         >
+            <RatingForm onClose={() => setIsShowRatingForm(false)} />
+         </BaseModal> */}
       </>
    )
 }

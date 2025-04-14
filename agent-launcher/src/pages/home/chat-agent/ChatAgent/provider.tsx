@@ -143,6 +143,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                               const updateMessage = {
                                  ...item,
                                  status: "received",
+                                 updatedAt: new Date().getTime(),
                               };
                               return updateMessage;
                            }
@@ -151,6 +152,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                               ...item,
                               msg: "Something went wrong!",
                               status: "failed",
+                              updatedAt: new Date().getTime(),
                            };
                            return updateMessage;
                         } else {
@@ -158,6 +160,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                               const updateMessage = {
                                  ...item,
                                  status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
+                                 updatedAt: new Date().getTime(),
                               };
                               return updateMessage;
                            }
@@ -326,6 +329,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                      status: "pre-done",
                      queryMessageState: options?.message,
                      onchain_data: options.onchain_data,
+                     updatedAt: new Date().getTime(),
                   });
                } else {
                   isGeneratedDone = !!options?.isGeneratedDone;
@@ -334,6 +338,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                      status: text.trim().length ? "receiving" : "waiting",
                      queryMessageState: options?.message,
                      onchain_data: options.onchain_data,
+                     updatedAt: new Date().getTime(),
                   });
                }
             },
@@ -342,6 +347,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   status: "received",
                   queryMessageState: options?.message,
                   onchain_data: options.onchain_data,
+                  updatedAt: new Date().getTime(),
                });
                updateTaskItem({
                   id: messageId,
