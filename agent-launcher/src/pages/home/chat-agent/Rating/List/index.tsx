@@ -1,11 +1,14 @@
 import { StarIcon } from '@chakra-ui/icons';
-import { Box, Flex, HStack, Text } from '@chakra-ui/react';
-import React, { useRef, useState } from 'react';
+import { Box, Flex, HStack, Text, useDisclosure } from '@chakra-ui/react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import RatingItem from './RatingItem';
 import s from './styles.module.scss';
 import cx from 'classnames';
 import { labelAmountOrNumberAdds } from '@utils/format';
+import CAgentTokenAPI from '@services/api/agents-token';
+import { AgentContext } from '@pages/home/provider/AgentContext';
+import BaseModal from '@components/BaseModal';
 
 interface Rating {
   id: string;
@@ -28,13 +31,26 @@ const RatingList: React.FC<RatingListProps> = ({
   isShowFull = false,
   theme = 'light',
 }) => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const cAgentTokenAPI = new CAgentTokenAPI();
 
+  const {selectedAgent} = useContext(AgentContext);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [hasMore, setHasMore] = useState(true);
+  const refParams = useRef({
+    page: 1,
+    limit: isShowFull ? 10 : 2,
+  });
+
+  const {isOpen, onOpen, onClose} = useDisclosure();
+
+  useEffect(() => {
+    loadMoreRatings();
+  }, []);
 
   const loadMoreRatings = async () => {
-    const newRatings = await fetchMoreRatings();
+    const newRatings = await cAgentTokenAPI.getAgentCommentsAndRatings(selectedAgent.id, refParams.current);
     setRatings([...ratings, ...newRatings]);
 
     setHasMore(newRatings.length > 0);
@@ -44,7 +60,7 @@ const RatingList: React.FC<RatingListProps> = ({
     <Box className={cx(s.ratingListContainer, { [s.dark]: theme === 'dark', })}>
       <Flex justifyContent={'space-between'} alignItems={'center'}>
         <Text className={s.title}>Ratings & Reviews</Text>
-        <Text className={s.viewAll}>See All</Text>
+        <Text className={s.viewAll} onClick={onOpen}>See All</Text>
       </Flex>
 
       <Flex className={s.header} gap={'40px'}>
@@ -119,12 +135,15 @@ const RatingList: React.FC<RatingListProps> = ({
           ))}
         </InfiniteScroll>
       </Box>
+      <BaseModal
+        isShow={isOpen}
+        onHide={onClose}
+        className={s.modalContent}
+      >
+        <RatingList theme='light' averageRating={averageRating} totalRatings={totalRatings} isShowFull={true}/>
+      </BaseModal>
     </Box>
   );
 };
 
 export default RatingList;
-
-function fetchMoreRatings() {
-  throw new Error('Function not implemented.');
-}
