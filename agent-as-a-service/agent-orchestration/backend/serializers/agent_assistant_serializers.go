@@ -273,3 +273,8 @@ type AgentActionReq struct {
 	Ids             []uint   `json:"ids"`
 	ContractAddress []string `json:"contract_address"`
 }
+
+type AgentCommentReq struct {
+	Comment string  `json:"comment"`
+	Rating  float64 `json:"rating"`
+}

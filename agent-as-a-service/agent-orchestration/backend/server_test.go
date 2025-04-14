@@ -91,9 +91,9 @@ func Test_OpenAI(t *testing.T) {
 }
 
 func Test_SRV(t *testing.T) {
-	ts.TestCrawlDexScreener(context.Background())
+	// ts.TestCrawlDexScreener(context.Background())
 	// ts.JobRobotScanBalanceSOL(context.Background())
-	// ts.AgentTwitterPostGenerateVideoByUserTweetId(context.Background(), 35409)
+	ts.CreateClankerTokenForVideoByPostID(context.Background(), 35944)
 }
 
 func Test_UpdateTokenPrice(t *testing.T) {

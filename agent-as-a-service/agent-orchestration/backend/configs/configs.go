@@ -283,10 +283,12 @@ type Config struct {
 		CreatorRewardsAdmin      string  `json:"creator_rewards_admin"`
 	} `json:"clanker"`
 	Privy struct {
-		AppID     string `json:"app_id"`
-		AppSecret string `json:"app_secret"`
+		AppID     string   `json:"app_id"`
+		AppSecret string   `json:"app_secret"`
+		AppIDList []string `json:"app_id_list"`
 	} `json:"privy"`
-	Robot struct {
+	PrivyEx map[string]string `json:"privy_ex"`
+	Robot   struct {
 		TokenAdminAddress string `json:"token_admin_address"`
 		TokenSupply       uint64 `json:"token_supply"`
 	} `json:"robot"`

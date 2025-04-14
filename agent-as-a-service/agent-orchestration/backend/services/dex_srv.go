@@ -151,11 +151,11 @@ func (s *Service) GetListTrendingTokens(ctx context.Context) ([]*models.Trending
 	tokens, err := s.dao.FindTrendingToken(
 		daos.GetDBMainCtx(ctx),
 		map[string][]interface{}{
-			"mint_at >= now() - interval 1 day ": []interface{}{},
-			"market_cap >= 200000":               []interface{}{},
-			"volume1h >= 1000000":                []interface{}{},
-			"buyers1h >= 1000":                   []interface{}{},
-			"transactions1h >= 1000":             []interface{}{},
+			// "mint_at >= now() - interval 1 day ": []interface{}{},
+			"market_cap >= 200000": []interface{}{},
+			// "volume1h >= 1000000":                []interface{}{},
+			// "buyers1h >= 1000":                   []interface{}{},
+			"transactions1h >= 1000": []interface{}{},
 		},
 		map[string][]interface{}{},
 		[]string{},

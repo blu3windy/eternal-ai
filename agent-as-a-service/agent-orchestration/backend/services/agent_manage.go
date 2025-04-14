@@ -1768,3 +1768,86 @@ func (s *Service) PublicAgent(ctx context.Context, address string, agentID uint)
 
 	return true, nil
 }
+
+func (s *Service) AgentComment(ctx context.Context, address string, agentID uint, req *serializers.AgentCommentReq) (*models.AgentUserComment, error) {
+	var agentUserComment *models.AgentUserComment
+	err := daos.WithTransaction(
+		daos.GetDBMainCtx(ctx),
+		func(tx *gorm.DB) error {
+			agentInfo, err := s.dao.FirstAgentInfoByID(
+				tx, agentID,
+				map[string][]any{},
+				true,
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			if agentInfo == nil {
+				return errs.NewError(errs.ErrAgentNotFound)
+			}
+
+			agentUserComment = &models.AgentUserComment{
+				AgentInfoID: agentID,
+				UserAddress: strings.ToLower(address),
+				Comment:     req.Comment,
+				Rating:      req.Rating,
+			}
+
+			err = s.dao.Create(tx, agentUserComment)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			switch req.Rating {
+			case 1:
+				err = tx.Model(agentInfo).UpdateColumn("num_of_one_star", gorm.Expr("num_of_one_star + 1")).
+					UpdateColumn("num_of_rating", gorm.Expr("num_of_rating + 1")).Error
+			case 2:
+				err = tx.Model(agentInfo).UpdateColumn("num_of_two_star", gorm.Expr("num_of_two_star + 1")).
+					UpdateColumn("num_of_rating", gorm.Expr("num_of_rating + 1")).Error
+			case 3:
+				err = tx.Model(agentInfo).UpdateColumn("num_of_three_star", gorm.Expr("num_of_three_star + 1")).
+					UpdateColumn("num_of_rating", gorm.Expr("num_of_rating + 1")).Error
+			case 4:
+				err = tx.Model(agentInfo).UpdateColumn("num_of_four_star", gorm.Expr("num_of_four_star + 1")).
+					UpdateColumn("num_of_rating", gorm.Expr("num_of_rating + 1")).Error
+			case 5:
+				err = tx.Model(agentInfo).UpdateColumn("num_of_five_star", gorm.Expr("num_of_five_star + 1")).
+					UpdateColumn("num_of_rating", gorm.Expr("num_of_rating + 1")).Error
+			}
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			agentInfo.Rating = (agentInfo.Rating*float64(agentInfo.NumOfRating) + req.Rating) / float64(agentInfo.NumOfRating+1)
+			err = tx.Model(agentInfo).Update("rating", agentInfo.Rating).Error
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+
+	return agentUserComment, nil
+}
+
+func (s *Service) GetListAgentComment(ctx context.Context, agentID uint, page, limit int) ([]*models.AgentUserComment, error) {
+	agentUserComments, err := s.dao.AgentUserComment4Page(
+		daos.GetDBMainCtx(ctx),
+		map[string][]any{"agent_info_id = ?": {agentID}},
+		map[string][]any{},
+		[]string{"created_at desc"},
+		page,
+		limit,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return agentUserComments, nil
+}

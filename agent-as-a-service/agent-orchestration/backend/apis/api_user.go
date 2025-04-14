@@ -118,16 +118,3 @@ func (s *Server) GetListUserTransactions(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewUserTransactionRespArry(ms), Count: &count})
 }
-
-func (s *Server) AddVibeWhiteList(c *gin.Context) {
-	ctx := s.requestContext(c)
-	var req struct {
-		Email string `json:"email"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
-		return
-	}
-	_ = s.nls.AddVibeWhiteList(ctx, req.Email)
-	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: true})
-}

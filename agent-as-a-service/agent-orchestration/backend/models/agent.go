@@ -239,6 +239,13 @@ type AgentInfo struct {
 	CodeVersion      int    `gorm:"default:0"`
 	RunStatus        string
 	Author           string
+	Rating           float64 `gorm:"default:0"`
+	NumOfRating      int64   `gorm:"default:0"`
+	NumOfOneStar     int64   `gorm:"default:0"`
+	NumOfTwoStar     int64   `gorm:"default:0"`
+	NumOfThreeStar   int64   `gorm:"default:0"`
+	NumOfFourStar    int64   `gorm:"default:0"`
+	NumOfFiveStar    int64   `gorm:"default:0"`
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string
@@ -722,11 +729,22 @@ type AgentUtilityRecentChat struct {
 	AgentInfoID uint   `gorm:"unique_index:agent_utility_recent_chat_main_idx"`
 }
 
+type (
+	WalletType string
+)
+
+const (
+	WalletTypePrivy    WalletType = "privy"
+	WalletTypeInternal WalletType = "internal"
+)
+
 type PrivyWallet struct {
 	gorm.Model
-	PrivyID   string `gorm:"unique_index"`
-	TwitterID string `gorm:"unique_index"`
-	Address   string `gorm:"index"`
+	PrivyID     string     `gorm:"unique_index"`
+	TwitterID   string     `gorm:"unique_index"`
+	Address     string     `gorm:"index"`
+	UserAddress string     `gorm:"index"`
+	WalletType  WalletType `gorm:"default:'privy'"`
 }
 
 type ClankerVideoToken struct {
@@ -755,9 +773,4 @@ type AgentReactionHistory struct {
 	AgentInfoID uint   `gorm:"index"`
 	UserAddress string `gorm:"index"`
 	Reaction    string
-}
-
-type VibeWhiteList struct {
-	gorm.Model
-	Email string `gorm:"unique_index"`
 }
