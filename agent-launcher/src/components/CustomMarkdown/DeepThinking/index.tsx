@@ -2,7 +2,7 @@ import SvgInset from '@components/SvgInset';
 import { CustomComponentProps } from '../types';
 import s from './styles.module.scss';
 import cx from 'clsx';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 import { TASK_TAG_REGEX } from '../constants';
 import Task, { TaskType } from './Task';
@@ -12,6 +12,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from 'remark-breaks'
+import usePrevious from 'react-use/lib/usePrevious';
 
 type TaskItem = TaskType | string;
 
@@ -34,7 +35,14 @@ function DeepThinking({
    status?: string;
    content: string;
 }) {
+   const prevStatus = usePrevious(status);
    const [isExpanded, setIsExpanded] = useState(status === "receiving");
+
+   useEffect(() => {
+      if (prevStatus === "receiving" && status !== "receiving") {
+         setIsExpanded(false);
+      }
+   }, [prevStatus, status])
 
    const tasks = useMemo(() => {
       try {
