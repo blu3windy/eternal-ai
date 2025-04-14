@@ -209,6 +209,17 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
    }
 
    const renderMarkdown = () => {
+      if (message.type === 'human') {
+         return (
+            <div
+               className={cs(s.markdown, "markdown-body", {
+                  [s.markdown__human]: true
+               })}
+            >
+               <p>{message.msg}</p>
+            </div>
+         )
+      }
       if (message.status === "waiting" || message.status === "sync-waiting") {
          return renderWaitingMessage();
       }
