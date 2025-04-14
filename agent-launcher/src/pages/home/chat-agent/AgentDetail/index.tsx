@@ -131,7 +131,7 @@ const AgentDetail = () => {
          <Flex
             className={s.container}
             direction={"column"}
-            justifyContent={"center"}
+            // justifyContent={"center"}
             w={"100%"}
          >
             <Flex w={"100%"} justifyContent={"space-between"} alignItems={"center"} mb={'40px'}>
