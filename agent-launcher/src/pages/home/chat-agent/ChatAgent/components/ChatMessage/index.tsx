@@ -20,7 +20,7 @@ import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/Wai
 import { v4 } from "uuid";
 import { useDispatch } from "react-redux";
 import { openWithUrl } from "@stores/states/floating-web-view/reducer";
-import { PROCESSING_TAG_REGEX, THINK_TAG_REGEX, COMPUTER_USE_TAG_REGEX, MARKDOWN_TAGS } from "@components/CustomMarkdown/constants";
+import { THINK_TAG_REGEX, COMPUTER_USE_TAG_REGEX, MARKDOWN_TAGS, IMAGE_SLIDER_TAG_REGEX, IMAGE_SLIDE_ITEM_TAG_REGEX } from "@components/CustomMarkdown/constants";
 import ProcessingTaskModal from "@pages/home/list-agent/BottomBar/ProcessingTaskModal";
 
 dayjs.extend(duration);
@@ -138,7 +138,6 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          return (textStr || ''); // replace computer use tag;
       }
       return `${textStr || ''}`
-         .replace(PROCESSING_TAG_REGEX, '') // replace processing tag
          .replace(COMPUTER_USE_TAG_REGEX, ''); // replace computer use tag
    }, [message?.msg, message?.status]);
 
@@ -149,13 +148,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
 
    const processingWebViewUrl = useMemo(() => {
       try {
-         let matches = `${renderMessage || ''}`.match(PROCESSING_TAG_REGEX);
-         if (matches?.length) {
-            let url = matches[0] || '';
-            url = url.replace(`<${MARKDOWN_TAGS.PROCESSING}>`, '').replace(`</${MARKDOWN_TAGS.PROCESSING}>`, '');
-            return url;
-         }
-         matches = `${renderMessage || ''}`.match(COMPUTER_USE_TAG_REGEX);
+         const matches = `${renderMessage || ''}`.match(COMPUTER_USE_TAG_REGEX);
          if (matches?.length) {
             let url = matches[0] || '';
             url = url.replace(`<${MARKDOWN_TAGS.COMPUTER_USE}>`, '').replace(`</${MARKDOWN_TAGS.COMPUTER_USE}>`, '');
@@ -208,6 +201,18 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
       );
    }
 
+   const renderResponseTime = () => {
+      return (
+         <>
+         {message?.is_reply && !!message?.createdAt && !!message?.updatedAt && (
+               <Box w='100%' display={"flex"} alignItems={"center"} gap={"12px"} justifyContent={message?.is_reply ? "flex-start" : "flex-end"} mt={message?.is_reply ? "0px" : "-20px"}>
+                  <Text className={s.txLink}>{`${minutes && minutes > 0 ? `${minutes}m` : ""} ${seconds && seconds > 0 ? `${seconds}s` : ""}`}</Text>
+               </Box>
+            )}
+         </>
+      )
+   }
+
    const renderMarkdown = () => {
       if (message.type === 'human') {
          return (
@@ -230,8 +235,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                className={cs(s.markdown, "markdown-body", {
                })}
             >
-               <CustomMarkdown id={message.id} status={message.status} content={renderMessage.replace(PROCESSING_TAG_REGEX, '') // replace processing tag
-                  .replace(COMPUTER_USE_TAG_REGEX, '')} />
+               <CustomMarkdown id={message.id} status={message.status} content={renderMessage.replace(COMPUTER_USE_TAG_REGEX, '')} />
             </div>
          );
       }
@@ -274,7 +278,18 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                      transition={{ duration: 0.3, ease: "easeOut" }}
                      className={`${s.snackbar}`}
                      onClick={() => {
-                        mdpdfmake(message.msg.replace(THINK_TAG_REGEX, '').replace(PROCESSING_TAG_REGEX, '')).then((docDefinition) => {
+                        const printContent = message.msg
+                           .replace(THINK_TAG_REGEX, '')
+                           .replace(COMPUTER_USE_TAG_REGEX, '')
+                           .replace(IMAGE_SLIDER_TAG_REGEX, (_, sliderInnerText) => {
+                              return sliderInnerText
+                                 .replace(/\n/g, "")
+                                 .match(IMAGE_SLIDE_ITEM_TAG_REGEX)
+                                 .map(item => item.replace(/<\/?slide-item>/g, ''))
+                                 .join('\n');
+                           });
+
+                        mdpdfmake(printContent).then((docDefinition) => {
                            console.log(docDefinition);
                            // Use docDefinition with a PDFMake instance to generate a PDF
                            pdfMake.createPdf(docDefinition).download(`${selectedAgent?.display_name || selectedAgent?.agent_name || "Agent"}-${dayjs().format("YYYY-MM-DD-hh:mm:ss")}.pdf`);
@@ -359,33 +374,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                   </Text>
                </Box>
             )}
-            {message?.tx_hash && (
-               <Box display={"flex"} alignItems={"center"} gap={"12px"} justifyContent={message?.is_reply ? "flex-start" : "flex-end"} mt={message?.is_reply ? "0px" : "-20px"}>
-                  {message?.is_reply && !!message?.createdAt && !!message?.updatedAt && (
-                     <>
-                        <Text className={s.txLink}>{`${minutes && minutes > 0 ? `${minutes}m` : ""} ${seconds && seconds > 0 ? `${seconds}s` : ""}`}</Text>
-                        <svg width="4" height="4" viewBox="0 0 4 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                           <circle cx="2" cy="2" r="2" fill="white" fill-opacity="0.6" />
-                        </svg>
-                     </>
-                  )}
-                  <a
-                     className={s.txLink}
-                     href={
-                        getExplorerByChain({
-                           chainId: selectedAgent?.network_id as any,
-                           address: message?.tx_hash,
-                           type: "tx",
-                        }) as any
-                     }
-                     target="_blank"
-                     rel="noopener noreferrer"
-                  >
-                     {formatLongAddress(message?.tx_hash)}
-                     <Image src="/svg/ic-arrow-top-right-gray.svg" />
-                  </a>
-               </Box>
-            )}
+            {renderResponseTime()}
          </div>
          <ProcessingTaskModal
             key={`processing-task-${isOpenProcessingTask}`}
