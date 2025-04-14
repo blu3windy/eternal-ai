@@ -1,0 +1,21 @@
+.popoverContent {
+   border-radius: 8px !important;
+   border: 1px solid rgba(255, 255, 255, 0.3) !important;
+   background: rgba(12, 0, 99, 0.7) !important;
+   box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.3) !important;
+   backdrop-filter: blur(30px) !important;
+   width: 500px !important;
+}
+
+.containerOverview {
+   margin-top: -20px;
+}
+
+.taskListScroll {
+   -ms-overflow-style: none; /* Internet Explorer 10+ */
+   scrollbar-width: none; /* Firefox */
+
+   &::-webkit-scrollbar {
+      display: none; /* Safari and Chrome */
+   }
+}

@@ -16,13 +16,15 @@ import ROUTERS from "@constants/route-path";
 import { useAuth } from "@pages/authen/provider";
 import { totalPendingTasksSelector } from "@stores/states/agent-chat/selector";
 import { formatAddressCenter } from "@utils/format";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import AddTestAgent from "../AddTestAgent";
 import AgentMonitor from "../AgentMonitor";
 import ProcessingTaskModal from "./ProcessingTaskModal";
 import s from "./styles.module.scss";
+import NewsModal from "./NewsModal";
+import { MonitorContext } from "@providers/Monitor/MonitorContext";
 
 const ProcessingTaskIcon = () => {
    return (
@@ -51,6 +53,15 @@ const ProcessingTaskIcon = () => {
    );
 };
 
+const NewsIcon = () => {
+   return (
+      <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+         <path d="M9.56665 19.9531L9.573 19.9258C9.529 20.1113 9.5 20.3018 9.5 20.5008C9.5 21.8813 10.6195 23.0008 12 23.0008C13.3805 23.0008 14.5 21.8813 14.5 20.5008C14.5 20.3023 14.471 20.1113 14.427 19.9258L14.4372 19.9701" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+         <path d="M21 19V17.5C21 17.5 18.5 15.5 18.5 10.5V8.5C18.5 4.91 15.59 2 12 2C8.41 2 5.5 4.91 5.5 8.5V10.5C5.5 15.5 3 17.5 3 17.5V19C9 20.3335 15 20.3335 21 19Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+   );
+};
+
 const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string) => void }) => {
    const toast = useToast();
    const { signer } = useAuth();
@@ -59,8 +70,10 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
    const navigate = useNavigate();
 
    const [isOpenProcessingTask, setIsOpenProcessingTask] = useState(false);
+   const [isOpenNews, setIsOpenNews] = useState(false);
 
    const totalPendingTasks = useSelector(totalPendingTasksSelector);
+   const { updateAgents } = useContext(MonitorContext);
 
    // get wallet balance
 
@@ -78,9 +91,21 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
    return (
       <Box className={s.bottomBar}>
          <Flex className={s.addressContainer}>
-            <Text className={s.addressText} onClick={() => navigate(ROUTERS.MINE)} cursor={"pointer"}>{formatAddressCenter(signer?.address || "")}</Text>
+            <Text
+               className={s.addressText}
+               onClick={() => navigate(ROUTERS.MINE)}
+               cursor={"pointer"}
+            >
+               {formatAddressCenter(signer?.address || "")}
+            </Text>
             <Box className={s.copyIcon} onClick={handleCopy}>
-               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+               <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+               >
                   <path
                      d="M12.25 4.16667H6.41667C4.96533 4.16667 4.16667 4.96533 4.16667 6.41667V12.25C4.16667 13.7013 4.96533 14.5 6.41667 14.5H12.25C13.7013 14.5 14.5 13.7013 14.5 12.25V6.41667C14.5 4.96533 13.7013 4.16667 12.25 4.16667ZM13.5 12.25C13.5 13.138 13.138 13.5 12.25 13.5H6.41667C5.52867 13.5 5.16667 13.138 5.16667 12.25V6.41667C5.16667 5.52867 5.52867 5.16667 6.41667 5.16667H12.25C13.138 5.16667 13.5 5.52867 13.5 6.41667V12.25ZM2.5 3.74666V9.58667C2.5 10.3853 2.82206 10.582 2.92806 10.6473C3.16406 10.7913 3.23726 11.0993 3.09326 11.3347C2.9986 11.4887 2.83468 11.5733 2.66602 11.5733C2.57735 11.5733 2.48661 11.5493 2.40527 11.5C1.80461 11.132 1.5 10.4887 1.5 9.58667V3.74666C1.5 2.31866 2.31941 1.5 3.74674 1.5H9.58659C10.7099 1.5 11.2467 1.99265 11.5 2.40531C11.644 2.64065 11.57 2.94865 11.3346 3.09265C11.0986 3.23732 10.792 3.16266 10.6473 2.92733C10.5826 2.82133 10.3853 2.49935 9.58659 2.49935H3.74674C2.86141 2.50002 2.5 2.86133 2.5 3.74666Z"
                      fill="#5B5B5B"
@@ -109,12 +134,57 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                </Flex>
             )}
 
+            {updateAgents?.length > 0 && (
+               <Flex
+                  gap="4px"
+                  alignItems={"center"}
+                  borderRadius={"12px"}
+                  bg="rgba(255, 255, 255, 0.30)"
+                  px="8px"
+                  py="4px"
+                  onClick={() => {
+                     setIsOpenNews((prev) => !prev);
+                  }}
+                  cursor={"pointer"}
+               >
+                  <svg
+                     width="16"
+                     height="16"
+                     viewBox="0 0 16 16"
+                     fill="none"
+                     xmlns="http://www.w3.org/2000/svg"
+                  >
+                     <path
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M3.33317 5.33268C3.33317 2.75526 5.4224 0.666016 7.99984 0.666016C10.5773 0.666016 12.6665 2.75526 12.6665 5.33268V6.66602C12.6665 8.27432 13.0679 9.38545 13.4579 10.0875C13.6859 10.498 13.9652 10.8781 14.3332 11.1725V12.6001C10.1495 13.5299 5.8482 13.5294 1.6665 12.6001V11.1725C2.03451 10.878 2.31372 10.498 2.54178 10.0875C2.93179 9.38545 3.33317 8.27432 3.33317 6.66602V5.33268Z"
+                        fill="black"
+                     />
+                     <path
+                        d="M5.97363 13.9355C6.28397 14.7524 7.07417 15.3331 7.99977 15.3331C8.9254 15.3331 9.7156 14.7524 10.0259 13.9355C8.67613 14.0211 7.32327 14.0211 5.97363 13.9355Z"
+                        fill="black"
+                     />
+                  </svg>
+
+                  <Text fontSize={"12px"} fontWeight={400} lineHeight={"120%"}>
+                     {updateAgents?.length}{" "}
+                     {updateAgents?.length === 1 ? "update" : "updates"}
+                  </Text>
+               </Flex>
+            )}
+
             <Box>
                <Popover placement="top-start">
                   <PopoverTrigger>
                      <Box cursor={"pointer"} className={s.settingsContainer}>
                         <Box className={s.settingsIcon}>
-                           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                           <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                           >
                               <path
                                  d="M11.8867 9.73333C11.2667 9.37333 10.8867 8.71333 10.8867 8C10.8867 7.28667 11.2667 6.62667 11.8867 6.26667C11.9933 6.2 12.0333 6.06667 11.9667 5.96L10.8533 4.04C10.8133 3.96667 10.74 3.92668 10.6667 3.92668C10.6267 3.92668 10.5867 3.94 10.5533 3.96C10.2467 4.13334 9.9 4.22666 9.55333 4.22666C9.2 4.22666 8.85333 4.13333 8.54 3.95333C7.92 3.59333 7.54 2.94 7.54 2.22666C7.54 2.1 7.44 2 7.32 2H4.68C4.56 2 4.46 2.1 4.46 2.22666C4.46 2.94 4.08 3.59333 3.46 3.95333C3.14667 4.13333 2.80001 4.22666 2.44668 4.22666C2.10001 4.22666 1.75334 4.13334 1.44668 3.96C1.34001 3.89333 1.20667 3.93333 1.14667 4.04L0.0266724 5.96C0.00667236 5.99334 0 6.03333 0 6.06667C0 6.14667 0.0400097 6.22 0.113343 6.26667C0.733343 6.62667 1.11334 7.28 1.11334 7.99333C1.11334 8.71333 0.733329 9.37333 0.12 9.73333H0.113343C0.00667572 9.8 -0.0333415 9.93333 0.0333252 10.04L1.14667 11.96C1.18667 12.0333 1.26 12.0733 1.33333 12.0733C1.37333 12.0733 1.41334 12.06 1.44668 12.04C2.07334 11.6867 2.84 11.6867 3.46 12.0467C4.07333 12.4067 4.45333 13.06 4.45333 13.7733C4.45333 13.9 4.55333 14 4.68 14H7.32C7.44 14 7.54 13.9 7.54 13.7733C7.54 13.06 7.92 12.4067 8.54 12.0467C8.85333 11.8667 9.2 11.7733 9.55333 11.7733C9.9 11.7733 10.2467 11.8667 10.5533 12.04C10.66 12.1067 10.7933 12.0667 10.8533 11.96L11.9733 10.04C11.9933 10.0067 12 9.96667 12 9.93333C12 9.85333 11.96 9.78 11.8867 9.73333ZM6 10C4.89333 10 4 9.10667 4 8C4 6.89333 4.89333 6 6 6C7.10667 6 8 6.89333 8 8C8 9.10667 7.10667 10 6 10Z"
                                  fill="#5B5B5B"
@@ -126,8 +196,23 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                   <PopoverContent bg={"rgba(12, 0, 99, 0.90) !important"}>
                      <PopoverBody padding={0} className={s.menuList1}>
                         <AgentMonitor />
-                        <Button width="100%" height="45px" display="flex" alignItems="center" padding="10px 20px" gap="12px" onClick={() => setIsOpen(true)} className={s.menuItem}>
-                           <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <Button
+                           width="100%"
+                           height="45px"
+                           display="flex"
+                           alignItems="center"
+                           padding="10px 20px"
+                           gap="12px"
+                           onClick={() => setIsOpen(true)}
+                           className={s.menuItem}
+                        >
+                           <svg
+                              width="24"
+                              height="25"
+                              viewBox="0 0 24 25"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                           >
                               <path
                                  d="M9.25 3.75H4.25C3.69772 3.75 3.25 4.19772 3.25 4.75V9.75C3.25 10.3023 3.69772 10.75 4.25 10.75H9.25C9.80228 10.75 10.25 10.3023 10.25 9.75V4.75C10.25 4.19772 9.80228 3.75 9.25 3.75Z"
                                  stroke="white"
@@ -149,10 +234,22 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                                  stroke-linecap="round"
                                  stroke-linejoin="round"
                               />
-                              <path d="M17.75 14.75V21.75" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                              <path d="M21.25 18.25H14.25" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                              <path
+                                 d="M17.75 14.75V21.75"
+                                 stroke="white"
+                                 stroke-width="2"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              />
+                              <path
+                                 d="M21.25 18.25H14.25"
+                                 stroke="white"
+                                 stroke-width="2"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                              />
                            </svg>
-                           Add test agent
+                   Add test agent
                         </Button>
 
                         <Button
@@ -168,7 +265,25 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                            className={s.menuItem}
                         >
                            <ProcessingTaskIcon />
-                           Task processing {totalPendingTasks ? `(${totalPendingTasks})` : ""}
+                   Task processing{" "}
+                           {totalPendingTasks ? `(${totalPendingTasks})` : ""}
+                        </Button>
+
+                        <Button
+                           width="100%"
+                           height="45px"
+                           display="flex"
+                           alignItems="center"
+                           padding="10px 20px"
+                           gap="12px"
+                           onClick={() => {
+                              setIsOpenNews((prev) => !prev);
+                           }}
+                           className={s.menuItem}
+                        >
+                           <NewsIcon />
+                   Updates{" "}
+                           {updateAgents?.length > 0 ? `(${updateAgents?.length})` : ""}
                         </Button>
                      </PopoverBody>
                   </PopoverContent>
@@ -193,6 +308,14 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                   isOpen={isOpenProcessingTask}
                   setIsOpen={() => {
                      setIsOpenProcessingTask((prev) => !prev);
+                  }}
+               />
+
+               <NewsModal
+                  key={`news-${isOpenProcessingTask}`}
+                  isOpen={isOpenNews}
+                  setIsOpen={() => {
+                     setIsOpenNews((prev) => !prev);
                   }}
                />
             </Box>
