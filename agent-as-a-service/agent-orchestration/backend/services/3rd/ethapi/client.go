@@ -149,7 +149,7 @@ func (c *Client) PendingNonceAt(ctx context.Context, addr common.Address) (uint6
 	if pNum > num+3 {
 		return 0, errors.New("pending nonce is too high")
 	}
-	return num, nil
+	return pNum, nil
 }
 
 func (c *Client) Address() (string, string, error) {
