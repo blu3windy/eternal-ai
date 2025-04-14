@@ -722,11 +722,22 @@ type AgentUtilityRecentChat struct {
 	AgentInfoID uint   `gorm:"unique_index:agent_utility_recent_chat_main_idx"`
 }
 
+type (
+	WalletType string
+)
+
+const (
+	WalletTypePrivy    WalletType = "privy"
+	WalletTypeInternal WalletType = "internal"
+)
+
 type PrivyWallet struct {
 	gorm.Model
-	PrivyID   string `gorm:"unique_index"`
-	TwitterID string `gorm:"unique_index"`
-	Address   string `gorm:"index"`
+	PrivyID     string     `gorm:"unique_index"`
+	TwitterID   string     `gorm:"unique_index"`
+	Address     string     `gorm:"index"`
+	UserAddress string     `gorm:"index"`
+	WalletType  WalletType `gorm:"default:'privy'"`
 }
 
 type ClankerVideoToken struct {

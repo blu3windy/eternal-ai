@@ -38,7 +38,7 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 						return errs.NewError(errs.ErrRecordNotFound)
 					}
 
-					if twitterPost != nil && twitterPost.Status == models.AgentTwitterPostStatusNew &&
+					if twitterPost.Status == models.AgentTwitterPostStatusNew &&
 						twitterPost.PostType == models.AgentSnapshotPostActionTypeGenerateVideo && twitterPost.TokenAddress == "" {
 						// check if privy wallet already exists
 						privyWallet, err := s.dao.FirstPrivyWallet(tx,
@@ -50,42 +50,63 @@ func (s *Service) CreateClankerTokenForVideoByPostID(ctx context.Context, twitte
 						}
 
 						if privyWallet == nil {
-							//call api privy
-							privyResp, err := s.privyClient.CreateUser(&privy.CreateUserReq{
-								CreateEthereumWallet: true,
-								LinkedAccounts: []privy.LinkedAccountReq{
-									{
-										Type:     "twitter_oauth",
-										Subject:  twitterPost.TwitterID,
-										Name:     twitterPost.TwitterName,
-										Username: twitterPost.TwitterUsername,
-									},
-								},
-							})
-
+							ethAddress, err := s.CreateETHAddress(ctx)
 							if err != nil {
 								return errs.NewError(err)
 							}
 
-							if privyResp != nil {
-								walletAddress := ""
-								for _, wallet := range privyResp.LinkedAccounts {
-									if wallet.Type == "wallet" {
-										walletAddress = wallet.Address
-										break
-									}
-								}
-								//create privy wallet
-								privyWallet = &models.PrivyWallet{
-									TwitterID: twitterPost.TwitterID,
-									Address:   walletAddress,
-									PrivyID:   privyResp.ID,
-								}
-								err = s.dao.Create(tx, privyWallet)
-								if err != nil {
-									return errs.NewError(err)
-								}
+							privyWallet = &models.PrivyWallet{
+								TwitterID:  twitterPost.TwitterID,
+								Address:    strings.ToLower(ethAddress),
+								WalletType: models.WalletTypeInternal,
+								PrivyID:    helpers.RandomBigInt(12).Text(25),
 							}
+							err = s.dao.Create(tx, privyWallet)
+							if err != nil {
+								return errs.NewError(err)
+							}
+
+							// var privyResp *privy.CreateUserResp
+							// var appID string
+							// for _, item := range s.conf.Privy.AppIDList {
+							// 	//call api privy
+							// 	privyResp, err = s.privyClient.CreateUserEx(&privy.CreateUserReq{
+							// 		CreateEthereumWallet: true,
+							// 		LinkedAccounts: []privy.LinkedAccountReq{
+							// 			{
+							// 				Type:     "twitter_oauth",
+							// 				Subject:  twitterPost.TwitterID,
+							// 				Name:     twitterPost.TwitterName,
+							// 				Username: twitterPost.TwitterUsername,
+							// 			},
+							// 		},
+							// 	})
+
+							// 	if err == nil && privyResp != nil && privyResp.LinkedAccounts != nil && len(privyResp.LinkedAccounts) > 0 {
+							// 		appID = item
+							// 		break
+							// 	}
+							// }
+
+							// if privyResp != nil && appID != "" && privyResp.LinkedAccounts != nil && len(privyResp.LinkedAccounts) > 0 {
+							// 	walletAddress := ""
+							// 	for _, wallet := range privyResp.LinkedAccounts {
+							// 		if wallet.Type == "wallet" {
+							// 			walletAddress = wallet.Address
+							// 			break
+							// 		}
+							// 	}
+							// 	//create privy wallet
+							// 	privyWallet = &models.PrivyWallet{
+							// 		TwitterID: twitterPost.TwitterID,
+							// 		Address:   walletAddress,
+							// 		PrivyID:   privyResp.ID,
+							// 	}
+							// 	err = s.dao.Create(tx, privyWallet)
+							// 	if err != nil {
+							// 		return errs.NewError(err)
+							// 	}
+							// }
 						}
 
 						inst, err := s.dao.FirstClankerVideoToken(

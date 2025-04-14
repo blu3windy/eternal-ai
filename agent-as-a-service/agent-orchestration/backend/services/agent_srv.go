@@ -121,6 +121,8 @@ func (s *Service) TwitterOauthCallbackV1(ctx context.Context, callbackUrl, addre
 		return s.TwitterOauthCallbackForApiSubscription(ctx, callbackUrl, address, code, clientID)
 	} else if agentID == "1" {
 		return s.TwitterOauthCallbackForCreateAgent(ctx, callbackUrl, address, code, clientID)
+	} else if agentID == "2" {
+		return s.TwitterOauthCallbackForClaimVideoReward(ctx, callbackUrl, address, code, clientID)
 	}
 
 	agentInfo, err := s.SyncAgentInfoDetailByAgentID(ctx, agentID)
@@ -615,6 +617,77 @@ func (s *Service) TwitterOauthCallbackForCreateAgent(ctx context.Context, callba
 				}
 			}
 
+		}
+
+	}
+
+	return nil
+}
+
+func (s *Service) TwitterOauthCallbackForClaimVideoReward(ctx context.Context, callbackUrl, address, code, clientID string) error {
+	oauthClientId := s.conf.Twitter.OauthClientId
+	oauthClientSecret := s.conf.Twitter.OauthClientSecret
+
+	respOauth, err := s.twitterAPI.GetTwitterOAuthTokenWithKeyForCreateAgent(
+		oauthClientId, oauthClientSecret,
+		code, callbackUrl, address)
+	if err != nil {
+		return errs.NewError(err)
+	}
+
+	if respOauth != nil && respOauth.AccessToken != "" {
+		twitterUser, err := s.twitterAPI.GetTwitterMe(respOauth.AccessToken)
+		if err != nil {
+			return errs.NewError(err)
+		}
+
+		if twitterUser != nil {
+			twitterInfo, err := s.dao.FirstTwitterInfo(daos.GetDBMainCtx(ctx),
+				map[string][]interface{}{
+					"twitter_id = ?": {twitterUser.ID},
+				},
+				map[string][]interface{}{}, false,
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			if twitterInfo == nil {
+				twitterInfo = &models.TwitterInfo{
+					TwitterID: twitterUser.ID,
+				}
+			}
+			twitterInfo.TwitterAvatar = twitterUser.ProfileImageURL
+			twitterInfo.TwitterName = twitterUser.Name
+			twitterInfo.TwitterUsername = twitterUser.UserName
+			twitterInfo.AccessToken = respOauth.AccessToken
+			twitterInfo.RefreshToken = respOauth.RefreshToken
+			twitterInfo.ExpiresIn = respOauth.ExpiresIn
+			twitterInfo.Scope = respOauth.Scope
+			twitterInfo.TokenType = respOauth.TokenType
+			twitterInfo.OauthClientId = oauthClientId
+			twitterInfo.OauthClientSecret = oauthClientSecret
+			twitterInfo.Description = twitterUser.Description
+			twitterInfo.RefreshError = "OK"
+
+			expiredAt := time.Now().Add(time.Second * time.Duration(respOauth.ExpiresIn-(60*20)))
+			twitterInfo.ExpiredAt = &expiredAt
+			err = s.dao.Save(daos.GetDBMainCtx(ctx), twitterInfo)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			//
+			updateFields := map[string]interface{}{
+				"user_address": strings.ToLower(address),
+			}
+
+			err = daos.GetDBMainCtx(ctx).Model(&models.PrivyWallet{}).Where("twitter_id = ?", twitterUser.ID).Updates(
+				updateFields,
+			).Error
+			if err != nil {
+				return errs.NewError(err)
+			}
 		}
 
 	}
