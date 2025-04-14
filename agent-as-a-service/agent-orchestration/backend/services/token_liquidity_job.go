@@ -291,7 +291,7 @@ func (s *Service) JobRetryAgentDeployToken(ctx context.Context) error {
 					"updated_at <= ?":       {time.Now().Add(-120 * time.Minute)},
 					"status = ?":            {models.MemeStatusCreated},
 					"add_pool1_tx_hash = ?": {""},
-					"num_retries < 3":       {},
+					"num_retries < 6":       {},
 					"network_id in (?)": {
 						[]uint64{
 							models.BASE_CHAIN_ID,
@@ -397,6 +397,23 @@ func (s *Service) RetryAgentDeployToken(ctx context.Context, memeID uint) error 
 								)
 							if err != nil {
 								return errs.NewError(err)
+							}
+							// check token address exist in db
+							{
+								memeCheck, err := s.dao.FirstMeme(
+									daos.GetDBMainCtx(ctx),
+									map[string][]any{
+										"token_address = ?": {strings.ToLower(tokenAddress)},
+									},
+									map[string][]any{},
+									false,
+								)
+								if err != nil {
+									return errs.NewError(err)
+								}
+								if memeCheck != nil {
+									return errs.NewError(errs.ErrBadRequest)
+								}
 							}
 							err = daos.GetDBMainCtx(ctx).Model(&m).
 								Updates(

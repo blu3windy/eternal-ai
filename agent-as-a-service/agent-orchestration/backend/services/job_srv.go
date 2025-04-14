@@ -253,13 +253,13 @@ func (s *Service) RunJobs(ctx context.Context) error {
 				"JobAgentLiquidity",
 				func() error {
 					s.JobAgentDeployToken(context.Background())
+					s.JobRetryAgentDeployToken(context.Background())
 					s.JobMemeAddPositionInternal(context.Background())
 					s.JobMemeRemovePositionInternal(context.Background())
 					s.JobCheckMemeReachMarketCap(context.Background())
 					s.JobMemeAddPositionUniswap(context.Background())
 					s.JobRetryAddPool1(context.Background())
 					s.JobRetryAddPool2(context.Background())
-					s.JobRetryAgentDeployToken(context.Background())
 					s.JobMemeBurnPositionUniswap(context.Background())
 					return nil
 				},
