@@ -58,6 +58,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
             const timeout = setTimeout(() => {
                updateMessage(message.id, {
                   status: message.status === "waiting" ? "sync-waiting" : "sync-receiving",
+                  updatedAt: new Date().getTime(),
                });
             }, waitingTime - remainingTime);
 
@@ -67,6 +68,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          } else {
             updateMessage(message.id, {
                status: message.status === "waiting" ? "sync-waiting" : "sync-receiving",
+               updatedAt: new Date().getTime(),
             });
          }
       } else if (message.status === "sync-waiting" || message.status === "sync-receiving") {
