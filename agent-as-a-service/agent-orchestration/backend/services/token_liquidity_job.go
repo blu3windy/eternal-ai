@@ -288,7 +288,7 @@ func (s *Service) JobRetryAgentDeployToken(ctx context.Context) error {
 			memes, err := s.dao.FindMeme(
 				daos.GetDBMainCtx(ctx),
 				map[string][]any{
-					"updated_at <= ?":       {time.Now().Add(-120 * time.Minute)},
+					"updated_at <= ?":       {time.Now().Add(-180 * time.Minute)},
 					"status = ?":            {models.MemeStatusCreated},
 					"add_pool1_tx_hash = ?": {""},
 					"num_retries < 6":       {},
