@@ -3,7 +3,7 @@ import STORAGE_KEYS from "@constants/storage-key.ts";
 import GenericContract from "@contract/common/index.ts";
 import ForgotPass from "@pages/authen/ForgotPass";
 import useStarter from "@pages/authen/hooks/useStarter.ts";
-import Starter from "@pages/authen/Starter";
+import Starter, { LoadingIcon } from "@pages/authen/Starter";
 import AgentAPI from "@services/api/agent";
 import eaiCrypto from "@utils/crypto";
 import sleep from "@utils/sleep.ts";
@@ -19,11 +19,13 @@ import {
    useRef,
    useState,
 } from "react";
-import { BASE_CHAIN_ID } from "../../config.ts";
-import EaiSigner from "../../helpers/signer";
-import localStorageService from "../../storage/LocalStorageService.ts";
+import { BASE_CHAIN_ID } from "@constants/chains";
+import EaiSigner from "@helpers/signer";
+import localStorageService from "@storage/LocalStorageService.ts";
 import HomeAuthen from "./Home";
-// import { ipcRenderer } from "electron";
+import InviteCodePage from "./InviteCode";
+import AppLoading from "@components/AppLoading";
+import { Center } from "@chakra-ui/react";
 
 interface IReqAgentSecretKey {
   chainId: string;
@@ -39,7 +41,6 @@ type Transaction = {
 };
 interface AuthContextType {
   signer: Wallet | undefined;
-  hasUser: boolean;
   onLogin: (pass: string) => Promise<void>;
   genAgentSecretKey: (_: IReqAgentSecretKey) => Promise<string>;
   getAuthenToken: (_: string) => Promise<string>;
@@ -51,9 +52,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
    const baseContract = useRef(new GenericContract()).current;
    const [signer, setSigner] = useState<Wallet | undefined>();
-   const [hasUser, setHasUser] = useState<boolean>(false);
    const [loading, setLoading] = useState<boolean>(true);
-   const { checking } = useStarter();
+   const { inviteCode, dockerIsFinished, setInviteCode, setHasUser } = useStarter();
 
    useEffect(() => {
       if (signer) {
@@ -90,11 +90,13 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
       try {
          setLoading(true);
          const hasUser = await EaiSigner.hasUser();
+         const inviteCode = await EaiSigner.getInviteCode();
          setHasUser(hasUser);
+         setInviteCode(inviteCode);
       } catch (error) {
          console.log(error);
       } finally {
-         await sleep(500);
+         // await sleep(500);
          setLoading(false);
       }
    };
@@ -138,10 +140,10 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
          );
 
          const _wallet = new ethers.Wallet(
-        signer?.privateKey as any,
-        new ethers.providers.JsonRpcProvider(
-           baseContract.getRPCByChainID(chainId)
-        )
+         signer?.privateKey as any,
+         new ethers.providers.JsonRpcProvider(
+            baseContract.getRPCByChainID(chainId)
+         )
          );
 
          const txResponse = await _wallet.sendTransaction({
@@ -166,52 +168,26 @@ const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
    const values = useMemo(() => {
       return {
          signer,
-         hasUser,
          onLogin,
          genAgentSecretKey,
          getAuthenToken,
          sendTransaction,
       };
-   }, [signer, hasUser]);
+   }, [signer]);
 
 
-   // useEffect(() => {
-   //    // Fetch initial data
-   //    window.electronAPI.getInitialDockerData().then(({ containers, images }) => {
-   //       console.log('LEON getInitialDockerData', { containers, images });
-   //    });
-  
-   //    // Listen for container updates
-   //    window.electronAPI.onContainersUpdate((updatedContainers) => {
-   //       console.log('LEON onContainersUpdate', updatedContainers);
-   //    });
-  
-   //    // Listen for image updates
-   //    window.electronAPI.onImagesUpdate((updatedImages) => {
-   //       console.log('LEON onImagesUpdate', updatedImages);
-   //    });
-  
-   //    // Cleanup listeners (optional, for robustness)
-   //    return () => {
-   //       // Electron doesn’t provide a direct way to remove specific listeners here,
-   //       // but you could manage this in preload.js if needed.
-   //    };
-   // }, []);
+   useEffect(() => {
+      onCheckHasUser();
+   }, []);
 
    const renderContent = () => {
-      if (checking || loading) {
-         return <Starter loadingUser={loading} onCheckHasUser={onCheckHasUser} />;
+      if (loading) return <></>;
+
+      if (!signer || !inviteCode || !dockerIsFinished) {
+         return <HomeAuthen />;
       }
 
-      if (!checking) {
-         if (signer) {
-            return children;
-         } else {
-            return <HomeAuthen />;
-         }
-      }
-
-      return <></>;
+      return children;
    };
 
    return (

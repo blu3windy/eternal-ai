@@ -2,13 +2,14 @@ import storage from "@storage/LocalStorageService";
 import eaiCrypto from "@utils/crypto";
 import { ethers } from "ethers";
 
-const KEYTAR_STORAGE_NAME = {
+const STORAGE_KEY_NAME = {
    CIPHER_TEXT: 'KEYTAR_LAUNCHER_EAI_CIPHER_TEXT',
+   INVITE_CODE: 'KEYTAR_LAUNCHER_EAI_INVITE_CODE',
 }
 
 class EaiSigner {
    static async getCipherText() {
-      const cipher = await storage.getItem(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
+      const cipher = await storage.getItem(STORAGE_KEY_NAME.CIPHER_TEXT);
       return cipher;
    }
 
@@ -32,7 +33,7 @@ class EaiSigner {
          value: prvKey,
          pass
       });
-      await storage.setItem(KEYTAR_STORAGE_NAME.CIPHER_TEXT, cipherText);
+      await storage.setItem(STORAGE_KEY_NAME.CIPHER_TEXT, cipherText);
    }
 
    static async getStorageKey({ pass }: { pass: string }) {
@@ -48,7 +49,18 @@ class EaiSigner {
    }
 
    static async reset() {
-      await storage.removeItem(KEYTAR_STORAGE_NAME.CIPHER_TEXT);
+      await storage.removeItem(STORAGE_KEY_NAME.CIPHER_TEXT);
+      await storage.removeItem(STORAGE_KEY_NAME.INVITE_CODE);
+   }
+
+
+   static async getInviteCode() {
+      const inviteCode = await storage.getItem(STORAGE_KEY_NAME.INVITE_CODE);
+      return inviteCode;
+   }
+
+   static async setInviteCode(inviteCode: string) {
+      await storage.setItem(STORAGE_KEY_NAME.INVITE_CODE, inviteCode);
    }
 }
 

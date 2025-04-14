@@ -213,9 +213,17 @@ class CAgentTokenAPI extends CApiClient {
       }
    };
 
+   public submitInviteCode = async (params: { code: string, address: string }): Promise<any> => {
+      const res = (await this.api.post("vibe/validate-ref-code", {
+         ref_code: params.code,
+         user_address: params.address,
+      })) as any;
+      return res;
+   };
+
    public getAgentCommentsAndRatings = async (id: number, params: any): Promise<any[]> => {
       try {
-         const res: any = await this.api.get(`agent/comment/${id}`, {params});
+         const res: any = await this.api.get(`agent/comment/${id}`, { params });
          return res;
       } catch (e) {
          throw e;

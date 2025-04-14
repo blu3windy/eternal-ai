@@ -126,7 +126,7 @@ docker_build() {
     echo "Docker image '$IMAGE_NAME' already exists. Skipping build."
   else
     echo "Docker image '$IMAGE_NAME' does not exist. Building the image..."
-    docker build -t "$IMAGE_NAME" .
+    docker build --pull -t "$IMAGE_NAME" .
   fi
 }
 

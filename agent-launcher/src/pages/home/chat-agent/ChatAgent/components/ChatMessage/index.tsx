@@ -20,7 +20,7 @@ import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/Wai
 import { v4 } from "uuid";
 import { useDispatch } from "react-redux";
 import { openWithUrl } from "@stores/states/floating-web-view/reducer";
-import { PROCESSING_TAG_REGEX, THINK_TAG_REGEX, COMPUTER_USE_TAG_REGEX, MARKDOWN_TAGS } from "@components/CustomMarkdown/constants";
+import { THINK_TAG_REGEX, COMPUTER_USE_TAG_REGEX, MARKDOWN_TAGS } from "@components/CustomMarkdown/constants";
 import ProcessingTaskModal from "@pages/home/list-agent/BottomBar/ProcessingTaskModal";
 
 dayjs.extend(duration);
@@ -138,7 +138,6 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          return (textStr || ''); // replace computer use tag;
       }
       return `${textStr || ''}`
-         .replace(PROCESSING_TAG_REGEX, '') // replace processing tag
          .replace(COMPUTER_USE_TAG_REGEX, ''); // replace computer use tag
    }, [message?.msg, message?.status]);
 
@@ -149,13 +148,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
 
    const processingWebViewUrl = useMemo(() => {
       try {
-         let matches = `${renderMessage || ''}`.match(PROCESSING_TAG_REGEX);
-         if (matches?.length) {
-            let url = matches[0] || '';
-            url = url.replace(`<${MARKDOWN_TAGS.PROCESSING}>`, '').replace(`</${MARKDOWN_TAGS.PROCESSING}>`, '');
-            return url;
-         }
-         matches = `${renderMessage || ''}`.match(COMPUTER_USE_TAG_REGEX);
+         const matches = `${renderMessage || ''}`.match(COMPUTER_USE_TAG_REGEX);
          if (matches?.length) {
             let url = matches[0] || '';
             url = url.replace(`<${MARKDOWN_TAGS.COMPUTER_USE}>`, '').replace(`</${MARKDOWN_TAGS.COMPUTER_USE}>`, '');
@@ -242,8 +235,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                className={cs(s.markdown, "markdown-body", {
                })}
             >
-               <CustomMarkdown id={message.id} status={message.status} content={renderMessage.replace(PROCESSING_TAG_REGEX, '') // replace processing tag
-                  .replace(COMPUTER_USE_TAG_REGEX, '')} />
+               <CustomMarkdown id={message.id} status={message.status} content={renderMessage.replace(COMPUTER_USE_TAG_REGEX, '')} />
             </div>
          );
       }
@@ -286,7 +278,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                      transition={{ duration: 0.3, ease: "easeOut" }}
                      className={`${s.snackbar}`}
                      onClick={() => {
-                        mdpdfmake(message.msg.replace(THINK_TAG_REGEX, '').replace(PROCESSING_TAG_REGEX, '')).then((docDefinition) => {
+                        mdpdfmake(message.msg.replace(THINK_TAG_REGEX, '').replace(COMPUTER_USE_TAG_REGEX, '')).then((docDefinition) => {
                            console.log(docDefinition);
                            // Use docDefinition with a PDFMake instance to generate a PDF
                            pdfMake.createPdf(docDefinition).download(`${selectedAgent?.display_name || selectedAgent?.agent_name || "Agent"}-${dayjs().format("YYYY-MM-DD-hh:mm:ss")}.pdf`);

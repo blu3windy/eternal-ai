@@ -16,14 +16,11 @@ import { getAgentContainerName } from "@providers/GarbageDocker/helpers";
 import useAgentState from "@pages/home/provider/useAgentState";
 // import useDockerMonitorState from "@providers/DockerMonitor/useDockerMonitorState";
 
-interface IProps {
-   loadingUser: boolean;
-   onCheckHasUser: () => Promise<void>;
-}
+interface IProps {}
 
 type Step = "INITIALIZING";
 
-const LoadingIcon = () => (
+export const LoadingIcon = () => (
    <Image
       src="icons/eai-loading.gif"
       alt="loading"
@@ -32,9 +29,7 @@ const LoadingIcon = () => (
    />
 )
 
-const Starter = (props: IProps) => {
-   const { onCheckHasUser } = props;
-   const { setChecking } = useStarter();
+const Starter = (_props: IProps) => {
    const initRef = useRef(false);
    const agentAPI = useRef(new CAgentTokenAPI());
    const { addActiveAgents } = useAgentState();
@@ -73,7 +68,7 @@ const Starter = (props: IProps) => {
    const [hasError, setHasError] = useState(false);
    const agentCtx = useContext(AgentContext);
 
-   const { setIsFinished } = useStarter();
+   const { setSettingDocker, setDockerIsFinished } = useStarter();
 
    const setDefaultAgent = async () => {
       const {
@@ -105,9 +100,7 @@ const Starter = (props: IProps) => {
       }, time);
 
       try {
-         setIsFinished(false);
          console.time("FULL_LOAD_TIME");
-         await onCheckHasUser();
          if (!ignoreCopy) {
             await globalThis.electronAPI.dockerCopyBuild();
          }
@@ -141,8 +134,6 @@ const Starter = (props: IProps) => {
          }
 
          // const { containers, images } = await window.electronAPI.getInitialDockerData();
-         // console.log('LEON HIHI 000', { containers, images });
-
          // setContainers(containers);
          // setImages(images);
          try {
@@ -152,14 +143,13 @@ const Starter = (props: IProps) => {
             console.log('LEON getTokens error', error);
          }
 
-         setChecking(false);
+         setSettingDocker(false);
          localStorage.setItem("loaded", "true");
+         setDockerIsFinished(true);
       } catch (error: any) {
-         console.log('LEON HIHI 000', error);
          setHasError(true);
       } finally {
          console.timeEnd("FULL_LOAD_TIME");
-         setIsFinished(true);
          // Clear the timer if init completes before timeout
          if (initTimerRef.current) {
             clearTimeout(initTimerRef.current);
@@ -175,7 +165,7 @@ const Starter = (props: IProps) => {
 
    const onRetry = () => {
       setHasError(false);
-      setChecking(true);
+      setSettingDocker(true);
       setIsShowWarning(false);
       onClearCounter();
       onInit(true).then().catch();
@@ -219,12 +209,12 @@ const Starter = (props: IProps) => {
 };
 
 
-const Container = (props: IProps) => {
+const StarterContainer = (props: IProps) => {
    return(
       <AgentProvider>
-         <Starter loadingUser={props.loadingUser} onCheckHasUser={props.onCheckHasUser}/>
+         <Starter />
       </AgentProvider>
    )
 }
 
-export default Container;
+export default StarterContainer;
