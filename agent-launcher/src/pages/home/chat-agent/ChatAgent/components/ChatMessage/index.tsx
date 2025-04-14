@@ -208,6 +208,18 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
       );
    }
 
+   const renderResponseTime = () => {
+      return (
+         <>
+         {message?.is_reply && !!message?.createdAt && !!message?.updatedAt && (
+               <Box w='100%' display={"flex"} alignItems={"center"} gap={"12px"} justifyContent={message?.is_reply ? "flex-start" : "flex-end"} mt={message?.is_reply ? "0px" : "-20px"}>
+                  <Text className={s.txLink}>{`${minutes && minutes > 0 ? `${minutes}m` : ""} ${seconds && seconds > 0 ? `${seconds}s` : ""}`}</Text>
+               </Box>
+            )}
+         </>
+      )
+   }
+
    const renderMarkdown = () => {
       if (message.type === 'human') {
          return (
@@ -359,33 +371,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                   </Text>
                </Box>
             )}
-            {message?.tx_hash && (
-               <Box display={"flex"} alignItems={"center"} gap={"12px"} justifyContent={message?.is_reply ? "flex-start" : "flex-end"} mt={message?.is_reply ? "0px" : "-20px"}>
-                  {message?.is_reply && !!message?.createdAt && !!message?.updatedAt && (
-                     <>
-                        <Text className={s.txLink}>{`${minutes && minutes > 0 ? `${minutes}m` : ""} ${seconds && seconds > 0 ? `${seconds}s` : ""}`}</Text>
-                        <svg width="4" height="4" viewBox="0 0 4 4" fill="none" xmlns="http://www.w3.org/2000/svg">
-                           <circle cx="2" cy="2" r="2" fill="white" fill-opacity="0.6" />
-                        </svg>
-                     </>
-                  )}
-                  <a
-                     className={s.txLink}
-                     href={
-                        getExplorerByChain({
-                           chainId: selectedAgent?.network_id as any,
-                           address: message?.tx_hash,
-                           type: "tx",
-                        }) as any
-                     }
-                     target="_blank"
-                     rel="noopener noreferrer"
-                  >
-                     {formatLongAddress(message?.tx_hash)}
-                     <Image src="/svg/ic-arrow-top-right-gray.svg" />
-                  </a>
-               </Box>
-            )}
+            {renderResponseTime()}
          </div>
          <ProcessingTaskModal
             key={`processing-task-${isOpenProcessingTask}`}
