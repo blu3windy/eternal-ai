@@ -40,7 +40,8 @@ const ChatBox = () => {
 
       const queryParams = new URLSearchParams({
          PRIVATE_KEY: agentWallet?.privateKey || '',
-         WALLET_ADDRESS: agentWallet?.address || ''
+         WALLET_ADDRESS: agentWallet?.address || '',
+         CHAIN_ID: selectedAgent?.network_id || ''
       }).toString();
 
       return queryParams;
