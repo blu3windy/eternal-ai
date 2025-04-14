@@ -7,7 +7,7 @@ import BigNumber from 'bignumber.js';
 import storageModel from '@storage/StorageModel';
 import { AgentContext } from '@pages/home/provider/AgentContext';
 import { compareString } from '@utils/string';
-import { debounce } from 'lodash';
+import { debounce, uniqBy } from 'lodash';
 import { useSelector } from 'react-redux';
 import { agentTasksProcessingSelector } from '@stores/states/agent-chat/selector';
 import { TaskItem } from '@stores/states/agent-chat/type';
@@ -32,7 +32,7 @@ const GarbageContext = createContext<IGarbageContext | undefined>(undefined);
 const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
    const { selectedAgent, activeAgents, removeActiveAgent } = useAgentState();
    const { containers } = useContext(MonitorContext);
-   const { stopAgent } = useContext(AgentContext);
+   const { stopAgent, getDependAgents } = useContext(AgentContext);
    const pendingTasks = useSelector(agentTasksProcessingSelector);
 
    const initRef = useRef(false);
@@ -93,9 +93,16 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
          activeAgents: Array.from(activeAgents.values()).map((agent) => agent.agent.agent_name) 
       });
 
+
+      const requestStopAgents: IAgentToken[] = [];
+      const runningAgents: IAgentToken[] = [];
+
       for (const activeAgent of activeAgents) {
          const isSkip = await shouldSkipAgent(activeAgent, selectedAgent);
-         if (isSkip) continue;
+         if (isSkip) {
+            runningAgents.push(activeAgent.agent);
+            continue;
+         }
 
          const isValidTime = new BigNumber(now).minus(activeAgent.timestamp).gt(TIME_TO_CLEAN);
          const remandTime = new BigNumber(TIME_TO_CLEAN).minus(new BigNumber(now).minus(activeAgent.timestamp))
@@ -113,8 +120,9 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
             
             if (matchingContainer) {
                try {
-                  await stopAgent(activeAgent.agent);
-                  removeActiveAgent(activeAgent.agent.agent_id);
+                  requestStopAgents.push(activeAgent.agent);   
+                  // await stopAgent(activeAgent.agent);
+                  // removeActiveAgent(activeAgent.agent.agent_id);
                   console.log(`LEON checkInactiveContainers stopped agent: ${activeAgent.agent.agent_name}`);
                } catch (error) {
                   console.error('LEON checkInactiveContainers stopAgent error: ', error);
@@ -123,7 +131,34 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
                console.log('LEON checkInactiveContainers remove agent: ', getAgentContainerName(activeAgent.agent));
                removeActiveAgent(activeAgent.agent.agent_id);
             }
+         } else {
+            runningAgents.push(activeAgent.agent);
          }
+      }
+
+
+      // const dependUnStopAgents = unStopAgents.map(async (agent) => {
+      //    const dependAgents = await getDependAgents(agent);
+      //    console.log('LEON checkInactiveContainers dependAgents: ', dependAgents);
+      //    return dependAgents || [];
+      // });
+
+
+      const tasks = await Promise.all(runningAgents.map(async (agent) => {
+         const dependAgents = await getDependAgents(agent);
+         return dependAgents || [];
+      }));
+
+      const dependRunningAgents: IAgentToken[] = uniqBy(tasks.flat(), 'agent_id');
+
+      const requestStopAgentsFilter = requestStopAgents.filter(agent => {
+         const isDepend = dependRunningAgents.some(dependAgent => compareString(dependAgent.agent_id, agent.agent_id));
+         return !isDepend;
+      });
+
+      for (const agent of requestStopAgentsFilter) {
+         await stopAgent(agent);
+         removeActiveAgent(agent.agent_id);
       }
    };
 

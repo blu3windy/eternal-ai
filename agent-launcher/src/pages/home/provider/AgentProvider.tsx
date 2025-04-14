@@ -74,6 +74,7 @@ const AgentProvider: React.FC<
       isUpdating: boolean;
       isInstalled: boolean;
       customUIPort?: string;
+      startAt?: number;
     }>>({});
 
    const { genAgentSecretKey } = useAuth();
@@ -294,6 +295,7 @@ const AgentProvider: React.FC<
       isUpdating?: boolean;
       isInstalled?: boolean;
       customUIPort?: string;
+      startAt?: number;
     }) => {
       setAgentStates(prev => ({
          ...prev,
@@ -564,6 +566,7 @@ const AgentProvider: React.FC<
          updateAgentState(agent.id, {
             data: agent,
             isStarting: true,
+            startAt: new Date().getTime(),
          });
          await installAgentStorage.addAgent([agent.id]);
 
@@ -631,6 +634,7 @@ const AgentProvider: React.FC<
                updateAgentState(agent.id, {
                   data: agent,
                   isStarting: false,
+                  startAt: undefined,
                });
             }, 4000);
          } else {
@@ -640,6 +644,7 @@ const AgentProvider: React.FC<
                   data: agent,
                   isStarting: false,
                   isRunning: true,
+                  startAt: undefined,
                });
             }, 4000);
          }
@@ -666,6 +671,7 @@ const AgentProvider: React.FC<
             data: agent,
             isStarting: false,
             isRunning: false,
+            startAt: undefined,
          });
       }
    };
@@ -702,6 +708,7 @@ const AgentProvider: React.FC<
             updateAgentState(agent.id, {
                data: agent,
                isStarting: true,
+               startAt: new Date().getTime(),
             });
          }
       }
@@ -1212,6 +1219,7 @@ const AgentProvider: React.FC<
          updateAgentState(agent.id, {
             data: agent,
             isStarting: true,
+            startAt: new Date().getTime(),
          });
          await stopAgent(agent, true);
          await unInstallAgent(agent, false);
