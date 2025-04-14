@@ -173,7 +173,7 @@ const AgentDetail = () => {
                                     <Button
                                        className={s.btnInstall}
                                        onClick={handleStartAgent}
-                                       isLoading={isStarting && !isUpdating}
+                                       isLoading={isStarting}
                                        isDisabled={isStarting}
                                        loadingText={"Starting..."}
                                     >
