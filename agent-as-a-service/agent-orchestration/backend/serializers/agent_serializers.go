@@ -175,6 +175,13 @@ type AgentInfoResp struct {
 	CodeVersion               int                       `json:"code_version"`
 	RunStatus                 string                    `json:"run_status"`
 	Author                    string                    `json:"author"`
+	Rating                    float64                   `json:"rating"`
+	NumOfRating               int64                     `json:"num_of_rating"`
+	NumOfOneStar              int64                     `json:"num_of_one_star"`
+	NumOfTwoStar              int64                     `json:"num_of_two_star"`
+	NumOfThreeStar            int64                     `json:"num_of_three_star"`
+	NumOfFourStar             int64                     `json:"num_of_four_star"`
+	NumOfFiveStar             int64                     `json:"num_of_five_star"`
 }
 
 type AgentTwitterPostResp struct {
@@ -356,6 +363,13 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		CodeVersion:          m.CodeVersion,
 		RunStatus:            m.RunStatus,
 		Author:               m.Author,
+		Rating:               m.Rating,
+		NumOfRating:          m.NumOfRating,
+		NumOfOneStar:         m.NumOfOneStar,
+		NumOfTwoStar:         m.NumOfTwoStar,
+		NumOfThreeStar:       m.NumOfThreeStar,
+		NumOfFourStar:        m.NumOfFourStar,
+		NumOfFiveStar:        m.NumOfFiveStar,
 	}
 
 	if m.NftTokenImage != "" {

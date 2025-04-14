@@ -38,3 +38,39 @@ func (s *Server) VibeValidateReferralCode(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: valid})
 }
+
+func (s *Server) AgentComment(c *gin.Context) {
+	ctx := s.requestContext(c)
+	agentID := s.uintFromContextParam(c, "id")
+	req := &serializers.AgentCommentReq{}
+
+	if err := c.ShouldBindJSON(req); err != nil {
+		ctxJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+
+	resp, err := s.nls.AgentComment(ctx, userAddress, agentID, req)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+}
+
+func (s *Server) GetListAgentComment(c *gin.Context) {
+	ctx := s.requestContext(c)
+	page, limit := s.pagingFromContext(c)
+	agentID := s.uintFromContextParam(c, "id")
+	agentUserComments, err := s.nls.GetListAgentComment(ctx, agentID, page, limit)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentUserCommentArray(agentUserComments)})
+}

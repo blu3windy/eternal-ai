@@ -239,6 +239,13 @@ type AgentInfo struct {
 	CodeVersion      int    `gorm:"default:0"`
 	RunStatus        string
 	Author           string
+	Rating           float64 `gorm:"default:0"`
+	NumOfRating      int64   `gorm:"default:0"`
+	NumOfOneStar     int64   `gorm:"default:0"`
+	NumOfTwoStar     int64   `gorm:"default:0"`
+	NumOfThreeStar   int64   `gorm:"default:0"`
+	NumOfFourStar    int64   `gorm:"default:0"`
+	NumOfFiveStar    int64   `gorm:"default:0"`
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string

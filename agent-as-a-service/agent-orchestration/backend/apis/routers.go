@@ -156,6 +156,9 @@ func (s *Server) Routers() {
 			agentAPI.POST("/recent-chat", s.authCheckTK1TokenMiddleware(), s.MarkRecentChatUtilityAgent)
 			agentAPI.POST("/prompt/:id", s.authCheckTK1TokenMiddleware(), s.MarkPromptCountUtilityAgent)
 
+			agentAPI.POST("/comment/:id", s.authCheckTK1TokenMiddleware(), s.AgentComment)
+			agentAPI.GET("/comment/:id", s.GetListAgentComment)
+
 			agentAPI.POST("/public/:id", s.authCheckTK1TokenMiddleware(), s.PublicAgent)
 			agentAPI.POST("/like/:id", s.authCheckTK1TokenMiddleware(), s.LikeAgent)
 			agentAPI.GET("/like/:id", s.authCheckTK1TokenMiddleware(), s.CheckAgentLiked)
