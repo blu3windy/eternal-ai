@@ -348,15 +348,6 @@ app.post("/:agentName/prompt", async (req, res) => {
               );
           }
 
-          if (!PROCESSING_REQUESTS[payload?.id]) {
-            setRequestToErrorIfLargerThanTimeout(
-              options,
-              payload?.id || "",
-              agentName,
-              existedLog
-            );
-          }
-
           return;
         }
         if (existedLog?.status === 500) {
@@ -415,7 +406,7 @@ app.post("/:agentName/prompt", async (req, res) => {
           // Split the chunk by newlines to handle multiple events
           try {
             if (payload?.id) {
-              const chunks = chunk.toString().split(/(?<=data: )\n\n/);
+              const chunks = chunk.toString().split("\n\n");
               for (const chunkData of chunks) {
                 if (!chunkData.trim()) continue;
                 const chunkText = parseDataFromStream(chunkData);
