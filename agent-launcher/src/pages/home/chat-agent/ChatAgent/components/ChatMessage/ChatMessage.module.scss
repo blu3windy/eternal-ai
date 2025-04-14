@@ -130,4 +130,14 @@
      :global(.__json-pretty__) {
         background: transparent;
     }
+
+    &.markdown__human {
+        p {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            white-space: pre-wrap;
+            hyphens: auto;
+        }
+    }
 }
