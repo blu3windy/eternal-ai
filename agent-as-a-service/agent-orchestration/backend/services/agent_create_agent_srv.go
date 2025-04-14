@@ -971,7 +971,8 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 
 					if twitterPost.Status == models.AgentTwitterPostStatusNew &&
 						twitterPost.PostType == models.AgentSnapshotPostActionTypeGenerateVideo &&
-						twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil && twitterPost.TokenAddress != "" {
+						twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil &&
+						twitterPost.TokenAddress != "" {
 
 						videoUrl := twitterPost.ImageUrl
 						mediaID := ""
