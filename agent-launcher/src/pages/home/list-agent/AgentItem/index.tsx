@@ -231,6 +231,10 @@ const AgentItem = ({ token, isLatest, addActiveAgent }: IProps) => {
                            <Image src="icons/ic-downloaded.svg" w="15px" h="15px" />
                            <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.installed_count, 0, 0)}</Text>
                         </Flex>
+                        {/* <Flex gap="4px" alignItems={'center'}>
+                           <Image src="icons/ic-yellow-star.svg" w="15px" h="15px" />
+                           <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.installed_count, 0, 0)}</Text>
+                        </Flex> */}
                      </Flex>
                   </Flex>
                </Flex>
