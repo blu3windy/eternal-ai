@@ -56,4 +56,5 @@ export interface IMonitorContext {
   totalMemory: any;
   totalCPU: any;
   installedAgents: IAgentToken[];
+  updateAgents: IAgentToken[];
 }

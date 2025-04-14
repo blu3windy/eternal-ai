@@ -1,6 +1,18 @@
 .ratingListContainer {
   width: 100%;
-  padding: 2rem;
+
+  .title {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--chakra-colors-black);
+  }
+
+  .viewAll {
+    font-size: 14px;
+    font-weight: 400;
+    color: #7DAFFF;
+    cursor: pointer;
+  }
 
   .header {
     margin-bottom: 2rem;
@@ -8,8 +20,7 @@
 
     .averageRating {
       display: flex;
-      flex-direction: column;
-      align-items: flex-start;
+      align-items: flex-end;
     }
 
     .ratingStats {
@@ -20,6 +31,10 @@
       position: relative;
       overflow: hidden;
       transition: all 0.3s ease;
+    }
+
+    .totalRatings {
+      color: var(--chakra-colors-black);
     }
   }
 
@@ -40,4 +55,32 @@
       gap: 1rem;
     }
   }
-} 
+
+  &.dark {
+    .title {
+      color: var(--chakra-colors-white);
+    }
+
+    .header {
+      .averageRating {
+        color: var(--chakra-colors-white);
+      }
+
+      .totalRatings {
+        color: var(--chakra-colors-white);
+      }
+    }
+  }
+}
+
+.modalContent {
+  :global {
+    .chakra-modal__header {
+      display: none;
+      margin-top: 0 !important;
+    }
+    .modal-content {
+      max-width: 480px;
+    }
+  }
+}

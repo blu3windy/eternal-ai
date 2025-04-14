@@ -1,9 +1,14 @@
 import { StarIcon } from '@chakra-ui/icons';
-import { Box, Flex, HStack, Text } from '@chakra-ui/react';
-import React, { useRef, useState } from 'react';
+import { Box, Flex, HStack, Text, useDisclosure } from '@chakra-ui/react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import RatingItem from './RatingItem';
-import styles from './styles.module.scss';
+import s from './styles.module.scss';
+import cx from 'classnames';
+import { labelAmountOrNumberAdds } from '@utils/format';
+import CAgentTokenAPI from '@services/api/agents-token';
+import { AgentContext } from '@pages/home/provider/AgentContext';
+import BaseModal from '@components/BaseModal';
 
 interface Rating {
   id: string;
@@ -16,64 +21,87 @@ interface Rating {
 interface RatingListProps {
   averageRating: number;
   totalRatings: number;
+  isShowFull?: boolean;
+  theme?: 'light' | 'dark';
 }
 
 const RatingList: React.FC<RatingListProps> = ({
   averageRating,
   totalRatings,
+  isShowFull = false,
+  theme = 'light',
 }) => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const cAgentTokenAPI = new CAgentTokenAPI();
 
+  const {selectedAgent} = useContext(AgentContext);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [hasMore, setHasMore] = useState(true);
+  const refParams = useRef({
+    page: 1,
+    limit: isShowFull ? 10 : 2,
+  });
+
+  const {isOpen, onOpen, onClose} = useDisclosure();
+
+  useEffect(() => {
+    loadMoreRatings();
+  }, []);
 
   const loadMoreRatings = async () => {
-     const newRatings = await fetchMoreRatings();
-     setRatings([...ratings, ...newRatings]);
+    const newRatings = await cAgentTokenAPI.getAgentCommentsAndRatings(selectedAgent.id, refParams.current);
+    setRatings([...ratings, ...newRatings]);
 
-     setHasMore(newRatings.length > 0);
+    setHasMore(newRatings.length > 0);
   };
 
   return (
-    <Box className={styles.ratingListContainer}>
-      <Flex className={styles.header}>
-        <Box className={styles.averageRating}>
-          <Text fontSize="4xl" fontWeight="bold">
-            {averageRating.toFixed(1)}
-          </Text>
-          <Text fontSize="md" color="gray.500">
-            out of 5
-          </Text>
-        </Box>
+    <Box className={cx(s.ratingListContainer, { [s.dark]: theme === 'dark', })}>
+      <Flex justifyContent={'space-between'} alignItems={'center'}>
+        <Text className={s.title}>Ratings & Reviews</Text>
+        <Text className={s.viewAll} onClick={onOpen}>See All</Text>
+      </Flex>
 
-        <Box className={styles.ratingStats}>
-          <Text fontSize="md" color="gray.500" mb={2}>
-            {totalRatings} Ratings
+      <Flex className={s.header} gap={'40px'}>
+        <Flex justifyContent={'space-between'} alignItems={'flex-end'} flex={1} gap={'8px'}>
+          <Flex className={s.averageRating} gap={'8px'}>
+            <Text fontSize="60px" fontWeight="700" lineHeight={'60px'}>
+              {averageRating.toFixed(1)}
+            </Text>
+            <Text fontSize="16px" fontWeight="600">
+              out of 5
+            </Text>
+          </Flex>
+          <Text fontSize="16px" fontWeight="400" opacity={0.8} className={s.totalRatings}>
+            {totalRatings} Rating{labelAmountOrNumberAdds(totalRatings)}
           </Text>
+        </Flex>
+
+        <Box className={s.ratingStats} flex={1}>
           <Box>
             {[5, 4, 3, 2, 1].map((num) => (
-              <HStack key={num} spacing={2} mb={1}>
-                <HStack spacing={1}>
+              <HStack key={num} spacing={'12px'} mb={'4px'}>
+                <HStack spacing={1} minW={'80px'} justifyContent={'flex-end'}>
                   {Array.from({ length: num }).map((_, idx) => (
-                    <StarIcon key={idx} color="yellow.400" boxSize={3} />
+                    <StarIcon key={idx} color={theme === 'dark' ? 'white' : 'black'} boxSize={3} />
                   ))}
                 </HStack>
                 <Box
-                  className={styles.ratingBar}
-                  width="200px"
-                  height="8px"
-                  bg="gray.200"
+                  className={s.ratingBar}
+                  width="100%"
+                  height="4px"
+                  bg="#00000033"
                   borderRadius="full"
                 >
                   <Box
                     height="100%"
-                    bg="yellow.400"
+                    bg={theme === 'dark' ? 'white' : 'black'}
                     borderRadius="full"
-                    width={`${
-                      (ratings.filter((r) => Math.round(r.rating) === num).length /
+                    width={`${(ratings.filter((r) => Math.round(r.rating) === num).length /
                         totalRatings) *
                       100
-                    }%`}
+                      }%`}
                   />
                 </Box>
               </HStack>
@@ -84,7 +112,7 @@ const RatingList: React.FC<RatingListProps> = ({
 
       <Box
         id="scrollableRatings"
-        className={styles.ratingsList}
+        className={s.ratingsList}
         ref={scrollContainerRef}
       >
         <InfiniteScroll
@@ -107,12 +135,15 @@ const RatingList: React.FC<RatingListProps> = ({
           ))}
         </InfiniteScroll>
       </Box>
+      <BaseModal
+        isShow={isOpen}
+        onHide={onClose}
+        className={s.modalContent}
+      >
+        <RatingList theme='light' averageRating={averageRating} totalRatings={totalRatings} isShowFull={true}/>
+      </BaseModal>
     </Box>
   );
 };
 
-export default RatingList; 
-
-function fetchMoreRatings() {
-  throw new Error('Function not implemented.');
-}
+export default RatingList;

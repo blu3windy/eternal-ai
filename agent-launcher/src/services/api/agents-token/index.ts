@@ -220,6 +220,24 @@ class CAgentTokenAPI extends CApiClient {
       })) as any;
       return res;
    };
+
+   public getAgentCommentsAndRatings = async (id: number, params: any): Promise<any[]> => {
+      try {
+         const res: any = await this.api.get(`agent/comment/${id}`, { params });
+         return res;
+      } catch (e) {
+         throw e;
+      }
+   };
+
+   public postAgentCommentsAndRatings = async (id: number, payload: {comment: string, rating: number}): Promise<any> => {
+      try {
+         const res: any = await this.api.post(`agent/comment/${id}`, payload);
+         return res;
+      } catch (e) {
+         throw e;
+      }
+   };
 }
 
 export default CAgentTokenAPI;
