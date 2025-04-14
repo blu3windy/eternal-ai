@@ -65,22 +65,22 @@ const RatingList: React.FC<RatingListProps> = ({
         <Box className={s.ratingStats} flex={1}>
           <Box>
             {[5, 4, 3, 2, 1].map((num) => (
-              <HStack key={num} spacing={2} mb={1}>
-                <HStack spacing={1}>
+              <HStack key={num} spacing={'12px'} mb={'4px'}>
+                <HStack spacing={1} minW={'80px'} justifyContent={'flex-end'}>
                   {Array.from({ length: num }).map((_, idx) => (
-                    <StarIcon key={idx} color="yellow.400" boxSize={3} />
+                    <StarIcon key={idx} color={theme === 'dark' ? 'white' : 'black'} boxSize={3} />
                   ))}
                 </HStack>
                 <Box
                   className={s.ratingBar}
-                  width="200px"
-                  height="8px"
-                  bg="gray.200"
+                  width="100%"
+                  height="4px"
+                  bg="#00000033"
                   borderRadius="full"
                 >
                   <Box
                     height="100%"
-                    bg="yellow.400"
+                    bg={theme === 'dark' ? 'white' : 'black'}
                     borderRadius="full"
                     width={`${(ratings.filter((r) => Math.round(r.rating) === num).length /
                         totalRatings) *
