@@ -167,12 +167,26 @@
       "icon": "configBuild/icon.icns",
       "entitlements": "configBuild/entitlements.mas.plist",
       "entitlementsInherit": "configBuild/entitlements.mas.plist",
-      "notarize": true
+      "notarize": true,
+      "extendInfo": {
+      "CFBundleURLTypes": [
+          {
+            "CFBundleURLName": "vibe",
+            "CFBundleURLSchemes": ["vibe"]
+          }
+        ]
+      }
     },
     "extraResources": [
       {
         "from": "public",
         "to": "public"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "vibe",
+        "schemes": ["vibe"]
       }
     ]
   }

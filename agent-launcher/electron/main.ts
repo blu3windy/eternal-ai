@@ -10,8 +10,6 @@ import log from 'electron-log';
 // import listenToDockerEvents from "./ipcMain/docker-listener.ts";
 
 
-
-
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
 
@@ -133,6 +131,43 @@ function createWindow() {
    } else {
       // win.loadFile('dist/index.html')
       win.loadFile(path.join(RENDERER_DIST, "index.html"));
+   }
+
+   // Register custom protocol (e.g., 'vibe://')
+   app.setAsDefaultProtocolClient('vibe');
+
+   function handleDeepLink(deepLink) {
+      console.log('Opened with URL:', deepLink);
+
+      const parsedUrl = deepLink.parse(deepLink, true);
+      const params = parsedUrl.query;
+      console.log('Deep link params:', params);
+
+      if (win) {
+         // Send deep link data to renderer
+         win.webContents.send('deep-link', { url: deepLink, params });
+       }
+      // Add logic to handle the URL (e.g., open specific window, pass params)
+   }
+
+   app.on('second-instance', (event, argv) => {
+      const deepLink = argv.find((arg) => arg.startsWith('myapp://'));
+      if (deepLink) handleDeepLink(deepLink);
+      if (win) {
+         if (win.isMinimized()) win.restore();
+         win.focus();
+      }
+    });
+
+   // Handle the protocol on macOS
+   app.on('open-url', (event, url) => {
+      event.preventDefault();
+      handleDeepLink(url); // Function to process the URL
+   });
+
+   const gotTheLock = app.requestSingleInstanceLock();
+   if (!gotTheLock) {
+      app.quit();
    }
 
    win.on("closed", () => {

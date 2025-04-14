@@ -2,17 +2,30 @@ import React from "react";
 import App from "./App.tsx";
 import { createRoot } from "react-dom/client";
 import { ChakraProvider } from "@chakra-ui/react";
+import { DeepLinkProvider } from "./providers/DeepLink";
 import "@fontsource/inter";
 
 const isDev = import.meta.env.MODE === "development";
 
 const Root = () => {
+   if (process.env.NODE_ENV === 'development') {
+      return (
+         <React.StrictMode>
+            <ChakraProvider>
+               <DeepLinkProvider>
+                  <App />
+               </DeepLinkProvider>
+            </ChakraProvider>
+         </React.StrictMode>
+      );
+   }
+   
    return (
-      <>
-         <ChakraProvider>
+      <ChakraProvider>
+         <DeepLinkProvider>
             <App />
-         </ChakraProvider>
-      </>
+         </DeepLinkProvider>
+      </ChakraProvider>
    );
 };
 

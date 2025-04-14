@@ -98,5 +98,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
    onContainersUpdate: (callback) =>
       ipcRenderer.on(EMIT_EVENT_NAME.ON_CONTAINERS_UPDATE, (_event, data) => callback(data)),
    onImagesUpdate: (callback) =>
-      ipcRenderer.on(EMIT_EVENT_NAME.ON_IMAGES_UPDATE, (_event, data) => callback(data))
+      ipcRenderer.on(EMIT_EVENT_NAME.ON_IMAGES_UPDATE, (_event, data) => callback(data)),
+
+   onDeepLink: (callback) => ipcRenderer.on('deep-link', callback),
 });
