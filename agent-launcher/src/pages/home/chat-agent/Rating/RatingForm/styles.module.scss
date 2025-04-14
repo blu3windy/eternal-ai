@@ -1,0 +1,53 @@
+.ratingForm {
+  max-width: 500px;
+  width: 100%;
+  padding: 1.5rem;
+  background: var(--chakra-colors-whiteAlpha-50);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--chakra-colors-gray-700);
+  }
+
+  .starContainer {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .starButton {
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+
+    &.active {
+      color: var(--chakra-colors-yellow-400);
+    }
+
+    &.inactive {
+      color: var(--chakra-colors-gray-200);
+    }
+  }
+
+  .commentField {
+    margin-bottom: 0.5rem;
+  }
+
+  .charCount {
+    font-size: 0.875rem;
+    color: var(--chakra-colors-gray-500);
+    text-align: right;
+  }
+
+  .errorText {
+    color: var(--chakra-colors-red-500);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+} 
