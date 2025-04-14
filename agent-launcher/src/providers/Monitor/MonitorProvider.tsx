@@ -173,7 +173,9 @@ const MonitorProvider: React.FC<
             if (memInfo && matchingAgent) {
                // Parse memory values for totals
                const memUsage = memInfo.MemUsage.split('/');
-               const memUsed = parseFloat(memUsage[0]);
+               const memUsed = memUsage[0].includes("GiB")
+                  ? parseFloat(`${parseFloat(memUsage[0]) * 1024}`)
+                  : parseFloat(memUsage[0]);
                const memTotal = parseFloat(memUsage[1]);
                totalMemUsed += memUsed || 0;
                totalMemMax = Math.max(totalMemMax, memTotal || 0);
@@ -190,7 +192,7 @@ const MonitorProvider: React.FC<
                   ports: container.Ports || '-',
                   cpu: memInfo.CPUPerc,
                   lastStarted: container.RunningFor,
-                  memoryUsage: convertMemoryToGB(memUsage[0]),
+                  memoryUsage: convertMemoryToGB(`${memUsed}`),
                   memoryPercentage: memInfo.MemPerc,
                   state: container.State,
                   agent: matchingAgent,
