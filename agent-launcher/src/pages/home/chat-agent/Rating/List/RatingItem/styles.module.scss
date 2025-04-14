@@ -1,0 +1,37 @@
+.ratingItem {
+  background: var(--chakra-colors-whiteAlpha-50);
+  border-radius: 12px;
+  padding: 1rem;
+  min-width: 300px;
+  max-width: 350px;
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  margin-right: 1rem;
+
+  .comment {
+    flex: 1;
+    font-size: 0.95rem;
+    color: var(--chakra-colors-gray-700);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
+  .footer {
+    width: 100%;
+    
+    .username {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--chakra-colors-gray-600);
+    }
+
+    .date {
+      font-size: 0.875rem;
+      color: var(--chakra-colors-gray-500);
+    }
+  }
+} 
