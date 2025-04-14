@@ -202,7 +202,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                   fontSize="16px"
                   fontWeight="400"
                   color={message?.is_reply ? "black" : "white"}
-               >{selectedAgent?.display_name} is getting it done. Check the progress in your tasks <Text as={'span'} cursor={'pointer'} textDecoration={'underline'} onClick={() => setIsOpenProcessingTask(true)}>here</Text>.</Text>
+               >{selectedAgent?.display_name} is looking up information. Check your active tasks to track the progress <Text as={'span'} cursor={'pointer'} textDecoration={'underline'} onClick={() => setIsOpenProcessingTask(true)}>here</Text>.</Text>
             )}
          </Flex>
       );
@@ -214,9 +214,6 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
       }
 
       if ((message.status === "receiving" || message.status === "sync-receiving") && !!processingWebViewUrl) {
-         console.log('hihihi', renderMessage.replace(PROCESSING_TAG_REGEX, '')
-         .replace(COMPUTER_USE_TAG_REGEX, ''));
-
          return (
             <div
                className={cs(s.markdown, "markdown-body", {

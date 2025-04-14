@@ -603,6 +603,7 @@ const AgentProvider: React.FC<
             }
          } else if (agent.agent_type === AgentType.Model) {
             console.log('stephen: startAgent Model install', new Date().toLocaleTimeString());
+            await startDependAgents(agent);
             await handleInstallModelAgentRequirement();
             
             console.log('stephen: startAgent Model get hash', new Date().toLocaleTimeString());
@@ -771,8 +772,12 @@ const AgentProvider: React.FC<
       } finally {
          setTimeout(() => {
             dispatch(requestReloadMonitor());
-            deleteAgent(agent.id)
+            updateAgentState(agent.id, {
+              data: agent,
+              isUnInstalling: false,
+            });
             if (needRemoveStorage) {
+               deleteAgent(agent.id)
                dispatch(requestReloadListAgent());
                showMessage({
                   message: `Delete ${agent?.display_name || agent?.agent_name} successfully.`,

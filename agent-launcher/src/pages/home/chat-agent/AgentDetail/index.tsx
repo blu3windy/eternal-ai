@@ -131,7 +131,7 @@ const AgentDetail = () => {
          <Flex
             className={s.container}
             direction={"column"}
-            justifyContent={"center"}
+            // justifyContent={"center"}
             w={"100%"}
          >
             <Flex w={"100%"} justifyContent={"space-between"} alignItems={"center"} mb={'40px'}>
@@ -194,7 +194,7 @@ const AgentDetail = () => {
                </Flex>
 
             </Flex>
-            <Flex w={'100%'} direction="column" overflowY={'auto'}>
+            <Flex w={'100%'} direction="column" overflowY={'auto'} className={s.descriptionWrapper}>
                <Divider color={'rgba(255, 255, 255, 0.15)'} mb={'40px'} />
                <Flex gap={"20px"} justifyContent={'space-between'}>
                   <Flex className={s.infoBox}>
