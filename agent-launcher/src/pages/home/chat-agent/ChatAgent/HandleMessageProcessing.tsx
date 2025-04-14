@@ -45,10 +45,14 @@ function HandleProcessingMessage({
                         console.log('__________res__________', res);
                         try {
                            if (res.choices[0].message.content) {
-                              if (res.choices[0].message.content.length > data.msg?.length) {
+                              if (!data.msg) {
                                  updateMessage(data.id, {
                                     status: "received",
                                     msg: res.choices[0].message.content
+                                 });
+                              } else {
+                                 updateMessage(data.id, {
+                                    status: "received",
                                  });
                               }
                            } else {
