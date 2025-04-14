@@ -33,7 +33,7 @@ const LastChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, 
    const [minutes, setMinutes] = useState<number | null>(0);
    const [seconds, setSeconds] = useState<number | null>(0);
    const [showTaskText, setShowTaskText] = useState(false);
-
+   const [isOpenProcessingTask, setIsOpenProcessingTask] = useState(false);
 
    useEffect(() => {
       const createdAt = message?.createdAt ? new Date(message?.createdAt).getTime() : new Date().getTime();
@@ -80,7 +80,6 @@ const LastChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, 
          }
       }
    }, [message.status, updateMessage, message.id]);
-
 
    const renderMessage = useMemo(() => {
       // const textStr = removeInvalidTags(message.msg || '')
@@ -156,7 +155,7 @@ const LastChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, 
                   [s.markdown__human]: true
                })}
             >
-               <p>{message.msg}</p>
+               <p className={s.twoLineText}>{message.msg}</p>
             </div>
          )
       }
@@ -170,7 +169,9 @@ const LastChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, 
                className={cs(s.markdown, "markdown-body", {
                })}
             >
-               <CustomMarkdown id={message.id} status={message.status} content={renderMessage.replace(COMPUTER_USE_TAG_REGEX, '')} />
+               <div className={s.twoLineText}>
+                  <CustomMarkdown id={message.id} status={message.status} content={renderMessage.replace(COMPUTER_USE_TAG_REGEX, '')} />
+               </div>
             </div>
          );
       }
@@ -182,7 +183,7 @@ const LastChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, 
                   [s.markdown__failed]: message.status === "failed",
                })}
             >
-               <span>{message.msg || "Something went wrong!"}</span>
+               <span className={s.twoLineText}>{message.msg || "Something went wrong!"}</span>
                {!isSending && (
                   <span
                      className={s.retry}
@@ -203,7 +204,9 @@ const LastChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, 
                [s.markdown__received]: message.status === "received",
             })}
          >
-            <CustomMarkdown id={message.id} status={message.status} content={renderMessage} />
+            <div className={s.twoLineText}>
+               <CustomMarkdown id={message.id} status={message.status} content={renderMessage} />
+            </div>
          </div>
       );
    };
