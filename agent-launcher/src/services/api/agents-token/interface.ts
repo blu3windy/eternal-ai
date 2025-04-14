@@ -99,6 +99,13 @@ export interface IAgentToken {
   is_force_update?: boolean;
   run_status?: AgentStatus;
   author?: string;
+  rating?: number;
+  total_ratings?: number;
+  num_of_one_star?: number;
+  num_of_two_star?: number;
+  num_of_three_star?: number;
+  num_of_four_star?: number;
+  num_of_five_star?: number;
 }
 
 export interface Meme {
