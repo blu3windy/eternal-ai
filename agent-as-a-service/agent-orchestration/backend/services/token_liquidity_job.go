@@ -431,7 +431,6 @@ func (s *Service) JobMemeAddPositionInternal(ctx context.Context) error {
 			memes, err := s.dao.FindMeme(
 				daos.GetDBMainCtx(ctx),
 				map[string][]any{
-					"updated_at <= ?": {time.Now().Add(-120 * time.Minute)},
 					"network_id in (?)": {
 						[]uint64{
 							models.BASE_CHAIN_ID,
