@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { dialog, ipcMain } from "electron";
 import { EMIT_EVENT_NAME } from "../share/event-name.ts";
 import command from "../share/command-tool.ts";
 import { SCRIPTS_NAME } from "../share/utils.ts";
@@ -93,12 +93,14 @@ const ipcMainModel = () => {
       if (isDownloaded) {
          const _runningHash = await _getRunningHash();
          if (!_runningHash) {
+            await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_STARTER}`);
             await _onRunModel(hash);
          }
          return;
       }
 
       await dialogCheckDist(hash);
+      
       await command.execAsyncStream(`cd "${path}" && bash ${SCRIPTS_NAME.MODEL_STARTER}`);
 
       let count = 0;

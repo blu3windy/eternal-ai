@@ -50,9 +50,7 @@ const StarterLogs = ({ isShowWarning = false, hasError = false, onRetry }: IProp
       if (scrollRef.current && !userScrolled) {
          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-   }, [
-      JSON.stringify(displayedLogs)
-   ]);
+   }, [JSON.stringify(displayedLogs)]);
 
    const handleScroll = (e: any) => {
       const element = e.currentTarget;
@@ -85,8 +83,8 @@ const StarterLogs = ({ isShowWarning = false, hasError = false, onRetry }: IProp
    };
    
    const percentage = useMemo(() => {
-      if (uniqueLogs?.length === TOTAL_STEP) {
-         return 99;
+      if (uniqueLogs?.length >= TOTAL_STEP - 3) {
+         return 98;
       }
       return Math.round(((uniqueLogs?.length || 1) / TOTAL_STEP) * 100) + 5;
    }, [uniqueLogs?.length]);

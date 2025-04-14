@@ -146,6 +146,12 @@ const SearchModal = (props: SearchModalProps) => {
       throttleGetTokens(true, true);
    }, []);
 
+   useEffect(() => {
+      if (props.isOpen) {
+         refInput?.current?.focus();
+      }
+   }, [props.isOpen])
+
    const renderSearch = () => {
       return (
          <Flex flex={1} gap={'24px'} alignItems={'center'}>

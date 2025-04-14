@@ -16,13 +16,15 @@ import SearchModal from './SearchModal/index.tsx';
 import s from './styles.module.scss';
 import YourSwarm from './YourSwarm/index.tsx';
 import { requestReloadListAgent } from '@stores/states/common/reducer.ts';
-import AgentStore from './AgentStore/index.tsx';
+// import AgentStore from './AgentStore/index.tsx';
 
 const AgentsList = () => {
    const refInput = useRef<HTMLInputElement | null>(null);
    const dispatch = useDispatch();
   
    const [isSearchMode, setIsSearchMode] = useState(false);
+   const [currentTab, setCurrentTab] = useState(0);
+
    const refAddAgentTestCA = useRef('')
 
    const renderSearch = () => {
@@ -73,7 +75,7 @@ const AgentsList = () => {
                   </Flex>
                </Flex>
             )}
-            <Tabs variant="unstyled">
+            <Tabs variant="unstyled" index={currentTab}>
                <TabList
                   borderRadius="full"
                   justifyContent="center"
@@ -92,6 +94,9 @@ const AgentsList = () => {
                      w="100%"
                      bg="white"
                      border="1px solid transparent"
+                     onClick={() => {
+                        setCurrentTab(0);
+                     }}
                   >
                      Your Swarm
                   </Tab>
@@ -107,6 +112,10 @@ const AgentsList = () => {
                      w="100%"
                      bg="white"
                      border="1px solid transparent"
+                     onClick={() => {
+                        setIsSearchMode(true);
+                        setCurrentTab(0);
+                     }}
                   >
                      Agent Store
                   </Tab>
@@ -115,12 +124,15 @@ const AgentsList = () => {
                   <TabPanel p={0}>
                      <YourSwarm refAddAgentTestCA={refAddAgentTestCA} />
                   </TabPanel>
-                  <TabPanel p={0}>
+                  {/* <TabPanel p={0}>
                      <AgentStore />
-                  </TabPanel>
+                  </TabPanel> */}
                </TabPanels>
             </Tabs>
-            <SearchModal isOpen={isSearchMode} onClickClose={() => setIsSearchMode(false)} />
+            <SearchModal isOpen={isSearchMode} onClickClose={() => {
+               setCurrentTab(0);
+               setIsSearchMode(false);
+            }} />
 
             <BottomBar onAddAgentSuccess={(address: string) => {
                refAddAgentTestCA.current = address;
