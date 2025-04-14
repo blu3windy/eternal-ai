@@ -3,7 +3,9 @@ import { Box, Flex, HStack, Text } from '@chakra-ui/react';
 import React, { useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import RatingItem from './RatingItem';
-import styles from './styles.module.scss';
+import s from './styles.module.scss';
+import cx from 'classnames';
+import { labelAmountOrNumberAdds } from '@utils/format';
 
 interface Rating {
   id: string;
@@ -16,11 +18,15 @@ interface Rating {
 interface RatingListProps {
   averageRating: number;
   totalRatings: number;
+  isShowFull?: boolean;
+  theme?: 'light' | 'dark';
 }
 
 const RatingList: React.FC<RatingListProps> = ({
   averageRating,
   totalRatings,
+  isShowFull = false,
+  theme = 'light',
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -28,28 +34,35 @@ const RatingList: React.FC<RatingListProps> = ({
   const [hasMore, setHasMore] = useState(true);
 
   const loadMoreRatings = async () => {
-     const newRatings = await fetchMoreRatings();
-     setRatings([...ratings, ...newRatings]);
+    const newRatings = await fetchMoreRatings();
+    setRatings([...ratings, ...newRatings]);
 
-     setHasMore(newRatings.length > 0);
+    setHasMore(newRatings.length > 0);
   };
 
   return (
-    <Box className={styles.ratingListContainer}>
-      <Flex className={styles.header}>
-        <Box className={styles.averageRating}>
-          <Text fontSize="4xl" fontWeight="bold">
-            {averageRating.toFixed(1)}
-          </Text>
-          <Text fontSize="md" color="gray.500">
-            out of 5
-          </Text>
-        </Box>
+    <Box className={cx(s.ratingListContainer, { [s.dark]: theme === 'dark', })}>
+      <Flex justifyContent={'space-between'} alignItems={'center'}>
+        <Text className={s.title}>Ratings & Reviews</Text>
+        <Text className={s.viewAll}>See All</Text>
+      </Flex>
 
-        <Box className={styles.ratingStats}>
-          <Text fontSize="md" color="gray.500" mb={2}>
-            {totalRatings} Ratings
+      <Flex className={s.header} gap={'40px'}>
+        <Flex justifyContent={'space-between'} alignItems={'flex-end'} flex={1} gap={'8px'}>
+          <Flex className={s.averageRating} gap={'8px'}>
+            <Text fontSize="60px" fontWeight="700" lineHeight={'60px'}>
+              {averageRating.toFixed(1)}
+            </Text>
+            <Text fontSize="16px" fontWeight="600">
+              out of 5
+            </Text>
+          </Flex>
+          <Text fontSize="16px" fontWeight="400" opacity={0.8} className={s.totalRatings}>
+            {totalRatings} Rating{labelAmountOrNumberAdds(totalRatings)}
           </Text>
+        </Flex>
+
+        <Box className={s.ratingStats} flex={1}>
           <Box>
             {[5, 4, 3, 2, 1].map((num) => (
               <HStack key={num} spacing={2} mb={1}>
@@ -59,7 +72,7 @@ const RatingList: React.FC<RatingListProps> = ({
                   ))}
                 </HStack>
                 <Box
-                  className={styles.ratingBar}
+                  className={s.ratingBar}
                   width="200px"
                   height="8px"
                   bg="gray.200"
@@ -69,11 +82,10 @@ const RatingList: React.FC<RatingListProps> = ({
                     height="100%"
                     bg="yellow.400"
                     borderRadius="full"
-                    width={`${
-                      (ratings.filter((r) => Math.round(r.rating) === num).length /
+                    width={`${(ratings.filter((r) => Math.round(r.rating) === num).length /
                         totalRatings) *
                       100
-                    }%`}
+                      }%`}
                   />
                 </Box>
               </HStack>
@@ -84,7 +96,7 @@ const RatingList: React.FC<RatingListProps> = ({
 
       <Box
         id="scrollableRatings"
-        className={styles.ratingsList}
+        className={s.ratingsList}
         ref={scrollContainerRef}
       >
         <InfiniteScroll
@@ -111,7 +123,7 @@ const RatingList: React.FC<RatingListProps> = ({
   );
 };
 
-export default RatingList; 
+export default RatingList;
 
 function fetchMoreRatings() {
   throw new Error('Function not implemented.');
