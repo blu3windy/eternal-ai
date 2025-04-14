@@ -133,6 +133,25 @@ func (c *Client) ChainID() (uint64, error) {
 	return c.chainID, nil
 }
 
+func (c *Client) PendingNonceAt(ctx context.Context, addr common.Address) (uint64, error) {
+	client, err := c.getClient()
+	if err != nil {
+		return 0, err
+	}
+	pNum, err := client.PendingNonceAt(ctx, addr)
+	if err != nil {
+		return 0, err
+	}
+	num, err := client.NonceAt(ctx, addr, nil)
+	if err != nil {
+		return 0, err
+	}
+	if pNum > num+3 {
+		return 0, errors.New("pending nonce is too high")
+	}
+	return num, nil
+}
+
 func (c *Client) Address() (string, string, error) {
 	return CreateETHAddress()
 }
@@ -463,7 +482,7 @@ func (c *Client) Transfer(prkHex string, toAddr string, amount string, includeFe
 	if err != nil {
 		return "", err
 	}
-	nonce, err := client.PendingNonceAt(context.Background(), pbkHex)
+	nonce, err := c.PendingNonceAt(context.Background(), pbkHex)
 	if err != nil {
 		return "", err
 	}
@@ -616,7 +635,7 @@ func (c *Client) Erc20Transfer(erc20Addr string, prkHex string, toAddr string, a
 	if err != nil {
 		return "", err
 	}
-	nonceAt, err := client.PendingNonceAt(context.Background(), pbkHex)
+	nonceAt, err := c.PendingNonceAt(context.Background(), pbkHex)
 	if err != nil {
 		return "", err
 	}
@@ -763,7 +782,7 @@ func (c *Client) Erc20ApproveMax(erc20Addr string, prkHex string, toAddr string)
 	if err != nil {
 		return "", err
 	}
-	nonceAt, err := client.PendingNonceAt(context.Background(), pbkHex)
+	nonceAt, err := c.PendingNonceAt(context.Background(), pbkHex)
 	if err != nil {
 		return "", err
 	}
@@ -972,7 +991,7 @@ func (c *Client) Transact(contractAddr string, prkHex string, dataBytes []byte, 
 	if err != nil {
 		return "", err
 	}
-	nonceAt, err := client.PendingNonceAt(context.Background(), pbkHex)
+	nonceAt, err := c.PendingNonceAt(context.Background(), pbkHex)
 	if err != nil {
 		return "", err
 	}
