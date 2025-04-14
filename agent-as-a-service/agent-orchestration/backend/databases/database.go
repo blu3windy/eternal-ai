@@ -137,6 +137,7 @@ func MigrateDBMain(db *gorm.DB) error {
 		(*models.RobotTokenTransfer)(nil),
 		(*models.TrendingToken)(nil),
 		(*models.VibeWhiteList)(nil),
+		(*models.VibeReferralCode)(nil),
 	}
 
 	if err := db.AutoMigrate(allTables...).Error; err != nil {

@@ -392,5 +392,10 @@ func (s *Server) Routers() {
 			utilityApi.POST("/twitter/post", s.UtilityPostTwitter)
 			// utilityApi.POST("/twitter/verify-deposit", s.UtilityTwitterVerifyDeposit)
 		}
+
+		vibeApi := rootAPI.Group("/vibe")
+		{
+			vibeApi.POST("/validate-ref-code", s.VibeValidateReferralCode)
+		}
 	}
 }

@@ -52,6 +52,7 @@ var (
 	ErrApiUrlNotHealth         = &Error{Code: -2016, Message: "Api Url not Health"}
 
 	ErrApiKeyRateLimited = &Error{Code: -2016, Message: "API Key rate limit"}
+	ErrReferralCodeUsed  = &Error{Code: -2017, Message: "Referral code already used"}
 
 	ErrAgentUtilityNotAuthen       = &Error{Code: -3000, Message: "Please authentican with this link and try again"}
 	ErrAgentUtilityInvalidBalance  = &Error{Code: -3001, Message: "Insufficient balance! You need at least 10 $EAI to proceed with address {address} in Base."}
