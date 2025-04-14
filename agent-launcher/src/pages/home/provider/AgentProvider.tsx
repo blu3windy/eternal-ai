@@ -1339,6 +1339,7 @@ const AgentProvider: React.FC<
          installedAgentIds,
          handleUpdateCode,
          agentCategories,
+         getDependAgents,
       };
    }, [
       loading,
@@ -1382,6 +1383,7 @@ const AgentProvider: React.FC<
       installedAgentIds,
       handleUpdateCode,
       agentCategories,
+      getDependAgents
    ]);
 
    return (
