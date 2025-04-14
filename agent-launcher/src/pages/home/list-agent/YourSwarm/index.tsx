@@ -26,6 +26,7 @@ import {
    SortOption
 } from '../constants';
 import s from './styles.module.scss';
+import useAgentState from "@pages/home/provider/useAgentState";
 
 const YourSwarm = (props: any) => {
    const [filter, setFilter] = useState<FilterOption>(FilterOption.Installed);
@@ -53,7 +54,7 @@ const YourSwarm = (props: any) => {
    });
 
    const cPumpAPI = new CAgentTokenAPI();
-   const { addActiveAgent } = useContext(AgentContext);
+   const { addActiveAgent } = useAgentState();
 
    const [hasMore, setHasMore] = useState(true);
 

@@ -641,7 +641,7 @@ const AgentProvider: React.FC<
                   isStarting: false,
                   isRunning: true,
                });
-            }, 3000);
+            }, 4000);
          }
 
          if ([AgentType.Model, AgentType.ModelOnline].includes(agent.agent_type)) {
