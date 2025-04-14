@@ -212,6 +212,14 @@ class CAgentTokenAPI extends CApiClient {
          throw e;
       }
    };
+
+   public submitInviteCode = async (params: { code: string, address: string }): Promise<any> => {
+      const res = (await this.api.post("vibe/validate-ref-code", {
+         ref_code: params.code,
+         user_address: params.address,
+      })) as any;
+      return res;
+   };
 }
 
 export default CAgentTokenAPI;

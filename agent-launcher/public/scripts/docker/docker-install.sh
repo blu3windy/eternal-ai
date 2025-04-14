@@ -52,7 +52,7 @@ else
         log_message "Docker Desktop found. Launching application..."
 
         # Launch Docker Desktop
-        open -a Docker
+        docker desktop start
         log_message "Waiting for Docker Desktop to initialize..."
         sleep 20
         exit 0
