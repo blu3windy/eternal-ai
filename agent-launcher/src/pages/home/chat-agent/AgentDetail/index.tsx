@@ -15,6 +15,10 @@ import RatingForm from "../Rating/RatingForm";
 import RatingList from "../Rating/List";
 import { IAgentToken } from "@services/api/agents-token/interface";
 import DependencyAgentItem from "./DependencyAgentItem";
+import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration";
+
+dayjs.extend(duration);
 
 const AgentDetail = () => {
    const {
@@ -28,14 +32,45 @@ const AgentDetail = () => {
       isUpdating,
       handleUpdateCode,
       getDependAgents,
+      agentStates
    } = useContext(AgentContext);
 
    const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
    const [dependAgents, setDependAgents] = useState<IAgentToken[]>([]);
 
+   const [hours, setHours] = useState<number | null>(0);
+   const [minutes, setMinutes] = useState<number | null>(0);
+   const [seconds, setSeconds] = useState<number | null>(0);
+
    // const [isShowRatingForm, setIsShowRatingForm] = useState(false);
 
+   const calcTime = () => {
+      const diff = dayjs.duration(dayjs().diff(dayjs(agentStates[selectedAgent?.id]?.startAt)));
+      if (diff.milliseconds() <= 0) {
+         setHours(null);
+         setMinutes(null);
+         setSeconds(null);
+         return;
+      }
+      setHours(diff.hours());
+      setMinutes(diff.minutes());
+      setSeconds(diff.seconds());
+   };
+
+   useEffect(() => {
+      if (isStarting && agentStates[selectedAgent?.id]?.startAt) {
+         calcTime();
+      }
+   }, [isStarting, agentStates, selectedAgent]);
+
+   const startingTime = useMemo(() => {
+      return minutes > 0 || seconds > 0 ? ` (${minutes && minutes > 0 ? `${minutes}m ` : ""}${seconds && seconds > 0 ? `${seconds}s` : ""})` : '';
+   }, [minutes, seconds]);
+
+   console.log('minutes', minutes);
+   console.log('seconds', seconds);
+   console.log('startingTime', startingTime);
 
    useEffect(() => {
       setHaveNewVersionCode(false);
@@ -175,7 +210,7 @@ const AgentDetail = () => {
                                        onClick={handleStartAgent}
                                        isLoading={isStarting || isUpdating}
                                        isDisabled={isStarting || isUpdating}
-                                       loadingText={isUpdating ? "Updating..." : "Starting..."}
+                                       loadingText={isUpdating ? "Updating..." : `Starting...` + startingTime}
                                     >
                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                           <path d="M15.5507 11.989L7.15397 17.1274C5.48314 18.1499 3.33398 16.9506 3.33398 14.9956V5.00479C3.33398 3.04979 5.48314 1.85074 7.15397 2.87324L15.5507 8.01158C17.0382 8.92242 17.0382 11.079 15.5507 11.989Z" fill="black" />
