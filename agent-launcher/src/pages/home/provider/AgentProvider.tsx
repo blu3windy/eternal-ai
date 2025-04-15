@@ -29,6 +29,7 @@ import { SUPPORT_TRADE_CHAIN } from "../trade-agent/form-trade/index.tsx";
 import { AgentContext } from "./AgentContext.tsx";
 import { ETradePlatform } from "./interface.ts";
 import useAgentState from "./useAgentState.ts";
+import { logError } from "@utils/error-handler.ts";
 
 const AgentProvider: React.FC<
     PropsWithChildren & { tokenAddress?: string }
@@ -673,6 +674,17 @@ const AgentProvider: React.FC<
             isRunning: false,
             startAt: undefined,
          });
+
+         logError(new Error(JSON.stringify(e)), {
+            type: 'START_ERROR',
+            context: 'start_agent',
+            agentId: agent.id,
+            agentName: agent.agent_name,
+            agentContractAddress: agent.agent_contract_address,
+            agentNetworkId: agent.network_id,
+            agentType: agent.agent_type,
+         });
+
       }
    };
 
