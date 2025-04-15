@@ -96,11 +96,14 @@ for container in "${DOCKER_CONTAINERS[@]}"; do
     
     log_message "Built $container_name successfully"
 
-    # Just run if container not exists or force build   
-    if ! docker ps -a --filter "name=^${container_name}$" | grep -q "${container_name}" || [ "$FORCE_BUILD" = true ]; then
-        # Stop and remove silently
-        docker stop "${container_name}" || true
-        docker rm "${container_name}" || true
+    # Check container state and handle accordingly
+    container_state=$(docker ps -a --filter "name=^${container_name}$" --format "{{.State}}" 2>/dev/null)
+    
+    # If force build or container doesn't exist or is not running
+    if [ "$FORCE_BUILD" = true ] || [ -z "$container_state" ] || [ "$container_state" != "running" ]; then
+        # Stop and remove silently if container exists
+        docker stop "${container_name}" 2>/dev/null || true
+        docker rm "${container_name}" 2>/dev/null || true
 
         # Run new container if it has a port
         if [ -n "$port" ]; then
@@ -124,7 +127,7 @@ for container in "${DOCKER_CONTAINERS[@]}"; do
             running_containers+=("$container_name:none")
         fi
     else
-        log_message "Container $container_name already exists"
+        log_message "Container $container_name already exists and is running"
     fi
 done
 
