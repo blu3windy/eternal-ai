@@ -74,3 +74,41 @@ func (s *Server) GetListAgentComment(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentUserCommentArray(agentUserComments)})
 }
+
+func (s *Server) GetVibeDashBoards(c *gin.Context) {
+	ctx := s.requestContext(c)
+	page, limit := s.pagingFromContext(c)
+	chain := s.chainFromContextQuery(c)
+	sortStr := s.agentSortListFromContext(c)
+	search := s.stringFromContextQuery(c, "search")
+	categoryIds := s.stringArrayFromContextQuery(c, "category_ids")
+	agentTypesInt, _ := s.intArrayFromContextQuery(c, "agent_types")
+	contractAddresses := s.stringArrayFromContextQuery(c, "contract_addresses")
+	ids, _ := s.uintArrayFromContextQuery(c, "ids")
+	exludeIds, _ := s.uintArrayFromContextQuery(c, "exlude_ids")
+
+	userAddress, _ := s.getUserAddressFromTK1Token(c)
+	ms, count, err := s.nls.GetVibeDashboard(ctx, contractAddresses,
+		userAddress, chain, agentTypesInt, search,
+		ids, exludeIds, categoryIds, sortStr, page, limit)
+
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentInfoRespArry(ms), Count: &count})
+}
+
+func (s *Server) GetVibeDashBoardsDetail(c *gin.Context) {
+	ctx := s.requestContext(c)
+	agentID := s.stringFromContextParam(c, "agent_id")
+	ms, err := s.nls.GetVibeDashboardsDetail(ctx, agentID)
+
+	if err != nil || ms == nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentInfoResp(ms)})
+	return
+}
