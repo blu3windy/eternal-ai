@@ -47,10 +47,10 @@ const YourSwarm = (props: any) => {
    const refParams = useRef({
       page: 1,
       limit: 25,
-      sort: SortOption.Installed,
+      sort: SortOption.RecentChat,
       category: 0,
       filter,
-      search: '',
+      search: "",
    });
 
    const cPumpAPI = new CAgentTokenAPI();
