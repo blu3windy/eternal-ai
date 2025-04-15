@@ -19,13 +19,13 @@ import { IChatMessage } from '@services/api/agent/types';
 import chatAgentDatabase from "../../../../database/chatAgentDatabase";
 import ChatMessage from '@pages/home/chat-agent/ChatAgent/components/ChatMessage';
 import LastChatMessage from './LastChatMessage';
+import { INIT_WELCOME_MESSAGE } from '@pages/home/chat-agent/ChatAgent/constants';
 interface IProps {
    token: IAgentToken;
-   isLatest?: boolean;
    addActiveAgent?: (agent: IAgentToken) => void;
 }
 
-const AgentItem = ({ token, isLatest, addActiveAgent }: IProps) => {
+const AgentItem = ({ token, addActiveAgent }: IProps) => {
    const {
       selectedAgent,
       stopAgent,
@@ -250,6 +250,11 @@ const AgentItem = ({ token, isLatest, addActiveAgent }: IProps) => {
 
    const lastMessage = messages[messages.length - 1];
    const questionMessage = messages[messages.length - 2];
+   const isInitialMessage = questionMessage?.msg === INIT_WELCOME_MESSAGE;
+
+   const showLastMessage = useMemo(() => {
+      return (lastMessage && lastMessage?.status === 'received') || (questionMessage && !isInitialMessage);
+   }, [lastMessage, questionMessage, isInitialMessage]);
 
    const handleGoToChat = (e: any, token_address?: any) => {
       if (token_address) {
@@ -350,14 +355,13 @@ const AgentItem = ({ token, isLatest, addActiveAgent }: IProps) => {
                   </Flex>
                </Flex>
 
-               {isLatest && lastMessage ? (
+               {showLastMessage ? (
                   <>
                   <LastChatMessage
                      messages={[]} 
                      updateMessage={() => {}}
                      key={lastMessage.id}
                      message={lastMessage?.status === 'received' ? lastMessage : questionMessage}
-                     isLast={true}
                      onRetryErrorMessage={() => {}}
                      isSending={false}
                      initialMessage={false}

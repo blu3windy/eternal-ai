@@ -18,7 +18,6 @@ dayjs.extend(duration);
 type Props = {
    message: IChatMessage;
    ref: any;
-   isLast: boolean;
    onRetryErrorMessage: (messageId: string) => void;
    isSending: boolean;
    initialMessage?: boolean;
@@ -200,7 +199,7 @@ const LastChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, 
 
       return (
          <div
-            className={cs(s.markdown, "markdown-body", {
+            className={cs(s.markdown, {
                [s.markdown__received]: message.status === "received",
             })}
          >
