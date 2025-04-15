@@ -350,6 +350,27 @@ func (s *Service) JobUpdateAgentUpgradeableCodeVersion(ctx context.Context) erro
 	return nil
 }
 
+func (s *Service) HandleAgentUpgradeableCodePointerCreated(ctx context.Context, event *agentupgradeable.AgentUpgradeableCodePointerCreated) error {
+	agentInfo, err := s.dao.FirstAgentInfo(
+		daos.GetDBMainCtx(ctx),
+		map[string][]any{
+			"agent_contract_address = ?": {event.Raw.Address.Hex()},
+		},
+		map[string][]any{},
+		[]string{},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	if agentInfo != nil {
+		err = s.UpdateAgentUpgradeableCodeVersion(ctx, agentInfo.ID)
+		if err != nil {
+			return errs.NewError(err)
+		}
+	}
+	return nil
+}
+
 func (s *Service) UpdateAgentUpgradeableCodeVersion(ctx context.Context, agentInfoID uint) error {
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),

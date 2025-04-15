@@ -156,16 +156,27 @@ func (s *Service) RunJobs(ctx context.Context) error {
 	})
 
 	// scan events by chain
+	var networkIDs []uint64
 	for networkIDStr := range s.conf.Networks {
 		networkID, err := strconv.ParseUint(networkIDStr, 10, 64)
 		if err != nil {
 			panic(err)
 		}
+		if networkID > 0 {
+			networkIDs = append(networkIDs, networkID)
+		}
+	}
+	for i := range 4 {
 		gocron.Every(30).Second().Do(func() {
-			s.ScanEventsByChain(context.Background(), networkID)
+			for idx, networkID := range networkIDs {
+				if idx%4 == i {
+					s.ScanEventsByChain(context.Background(), networkID)
+				}
+			}
 		})
 	}
 
+	// agent mint nft
 	gocron.Every(1).Minute().Do(
 		func() error {
 			s.JobAgentMintNft(context.Background())
