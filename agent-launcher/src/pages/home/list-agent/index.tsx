@@ -16,13 +16,14 @@ import SearchModal from './SearchModal/index.tsx';
 import s from './styles.module.scss';
 import YourSwarm from './YourSwarm/index.tsx';
 import { requestReloadListAgent } from '@stores/states/common/reducer.ts';
+import useAgentState from '../provider/useAgentState.ts';
 // import AgentStore from './AgentStore/index.tsx';
 
 const AgentsList = () => {
    const refInput = useRef<HTMLInputElement | null>(null);
    const dispatch = useDispatch();
+   const { isSearchMode, setIsSearchMode } = useAgentState();
   
-   const [isSearchMode, setIsSearchMode] = useState(false);
    const [currentTab, setCurrentTab] = useState(0);
 
    const refAddAgentTestCA = useRef('')

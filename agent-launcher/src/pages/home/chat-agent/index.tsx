@@ -8,6 +8,7 @@ import { AgentContext } from "../provider/AgentContext";
 import { useContext } from "react";
 import s from "./styles.module.scss";
 import AgentTopInfo from "./AgentTopInfo";
+import useAgentState from "../provider/useAgentState";
 
 function ChatAgent() {
    const {
@@ -18,12 +19,21 @@ function ChatAgent() {
       isBackupedPrvKey,
       isRunning,
    } = useContext(AgentContext);
+   const { isSearchMode } = useAgentState();
 
    const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
    // const isAllowChat = useMemo(() => {
    //    return ![AgentType.Model].includes(selectedAgent?.agent_type);
    // }, [selectedAgent]);
+
+   if (isSearchMode) {
+      return (
+         <Box className={s.container}>
+            <AgentDetail />
+         </Box>
+      );
+   }
 
    return (
       <Box className={s.container}>

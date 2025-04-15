@@ -60,7 +60,7 @@ class CAgentTokenAPI extends CApiClient {
       }
 
       try {
-         const response = (await this.api.get(`/${params?.isPathAgent ? 'agent' : 'vibe'}/dashboard`, {
+         const response = (await this.api.get(`/vibe/dashboard`, {
             params,
          })) as any;
 

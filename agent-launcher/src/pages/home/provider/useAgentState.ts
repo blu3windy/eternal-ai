@@ -17,6 +17,9 @@ interface AgentState {
     selectedAgent: IAgentToken | undefined;
     selectedAgentTimestamp: number;
     setSelectedAgent: (agent: IAgentToken | undefined) => void;
+
+    isSearchMode: boolean;
+    setIsSearchMode: (isSearchMode: boolean) => void;
 }
 
 const useAgentState = create<AgentState>((set) => ({
@@ -81,6 +84,11 @@ const useAgentState = create<AgentState>((set) => ({
    selectedAgentTimestamp: 0,
    setSelectedAgent: (agent) => {
       set({ selectedAgent: agent, selectedAgentTimestamp: Date.now() });
+   },
+
+   isSearchMode: false,
+   setIsSearchMode: (isSearchMode) => {
+      set({ isSearchMode });
    },
 }));
 
