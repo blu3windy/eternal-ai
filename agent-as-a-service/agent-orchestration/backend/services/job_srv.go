@@ -162,7 +162,9 @@ func (s *Service) RunJobs(ctx context.Context) error {
 		if err != nil {
 			panic(err)
 		}
-		networkIDs = append(networkIDs, networkID)
+		if networkID > 0 {
+			networkIDs = append(networkIDs, networkID)
+		}
 	}
 	for i := range 4 {
 		gocron.Every(30).Second().Do(func() {
