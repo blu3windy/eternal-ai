@@ -350,6 +350,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                      alignItems={"center"}
                      justifyContent={"center"}
                      transition={"all 0.2s ease-in-out"}
+                     zIndex={1000}
                      _hover={{
                         cursor: "pointer",
                         transform: "translateY(-2px)",
