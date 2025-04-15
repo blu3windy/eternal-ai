@@ -19,6 +19,7 @@ function NewsModal({
    const handleUpdateAll = async () => {
       try {
          await Promise.all(updateAgents.map(agent => handleUpdateCode(agent)));
+         setIsOpen(false);
       } catch (error) {
          console.error('Error updating agents:', error);
       }
