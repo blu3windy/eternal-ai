@@ -1178,6 +1178,12 @@ func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]strin
 			if s.conf.ExistsedConfigKey(networkID, "order_payment_contract_address") {
 				addrs = append(addrs, s.conf.GetConfigKeyString(networkID, "order_payment_contract_address"))
 			}
+			if s.conf.ExistsedConfigKey(networkID, "agent_factory_address") {
+				address := s.conf.GetConfigKeyString(networkID, "agent_factory_address")
+				if address != "" {
+					addrs = append(addrs, address)
+				}
+			}
 			agents, err := s.dao.FindAgentInfo(
 				daos.GetDBMainCtx(ctx),
 				map[string][]any{

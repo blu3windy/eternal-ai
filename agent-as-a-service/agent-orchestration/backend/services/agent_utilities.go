@@ -447,6 +447,7 @@ func (s *Service) AgentFactoryAgentCreatedEvent(ctx context.Context, networkID u
 			if err != nil {
 				return errs.NewError(err)
 			}
+			s.DeleteFilterAddrs(ctx, agentInfo.NetworkID)
 			go s.UpdateAgentUpgradeableCodeVersion(ctx, agentInfo.ID)
 		}
 	}
