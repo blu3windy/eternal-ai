@@ -60,7 +60,7 @@ class CAgentTokenAPI extends CApiClient {
       }
 
       try {
-         const response = (await this.api.get("/agent/dashboard", {
+         const response = (await this.api.get("/vibe/dashboard", {
             params,
          })) as any;
 
@@ -99,7 +99,7 @@ class CAgentTokenAPI extends CApiClient {
       token_address: any
    ): Promise<{ agents: IAgentToken }> => {
       const response = (await this.api.get(
-         `/agent/dashboard/${token_address}`
+         `/agent/vibe/${token_address}`
       )) as any;
       
 

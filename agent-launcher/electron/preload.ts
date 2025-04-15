@@ -50,7 +50,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
    dockerCopyBuild: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_COPY_BUILD),
    dockerCheckInstall: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_CHECK_INSTALL),
    dockerInstall: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_INSTALL),
-   dockerBuild: () => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_BUILD),
+   dockerBuild: (forceBuild: boolean = false) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_BUILD, forceBuild),
    dockerRunningPort: (agentName: string, chainId: string) => ipcRenderer.invoke(EMIT_EVENT_NAME.DOCKER_RUNNING_PORT, agentName, chainId),
 
    // options: language, privateKey, port

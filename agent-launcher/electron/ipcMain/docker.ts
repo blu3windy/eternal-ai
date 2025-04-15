@@ -46,7 +46,7 @@ const ipcMainDocker = () => {
       }
    })
 
-   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_BUILD, async (_event) => {
+   ipcMain.handle(EMIT_EVENT_NAME.DOCKER_BUILD, async (_event, forceBuild: boolean = false) => {
       try {
          const folderPathDocker = path.join(folderPath, USER_DATA_FOLDER_NAME.DOCKER);
 
@@ -55,9 +55,9 @@ const ipcMainDocker = () => {
             `agent-router:${DOCKER_ROUTER_NAME}:33030`,
          ];
          const containerArgs = containers.map(c => `--container "${c}"`).join(' ');
-
+         const forceBuildStr = forceBuild ? '--force-build true' : '';
          await command.execAsyncStream(
-            `bash "${folderPathDocker}/${SCRIPTS_NAME.DOCKER_BUILD_SCRIPT}" --folder-path "${folderPath}" ${containerArgs}`
+            `bash "${folderPathDocker}/${SCRIPTS_NAME.DOCKER_BUILD_SCRIPT}" --folder-path "${folderPath}" ${containerArgs} ${forceBuildStr}`
          );
 
          //

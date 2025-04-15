@@ -14,6 +14,7 @@ import installAgentStorage from "@storage/InstallAgentStorage";
 import { WHITE_LIST_CONTAINER_NAMES } from "@providers/GarbageDocker/constants";
 import { getAgentContainerName } from "@providers/GarbageDocker/helpers";
 import useAgentState from "@pages/home/provider/useAgentState";
+import STORAGE_KEYS, { ROUTER_VERSION } from "@storage/constant";
 // import useDockerMonitorState from "@providers/DockerMonitor/useDockerMonitorState";
 
 interface IProps {}
@@ -33,6 +34,14 @@ const Starter = (_props: IProps) => {
    const initRef = useRef(false);
    const agentAPI = useRef(new CAgentTokenAPI());
    const { addActiveAgents } = useAgentState();
+   const [step] = useState<Step>("INITIALIZING");
+   const [isShowWarning, setIsShowWarning] = useState(false);
+   const initTimerRef = useRef<NodeJS.Timeout>();
+
+   const [hasError, setHasError] = useState(false);
+   const agentCtx = useContext(AgentContext);
+
+   const { setSettingDocker, setDockerIsFinished } = useStarter();
 
    // const { setContainers, setImages } = useDockerMonitorState();
 
@@ -61,15 +70,6 @@ const Starter = (_props: IProps) => {
       return _agents
    }
 
-   const [step] = useState<Step>("INITIALIZING");
-   const [isShowWarning, setIsShowWarning] = useState(false);
-   const initTimerRef = useRef<NodeJS.Timeout>();
-
-   const [hasError, setHasError] = useState(false);
-   const agentCtx = useContext(AgentContext);
-
-   const { setSettingDocker, setDockerIsFinished } = useStarter();
-
    const setDefaultAgent = async () => {
       const {
          agents
@@ -91,7 +91,15 @@ const Starter = (_props: IProps) => {
 
 
    const onInit = async (ignoreCopy?: boolean) => {
-      const loaded = await localStorage.getItem("loaded");
+      const loaded = await localStorage.getItem(STORAGE_KEYS.DOCKER_DID_SETUP);
+
+      const latestBuildRouterVersion = await localStorage.getItem(STORAGE_KEYS.BUILD_ROUTER_VERSION);
+      
+      let forceBuild = false;
+      if (latestBuildRouterVersion !== ROUTER_VERSION) {
+         forceBuild = true;
+      }
+
       const time = (loaded ? 15 : 50) * 60 * 1000; // 15 minutes for loaded users, 50 minutes for new users
 
       // Start the timer based on whether user is loaded or not
@@ -110,7 +118,8 @@ const Starter = (_props: IProps) => {
          console.timeEnd("DOCKER_INSTALL");
 
          console.time("DOCKER_BUILD");
-         await globalThis.electronAPI.dockerBuild();
+         await globalThis.electronAPI.dockerBuild(forceBuild);
+         await localStorage.setItem(STORAGE_KEYS.BUILD_ROUTER_VERSION, ROUTER_VERSION);
          console.timeEnd("DOCKER_BUILD");
 
          const activeModel = await storageModel.getActiveModel();
@@ -144,7 +153,7 @@ const Starter = (_props: IProps) => {
          }
 
          setSettingDocker(false);
-         localStorage.setItem("loaded", "true");
+         localStorage.setItem(STORAGE_KEYS.DOCKER_DID_SETUP, "true");
          setDockerIsFinished(true);
       } catch (error: any) {
          setHasError(true);
