@@ -9,7 +9,7 @@ import { Box, Button, Flex, Modal, ModalBody, ModalCloseButton, ModalContent, Mo
 import cs from 'classnames';
 import { useDispatch } from "react-redux";
 import { changeLayout } from "@stores/states/layout-view/reducer";
-import { downloadFile } from "@utils/file";
+import { convertBase64ToFileSize, downloadFile } from "@utils/file";
 import "@cyntler/react-doc-viewer/dist/index.css";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 
@@ -17,7 +17,21 @@ type Props = React.ComponentPropsWithRef<'div'> & CustomComponentProps;
 
 const MAX_VIEW_FILE = 5;
 
+const readTxtFile = (filedata: string) => {
+   const base64 = filedata.split(',')[1];
+   const text = atob(base64);
+   return text;
+}
 
+const SUPPORTED_FILE_TYPE = {
+   'pdf': 'pdf',
+   'bmp': 'image',
+   'gif': 'image',
+   'jpg': 'image',
+   'jpeg': 'image',
+   'png': 'image',
+   'webp': 'image',
+}
 type FileType = {
    filename: string;
    filedata: string;
@@ -90,6 +104,14 @@ function FileViewer({ filename, filedata }: FileType) {
    const dispatch = useDispatch();
    const [isViewer, setIsViewer] = useState(false);
 
+   const fileExtension = useMemo(() => {
+      return filename.split('.').pop() || getMimeTypeFromBase64(filedata)?.split('/')[1];
+   }, [filename, filedata]);
+
+   const isSupportedFile = useMemo(() => {
+      return SUPPORTED_FILE_TYPE[fileExtension as keyof typeof SUPPORTED_FILE_TYPE];
+   }, [fileExtension]);
+
    const fileUrl = useMemo(() => {
       try {
          return URL.createObjectURL(base64ToBlob(filedata));
@@ -104,6 +126,79 @@ function FileViewer({ filename, filedata }: FileType) {
          setIsViewer(true);
       }, 0);
    }, []);
+
+   const renderFileContent = () => {
+      if (!isSupportedFile) {
+         if (fileExtension === 'txt') {
+            return (
+               <Flex
+                  flexDir={'column'}
+                  justifyContent={'center'}
+                  alignItems={'center'}
+                  gap={'12px'}
+                  height={'100%'}
+                  width={'100%'}
+                  padding={"24px"}
+                  overflowY={"auto"}
+               >
+                  <p
+                     style={{
+                        wordBreak: 'break-word',
+                        whiteSpace: 'pre-wrap',
+                     }}
+                  >{readTxtFile(filedata)}</p>
+               </Flex>
+            )
+         }
+         return (
+            <Flex
+               flexDir={'column'}
+               justifyContent={'center'}
+               alignItems={'center'}
+               gap={'12px'}
+               height={'100%'}
+               width={'100%'}
+            >
+               <Text>Unsupported file type</Text>
+               <Button
+                  onClick={() => {
+                     const fileUrl = URL.createObjectURL(base64ToBlob(filedata));
+                     downloadFile(fileUrl, filename);
+                  }}
+               >Download</Button>
+            </Flex>
+         )
+      }
+
+      return (
+         <div className="file-viewer-container">
+            {isViewer && fileUrl && (
+               <DocViewer
+                  documents={[
+                     { uri: fileUrl }, // Remote file
+                  ]}
+                  pluginRenderers={DocViewerRenderers}
+                  config={{
+                     noRenderer: {
+                        overrideComponent: MyNoRenderer,
+                     },
+                     header: {
+                        disableHeader: true,
+                        disableFileName: true,
+                        retainURLParams: true,
+                     },
+                     csvDelimiter: ",", // "," as default,
+                     pdfZoom: {
+                        defaultZoom: 1.1, // 1 as default,
+                        zoomJump: 0.2, // 0.1 as default,
+                     },
+                     pdfVerticalScrollByDefault: true, // false as default
+                  }}
+               />
+            )}
+         </div>
+      );
+   }
 
    return (
       <Box
@@ -164,33 +259,7 @@ function FileViewer({ filename, filedata }: FileType) {
                </Flex>
             </Flex>
             <Flex bg="#F6F6F6" flex={1}>
-               <div className="file-viewer-container">
-                  {isViewer && fileUrl && (
-                     <DocViewer
-                        documents={[
-                           { uri: fileUrl }, // Remote file
-                        ]}
-                        pluginRenderers={DocViewerRenderers}
-                        config={{
-                           noRenderer: {
-                              overrideComponent: MyNoRenderer,
-                           },
-                           header: {
-                              disableHeader: true,
-                              disableFileName: true,
-                              retainURLParams: true,
-                           },
-                           csvDelimiter: ",", // "," as default,
-                           pdfZoom: {
-                              defaultZoom: 1.1, // 1 as default,
-                              zoomJump: 0.2, // 0.1 as default,
-                           },
-                           pdfVerticalScrollByDefault: true, // false as default
-                        }}
-                     />
-                  )}
-               </div>
-               
+               {renderFileContent()}
             </Flex>
          </Flex>
       </Box>
@@ -200,7 +269,7 @@ function FileViewer({ filename, filedata }: FileType) {
 function FileItem({ filename, filedata, className, onClick }: FileType & { className?: string, onClick?: () => void }) {
    const dispatch = useDispatch();
    const fileSize = useMemo(() => {
-      return formatBytes((Number(filedata.length) || 0) * 0.7);
+      return formatBytes(convertBase64ToFileSize(filedata));
    }, [filedata]);
 
    const fileExtension = useMemo(() => {
