@@ -401,6 +401,9 @@ func (s *Service) UpdateAgentUpgradeableCodeVersion(ctx context.Context, agentIn
 }
 
 func (s *Service) AgentFactoryAgentCreatedEvent(ctx context.Context, networkID uint64, event *agentfactory.AgentFactoryAgentCreated) error {
+	if !s.conf.ExistsedConfigKey(networkID, "agent_factory_address") {
+		return nil
+	}
 	agentFactoryAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "agent_factory_address"))
 	if strings.EqualFold(agentFactoryAddress, event.Raw.Address.Hex()) {
 		agentID := big.NewInt(0).SetBytes(event.AgentId[:]).Text(16)

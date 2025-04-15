@@ -198,3 +198,19 @@ func (s *Server) GetPumpOrderHistory(c *gin.Context) {
 func (s *Server) NotifyChangePricePump(c *gin.Context) {
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: true})
 }
+
+func (s *Server) MemeEventsByTransaction(c *gin.Context) {
+	ctx := s.requestContext(c)
+	txHash := s.stringFromContextQuery(c, "tx_hash")
+	networkID, err := s.uint64FromContextQuery(c, "network_id")
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	err = s.nls.MemeEventsByTransaction(ctx, networkID, txHash)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: true})
+}

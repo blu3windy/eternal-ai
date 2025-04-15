@@ -254,7 +254,16 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 		// 	}
 		// }
 	}
-	//
+	// handle vibe token factory token deployed events
+	{
+		for _, event := range eventResp.VibeTokenFactoryTokenDeployed {
+			err := s.VibeTokenFactoryTokenDeployedEvent(ctx, networkID, event)
+			if err != nil {
+				retErr = errs.MergeError(retErr, err)
+			}
+		}
+	}
+	// handle meme pool created events
 	{
 		var baseTokenETH, baseTokenEAI string
 		if s.conf.ExistsedConfigKey(networkID, "weth9_contract_address") {
@@ -308,6 +317,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			}
 		}
 	}
+	// handle meme swap events
 	{
 		poolMap := map[string]bool{}
 		for _, event := range eventResp.MemeSwap {
@@ -351,6 +361,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 		}
 	}
 	if !forScan {
+		// handle meme increase liquidity events
 		for _, event := range eventResp.MemeIncreaseLiquidity {
 			err := s.UpdateMemeLiquidityPosition(
 				ctx, networkID, event,
@@ -360,6 +371,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			}
 		}
 	}
+	// handle system prompt manager new tokens events
 	{
 		for _, event := range eventResp.SystemPromptManagerNewTokens {
 			err := s.SystemPromptManagerNewTokenEvent(
@@ -386,16 +398,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			}
 		}
 	}
-	{
-		for _, event := range eventResp.OrderpaymentOrderPaids {
-			err := s.OrderpaymentOrderPaidEvent(
-				ctx, networkID, event,
-			)
-			if err != nil {
-				retErr = errs.MergeError(retErr, err)
-			}
-		}
-	}
+	// handle agent created events
 	{
 		for _, event := range eventResp.AgentCreated {
 			err := s.AgentFactoryAgentCreatedEvent(ctx, networkID, event)
@@ -404,6 +407,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			}
 		}
 	}
+	// handle agent upgradeable code pointer created events
 	{
 		for _, event := range eventResp.CodePointerCreated {
 			err := s.HandleAgentUpgradeableCodePointerCreated(ctx, event)
@@ -1175,6 +1179,9 @@ func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]strin
 				if address != "" {
 					addrs = append(addrs, address)
 				}
+			}
+			if s.conf.ExistsedConfigKey(networkID, "vibe_token_factory_address") {
+				addrs = append(addrs, s.conf.GetConfigKeyString(networkID, "vibe_token_factory_address"))
 			}
 			agentAddresses, err := s.dao.FindAllAgentAddress(
 				daos.GetDBMainCtx(ctx),

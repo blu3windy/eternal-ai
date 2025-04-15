@@ -11,6 +11,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/agentshares"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/vibetokenfactory"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/ethapi"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
 	"github.com/jinzhu/gorm"
@@ -591,4 +592,52 @@ func (s *Service) GeUserByAddress(ctx context.Context, networkID uint64, address
 	}
 
 	return user, err
+}
+
+func (s *Service) VibeTokenFactoryTokenDeployedEvent(ctx context.Context, networkID uint64, event *vibetokenfactory.VibeTokenFactoryTokenDeployed) error {
+	if !s.conf.ExistsedConfigKey(networkID, "vibe_token_factory_address") {
+		return nil
+	}
+	vibeTokenFactoryAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "vibe_token_factory_address"))
+	if strings.EqualFold(vibeTokenFactoryAddress, event.Raw.Address.Hex()) {
+		agentID := big.NewInt(0).SetBytes(event.Nonce[:]).Text(16)
+		agentInfo, err := s.dao.FirstAgentInfo(
+			daos.GetDBMainCtx(ctx),
+			map[string][]any{
+				"agent_id = ?": {agentID},
+			},
+			map[string][]any{},
+			[]string{},
+		)
+		if err != nil {
+			return errs.NewError(err)
+		}
+		if agentInfo != nil {
+			meme, err := s.dao.FirstMeme(
+				daos.GetDBMainCtx(ctx),
+				map[string][]any{
+					"agent_info_id = ?": {agentInfo.ID},
+				},
+				map[string][]any{},
+				false,
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+			if meme != nil {
+				err = daos.GetDBMainCtx(ctx).
+					Model(meme).
+					Updates(
+						map[string]any{
+							"token_address":     strings.ToLower(event.Token.Hex()),
+							"add_pool2_tx_hash": event.Raw.TxHash.Hex(),
+						},
+					).Error
+				if err != nil {
+					return errs.NewError(err)
+				}
+			}
+		}
+	}
+	return nil
 }
