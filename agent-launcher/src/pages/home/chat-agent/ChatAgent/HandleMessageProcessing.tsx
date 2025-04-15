@@ -95,13 +95,14 @@ function HandleProcessingMessage({
                            status: "failed",
                            msg: errorMessage,
                         });
-                        dispatch(
-                           removeTaskItemByItemId({
-                              id: threadId,
-                              itemId: data.id,
-                           })
-                        );
                      }
+
+                     dispatch(
+                        removeTaskItemByItemId({
+                           id: threadId,
+                           itemId: data.id,
+                        })
+                     );
                   }
                } catch (e) {
                   timeout = setTimeout(() => {
