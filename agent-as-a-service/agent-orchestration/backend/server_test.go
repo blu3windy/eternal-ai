@@ -85,7 +85,7 @@ func Test_UTIL(t *testing.T) {
 }
 
 func Test_OpenAI(t *testing.T) {
-	ts.CallWssDexScreener()
+	ts.GetTelegramMessage(context.Background())
 }
 
 func Test_SRV(t *testing.T) {
