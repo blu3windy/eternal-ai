@@ -5,7 +5,7 @@ import { useMemo } from "react";
 
 type Props = React.ComponentPropsWithRef<'div'> & CustomComponentProps;
 
-function ImageLink({ node, children, ...props }: Props) {
+function IframeLink({ node, children, ...props }: Props) {
    const link = useMemo(() => {
       try {
          const imageChildren = (children as any[])
@@ -34,4 +34,4 @@ function ImageLink({ node, children, ...props }: Props) {
    );
 }
 
-export default ImageLink;
+export default IframeLink;

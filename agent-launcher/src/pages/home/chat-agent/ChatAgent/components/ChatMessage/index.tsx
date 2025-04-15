@@ -9,7 +9,7 @@ import s from "./ChatMessage.module.scss";
 // import {WaitingAnimation} from '@/modules/chat/components/ChatMessage/WaitingForGenerate/WaitingForGenerateText';
 import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/WaitingForGenerateText";
 import CustomMarkdown from "@components/CustomMarkdown";
-import { COMPUTER_USE_TAG_REGEX, FILES_TAG_REGEX, IMAGE_LINK_DATA_REGEX, IMAGE_SLIDER_TAG_REGEX, IMAGE_SLIDE_ITEM_TAG_REGEX, MARKDOWN_TAGS, THINK_TAG_REGEX } from "@components/CustomMarkdown/constants";
+import { COMPUTER_USE_TAG_REGEX, FILES_TAG_REGEX, IFRAME_LINK_DATA_REGEX, IMAGE_SLIDER_TAG_REGEX, IMAGE_SLIDE_ITEM_TAG_REGEX, MARKDOWN_TAGS, THINK_TAG_REGEX } from "@components/CustomMarkdown/constants";
 import ProcessingTaskModal from "@pages/home/list-agent/BottomBar/ProcessingTaskModal";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { openWithUrl } from "@stores/states/floating-web-view/reducer";
@@ -281,7 +281,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                            .replace(THINK_TAG_REGEX, '')
                            .replace(COMPUTER_USE_TAG_REGEX, '')
                            .replace(FILES_TAG_REGEX, '')
-                           .replace(IMAGE_LINK_DATA_REGEX, '')
+                           .replace(IFRAME_LINK_DATA_REGEX, '')
                            .replace(IMAGE_SLIDER_TAG_REGEX, (_, sliderInnerText) => {
                               return sliderInnerText
                                  .replace(/\n/g, "")

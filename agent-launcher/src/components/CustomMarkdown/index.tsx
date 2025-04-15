@@ -6,13 +6,13 @@ import remarkBreaks from 'remark-breaks'
 import GeneralCode from "./GenerateCode";
 import CustomLink from "./Link";
 import ContentReplay from "./Content";
-import { FILES_TAG_REGEX, IMAGE_LINK_DATA_REGEX, IMAGE_SLIDER_TAG_REGEX, MARKDOWN_TAGS, THINK_TAG_REGEX } from "./constants";
+import { FILES_TAG_REGEX, IFRAME_LINK_DATA_REGEX, IMAGE_SLIDER_TAG_REGEX, MARKDOWN_TAGS, THINK_TAG_REGEX } from "./constants";
 import DeepThinking from "./DeepThinking";
 // import { MSG_WITH_IMAGE_SLIDER } from "./test";
 import ImageSlider from "./ImageSlider";
 import Files from "./Files";
 // import { MSG_WITH_FILES, MSG_WITH_IMAGE_LINK, MSG_WITH_IMAGE_SLIDER, THINK_TAG_MOCKUP } from "./test";
-import ImageLink from "./ImageLink";
+import IframeLink from "./IframeLink";
 
 const preprocessMarkdown = (content: string) => {
    try {
@@ -26,9 +26,9 @@ const preprocessMarkdown = (content: string) => {
             (_, innerText) =>
                `<${MARKDOWN_TAGS.FILES}>${innerText.trim().replace(/\n/g, "")}</${MARKDOWN_TAGS.FILES}>`)
          ?.replace?.(
-            IMAGE_LINK_DATA_REGEX,
+            IFRAME_LINK_DATA_REGEX,
             (_, innerText) =>
-               `<${MARKDOWN_TAGS.IMAGE_LINK}>${innerText.trim().replace(/\n/g, "")}</${MARKDOWN_TAGS.IMAGE_LINK}>`);
+               `<${MARKDOWN_TAGS.IFRAME_LINK}>${innerText.trim().replace(/\n/g, "")}</${MARKDOWN_TAGS.IFRAME_LINK}>`);
       return result;
    } catch (error) {
       return "";
@@ -78,8 +78,8 @@ function CustomMarkdown({
          ['files']: (props) => {
             return <Files {...props} key={id}/>;
          },
-         ['image-link']: (props) => {
-            return <ImageLink {...props} key={id}/>;
+         ['iframe-link']: (props) => {
+            return <IframeLink {...props} key={id}/>;
          }
       } satisfies any;
    }, []);

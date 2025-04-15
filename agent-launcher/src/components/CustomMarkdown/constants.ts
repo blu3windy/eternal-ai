@@ -10,7 +10,8 @@ export const FILE_TAG_REGEX = /<file>([\s\S]*?)(?:<\/file>|$)/g
 export const FILE_NAME_REGEX = /<filename>([\s\S]*?)(?:<\/filename>|$)/g
 export const FILE_DATA_REGEX = /<filedata>([\s\S]*?)(?:<\/filedata>|$)/g
 
-export const IMAGE_LINK_DATA_REGEX = /<image-link>([\s\S]*?)(?:<\/image-link>|$)/g
+// export const IMAGE_LINK_DATA_REGEX = /<image-link>([\s\S]*?)(?:<\/image-link>|$)/g
+export const IFRAME_LINK_DATA_REGEX = /<iframe-link>([\s\S]*?)(?:<\/iframe-link>|$)/g
 
 
 export const MARKDOWN_TAGS = {
@@ -25,5 +26,5 @@ export const MARKDOWN_TAGS = {
    FILE_NAME: 'filename',
    FILE_DATA: 'filedata',
 
-   IMAGE_LINK: 'image-link'
+   IFRAME_LINK: 'iframe-link'
 }
