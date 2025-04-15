@@ -47,7 +47,7 @@ func init() {
 func Test_JOB(t *testing.T) {
 
 	fmt.Println(
-		ts.ScanEventsByChain(context.Background(), models.BASE_CHAIN_ID),
+		ts.ScanEventsByChain(context.Background(), models.BSC_CHAIN_ID),
 	)
 
 	// data, err := ts.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), "man opens shirt and shows his fat belly")

@@ -171,9 +171,9 @@ func (s *Service) RunJobs(ctx context.Context) error {
 			From(helpers.GetNextScheduleTime(30*time.Second, time.Duration(i)*7*time.Second)).
 			Do(
 				func(rangeIndex int) {
-					fmt.Printf("ScanEventsByChainRange_%d\n", rangeIndex)
 					for idx, networkID := range networkIDs {
 						if idx%4 == rangeIndex {
+							fmt.Printf("ScanEventsByChainRange_%d_%d\n", rangeIndex, networkID)
 							s.ScanEventsByChain(context.Background(), networkID)
 						}
 					}
