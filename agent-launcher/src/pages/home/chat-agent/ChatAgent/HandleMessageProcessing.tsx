@@ -39,6 +39,10 @@ function HandleProcessingMessage({
                   }
 
                   try {
+                     console.log('__________chatAgentUtility__________', {
+                        id: data.id,
+                        agent: agent,
+                     });
                      const res = await AgentAPI.chatAgentUtility({
                         id: data.id,
                         agent: agent,
@@ -47,7 +51,7 @@ function HandleProcessingMessage({
                      if (res?.status !== 102) {
                         console.log('__________res__________', res);
                         try {
-                           if (res.choices[0].message.content) {
+                           if (res?.choices?.[0]?.message?.content) {
                               if (!data.msg || (res.choices[0].message.content as string).includes(data.msg)) {
                                  updateMessage(data.id, {
                                     status: "received",
