@@ -139,8 +139,8 @@ function createWindow() {
    function handleDeepLink(deepLink) {
       console.log('Opened with URL:', deepLink);
 
-      const parsedUrl = deepLink.parse(deepLink, true);
-      const params = parsedUrl.query;
+      const parsedUrl = (new URL(deepLink));
+      const params = parsedUrl.searchParams;
       console.log('Deep link params:', params);
 
       if (win) {
@@ -151,7 +151,7 @@ function createWindow() {
    }
 
    app.on('second-instance', (event, argv) => {
-      const deepLink = argv.find((arg) => arg.startsWith('myapp://'));
+      const deepLink = argv.find((arg) => arg.startsWith('vibe://'));
       if (deepLink) handleDeepLink(deepLink);
       if (win) {
          if (win.isMinimized()) win.restore();

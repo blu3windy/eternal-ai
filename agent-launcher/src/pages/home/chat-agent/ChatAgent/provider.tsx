@@ -317,43 +317,43 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          let isGeneratedDone = false;
          return {
             onStream: (content: string, chunk: string, options) => {
-               const text = content;
+               // const text = content;
 
-               if (isGeneratedDone) {
-                  setIsLoading(false);
-                  updateMessage(messageId, {
-                     msg: text,
-                     status: "pre-done",
-                     queryMessageState: options?.message,
-                     onchain_data: options.onchain_data,
-                  });
-               } else {
-                  isGeneratedDone = !!options?.isGeneratedDone;
-                  updateMessage(messageId, {
-                     msg: text,
-                     status: text.trim().length ? "receiving" : "waiting",
-                     queryMessageState: options?.message,
-                     onchain_data: options.onchain_data,
-                  });
-               }
+               // if (isGeneratedDone) {
+               //    setIsLoading(false);
+               //    updateMessage(messageId, {
+               //       msg: text,
+               //       status: "pre-done",
+               //       queryMessageState: options?.message,
+               //       onchain_data: options.onchain_data,
+               //    });
+               // } else {
+               //    isGeneratedDone = !!options?.isGeneratedDone;
+               //    updateMessage(messageId, {
+               //       msg: text,
+               //       status: text.trim().length ? "receiving" : "waiting",
+               //       queryMessageState: options?.message,
+               //       onchain_data: options.onchain_data,
+               //    });
+               // }
             },
             onFinish: (content: string, options) => {
-               updateMessage(messageId, {
-                  status: "received",
-                  queryMessageState: options?.message,
-                  onchain_data: options.onchain_data,
-               });
-               updateTaskItem({
-                  id: messageId,
-                  status: "done",
-               } as TaskItem);
+               // updateMessage(messageId, {
+               //    status: "received",
+               //    queryMessageState: options?.message,
+               //    onchain_data: options.onchain_data,
+               // });
+               // updateTaskItem({
+               //    id: messageId,
+               //    status: "done",
+               // } as TaskItem);
                
-               if (sessionId && isFirstChat) {
-                  const match = content.match(/<\/think>\s*([\s\S]*)/);
-                  const result = match ? match[1].trim() : '';
-                  chatAgentDatabase.updateSessionName(sessionId, result || "New Chat");
-                  refEmptyMessage.current = false;
-               }
+               // if (sessionId && isFirstChat) {
+               //    const match = content.match(/<\/think>\s*([\s\S]*)/);
+               //    const result = match ? match[1].trim() : '';
+               //    chatAgentDatabase.updateSessionName(sessionId, result || "New Chat");
+               //    refEmptyMessage.current = false;
+               // }
             },
             onFail: (err: any) => {
                // updateMessage(messageId, {

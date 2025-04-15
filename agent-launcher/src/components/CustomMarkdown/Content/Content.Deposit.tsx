@@ -15,9 +15,7 @@ const ContentDeposit = (props) => {
   const address = matchDeposit[2];
   const network = matchDeposit[4];
 
-  const walletAddress = agentWallet?.address;
-
-  console.log("agentWallet", matchDeposit);
+  const walletAddress = address || agentWallet?.address;
 
   return (
     <Flex className={s.contentDeposit}>
