@@ -173,38 +173,49 @@ const AgentItem = ({ token, addActiveAgent }: IProps) => {
                   .filter((item) => item.createdAt)
                   .map((item) => {
 
-                     const now = new Date();
-                     const createdAt = new Date(item.createdAt || "");
-                     const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-                     if (item.status === "waiting" || item.status === "receiving") {
-                        if (diffMinutes >= 3) {
-                           if (item.msg) {
-                              const updateMessage = {
-                                 ...item,
-                                 status: "received",
-                                 updatedAt: new Date().getTime(),
-                              };
-                              return updateMessage;
-                           }
+                     // const now = new Date();
+                     // const createdAt = new Date(item.createdAt || "");
+                     // const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+                     // if (item.status === "waiting" || item.status === "receiving") {
+                     //    if (diffMinutes >= 3) {
+                     //       if (item.msg) {
+                     //          const updateMessage = {
+                     //             ...item,
+                     //             status: "received",
+                     //             updatedAt: new Date().getTime(),
+                     //          };
+                     //          return updateMessage;
+                     //       }
 
-                           const updateMessage = {
-                              ...item,
-                              msg: "Something went wrong!",
-                              status: "failed",
-                              updatedAt: new Date().getTime(),
-                           };
-                           return updateMessage;
-                        } else {
-                           if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-                              const updateMessage = {
-                                 ...item,
-                                 status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                                 updatedAt: new Date().getTime(),
-                              };
-                              return updateMessage;
-                           }
-                        }
+                     //       const updateMessage = {
+                     //          ...item,
+                     //          msg: "Something went wrong!",
+                     //          status: "failed",
+                     //          updatedAt: new Date().getTime(),
+                     //       };
+                     //       return updateMessage;
+                     //    } else {
+                     //       if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
+                     //          const updateMessage = {
+                     //             ...item,
+                     //             status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
+                     //             updatedAt: new Date().getTime(),
+                     //          };
+                     //          return updateMessage;
+                     //       }
+                     //    }
+                     // }
+                     // return item;
+
+                     if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
+                        const updateMessage = {
+                           ...item,
+                           status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
+                           updatedAt: new Date().getTime(),
+                        };
+                        return updateMessage;
                      }
+
                      return item;
                   });
 
