@@ -93,8 +93,8 @@ const AgentTopInfo = () => {
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
 
    const allowStopAgent = useMemo(() => {
-      const isAgentSystem = (compareString(selectedAgent?.agent_name, currentActiveModel?.agent?.agent_name) || 
-         currentActiveModel?.dependAgents?.find((address) => compareString(address, selectedAgent?.agent_contract_address)));
+      const isAgentSystem = (compareString(selectedAgent?.agent_name, currentActiveModel?.agent?.agent_name) 
+         || currentActiveModel?.dependAgents?.find((address) => compareString(address, selectedAgent?.agent_contract_address)));
       return !isAgentSystem && !SYSTEM_AGENTS.some(id => compareString(id, selectedAgent?.id));
    }, [selectedAgent, currentActiveModel]);
 
@@ -230,7 +230,7 @@ const AgentTopInfo = () => {
                {
                   showSelectModel ? (
                      <Flex gap={'6px'} alignItems={'center'}>
-                       <SelectModel showDescription={false} />
+                        <SelectModel showDescription={false} />
                         <ButtonChatHistory />
                         <ButtonChatCreate />
                      </Flex>
@@ -239,7 +239,7 @@ const AgentTopInfo = () => {
 
                <Flex gap={'12px'} justifyContent={'space-between'} alignItems={'center'}>
 
-                   <Flex gap={'6px'} alignItems={'center'} className={s.content}>
+                  <Flex gap={'6px'} alignItems={'center'} className={s.content}>
                      <InfoTooltip
                         key={`info-tooltip-${selectedAgent?.id}-${infoTooltipKey}`}
                         iconSize="20px"
@@ -316,7 +316,7 @@ const AgentTopInfo = () => {
                                     <Button
                                        className={s.btnStop}
                                        onClick={async () => {
-                                          handleStopAgent();
+                                          // handleStopAgent();
                                           setIsShowSetupEnvModel(true);
                                        }}
                                        isDisabled={isStopping}
@@ -509,6 +509,7 @@ const AgentTopInfo = () => {
                   environments={JSON.stringify(environments || "")}
                   onSubmit={async () => {
                      try {
+                        await handleStopAgent();
                         await getEnvironments();
                         setIsShowSetupEnvModel(false);
                      } catch (error) {
