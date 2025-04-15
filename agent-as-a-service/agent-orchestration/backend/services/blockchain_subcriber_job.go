@@ -1133,30 +1133,14 @@ func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]strin
 		&addrs,
 		func() (any, error) {
 			addrs := []string{}
-			memes, err := s.dao.FindMeme(
+			memeAddresses, err := s.dao.FindAllMemeTokenAddress(
 				daos.GetDBMainCtx(ctx),
-				map[string][]any{
-					"network_id = ?": {networkID},
-				},
-				map[string][]any{},
-				[]string{},
-				0,
-				999999,
+				networkID,
 			)
 			if err != nil {
 				return nil, errs.NewError(err)
 			}
-			for _, v := range memes {
-				if v.TokenAddress != "" {
-					addrs = append(addrs, v.TokenAddress)
-				}
-				if v.Pool != "" {
-					addrs = append(addrs, v.Pool)
-				}
-				if v.UniswapPool != "" {
-					addrs = append(addrs, v.UniswapPool)
-				}
-			}
+			addrs = append(addrs, memeAddresses...)
 			if s.conf.ExistsedConfigKey(networkID, "meme_position_mamanger_address") {
 				addrs = append(addrs, s.conf.GetConfigKeyString(networkID, "meme_position_mamanger_address"))
 			}
@@ -1184,34 +1168,14 @@ func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]strin
 					addrs = append(addrs, address)
 				}
 			}
-			agents, err := s.dao.FindAgentInfo(
+			agentAddresses, err := s.dao.FindAllAgentAddress(
 				daos.GetDBMainCtx(ctx),
-				map[string][]any{
-					"network_id = ?":               {networkID},
-					"agent_contract_address != ''": {},
-					"agent_type in (?)": {
-						[]models.AgentInfoAgentType{
-							models.AgentInfoAgentTypeModel,
-							models.AgentInfoAgentTypeModelOnline,
-							models.AgentInfoAgentTypeJs,
-							models.AgentInfoAgentTypePython,
-							models.AgentInfoAgentTypeInfa,
-							models.AgentInfoAgentTypeCustomUi,
-							models.AgentInfoAgentTypeCustomPrompt,
-						},
-					},
-				},
-				map[string][]any{},
-				[]string{},
-				0,
-				999999,
+				networkID,
 			)
 			if err != nil {
 				return nil, errs.NewError(err)
 			}
-			for _, agent := range agents {
-				addrs = append(addrs, agent.AgentContractAddress)
-			}
+			addrs = append(addrs, agentAddresses...)
 			return addrs, nil
 		},
 	)

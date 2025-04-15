@@ -490,3 +490,33 @@ func (d *DAO) FindTrendingToken(tx *gorm.DB, filters map[string][]interface{}, p
 	}
 	return tokens, nil
 }
+
+func (d *DAO) FindAllMemeTokenAddress(tx *gorm.DB, networkID uint64) ([]string, error) {
+	var ms []*struct {
+		TokenAddress string
+		Pool         string
+		UniswapPool  string
+	}
+	err := tx.Raw(`
+		select token_address, pool, uniswap_pool
+		from memes
+		where network_id = ?
+		and token_address != ''
+	`, networkID).Scan(&ms).Error
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	addresses := []string{}
+	for _, v := range ms {
+		if v.TokenAddress != "" {
+			addresses = append(addresses, v.TokenAddress)
+		}
+		if v.Pool != "" {
+			addresses = append(addresses, v.Pool)
+		}
+		if v.UniswapPool != "" {
+			addresses = append(addresses, v.UniswapPool)
+		}
+	}
+	return addresses, nil
+}
