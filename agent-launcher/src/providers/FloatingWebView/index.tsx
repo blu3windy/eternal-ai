@@ -20,8 +20,8 @@ function FloatingWebView() {
 
    useEffect(() => {
       setViewPosition({
-         x: window.innerWidth - 48 - 650,
-         y: window.innerWidth - 100 - 48 - 450,
+         x: document.documentElement.clientWidth - 48 - 650,
+         y: document.documentElement.clientHeight - 100 - 48 - 450,
       })
    }, [isOpen])
 
@@ -32,12 +32,12 @@ function FloatingWebView() {
       }
    }, [isMaximized])
 
-   if (isOpen && url) {
+   if (isOpen && url && viewPosition) {
       return (
          <Draggable
             position={viewPosition}
             onDrag={(e, data) => {
-               if (!isMaximized) {
+               if (!isMaximized && isOpen) {
                   setViewPosition({
                      x: data.x,
                      y: data.y,
