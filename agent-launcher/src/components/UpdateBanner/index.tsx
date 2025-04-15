@@ -9,7 +9,7 @@ const UpdateBanner = () => {
  
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
-  const {isFinished} = useStarter();
+  const {dockerIsFinished} = useStarter();
 
   const checkUpdateAndInstall = () => {
     globalThis.electronAPI.onCheckForUpdate();
@@ -39,7 +39,7 @@ const UpdateBanner = () => {
 }
 
 
-  if (!updateAvailable || !isFinished) {
+  if (!updateAvailable || !dockerIsFinished) {
     return null;
   }
 
