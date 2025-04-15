@@ -84,12 +84,15 @@ for container in "${DOCKER_CONTAINERS[@]}"; do
         continue
     fi
     
-    # Just build if image not exists or force build
-    if ! docker images "${container_name}" -q || [ "$FORCE_BUILD" = true ]; then
+    # Check if image exists
+    image_exists=$(docker images "${container_name}" -q)
+    
+    # Build if image doesn't exist or force build is true
+    if [ -z "$image_exists" ] || [ "$FORCE_BUILD" = true ]; then
         # Build image
         if ! docker build -t "${container_name}" "./${folder_name}"; then
-        log_error "Failed to build $container_name"
-        build_success=false
+            log_error "Failed to build $container_name"
+            build_success=false
             continue
         fi
     fi
