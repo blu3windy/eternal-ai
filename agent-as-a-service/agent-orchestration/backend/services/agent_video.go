@@ -12,7 +12,6 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/clanker"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/privy"
 	"github.com/jinzhu/gorm"
 )
 
@@ -265,7 +264,7 @@ func (s *Service) GenerateTokenInfoFromVideoPrompt(ctx context.Context, sysPromp
 
 func (s *Service) GetListUserVideo(ctx context.Context, userAddres, search string) ([]*models.ClankerVideoToken, error) {
 	filters := map[string][]interface{}{
-		"lower(requestor_address) = ? ": {strings.ToLower(userAddres)},
+		"lower(requestor_address) = ? or lower(owner_twitter_id) = ?": {strings.ToLower(userAddres), strings.ToLower(userAddres)},
 	}
 
 	if search != "" {
@@ -294,23 +293,37 @@ func (s *Service) GetListUserVideo(ctx context.Context, userAddres, search strin
 	return res, nil
 }
 
-func (s *Service) TestPrivy(ctx context.Context) error {
-	privyResp, err := s.privyClient.CreateUser(&privy.CreateUserReq{
-		CreateEthereumWallet: true,
-		LinkedAccounts: []privy.LinkedAccountReq{
-			{
-				Type:     "twitter_oauth",
-				Subject:  "1872182928639451136",
-				Name:     "wilfred bvm",
-				Username: "BvmWilfred93209",
-			},
+func (s *Service) GetVideoUserInfo(ctx context.Context, twitterID string) (*models.PrivyWallet, error) {
+	insts, err := s.dao.FirstPrivyWallet(daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"twitter_id = ? or address = ?": {twitterID, strings.ToLower(twitterID)},
 		},
-	})
+		map[string][]interface{}{},
+		[]string{},
+	)
 	if err != nil {
-		return errs.NewError(err)
+		return nil, errs.NewError(err)
 	}
-	fmt.Println(privyResp)
-	return nil
+	return insts, nil
+}
+
+func (s *Service) ExportUserPrivateKeyForClaimVideoReward(ctx context.Context, userAddress string) (string, error) {
+	privyWallet, err := s.dao.FirstPrivyWallet(daos.GetDBMainCtx(ctx),
+		map[string][]interface{}{
+			"user_address = ?": {strings.ToLower(userAddress)},
+		},
+		map[string][]interface{}{},
+		[]string{},
+	)
+	if err != nil {
+		return "", errs.NewError(err)
+	}
+	if privyWallet == nil {
+		return "", errs.NewError(errs.ErrRecordNotFound)
+	}
+	prk := s.GetAddressPrk(privyWallet.Address)
+
+	return prk, nil
 }
 
 // package services

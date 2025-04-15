@@ -555,3 +555,22 @@ func NewTrendingTokenRespArray(arr []*models.TrendingToken) []*TrendingTokenResp
 	}
 	return resps
 }
+
+type UserVideoInfoResp struct {
+	TwitterID   string            `json:"twitter_id"`
+	Address     string            `json:"address"`
+	UserAddress string            `json:"user_address"`
+	WalletType  models.WalletType `json:"wallet_type"`
+}
+
+func NewUserVideoInfoResp(m *models.PrivyWallet) *UserVideoInfoResp {
+	if m == nil {
+		return nil
+	}
+	return &UserVideoInfoResp{
+		Address:     m.Address,
+		TwitterID:   m.TwitterID,
+		UserAddress: m.UserAddress,
+		WalletType:  m.WalletType,
+	}
+}
