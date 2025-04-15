@@ -397,6 +397,14 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 		}
 	}
 	{
+		for _, event := range eventResp.AgentCreated {
+			err := s.AgentFactoryAgentCreatedEvent(ctx, networkID, event)
+			if err != nil {
+				retErr = errs.MergeError(retErr, err)
+			}
+		}
+	}
+	{
 		for _, event := range eventResp.CodePointerCreated {
 			err := s.HandleAgentUpgradeableCodePointerCreated(ctx, event)
 			if err != nil {
@@ -1115,7 +1123,7 @@ func (s *Service) CreateSolanaTokenTransferEvent(ctx context.Context, networkID 
 }
 
 func (s *Service) DeleteFilterAddrs(ctx context.Context, networkID uint64) error {
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		err := s.DeleteRedisCachedWithKey(fmt.Sprintf("GetFilterAddrs_%d", networkID))
 		if err == nil {
 			break
@@ -1127,36 +1135,20 @@ func (s *Service) DeleteFilterAddrs(ctx context.Context, networkID uint64) error
 func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]string, error) {
 	addrs := []string{}
 	err := s.RedisCached(
-		fmt.Sprintf("GetFilterAddrs_%d", networkID),
+		fmt.Sprintf("GetFilterAddrsV1_%d", networkID),
 		true,
 		5*time.Minute,
 		&addrs,
 		func() (any, error) {
 			addrs := []string{}
-			memes, err := s.dao.FindMeme(
+			memeAddresses, err := s.dao.FindAllMemeTokenAddress(
 				daos.GetDBMainCtx(ctx),
-				map[string][]any{
-					"network_id = ?": {networkID},
-				},
-				map[string][]any{},
-				[]string{},
-				0,
-				999999,
+				networkID,
 			)
 			if err != nil {
 				return nil, errs.NewError(err)
 			}
-			for _, v := range memes {
-				if v.TokenAddress != "" {
-					addrs = append(addrs, v.TokenAddress)
-				}
-				if v.Pool != "" {
-					addrs = append(addrs, v.Pool)
-				}
-				if v.UniswapPool != "" {
-					addrs = append(addrs, v.UniswapPool)
-				}
-			}
+			addrs = append(addrs, memeAddresses...)
 			if s.conf.ExistsedConfigKey(networkID, "meme_position_mamanger_address") {
 				addrs = append(addrs, s.conf.GetConfigKeyString(networkID, "meme_position_mamanger_address"))
 			}
@@ -1178,8 +1170,21 @@ func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]strin
 			if s.conf.ExistsedConfigKey(networkID, "order_payment_contract_address") {
 				addrs = append(addrs, s.conf.GetConfigKeyString(networkID, "order_payment_contract_address"))
 			}
+			if s.conf.ExistsedConfigKey(networkID, "agent_factory_address") {
+				address := s.conf.GetConfigKeyString(networkID, "agent_factory_address")
+				if address != "" {
+					addrs = append(addrs, address)
+				}
+			}
+			agentAddresses, err := s.dao.FindAllAgentAddress(
+				daos.GetDBMainCtx(ctx),
+				networkID,
+			)
+			if err != nil {
+				return nil, errs.NewError(err)
+			}
+			addrs = append(addrs, agentAddresses...)
 			return addrs, nil
-
 		},
 	)
 	if err != nil {
@@ -1312,11 +1317,10 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 								if !chain.Enabled || chain.LastBlockNumber == 0 {
 									break
 								}
-								// addrs, err := s.GetFilterAddrs(ctx, chain.NetworkID)
-								// if err != nil {
-								// 	return errs.NewError(err)
-								// }
-								addrs := []string{}
+								addrs, err := s.GetFilterAddrs(ctx, chain.NetworkID)
+								if err != nil {
+									return errs.NewError(err)
+								}
 								startBlocks := chain.LastBlockNumber + 1
 								endBlocks := (chain.LastBlockNumber + chain.NumBlocks - 1)
 								eventResp, err := ethClient.ScanEvents(addrs, startBlocks, endBlocks)

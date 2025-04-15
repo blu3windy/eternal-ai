@@ -167,15 +167,19 @@ func (s *Service) RunJobs(ctx context.Context) error {
 		}
 	}
 	for i := range 4 {
-		func(rangeIndex int) {
-			gocron.Every(30).Second().Do(func() {
-				for idx, networkID := range networkIDs {
-					if idx%4 == rangeIndex {
-						s.ScanEventsByChain(context.Background(), networkID)
+		gocron.Every(30).Second().
+			From(helpers.GetNextScheduleTime(30*time.Second, time.Duration(i)*7*time.Second)).
+			Do(
+				func(rangeIndex int) {
+					for idx, networkID := range networkIDs {
+						if idx%4 == rangeIndex {
+							fmt.Printf("ScanEventsByChainRange_%d_%d\n", rangeIndex, networkID)
+							s.ScanEventsByChain(context.Background(), networkID)
+						}
 					}
-				}
-			})
-		}(i)
+				},
+				i,
+			)
 	}
 
 	// agent mint nft

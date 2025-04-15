@@ -57,6 +57,8 @@ func (s *Server) Routers() {
 		rootAPI.GET("/eai/supply/circulating", s.GetEAISupplyCirculating)
 		rootAPI.GET("/coin-prices", s.GetTokenPrice)
 		rootAPI.GET("/trending-tokens", s.GetListTrendingTokens)
+		rootAPI.GET("/pump-order-history", s.GetPumpOrderHistory)
+		rootAPI.GET("/notify-change-price-pump", s.NotifyChangePricePump)
 		rootAPI.POST("/vibe-white-list", s.AddVibeWhiteList)
 
 		webhookAPI := rootAPI.Group("/webhook")

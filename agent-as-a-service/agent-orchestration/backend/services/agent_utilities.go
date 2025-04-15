@@ -3,15 +3,16 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"math/big"
 	"strings"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/agentfactory"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/agentupgradeable"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/erc20utilityagent"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/evmapi"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -48,6 +49,7 @@ func (s *Service) ERC20UtilityAgentGetStorageInfo(
 func (s *Service) DeployAgentUpgradeableAddress(
 	ctx context.Context,
 	networkID uint64,
+	agentID string,
 	agentName string,
 	agentVersion string,
 	codeLanguage string,
@@ -56,35 +58,23 @@ func (s *Service) DeployAgentUpgradeableAddress(
 	agentOwner common.Address,
 ) (string, string, string, error) {
 	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
-	proxyAdminAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "proxy_admin_address"))
-	logicAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "agentupgradeable_address"))
-	registrarAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "registrar_address"))
-	resolverAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "resolver_address"))
-	initializeData, err := evmapi.AgentUpgradeableInitializeData(
-		agentName,
-		agentVersion,
-		codeLanguage,
-		pointers,
-		depsAgents,
-		agentOwner,
-		common.HexToAddress(registrarAddress),
-		common.HexToAddress(resolverAddress),
-		10*365*24*60*60,
-	)
-	if err != nil {
-		return "", "", "", errs.NewError(err)
-	}
-	contractAddress, txHash, err := s.GetEVMClient(ctx, networkID).
-		DeployTransparentUpgradeableProxy(
+	agentFactoryAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "agent_factory_address"))
+	txHash, err := s.GetEthereumClient(ctx, networkID).
+		AgentFactoryCreateAgent(
+			agentFactoryAddress,
 			s.GetAddressPrk(memePoolAddress),
-			helpers.HexToAddress(logicAddress),
-			helpers.HexToAddress(proxyAdminAddress),
-			initializeData,
+			common.HexToHash(agentID),
+			agentName,
+			agentVersion,
+			codeLanguage,
+			pointers,
+			depsAgents,
+			agentOwner,
 		)
 	if err != nil {
 		return "", "", "", errs.NewError(err)
 	}
-	return contractAddress, logicAddress, txHash, nil
+	return "", "", txHash, nil
 }
 
 func (s *Service) UpgradeAgentUpgradeable(ctx context.Context, agentInfoID uint) (string, error) {
@@ -251,9 +241,10 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 							codeLanguage = "custom_prompt"
 						}
 					}
-					contractAddress, logicAddress, txHash, err := s.DeployAgentUpgradeableAddress(
+					_, _, txHash, err := s.DeployAgentUpgradeableAddress(
 						ctx,
 						agentInfo.NetworkID,
+						agentInfo.AgentID,
 						agentInfo.AgentName,
 						"1",
 						codeLanguage,
@@ -268,12 +259,7 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 						Model(agentInfo).
 						Updates(
 							map[string]any{
-								"agent_contract_address": strings.ToLower(contractAddress),
-								"agent_logic_address":    strings.ToLower(logicAddress),
-								"agent_contract_id":      "0",
-								"mint_hash":              txHash,
-								"status":                 models.AssistantStatusReady,
-								"reply_enabled":          true,
+								"mint_hash": txHash,
 							},
 						).Error
 					if err != nil {
@@ -409,6 +395,45 @@ func (s *Service) UpdateAgentUpgradeableCodeVersion(ctx context.Context, agentIn
 			).Error
 		if err != nil {
 			return errs.NewError(err)
+		}
+	}
+	return nil
+}
+
+func (s *Service) AgentFactoryAgentCreatedEvent(ctx context.Context, networkID uint64, event *agentfactory.AgentFactoryAgentCreated) error {
+	agentFactoryAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "agent_factory_address"))
+	if strings.EqualFold(agentFactoryAddress, event.Raw.Address.Hex()) {
+		agentID := big.NewInt(0).SetBytes(event.AgentId[:]).Text(16)
+		agentInfo, err := s.dao.FirstAgentInfo(
+			daos.GetDBMainCtx(ctx),
+			map[string][]any{
+				"agent_id = ?": {agentID},
+			},
+			map[string][]any{},
+			[]string{},
+		)
+		if err != nil {
+			return errs.NewError(err)
+		}
+		if agentInfo != nil && agentInfo.AgentContractAddress == "" {
+			agentAddress := strings.ToLower(event.Agent.Hex())
+			err = daos.GetDBMainCtx(ctx).
+				Model(agentInfo).
+				Updates(
+					map[string]any{
+						"agent_contract_address": agentAddress,
+						"agent_contract_id":      "0",
+						"mint_hash":              event.Raw.TxHash.Hex(),
+						"status":                 models.AssistantStatusReady,
+						"reply_enabled":          true,
+						"agent_nft_minted":       true,
+					},
+				).Error
+			if err != nil {
+				return errs.NewError(err)
+			}
+			s.DeleteFilterAddrs(ctx, agentInfo.NetworkID)
+			go s.UpdateAgentUpgradeableCodeVersion(ctx, agentInfo.ID)
 		}
 	}
 	return nil
