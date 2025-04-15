@@ -242,7 +242,7 @@ const AgentDetail = () => {
                                  onClick={handleInstall}
                                  isLoading={isInstalling}
                                  isDisabled={isInstalling}
-                                 loadingText={totalStep > 0 ? `${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : 'Installing...'}
+                                 loadingText={totalStep > 0 ? `Installing... ${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : 'Installing...'}
                               >
                                  Get
                               </Button>
