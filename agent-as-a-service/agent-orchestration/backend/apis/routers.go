@@ -60,6 +60,7 @@ func (s *Server) Routers() {
 		rootAPI.GET("/pump-order-history", s.GetPumpOrderHistory)
 		rootAPI.GET("/notify-change-price-pump", s.NotifyChangePricePump)
 		rootAPI.POST("/vibe-white-list", s.AddVibeWhiteList)
+		rootAPI.GET("/scan-transaction", s.MemeEventsByTransaction)
 
 		webhookAPI := rootAPI.Group("/webhook")
 		{
