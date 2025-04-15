@@ -339,6 +339,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                {renderContent()}
                {processingWebViewUrl && (
                   <Box
+                     as="div"
                      position={"absolute"}
                      right={"-40px"}
                      bottom={0}
@@ -360,7 +361,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                         // transform: "translateY(-2px)",
                         // transition: "transform 0.2s ease-in-out",
                      }}
-                     onClick={() => {
+                     onMouseDown={() => {
                         console.log('__________processingWebViewUrl__________', {
                            processingWebViewUrl,
                            message,
@@ -372,6 +373,18 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                            taskProcessing: replyToMessage?.msg || ''
                         }))
                      }}
+                     // onClick={() => {
+                     //    console.log('__________processingWebViewUrl__________', {
+                     //       processingWebViewUrl,
+                     //       message,
+                     //    })
+                     //    const replyToMessage = messages.find(item => item.id === message.replyTo);
+                     //    dispatch(openWithUrl({
+                     //       url: processingWebViewUrl,
+                     //       task: 'Searching',
+                     //       taskProcessing: replyToMessage?.msg || ''
+                     //    }))
+                     // }}
                   >
                      <SvgInset svgUrl="icons/ic-computer.svg" size={16} />
                   </Box>
