@@ -174,12 +174,45 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
       }
    }, [threadId]);
 
+   useEffect(() => {
+      if (!sessionId || !isLatest) return;
+      
+      if (!isRunning) return;
+
+      const pollInterval = setInterval(async () => {
+         try {
+            const latestMessages = await chatAgentDatabase.loadChatItems(sessionId);
+            
+            if (latestMessages.length > messages.length) {
+               setMessages(latestMessages);
+            } else if (latestMessages.length === messages.length) {
+               const hasUpdates = latestMessages.some((latestMsg, index) => {
+                  const currentMsg = messages[index];
+                  return (
+                     latestMsg.status !== currentMsg.status ||
+                     latestMsg.msg !== currentMsg.msg ||
+                     latestMsg.updatedAt !== currentMsg.updatedAt
+                  );
+               });
+               
+               if (hasUpdates) {
+                  setMessages(latestMessages);
+               }
+            }
+         } catch (error) {
+            console.error('Error polling for message updates:', error);
+         }
+      }, 10000);
+
+      return () => clearInterval(pollInterval);
+   }, [sessionId, messages, isLatest, isRunning]);
+
    const lastMessage = messages[messages.length - 1];
    const questionMessage = messages[messages.length - 2];
    const isInitialMessage = questionMessage?.msg === INIT_WELCOME_MESSAGE;
 
    const showLastMessage = useMemo(() => {
-      return (lastMessage && lastMessage?.status === 'received') || (questionMessage && !isInitialMessage);
+      return (lastMessage && ['received', 'receiving', 'sync-receiving'].includes(lastMessage?.status)) || (questionMessage && !isInitialMessage);
    }, [lastMessage, questionMessage, isInitialMessage]);
 
    const handleGoToChat = (e: any, token_address?: any) => {
@@ -289,7 +322,7 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
                                  messages={[]}
                                  updateMessage={() => { }}
                                  key={lastMessage.id}
-                                 message={lastMessage?.status === 'received' ? lastMessage : questionMessage}
+                                 message={['received', 'receiving', 'sync-receiving'].includes(lastMessage?.status) ? lastMessage : questionMessage}
                                  onRetryErrorMessage={() => { }}
                                  isSending={false}
                                  initialMessage={false}
