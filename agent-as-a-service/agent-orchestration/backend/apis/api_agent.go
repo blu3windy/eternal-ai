@@ -718,3 +718,29 @@ func (s *Server) UpdateAgentCodeVersion(c *gin.Context) {
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: true})
 }
+
+func (s *Server) ExportUserPrivateKeyForClaimVideoReward(c *gin.Context) {
+	ctx := s.requestContext(c)
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+	resp, err := s.nls.ExportUserPrivateKeyForClaimVideoReward(ctx, userAddress)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+}
+
+func (s *Server) GetVideoUserInfo(c *gin.Context) {
+	ctx := s.requestContext(c)
+	creator := s.stringFromContextQuery(c, "creator")
+	insts, err := s.nls.GetVideoUserInfo(ctx, creator)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewUserVideoInfoResp(insts)})
+}
