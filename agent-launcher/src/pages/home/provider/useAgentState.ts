@@ -35,13 +35,13 @@ const useAgentState = create<AgentState>((set) => ({
    addActiveAgent: (agent) => {
       set((state) => {
          // if model online or model ignore, don't add to active agents
-         if (agent.agent_type === AgentType.ModelOnline || agent.agent_type === AgentType.Model) {
+         if (agent?.agent_type === AgentType.ModelOnline || agent?.agent_type === AgentType.Model) {
             return { activeAgents: state.activeAgents };
          }
          const activeAgents = new Set(state.activeAgents);
          let agentFound = false;
          activeAgents.forEach((activeAgent) => {
-            if (compareString(activeAgent.agent.agent_id, agent.agent_id)) {
+            if (compareString(activeAgent.agent.agent_id, agent?.agent_id)) {
                activeAgent.agent = agent;
                activeAgent.timestamp = Date.now();
                agentFound = true;
@@ -58,12 +58,12 @@ const useAgentState = create<AgentState>((set) => ({
       set((state) => {
          const activeAgents = new Set(state.activeAgents);
          agents.forEach((agent) => {
-            if (agent.agent_type === AgentType.ModelOnline || agent.agent_type === AgentType.Model) {
+            if (agent?.agent_type === AgentType.ModelOnline || agent?.agent_type === AgentType.Model) {
                return;
             }
             let agentFound = false;
             activeAgents.forEach((activeAgent) => {
-               if (compareString(activeAgent.agent.agent_id, agent.agent_id)) {
+               if (compareString(activeAgent.agent.agent_id, agent?.agent_id)) {
                   activeAgent.agent = agent;
                   activeAgent.timestamp = Date.now();
                   agentFound = true;
