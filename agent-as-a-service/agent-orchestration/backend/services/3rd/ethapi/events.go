@@ -23,6 +23,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/systempromptmanager"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/uniswapv3factory"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/uniswapv3pool"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/vibetokenfactory"
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/wbvm"
 	"github.com/ethereum/go-ethereum"
@@ -166,6 +167,7 @@ type BlockChainEventResp struct {
 	RealWorldAgentExecutionRequested    []*RealWorldAgentExecutionRequested                       `json:"real_world_agent_execution_requested"`
 	CodePointerCreated                  []*agentupgradeable.AgentUpgradeableCodePointerCreated    `json:"code_pointer_created"`
 	AgentCreated                        []*agentfactory.AgentFactoryAgentCreated                  `json:"agent_created"`
+	VibeTokenFactoryTokenDeployed       []*vibetokenfactory.VibeTokenFactoryTokenDeployed         `json:"vibe_token_factory_token_deployed"`
 }
 
 func (c *Client) NewEventResp() *BlockChainEventResp {
@@ -264,6 +266,8 @@ func (c *Client) ScanEvents(contractAddrs []string, startBlock, endBlock int64) 
 					common.HexToHash("0x0c69de805f518c322126e1fa81f2e91d814412a2ad304638fcaed200bd7f43dc"),
 					// AgentFactory
 					common.HexToHash("0x7c96960a1ebd8cc753b10836ea25bd7c9c4f8cd43590db1e8b3648cb0ec4cc89"),
+					// VibeTokenFactory
+					common.HexToHash("0x035044c956f0f85240e40898163f0636d588d72de5fd08d79a9168d626745173"),
 				},
 			},
 		},
@@ -857,6 +861,21 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			logParsed, err := instance.ParseAgentCreated(*log)
 			if err == nil {
 				resp.AgentCreated = append(resp.AgentCreated, logParsed)
+			}
+		}
+	}
+	{
+		instance, err := vibetokenfactory.NewVibeTokenFactory(log.Address, client)
+		if err != nil {
+			return err
+		}
+		{
+			logParsed, err := instance.ParseTokenDeployed(*log)
+			if err == nil {
+				resp.VibeTokenFactoryTokenDeployed = append(
+					resp.VibeTokenFactoryTokenDeployed,
+					logParsed,
+				)
 			}
 		}
 	}
