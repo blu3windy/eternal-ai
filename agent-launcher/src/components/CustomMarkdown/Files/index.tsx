@@ -258,8 +258,10 @@ function FileViewer({ filename, filedata }: FileType) {
                   </Button>
                </Flex>
             </Flex>
-            <Flex bg="#F6F6F6" flex={1}>
-               {renderFileContent()}
+            <Flex bg="#F6F6F6" flex={1} overflowY="hidden">
+               <Flex flex={1} overflowY="auto">
+                  {renderFileContent()}
+               </Flex>
             </Flex>
          </Flex>
       </Box>
