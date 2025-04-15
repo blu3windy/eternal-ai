@@ -696,6 +696,7 @@ func (s *Server) agentSortListFromContext(c *gin.Context) []string {
 		"created_at":          "1",
 		"prompt_calls":        "1",
 		"installed_count":     "1",
+		"recent_chat_time":    "1",
 	}
 
 	for i, item := range arrayCol {

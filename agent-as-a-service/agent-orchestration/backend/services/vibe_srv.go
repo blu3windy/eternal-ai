@@ -147,6 +147,7 @@ func (s *Service) GetVibeDashboard(ctx context.Context,
 	}
 
 	if userAddress != "" {
+		selected = append(selected, "ifnull(agent_utility_recent_chats.updated_at, now() - interval 100 day) recent_chat_time")
 		joinFilters = map[string][]any{
 			`
 			left join memes on agent_infos.id = memes.agent_info_id and memes.deleted_at IS NULL
@@ -155,11 +156,8 @@ func (s *Service) GetVibeDashboard(ctx context.Context,
 					and agent_utility_recent_chats.address = ?
 		`: {strings.ToLower(userAddress)},
 		}
-		sortRecentChat := "ifnull(agent_utility_recent_chats.updated_at, now() - interval 100 day) desc"
-		newSortListStr := make([]string, 0, len(sortListStr)+1)
-		newSortListStr = append(newSortListStr, sortRecentChat)
-		newSortListStr = append(newSortListStr, sortListStr...)
-		sortListStr = newSortListStr
+	} else {
+		selected = append(selected, "now() recent_chat_time")
 	}
 
 	sortDefault := "installed_count desc"
