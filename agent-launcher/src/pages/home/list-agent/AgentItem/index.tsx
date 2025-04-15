@@ -39,14 +39,9 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
    const { containers } = useContext(MonitorContext);
 
    const threadId = `${token?.id}-${token?.agent_name}`;
-   const refLoadChatItems = useRef(false);
    const [messages, setMessages] = useState<IChatMessage[]>([]);
    const [sessionId, setSessionId] = useState<string | undefined>(undefined);
-   const [isFirstChat, setIsFirstChat] = useState(true);
-   const isElectron = useRef(false);
    const refEmptyMessage = useRef(true);
-   const initTimeout = useRef<NodeJS.Timeout | null>(null);
-   const refInitialized = useRef(false);
 
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
@@ -140,23 +135,18 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
       || token?.twitter_info?.twitter_avatar;
 
    const initialLoadChatItems = useCallback(async () => {
-      refLoadChatItems.current = true;
-      setMessages([]);
-      setSessionId(undefined);
-
       const threadItems = await chatAgentDatabase.getSessions(threadId);
 
       if (threadItems?.length === 0) {
          const sessionId = await chatAgentDatabase.createSession(threadId);
          setSessionId(sessionId);
-         await chatAgentDatabase.migrateMessages(threadId);
+         // await chatAgentDatabase.migrateMessages(threadId);
       } else {
          const lastSessionActive = await chatAgentDatabase.getLastSessionActive(threadId);
 
          setSessionId(lastSessionActive?.id);
-         setIsFirstChat(false)
       }
-   }, [selectedAgent]);
+   }, [threadId]);
 
    useEffect(() => {
       if (sessionId) {
@@ -167,96 +157,20 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
             if (items.length > 0) {
                refEmptyMessage.current = false;
             }
-            if (items?.length === 0 && isFirstChat) {
-               // publishEvent(INIT_WELCOME_MESSAGE);
-            } else {
-               const filterMessages = items
-                  .filter((item) => item.createdAt)
-                  .map((item) => {
+            const filterMessages = items
+               .filter((item) => item.createdAt)
+               .map((item) => {
+                  return item;
+               });
 
-                     // const now = new Date();
-                     // const createdAt = new Date(item.createdAt || "");
-                     // const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-                     // if (item.status === "waiting" || item.status === "receiving") {
-                     //    if (diffMinutes >= 3) {
-                     //       if (item.msg) {
-                     //          const updateMessage = {
-                     //             ...item,
-                     //             status: "received",
-                     //             updatedAt: new Date().getTime(),
-                     //          };
-                     //          return updateMessage;
-                     //       }
-
-                     //       const updateMessage = {
-                     //          ...item,
-                     //          msg: "Something went wrong!",
-                     //          status: "failed",
-                     //          updatedAt: new Date().getTime(),
-                     //       };
-                     //       return updateMessage;
-                     //    } else {
-                     //       if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-                     //          const updateMessage = {
-                     //             ...item,
-                     //             status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                     //             updatedAt: new Date().getTime(),
-                     //          };
-                     //          return updateMessage;
-                     //       }
-                     //    }
-                     // }
-                     // return item;
-
-                     if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-                        const updateMessage = {
-                           ...item,
-                           status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                           updatedAt: new Date().getTime(),
-                        };
-                        return updateMessage;
-                     }
-
-                     return item;
-                  });
-
-               setMessages(filterMessages as any);
-            }
+            setMessages(filterMessages as any);
          })();
       }
    }, [sessionId]);
 
    useEffect(() => {
-      if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
-         isElectron.current = true;
-      }
-
-      if (initTimeout.current) {
-         clearTimeout(initTimeout.current);
-      }
-
-      if (threadId && !refLoadChatItems.current && !refInitialized.current) {
-         if (isElectron.current) {
-            initTimeout.current = setTimeout(() => {
-               if (!refInitialized.current) {
-                  refInitialized.current = true;
-                  refLoadChatItems.current = true;
-                  initialLoadChatItems();
-               }
-            }, 100);
-         } else {
-            refInitialized.current = true;
-            refLoadChatItems.current = true;
-            initialLoadChatItems();
-         }
-
-         return () => {
-            if (initTimeout.current) {
-               clearTimeout(initTimeout.current);
-            }
-            refLoadChatItems.current = false;
-            refInitialized.current = false;
-         };
+      if (threadId) {
+         initialLoadChatItems();
       }
    }, [threadId]);
 
