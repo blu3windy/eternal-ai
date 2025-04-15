@@ -380,7 +380,7 @@ const AgentItem = ({ token, addActiveAgent }: IProps) => {
                   </>
                ) : (
                   <>
-                     {
+                     {/* {
                         description && (
                            <div className={cs(s.descriptionText, "markdown")}>
                               <CustomMarkdown
@@ -388,7 +388,7 @@ const AgentItem = ({ token, addActiveAgent }: IProps) => {
                               />
                            </div>
                         )
-                     }
+                     } */}
                   </>
                )}
 
