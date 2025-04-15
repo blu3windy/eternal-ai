@@ -163,13 +163,12 @@ const ipcMainDocker = () => {
          const convertJsonToDockerEnv = (jsonObject: Record<string, string>) => {
             return Object.entries(jsonObject)
                .map(([key, value]) => {
-                  // Trim the key and value to avoid leading/trailing spaces
                   const trimmedKey = key.trim();
-                  const trimmedValue = encodeURIComponent(value || "").trim(); // Ensure value is encoded and trimmed
-                  return `${trimmedKey}=${trimmedValue}`; // Construct the key=value pair
+                  const trimmedValue = (value || "").trim(); // Remove encodeURIComponent to preserve @
+                  return `${trimmedKey}=${trimmedValue}`;
                })
-               .filter(entry => entry !== '=' && entry !== undefined) // Filter out any empty entries
-               .join(' '); // Join with space for multiple environment variables
+               .filter(entry => entry !== '=' && entry !== undefined)
+               .join(' ');
          };
 
          const params = [
