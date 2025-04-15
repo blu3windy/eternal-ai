@@ -201,7 +201,7 @@ const YourSwarm = (props: any) => {
                )}
                {agents?.map((item: IAgentToken, i) => (
                   <GridItem key={`${item.id}-your-swarm`}>
-                     <AgentItem token={item} addActiveAgent={addActiveAgent} />
+                     <AgentItem token={item} addActiveAgent={addActiveAgent} isLatest/>
                   </GridItem>
                ))}
                {filter === FilterOption.Installed && loaded && agents.length === 0 && (

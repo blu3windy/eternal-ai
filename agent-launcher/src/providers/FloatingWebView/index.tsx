@@ -3,7 +3,7 @@ import { floatingWebViewSelector } from '@stores/states/floating-web-view/select
 import { useDispatch, useSelector } from 'react-redux'
 import styles from './styles.module.scss'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Button, Text, Flex, Box } from '@chakra-ui/react'
+import { Button, Text, Flex, Box, position } from '@chakra-ui/react'
 import SvgInset from '@components/SvgInset'
 import { reset, toggleMaximize } from '@stores/states/floating-web-view/reducer'
 
@@ -11,7 +11,7 @@ function FloatingWebView() {
    const dispatch = useDispatch()
    const { isOpen, url, isMaximized, task, taskProcessing } = useSelector(floatingWebViewSelector)
 
-   const [position, setPosition] = useState({
+   const [viewPosition, setViewPosition] = useState({
       x: 0,
       y: 0,
    })
@@ -19,9 +19,9 @@ function FloatingWebView() {
    const refPosition = useRef<any>(null)
 
    useEffect(() => {
-      setPosition({
-         x: window.innerWidth - 48 - 650,
-         y: window.innerWidth - 100 - 48 - 450,
+      setViewPosition({
+         x: document.documentElement.clientWidth - 48 - 650,
+         y: document.documentElement.clientHeight - 100 - 48 - 450,
       })
    }, [isOpen])
 
@@ -32,13 +32,13 @@ function FloatingWebView() {
       }
    }, [isMaximized])
 
-   if (isOpen && url) {
+   if (isOpen && url && viewPosition) {
       return (
          <Draggable
-            position={position}
+            position={viewPosition}
             onDrag={(e, data) => {
-               if (!isMaximized) {
-                  setPosition({
+               if (!isMaximized && isOpen) {
+                  setViewPosition({
                      x: data.x,
                      y: data.y,
                   })
@@ -63,7 +63,7 @@ function FloatingWebView() {
                               size={20}
                               svgUrl={'icons/ic-minimize.svg'}
                               onClick={() => {
-                                 setPosition(refPosition.current)
+                                 setViewPosition(refPosition.current)
                                  dispatch(toggleMaximize(false))
                               }}
                            />
@@ -74,7 +74,7 @@ function FloatingWebView() {
                               svgUrl={'icons/ic-maximize.svg'}
                               onClick={() => {
                                  refPosition.current = position
-                                 setPosition({
+                                 setViewPosition({
                                     x: 0,
                                     y: 0,
                                  })

@@ -9,20 +9,23 @@ import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import localStorageService from '@storage/LocalStorageService';
 import { formatCurrency, formatLongAddress } from "@utils/format.ts";
 import cs from "clsx";
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import s from './styles.module.scss';
 import { MonitorContext } from '@providers/Monitor/MonitorContext';
 import { ContainerData } from '@providers/Monitor/interface';
 import { compareString } from '@utils/string';
 import { motion } from 'framer-motion';
-
+import { IChatMessage } from '@services/api/agent/types';
+import chatAgentDatabase from "../../../../database/chatAgentDatabase";
+import ChatMessage from '@pages/home/chat-agent/ChatAgent/components/ChatMessage';
+import LastChatMessage from './LastChatMessage';
+import { INIT_WELCOME_MESSAGE } from '@pages/home/chat-agent/ChatAgent/constants';
 interface IProps {
    token: IAgentToken;
-   isLatest?: boolean;
    addActiveAgent?: (agent: IAgentToken) => void;
 }
 
-const AgentItem = ({ token, isLatest, addActiveAgent }: IProps) => {
+const AgentItem = ({ token, addActiveAgent }: IProps) => {
    const {
       selectedAgent,
       stopAgent,
@@ -34,23 +37,18 @@ const AgentItem = ({ token, isLatest, addActiveAgent }: IProps) => {
    } = useContext(AgentContext);
    const { containers } = useContext(MonitorContext);
 
+   const threadId = `${token?.id}-${token?.agent_name}`;
+   const refLoadChatItems = useRef(false);
+   const [messages, setMessages] = useState<IChatMessage[]>([]);
+   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
+   const [isFirstChat, setIsFirstChat] = useState(true);
+   const isElectron = useRef(false);
+   const refEmptyMessage = useRef(true);
+   const initTimeout = useRef<NodeJS.Timeout | null>(null);
+   const refInitialized = useRef(false);
+
+
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
-
-   const isStarting = useMemo(() => {
-      if (token) {
-         return agentStates[token.id]?.isStarting || false;
-      }
-
-      return false;
-   }, [token, agentStates]);
-
-   const isStopping = useMemo(() => {
-      if (token) {
-         return agentStates[token.id]?.isStopping || false;
-      }
-
-      return false;
-   }, [token, agentStates]);
 
    const isRunning = useMemo(() => {
       if (token) {
@@ -139,6 +137,135 @@ const AgentItem = ({ token, isLatest, addActiveAgent }: IProps) => {
       = token?.thumbnail
       || token?.token_image_url
       || token?.twitter_info?.twitter_avatar;
+
+   const initialLoadChatItems = useCallback(async () => {
+      refLoadChatItems.current = true;
+      setMessages([]);
+      setSessionId(undefined);
+
+      const threadItems = await chatAgentDatabase.getSessions(threadId);
+
+      if (threadItems?.length === 0) {
+         const sessionId = await chatAgentDatabase.createSession(threadId);
+         setSessionId(sessionId);
+         await chatAgentDatabase.migrateMessages(threadId);
+      } else {
+         const lastSessionActive = await chatAgentDatabase.getLastSessionActive(threadId);
+
+         setSessionId(lastSessionActive?.id);
+         setIsFirstChat(false)
+      }
+   }, [selectedAgent]);
+
+   useEffect(() => {
+      if (sessionId) {
+         (async () => {
+            setMessages([]);
+            refEmptyMessage.current = true;
+            const items = await chatAgentDatabase.loadChatItems(sessionId);
+            if (items.length > 0) {
+               refEmptyMessage.current = false;
+            }
+            if (items?.length === 0 && isFirstChat) {
+               // publishEvent(INIT_WELCOME_MESSAGE);
+            } else {
+               const filterMessages = items
+                  .filter((item) => item.createdAt)
+                  .map((item) => {
+
+                     // const now = new Date();
+                     // const createdAt = new Date(item.createdAt || "");
+                     // const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+                     // if (item.status === "waiting" || item.status === "receiving") {
+                     //    if (diffMinutes >= 3) {
+                     //       if (item.msg) {
+                     //          const updateMessage = {
+                     //             ...item,
+                     //             status: "received",
+                     //             updatedAt: new Date().getTime(),
+                     //          };
+                     //          return updateMessage;
+                     //       }
+
+                     //       const updateMessage = {
+                     //          ...item,
+                     //          msg: "Something went wrong!",
+                     //          status: "failed",
+                     //          updatedAt: new Date().getTime(),
+                     //       };
+                     //       return updateMessage;
+                     //    } else {
+                     //       if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
+                     //          const updateMessage = {
+                     //             ...item,
+                     //             status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
+                     //             updatedAt: new Date().getTime(),
+                     //          };
+                     //          return updateMessage;
+                     //       }
+                     //    }
+                     // }
+                     // return item;
+
+                     if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
+                        const updateMessage = {
+                           ...item,
+                           status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
+                           updatedAt: new Date().getTime(),
+                        };
+                        return updateMessage;
+                     }
+
+                     return item;
+                  });
+
+               setMessages(filterMessages as any);
+            }
+         })();
+      }
+   }, [sessionId]);
+
+   useEffect(() => {
+      if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
+         isElectron.current = true;
+      }
+
+      if (initTimeout.current) {
+         clearTimeout(initTimeout.current);
+      }
+
+      if (threadId && !refLoadChatItems.current && !refInitialized.current) {
+         if (isElectron.current) {
+            initTimeout.current = setTimeout(() => {
+               if (!refInitialized.current) {
+                  refInitialized.current = true;
+                  refLoadChatItems.current = true;
+                  initialLoadChatItems();
+               }
+            }, 100);
+         } else {
+            refInitialized.current = true;
+            refLoadChatItems.current = true;
+            initialLoadChatItems();
+         }
+
+         return () => {
+            if (initTimeout.current) {
+               clearTimeout(initTimeout.current);
+            }
+            refLoadChatItems.current = false;
+            refInitialized.current = false;
+         };
+      }
+   }, [threadId]);
+
+   const lastMessage = messages[messages.length - 1];
+   const questionMessage = messages[messages.length - 2];
+   const isInitialMessage = questionMessage?.msg === INIT_WELCOME_MESSAGE;
+
+   const showLastMessage = useMemo(() => {
+      return (lastMessage && lastMessage?.status === 'received') || (questionMessage && !isInitialMessage);
+   }, [lastMessage, questionMessage, isInitialMessage]);
 
    const handleGoToChat = (e: any, token_address?: any) => {
       if (token_address) {
@@ -238,15 +365,33 @@ const AgentItem = ({ token, isLatest, addActiveAgent }: IProps) => {
                      </Flex>
                   </Flex>
                </Flex>
-               {
-                  description && (
-                     <div className={cs(s.descriptionText, "markdown")}>
-                        <CustomMarkdown
-                           content={description}
-                        />
-                     </div>
-                  )
-               }
+
+               {showLastMessage ? (
+                  <>
+                  <LastChatMessage
+                     messages={[]} 
+                     updateMessage={() => {}}
+                     key={lastMessage.id}
+                     message={lastMessage?.status === 'received' ? lastMessage : questionMessage}
+                     onRetryErrorMessage={() => {}}
+                     isSending={false}
+                     initialMessage={false}
+                  />
+                  </>
+               ) : (
+                  <>
+                     {/* {
+                        description && (
+                           <div className={cs(s.descriptionText, "markdown")}>
+                              <CustomMarkdown
+                                 content={description}
+                              />
+                           </div>
+                        )
+                     } */}
+                  </>
+               )}
+
                <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"} mt={"4px"}>
                   <Flex gap={"8px"}>
                      {token?.run_status && <Text className={token?.run_status === AgentStatus.Local ? s.onChainTag : s.agentTypeTag}>{runStatus}</Text>}
@@ -259,7 +404,11 @@ const AgentItem = ({ token, isLatest, addActiveAgent }: IProps) => {
                   {hasNewVersionCode && isInstalled && (
                      <Button
                         className={s.btnUpdate}
-                        onClick={() => handleUpdateCode(token)}
+                        onClick={(e) => {
+                           e?.preventDefault();
+                           e?.stopPropagation();
+                           handleUpdateCode(token);
+                        }}
                         isLoading={isUpdating}
                         isDisabled={isUpdating}
                         loadingText={'Updating...'}

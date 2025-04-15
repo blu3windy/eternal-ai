@@ -638,15 +638,15 @@ const AgentProvider: React.FC<
                });
             }, 4000);
          } else {
-            dispatch(requestReloadMonitor());
             setTimeout(() => {
+               dispatch(requestReloadMonitor());
                updateAgentState(agent.id, {
                   data: agent,
                   isStarting: false,
                   isRunning: true,
                   startAt: undefined,
                });
-            }, 4000);
+            }, 6000);
          }
 
          if ([AgentType.Model, AgentType.ModelOnline].includes(agent.agent_type)) {
@@ -1013,7 +1013,7 @@ const AgentProvider: React.FC<
       try {
          const folders = await globalThis.electronAPI.getExistAgentFolders();
          refInstalledUtilityAgents.current = folders || [];
-         checkInstalledUtilityAgentsRunning();
+         // checkInstalledUtilityAgentsRunning();
       } catch (error) {
          console.error('Error fetching installed utility agents:', error);
          refInstalledUtilityAgents.current = [];

@@ -72,23 +72,23 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
             });
          }
       } else if (message.status === "sync-waiting" || message.status === "sync-receiving") {
-         const waitingTime = 1000 * 60 * 30;
-         if (remainingTime < waitingTime) {
-            const timeout = setTimeout(() => {
-               updateMessage(message.id, {
-                  status: "failed",
-                  msg: "Server is not responding",
-               });
-            }, waitingTime - remainingTime);
-            return () => {
-               clearTimeout(timeout);
-            };
-         } else {
-            updateMessage(message.id, {
-               status: "failed",
-               msg: "Server is not responding",
-            });
-         }
+         // const waitingTime = 1000 * 60 * 30;
+         // if (remainingTime < waitingTime) {
+         //    const timeout = setTimeout(() => {
+         //       updateMessage(message.id, {
+         //          status: "failed",
+         //          msg: "Server is not responding",
+         //       });
+         //    }, waitingTime - remainingTime);
+         //    return () => {
+         //       clearTimeout(timeout);
+         //    };
+         // } else {
+         //    updateMessage(message.id, {
+         //       status: "failed",
+         //       msg: "Server is not responding",
+         //    });
+         // }
       }
    }, [message.status, updateMessage, message.id]);
 
@@ -350,6 +350,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                      alignItems={"center"}
                      justifyContent={"center"}
                      transition={"all 0.2s ease-in-out"}
+                     zIndex={1000}
                      _hover={{
                         cursor: "pointer",
                         transform: "translateY(-2px)",
