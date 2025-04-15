@@ -50,6 +50,7 @@ func (s *Service) ValidateReferralCode(ctx context.Context, refCode, userAddress
 }
 
 func (s *Service) GetVibeDashboard(ctx context.Context,
+	includeHidden *bool,
 	contractAddresses []string,
 	userAddress string, networkID uint64, agentTypes []int,
 	search string,
@@ -132,7 +133,9 @@ func (s *Service) GetVibeDashboard(ctx context.Context,
 	if len(ids) > 0 {
 		filters["agent_infos.id in (?)"] = []any{ids}
 	} else {
-		filters["agent_infos.is_public = 1"] = []any{}
+		if includeHidden == nil || !(*includeHidden) {
+			filters["agent_infos.is_public = 1"] = []any{}
+		}
 	}
 
 	if len(exludeIds) > 0 {

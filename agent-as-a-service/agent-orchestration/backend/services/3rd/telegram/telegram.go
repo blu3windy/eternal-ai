@@ -27,28 +27,33 @@ func (c *Client) GetMessages(ctx context.Context, channelURL string, limit int) 
 	// Create a new API client
 	api := c.client.API()
 
+	peer := &tg.InputPeerChannel{
+		ChannelID:  -2439704383,
+		AccessHash: 0,
+	}
+
 	// Resolve the channel username from URL
-	channelUsername := channelURL[len("https://t.me/"):]
+	// channelUsername := channelURL[len("https://t.me/"):]
 
-	// Get channel info
-	resolved, err := api.ContactsResolveUsername(ctx, &tg.ContactsResolveUsernameRequest{
-		Username: channelUsername,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to resolve channel: %v", err)
-	}
+	// // Get channel info
+	// resolved, err := api.ContactsResolveUsername(ctx, &tg.ContactsResolveUsernameRequest{
+	// 	Username: channelUsername,
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("failed to resolve channel: %v", err)
+	// }
 
-	var peer tg.InputPeerClass
-	for _, chat := range resolved.Chats {
-		if channel, ok := chat.(*tg.Channel); ok {
-			peer = &tg.InputPeerChannel{
-				ChannelID:  channel.ID,
-				AccessHash: channel.AccessHash,
-			}
-			fmt.Printf("Found group: %s, Chat ID: -100%d\n", channel.Title, channel.ID)
-			break
-		}
-	}
+	// var peer tg.InputPeerClass
+	// for _, chat := range resolved.Chats {
+	// 	if channel, ok := chat.(*tg.Channel); ok {
+	// 		peer = &tg.InputPeerChannel{
+	// 			ChannelID:  channel.ID,
+	// 			AccessHash: channel.AccessHash,
+	// 		}
+	// 		fmt.Printf("Found group: %s, Chat ID: -100%d\n", channel.Title, channel.ID)
+	// 		break
+	// 	}
+	// }
 	// Get channel messages
 	messages, err := api.MessagesGetHistory(ctx, &tg.MessagesGetHistoryRequest{
 		Peer:  peer,

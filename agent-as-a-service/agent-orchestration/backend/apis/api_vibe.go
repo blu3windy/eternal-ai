@@ -86,9 +86,11 @@ func (s *Server) GetVibeDashBoards(c *gin.Context) {
 	contractAddresses := s.stringArrayFromContextQuery(c, "contract_addresses")
 	ids, _ := s.uintArrayFromContextQuery(c, "ids")
 	exludeIds, _ := s.uintArrayFromContextQuery(c, "exlude_ids")
-
+	includeHidden, _ := s.boolFromContextQuery(c, "include_hidden")
 	userAddress, _ := s.getUserAddressFromTK1Token(c)
-	ms, count, err := s.nls.GetVibeDashboard(ctx, contractAddresses,
+	ms, count, err := s.nls.GetVibeDashboard(ctx,
+		includeHidden,
+		contractAddresses,
 		userAddress, chain, agentTypesInt, search,
 		ids, exludeIds, categoryIds, sortStr, page, limit)
 
