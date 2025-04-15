@@ -43,7 +43,7 @@ export interface IElectronAPI {
   copyRequireRunPython: (folderName: string) => Promise<void>
 
   dockerCopyBuild: () => Promise<void>
-  dockerBuild: () => Promise<void>
+  dockerBuild: (forceBuild: boolean) => Promise<void>
   dockerCheckInstall: () => Promise<boolean>
   dockerInstall: () => Promise<void>
   dockerRunAgent: (agentName: string, chainId: string, options: string) => Promise<void>
