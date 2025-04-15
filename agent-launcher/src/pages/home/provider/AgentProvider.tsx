@@ -465,9 +465,12 @@ const AgentProvider: React.FC<
 
    const fetchAgentCategories = async () => {
       try {
-         const res: any = await cPumpAPI.getAgentCategories();
-         setAgentCategories([{ id: 0, name: 'All' }, ...res]);
-      } catch (error) {}
+         const res = await cPumpAPI.getAgentCategories();
+         const categories: { id: number; name: string }[] = [{ id: 0, name: 'All' }, ...res];
+         setAgentCategories(categories as any);
+      } catch (error) {
+         console.error('Failed to fetch agent categories:', error);
+      }
    };
 
    const setAgentInstalled = (agent: IAgentToken) => {
@@ -960,7 +963,14 @@ const AgentProvider: React.FC<
          }
          installedAgents.add(agentContractAddr);
 
-         const { agents } = (await cPumpAPI.getAgentTokenList({ contract_addresses: agentContractAddr, page: 1, limit: 1, agent_types, include_hidden: true }));
+         const { agents } = await cPumpAPI.getAgentTokenList({
+            contract_addresses: agentContractAddr,
+            page: 1,
+            limit: 1,
+            agent_types,
+            include_hidden: true,
+            isPathAgent: true,
+         });
          const agent = agents?.[0];
          if (!agent) {
             return null;

@@ -54,7 +54,7 @@ const createAxiosInstance = ({ baseURL = '' }: { baseURL: string }) => {
             type: 'REQUEST_ERROR',
             context: 'request_interceptor',
             url: error.config?.url,
-            method: error.config?.method
+            method: error.config?.method,
          });
          return Promise.reject(error);
       },

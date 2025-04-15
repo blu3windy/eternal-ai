@@ -166,12 +166,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                      //    }
                      // }
                      // return item;
-                     if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-                        const updateMessage = {
-                           ...item,
-                           status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                        };
-                        return updateMessage;
+                     if (item.status === "waiting" || item.status === "receiving") {
+                        if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
+                           const updateMessage = {
+                              ...item,
+                              status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
+                           };
+                           return updateMessage;
+                        }
                      }
 
                      return item;

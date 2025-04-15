@@ -1,25 +1,22 @@
 import { Button, Flex, Grid, Image, Text } from '@chakra-ui/react';
 import CustomMarkdown from "@components/CustomMarkdown";
 import { DefaultAvatar } from "@components/DefaultAvatar";
-import { BASE_CHAIN_ID } from '@constants/chains';
-import CAgentContract from '@contract/agent';
-import { AgentStatus, AgentStatusLabel, AgentType, AgentTypeName } from "@pages/home/list-agent/constants";
+import { INIT_WELCOME_MESSAGE } from '@pages/home/chat-agent/ChatAgent/constants';
+import { AgentStatus, AgentStatusLabel, AgentType } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext";
-import { IAgentToken } from "@services/api/agents-token/interface.ts";
-import localStorageService from '@storage/LocalStorageService';
-import { formatCurrency, formatLongAddress } from "@utils/format.ts";
-import cs from "clsx";
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import s from './styles.module.scss';
 import { MonitorContext } from '@providers/Monitor/MonitorContext';
 import { ContainerData } from '@providers/Monitor/interface';
-import { compareString } from '@utils/string';
-import { motion } from 'framer-motion';
 import { IChatMessage } from '@services/api/agent/types';
+import { IAgentToken } from "@services/api/agents-token/interface.ts";
+import localStorageService from '@storage/LocalStorageService';
+import { formatCurrency } from "@utils/format.ts";
+import { compareString } from '@utils/string';
+import cs from "clsx";
+import { motion } from 'framer-motion';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import chatAgentDatabase from "../../../../database/chatAgentDatabase";
-import ChatMessage from '@pages/home/chat-agent/ChatAgent/components/ChatMessage';
 import LastChatMessage from './LastChatMessage';
-import { INIT_WELCOME_MESSAGE } from '@pages/home/chat-agent/ChatAgent/constants';
+import s from './styles.module.scss';
 interface IProps {
    token: IAgentToken;
    addActiveAgent?: (agent: IAgentToken) => void;
@@ -173,6 +170,39 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
          initialLoadChatItems();
       }
    }, [threadId]);
+
+   useEffect(() => {
+      if (!sessionId || !isLatest) return;
+      
+      if (!isRunning) return;
+
+      const pollInterval = setInterval(async () => {
+         try {
+            const latestMessages = await chatAgentDatabase.loadChatItems(sessionId);
+            
+            if (latestMessages.length > messages.length) {
+               setMessages(latestMessages);
+            } else if (latestMessages.length === messages.length) {
+               const hasUpdates = latestMessages.some((latestMsg, index) => {
+                  const currentMsg = messages[index];
+                  return (
+                     latestMsg.status !== currentMsg.status ||
+                     latestMsg.msg !== currentMsg.msg ||
+                     latestMsg.updatedAt !== currentMsg.updatedAt
+                  );
+               });
+               
+               if (hasUpdates) {
+                  setMessages(latestMessages);
+               }
+            }
+         } catch (error) {
+            console.error('Error polling for message updates:', error);
+         }
+      }, 10000);
+
+      return () => clearInterval(pollInterval);
+   }, [sessionId, messages, isLatest, isRunning]);
 
    const lastMessage = messages[messages.length - 1];
    const questionMessage = messages[messages.length - 2];
