@@ -12,7 +12,6 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/databases"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services"
 )
 
@@ -46,9 +45,7 @@ func init() {
 
 func Test_JOB(t *testing.T) {
 
-	fmt.Println(
-		ts.ScanEventsByChain(context.Background(), models.BASE_CHAIN_ID),
-	)
+	fmt.Println()
 
 	// data, err := ts.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), "man opens shirt and shows his fat belly")
 	// fmt.Println(data, err)

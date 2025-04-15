@@ -407,7 +407,7 @@ func (s *Service) AgentFactoryAgentCreatedEvent(ctx context.Context, networkID u
 		agentInfo, err := s.dao.FirstAgentInfo(
 			daos.GetDBMainCtx(ctx),
 			map[string][]any{
-				"agent_id": {agentID},
+				"agent_id = ?": {agentID},
 			},
 			map[string][]any{},
 			[]string{},

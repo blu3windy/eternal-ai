@@ -397,6 +397,14 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 		}
 	}
 	{
+		for _, event := range eventResp.AgentCreated {
+			err := s.AgentFactoryAgentCreatedEvent(ctx, networkID, event)
+			if err != nil {
+				retErr = errs.MergeError(retErr, err)
+			}
+		}
+	}
+	{
 		for _, event := range eventResp.CodePointerCreated {
 			err := s.HandleAgentUpgradeableCodePointerCreated(ctx, event)
 			if err != nil {
