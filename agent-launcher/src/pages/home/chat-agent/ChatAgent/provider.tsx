@@ -170,7 +170,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                         const updateMessage = {
                            ...item,
                            status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                           updatedAt: new Date().getTime(),
                         };
                         return updateMessage;
                      }
