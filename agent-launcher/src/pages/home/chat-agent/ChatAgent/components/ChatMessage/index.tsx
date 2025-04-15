@@ -150,16 +150,18 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
 
    const processingWebViewUrl = useMemo(() => {
       try {
-         const matches = `${renderMessage || ''}`.match(COMPUTER_USE_TAG_REGEX);
-         if (matches?.length) {
-            let url = matches[0] || '';
-            url = url.replace(`<${MARKDOWN_TAGS.COMPUTER_USE}>`, '').replace(`</${MARKDOWN_TAGS.COMPUTER_USE}>`, '');
-            return url;
+         if (message.status === "waiting" || message.status === "sync-waiting" || message.status === "receiving" || message.status === "sync-receiving") {
+            const matches = `${renderMessage || ''}`.match(COMPUTER_USE_TAG_REGEX);
+            if (matches?.length) {
+               let url = matches[0] || '';
+               url = url.replace(`<${MARKDOWN_TAGS.COMPUTER_USE}>`, '').replace(`</${MARKDOWN_TAGS.COMPUTER_USE}>`, '');
+               return url;
+            }
          }
       } catch (error) {
          return null;
       }
-   }, [renderMessage]);
+   }, [renderMessage, message.status]);
 
    const renderContent = () => {
       return (
@@ -346,6 +348,8 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                      boxShadow={"2px 2px 8px 0px rgba(0, 0, 0, 0.15)"}
                      width={"32px"}
                      height={"32px"}
+                     minW={"32px"}
+                     minH={"32px"}
                      display={"flex"}
                      alignItems={"center"}
                      justifyContent={"center"}
@@ -353,10 +357,14 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                      zIndex={1000}
                      _hover={{
                         cursor: "pointer",
-                        transform: "translateY(-2px)",
-                        transition: "transform 0.2s ease-in-out",
+                        // transform: "translateY(-2px)",
+                        // transition: "transform 0.2s ease-in-out",
                      }}
                      onClick={() => {
+                        console.log('__________processingWebViewUrl__________', {
+                           processingWebViewUrl,
+                           message,
+                        })
                         const replyToMessage = messages.find(item => item.id === message.replyTo);
                         dispatch(openWithUrl({
                            url: processingWebViewUrl,
