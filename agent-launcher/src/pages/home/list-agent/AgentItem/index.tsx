@@ -140,7 +140,7 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
       if (threadItems?.length === 0) {
          const sessionId = await chatAgentDatabase.createSession(threadId);
          setSessionId(sessionId);
-         await chatAgentDatabase.migrateMessages(threadId);
+         // await chatAgentDatabase.migrateMessages(threadId);
       } else {
          const lastSessionActive = await chatAgentDatabase.getLastSessionActive(threadId);
 
