@@ -31,7 +31,8 @@ const normalizedContent = (content: Content) => {
 // Utility function to handle API responses
 const handleStreamResponse = async (
    response: Response,
-   streamHandlers: ChatCompletionStreamHandler
+   streamHandlers: ChatCompletionStreamHandler,
+   body: any
 ): Promise<any> => {
    if (!response.ok) {
       const errorData = await response.text();
@@ -51,7 +52,8 @@ const handleStreamResponse = async (
       if (!reader) {
          logError(new Error('No reader available for stream response'), {
             type: 'STREAM_ERROR',
-            context: 'stream_setup'
+            context: 'stream_setup',
+            reqeustData: body
          });
          throw new Error('No reader available for stream response');
       }
@@ -60,7 +62,8 @@ const handleStreamResponse = async (
          onFail: (err) => {
             logError(err, {
                type: 'STREAM_ERROR',
-               context: 'stream_processing'
+               context: 'stream_processing',
+               reqeustData: body
             });
             streamHandlers.onFail(err);
          }
@@ -71,7 +74,8 @@ const handleStreamResponse = async (
          logError(new Error(data.error || 'Unknown error'), {
             type: 'API_ERROR',
             context: 'json_response',
-            errorData: data
+            errorData: data,
+            reqeustData: body
          });
          return {
             success: false,
@@ -175,20 +179,22 @@ const AgentAPI = {
             ...item,
             content: normalizedContent(item.content)
          }));
+
+         const body = JSON.stringify({ 
+            messages, 
+            stream: true, 
+            seed: 0, 
+            name: payload.name, 
+            description: payload.description 
+         })
          
          const response = await fetch(`http://localhost:65534/v1/chat/completions`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ 
-               messages, 
-               stream: true, 
-               seed: 0, 
-               name: payload.name, 
-               description: payload.description 
-            })
+            body
          });
 
-         return await handleStreamResponse(response, streamHandlers);
+         return await handleStreamResponse(response, streamHandlers, body);
       } catch (error) {
          console.log('chatAgentModelStreamCompletions error', error);
          logError(error instanceof Error ? error : new Error(String(error)), {
@@ -197,6 +203,9 @@ const AgentAPI = {
             payload: {
                name: payload.name,
                description: payload.description
+            },
+            chatAgentModel: {
+               messages: payload?.messages
             }
          });
          
@@ -248,6 +257,9 @@ const AgentAPI = {
             payload: {
                name: payload.name,
                description: payload.description
+            },
+            chatAgentUtility: {
+               messages: payload?.messages
             }
          });
          throw error;
@@ -300,23 +312,25 @@ const AgentAPI = {
             ...item,
             content: normalizedContent(item.content)
          }));
+
+         const body = JSON.stringify({ 
+            id,
+            messages, 
+            stream: true, 
+            seed: 0,
+            privateKey: prvKey,
+            chainId: agent?.network_id,
+            name: payload?.name,
+            description: payload?.description
+         });
          
          const response = await fetch(`http://localhost:33030/${agent?.network_id}-${agent?.agent_name?.toLowerCase()}/prompt`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ 
-               id,
-               messages, 
-               stream: true, 
-               seed: 0,
-               privateKey: prvKey,
-               chainId: agent?.network_id,
-               name: payload?.name,
-               description: payload?.description
-            })
+            body
          });
 
-         return await handleStreamResponse(response, streamHandlers);
+         return await handleStreamResponse(response, streamHandlers, body);
       } catch (error) {
          logError(error instanceof Error ? error : new Error(String(error)), {
             type: 'AGENT_UTILITY_ERROR',
@@ -327,7 +341,11 @@ const AgentAPI = {
             },
             payload: {
                name: payload?.name,
-               description: payload?.description
+               description: payload?.description,
+            },
+            chatAgentUtility: {
+               id,
+               messages: payload?.messages
             }
          });
          
