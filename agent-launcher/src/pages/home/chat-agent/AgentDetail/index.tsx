@@ -113,7 +113,7 @@ const AgentDetail = () => {
 
    const { currentStep, totalStep } = useMemo(() => {
       if (parsedLog?.values['step']) {
-         const steps = parsedLog?.values['step'].split('-');
+         const steps = parsedLog?.values['step'].split('/');
 
          return {
             currentStep: parseInt(steps[0]),
