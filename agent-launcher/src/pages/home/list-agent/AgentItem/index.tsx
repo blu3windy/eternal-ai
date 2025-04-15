@@ -179,7 +179,7 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
    const isInitialMessage = questionMessage?.msg === INIT_WELCOME_MESSAGE;
 
    const showLastMessage = useMemo(() => {
-      return (lastMessage && lastMessage?.status === 'received') || (questionMessage && !isInitialMessage);
+      return (lastMessage && ['received', 'receiving', 'sync-receiving'].includes(lastMessage?.status)) || (questionMessage && !isInitialMessage);
    }, [lastMessage, questionMessage, isInitialMessage]);
 
    const handleGoToChat = (e: any, token_address?: any) => {
@@ -289,7 +289,7 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
                                  messages={[]}
                                  updateMessage={() => { }}
                                  key={lastMessage.id}
-                                 message={lastMessage?.status === 'received' ? lastMessage : questionMessage}
+                                 message={['received', 'receiving', 'sync-receiving'].includes(lastMessage?.status) ? lastMessage : questionMessage}
                                  onRetryErrorMessage={() => { }}
                                  isSending={false}
                                  initialMessage={false}
