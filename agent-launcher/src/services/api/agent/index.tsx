@@ -272,6 +272,10 @@ const AgentAPI = {
             agent: {
                network_id: agent?.network_id,
                agent_name: agent?.agent_name
+            },
+            chatAgentUtility: {
+               id,
+               messages
             }
          });
          throw error;
