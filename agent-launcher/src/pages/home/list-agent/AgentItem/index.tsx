@@ -174,6 +174,39 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
       }
    }, [threadId]);
 
+   useEffect(() => {
+      if (!sessionId || !isLatest) return;
+      
+      if (!isRunning) return;
+
+      const pollInterval = setInterval(async () => {
+         try {
+            const latestMessages = await chatAgentDatabase.loadChatItems(sessionId);
+            
+            if (latestMessages.length > messages.length) {
+               setMessages(latestMessages);
+            } else if (latestMessages.length === messages.length) {
+               const hasUpdates = latestMessages.some((latestMsg, index) => {
+                  const currentMsg = messages[index];
+                  return (
+                     latestMsg.status !== currentMsg.status ||
+                     latestMsg.msg !== currentMsg.msg ||
+                     latestMsg.updatedAt !== currentMsg.updatedAt
+                  );
+               });
+               
+               if (hasUpdates) {
+                  setMessages(latestMessages);
+               }
+            }
+         } catch (error) {
+            console.error('Error polling for message updates:', error);
+         }
+      }, 10000);
+
+      return () => clearInterval(pollInterval);
+   }, [sessionId, messages, isLatest, isRunning]);
+
    const lastMessage = messages[messages.length - 1];
    const questionMessage = messages[messages.length - 2];
    const isInitialMessage = questionMessage?.msg === INIT_WELCOME_MESSAGE;
