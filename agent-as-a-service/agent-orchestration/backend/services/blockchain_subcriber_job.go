@@ -147,7 +147,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			eventResp.Transfer = eventTransfers
 			eventResp.NftTransfer = []*ethapi.NftTransferEventResp{}
 			eventResp.ERC1155Transfer = []*ethapi.ERC1155ransferEventResp{}
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				err := s.TokenTransferEventsByTransactionV2(
 					ctx,
 					networkID,
@@ -216,43 +216,43 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 				}
 			}
 		}
-		{
-			poolMap := map[string]bool{}
-			for _, event := range eventResp.Transfer {
-				poolMap[strings.ToLower(event.To)] = true
-			}
-			poolArr := []string{}
-			for pool := range poolMap {
-				poolArr = append(poolArr, pool)
-			}
-			if len(poolArr) > 0 {
-				lps, err := s.dao.FindLaunchpad(
-					daos.GetDBMainCtx(ctx),
-					map[string][]any{
-						"address in (?)": {poolArr},
-					},
-					map[string][]any{},
-					[]string{},
-					0,
-					999999,
-				)
-				if err != nil {
-					return errs.NewError(err)
-				}
-				poolMap = map[string]bool{}
-				for _, lp := range lps {
-					poolMap[strings.ToLower(lp.Address)] = true
-				}
-			}
-			for _, event := range eventResp.Transfer {
-				if poolMap[strings.ToLower(event.To)] {
-					err := s.CreateErc20TokenTransferEventLaunchpad(ctx, networkID, event)
-					if err != nil {
-						return errs.NewError(err)
-					}
-				}
-			}
-		}
+		// {
+		// 	poolMap := map[string]bool{}
+		// 	for _, event := range eventResp.Transfer {
+		// 		poolMap[strings.ToLower(event.To)] = true
+		// 	}
+		// 	poolArr := []string{}
+		// 	for pool := range poolMap {
+		// 		poolArr = append(poolArr, pool)
+		// 	}
+		// 	if len(poolArr) > 0 {
+		// 		lps, err := s.dao.FindLaunchpad(
+		// 			daos.GetDBMainCtx(ctx),
+		// 			map[string][]any{
+		// 				"address in (?)": {poolArr},
+		// 			},
+		// 			map[string][]any{},
+		// 			[]string{},
+		// 			0,
+		// 			999999,
+		// 		)
+		// 		if err != nil {
+		// 			return errs.NewError(err)
+		// 		}
+		// 		poolMap = map[string]bool{}
+		// 		for _, lp := range lps {
+		// 			poolMap[strings.ToLower(lp.Address)] = true
+		// 		}
+		// 	}
+		// 	for _, event := range eventResp.Transfer {
+		// 		if poolMap[strings.ToLower(event.To)] {
+		// 			err := s.CreateErc20TokenTransferEventLaunchpad(ctx, networkID, event)
+		// 			if err != nil {
+		// 				return errs.NewError(err)
+		// 			}
+		// 		}
+		// 	}
+		// }
 	}
 	//
 	{
@@ -396,7 +396,14 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			}
 		}
 	}
-
+	{
+		for _, event := range eventResp.CodePointerCreated {
+			err := s.HandleAgentUpgradeableCodePointerCreated(ctx, event)
+			if err != nil {
+				retErr = errs.MergeError(retErr, err)
+			}
+		}
+	}
 	return retErr
 }
 
@@ -1305,10 +1312,11 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 								if !chain.Enabled || chain.LastBlockNumber == 0 {
 									break
 								}
-								addrs, err := s.GetFilterAddrs(ctx, chain.NetworkID)
-								if err != nil {
-									return errs.NewError(err)
-								}
+								// addrs, err := s.GetFilterAddrs(ctx, chain.NetworkID)
+								// if err != nil {
+								// 	return errs.NewError(err)
+								// }
+								addrs := []string{}
 								startBlocks := chain.LastBlockNumber + 1
 								endBlocks := (chain.LastBlockNumber + chain.NumBlocks - 1)
 								eventResp, err := ethClient.ScanEvents(addrs, startBlocks, endBlocks)

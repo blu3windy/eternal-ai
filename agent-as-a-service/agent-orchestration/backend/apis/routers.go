@@ -187,6 +187,8 @@ func (s *Server) Routers() {
 			agentAPI.GET("/check-exist", s.CheckNameExist)
 
 			agentAPI.GET("/video", s.GetListUserVideo)
+			agentAPI.GET("/video/user", s.GetVideoUserInfo)
+			agentAPI.POST("/video/export", s.authCheckTK1TokenMiddleware(), s.ExportUserPrivateKeyForClaimVideoReward)
 
 		}
 

@@ -114,20 +114,26 @@ func (s *Service) GenerateTipAddress(ctx context.Context, agentInfoID uint) erro
 	return nil
 }
 
-func (s *Service) TwitterOauthCallbackV1(ctx context.Context, callbackUrl, address, code, agentID, clientID string) error {
+func (s *Service) TwitterOauthCallbackV1(ctx context.Context, callbackUrl, address, code, agentID, clientID string) (map[string]string, error) {
+	var err error
+	var resp map[string]string
 	if agentID == "" {
-		return s.TwitterOauthCallbackForRelink(ctx, callbackUrl, address, code, clientID)
+		err = s.TwitterOauthCallbackForRelink(ctx, callbackUrl, address, code, clientID)
+		return resp, err
 	} else if agentID == "0" {
-		return s.TwitterOauthCallbackForApiSubscription(ctx, callbackUrl, address, code, clientID)
+		err = s.TwitterOauthCallbackForApiSubscription(ctx, callbackUrl, address, code, clientID)
+		return resp, err
 	} else if agentID == "1" {
-		return s.TwitterOauthCallbackForCreateAgent(ctx, callbackUrl, address, code, clientID)
+		err = s.TwitterOauthCallbackForCreateAgent(ctx, callbackUrl, address, code, clientID)
+		return resp, err
 	} else if agentID == "2" {
-		return s.TwitterOauthCallbackForClaimVideoReward(ctx, callbackUrl, address, code, clientID)
+		resp, err = s.TwitterOauthCallbackForClaimVideoReward(ctx, callbackUrl, address, code, clientID)
+		return resp, err
 	}
 
 	agentInfo, err := s.SyncAgentInfoDetailByAgentID(ctx, agentID)
 	if err != nil {
-		return errs.NewError(err)
+		return nil, errs.NewError(err)
 	}
 
 	if agentInfo != nil {
@@ -148,18 +154,18 @@ func (s *Service) TwitterOauthCallbackV1(ctx context.Context, callbackUrl, addre
 			oauthClientId, oauthClientSecret,
 			code, callbackUrl, address, agentID)
 		if err != nil {
-			return errs.NewError(err)
+			return nil, errs.NewError(err)
 		}
 
 		if respOauth != nil && respOauth.AccessToken != "" {
 			twitterUser, err := s.twitterAPI.GetTwitterMe(respOauth.AccessToken)
 			if err != nil {
-				return errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 
 			user, err := s.GetUser(daos.GetDBMainCtx(ctx), agentInfo.NetworkID, address, true)
 			if err != nil {
-				return errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 
 			user.TwitterID = twitterUser.ID
@@ -169,7 +175,7 @@ func (s *Service) TwitterOauthCallbackV1(ctx context.Context, callbackUrl, addre
 
 			err = s.dao.Save(daos.GetDBMainCtx(ctx), user)
 			if err != nil {
-				return errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 
 			//
@@ -180,7 +186,7 @@ func (s *Service) TwitterOauthCallbackV1(ctx context.Context, callbackUrl, addre
 				map[string][]interface{}{}, false,
 			)
 			if err != nil {
-				return errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 
 			if twitterInfo == nil {
@@ -206,7 +212,7 @@ func (s *Service) TwitterOauthCallbackV1(ctx context.Context, callbackUrl, addre
 			twitterInfo.ExpiredAt = &expiredAt
 			err = s.dao.Save(daos.GetDBMainCtx(ctx), twitterInfo)
 			if err != nil {
-				return errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 			//
 
@@ -222,7 +228,7 @@ func (s *Service) TwitterOauthCallbackV1(ctx context.Context, callbackUrl, addre
 				updateFields,
 			).Error
 			if err != nil {
-				return errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 
 			if isFirstLinked {
@@ -233,7 +239,7 @@ func (s *Service) TwitterOauthCallbackV1(ctx context.Context, callbackUrl, addre
 
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 func (s *Service) AgentCreateMissionDefault(ctx context.Context, agentInfoID uint) error {
@@ -624,21 +630,22 @@ func (s *Service) TwitterOauthCallbackForCreateAgent(ctx context.Context, callba
 	return nil
 }
 
-func (s *Service) TwitterOauthCallbackForClaimVideoReward(ctx context.Context, callbackUrl, address, code, clientID string) error {
+func (s *Service) TwitterOauthCallbackForClaimVideoReward(ctx context.Context, callbackUrl, address, code, clientID string) (map[string]string, error) {
+	mapResp := map[string]string{}
 	oauthClientId := s.conf.Twitter.OauthClientId
 	oauthClientSecret := s.conf.Twitter.OauthClientSecret
 
-	respOauth, err := s.twitterAPI.GetTwitterOAuthTokenWithKeyForCreateAgent(
+	respOauth, err := s.twitterAPI.GetTwitterOAuthTokenWithKeyForVideoReward(
 		oauthClientId, oauthClientSecret,
 		code, callbackUrl, address)
 	if err != nil {
-		return errs.NewError(err)
+		return nil, errs.NewError(err)
 	}
 
 	if respOauth != nil && respOauth.AccessToken != "" {
 		twitterUser, err := s.twitterAPI.GetTwitterMe(respOauth.AccessToken)
 		if err != nil {
-			return errs.NewError(err)
+			return nil, errs.NewError(err)
 		}
 
 		if twitterUser != nil {
@@ -649,7 +656,7 @@ func (s *Service) TwitterOauthCallbackForClaimVideoReward(ctx context.Context, c
 				map[string][]interface{}{}, false,
 			)
 			if err != nil {
-				return errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 
 			if twitterInfo == nil {
@@ -674,25 +681,39 @@ func (s *Service) TwitterOauthCallbackForClaimVideoReward(ctx context.Context, c
 			twitterInfo.ExpiredAt = &expiredAt
 			err = s.dao.Save(daos.GetDBMainCtx(ctx), twitterInfo)
 			if err != nil {
-				return errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
 
-			//
+			//user address
+			privyWallet, err := s.dao.FirstPrivyWallet(daos.GetDBMainCtx(ctx),
+				map[string][]interface{}{
+					"twitter_id = ?": {twitterUser.ID},
+				}, map[string][]interface{}{}, []string{})
+			if err != nil {
+				return nil, errs.NewError(err)
+			}
+
+			if privyWallet == nil {
+				return nil, errs.NewError(errs.ErrRecordNotFound)
+			}
+
 			updateFields := map[string]interface{}{
 				"user_address": strings.ToLower(address),
 			}
 
-			err = daos.GetDBMainCtx(ctx).Model(&models.PrivyWallet{}).Where("twitter_id = ?", twitterUser.ID).Updates(
+			err = daos.GetDBMainCtx(ctx).Model(privyWallet).Updates(
 				updateFields,
 			).Error
 			if err != nil {
-				return errs.NewError(err)
+				return nil, errs.NewError(err)
 			}
+			mapResp["address"] = privyWallet.Address
+			mapResp["twitter_id"] = twitterUser.ID
 		}
 
 	}
 
-	return nil
+	return mapResp, nil
 }
 
 // func (s *Service) TwitterOauthCallbackForClaimVideoReward(ctx context.Context, callbackUrl, address, code, clientID string) error {
