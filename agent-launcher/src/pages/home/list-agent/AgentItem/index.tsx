@@ -17,6 +17,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import chatAgentDatabase from "../../../../database/chatAgentDatabase";
 import LastChatMessage from './LastChatMessage';
 import s from './styles.module.scss';
+import useAgentState from '@pages/home/provider/useAgentState';
 interface IProps {
    token: IAgentToken;
    addActiveAgent?: (agent: IAgentToken) => void;
@@ -34,6 +35,8 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
       handleUpdateCode
    } = useContext(AgentContext);
    const { containers } = useContext(MonitorContext);
+   const { isSearchMode, setSelectedAgent: _setSelectedAgent } =
+     useAgentState();
 
    const threadId = `${token?.id}-${token?.agent_name}`;
    const [messages, setMessages] = useState<IChatMessage[]>([]);
@@ -213,12 +216,16 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
    }, [lastMessage, questionMessage, isInitialMessage]);
 
    const handleGoToChat = (e: any, token_address?: any) => {
+      
       if (token_address) {
          e?.preventDefault();
          e?.stopPropagation();
-
-         setSelectedAgent(token);
-         addActiveAgent && addActiveAgent(token);
+         if (isSearchMode) {
+            _setSelectedAgent(token);
+         } else {
+            setSelectedAgent(token);
+            addActiveAgent && addActiveAgent(token);
+         }
       }
    };
 

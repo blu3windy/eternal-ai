@@ -105,16 +105,15 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
 
       const threadItems = await chatAgentDatabase.getSessions(threadId);
 
+      setIsFirstChat(threadItems?.length === 1);
+
       if (threadItems?.length === 0) {
          const sessionId = await chatAgentDatabase.createSession(threadId);
          setSessionId(sessionId);
          await chatAgentDatabase.migrateMessages(threadId);
       } else {
          const lastSessionActive = await chatAgentDatabase.getLastSessionActive(threadId);
-         console.log('lastSessionActive', lastSessionActive);
-         
          setSessionId(lastSessionActive?.id);
-         setIsFirstChat(false)
       }
    }, [selectedAgent]);
 
@@ -191,37 +190,12 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isElectron.current = true;
       }
 
-
-      // Clear any existing timeout
-      if (initTimeout.current) {
-         clearTimeout(initTimeout.current);
+      if (threadId) {
+         refInitialized.current = true;
+         refLoadChatItems.current = true;
+         initialLoadChatItems();
       }
 
-      if (threadId && !refLoadChatItems.current && !refInitialized.current) {
-         // For Electron, add a small delay to ensure we only run once
-         if (isElectron.current) {
-            initTimeout.current = setTimeout(() => {
-               if (!refInitialized.current) {
-                  refInitialized.current = true;
-                  refLoadChatItems.current = true;
-                  initialLoadChatItems();
-               }
-            }, 100);
-         } else {
-            refInitialized.current = true;
-            refLoadChatItems.current = true;
-            initialLoadChatItems();
-         }
-
-         return () => {
-            if (initTimeout.current) {
-               clearTimeout(initTimeout.current);
-            }
-            refLoadChatItems.current = false;
-            refInitialized.current = false;
-            (window as any).clearChatHistory = undefined;
-         };
-      }
    }, [threadId]);
 
    const lastMessage = messages[messages.length - 1];

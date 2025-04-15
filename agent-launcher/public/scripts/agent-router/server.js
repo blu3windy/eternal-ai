@@ -12,6 +12,29 @@ const REQUEST_TIMEOUT = 120; // 120 minutes
 const FILE_RETENTION_HOURS = 72; // 72 hours
 const PROCESSING_REQUESTS = {};
 
+// TODO: add api request log error for rollbar end point  
+// where is context?
+
+const logError = async (error) => {
+  const payload = {
+    error: error,
+    timestamp: new Date().toISOString(),
+    type: 'ERROR_LOG_FROM_AGENT_ROUTER',
+    level: 'error',
+    source: 'agent-router',
+    context: 'ERROR_LOG_FROM_AGENT_ROUTER',
+  };
+  const response = await fetch('https://api.rollbar.com/api/1/log', { 
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Rollbar-Access-Token': '0b1d40e4a6c94f19b9c39a7b8cc5cea184130e2685cb6e38689a17843c0765e9228dd3b611b559e3ae5176dfe3ab7f12',
+    },
+    body: JSON.stringify(payload),
+  });
+  return response;
+};
+
 // Enable CORS for all origins
 app.use(
   cors({
@@ -275,6 +298,7 @@ app.post("/:agentName/prompt", async (req, res) => {
           return;
         }
         if (existedLog?.status === 500) {
+          logError(JSON.stringify(existedLog.data));
           res.status(500).json(tryToParseStringJson(existedLog.data));
           return;
         }
@@ -297,6 +321,7 @@ app.post("/:agentName/prompt", async (req, res) => {
         }
       }
     } catch (error) {
+      logError(JSON.stringify(error));
       //
     }
   }
@@ -346,7 +371,9 @@ app.post("/:agentName/prompt", async (req, res) => {
                 }
               }
             }
-          } catch (e) {}
+          } catch (e) {
+            logError(JSON.stringify(e));
+          }
         }
       });
 
