@@ -48,7 +48,7 @@ function HandleProcessingMessage({
                         console.log('__________res__________', res);
                         try {
                            if (res.choices[0].message.content) {
-                              if (!data.msg) {
+                              if (!data.msg || (res.choices[0].message.content as string).includes(data.msg)) {
                                  updateMessage(data.id, {
                                     status: "received",
                                     msg: res.choices[0].message.content
