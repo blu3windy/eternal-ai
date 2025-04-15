@@ -3,15 +3,18 @@ import App from "./App.tsx";
 import { createRoot } from "react-dom/client";
 import { ChakraProvider } from "@chakra-ui/react";
 import "@fontsource/inter";
+import { ErrorManagerProvider } from "@providers/ErrorManager/index.tsx";
 
 const isDev = import.meta.env.MODE === "development";
 
 const Root = () => {
    return (
       <>
-         <ChakraProvider>
-            <App />
-         </ChakraProvider>
+         <ErrorManagerProvider>
+            <ChakraProvider>
+               <App />
+            </ChakraProvider>
+         </ErrorManagerProvider>
       </>
    );
 };
