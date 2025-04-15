@@ -9,6 +9,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/agentfactory"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/agentupgradeable"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/erc20utilityagent"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/evmapi"
@@ -388,6 +389,44 @@ func (s *Service) UpdateAgentUpgradeableCodeVersion(ctx context.Context, agentIn
 			).Error
 		if err != nil {
 			return errs.NewError(err)
+		}
+	}
+	return nil
+}
+
+func (s *Service) AgentFactoryAgentCreatedEvent(ctx context.Context, networkID uint64, event *agentfactory.AgentFactoryAgentCreated) error {
+	agentFactoryAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "agent_factory_address"))
+	if strings.EqualFold(agentFactoryAddress, event.Raw.Address.Hex()) {
+		agentID := common.Bytes2Hex(event.AgentId[:])
+		agentInfo, err := s.dao.FirstAgentInfo(
+			daos.GetDBMainCtx(ctx),
+			map[string][]any{
+				"agent_id": {agentID},
+			},
+			map[string][]any{},
+			[]string{},
+		)
+		if err != nil {
+			return errs.NewError(err)
+		}
+		if agentInfo != nil && agentInfo.AgentContractAddress == "" {
+			agentAddress := strings.ToLower(event.Agent.Hex())
+			err = daos.GetDBMainCtx(ctx).
+				Model(agentInfo).
+				Updates(
+					map[string]any{
+						"agent_contract_address": agentAddress,
+						"agent_contract_id":      "0",
+						"mint_hash":              event.Raw.TxHash.Hex(),
+						"status":                 models.AssistantStatusReady,
+						"reply_enabled":          true,
+						"agent_nft_minted":       true,
+					},
+				).Error
+			if err != nil {
+				return errs.NewError(err)
+			}
+			go s.UpdateAgentUpgradeableCodeVersion(ctx, agentInfo.ID)
 		}
 	}
 	return nil

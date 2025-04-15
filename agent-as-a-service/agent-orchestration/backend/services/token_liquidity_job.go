@@ -39,6 +39,14 @@ func (s *Service) JobAgentDeployToken(ctx context.Context) error {
 					"memes.status = ?": {models.MemeStatusNew},
 					"memes.fee = 0 or agent_infos.eai_balance >= memes.fee or agent_infos.ref_tweet_id > 0": {},
 					"memes.num_retries < 3": {},
+					"agent_infos.agent_type in (?)": {
+						[]models.AgentInfoAgentType{
+							models.AgentInfoAgentTypeNormal,
+							models.AgentInfoAgentTypeReasoning,
+							models.AgentInfoAgentTypeEliza,
+							models.AgentInfoAgentTypeZerepy,
+						},
+					},
 				},
 				map[string][]any{},
 				[]string{
