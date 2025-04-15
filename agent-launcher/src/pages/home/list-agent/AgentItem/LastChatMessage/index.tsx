@@ -34,52 +34,6 @@ const LastChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, 
    const [showTaskText, setShowTaskText] = useState(false);
    const [isOpenProcessingTask, setIsOpenProcessingTask] = useState(false);
 
-   useEffect(() => {
-      const createdAt = message?.createdAt ? new Date(message?.createdAt).getTime() : new Date().getTime();
-      const now = new Date().getTime();
-
-      const remainingTime = (now - createdAt);
-
-      if (message.status === "waiting" || message.status === "receiving") {
-         const waitingTime = 1000 * 60 * 3;
-         if (remainingTime < waitingTime) {
-            const timeout = setTimeout(() => {
-               updateMessage(message.id, {
-                  status: message.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                  updatedAt: new Date().getTime(),
-               });
-            }, waitingTime - remainingTime);
-
-            return () => {
-               clearTimeout(timeout);
-            };
-         } else {
-            updateMessage(message.id, {
-               status: message.status === "waiting" ? "sync-waiting" : "sync-receiving",
-               updatedAt: new Date().getTime(),
-            });
-         }
-      } else if (message.status === "sync-waiting" || message.status === "sync-receiving") {
-         const waitingTime = 1000 * 60 * 30;
-         if (remainingTime < waitingTime) {
-            const timeout = setTimeout(() => {
-               updateMessage(message.id, {
-                  status: "failed",
-                  msg: "Server is not responding",
-               });
-            }, waitingTime - remainingTime);
-            return () => {
-               clearTimeout(timeout);
-            };
-         } else {
-            updateMessage(message.id, {
-               status: "failed",
-               msg: "Server is not responding",
-            });
-         }
-      }
-   }, [message.status, updateMessage, message.id]);
-
    const renderMessage = useMemo(() => {
       // const textStr = removeInvalidTags(message.msg || '')
       const textStr = message.msg || '';
