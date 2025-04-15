@@ -29,10 +29,10 @@ function ChatAgent() {
       <Box className={s.container}>
          {/* <AgentTopInfo /> */}
          {isCanChat && isRunning ? (
-            <ChatAgentProvider>
+            <Box>
                <AgentTopInfo />
                <ChatBox />
-            </ChatAgentProvider>
+            </Box>
          ) : (
             <>
                {

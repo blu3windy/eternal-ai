@@ -11,6 +11,7 @@ import { AgentContext } from "./provider/AgentContext";
 import s from "./styles.module.scss";
 import MonitorProvider from "@providers/Monitor/MonitorProvider";
 import { GarbageProvider } from "@providers/GarbageDocker";
+import { ChatAgentProvider } from "./chat-agent/ChatAgent/provider";
 
 type Props = {
    // some props
@@ -56,11 +57,13 @@ const Home = (_props: Props) => {
       <MainLayout className={s.container}>
          <MonitorProvider>
             <AgentProvider>
-               <GarbageProvider>
-                  <FundAgentProvider>
-                     <HandleHome />
-                  </FundAgentProvider>
-               </GarbageProvider>
+               <ChatAgentProvider>
+                  <GarbageProvider>
+                     <FundAgentProvider>
+                        <HandleHome />
+                     </FundAgentProvider>
+                  </GarbageProvider>
+               </ChatAgentProvider>
             </AgentProvider>
          </MonitorProvider>
       </MainLayout>
