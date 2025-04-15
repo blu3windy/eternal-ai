@@ -457,6 +457,23 @@ func (s *Server) uintArrayFromContextQuery(c *gin.Context, query string) ([]uint
 	return rets, nil
 }
 
+func (s *Server) intArrayFromContextQuery(c *gin.Context, query string) ([]int, error) {
+	val := strings.TrimSpace(c.Query(query))
+	if val == "" {
+		return []int{}, nil
+	}
+	vals := strings.Split(val, ",")
+	rets := []int{}
+	for _, val := range vals {
+		num, err := strconv.ParseUint(val, 10, 64)
+		if err != nil {
+			return []int{}, err
+		}
+		rets = append(rets, int(num))
+	}
+	return rets, nil
+}
+
 func (s *Server) dateFromContextQuery(c *gin.Context, query string) (*time.Time, error) {
 	val := strings.TrimSpace(c.Query(query))
 	if val == "" {
