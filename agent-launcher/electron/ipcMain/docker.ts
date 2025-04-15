@@ -164,7 +164,7 @@ const ipcMainDocker = () => {
             return Object.entries(jsonObject)
                .map(([key, value]) => {
                   const trimmedKey = key.trim();
-                  const trimmedValue = (value || "").trim(); // Remove encodeURIComponent to preserve @
+                  const trimmedValue = (value || "").trim().replace(/ /g, '-'); // Replace " " with "-"
                   return `${trimmedKey}=${trimmedValue}`;
                })
                .filter(entry => entry !== '=' && entry !== undefined)
