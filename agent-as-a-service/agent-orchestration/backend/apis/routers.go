@@ -401,6 +401,8 @@ func (s *Server) Routers() {
 		vibeApi := rootAPI.Group("/vibe")
 		{
 			vibeApi.POST("/validate-ref-code", s.VibeValidateReferralCode)
+			vibeApi.GET("/dashboard", s.GetVibeDashBoards)
+			vibeApi.GET("/dashboard/:agent_id", s.GetVibeDashBoardsDetail)
 		}
 	}
 }
