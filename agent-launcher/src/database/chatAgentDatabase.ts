@@ -45,8 +45,8 @@ class ChatAgentDatabase {
            id: sessionId,
            threadId: threadId,
            name: "New Chat",
-           createdAt: Date.now(),
-           updatedAt: Date.now(),
+           createdAt: new Date().getTime(),
+           updatedAt:new Date().getTime(),
        });
        return sessionId;
    }
@@ -54,14 +54,14 @@ class ChatAgentDatabase {
    async updateSessionName(sessionId: string, name: string) {
        await this.db?.sessions.update(sessionId, {
            name,
-           updatedAt: Date.now()
+           updatedAt: new Date().getTime()
        });
    }
 
    async updateSessionLastMessage(sessionId: string, lastMessage: string) {
        await this.db?.sessions.update(sessionId, {
            lastMessage,
-           updatedAt: Date.now()
+           updatedAt: new Date().getTime()
        });
    }
 

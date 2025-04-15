@@ -21,6 +21,7 @@ log_error() {
 # Parse command line arguments
 FOLDER_PATH=""
 DOCKER_CONTAINERS=()
+BASE_PORT=80
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -30,6 +31,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --container)
             DOCKER_CONTAINERS+=("$2")
+            shift 2
+            ;;
+        --force-build)
+            FORCE_BUILD="$2"
             shift 2
             ;;
         *)
@@ -79,42 +84,50 @@ for container in "${DOCKER_CONTAINERS[@]}"; do
         continue
     fi
     
-    # Build image
-    if ! docker build -t "${container_name}" "./${folder_name}"; then
+    # Just build if image not exists or force build
+    if ! docker images "${container_name}" -q || [ "$FORCE_BUILD" = true ]; then
+        # Build image
+        if ! docker build -t "${container_name}" "./${folder_name}"; then
         log_error "Failed to build $container_name"
         build_success=false
-        continue
+            continue
+        fi
     fi
     
     log_message "Built $container_name successfully"
 
-    # Stop and remove silently
-    docker stop "${container_name}" || true
-    docker rm "${container_name}" || true
+    # Check container state and handle accordingly
+    container_state=$(docker ps -a --filter "name=^${container_name}$" --format "{{.State}}" 2>/dev/null)
+    
+    # If force build or container doesn't exist or is not running
+    if [ "$FORCE_BUILD" = true ] || [ -z "$container_state" ] || [ "$container_state" != "running" ]; then
+        # Stop and remove silently if container exists
+        docker stop "${container_name}" 2>/dev/null || true
+        docker rm "${container_name}" 2>/dev/null || true
 
-    docker stop "launcher-agent-router" || true
-    docker rm "launcher-agent-router" || true
-
-    # Run new container if it has a port
-    if [ -n "$port" ]; then
-        log_message "Starting $container_name..."
-        if [ "$container_name" = "agent-router" ]; then
-            if ! docker run -d -p "${port}:80" --network=network-agent-external --add-host=localmodel:host-gateway --name "${container_name}" -v "${FOLDER_PATH}/${container_name}/data:/app/data" "${container_name}"; then
-                log_error "Failed to start $container_name with mount"
-                build_success=false
-                continue
+        # Run new container if it has a port
+        if [ -n "$port" ]; then
+            log_message "Starting $container_name..."
+            if [ "$container_name" = "agent-router" ]; then
+                if ! docker run -d -p "${port}:${BASE_PORT}" --network=network-agent-external --add-host=localmodel:host-gateway --name "${container_name}" -v "${FOLDER_PATH}/${container_name}/data:/app/data" "${container_name}"; then
+                    log_error "Failed to start $container_name with mount"
+                    build_success=false
+                    continue
+                fi
+            else
+                if ! docker run -d -p "${port}:${BASE_PORT}" --network=network-agent-external --add-host=localmodel:host-gateway --name "${container_name}" "${container_name}"; then
+                    log_error "Failed to start $container_name"
+                    build_success=false
+                    continue
+                fi
             fi
+            log_message "Started $container_name successfully"
+            running_containers+=("$container_name:$port")
         else
-            if ! docker run -d -p "${port}:80" --network=network-agent-external --add-host=localmodel:host-gateway --name "${container_name}" "${container_name}"; then
-                log_error "Failed to start $container_name"
-                build_success=false
-                continue
-            fi
+            running_containers+=("$container_name:none")
         fi
-        log_message "Started $container_name successfully"
-        running_containers+=("$container_name:$port")
     else
-        running_containers+=("$container_name:none")
+        log_message "Container $container_name already exists and is running"
     fi
 done
 

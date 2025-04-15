@@ -1,25 +1,22 @@
 import { Button, Flex, Grid, Image, Text } from '@chakra-ui/react';
 import CustomMarkdown from "@components/CustomMarkdown";
 import { DefaultAvatar } from "@components/DefaultAvatar";
-import { BASE_CHAIN_ID } from '@constants/chains';
-import CAgentContract from '@contract/agent';
-import { AgentStatus, AgentStatusLabel, AgentType, AgentTypeName } from "@pages/home/list-agent/constants";
+import { INIT_WELCOME_MESSAGE } from '@pages/home/chat-agent/ChatAgent/constants';
+import { AgentStatus, AgentStatusLabel, AgentType } from "@pages/home/list-agent/constants";
 import { AgentContext } from "@pages/home/provider/AgentContext";
-import { IAgentToken } from "@services/api/agents-token/interface.ts";
-import localStorageService from '@storage/LocalStorageService';
-import { formatCurrency, formatLongAddress } from "@utils/format.ts";
-import cs from "clsx";
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import s from './styles.module.scss';
 import { MonitorContext } from '@providers/Monitor/MonitorContext';
 import { ContainerData } from '@providers/Monitor/interface';
-import { compareString } from '@utils/string';
-import { motion } from 'framer-motion';
 import { IChatMessage } from '@services/api/agent/types';
+import { IAgentToken } from "@services/api/agents-token/interface.ts";
+import localStorageService from '@storage/LocalStorageService';
+import { formatCurrency } from "@utils/format.ts";
+import { compareString } from '@utils/string';
+import cs from "clsx";
+import { motion } from 'framer-motion';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import chatAgentDatabase from "../../../../database/chatAgentDatabase";
-import ChatMessage from '@pages/home/chat-agent/ChatAgent/components/ChatMessage';
 import LastChatMessage from './LastChatMessage';
-import { INIT_WELCOME_MESSAGE } from '@pages/home/chat-agent/ChatAgent/constants';
+import s from './styles.module.scss';
 interface IProps {
    token: IAgentToken;
    addActiveAgent?: (agent: IAgentToken) => void;
@@ -39,14 +36,9 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
    const { containers } = useContext(MonitorContext);
 
    const threadId = `${token?.id}-${token?.agent_name}`;
-   const refLoadChatItems = useRef(false);
    const [messages, setMessages] = useState<IChatMessage[]>([]);
    const [sessionId, setSessionId] = useState<string | undefined>(undefined);
-   const [isFirstChat, setIsFirstChat] = useState(true);
-   const isElectron = useRef(false);
    const refEmptyMessage = useRef(true);
-   const initTimeout = useRef<NodeJS.Timeout | null>(null);
-   const refInitialized = useRef(false);
 
 
    const [hasNewVersionCode, setHaveNewVersionCode] = useState(false);
@@ -140,23 +132,18 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
       || token?.twitter_info?.twitter_avatar;
 
    const initialLoadChatItems = useCallback(async () => {
-      refLoadChatItems.current = true;
-      setMessages([]);
-      setSessionId(undefined);
-
       const threadItems = await chatAgentDatabase.getSessions(threadId);
 
       if (threadItems?.length === 0) {
          const sessionId = await chatAgentDatabase.createSession(threadId);
          setSessionId(sessionId);
-         await chatAgentDatabase.migrateMessages(threadId);
+         // await chatAgentDatabase.migrateMessages(threadId);
       } else {
          const lastSessionActive = await chatAgentDatabase.getLastSessionActive(threadId);
 
          setSessionId(lastSessionActive?.id);
-         setIsFirstChat(false)
       }
-   }, [selectedAgent]);
+   }, [threadId]);
 
    useEffect(() => {
       if (sessionId) {
@@ -167,105 +154,62 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
             if (items.length > 0) {
                refEmptyMessage.current = false;
             }
-            if (items?.length === 0 && isFirstChat) {
-               // publishEvent(INIT_WELCOME_MESSAGE);
-            } else {
-               const filterMessages = items
-                  .filter((item) => item.createdAt)
-                  .map((item) => {
+            const filterMessages = items
+               .filter((item) => item.createdAt)
+               .map((item) => {
+                  return item;
+               });
 
-                     // const now = new Date();
-                     // const createdAt = new Date(item.createdAt || "");
-                     // const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-                     // if (item.status === "waiting" || item.status === "receiving") {
-                     //    if (diffMinutes >= 3) {
-                     //       if (item.msg) {
-                     //          const updateMessage = {
-                     //             ...item,
-                     //             status: "received",
-                     //             updatedAt: new Date().getTime(),
-                     //          };
-                     //          return updateMessage;
-                     //       }
-
-                     //       const updateMessage = {
-                     //          ...item,
-                     //          msg: "Something went wrong!",
-                     //          status: "failed",
-                     //          updatedAt: new Date().getTime(),
-                     //       };
-                     //       return updateMessage;
-                     //    } else {
-                     //       if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-                     //          const updateMessage = {
-                     //             ...item,
-                     //             status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                     //             updatedAt: new Date().getTime(),
-                     //          };
-                     //          return updateMessage;
-                     //       }
-                     //    }
-                     // }
-                     // return item;
-
-                     if ([AgentType.Infra, AgentType.CustomPrompt].includes(selectedAgent?.agent_type as any)) {
-                        const updateMessage = {
-                           ...item,
-                           status: item.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                           updatedAt: new Date().getTime(),
-                        };
-                        return updateMessage;
-                     }
-
-                     return item;
-                  });
-
-               setMessages(filterMessages as any);
-            }
+            setMessages(filterMessages as any);
          })();
       }
    }, [sessionId]);
 
    useEffect(() => {
-      if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
-         isElectron.current = true;
-      }
-
-      if (initTimeout.current) {
-         clearTimeout(initTimeout.current);
-      }
-
-      if (threadId && !refLoadChatItems.current && !refInitialized.current) {
-         if (isElectron.current) {
-            initTimeout.current = setTimeout(() => {
-               if (!refInitialized.current) {
-                  refInitialized.current = true;
-                  refLoadChatItems.current = true;
-                  initialLoadChatItems();
-               }
-            }, 100);
-         } else {
-            refInitialized.current = true;
-            refLoadChatItems.current = true;
-            initialLoadChatItems();
-         }
-
-         return () => {
-            if (initTimeout.current) {
-               clearTimeout(initTimeout.current);
-            }
-            refLoadChatItems.current = false;
-            refInitialized.current = false;
-         };
+      if (threadId) {
+         initialLoadChatItems();
       }
    }, [threadId]);
+
+   useEffect(() => {
+      if (!sessionId || !isLatest) return;
+      
+      if (!isRunning) return;
+
+      const pollInterval = setInterval(async () => {
+         try {
+            const latestMessages = await chatAgentDatabase.loadChatItems(sessionId);
+            
+            if (latestMessages.length > messages.length) {
+               setMessages(latestMessages);
+            } else if (latestMessages.length === messages.length) {
+               const hasUpdates = latestMessages.some((latestMsg, index) => {
+                  const currentMsg = messages[index];
+                  return (
+                     latestMsg.status !== currentMsg.status ||
+                     latestMsg.msg !== currentMsg.msg ||
+                     latestMsg.updatedAt !== currentMsg.updatedAt
+                  );
+               });
+               
+               if (hasUpdates) {
+                  setMessages(latestMessages);
+               }
+            }
+         } catch (error) {
+            console.error('Error polling for message updates:', error);
+         }
+      }, 10000);
+
+      return () => clearInterval(pollInterval);
+   }, [sessionId, messages, isLatest, isRunning]);
 
    const lastMessage = messages[messages.length - 1];
    const questionMessage = messages[messages.length - 2];
    const isInitialMessage = questionMessage?.msg === INIT_WELCOME_MESSAGE;
 
    const showLastMessage = useMemo(() => {
-      return (lastMessage && lastMessage?.status === 'received') || (questionMessage && !isInitialMessage);
+      return (lastMessage && ['received', 'receiving', 'sync-receiving'].includes(lastMessage?.status)) || (questionMessage && !isInitialMessage);
    }, [lastMessage, questionMessage, isInitialMessage]);
 
    const handleGoToChat = (e: any, token_address?: any) => {
@@ -375,7 +319,7 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
                                  messages={[]}
                                  updateMessage={() => { }}
                                  key={lastMessage.id}
-                                 message={lastMessage?.status === 'received' ? lastMessage : questionMessage}
+                                 message={['received', 'receiving', 'sync-receiving'].includes(lastMessage?.status) ? lastMessage : questionMessage}
                                  onRetryErrorMessage={() => { }}
                                  isSending={false}
                                  initialMessage={false}

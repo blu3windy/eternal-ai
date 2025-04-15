@@ -25,7 +25,7 @@ type Props = {
    messages: IChatMessage[];
 };
 
-const LastChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSending, initialMessage, updateMessage }: Props) => {
+const LastChatMessage = ({ messages, message, ref, onRetryErrorMessage, isSending, initialMessage, updateMessage }: Props) => {
    const dispatch = useDispatch();
    const { selectedAgent } = useContext(AgentContext);
    const [hours, setHours] = useState<number | null>(0);

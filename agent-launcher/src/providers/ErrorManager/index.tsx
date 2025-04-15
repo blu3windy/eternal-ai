@@ -28,7 +28,7 @@ const ErrorFallback = ({ error, resetError }: { error: Error | null; resetError:
 
 export const ErrorManagerProvider: React.FC<ErrorManagerProviderProps> = ({ children }) => {
     const rollbar = new Rollbar({
-        accessToken: '77b96dbab323499fa1da2dc449a928f2b75c39ae8af2a4495020a801834bd4f752bce9260390042d2698563253741f58',
+        accessToken: '0b1d40e4a6c94f19b9c39a7b8cc5cea184130e2685cb6e38689a17843c0765e9228dd3b611b559e3ae5176dfe3ab7f12',
         environment: process.env.NODE_ENV,
         captureUncaught: true,
         captureUnhandledRejections: true,

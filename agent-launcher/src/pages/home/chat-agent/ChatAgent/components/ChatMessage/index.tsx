@@ -1,27 +1,24 @@
 import { Box, Flex, Image, Text } from "@chakra-ui/react";
-import { memo, useContext, useEffect, useMemo, useState } from "react";
-import s from "./ChatMessage.module.scss";
-import pdfMake from "pdfmake";
-import { mdpdfmake } from "mdpdfmake";
-import cs from "classnames";
-import { INIT_WELCOME_MESSAGE } from "../../constants";
 import SvgInset from "@components/SvgInset";
+import cs from "classnames";
+import { mdpdfmake } from "mdpdfmake";
+import pdfMake from "pdfmake";
+import { memo, useContext, useEffect, useMemo, useState } from "react";
+import { INIT_WELCOME_MESSAGE } from "../../constants";
+import s from "./ChatMessage.module.scss";
 // import {WaitingAnimation} from '@/modules/chat/components/ChatMessage/WaitingForGenerate/WaitingForGenerateText';
-import { formatLongAddress } from "@utils/format";
+import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/WaitingForGenerateText";
+import CustomMarkdown from "@components/CustomMarkdown";
+import { COMPUTER_USE_TAG_REGEX, IMAGE_SLIDER_TAG_REGEX, IMAGE_SLIDE_ITEM_TAG_REGEX, MARKDOWN_TAGS, THINK_TAG_REGEX } from "@components/CustomMarkdown/constants";
+import ProcessingTaskModal from "@pages/home/list-agent/BottomBar/ProcessingTaskModal";
+import { AgentContext } from "@pages/home/provider/AgentContext";
+import { openWithUrl } from "@stores/states/floating-web-view/reducer";
+import { compareString } from "@utils/string.ts";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
-import { IChatMessage } from "src/services/api/agent/types.ts";
-import { AgentContext } from "@pages/home/provider/AgentContext";
-import CustomMarkdown from "@components/CustomMarkdown";
-import { compareString, removeInvalidTags } from "@utils/string.ts";
-import { getExplorerByChain } from "@utils/helpers.ts";
 import { motion } from "framer-motion";
-import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/WaitingForGenerateText";
-import { v4 } from "uuid";
 import { useDispatch } from "react-redux";
-import { openWithUrl } from "@stores/states/floating-web-view/reducer";
-import { THINK_TAG_REGEX, COMPUTER_USE_TAG_REGEX, MARKDOWN_TAGS, IMAGE_SLIDER_TAG_REGEX, IMAGE_SLIDE_ITEM_TAG_REGEX } from "@components/CustomMarkdown/constants";
-import ProcessingTaskModal from "@pages/home/list-agent/BottomBar/ProcessingTaskModal";
+import { IChatMessage } from "src/services/api/agent/types.ts";
 
 dayjs.extend(duration);
 
@@ -58,7 +55,6 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
             const timeout = setTimeout(() => {
                updateMessage(message.id, {
                   status: message.status === "waiting" ? "sync-waiting" : "sync-receiving",
-                  updatedAt: new Date().getTime(),
                });
             }, waitingTime - remainingTime);
 
@@ -68,7 +64,6 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          } else {
             updateMessage(message.id, {
                status: message.status === "waiting" ? "sync-waiting" : "sync-receiving",
-               updatedAt: new Date().getTime(),
             });
          }
       } else if (message.status === "sync-waiting" || message.status === "sync-receiving") {
