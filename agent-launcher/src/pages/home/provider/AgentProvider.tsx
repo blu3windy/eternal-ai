@@ -969,7 +969,6 @@ const AgentProvider: React.FC<
             limit: 1,
             agent_types,
             include_hidden: true,
-            isPathAgent: true,
          });
          const agent = agents?.[0];
          if (!agent) {
