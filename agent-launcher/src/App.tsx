@@ -13,29 +13,29 @@ import { PersistGate } from "redux-persist/integration/react";
 
 import FloatingWebView from "@providers/FloatingWebView/index.tsx";
 import UpdateBanner from "@components/UpdateBanner/index.tsx";
+import { ErrorManagerProvider } from "@providers/ErrorManager/index.tsx";
 // import { DockerMonitorProvider } from "@providers/DockerMonitor/index.tsx";
 
 function App() {
-
    return (
       <>
-         <Provider store={store}>
-            <PersistGate loading={null} persistor={persistor}>
-               <SyncTaskFromStorage />
-               <FloatingWebView />
-               <UpdateBanner />
-               <AuthProvider>
-                  <Router basename="/">
-                     <Routes>
-                        <Route path={ROUTERS.HOME} element={<Home />} />
-                        <Route path={ROUTERS.MINE} element={<Mine />} />
-                        {/* Wildcard route to catch all unmatched paths */}
-                        <Route path="*" element={<Navigate to={ROUTERS.HOME} />} />
-                     </Routes>
-                  </Router>
-               </AuthProvider>
-            </PersistGate>
-         </Provider>
+            <Provider store={store}>
+               <PersistGate loading={null} persistor={persistor}>
+                  <SyncTaskFromStorage />
+                  <FloatingWebView />
+                  <UpdateBanner />
+                  <AuthProvider>
+                     <Router basename="/">
+                        <Routes>
+                           <Route path={ROUTERS.HOME} element={<Home />} />
+                           <Route path={ROUTERS.MINE} element={<Mine />} />
+                           {/* Wildcard route to catch all unmatched paths */}
+                           <Route path="*" element={<Navigate to={ROUTERS.HOME} />} />
+                        </Routes>
+                     </Router>
+                  </AuthProvider>
+               </PersistGate>
+            </Provider>
       </>
    );
 }

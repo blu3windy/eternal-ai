@@ -2,22 +2,26 @@
 import axios, { AxiosHeaders } from 'axios';
 import localStorageService from "../../storage/LocalStorageService.ts";
 import STORAGE_KEYS from "@constants/storage-key.ts";
-
+import { logError } from '@utils/error-handler';
+import { v4 as uuidv4 } from 'uuid';
 export const TIMEOUT = 120 * 60000;
-export const HEADERS = { 'Content-Type': 'application/json' };
+
+const HEADERS = {
+   'Content-Type': 'application/json',
+   Accept: 'application/json',
+} as unknown as AxiosHeaders;
 
 export const getAuthenToken = async () => {
-   const authToken = await localStorageService.getItem(STORAGE_KEYS.AUTHEN_TOKEN);
-   if (authToken) {
-      return authToken;
-   }
-   return '';
+   return await localStorageService.getItem(STORAGE_KEYS.AUTHEN_TOKEN);
 };
 
 export const getClientHeaders = async () => {
-   const headers = {
-      ...HEADERS,
-   } as Partial<AxiosHeaders>;
+   const requestId = uuidv4();
+   const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Request-ID': requestId,
+   };
    const authToken = await getAuthenToken();
 
    if (authToken) {
@@ -32,6 +36,7 @@ const createAxiosInstance = ({ baseURL = '' }: { baseURL: string }) => {
       timeout: TIMEOUT,
       headers: {
          ...HEADERS,
+         'X-Request-ID': crypto.randomUUID(),
       },
    });
 
@@ -45,7 +50,13 @@ const createAxiosInstance = ({ baseURL = '' }: { baseURL: string }) => {
          return config;
       },
       (error) => {
-         Promise.reject(error);
+         logError(error, {
+            type: 'REQUEST_ERROR',
+            context: 'request_interceptor',
+            url: error.config?.url,
+            method: error.config?.method
+         });
+         return Promise.reject(error);
       },
    );
 
@@ -57,6 +68,13 @@ const createAxiosInstance = ({ baseURL = '' }: { baseURL: string }) => {
          }
          const error = res?.data?.error;
          if (error && Object.keys(error).length) {
+            logError(new Error(JSON.stringify(error)), {
+               type: 'API_ERROR',
+               context: 'response_validation',
+               status: res.status,
+               url: res.config.url,
+               requestId: res.config.headers['X-Request-ID']
+            });
             return Promise.reject(error);
          }
 
@@ -64,18 +82,30 @@ const createAxiosInstance = ({ baseURL = '' }: { baseURL: string }) => {
             return Promise.resolve(result);
          }
          if (typeof result === 'object') {
-            // return Promise.resolve(camelCaseKeys(result));
             return result;
          }
          return Promise.resolve(result);
       },
       (error: any) => {
          if (!error.response) {
+            logError(error, {
+               type: 'NETWORK_ERROR',
+               context: 'network_failure',
+               url: error.config?.url,
+               requestId: error.config?.headers['X-Request-ID']
+            });
             return Promise.reject(error);
          }
          const response = error?.response?.data || error;
-         const errorMessage
-        = response?.error || error?.Message || JSON.stringify(error);
+         const errorMessage = response?.error || error?.Message || JSON.stringify(error);
+         logError(new Error(errorMessage), {
+            type: 'API_ERROR',
+            context: 'response_error',
+            status: error.response?.status,
+            url: error.config?.url,
+            requestId: error.config?.headers['X-Request-ID'],
+            responseData: response
+         });
          return Promise.reject(errorMessage);
       },
    );

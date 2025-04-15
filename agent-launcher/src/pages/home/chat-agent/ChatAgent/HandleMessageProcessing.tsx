@@ -6,6 +6,8 @@ import { useChatAgentProvider } from "./provider";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface";
 import CAgentTokenAPI from "@services/api/agents-token";
+import { useDispatch } from "react-redux";
+import { removeTaskItem, removeTaskItemByItemId } from "@stores/states/agent-chat/reducer";
 
 function HandleProcessingMessage({
    data,
@@ -16,9 +18,10 @@ function HandleProcessingMessage({
    updateMessage: (id: string, data: Partial<IChatMessage>) => void;
    agent: IAgentToken | undefined;
 }) {
+   const dispatch = useDispatch();
    const cPumpAPI = new CAgentTokenAPI();
    const isPongRef = useRef<boolean>(false);
-
+   const threadId = `${agent?.id}-${agent?.agent_name}`;
 
    useEffect(() => {
       let timeout: NodeJS.Timeout;
@@ -45,7 +48,7 @@ function HandleProcessingMessage({
                         console.log('__________res__________', res);
                         try {
                            if (res.choices[0].message.content) {
-                              if (!data.msg) {
+                              if (!data.msg || (res.choices[0].message.content as string).includes(data.msg)) {
                                  updateMessage(data.id, {
                                     status: "received",
                                     msg: res.choices[0].message.content
@@ -60,13 +63,19 @@ function HandleProcessingMessage({
                                  status: "received",
                               });
                            }
-                           
                         } catch (e) {
                            updateMessage(data.id, {
                               status: "received",
                            });
                            console.log('__________e__________', e);
                         }
+
+                        dispatch(
+                           removeTaskItemByItemId({
+                              id: threadId,
+                              itemId: data.id,
+                           })
+                        );
                      } else {
                         setTimeout(() => {
                            checkProcessingTask();
@@ -87,6 +96,13 @@ function HandleProcessingMessage({
                            msg: errorMessage,
                         });
                      }
+
+                     dispatch(
+                        removeTaskItemByItemId({
+                           id: threadId,
+                           itemId: data.id,
+                        })
+                     );
                   }
                } catch (e) {
                   timeout = setTimeout(() => {

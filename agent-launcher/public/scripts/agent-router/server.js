@@ -8,7 +8,7 @@ const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 
-const REQUEST_TIMEOUT = 30; // 30 minutes
+const REQUEST_TIMEOUT = 120; // 120 minutes
 const FILE_RETENTION_HOURS = 72; // 72 hours
 const PROCESSING_REQUESTS = {};
 
@@ -486,12 +486,12 @@ app.post("/:agentName/prompt", async (req, res) => {
   proxyRequest.on("error", (err) => {
     console.error("Proxy request error:", err);
     res.status(500).json({
-      error: "Internal Server Error",
+      error: JSON.stringify(err),
     });
     if (payload?.id) {
       writeRequestEndLogger(
         payload?.id || "",
-        "Internal Server Error",
+        JSON.stringify(err),
         500,
         agentName
       );

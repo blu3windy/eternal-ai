@@ -47,31 +47,31 @@ function ProcessingItem({ data }: { data: TaskItem }) {
                   );
                }
             } else {
-               if (data.createdAt) {
-                  const now = new Date();
-                  const createdAt = new Date(data.createdAt || "");
-                  const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+               // if (data.createdAt) {
+               //    const now = new Date();
+               //    const createdAt = new Date(data.createdAt || "");
+               //    const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
 
-                  if (diffMinutes >= 3) {
-                     dispatch(
-                        removeTaskItem({
-                           id: threadId,
-                           taskItem: {
-                              ...data,
-                           },
-                        })
-                     );
-                  }
-               } else {
-                  dispatch(
-                     removeTaskItem({
-                        id: threadId,
-                        taskItem: {
-                           ...data,
-                        },
-                     })
-                  );
-               }
+               //    if (diffMinutes >= 3) {
+               //       dispatch(
+               //          removeTaskItem({
+               //             id: threadId,
+               //             taskItem: {
+               //                ...data,
+               //             },
+               //          })
+               //       );
+               //    }
+               // } else {
+               //    dispatch(
+               //       removeTaskItem({
+               //          id: threadId,
+               //          taskItem: {
+               //             ...data,
+               //          },
+               //       })
+               //    );
+               // }
             }
          }
       };

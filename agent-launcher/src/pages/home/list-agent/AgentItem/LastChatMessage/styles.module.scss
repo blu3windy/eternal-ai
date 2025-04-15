@@ -6,9 +6,12 @@
     .content {
         border-radius: 12px;
         // padding: 16px;
-        max-width: calc(calc(100vw / 2) * 0.8);
+        max-width: 340px;
         width: fit-content;
         gap: 8px;
+        font-size: 13px;
+        pointer-events: none;
+
         &.question {
             //margin-bottom: 0;
             // border-radius: 16px 16px 0 16px;
@@ -51,13 +54,6 @@
 }
 
 .markdown {
-    //margin-top: 8px;
-    //background: #000;
-    //border-radius: 12px;
-    //padding: 16px;
-    //padding-top: 0;
-    //padding-bottom: 0;
-    //border: 1px solid transparent;
     &.markdown__failed {
         // background: #ed8484;
         // border: 1px solid #ed8484;
