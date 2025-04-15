@@ -1115,7 +1115,7 @@ func (s *Service) CreateSolanaTokenTransferEvent(ctx context.Context, networkID 
 }
 
 func (s *Service) DeleteFilterAddrs(ctx context.Context, networkID uint64) error {
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		err := s.DeleteRedisCachedWithKey(fmt.Sprintf("GetFilterAddrs_%d", networkID))
 		if err == nil {
 			break
@@ -1127,7 +1127,7 @@ func (s *Service) DeleteFilterAddrs(ctx context.Context, networkID uint64) error
 func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]string, error) {
 	addrs := []string{}
 	err := s.RedisCached(
-		fmt.Sprintf("GetFilterAddrs_%d", networkID),
+		fmt.Sprintf("GetFilterAddrsV1_%d", networkID),
 		true,
 		5*time.Minute,
 		&addrs,
@@ -1178,8 +1178,35 @@ func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]strin
 			if s.conf.ExistsedConfigKey(networkID, "order_payment_contract_address") {
 				addrs = append(addrs, s.conf.GetConfigKeyString(networkID, "order_payment_contract_address"))
 			}
+			agents, err := s.dao.FindAgentInfo(
+				daos.GetDBMainCtx(ctx),
+				map[string][]any{
+					"network_id = ?":               {networkID},
+					"agent_contract_address != ''": {},
+					"agent_type in (?)": {
+						[]models.AgentInfoAgentType{
+							models.AgentInfoAgentTypeModel,
+							models.AgentInfoAgentTypeModelOnline,
+							models.AgentInfoAgentTypeJs,
+							models.AgentInfoAgentTypePython,
+							models.AgentInfoAgentTypeInfa,
+							models.AgentInfoAgentTypeCustomUi,
+							models.AgentInfoAgentTypeCustomPrompt,
+						},
+					},
+				},
+				map[string][]any{},
+				[]string{},
+				0,
+				999999,
+			)
+			if err != nil {
+				return nil, errs.NewError(err)
+			}
+			for _, agent := range agents {
+				addrs = append(addrs, agent.AgentContractAddress)
+			}
 			return addrs, nil
-
 		},
 	)
 	if err != nil {
