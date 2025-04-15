@@ -629,7 +629,8 @@ func (s *Service) VibeTokenFactoryTokenDeployedEvent(ctx context.Context, networ
 					Model(meme).
 					Updates(
 						map[string]any{
-							"token_address": strings.ToLower(event.Token.Hex()),
+							"token_address":     strings.ToLower(event.Token.Hex()),
+							"add_pool2_tx_hash": event.Raw.TxHash.Hex(),
 						},
 					).Error
 				if err != nil {
