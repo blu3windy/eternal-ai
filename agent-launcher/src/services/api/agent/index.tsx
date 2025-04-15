@@ -6,8 +6,9 @@ import { parseStreamAIResponse } from "@utils/api.ts";
 import { getClientHeaders } from "../http-client.ts";
 import CApiClient from "../agents-token/apiClient.ts";
 import { IAgentToken } from "../agents-token/interface.ts";
-
+import { v4 as uuidv4 } from 'uuid';
 import qs from 'query-string';
+import { logError } from '@utils/error-handler';
 
 const normalizedContent = (content: Content) => {
    if (typeof content === 'string') {
@@ -33,21 +34,45 @@ const handleStreamResponse = async (
    streamHandlers: ChatCompletionStreamHandler
 ): Promise<any> => {
    if (!response.ok) {
+      const errorData = await response.text();
+      logError(new Error(`HTTP error! status: ${response.status}`), {
+         type: 'STREAM_ERROR',
+         context: 'response_validation',
+         status: response.status,
+         errorData
+      });
       throw new Error(`HTTP error! status: ${response.status}`);
    }
 
    const contentType = response.headers.get('content-type');
    
    if (contentType?.includes('text/event-stream')) {
-      // Handle streaming response
       const reader = response.body?.getReader();
       if (!reader) {
+         logError(new Error('No reader available for stream response'), {
+            type: 'STREAM_ERROR',
+            context: 'stream_setup'
+         });
          throw new Error('No reader available for stream response');
       }
-      return await parseStreamAIResponse(reader, streamHandlers);
+      return await parseStreamAIResponse(reader, {
+         ...streamHandlers,
+         onFail: (err) => {
+            logError(err, {
+               type: 'STREAM_ERROR',
+               context: 'stream_processing'
+            });
+            streamHandlers.onFail(err);
+         }
+      });
    } else if (contentType?.includes('application/json')) {
       const data = await response.json();
       if (data.success === false) {
+         logError(new Error(data.error || 'Unknown error'), {
+            type: 'API_ERROR',
+            context: 'json_response',
+            errorData: data
+         });
          return {
             success: false,
             error: data.error || 'Unknown error occurred',
@@ -57,21 +82,18 @@ const handleStreamResponse = async (
 
       // Check for different response structures
       if (data.choices?.[0]?.message?.content) {
-         // Standard OpenAI format
          return {
             success: true,
             data: data,
             isStream: false
          };
       } else if (data.data?.choices?.[0]?.message?.content) {
-         // Nested data format
          return {
             success: true,
             data: data.data,
             isStream: false
          };
       } else if (typeof data === 'string') {
-         // Simple string response
          return {
             success: true,
             data: {
@@ -84,34 +106,12 @@ const handleStreamResponse = async (
             isStream: false
          };
       } else {
-         // Unknown format, return as is
          return {
             success: true,
             data: data,
             isStream: false
          };
       }
-   // } else if (contentType?.includes('text/plain')) {
-   } else {
-      const text = await response.text();
-      return {
-         success: true,
-         data: {
-            choices: [{
-               message: {
-                  content: text
-               }
-            }]
-         },
-         isStream: false
-      };
-   // } else {
-   //    // Unknown content type
-   //    return {
-   //       success: false,
-   //       error: `Unsupported content type: ${contentType}`,
-   //       isStream: false
-   //    };
    }
 };
 
@@ -176,18 +176,30 @@ const AgentAPI = {
             content: normalizedContent(item.content)
          }));
          
-         // Try with stream first
          const response = await fetch(`http://localhost:65534/v1/chat/completions`, {
             method: 'POST',
-            headers: {
-               ...headers,
-            },
-            body: JSON.stringify({ messages: messages, stream: true, seed: 0, name: payload.name, description: payload.description })
+            headers,
+            body: JSON.stringify({ 
+               messages, 
+               stream: true, 
+               seed: 0, 
+               name: payload.name, 
+               description: payload.description 
+            })
          });
 
          return await handleStreamResponse(response, streamHandlers);
       } catch (error) {
-         console.error('Error in chatAgentModelStreamCompletions:', error);
+         console.log('chatAgentModelStreamCompletions error', error);
+         logError(error instanceof Error ? error : new Error(String(error)), {
+            type: 'CHAT_COMPLETION_ERROR',
+            context: 'stream_completion',
+            payload: {
+               name: payload.name,
+               description: payload.description
+            }
+         });
+         
          return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -200,24 +212,46 @@ const AgentAPI = {
    }: {
       payload: ChatCompletionPayload;
    }): Promise<any> => {
-      const headers = await getClientHeaders();
-      const messages = payload.messages.map((item) => ({
-         ...item,
-         content: normalizedContent(item.content)
-      }));
-      const response = await fetch(`http://localhost:65534/v1/chat/completions`, {
-         method: 'POST',
-         headers: {
-            ...headers,
-         },
-         body: JSON.stringify({ messages: messages, name: payload.name, description: payload.description })
-      });
+      try {
+         const headers = await getClientHeaders();
+         const messages = payload.messages.map((item) => ({
+            ...item,
+            content: normalizedContent(item.content)
+         }));
+         
+         const response = await fetch(`http://localhost:65534/v1/chat/completions`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ 
+               messages, 
+               name: payload.name, 
+               description: payload.description 
+            })
+         });
 
-      if (response.status === 200) {
-         return await response.json();
+         if (response.status === 200) {
+            return await response.json();
+         }
+
+         const errorData = await response.text();
+         logError(new Error(`API error: ${response.status}`), {
+            type: 'API_ERROR',
+            context: 'chat_completion',
+            status: response.status,
+            errorData
+         });
+         throw new Error('API error');
+      } catch (error) {
+         logError(error instanceof Error ? error : new Error(String(error)), {
+            type: 'CHAT_COMPLETION_ERROR',
+            context: 'completion',
+            payload: {
+               name: payload.name,
+               description: payload.description
+            }
+         });
+         throw error;
       }
-
-      throw 'API error';
    },
    chatAgentUtility: async ({ id, agent, prvKey, messages }: { id?: string; agent: IAgentToken, prvKey?: string, messages: any[]}): Promise<any> => {
       try {
@@ -230,11 +264,17 @@ const AgentAPI = {
          const res: AgentInfo = await (new CApiClient()).api.post(
             `http://localhost:33030/${agent?.network_id}-${agent?.agent_name?.toLowerCase()}/prompt`, payload
          );
-         console.log('res>>>AgentInfo', res);
-
          return res;
-      } catch (e) {
-         throw e;
+      } catch (error) {
+         logError(error instanceof Error ? error : new Error(String(error)), {
+            type: 'AGENT_UTILITY_ERROR',
+            context: 'prompt',
+            agent: {
+               network_id: agent?.network_id,
+               agent_name: agent?.agent_name
+            }
+         });
+         throw error;
       }
    },
    chatAgentUtilityStreamCompletions: async ({
@@ -251,22 +291,18 @@ const AgentAPI = {
       prvKey?: string;
    }): Promise<any> => {
       try {
-         
          const headers = await getClientHeaders();
          const messages = payload.messages.map((item) => ({
             ...item,
             content: normalizedContent(item.content)
          }));
          
-         // Try with stream first
          const response = await fetch(`http://localhost:33030/${agent?.network_id}-${agent?.agent_name?.toLowerCase()}/prompt`, {
             method: 'POST',
-            headers: {
-               ...headers,
-            },
+            headers,
             body: JSON.stringify({ 
                id,
-               messages: messages, 
+               messages, 
                stream: true, 
                seed: 0,
                privateKey: prvKey,
@@ -278,7 +314,19 @@ const AgentAPI = {
 
          return await handleStreamResponse(response, streamHandlers);
       } catch (error) {
-         console.error('Error in chatAgentUtilityStreamCompletions:', error);
+         logError(error instanceof Error ? error : new Error(String(error)), {
+            type: 'AGENT_UTILITY_ERROR',
+            context: 'stream_completion',
+            agent: {
+               network_id: agent?.network_id,
+               agent_name: agent?.agent_name
+            },
+            payload: {
+               name: payload?.name,
+               description: payload?.description
+            }
+         });
+         
          return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error occurred',
