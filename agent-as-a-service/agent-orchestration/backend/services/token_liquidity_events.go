@@ -678,9 +678,12 @@ func (s *Service) VibeTokenFactoryFeesCollectedEvent(ctx context.Context, networ
 			if meme.FeesCollectedUpdated < feesCollectedUpdated {
 				err = daos.GetDBMainCtx(ctx).
 					Model(meme).
+					Where("fees_collected_updated < ?", feesCollectedUpdated).
 					Updates(
 						map[string]any{
-							"fees_collected_updated": feesCollectedUpdated,
+							"fees0_collected_balance": gorm.Expr("fees0_collected_balance + ?", numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Amount0, 18))),
+							"fees1_collected_balance": gorm.Expr("fees1_collected_balance + ?", numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Amount1, 18))),
+							"fees_collected_updated":  feesCollectedUpdated,
 						},
 					).Error
 				if err != nil {
