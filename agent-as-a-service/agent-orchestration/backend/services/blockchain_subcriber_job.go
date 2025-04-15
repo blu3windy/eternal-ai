@@ -1312,11 +1312,10 @@ func (s *Service) ScanEventsByChain(ctx context.Context, networkID uint64) error
 								if !chain.Enabled || chain.LastBlockNumber == 0 {
 									break
 								}
-								// addrs, err := s.GetFilterAddrs(ctx, chain.NetworkID)
-								// if err != nil {
-								// 	return errs.NewError(err)
-								// }
-								addrs := []string{}
+								addrs, err := s.GetFilterAddrs(ctx, chain.NetworkID)
+								if err != nil {
+									return errs.NewError(err)
+								}
 								startBlocks := chain.LastBlockNumber + 1
 								endBlocks := (chain.LastBlockNumber + chain.NumBlocks - 1)
 								eventResp, err := ethClient.ScanEvents(addrs, startBlocks, endBlocks)
