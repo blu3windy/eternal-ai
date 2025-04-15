@@ -23,9 +23,10 @@ import { INIT_WELCOME_MESSAGE } from '@pages/home/chat-agent/ChatAgent/constants
 interface IProps {
    token: IAgentToken;
    addActiveAgent?: (agent: IAgentToken) => void;
+   isLatest?: boolean;
 }
 
-const AgentItem = ({ token, addActiveAgent }: IProps) => {
+const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
    const {
       selectedAgent,
       stopAgent,
@@ -365,33 +366,37 @@ const AgentItem = ({ token, addActiveAgent }: IProps) => {
                      </Flex>
                   </Flex>
                </Flex>
-
-               {showLastMessage ? (
-                  <>
-                  <LastChatMessage
-                     messages={[]} 
-                     updateMessage={() => {}}
-                     key={lastMessage.id}
-                     message={lastMessage?.status === 'received' ? lastMessage : questionMessage}
-                     onRetryErrorMessage={() => {}}
-                     isSending={false}
-                     initialMessage={false}
-                  />
-                  </>
-               ) : (
-                  <>
-                     {/* {
-                        description && (
-                           <div className={cs(s.descriptionText, "markdown")}>
-                              <CustomMarkdown
-                                 content={description}
+               {
+                  isLatest ? (
+                     <>
+                        {
+                           showLastMessage && (
+                              <LastChatMessage
+                                 messages={[]}
+                                 updateMessage={() => { }}
+                                 key={lastMessage.id}
+                                 message={lastMessage?.status === 'received' ? lastMessage : questionMessage}
+                                 onRetryErrorMessage={() => { }}
+                                 isSending={false}
+                                 initialMessage={false}
                               />
-                           </div>
-                        )
-                     } */}
-                  </>
-               )}
-
+                           )
+                        }
+                     </>
+                  ) : (
+                     <>
+                        {
+                           description && (
+                              <div className={cs(s.descriptionText, "markdown")}>
+                                 <CustomMarkdown
+                                    content={description}
+                                 />
+                              </div>
+                           )
+                        }
+                     </>
+                  )
+               }
                <Flex gap={"6px"} alignItems={"center"} justifyContent={"space-between"} mt={"4px"}>
                   <Flex gap={"8px"}>
                      {token?.run_status && <Text className={token?.run_status === AgentStatus.Local ? s.onChainTag : s.agentTypeTag}>{runStatus}</Text>}
