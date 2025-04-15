@@ -4,7 +4,7 @@
   "description": "Personal AGI, locally on your device.",
   "author": "Eternal AI Limited",
   "private": true,
-  "version": "25.0.49",
+  "version": "25.0.57",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "build:install": "node configBuild/build-install.cjs",
-    "build:update": "git pull && node configBuild/build-update.cjs"
+    "build:update": "git pull && yarn && node configBuild/build-update.cjs"
   },
   "resolutions": {
     "react": "^18",
@@ -28,6 +28,7 @@
     "@enzoferey/ethers-error-parser": "^0.2.3",
     "@fontsource/inter": "^5.1.1",
     "@reduxjs/toolkit": "^2.6.0",
+    "@rollbar/react": "^0.12.1",
     "adm-zip": "^0.5.16",
     "agent-server-definition": "^0.1.7",
     "axios": "^1.7.9",
@@ -87,6 +88,7 @@
     "rehype-raw": "^7.0.0",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
+    "rollbar": "^2.26.4",
     "sass": "^1.85.0",
     "slick-carousel": "^1.8.1",
     "swiper": "^11.2.5",
