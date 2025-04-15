@@ -297,13 +297,13 @@ func (s *Service) CreateMemeTradeHistory(ctx context.Context, event *ethapi.Unis
 					}
 					memeID = meme.ID
 				}
-				poolSwappedIdx := helpers.GetTimeIndex(uint(event.BlockNumber), event.TxIndex, event.Index)
-				if meme.PoolSwappedIdx < poolSwappedIdx {
+				poolSwappedUpdated := helpers.GetTimeIndex(uint(event.BlockNumber), event.TxIndex, event.Index)
+				if meme.PoolSwappedUpdated < poolSwappedUpdated {
 					err = tx.
 						Model(meme).
 						Updates(
 							map[string]any{
-								"pool_swapped_idx": poolSwappedIdx,
+								"pool_swapped_updated": poolSwappedUpdated,
 							},
 						).Error
 					if err != nil {
@@ -674,13 +674,13 @@ func (s *Service) VibeTokenFactoryFeesCollectedEvent(ctx context.Context, networ
 			return errs.NewError(err)
 		}
 		if meme != nil {
-			feesCollectedIdx := helpers.GetTimeIndex(uint(event.Raw.BlockNumber), event.Raw.TxIndex, event.Raw.Index)
-			if meme.FeesCollectedIdx < feesCollectedIdx {
+			feesCollectedUpdated := helpers.GetTimeIndex(uint(event.Raw.BlockNumber), event.Raw.TxIndex, event.Raw.Index)
+			if meme.FeesCollectedUpdated < feesCollectedUpdated {
 				err = daos.GetDBMainCtx(ctx).
 					Model(meme).
 					Updates(
 						map[string]any{
-							"fees_collected_idx": feesCollectedIdx,
+							"fees_collected_updated": feesCollectedUpdated,
 						},
 					).Error
 				if err != nil {
