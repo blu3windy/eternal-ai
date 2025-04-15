@@ -259,7 +259,11 @@ const AgentItem = ({ token, isLatest, addActiveAgent }: IProps) => {
                   {hasNewVersionCode && isInstalled && (
                      <Button
                         className={s.btnUpdate}
-                        onClick={() => handleUpdateCode(token)}
+                        onClick={(e) => {
+                           e?.preventDefault();
+                           e?.stopPropagation();
+                           handleUpdateCode(token);
+                        }}
                         isLoading={isUpdating}
                         isDisabled={isUpdating}
                         loadingText={'Updating...'}
