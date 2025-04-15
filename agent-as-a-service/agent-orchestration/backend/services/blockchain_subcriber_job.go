@@ -398,16 +398,6 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			}
 		}
 	}
-	{
-		for _, event := range eventResp.OrderpaymentOrderPaids {
-			err := s.OrderpaymentOrderPaidEvent(
-				ctx, networkID, event,
-			)
-			if err != nil {
-				retErr = errs.MergeError(retErr, err)
-			}
-		}
-	}
 	// handle agent created events
 	{
 		for _, event := range eventResp.AgentCreated {

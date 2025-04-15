@@ -19,7 +19,6 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/erc721"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/imagehub"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/iworkerhub"
-	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/orderpayment"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/systempromptmanager"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/uniswapv3factory"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/uniswapv3pool"
@@ -163,7 +162,6 @@ type BlockChainEventResp struct {
 	SystemPromptManagerNewTokens        []*systempromptmanager.SystemPromptManagerNewToken        `json:"system_prompt_manager_new_tokens"`
 	SystemPromptManagerAgentDataUpdates []*systempromptmanager.SystemPromptManagerAgentDataUpdate `json:"system_prompt_manager_agent_data_updates"`
 	SystemPromptManagerAgentURIUpdates  []*systempromptmanager.SystemPromptManagerAgentURIUpdate  `json:"system_prompt_manager_agent_uri_updates"`
-	OrderpaymentOrderPaids              []*orderpayment.OrderpaymentOrderPaid                     `json:"orderpayment_order_paid"`
 	RealWorldAgentExecutionRequested    []*RealWorldAgentExecutionRequested                       `json:"real_world_agent_execution_requested"`
 	CodePointerCreated                  []*agentupgradeable.AgentUpgradeableCodePointerCreated    `json:"code_pointer_created"`
 	AgentCreated                        []*agentfactory.AgentFactoryAgentCreated                  `json:"agent_created"`
@@ -258,8 +256,6 @@ func (c *Client) ScanEvents(contractAddrs []string, startBlock, endBlock int64) 
 					common.HexToHash("0x61beab98a81083e3c0239c33e149bef1316ca78f15b9f29125039f5521a06d06"),
 					common.HexToHash("0xe42abf7d4a793286da8cc1399cb577a1f5a0e133dfee371bb3a5abbdd77b011e"),
 					common.HexToHash("0x706a4e8eb2f354c7f4d96e5ea1984f36e72482629987edad78c9940ea037c362"),
-					// OrderPayment
-					common.HexToHash("0xc2522570932e6dff27df2e5c31cfd70be3653d564375e29575d4360aafca4eb5"),
 					//RealWorldAgent
 					common.HexToHash("0x9096741026bdd638bcc5cb995f0f00b4574b81f120a23c4a7086347116bf58a1"),
 					// AgentUpgradeable
@@ -795,22 +791,6 @@ func (c *Client) ParseEventResp(resp *BlockChainEventResp, log *types.Log) error
 			}
 		}
 	}
-	{
-		instance, err := orderpayment.NewOrderpayment(log.Address, client)
-		if err != nil {
-			return err
-		}
-		{
-			logParsed, err := instance.ParseOrderPaid(*log)
-			if err == nil {
-				resp.OrderpaymentOrderPaids = append(
-					resp.OrderpaymentOrderPaids,
-					logParsed,
-				)
-			}
-		}
-	}
-
 	//realworld agent
 	infra, err := realworldagent.NewERC20RealWorldAgent(log.Address, client)
 	if err != nil {
