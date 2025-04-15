@@ -9,6 +9,7 @@ import (
 
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/errs"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/helpers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/agentshares"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/binds/vibetokenfactory"
@@ -61,10 +62,10 @@ func (s *Service) CreateMemePool(ctx context.Context, networkID uint64, event *e
 				swapFactoryAddr := s.conf.GetConfigKeyString(networkID, "memeswap_factory_contract_address")
 				if strings.EqualFold(swapFactoryAddr, event.ContractAddress) {
 					token, err := s.dao.FirstMeme(tx,
-						map[string][]interface{}{
+						map[string][]any{
 							"pool = ?": {strings.ToLower(event.Pool)},
 						},
-						map[string][]interface{}{},
+						map[string][]any{},
 						false,
 					)
 					if err != nil {
@@ -82,10 +83,10 @@ func (s *Service) CreateMemePool(ctx context.Context, networkID uint64, event *e
 							baseIndex = 0
 						}
 						token, err = s.dao.FirstMeme(tx,
-							map[string][]interface{}{
-								"token_address = ?": []interface{}{tokenAddress},
+							map[string][]any{
+								"token_address = ?": []any{tokenAddress},
 							},
-							map[string][]interface{}{},
+							map[string][]any{},
 							false,
 						)
 						if err != nil {
@@ -95,7 +96,7 @@ func (s *Service) CreateMemePool(ctx context.Context, networkID uint64, event *e
 							if token.AddPool1TxHash == "" {
 								return errs.NewError(errs.ErrBadRequest)
 							}
-							token, err = s.dao.FirstMemeByID(tx, token.ID, map[string][]interface{}{}, true)
+							token, err = s.dao.FirstMemeByID(tx, token.ID, map[string][]any{}, true)
 							if err != nil {
 								return errs.NewError(err)
 							}
@@ -127,10 +128,10 @@ func (s *Service) CreateMemePool(ctx context.Context, networkID uint64, event *e
 				swapFactoryAddr := s.conf.GetConfigKeyString(networkID, "uniswap_factory_contract_address")
 				if strings.EqualFold(swapFactoryAddr, event.ContractAddress) {
 					token, err := s.dao.FirstMeme(tx,
-						map[string][]interface{}{
-							"uniswap_pool = ?": []interface{}{strings.ToLower(event.Pool)},
+						map[string][]any{
+							"uniswap_pool = ?": []any{strings.ToLower(event.Pool)},
 						},
-						map[string][]interface{}{},
+						map[string][]any{},
 						false,
 					)
 					if err != nil {
@@ -148,10 +149,10 @@ func (s *Service) CreateMemePool(ctx context.Context, networkID uint64, event *e
 							baseIndex = 0
 						}
 						token, err = s.dao.FirstMeme(tx,
-							map[string][]interface{}{
-								"token_address = ?": []interface{}{tokenAddress},
+							map[string][]any{
+								"token_address = ?": []any{tokenAddress},
 							},
-							map[string][]interface{}{},
+							map[string][]any{},
 							false,
 						)
 						if err != nil {
@@ -161,7 +162,7 @@ func (s *Service) CreateMemePool(ctx context.Context, networkID uint64, event *e
 							if token.AddPool2TxHash == "" {
 								token.AddPool2TxHash = event.TxHash
 							}
-							token, err = s.dao.FirstMemeByID(tx, token.ID, map[string][]interface{}{}, true)
+							token, err = s.dao.FirstMemeByID(tx, token.ID, map[string][]any{}, true)
 							if err != nil {
 								return errs.NewError(err)
 							}
@@ -203,10 +204,10 @@ func (s *Service) CreateMemeTradeHistory(ctx context.Context, event *ethapi.Unis
 		daos.GetDBMainCtx(ctx),
 		func(tx *gorm.DB) error {
 			meme, err := s.dao.FirstMeme(tx,
-				map[string][]interface{}{
+				map[string][]any{
 					"pool = ? or uniswap_pool = ?": {strings.ToLower(event.ContractAddress), strings.ToLower(event.ContractAddress)},
 				},
-				map[string][]interface{}{}, false)
+				map[string][]any{}, false)
 			if err != nil {
 				return errs.NewError(err)
 			}
@@ -215,10 +216,10 @@ func (s *Service) CreateMemeTradeHistory(ctx context.Context, event *ethapi.Unis
 				var err error
 				history, err := s.dao.FirstMemeHistory(
 					tx,
-					map[string][]interface{}{
+					map[string][]any{
 						"event_id = ?": {eventHash},
 					},
-					map[string][]interface{}{},
+					map[string][]any{},
 					[]string{},
 				)
 				if err != nil {
@@ -287,7 +288,7 @@ func (s *Service) CreateMemeTradeHistory(ctx context.Context, event *ethapi.Unis
 					err = tx.
 						Model(meme).
 						Updates(
-							map[string]interface{}{
+							map[string]any{
 								"req_sync_at": time.Now(),
 							},
 						).Error
@@ -295,6 +296,19 @@ func (s *Service) CreateMemeTradeHistory(ctx context.Context, event *ethapi.Unis
 						return errs.NewError(err)
 					}
 					memeID = meme.ID
+				}
+				poolSwappedIdx := helpers.GetTimeIndex(uint(event.BlockNumber), event.TxIndex, event.Index)
+				if meme.PoolSwappedIdx < poolSwappedIdx {
+					err = tx.
+						Model(meme).
+						Updates(
+							map[string]any{
+								"pool_swapped_idx": poolSwappedIdx,
+							},
+						).Error
+					if err != nil {
+						return errs.NewError(err)
+					}
 				}
 			}
 			return nil
@@ -319,10 +333,10 @@ func (s *Service) CreateMemeShareTradeHistory(ctx context.Context, networkID uin
 			swapFactoryAddr := s.conf.GetConfigKeyString(networkID, "agentshares_contract_address")
 			if strings.EqualFold(swapFactoryAddr, event.Raw.Address.Hex()) {
 				meme, err := s.dao.FirstMeme(tx,
-					map[string][]interface{}{
+					map[string][]any{
 						"token_id = ?": {event.TokenId.String()},
 					},
-					map[string][]interface{}{}, false)
+					map[string][]any{}, false)
 				if err != nil {
 					return errs.NewError(err)
 				}
@@ -331,10 +345,10 @@ func (s *Service) CreateMemeShareTradeHistory(ctx context.Context, networkID uin
 					var err error
 					history, err := s.dao.FirstMemeHistory(
 						tx,
-						map[string][]interface{}{
+						map[string][]any{
 							"event_id = ?": {eventHash},
 						},
-						map[string][]interface{}{},
+						map[string][]any{},
 						[]string{},
 					)
 					if err != nil {
@@ -391,7 +405,7 @@ func (s *Service) CreateMemeShareTradeHistory(ctx context.Context, networkID uin
 						err = tx.
 							Model(meme).
 							Updates(
-								map[string]interface{}{
+								map[string]any{
 									"req_sync_at": time.Now(),
 								},
 							).Error
@@ -421,7 +435,7 @@ func (s *Service) UpdateMemeInfo(ctx context.Context, memeID uint) error {
 		ctx,
 		fmt.Sprintf("UpdateMemeInfo_%d", memeID),
 		func() error {
-			meme, err := s.dao.FirstMemeByID(daos.GetDBMainCtx(ctx), memeID, map[string][]interface{}{}, false)
+			meme, err := s.dao.FirstMemeByID(daos.GetDBMainCtx(ctx), memeID, map[string][]any{}, false)
 			if err != nil {
 				return errs.NewError(err)
 			}
@@ -431,7 +445,7 @@ func (s *Service) UpdateMemeInfo(ctx context.Context, memeID uint) error {
 					return errs.NewError(err)
 				}
 				if tmpResp != nil {
-					updateFields := map[string]interface{}{
+					updateFields := map[string]any{
 						"volume_last24h": tmpResp.VolumeLast24h,
 						"total_volume":   tmpResp.TotalVolume,
 						"price":          tmpResp.Price,
@@ -458,7 +472,7 @@ func (s *Service) UpdateMemeInfo(ctx context.Context, memeID uint) error {
 					err = daos.GetDBMainCtx(ctx).
 						Model(meme).
 						Updates(
-							map[string]interface{}{
+							map[string]any{
 								"sync_at": time.Now(),
 							},
 						).Error
@@ -488,16 +502,16 @@ func (s *Service) UpdateMemeLiquidityPosition(ctx context.Context, networkID uin
 					)
 					if positionInfo != nil {
 						meme, err := s.dao.FirstMeme(tx,
-							map[string][]interface{}{
+							map[string][]any{
 								"token_address in (?)": {[]string{strings.ToLower(positionInfo.Token0), strings.ToLower(positionInfo.Token1)}},
 								"position_id = 0":      {},
 							},
-							map[string][]interface{}{},
+							map[string][]any{},
 							false,
 						)
 						if meme != nil && meme.PositionID <= 0 {
 							if meme.AddPool1TxHash == "" || strings.EqualFold(event.TxHash, meme.AddPool1TxHash) {
-								meme, err = s.dao.FirstMemeByID(tx, meme.ID, map[string][]interface{}{}, true)
+								meme, err = s.dao.FirstMemeByID(tx, meme.ID, map[string][]any{}, true)
 								if err != nil {
 									return errs.NewError(err)
 								}
@@ -537,16 +551,16 @@ func (s *Service) UpdateMemeLiquidityPosition(ctx context.Context, networkID uin
 					}
 					if positionInfo != nil {
 						meme, err := s.dao.FirstMeme(tx,
-							map[string][]interface{}{
+							map[string][]any{
 								"token_address in (?)":    {[]string{strings.ToLower(positionInfo.Token0), strings.ToLower(positionInfo.Token1)}},
 								"uniswap_position_id = 0": {},
 							},
-							map[string][]interface{}{},
+							map[string][]any{},
 							false,
 						)
 						if meme != nil && meme.UniswapPositionID <= 0 {
 							if meme.AddPool2TxHash == "" || strings.EqualFold(event.TxHash, meme.AddPool2TxHash) {
-								meme, err = s.dao.FirstMemeByID(tx, meme.ID, map[string][]interface{}{}, true)
+								meme, err = s.dao.FirstMemeByID(tx, meme.ID, map[string][]any{}, true)
 								if err != nil {
 									return errs.NewError(err)
 								}
@@ -582,11 +596,11 @@ func (s *Service) GeUserByAddress(ctx context.Context, networkID uint64, address
 		user, err = s.GetUser(daos.GetDBMainCtx(ctx), networkID, address, false)
 	} else {
 		user, err = s.dao.FirstUser(daos.GetDBMainCtx(ctx),
-			map[string][]interface{}{
+			map[string][]any{
 				"address = ?":    {strings.ToLower(address)},
 				"network_id = ?": {networkID},
 			},
-			map[string][]interface{}{},
+			map[string][]any{},
 			false,
 		)
 	}
@@ -631,6 +645,42 @@ func (s *Service) VibeTokenFactoryTokenDeployedEvent(ctx context.Context, networ
 						map[string]any{
 							"token_address":     strings.ToLower(event.Token.Hex()),
 							"add_pool2_tx_hash": event.Raw.TxHash.Hex(),
+						},
+					).Error
+				if err != nil {
+					return errs.NewError(err)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (s *Service) VibeTokenFactoryFeesCollectedEvent(ctx context.Context, networkID uint64, event *vibetokenfactory.VibeTokenFactoryFeesCollected) error {
+	if !s.conf.ExistsedConfigKey(networkID, "vibe_token_factory_address") {
+		return nil
+	}
+	vibeTokenFactoryAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "vibe_token_factory_address"))
+	if strings.EqualFold(vibeTokenFactoryAddress, event.Raw.Address.Hex()) {
+		meme, err := s.dao.FirstMeme(
+			daos.GetDBMainCtx(ctx),
+			map[string][]any{
+				"token_address = ?": {strings.ToLower(event.Token.Hex())},
+			},
+			map[string][]any{},
+			false,
+		)
+		if err != nil {
+			return errs.NewError(err)
+		}
+		if meme != nil {
+			feesCollectedIdx := helpers.GetTimeIndex(uint(event.Raw.BlockNumber), event.Raw.TxIndex, event.Raw.Index)
+			if meme.FeesCollectedIdx < feesCollectedIdx {
+				err = daos.GetDBMainCtx(ctx).
+					Model(meme).
+					Updates(
+						map[string]any{
+							"fees_collected_idx": feesCollectedIdx,
 						},
 					).Error
 				if err != nil {
