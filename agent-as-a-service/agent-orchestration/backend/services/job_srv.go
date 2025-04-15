@@ -169,6 +169,7 @@ func (s *Service) RunJobs(ctx context.Context) error {
 	for i := range 4 {
 		gocron.Every(30).Second().Do(
 			func(rangeIndex int) {
+				fmt.Printf("ScanEventsByChainRange_%d\n", rangeIndex)
 				for idx, networkID := range networkIDs {
 					if idx%4 == rangeIndex {
 						s.ScanEventsByChain(context.Background(), networkID)
