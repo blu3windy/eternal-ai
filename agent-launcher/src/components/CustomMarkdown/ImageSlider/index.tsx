@@ -5,10 +5,13 @@ import styles from './styles.module.scss';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { useMemo } from "react";
+import useInViewportOnce from "@hooks/useInViewportOnce";
 
 type Props = React.ComponentPropsWithRef<'div'> & CustomComponentProps;
 
 function ImageSlider({ node, children, ...props }: Props) {
+   const { ref, inViewport } = useInViewportOnce();
+
    const images = useMemo(() => {
       return (children as any[])
          .filter(item => typeof item !== 'string')
@@ -19,7 +22,7 @@ function ImageSlider({ node, children, ...props }: Props) {
       customPaging: function(i) {
          return (
             <div className={styles.thumbnail}>
-               <img alt="" src={images[i]} />
+               {!!inViewport && (<img loading="lazy" alt="" src={images[i]} />)}
             </div>
          );
       },
@@ -29,19 +32,23 @@ function ImageSlider({ node, children, ...props }: Props) {
       slidesToShow: 1,
       slidesToScroll: 1,
       dotsClass: styles.dots,
-   }), [images]);
+   }), [images, inViewport]);
 
    return (
-      <div className={styles.imageSlider}>
-         <Slider {...settings}>
-            {images.map((item, index) => 
-               <div className={styles.slideItem} key={`${item}-${index}`} {...props}>
-                  <div className={styles.box}>
-                     <img src={item} alt="" />
-                  </div>
-               </div>
+      <div ref={ref} className={styles.imageSlider}>
+         <div className={styles.container}>
+            {!!inViewport && (
+               <Slider {...settings} className={styles.sliderSlicker}>
+                  {images.map((item, index) => 
+                     <div className={styles.slideItem} key={`${item}-${index}`}>
+                        <div className={styles.box}>
+                           <img src={item} alt="" loading="lazy" />
+                        </div>
+                     </div>
+                  )}
+               </Slider>
             )}
-         </Slider>
+         </div>
       </div>
    );
 }

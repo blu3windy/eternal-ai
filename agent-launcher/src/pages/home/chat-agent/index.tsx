@@ -19,7 +19,7 @@ function ChatAgent() {
       isBackupedPrvKey,
       isRunning,
    } = useContext(AgentContext);
-   const { isSearchMode } = useAgentState();
+   const { isSearchMode, showSearchDetail } = useAgentState();
 
    const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
@@ -27,7 +27,7 @@ function ChatAgent() {
    //    return ![AgentType.Model].includes(selectedAgent?.agent_type);
    // }, [selectedAgent]);
 
-   if (isSearchMode) {
+   if (isSearchMode && showSearchDetail) {
       return (
          <Box className={s.container}>
             <AgentDetail />

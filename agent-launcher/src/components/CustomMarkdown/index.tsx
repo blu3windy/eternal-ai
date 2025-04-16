@@ -87,13 +87,19 @@ function CustomMarkdown({
    return (
       <>
          {!!thinkTag && <DeepThinking content={thinkTag} status={status} />}
-         <Markdown
-            remarkPlugins={[remarkGfm, remarkBreaks]} // Enables GitHub Flavored Markdown
-            rehypePlugins={[rehypeRaw]} // Enables raw HTML parsing
-            children={contentWithoutThinkTag}
-            components={customComponents as Components}
-            urlTransform={(value: string) => value}
-         />
+         <div
+            // style={{
+            //    width: 'calc(calc(100vw / 2) * 0.8)'
+            // }}
+         >
+            <Markdown
+               remarkPlugins={[remarkGfm, remarkBreaks]} // Enables GitHub Flavored Markdown
+               rehypePlugins={[rehypeRaw]} // Enables raw HTML parsing
+               children={contentWithoutThinkTag}
+               components={customComponents as Components}
+               urlTransform={(value: string) => value}
+            />
+         </div>
       </>
    );
 }
