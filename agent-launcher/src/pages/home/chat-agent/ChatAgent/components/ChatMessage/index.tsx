@@ -19,6 +19,7 @@ import duration from "dayjs/plugin/duration";
 import { motion } from "framer-motion";
 import { useDispatch } from "react-redux";
 import { IChatMessage } from "src/services/api/agent/types.ts";
+import { changeLayout } from "@stores/states/layout-view/reducer";
 
 dayjs.extend(duration);
 
@@ -40,8 +41,6 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
    const [minutes, setMinutes] = useState<number | null>(0);
    const [seconds, setSeconds] = useState<number | null>(0);
    const [showTaskText, setShowTaskText] = useState(false);
-
-   const [isOpenProcessingTask, setIsOpenProcessingTask] = useState(false);
 
    useEffect(() => {
       const createdAt = message?.createdAt ? new Date(message?.createdAt).getTime() : new Date().getTime();
@@ -194,7 +193,13 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                   fontSize="16px"
                   fontWeight="400"
                   color={message?.is_reply ? "black" : "white"}
-               >{selectedAgent?.display_name} is looking up information. Check your active tasks to track the progress <Text as={'span'} cursor={'pointer'} textDecoration={'underline'} onClick={() => setIsOpenProcessingTask(true)}>here</Text>.</Text>
+               >{selectedAgent?.display_name} is looking up information. Check your active tasks to track the progress <Text as={'span'} cursor={'pointer'} textDecoration={'underline'} onClick={() => {
+                  dispatch(changeLayout({
+                     isOpenAgentBar: true,
+                     isOpenRightBar: true,
+                     rightBarView: <ProcessingTaskModal />
+                  }))
+               }}>here</Text>.</Text>
             )}
          </Flex>
       );

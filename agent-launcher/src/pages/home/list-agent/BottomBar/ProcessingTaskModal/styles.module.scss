@@ -6,6 +6,9 @@
    background-size: cover;
    background-position: center;
    background-repeat: no-repeat;
+   display: flex;
+   flex-direction: column;
+   gap: 16px;
 
    .btnTaskProcessing {
       font-size: 14px;
@@ -26,12 +29,19 @@
       :global {
          .chakra-button__icon {
             margin-right: 0;
-         }        
+         }
       }
    }
 }
 
 .taskListScroll {
+   display: flex;
+   flex-direction: column;
+   gap: 20px;
+   padding: 0 24px;
+   overflow-y: auto;
+   height: 100%;;
+
    -ms-overflow-style: none;
    /* Internet Explorer 10+ */
    scrollbar-width: none;
@@ -41,4 +51,45 @@
       display: none;
       /* Safari and Chrome */
    }
+}
+
+.taskItem {
+   border-radius: 20px;
+   background: rgba(255, 255, 255, 0.60);
+   backdrop-filter: blur(5px);
+
+   padding: 16px 20px;
+
+   .nameText {
+      font-size: 15px;
+      font-weight: 500;
+      color: inherit;
+    }
+
+    .status {
+      font-size: 12px;
+      font-weight: 400;
+      color: #000;
+      background: rgba(0, 0, 0, 0.05);
+      padding: 4px 8px;
+      border-radius: 100px;
+      width: fit-content;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 50px;
+      height: 24px;
+
+      &.processing {
+         background: #F9D03F;
+      }
+
+      &.done {
+         background: #BAEDBD;
+      }
+
+      &.failed {
+         background: #FF0000;
+      }
+    }
 }
