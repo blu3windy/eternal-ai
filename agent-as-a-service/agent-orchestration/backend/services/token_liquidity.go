@@ -984,8 +984,15 @@ func (s *Service) ShareMeme(ctx context.Context, address, memAddress string) (bo
 
 }
 
-func (s *Service) VibeTokenGetDeployInfo(ctx context.Context, id uint) (*serializers.VibeTokenDeployInfoResp, error) {
-	vibeToken, err := s.dao.FirstMemeByID(daos.GetDBMainCtx(ctx), id, nil, false)
+func (s *Service) VibeTokenGetDeployInfo(ctx context.Context, address string, id uint) (*serializers.VibeTokenDeployInfoResp, error) {
+	vibeToken, err := s.dao.FirstMemeByID(
+		daos.GetDBMainCtx(ctx),
+		id,
+		map[string][]any{
+			"AgentInfo": {},
+		},
+		false,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -995,16 +1002,11 @@ func (s *Service) VibeTokenGetDeployInfo(ctx context.Context, id uint) (*seriali
 	if vibeToken.TokenAddress != "" {
 		return nil, errs.NewError(errs.ErrBadRequest)
 	}
-	agentInfo, err := s.dao.FirstAgentInfoByID(
-		daos.GetDBMainCtx(ctx),
-		vibeToken.AgentInfoID,
-		map[string][]any{},
-		false,
-	)
-	if err != nil {
-		return nil, err
-	}
+	agentInfo := vibeToken.AgentInfo
 	if agentInfo == nil {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	if !strings.EqualFold(address, agentInfo.Creator) {
 		return nil, errs.NewError(errs.ErrBadRequest)
 	}
 	baseTokenPrice := s.GetTokenMarketPrice(daos.GetDBMainCtx(ctx), vibeToken.BaseTokenSymbol)

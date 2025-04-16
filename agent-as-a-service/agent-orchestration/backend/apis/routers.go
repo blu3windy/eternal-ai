@@ -406,7 +406,7 @@ func (s *Server) Routers() {
 			vibeApi.POST("/validate-ref-code", s.VibeValidateReferralCode)
 			vibeApi.GET("/dashboard", s.GetVibeDashBoards)
 			vibeApi.GET("/dashboard/:agent_id", s.GetVibeDashBoardsDetail)
-			vibeApi.GET("/deploy-token/:id", s.VibeTokenGetDeployInfo)
+			vibeApi.GET("/deploy-token/:id", s.authCheckTK1TokenMiddleware(), s.VibeTokenGetDeployInfo)
 		}
 	}
 }
