@@ -35,7 +35,7 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
       handleUpdateCode
    } = useContext(AgentContext);
    const { containers } = useContext(MonitorContext);
-   const { isSearchMode, setSelectedAgent: _setSelectedAgent } =
+   const { isSearchMode, setSelectedAgent: _setSelectedAgent, setShowSearchDetail } =
      useAgentState();
 
    const threadId = `${token?.id}-${token?.agent_name}`;
@@ -222,6 +222,7 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
          e?.stopPropagation();
          if (isSearchMode) {
             _setSelectedAgent(token);
+            setShowSearchDetail(true);
          } else {
             setSelectedAgent(token);
             addActiveAgent && addActiveAgent(token);

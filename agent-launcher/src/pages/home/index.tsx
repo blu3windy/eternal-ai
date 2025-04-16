@@ -29,7 +29,7 @@ const HandleHome = () => {
    const showBackupPrvKey
       = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
 
-   const { isSearchMode } = useAgentState();
+   const { isSearchMode, showSearchDetail } = useAgentState();
 
    // const isAllowChat = useMemo(() => {
    //    return ![AgentType.Model].includes(selectedAgent?.agent_type);
@@ -58,7 +58,7 @@ const HandleHome = () => {
          <Box
             className={cx(
                s.detailContainer,
-               isSearchMode || showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : ""
+               (isSearchMode && showSearchDetail) || showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : ""
             )}
             flex={1}
          >
