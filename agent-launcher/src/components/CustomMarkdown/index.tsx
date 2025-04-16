@@ -88,9 +88,9 @@ function CustomMarkdown({
       <>
          {!!thinkTag && <DeepThinking content={thinkTag} status={status} />}
          <div
-            style={{
-               width: 'calc(calc(100vw / 2) * 0.8)'
-            }}
+            // style={{
+            //    width: 'calc(calc(100vw / 2) * 0.8)'
+            // }}
          >
             <Markdown
                remarkPlugins={[remarkGfm, remarkBreaks]} // Enables GitHub Flavored Markdown
