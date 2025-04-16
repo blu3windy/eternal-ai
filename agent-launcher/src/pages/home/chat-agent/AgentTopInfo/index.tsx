@@ -227,15 +227,6 @@ const AgentTopInfo = () => {
                   ) && (
                      <ProcessingTasks />
                   )} */}
-               {
-                  showSelectModel ? (
-                     <Flex gap={'6px'} alignItems={'center'}>
-                        <SelectModel showDescription={false} />
-                        <ButtonChatHistory />
-                        <ButtonChatCreate />
-                     </Flex>
-                  ) : (<Box />)
-               }
 
                <Flex gap={'12px'} justifyContent={'space-between'} alignItems={'center'}>
 
@@ -458,15 +449,18 @@ const AgentTopInfo = () => {
                      </Text>
                      <Percent24h clsName={s.percent} percent={selectedAgent?.meme?.percent || 0} />
                   </Flex>
-                  {/* {selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey && (
-                     <AgentTradeProvider>
-                        <AgentWallet color={colorWallet}/>
-                     </AgentTradeProvider>
-                  )} */}
-                  <Button className={s.btnBuy} onClick={onOpenDrawer}>
+                  {/* <Button className={s.btnBuy} onClick={onOpenDrawer}>
                      Buy
-                  </Button>
+                  </Button> */}
                </Flex>
+               {
+                  showSelectModel ? (
+                     <Flex gap={'6px'} alignItems={'center'}>
+                        <ButtonChatHistory />
+                        <ButtonChatCreate />
+                     </Flex>
+                  ) : (<Box />)
+               }
             </Flex>
             {/* <Flex justifyContent={"flex-end"} position={"absolute"} right={"16px"}>
                <HeaderWallet color={color} />
