@@ -15,6 +15,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/serializers"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/types/numeric"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/jinzhu/gorm"
 )
 
@@ -1040,7 +1041,7 @@ func (s *Service) VibeTokenGetDeployInfo(ctx context.Context, address string, id
 		return nil, err
 	}
 	return &serializers.VibeTokenDeployInfoResp{
-		NonceHex:  agentInfo.AgentID,
+		NonceHex:  common.HexToHash(agentInfo.AgentID).Hex(),
 		Name:      vibeToken.Name,
 		Symbol:    vibeToken.Ticker,
 		Creator:   agentInfo.Creator,
