@@ -324,8 +324,8 @@ type BotOrder struct {
 type MemeFeesCollected struct {
 	gorm.Model
 	EventId string `gorm:"unique_index"`
-	MemeID  uint
-	TxHash  string `gorm:"index"`
+	MemeID  uint   `gorm:"index"`
+	TxHash  string
 	TxAt    *time.Time
 	Amount0 numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Amount1 numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
