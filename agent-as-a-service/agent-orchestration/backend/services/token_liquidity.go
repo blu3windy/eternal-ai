@@ -966,7 +966,7 @@ func (s *Service) ShareMeme(ctx context.Context, address, memAddress string) (bo
 					Model(meme).
 					Updates(
 						map[string]any{
-							"shared": meme.Shared + 1,
+							"shared": gorm.Expr("shared + 1"),
 						},
 					).Error
 				if err != nil {
