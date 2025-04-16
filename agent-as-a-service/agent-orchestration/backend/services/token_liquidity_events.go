@@ -694,7 +694,6 @@ func (s *Service) VibeTokenFactoryFeesCollectedEvent(ctx context.Context, networ
 							EventId: eventId,
 							MemeID:  meme.ID,
 							TxHash:  event.Raw.TxHash.Hex(),
-							TxAt:    helpers.TimeNow(),
 							Amount0: numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Amount0, 18)),
 							Amount1: numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Amount1, 18)),
 						}
