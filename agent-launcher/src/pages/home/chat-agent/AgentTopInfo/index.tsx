@@ -12,13 +12,10 @@ import {
    Text,
    useDisclosure,
 } from '@chakra-ui/react';
-import Avatar from '@components/Avatar';
 import BaseModal from '@components/BaseModal';
 import InfoTooltip from '@components/InfoTooltip';
-import Percent24h from '@components/Percent';
 import { BASE_CHAIN_ID } from '@constants/chains';
 import CAgentContract from '@contract/agent';
-import SelectModel from '@pages/home/chat-agent/AgentTopInfo/SelectModel';
 import DeleteAgentModal from '@pages/home/list-agent/AgentMonitor/DeleteAgentModal';
 import { AgentType, SYSTEM_AGENTS } from '@pages/home/list-agent/constants';
 import { AgentContext } from '@pages/home/provider/AgentContext';
@@ -29,16 +26,15 @@ import CAgentTokenAPI from '@services/api/agents-token';
 import { IAgentToken } from '@services/api/agents-token/interface';
 import localStorageService from '@storage/LocalStorageService';
 import storageModel from '@storage/StorageModel';
-import { formatCurrency } from '@utils/format.ts';
-import { addressFormater, compareString } from '@utils/string';
+import { compareString } from '@utils/string';
 import cx from 'clsx';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import SetupEnvModel from '../SetupEnvironment';
 import s from './styles.module.scss';
-import debounce from 'lodash.debounce';
 import ButtonChatHistory from "./ButtonChatHistory";
 import ButtonChatCreate from "./ButtonChatCreate";
+import AgentHeaderInfo from './Header/HeaderInfo';
+import AgentHeaderRate from './Header/HeaderRate';
 
 const AgentTopInfo = () => {
    const {
@@ -62,6 +58,9 @@ const AgentTopInfo = () => {
    const [infoTooltipKey, setInfoTooltipKey] = useState(0);
    const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
    const [environments, setEnvironments] = useState<JSON>();
+
+   console.log("selectedAgent", selectedAgent);
+   
 
    const { isOpen, onOpen, onClose } = useDisclosure();
    const { isOpen: isOpenDrawer, onOpen: onOpenDrawer, onClose: onCloseDrawer } = useDisclosure();
@@ -179,13 +178,6 @@ const AgentTopInfo = () => {
       unInstallAgent(selectedAgent);
    };
 
-   const handleClickCreator = (e: any) => {
-      e?.preventDefault();
-      e?.stopPropagation();
-      if (selectedAgent?.tmp_twitter_info?.twitter_username)
-         window.open(`https://x.com/${selectedAgent?.tmp_twitter_info?.twitter_username}`);
-   };
-
    const handleClearHistory = useCallback(() => {
       // TODO: clear history
       // TODO: need refactor chat to global state
@@ -236,69 +228,11 @@ const AgentTopInfo = () => {
                         iconSize="20px"
                         label={
                            <Flex direction={'column'} p={'8px'}>
-                              <Flex direction={'column'} gap={'8px'}>
-                                 <Flex
-                                    alignItems={'center'}
-                                    gap={'8px'}
-                                    justifyContent={'space-between'}
-                                 >
-                                    <Flex direction={'column'} gap={'8px'}>
-                                       <Text fontSize={'16px'} fontWeight={500}>
-                                          {selectedAgent?.display_name || selectedAgent?.agent_name}
-                                       </Text>
-                                       <Flex
-                                          alignItems="center"
-                                          gap="4px"
-                                          onClick={handleClickCreator}
-                                       >
-                                          <Text
-                                             color="#000000"
-                                             fontSize="12px"
-                                             fontWeight="400"
-                                             opacity={0.7}
-                                          >
-                                             by
-                                          </Text>
-                                          {selectedAgent?.tmp_twitter_info?.twitter_avatar ? (
-                                             <Avatar
-                                                url={
-                                                   selectedAgent?.tmp_twitter_info?.twitter_avatar
-                                                }
-                                                width={16}
-                                             />
-                                          ) : (
-                                             <Jazzicon
-                                                diameter={16}
-                                                seed={jsNumberForAddress(
-                                                   selectedAgent?.creator || ''
-                                                )}
-                                             />
-                                          )}
-                                          <Text
-                                             color="#000000"
-                                             fontSize="12px"
-                                             fontWeight="400"
-                                             opacity={0.7}
-                                          >
-                                             {selectedAgent?.tmp_twitter_info?.twitter_username
-                                                ? `@${selectedAgent?.tmp_twitter_info?.twitter_username}`
-                                                : addressFormater(selectedAgent?.creator)}
-                                          </Text>
-                                       </Flex>
-                                    </Flex>
-                                    <Image
-                                       src={`icons/${isLiked ? 'ic-liked.svg' : 'ic-like.svg'}`}
-                                       width={'28px'}
-                                       height={'28px'}
-                                       onClick={handleLikeAgent}
-                                       cursor={isLiked ? 'not-allowed' : 'pointer'}
-                                    />
-                                 </Flex>
-
-                                 {/* <Text fontSize={'14px'} fontWeight={400} opacity={0.7}>
-                                    {description}
-                                 </Text> */}
-                              </Flex>
+                              {selectedAgent?.rating ? (
+                                 <AgentHeaderRate />
+                              ) : (
+                                 <AgentHeaderInfo />
+                              )}
                               <Divider color={'#E2E4E8'} my={'16px'} />
                               <AgentOnChainInfo />
                               {!!environments && selectedAgent?.env_example && (

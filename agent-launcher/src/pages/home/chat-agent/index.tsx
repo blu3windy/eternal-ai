@@ -1,4 +1,4 @@
-import { Box } from "@chakra-ui/react";
+import { Box, Flex } from "@chakra-ui/react";
 import AgentDetail from "@pages/home/chat-agent/AgentDetail";
 import BackupPrivateKey from "@pages/home/chat-agent/BackupPrivateKey";
 import ChatBox from "@pages/home/chat-agent/ChatAgent/components/ChatBox";
@@ -9,6 +9,8 @@ import { useContext } from "react";
 import s from "./styles.module.scss";
 import AgentTopInfo from "./AgentTopInfo";
 import useAgentState from "../provider/useAgentState";
+import BaseModal from "@components/BaseModal";
+import RatingForm from "./Rating/RatingForm";
 
 function ChatAgent() {
    const {
@@ -62,6 +64,14 @@ function ChatAgent() {
                }
             </>
          )}
+         <BaseModal
+            isShow={true}
+            onHide={() => {}}
+         >
+            <RatingForm
+               onClose={() => {}}
+            />
+         </BaseModal>
       </Box>
    );
 }

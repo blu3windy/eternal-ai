@@ -35,8 +35,8 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
       handleUpdateCode
    } = useContext(AgentContext);
    const { containers } = useContext(MonitorContext);
-   const { isSearchMode, setSelectedAgent: _setSelectedAgent, setShowSearchDetail } =
-     useAgentState();
+   const { isSearchMode, setSelectedAgent: _setSelectedAgent, setShowSearchDetail }
+     = useAgentState();
 
    const threadId = `${token?.id}-${token?.agent_name}`;
    const [messages, setMessages] = useState<IChatMessage[]>([]);
@@ -189,9 +189,9 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
                const hasUpdates = latestMessages.some((latestMsg, index) => {
                   const currentMsg = messages[index];
                   return (
-                     latestMsg.status !== currentMsg.status ||
-                     latestMsg.msg !== currentMsg.msg ||
-                     latestMsg.updatedAt !== currentMsg.updatedAt
+                     latestMsg.status !== currentMsg.status
+                     || latestMsg.msg !== currentMsg.msg
+                     || latestMsg.updatedAt !== currentMsg.updatedAt
                   );
                });
                
@@ -311,10 +311,12 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
                            <Image src="icons/ic-downloaded.svg" w="15px" h="15px" />
                            <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.installed_count, 0, 0)}</Text>
                         </Flex>
-                        {/* <Flex gap="4px" alignItems={'center'}>
-                           <Image src="icons/ic-yellow-star.svg" w="15px" h="15px" />
-                           <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.rating, 0, 0)}</Text>
-                        </Flex> */}
+                        {!!token?.rating && (
+                           <Flex gap="4px" alignItems="center">
+                              <Image src="icons/ic-yellow-star.svg" w="15px" h="15px" marginTop="-2px" />
+                              <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.rating, 0, 0)}</Text>
+                           </Flex>
+                        )}
                      </Flex>
                   </Flex>
                </Flex>
