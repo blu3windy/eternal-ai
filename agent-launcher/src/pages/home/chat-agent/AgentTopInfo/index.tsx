@@ -39,6 +39,10 @@ import s from './styles.module.scss';
 import debounce from 'lodash.debounce';
 import ButtonChatHistory from "./ButtonChatHistory";
 import ButtonChatCreate from "./ButtonChatCreate";
+import ProcessingTaskModal from '@pages/home/list-agent/BottomBar/ProcessingTaskModal';
+import { changeLayout } from '@stores/states/layout-view/reducer';
+import { CollapseIcon } from '@components/CustomMarkdown/Files/icons';
+import { useDispatch } from 'react-redux';
 
 const AgentTopInfo = () => {
    const {
@@ -62,6 +66,7 @@ const AgentTopInfo = () => {
    const [infoTooltipKey, setInfoTooltipKey] = useState(0);
    const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
    const [environments, setEnvironments] = useState<JSON>();
+   const dispatch = useDispatch();
 
    const { isOpen, onOpen, onClose } = useDisclosure();
    const { isOpen: isOpenDrawer, onOpen: onOpenDrawer, onClose: onCloseDrawer } = useDisclosure();
@@ -471,6 +476,22 @@ const AgentTopInfo = () => {
             {/* <Flex justifyContent={"flex-end"} position={"absolute"} right={"16px"}>
                <HeaderWallet color={color} />
             </Flex> */}
+            <Flex>
+               <Box
+                  onClick={() => {
+                     dispatch(changeLayout({
+                        isOpenAgentBar: true,
+                        isOpenRightBar: true,
+                        rightBarView: (
+                           <ProcessingTaskModal />
+                        )
+                     }));
+                  }}
+               >
+                  <CollapseIcon />
+               </Box>
+
+            </Flex>
          </Flex>
          <Drawer isOpen={isOpenDrawer} placement="right" onClose={onCloseDrawer}>
             <DrawerOverlay />

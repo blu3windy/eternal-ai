@@ -1,12 +1,14 @@
-import BaseModal from "@components/BaseModal";
-import styles from "./styles.module.scss";
-import { useCallback, useEffect, useState } from "react";
-import { Box, Flex, Text, Image } from "@chakra-ui/react";
-import { useSelector } from "react-redux";
+import { Box, Button, Flex, Image, Text } from "@chakra-ui/react";
 import { agentTasksProcessingSelector } from "@stores/states/agent-chat/selector";
 import { TaskItem } from "@stores/states/agent-chat/type";
 import { motion } from "framer-motion";
 import uniqBy from "lodash.uniqby";
+import { useCallback, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import s from "./styles.module.scss";
+import { CollapseIcon } from "@components/CustomMarkdown/Files/icons";
+import cx from "classnames";
+import { changeLayout } from "@stores/states/layout-view/reducer";
 
 function TaskItemRenderer({ task, isLast, onRemoveTask }: { task: TaskItem; isLast: boolean; onRemoveTask: (taskId: string) => void }) {
    useEffect(() => {
@@ -117,7 +119,8 @@ function TaskItemRenderer({ task, isLast, onRemoveTask }: { task: TaskItem; isLa
    );
 }
 
-function ProcessingTaskModal({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (isOpen: boolean) => void }) {
+function ProcessingTaskModal() {
+   const dispatch = useDispatch();
    const pendingTasks = useSelector(agentTasksProcessingSelector);
 
    const [renderTasks, setRenderTasks] = useState<TaskItem[]>(pendingTasks);
@@ -145,44 +148,43 @@ function ProcessingTaskModal({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen
    }, []);
 
    return (
-      <BaseModal
-         isShow={isOpen}
-         onHide={() => {
-            setIsOpen(false);
-         }}
-         size="small"
-         className={styles.popoverContent}
-      >
-         <Box className={styles.containerOverview}>
-            <Text fontSize="22px" fontWeight="600" mb="4" color="white">
-               Task processing
-            </Text>
+      <Box className={s.containerOverview}>
+         <Flex w={'100%'} justifyContent={'flex-end'} p={"12px 24px"}>
+            <Button className={cx(s.btnTaskProcessing)} leftIcon={<CollapseIcon />} onClick={() => {
+               dispatch(changeLayout({
+                  isOpenAgentBar: true,
+                  isOpenRightBar: false,
+                  rightBarView: undefined
+               }))
+            }}>
+               {renderTasks.length > 0 ? `${renderTasks.length} tasks processing` : ''}
+            </Button>
+         </Flex>
 
-            <Box
-               bg="rgba(255, 255, 255, 0.10)"
-               borderRadius="12px"
-               minHeight={"400px"}
-               maxHeight={"400px"}
-               overflowY={"auto"}
-               overflowX={"hidden"}
-               className={styles.taskListScroll}
-            >
-               {renderTasks.length ? (
-                  <>
-                     {renderTasks.map((task, index) => (
-                        <TaskItemRenderer key={task.id} task={task} isLast={index === renderTasks.length - 1} onRemoveTask={onRemoveTask} />
-                     ))}
-                  </>
-               ) : (
-                  <Flex height={"400px"} padding={"16px"} justifyContent={"center"} alignItems={"center"}>
-                     <Text color="#fff" fontSize={"16px"} fontWeight={"500"} lineHeight={"150%"}>
-                        No task
-                     </Text>
-                  </Flex>
-               )}
-            </Box>
+         <Box
+            bg="rgba(255, 255, 255, 0.10)"
+            borderRadius="12px"
+            minHeight={"400px"}
+            maxHeight={"400px"}
+            overflowY={"auto"}
+            overflowX={"hidden"}
+            className={s.taskListScroll}
+         >
+            {renderTasks.length ? (
+               <>
+                  {renderTasks.map((task, index) => (
+                     <TaskItemRenderer key={task.id} task={task} isLast={index === renderTasks.length - 1} onRemoveTask={onRemoveTask} />
+                  ))}
+               </>
+            ) : (
+               <Flex height={"400px"} padding={"16px"} justifyContent={"center"} alignItems={"center"}>
+                  <Text color="#fff" fontSize={"16px"} fontWeight={"500"} lineHeight={"150%"}>
+                     No task
+                  </Text>
+               </Flex>
+            )}
          </Box>
-      </BaseModal>
+      </Box>
    );
 }
 

@@ -307,13 +307,13 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                   />
                </BaseModal>
 
-               <ProcessingTaskModal
+               {/* <ProcessingTaskModal
                   key={`processing-task-${isOpenProcessingTask}`}
                   isOpen={isOpenProcessingTask}
                   setIsOpen={() => {
                      setIsOpenProcessingTask((prev) => !prev);
                   }}
-               />
+               /> */}
 
                <NewsModal
                   key={`news-${isOpenProcessingTask}`}

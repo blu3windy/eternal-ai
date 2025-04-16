@@ -397,13 +397,13 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
             )}
             {renderResponseTime()}
          </div>
-         <ProcessingTaskModal
+         {/* <ProcessingTaskModal
             key={`processing-task-${isOpenProcessingTask}`}
             isOpen={isOpenProcessingTask}
             setIsOpen={() => {
                setIsOpenProcessingTask((prev) => !prev);
             }}
-         />
+         /> */}
       </>
 
    );
