@@ -21,8 +21,12 @@ type Props = React.ComponentPropsWithRef<'div'> & CustomComponentProps;
 const MAX_VIEW_FILE = 5;
 
 const readRawFile = (filedata: string) => {
+   // const base64 = filedata.split(',')[1];
+   // const text = atob(base64);
+   // return text;
    const base64 = filedata.split(',')[1];
-   const text = atob(base64);
+   const binary = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+   const text = new TextDecoder('utf-8').decode(binary);
    return text;
 }
 
