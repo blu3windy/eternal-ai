@@ -399,6 +399,8 @@ app.post("/:agentName/prompt", async (req, res) => {
               }
             }
           } catch (e) {
+            console.log('AGENT_ROUTER_RESPONSE_ERROR_STREAM', {agentName, e});
+            
             logError('AGENT_ROUTER_RESPONSE_ERROR_STREAM', {agentName, e}, 'error');
           }
         }
@@ -442,6 +444,8 @@ app.post("/:agentName/prompt", async (req, res) => {
             result,
             agentName
           );
+          console.log('normalizedResponse', JSON.stringify(normalizedResponse));
+          
           res.status(proxyResponse.statusCode).json(normalizedResponse);
           if (payload?.id) {
             writeRequestEndLogger(
