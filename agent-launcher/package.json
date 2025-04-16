@@ -28,6 +28,7 @@
     "@emotion/styled": "^11.14.0",
     "@enzoferey/ethers-error-parser": "^0.2.3",
     "@fontsource/inter": "^5.1.1",
+    "@mantine/hooks": "^7.17.4",
     "@reduxjs/toolkit": "^2.6.0",
     "@rollbar/react": "^0.12.1",
     "adm-zip": "^0.5.16",

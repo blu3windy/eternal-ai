@@ -1100,3 +1100,12 @@
 .markdown-body > *:first-child > .heading-element:first-child {
    margin-top: 0 !important;
 }
+
+.markdown-body details {
+   margin-top: 4px;
+   margin-bottom: 4px;
+}
+
+.markdown-body details pre code {
+   white-space: initial !important;
+}

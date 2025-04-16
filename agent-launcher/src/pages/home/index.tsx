@@ -41,21 +41,19 @@ const HandleHome = () => {
 
    return (
       <Flex height={"100%"}>
-         <AnimatePresence>
-            {isOpenAgentBar && ( 
-               <Box
-                  flex={1}
-                  maxW={"460px"}
-                  minW={"460px"}
-                  as={motion.div}
-                  // initial={{ opacity: 0, x: -460 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -460 }}
-               >
-                  <AgentsList />
-               </Box>
-            )}
-         </AnimatePresence>
+         <Box
+            flex={1}
+            maxW={"460px"}
+            minW={"460px"}
+            as={motion.div}
+            initial={{ opacity: 0, x: -460 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -460 }}
+            transition="all 0.3s ease-in-out"
+            display={isOpenAgentBar ? "block" : "none"}
+         >
+            <AgentsList />
+         </Box>
 
          <Box
             className={cx(
@@ -63,10 +61,6 @@ const HandleHome = () => {
                isSearchMode || showSetup || (!isCanChat && !showBackupPrvKey) ? s.isSetup : ""
             )}
             flex={1}
-            as={motion.div}
-            // initial={{ opacity: 0, x: 460 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 460 }}
          >
             <Flex
                as={motion.div}
@@ -80,17 +74,7 @@ const HandleHome = () => {
          </Box>
 
          <AnimatePresence>
-            {isOpenRightBar && ( 
-               <Box
-                  flex={1}
-                  as={motion.div}
-                  // initial={{ opacity: 0, x: '100%' }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: '100%' }}
-               >
-                  {rightBarView}
-               </Box>
-            )}
+            {isOpenRightBar && rightBarView}
          </AnimatePresence>
       </Flex>
    );

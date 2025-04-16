@@ -71,6 +71,9 @@ docker network create network-agent-external || true
 build_success=true
 declare -a running_containers=()
 
+# Delete <none> images
+docker rmi $(docker images -f "dangling=true" -q) || true;
+
 # Loop through container configurations
 for container in "${DOCKER_CONTAINERS[@]}"; do
     IFS=':' read -r folder_name container_name port <<< "$container"

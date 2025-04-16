@@ -78,7 +78,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const [isFocusChatInput, setIsFocusChatInput] = React.useState(false);
    const [sessionId, setSessionId] = useState<string | undefined>(undefined);
 
-   const { selectedAgent, agentWallet } = useContext(AgentContext);
+   const { selectedAgent, agentWallet, isRunning } = useContext(AgentContext);
 
    const id = selectedAgent?.id;
    const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
@@ -187,12 +187,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isElectron.current = true;
       }
 
-      if (threadId) {
+      if (threadId && isRunning) {
          refLoadChatItems.current = true;
-         initialLoadChatItems();
-      }
 
-   }, [threadId]);
+         setTimeout(() => {
+            initialLoadChatItems();
+         }, 3000);
+      }
+   }, [threadId, isRunning]);
 
    const lastMessage = messages[messages.length - 1];
    const isStopReceiving = lastMessage?.status === "receiving" || lastMessage?.status === "waiting";

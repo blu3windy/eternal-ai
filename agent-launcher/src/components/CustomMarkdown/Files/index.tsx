@@ -15,6 +15,7 @@ import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from 'remark-breaks'
+import { motion } from "framer-motion";
 
 type Props = React.ComponentPropsWithRef<'div'> & CustomComponentProps;
 
@@ -321,7 +322,15 @@ function FileItem({ filename, filedata, className, onClick }: FileType & { class
                isOpenAgentBar: false,
                isOpenRightBar: true,
                rightBarView: (
-                  <FileViewer key={filename} filename={filename} filedata={filedata} />
+                  <Box
+                     flex={1}
+                     as={motion.div}
+                     // initial={{ opacity: 0, x: '100%' }}
+                     animate={{ opacity: 1, x: 0 }}
+                     exit={{ opacity: 0, x: '100%' }}
+                  >
+                     <FileViewer key={filename} filename={filename} filedata={filedata} />
+                  </Box>
                )
             }));
             onClick && onClick();
