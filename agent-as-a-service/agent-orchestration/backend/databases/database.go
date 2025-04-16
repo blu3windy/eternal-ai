@@ -75,6 +75,7 @@ func MigrateDBMain(db *gorm.DB) error {
 		(*models.AgentChainFee)(nil),
 		// meme
 		(*models.Meme)(nil),
+		(*models.MemeFeesCollected)(nil),
 
 		(*models.ApiSubscriptionPackage)(nil),
 		(*models.ApiSubscriptionKey)(nil),

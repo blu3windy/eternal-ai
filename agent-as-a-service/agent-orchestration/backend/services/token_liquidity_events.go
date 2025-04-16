@@ -662,34 +662,81 @@ func (s *Service) VibeTokenFactoryFeesCollectedEvent(ctx context.Context, networ
 	}
 	vibeTokenFactoryAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "vibe_token_factory_address"))
 	if strings.EqualFold(vibeTokenFactoryAddress, event.Raw.Address.Hex()) {
-		meme, err := s.dao.FirstMeme(
+		err := daos.WithTransaction(
 			daos.GetDBMainCtx(ctx),
-			map[string][]any{
-				"token_address = ?": {strings.ToLower(event.Token.Hex())},
-			},
-			map[string][]any{},
-			false,
-		)
-		if err != nil {
-			return errs.NewError(err)
-		}
-		if meme != nil {
-			feesCollectedUpdated := helpers.GetTimeIndex(uint(event.Raw.BlockNumber), event.Raw.TxIndex, event.Raw.Index)
-			if meme.FeesCollectedUpdated < feesCollectedUpdated {
-				err = daos.GetDBMainCtx(ctx).
-					Model(meme).
-					Where("fees_collected_updated < ?", feesCollectedUpdated).
-					Updates(
-						map[string]any{
-							"fees0_collected_balance": gorm.Expr("fees0_collected_balance + ?", numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Amount0, 18))),
-							"fees1_collected_balance": gorm.Expr("fees1_collected_balance + ?", numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Amount1, 18))),
-							"fees_collected_updated":  feesCollectedUpdated,
-						},
-					).Error
+			func(tx *gorm.DB) error {
+				meme, err := s.dao.FirstMeme(
+					tx,
+					map[string][]any{
+						"token_address = ?": {strings.ToLower(event.Token.Hex())},
+					},
+					map[string][]any{},
+					false,
+				)
 				if err != nil {
 					return errs.NewError(err)
 				}
-			}
+				if meme != nil {
+					eventId := fmt.Sprintf("%s_%d", event.Raw.TxHash.Hex(), event.Raw.Index)
+					memeFeesCollected, err := s.dao.FirstMemeFeesCollected(
+						tx,
+						map[string][]any{
+							"event_id = ?": {eventId},
+						},
+						map[string][]any{},
+						[]string{},
+					)
+					if err != nil {
+						return errs.NewError(err)
+					}
+					if memeFeesCollected == nil {
+						memeFeesCollected = &models.MemeFeesCollected{
+							EventId: eventId,
+							MemeID:  meme.ID,
+							TxHash:  event.Raw.TxHash.Hex(),
+							TxAt:    helpers.TimeNow(),
+							Amount0: numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Amount0, 18)),
+							Amount1: numeric.NewBigFloatFromFloat(models.ConvertWeiToBigFloat(event.Amount1, 18)),
+						}
+						err = s.dao.Create(
+							tx,
+							memeFeesCollected,
+						)
+						if err != nil {
+							return errs.NewError(err)
+						}
+						err = tx.
+							Model(meme).
+							Updates(
+								map[string]any{
+									"fees0_collected_balance": gorm.Expr("fees0_collected_balance + ?", memeFeesCollected.Amount0),
+									"fees1_collected_balance": gorm.Expr("fees1_collected_balance + ?", memeFeesCollected.Amount1),
+								},
+							).Error
+						if err != nil {
+							return errs.NewError(err)
+						}
+					}
+					feesCollectedUpdated := helpers.GetTimeIndex(uint(event.Raw.BlockNumber), event.Raw.TxIndex, event.Raw.Index)
+					if meme.FeesCollectedUpdated < feesCollectedUpdated {
+						err = tx.
+							Model(meme).
+							Where("fees_collected_updated < ?", feesCollectedUpdated).
+							Updates(
+								map[string]any{
+									"fees_collected_updated": feesCollectedUpdated,
+								},
+							).Error
+						if err != nil {
+							return errs.NewError(err)
+						}
+					}
+				}
+				return nil
+			},
+		)
+		if err != nil {
+			return errs.NewError(err)
 		}
 	}
 	return nil
