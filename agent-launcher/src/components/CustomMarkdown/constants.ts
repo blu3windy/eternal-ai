@@ -13,6 +13,8 @@ export const FILE_DATA_REGEX = /<filedata>([\s\S]*?)(?:<\/filedata>|$)/g
 // export const IMAGE_LINK_DATA_REGEX = /<image-link>([\s\S]*?)(?:<\/image-link>|$)/g
 export const IFRAME_LINK_DATA_REGEX = /<iframe-link>([\s\S]*?)(?:<\/iframe-link>|$)/g
 
+export const TOOL_CALL_TAG_REGEX = /<tool-call>([\s\S]*?)(?:<\/tool-call>|$)/g
+
 
 export const MARKDOWN_TAGS = {
    THINK: 'think',

@@ -36,6 +36,8 @@ export const parseStreamAIResponse = async (
 
       let buffer = '';
       let content = '';
+
+      let role = '';
       // eslint-disable-next-line no-constant-condition
       while (true) {
          const { done, value } = await reader.read(); // Read a chunk of data
@@ -67,7 +69,19 @@ export const parseStreamAIResponse = async (
                   }
                   let chunk = '';
                   if (jsonChunk.choices && jsonChunk.choices[0].delta) {
-                     chunk = jsonChunk?.choices?.[0]?.delta?.content || '';
+                     const latestRole = jsonChunk?.choices?.[0]?.delta?.role || '';
+
+                     const deltaContent = jsonChunk?.choices?.[0]?.delta?.content || '';
+                     if (role !== 'tool' && latestRole === 'tool') {
+                        // create start tool tag
+                        chunk = `<tool-call>${deltaContent}`;
+                     } else if (role === 'tool' && latestRole !== 'tool') {
+                        // create end tool tag
+                        chunk = `</tool-call>${deltaContent}`;
+                     } else {
+                        chunk = deltaContent;
+                     }
+                     role = latestRole;
                      content += chunk;
                   }
 
