@@ -26,3 +26,22 @@ type PumpOrder struct {
 	CreatedAt    string   `json:"created_at"`
 	UpdatedAt    string   `json:"updated_at"`
 }
+
+type PumpBalanceResponse struct {
+	Status  int             `json:"status"`
+	Data    PumpBalanceData `json:"data"`
+	Message string          `json:"message"`
+}
+
+type PumpBalanceData struct {
+	Amount string      `json:"amount"`
+	Tokens []PumpToken `json:"tokens"`
+}
+
+type PumpToken struct {
+	Mint     string `json:"mint"`
+	Name     string `json:"name"`
+	Symbol   string `json:"symbol"`
+	Decimals int    `json:"decimals"`
+	Amount   string `json:"amount"`
+}

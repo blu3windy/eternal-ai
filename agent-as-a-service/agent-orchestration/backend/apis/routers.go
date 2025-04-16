@@ -51,14 +51,13 @@ func (s *Server) Routers() {
 		rootAPI.GET("/health", func(c *gin.Context) {
 			ctxJSON(c, http.StatusOK, &serializers.Resp{Error: nil})
 		})
+
 		rootAPI.GET("/configs/explorer", s.GetAllConfigsExplorer)
 		rootAPI.GET("/clear-cache", s.ClearCacheKey)
 		rootAPI.GET("/eai/supply/total", s.GetEAISupplyTotal)
 		rootAPI.GET("/eai/supply/circulating", s.GetEAISupplyCirculating)
 		rootAPI.GET("/coin-prices", s.GetTokenPrice)
-		rootAPI.GET("/trending-tokens", s.GetListTrendingTokens)
-		rootAPI.GET("/pump-order-history", s.GetPumpOrderHistory)
-		rootAPI.GET("/notify-change-price-pump", s.NotifyChangePricePump)
+
 		rootAPI.POST("/vibe-white-list", s.AddVibeWhiteList)
 		rootAPI.GET("/scan-transaction", s.MemeEventsByTransaction)
 
@@ -66,6 +65,14 @@ func (s *Server) Routers() {
 		{
 			webhookAPI.GET("/twitter-oauth", s.TwitterOauthCallback)
 			webhookAPI.GET("/twitter-oauth/internal", s.TwitterOauthCallbackForInternalData)
+		}
+
+		pumpAPI := rootAPI.Group("/pump")
+		{
+			pumpAPI.GET("/orders", s.GetPumpOrderHistory)
+			pumpAPI.GET("/balances", s.GetPumpBalance)
+			rootAPI.GET("/notify-change-price-pump", s.NotifyChangePricePump)
+			rootAPI.GET("/trending-tokens", s.GetListTrendingTokens)
 		}
 
 		// user

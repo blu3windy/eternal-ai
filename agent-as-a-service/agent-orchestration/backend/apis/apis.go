@@ -174,31 +174,6 @@ func (s *Server) GetListBubbleCrypto(c *gin.Context) {
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: result})
 }
 
-func (s *Server) GetListTrendingTokens(c *gin.Context) {
-	ctx := s.requestContext(c)
-	tokens, err := s.nls.GetListTrendingTokens(ctx)
-	if err != nil {
-		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
-		return
-	}
-	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewTrendingTokenRespArray(tokens)})
-}
-
-func (s *Server) GetPumpOrderHistory(c *gin.Context) {
-	ctx := s.requestContext(c)
-	apiKey := c.Request.Header.Get("api-key")
-	orderHistory, err := s.nls.GetPumpOrderHistory(ctx, apiKey)
-	if err != nil {
-		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
-		return
-	}
-	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: orderHistory})
-}
-
-func (s *Server) NotifyChangePricePump(c *gin.Context) {
-	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: true})
-}
-
 func (s *Server) MemeEventsByTransaction(c *gin.Context) {
 	ctx := s.requestContext(c)
 	txHash := s.stringFromContextQuery(c, "tx_hash")
