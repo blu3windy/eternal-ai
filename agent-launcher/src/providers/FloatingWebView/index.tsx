@@ -39,8 +39,8 @@ function FloatingWebView() {
             onDrag={(e, data) => {
                if (!isMaximized && isOpen) {
                   setViewPosition({
-                     x: data.x,
-                     y: data.y,
+                     x: data.x || 0,
+                     y: data.y || 0,
                   })
                }
             }}
@@ -73,7 +73,7 @@ function FloatingWebView() {
                               size={20}
                               svgUrl={'icons/ic-maximize.svg'}
                               onClick={() => {
-                                 refPosition.current = position
+                                 refPosition.current = viewPosition
                                  setViewPosition({
                                     x: 0,
                                     y: 0,
@@ -131,7 +131,7 @@ function FloatingWebView() {
                            borderRadius: isMaximized ? 0 : '8px',
                         }}
                      >
-                        <iframe src={url} height="100%" width="100%" />
+                        <iframe key={`${url}-${isMaximized}`} src={url} height="100%" width="100%" />
                      </div>
                   </div>
                </Flex>

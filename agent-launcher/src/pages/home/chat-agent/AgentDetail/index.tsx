@@ -18,6 +18,7 @@ import DependencyAgentItem from "./DependencyAgentItem";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import useAgentState from "@pages/home/provider/useAgentState";
+import InfoTooltip from "@components/InfoTooltip";
 
 dayjs.extend(duration);
 
@@ -210,7 +211,7 @@ const AgentDetail = () => {
                                  {isSearchMode
                                     ? <Button
                                        className={s.btnInstall}
-                                       onClick={()=> {
+                                       onClick={() => {
                                           handleStartAgent();
                                           setTimeout(() => {
                                              setIsSearchMode(false);
@@ -219,7 +220,7 @@ const AgentDetail = () => {
                                     >
                                        Open
                                     </Button>
-                                    :                                    
+                                    :
                                     <>
                                        {!isRunning && (
                                           <Button
@@ -232,7 +233,7 @@ const AgentDetail = () => {
                                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                 <path d="M15.5507 11.989L7.15397 17.1274C5.48314 18.1499 3.33398 16.9506 3.33398 14.9956V5.00479C3.33398 3.04979 5.48314 1.85074 7.15397 2.87324L15.5507 8.01158C17.0382 8.92242 17.0382 11.079 15.5507 11.989Z" fill="black" />
                                              </svg>
-                                          Start
+                                             Start
                                           </Button>
                                        )}
                                     </>
@@ -358,7 +359,20 @@ const AgentDetail = () => {
                   dependAgents.length > 0 && (
                      <>
                         <Flex direction={'column'} gap={'12px'}>
-                           <Text fontSize={'20px'} fontWeight={'500'} color={'white'}>Dependency Agent</Text>
+                           <Flex alignItems={'center'} gap={'8px'}>
+                              <Text fontSize={'20px'} fontWeight={'500'} color={'white'}>Multi-Agent System</Text>
+                              <InfoTooltip
+                                 iconSize="20px"
+                                 label={
+                                    <Flex direction={'column'} p={'8px'}>
+                                       <Text>Agents collaborate to handle tasks more efficiently. If one encounters an issue, it could impact overall system performance.</Text>
+                                    </Flex>
+                                 }
+                                 placement="top"
+                                 iconColor="white"
+                                 showIcon
+                              ></InfoTooltip>
+                           </Flex>
                            <Flex overflowX={'auto'} gap={'12px'}>
                               {
                                  dependAgents.map((agent) => (

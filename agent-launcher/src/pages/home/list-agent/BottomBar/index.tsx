@@ -25,6 +25,7 @@ import ProcessingTaskModal from "./ProcessingTaskModal";
 import s from "./styles.module.scss";
 import NewsModal from "./NewsModal";
 import { MonitorContext } from "@providers/Monitor/MonitorContext";
+import SelectModel from "@pages/home/chat-agent/AgentTopInfo/SelectModel";
 
 const ProcessingTaskIcon = () => {
    return (
@@ -56,8 +57,8 @@ const ProcessingTaskIcon = () => {
 const NewsIcon = () => {
    return (
       <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <path d="M9.56665 19.9531L9.573 19.9258C9.529 20.1113 9.5 20.3018 9.5 20.5008C9.5 21.8813 10.6195 23.0008 12 23.0008C13.3805 23.0008 14.5 21.8813 14.5 20.5008C14.5 20.3023 14.471 20.1113 14.427 19.9258L14.4372 19.9701" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-         <path d="M21 19V17.5C21 17.5 18.5 15.5 18.5 10.5V8.5C18.5 4.91 15.59 2 12 2C8.41 2 5.5 4.91 5.5 8.5V10.5C5.5 15.5 3 17.5 3 17.5V19C9 20.3335 15 20.3335 21 19Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+         <path d="M9.56665 19.9531L9.573 19.9258C9.529 20.1113 9.5 20.3018 9.5 20.5008C9.5 21.8813 10.6195 23.0008 12 23.0008C13.3805 23.0008 14.5 21.8813 14.5 20.5008C14.5 20.3023 14.471 20.1113 14.427 19.9258L14.4372 19.9701" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+         <path d="M21 19V17.5C21 17.5 18.5 15.5 18.5 10.5V8.5C18.5 4.91 15.59 2 12 2C8.41 2 5.5 4.91 5.5 8.5V10.5C5.5 15.5 3 17.5 3 17.5V19C9 20.3335 15 20.3335 21 19Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
    );
 };
@@ -249,7 +250,7 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                                  stroke-linejoin="round"
                               />
                            </svg>
-                   Add test agent
+                           Add test agent
                         </Button>
 
                         <Button
@@ -265,9 +266,12 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                            className={s.menuItem}
                         >
                            <ProcessingTaskIcon />
-                   Task processing{" "}
+                           Task processing{" "}
                            {totalPendingTasks ? `(${totalPendingTasks})` : ""}
                         </Button>
+                        <Box w="100%" height={'45px'}>
+                           <SelectModel showDescription={false} />
+                        </Box>
 
                         <Button
                            width="100%"
@@ -282,7 +286,7 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                            className={s.menuItem}
                         >
                            <NewsIcon />
-                   Updates{" "}
+                           Updates{" "}
                            {updateAgents?.length > 0 ? `(${updateAgents?.length})` : ""}
                         </Button>
                      </PopoverBody>
