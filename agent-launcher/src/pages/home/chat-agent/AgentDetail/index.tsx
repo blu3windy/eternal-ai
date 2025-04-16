@@ -220,8 +220,7 @@ const AgentDetail = () => {
                                     >
                                        Open
                                     </Button>
-                                    :
-                                    <>
+                                    :                                    <>
                                        {!isRunning && (
                                           <Button
                                              className={s.btnInstall}

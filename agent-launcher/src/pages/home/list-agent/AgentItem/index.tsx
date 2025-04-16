@@ -311,12 +311,12 @@ const AgentItem = ({ token, addActiveAgent, isLatest }: IProps) => {
                            <Image src="icons/ic-downloaded.svg" w="15px" h="15px" />
                            <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.installed_count, 0, 0)}</Text>
                         </Flex>
-                        {!!token?.rating && (
+                        {/* {!!token?.rating && (
                            <Flex gap="4px" alignItems="center">
                               <Image src="icons/ic-yellow-star.svg" w="15px" h="15px" marginTop="-2px" />
                               <Text color="#657786" fontSize="12px" fontWeight="400">{formatCurrency(token.rating, 0, 0)}</Text>
                            </Flex>
-                        )}
+                        )} */}
                      </Flex>
                   </Flex>
                </Flex>

@@ -228,11 +228,12 @@ const AgentTopInfo = () => {
                         iconSize="20px"
                         label={
                            <Flex direction={'column'} p={'8px'}>
-                              {selectedAgent?.rating ? (
+                              {/* {selectedAgent?.rating ? (
                                  <AgentHeaderRate />
                               ) : (
                                  <AgentHeaderInfo />
-                              )}
+                              )} */}
+                              <AgentHeaderInfo />
                               <Divider color={'#E2E4E8'} my={'16px'} />
                               <AgentOnChainInfo />
                               {!!environments && selectedAgent?.env_example && (
