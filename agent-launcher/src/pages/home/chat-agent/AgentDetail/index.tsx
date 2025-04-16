@@ -201,7 +201,7 @@ const AgentDetail = () => {
                         <Text className={s.nameText}>
                            {selectedAgent?.display_name || selectedAgent?.agent_name}{' '}
                         </Text>
-                        <Text className={s.nameText} opacity={0.5}>{selectedAgent?.token_symbol ? `$${selectedAgent?.token_symbol}` : ''}</Text>
+                        {/* <Text className={s.nameText} opacity={0.5}>{selectedAgent?.token_symbol ? `$${selectedAgent?.token_symbol}` : ''}</Text> */}
                      </Flex>
                      <Text className={s.shortDescription}>{shortDescription}</Text>
                      <Flex gap={"24px"} mt={"12px"}>
