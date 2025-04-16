@@ -162,12 +162,6 @@ function ProcessingTaskModal() {
          </Flex>
 
          <Box
-            bg="rgba(255, 255, 255, 0.10)"
-            borderRadius="12px"
-            minHeight={"400px"}
-            maxHeight={"400px"}
-            overflowY={"auto"}
-            overflowX={"hidden"}
             className={s.taskListScroll}
          >
             {renderTasks.length ? (
@@ -177,9 +171,10 @@ function ProcessingTaskModal() {
                   ))}
                </>
             ) : (
-               <Flex height={"400px"} padding={"16px"} justifyContent={"center"} alignItems={"center"}>
-                  <Text color="#fff" fontSize={"16px"} fontWeight={"500"} lineHeight={"150%"}>
-                     No task
+               <Flex mt={"80px"} padding={"16px"} justifyContent={"center"} alignItems={"center"} flexDirection={"column"} gap={"32px"}>
+                  <Image src="icons/ic-no-processing-task.svg" alt="empty" width={"188px"} height={"140px"} />
+                  <Text color="#34343F" fontSize={"18px"} fontWeight={"600"} lineHeight={"150%"}>
+                     No task running
                   </Text>
                </Flex>
             )}
