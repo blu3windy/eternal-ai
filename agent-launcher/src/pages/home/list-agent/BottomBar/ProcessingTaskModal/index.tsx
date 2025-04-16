@@ -55,7 +55,7 @@ function TaskItemRenderer({ task, isLast, onRemoveTask }: { task: TaskItem; isLa
    };
 
    useEffect(() => {
-      if (task?.createdAt && task?.updatedAt) {
+      if (task?.createdAt) {
          calcTime();
       }
    }, [task]);
@@ -122,7 +122,7 @@ function TaskItemRenderer({ task, isLast, onRemoveTask }: { task: TaskItem; isLa
                   <Text className={s.nameText}>
                      {token?.display_name || token?.agent_name}{' '}
                   </Text>
-
+                  <Text className={s.timeText}>{`${hours && hours > 0 ? `${hours}h` : ""} ${minutes && minutes > 0 ? `${minutes}m` : ""} ${seconds && seconds > 0 ? `${seconds}s` : ""}`.trim()}</Text>
                </Flex>
                <Text className={cx(s.status, s[task.status])}>{TaskStatusText[task.status]}</Text>
             </Flex>

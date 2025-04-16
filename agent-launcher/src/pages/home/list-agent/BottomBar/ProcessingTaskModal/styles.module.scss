@@ -62,11 +62,20 @@
 
    .nameText {
       font-size: 15px;
+      line-height: 100%;
       font-weight: 500;
       color: inherit;
-    }
+   }
 
-    .status {
+   .timeText {
+      font-size: 12px;
+      line-height: 100%;
+      font-weight: 400;
+      color: #000;
+      opacity: 0.5;
+   }
+
+   .status {
       font-size: 12px;
       font-weight: 400;
       color: #000;
@@ -91,5 +100,5 @@
       &.failed {
          background: #FF0000;
       }
-    }
+   }
 }
