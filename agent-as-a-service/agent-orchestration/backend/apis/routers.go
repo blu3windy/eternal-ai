@@ -69,8 +69,8 @@ func (s *Server) Routers() {
 
 		pumpAPI := rootAPI.Group("/pump")
 		{
-			pumpAPI.GET("/pump/orders", s.GetPumpOrderHistory)
-			pumpAPI.GET("/pump/balance", s.GetPumpBalance)
+			pumpAPI.GET("/orders", s.GetPumpOrderHistory)
+			pumpAPI.GET("/balances", s.GetPumpBalance)
 			rootAPI.GET("/notify-change-price-pump", s.NotifyChangePricePump)
 			rootAPI.GET("/trending-tokens", s.GetListTrendingTokens)
 		}
