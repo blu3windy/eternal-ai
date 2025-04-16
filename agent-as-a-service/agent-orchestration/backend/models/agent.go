@@ -261,6 +261,22 @@ type AgentInfo struct {
 	KnowledgeBase             *KnowledgeBase   `json:"knowledge_base" gorm:"foreignKey:AgentKBId;references:AgentInfoId"`
 }
 
+func (m *AgentInfo) IsVibeAgent() bool {
+	switch m.AgentType {
+	case AgentInfoAgentTypeModel,
+		AgentInfoAgentTypeJs,
+		AgentInfoAgentTypePython,
+		AgentInfoAgentTypeInfa,
+		AgentInfoAgentTypeCustomUi,
+		AgentInfoAgentTypeCustomPrompt,
+		AgentInfoAgentTypeModelOnline:
+		{
+			return true
+		}
+	}
+	return false
+}
+
 func (m *AgentInfo) GetCodeLanguage() string {
 	var codeLanguage string
 	switch m.AgentType {

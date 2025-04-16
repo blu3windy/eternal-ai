@@ -627,29 +627,31 @@ func (s *Service) VibeTokenFactoryTokenDeployedEvent(ctx context.Context, networ
 			return errs.NewError(err)
 		}
 		if agentInfo != nil {
-			meme, err := s.dao.FirstMeme(
-				daos.GetDBMainCtx(ctx),
-				map[string][]any{
-					"agent_info_id = ?": {agentInfo.ID},
-				},
-				map[string][]any{},
-				false,
-			)
-			if err != nil {
-				return errs.NewError(err)
-			}
-			if meme != nil {
-				err = daos.GetDBMainCtx(ctx).
-					Model(meme).
-					Updates(
-						map[string]any{
-							"token_address":     strings.ToLower(event.Token.Hex()),
-							"add_pool2_tx_hash": event.Raw.TxHash.Hex(),
-							"factory_address":   strings.ToLower(event.Raw.Address.Hex()),
-						},
-					).Error
+			if agentInfo.IsVibeAgent() {
+				meme, err := s.dao.FirstMeme(
+					daos.GetDBMainCtx(ctx),
+					map[string][]any{
+						"agent_info_id = ?": {agentInfo.ID},
+					},
+					map[string][]any{},
+					false,
+				)
 				if err != nil {
 					return errs.NewError(err)
+				}
+				if meme != nil {
+					err = daos.GetDBMainCtx(ctx).
+						Model(meme).
+						Updates(
+							map[string]any{
+								"token_address":     strings.ToLower(event.Token.Hex()),
+								"add_pool2_tx_hash": event.Raw.TxHash.Hex(),
+								"factory_address":   strings.ToLower(event.Raw.Address.Hex()),
+							},
+						).Error
+					if err != nil {
+						return errs.NewError(err)
+					}
 				}
 			}
 		}

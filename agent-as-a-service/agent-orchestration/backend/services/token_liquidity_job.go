@@ -114,18 +114,8 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 			if m == nil {
 				return errs.NewError(errs.ErrBadRequest)
 			}
-			switch m.AgentInfo.AgentType {
-			case models.AgentInfoAgentTypeNormal,
-				models.AgentInfoAgentTypeKnowledgeBase,
-				models.AgentInfoAgentTypeReasoning,
-				models.AgentInfoAgentTypeEliza,
-				models.AgentInfoAgentTypeZerepy:
-				{
-				}
-			default:
-				{
-					return errs.NewError(errs.ErrBadRequest)
-				}
+			if m.AgentInfo.IsVibeAgent() {
+				return errs.NewError(errs.ErrBadRequest)
 			}
 			if m.TokenAddress == "" {
 				switch m.NetworkID {
@@ -399,6 +389,9 @@ func (s *Service) RetryAgentDeployToken(ctx context.Context, memeID uint) error 
 					models.AVALANCHE_C_CHAIN_ID,
 					models.CELO_CHAIN_ID:
 					{
+						if m.AgentInfo.IsVibeAgent() {
+							return errs.NewError(errs.ErrBadRequest)
+						}
 						isContact, err := s.GetEthereumClient(ctx, m.NetworkID).IsContract(m.TokenAddress)
 						if err != nil {
 							return errs.NewError(err)

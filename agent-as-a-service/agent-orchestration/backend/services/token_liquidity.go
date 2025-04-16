@@ -1010,6 +1010,9 @@ func (s *Service) VibeTokenGetDeployInfo(ctx context.Context, address string, id
 	if !strings.EqualFold(address, agentInfo.Creator) {
 		return nil, errs.NewError(errs.ErrBadRequest)
 	}
+	if !agentInfo.IsVibeAgent() {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
 	baseTokenPrice := s.GetTokenMarketPrice(daos.GetDBMainCtx(ctx), vibeToken.BaseTokenSymbol)
 	lowerPrice, _ := models.QuoBigFloats(
 		big.NewFloat(models.LOWER_PRICE_USD),
