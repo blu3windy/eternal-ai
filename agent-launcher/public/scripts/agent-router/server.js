@@ -11,12 +11,15 @@ const app = express();
 const REQUEST_TIMEOUT = 120; // 120 minutes
 const FILE_RETENTION_HOURS = 72; // 72 hours
 const PROCESSING_REQUESTS = {};
+const REQUEST_ID_WRITINGS = {};
 
 // TODO: add api request log error for rollbar end point  
 // where is context?
 
 const logError = async (title, body, level = 'error') => {
-    console.log('logError', title, body, level);
+    if (level === 'error') {
+      console.log('logError', title, body, level);
+    }
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
@@ -97,8 +100,13 @@ const getRequestFilePath = (agentName) => {
 
 const checkLogDir = async (agentName) => {
   try {
-    // Create log directory if it doesn't exist
-    await fs.mkdir(getRequestFilePath(agentName), { recursive: true });
+    // Check if log directory exists, create if not
+    const logPath = getRequestFilePath(agentName);
+    try {
+      await fs.access(logPath);
+    } catch {
+      await fs.mkdir(logPath, { recursive: true });
+    }
   } catch (e) {
     //
   }
@@ -152,6 +160,7 @@ const writeRequestEndLogger = async (id, data, status, agentName) => {
     if (!id) {
       return null;
     }
+    REQUEST_ID_WRITINGS[id] = true;
     await checkLogDir(agentName);
     const existingLog = await readLogFile(id, agentName);
     if (!existingLog) {
@@ -174,6 +183,8 @@ const writeRequestEndLogger = async (id, data, status, agentName) => {
     await fs.writeFile(filepath, JSON.stringify(updatedLog, null, 2), "utf-8");
   } catch (error) {
     console.error("Error logging request:", error);
+  } finally {
+    delete REQUEST_ID_WRITINGS[id];
   }
   return;
 };
@@ -238,12 +249,9 @@ const parseObjectFromStream = (data) => {
   }
 };
 
-const parseDataFromStream = (data) => {
+const parseDataFromStream = (jsonChunk) => {
   let content = "";
   try {
-    const jsonChunk = tryToParseStringJson(
-      data.toString().replace?.("data: ", "")
-    );
     if (typeof jsonChunk === "string") {
       return jsonChunk;
     }
@@ -272,7 +280,6 @@ app.post("/:agentName/prompt", async (req, res) => {
   const payload = req.body;
   const payloadString = JSON.stringify(payload);
 
-
   const timeout = REQUEST_TIMEOUT * 60 * 1000; // timeout 30 minutes
   const options = {
     hostname: parsedUrl.hostname,
@@ -287,9 +294,7 @@ app.post("/:agentName/prompt", async (req, res) => {
     },
   };
 
-
   logError('AGENT_ROUTER_REQUEST', {...payload}, 'info');
-
 
   if (payload?.messages?.length > 0) {
     console.log("agentName:", agentName);
@@ -340,7 +345,7 @@ app.post("/:agentName/prompt", async (req, res) => {
           );
         return;
       } else {
-        if (PROCESSING_REQUESTS[payload?.id]) {
+        if (PROCESSING_REQUESTS[payload?.id] || REQUEST_ID_WRITINGS[payload?.id]) {
           res.status(200).json({
             status: 102,
           });
@@ -360,6 +365,7 @@ app.post("/:agentName/prompt", async (req, res) => {
     const isStreaming = isStreamingResponse(proxyResponse.headers);
     if (isStreaming) {
       let responseData = "";
+      let role = "";
       // Handle as streaming response
       res.writeHead(proxyResponse.statusCode, proxyResponse.headers);
       // proxyResponse.pipe(res);
@@ -385,20 +391,25 @@ app.post("/:agentName/prompt", async (req, res) => {
               const chunks = chunk.toString().split("\n\n");
               for (const chunkData of chunks) {
                 if (!chunkData.trim()) continue;
-                const chunkText = parseDataFromStream(chunkData);
+                const jsonChunk = parseObjectFromStream(chunkData);
+                const chunkText = parseDataFromStream(jsonChunk);
 
-                responseData += chunkText;
-                if (payload?.id) {
-                  writeRequestEndLogger(
-                    payload.id,
-                    responseData,
-                    102,
-                    agentName
-                  );
+                const latestRole = jsonChunk?.choices?.[0]?.delta?.role || '';
+                if (role !== 'tool' && latestRole === 'tool') {
+                  // create start tool tag
+                  responseData += `<tool-call>${chunkText}`;
+                } else if (role === 'tool' && latestRole !== 'tool') {
+                  // create end tool tag
+                  responseData += `</tool-call>${chunkText}`;
+                } else {
+                  responseData += chunkText;
                 }
+                role = latestRole;
               }
             }
           } catch (e) {
+            console.log('AGENT_ROUTER_RESPONSE_ERROR_STREAM', {agentName, e});
+            
             logError('AGENT_ROUTER_RESPONSE_ERROR_STREAM', {agentName, e}, 'error');
           }
         }
@@ -442,6 +453,8 @@ app.post("/:agentName/prompt", async (req, res) => {
             result,
             agentName
           );
+          console.log('normalizedResponse', JSON.stringify(normalizedResponse));
+          
           res.status(proxyResponse.statusCode).json(normalizedResponse);
           if (payload?.id) {
             writeRequestEndLogger(

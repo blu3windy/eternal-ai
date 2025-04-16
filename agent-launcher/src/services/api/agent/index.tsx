@@ -1,7 +1,7 @@
 import { AgentInfo, ChatCompletionPayload, ChatCompletionStreamHandler } from "./types.ts";
 import { RequestPromptPayload, Content } from 'agent-server-definition'
 import { IMAGINE_URL } from "../../../config.ts";
-import { THINK_TAG_REGEX } from "@components/CustomMarkdown/constants.ts";
+import { COMPUTER_USE_TAG_REGEX, FILES_TAG_REGEX, IFRAME_LINK_DATA_REGEX, IMAGE_SLIDER_TAG_REGEX, THINK_TAG_REGEX, TOOL_CALL_TAG_REGEX } from "@components/CustomMarkdown/constants.ts";
 import { parseStreamAIResponse } from "@utils/api.ts";
 import { getClientHeaders } from "../http-client.ts";
 import CApiClient from "../agents-token/apiClient.ts";
@@ -10,20 +10,35 @@ import { v4 as uuidv4 } from 'uuid';
 import qs from 'query-string';
 import { logError } from '@utils/error-handler';
 
-const normalizedContent = (content: Content) => {
-   if (typeof content === 'string') {
-      return content.replace(THINK_TAG_REGEX, '');
-   }
-   if (Array.isArray(content)) {
-      return content.map((item) => {
-         if (item.type === 'text') {
-            return {
-               ...item,
-               text: item.text.replace(THINK_TAG_REGEX, ''),
-            };
-         }
-         return item;
-      });
+const normalizedContent = (content: Content, role: string) => {
+   if (role !== 'user') {
+      if (typeof content === 'string') {
+         return content
+            .replace(THINK_TAG_REGEX, '')
+            .replace(TOOL_CALL_TAG_REGEX, '')
+            .replace(COMPUTER_USE_TAG_REGEX, '')
+            .replace(FILES_TAG_REGEX, '')
+            .replace(IFRAME_LINK_DATA_REGEX, '')
+            .replace(IMAGE_SLIDER_TAG_REGEX, '');
+      }
+      if (Array.isArray(content)) {
+         return content.map((item) => {
+            if (item.type === 'text') {
+               return {
+                  ...item,
+                  text: item.text
+                     .replace(THINK_TAG_REGEX, '')
+                     .replace(TOOL_CALL_TAG_REGEX, '')
+                     .replace(COMPUTER_USE_TAG_REGEX, '')
+                     .replace(FILES_TAG_REGEX, '')
+                     .replace(IFRAME_LINK_DATA_REGEX, '')
+                     .replace(IMAGE_SLIDER_TAG_REGEX, ''),
+               };
+            }
+            return item;
+         });
+      }
+      return content;
    }
    return content;
 }
@@ -177,7 +192,7 @@ const AgentAPI = {
          const headers = await getClientHeaders();
          const messages = payload.messages.map((item) => ({
             ...item,
-            content: normalizedContent(item.content)
+            content: normalizedContent(item.content, item.role)
          }));
 
          const body = JSON.stringify({ 
@@ -225,7 +240,7 @@ const AgentAPI = {
          const headers = await getClientHeaders();
          const messages = payload.messages.map((item) => ({
             ...item,
-            content: normalizedContent(item.content)
+            content: normalizedContent(item.content, item.role)
          }));
          
          const response = await fetch(`http://localhost:65534/v1/chat/completions`, {
@@ -310,7 +325,7 @@ const AgentAPI = {
          const headers = await getClientHeaders();
          const messages = payload.messages.map((item) => ({
             ...item,
-            content: normalizedContent(item.content)
+            content: normalizedContent(item.content, item.role)
          }));
 
          const body = JSON.stringify({ 
@@ -366,7 +381,7 @@ const AgentAPI = {
       const headers = await getClientHeaders();
       const messages = payload.messages.map((item) => ({
          ...item,
-         content: normalizedContent(item.content)
+         content: normalizedContent(item.content, item.role)
       }));
       console.log('chatStreamCompletions messages', messages);
       const response = await fetch(`${IMAGINE_URL}/api/agent/preview/v1`, {
