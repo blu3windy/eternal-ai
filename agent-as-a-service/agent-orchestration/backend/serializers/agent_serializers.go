@@ -182,6 +182,7 @@ type AgentInfoResp struct {
 	NumOfThreeStar            int64                     `json:"num_of_three_star"`
 	NumOfFourStar             int64                     `json:"num_of_four_star"`
 	NumOfFiveStar             int64                     `json:"num_of_five_star"`
+	CodeLanguage              string                    `json:"code_language"`
 }
 
 type AgentTwitterPostResp struct {
@@ -370,6 +371,7 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		NumOfThreeStar:       m.NumOfThreeStar,
 		NumOfFourStar:        m.NumOfFourStar,
 		NumOfFiveStar:        m.NumOfFiveStar,
+		CodeLanguage:         m.GetCodeLanguage(),
 	}
 
 	if m.NftTokenImage != "" {

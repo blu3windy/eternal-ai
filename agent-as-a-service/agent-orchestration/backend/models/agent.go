@@ -260,6 +260,41 @@ type AgentInfo struct {
 	KnowledgeBase             *KnowledgeBase   `json:"knowledge_base" gorm:"foreignKey:AgentKBId;references:AgentInfoId"`
 }
 
+func (m *AgentInfo) GetCodeLanguage() string {
+	var codeLanguage string
+	switch m.AgentType {
+	case AgentInfoAgentTypeJs,
+		AgentInfoAgentTypeInfa:
+		{
+			codeLanguage = "javascript"
+		}
+	case AgentInfoAgentTypePython:
+		{
+			codeLanguage = "python"
+			if m.IsCustomUi {
+				codeLanguage = "python_custom_ui"
+			}
+		}
+	case AgentInfoAgentTypeModel:
+		{
+			codeLanguage = "model"
+		}
+	case AgentInfoAgentTypeModelOnline:
+		{
+			codeLanguage = "model_online"
+		}
+	case AgentInfoAgentTypeCustomUi:
+		{
+			codeLanguage = "custom_ui"
+		}
+	case AgentInfoAgentTypeCustomPrompt:
+		{
+			codeLanguage = "custom_prompt"
+		}
+	}
+	return codeLanguage
+}
+
 func (m *AgentInfo) GetCharacterArrayString(charactor string) []string {
 	data := []string{}
 	_ = json.Unmarshal([]byte(charactor), &data)

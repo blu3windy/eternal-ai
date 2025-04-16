@@ -164,36 +164,9 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 							dependAgentAddrs = append(dependAgentAddrs, helpers.HexToAddress(v))
 						}
 					}
-					var codeLanguage string
-					switch agentInfo.AgentType {
-					case models.AgentInfoAgentTypeJs,
-						models.AgentInfoAgentTypeInfa:
-						{
-							codeLanguage = "javascript"
-						}
-					case models.AgentInfoAgentTypePython:
-						{
-							codeLanguage = "python"
-							if agentInfo.IsCustomUi {
-								codeLanguage = "python_custom_ui"
-							}
-						}
-					case models.AgentInfoAgentTypeModel:
-						{
-							codeLanguage = "model"
-						}
-					case models.AgentInfoAgentTypeModelOnline:
-						{
-							codeLanguage = "model_online"
-						}
-					case models.AgentInfoAgentTypeCustomUi:
-						{
-							codeLanguage = "custom_ui"
-						}
-					case models.AgentInfoAgentTypeCustomPrompt:
-						{
-							codeLanguage = "custom_prompt"
-						}
+					codeLanguage := agentInfo.GetCodeLanguage()
+					if codeLanguage == "" {
+						return errs.NewError(errs.ErrBadRequest)
 					}
 					_, _, txHash, err := s.DeployAgentUpgradeableAddress(
 						ctx,
