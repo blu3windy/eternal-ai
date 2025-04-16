@@ -33,7 +33,7 @@ const logError = async (title, body) => {
     }
 
   };
-  console.log(payload);
+  console.log("payload", payload);
   const response = await fetch('https://api.rollbar.com/api/1/item', { 
     method: 'POST',
     headers: {
