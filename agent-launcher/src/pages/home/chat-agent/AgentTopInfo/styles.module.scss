@@ -1,5 +1,6 @@
 .container {
   padding: 16px 0;
+  background: linear-gradient(180deg, rgba(228, 229, 216, 0.60) 0%, rgba(203, 214, 232, 0.60) 100%);
 
   .contentContainer {
     &.isSetup {
@@ -20,6 +21,22 @@
       .btnBuy {
         background-color: #FFFFFF;
         color: #000;
+      }
+    }
+  }
+
+  .btnTaskProcessing {
+    border-radius: 100px;
+    background: rgba(255, 255, 255, 0.30);
+    padding: 10px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.30);
+    }
+
+    :global {
+      .chakra-button__icon {
+        margin-right: 0;
       }
     }
   }
@@ -99,6 +116,7 @@
 
     svg {
       width: 18px;
+
       path {
         fill: #FFF;
       }

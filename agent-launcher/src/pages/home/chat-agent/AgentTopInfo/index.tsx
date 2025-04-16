@@ -42,7 +42,11 @@ import ButtonChatCreate from "./ButtonChatCreate";
 import ProcessingTaskModal from '@pages/home/list-agent/BottomBar/ProcessingTaskModal';
 import { changeLayout } from '@stores/states/layout-view/reducer';
 import { CollapseIcon } from '@components/CustomMarkdown/Files/icons';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { layoutViewSelector } from '@stores/states/layout-view/selector';
+import { agentTasksProcessingSelector } from '@stores/states/agent-chat/selector';
+import uniqBy from 'lodash.uniqby';
+import { TaskItem } from '@stores/states/agent-chat/type';
 
 const AgentTopInfo = () => {
    const {
@@ -96,6 +100,27 @@ const AgentTopInfo = () => {
    }, [isCanChat, showBackupPrvKey, showSetup, hasNewVersionCode, isInstalled]);
 
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
+
+
+   const { isOpenRightBar } = useSelector(layoutViewSelector);
+   const pendingTasks = useSelector(agentTasksProcessingSelector);
+   const [renderTasks, setRenderTasks] = useState<TaskItem[]>(pendingTasks);
+
+   useEffect(() => {
+      setRenderTasks((prev) => {
+         const newTasks = prev.map((task) => {
+            const foundedIndex = pendingTasks.findIndex((t) => t.id === task.id);
+            if (foundedIndex !== -1) {
+               return {
+                  ...task,
+                  status: pendingTasks[foundedIndex].status,
+               };
+            }
+            return task;
+         });
+         return uniqBy([...newTasks, ...pendingTasks], "id");
+      });
+   }, [pendingTasks]);
 
    const allowStopAgent = useMemo(() => {
       const isAgentSystem = (compareString(selectedAgent?.agent_name, currentActiveModel?.agent?.agent_name)
@@ -476,22 +501,22 @@ const AgentTopInfo = () => {
             {/* <Flex justifyContent={"flex-end"} position={"absolute"} right={"16px"}>
                <HeaderWallet color={color} />
             </Flex> */}
-            <Flex>
-               <Box
-                  onClick={() => {
-                     dispatch(changeLayout({
-                        isOpenAgentBar: true,
-                        isOpenRightBar: true,
-                        rightBarView: (
-                           <ProcessingTaskModal />
-                        )
-                     }));
-                  }}
-               >
-                  <CollapseIcon />
-               </Box>
+            {
+               !isOpenRightBar && (
+                  <Flex>
+                     <Button className={cx(s.btnTaskProcessing)} leftIcon={<CollapseIcon />} onClick={() => {
+                        dispatch(changeLayout({
+                           isOpenAgentBar: true,
+                           isOpenRightBar: true,
+                           rightBarView: <ProcessingTaskModal />
+                        }))
+                     }}>
+                        {renderTasks.length > 0 ? `${renderTasks.length} tasks processing` : ''}
+                     </Button>
+                  </Flex>
+               )
+            }
 
-            </Flex>
          </Flex>
          <Drawer isOpen={isOpenDrawer} placement="right" onClose={onCloseDrawer}>
             <DrawerOverlay />
