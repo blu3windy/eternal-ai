@@ -1,8 +1,8 @@
 import SvgInset from "@components/SvgInset";
 
-export function TxtIcon() {
+export function TxtIcon({ size = 48 }: { size?: number }) {
    return (
-      <SvgInset size={48} svgUrl="icons/ic-file.svg" />
+      <SvgInset size={size} svgUrl="icons/ic-file.svg" />
    )
 }
 
