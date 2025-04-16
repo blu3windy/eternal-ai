@@ -208,6 +208,7 @@ type AgentInfo struct {
 	GraphData            string `gorm:"type:longtext"`
 	ConfigData           string `gorm:"type:longtext"`
 	DeployedRefID        string
+	FactoryAddress       string
 
 	TwinTwitterUsernames    string           `gorm:"index"` // multiple twitter usernames, split by ,
 	TwinStatus              TwinStatus       `gorm:"index"`

@@ -341,6 +341,7 @@ func (s *Service) AgentFactoryAgentCreatedEvent(ctx context.Context, networkID u
 						"status":                 models.AssistantStatusReady,
 						"reply_enabled":          true,
 						"agent_nft_minted":       true,
+						"factory_address":        strings.ToLower(event.Raw.Address.Hex()),
 					},
 				).Error
 			if err != nil {
