@@ -376,7 +376,17 @@ func (s *Service) JobCreateTokenInfo(ctx context.Context) error {
 					`(
 						(agent_infos.eai_balance > 0 and agent_infos.eai_balance >= agent_chain_fees.token_fee) 
 						or agent_infos.ref_tweet_id > 0
-					)`: {},
+						or agent_infos.agent_type in (?)
+					)`: {
+						[]models.AgentInfoAgentType{
+							models.AgentInfoAgentTypeModel,
+							models.AgentInfoAgentTypeModelOnline,
+							models.AgentInfoAgentTypeJs,
+							models.AgentInfoAgentTypePython,
+							models.AgentInfoAgentTypeInfa,
+							models.AgentInfoAgentTypeCustomUi,
+							models.AgentInfoAgentTypeCustomPrompt,
+						}},
 				},
 				map[string][]any{},
 				[]string{

@@ -43,6 +43,7 @@ func (s *Service) JobAgentDeployToken(ctx context.Context) error {
 						[]models.AgentInfoAgentType{
 							models.AgentInfoAgentTypeNormal,
 							models.AgentInfoAgentTypeReasoning,
+							models.AgentInfoAgentTypeKnowledgeBase,
 							models.AgentInfoAgentTypeEliza,
 							models.AgentInfoAgentTypeZerepy,
 						},
@@ -112,6 +113,19 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 			}
 			if m == nil {
 				return errs.NewError(errs.ErrBadRequest)
+			}
+			switch m.AgentInfo.AgentType {
+			case models.AgentInfoAgentTypeNormal,
+				models.AgentInfoAgentTypeKnowledgeBase,
+				models.AgentInfoAgentTypeReasoning,
+				models.AgentInfoAgentTypeEliza,
+				models.AgentInfoAgentTypeZerepy:
+				{
+				}
+			default:
+				{
+					return errs.NewError(errs.ErrBadRequest)
+				}
 			}
 			if m.TokenAddress == "" {
 				switch m.NetworkID {
