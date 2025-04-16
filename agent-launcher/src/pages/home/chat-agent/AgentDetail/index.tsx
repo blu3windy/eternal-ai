@@ -96,7 +96,7 @@ const AgentDetail = () => {
          const codeVersion = selectedAgent?.code_version ? Number(selectedAgent?.code_version) : 0;
          const values = await localStorageService.getItem(selectedAgent.agent_contract_address);
          const oldCodeVersion = values ? Number(values) : 1;
-         if (codeVersion > 1 && codeVersion > oldCodeVersion) {
+         if (codeVersion >= 1 && codeVersion !== oldCodeVersion) {
             setHaveNewVersionCode(true);
          } else {
             setHaveNewVersionCode(false);

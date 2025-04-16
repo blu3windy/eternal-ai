@@ -76,7 +76,7 @@ const MonitorProvider: React.FC<
          );
          const oldCodeVersion = values ? Number(values) : -1;
 
-         return oldCodeVersion > 0 && codeVersion > 1 && codeVersion > oldCodeVersion ? agent : null;
+         return oldCodeVersion > 0 && codeVersion >= 1 && codeVersion !== oldCodeVersion ? agent : null;
       }));
 
       // Filter out null values and set the state
