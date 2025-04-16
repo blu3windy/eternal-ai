@@ -77,52 +77,6 @@ func (s *Service) DeployAgentUpgradeableAddress(
 	return "", "", txHash, nil
 }
 
-func (s *Service) UpgradeAgentUpgradeable(ctx context.Context, agentInfoID uint) (string, error) {
-	agentInfo, err := s.dao.FirstAgentInfoByID(
-		daos.GetDBMainCtx(ctx),
-		agentInfoID,
-		map[string][]any{},
-		false,
-	)
-	if err != nil {
-		return "", errs.NewError(err)
-	}
-	if agentInfo.AgentType != models.AgentInfoAgentTypeModel &&
-		agentInfo.AgentType != models.AgentInfoAgentTypeModelOnline &&
-		agentInfo.AgentType != models.AgentInfoAgentTypeJs &&
-		agentInfo.AgentType != models.AgentInfoAgentTypeInfa &&
-		agentInfo.AgentType != models.AgentInfoAgentTypePython &&
-		agentInfo.AgentType != models.AgentInfoAgentTypeCustomUi &&
-		agentInfo.AgentType != models.AgentInfoAgentTypeCustomPrompt {
-		return "", errs.NewError(errs.ErrBadRequest)
-	}
-	logicAddress := strings.ToLower(s.conf.GetConfigKeyString(agentInfo.NetworkID, "agentupgradeable_address"))
-	if !strings.EqualFold(agentInfo.AgentLogicAddress, logicAddress) {
-		txHash, err := s.GetEthereumClient(context.Background(), agentInfo.NetworkID).
-			ProxyAdminUpgrade(
-				s.conf.GetConfigKeyString(agentInfo.NetworkID, "proxy_admin_address"),
-				s.GetAddressPrk(s.conf.GetConfigKeyString(agentInfo.NetworkID, "meme_pool_address")),
-				helpers.HexToAddress(agentInfo.AgentContractAddress),
-				helpers.HexToAddress(logicAddress),
-			)
-		if err != nil {
-			return "", errs.NewError(err)
-		}
-		err = daos.GetDBMainCtx(ctx).
-			Model(agentInfo).
-			Updates(
-				map[string]any{
-					"agent_logic_address": strings.ToLower(logicAddress),
-				},
-			).Error
-		if err != nil {
-			return "", errs.NewError(err)
-		}
-		return txHash, nil
-	}
-	return "", nil
-}
-
 func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) error {
 	agentInfo, err := s.dao.FirstAgentInfoByID(
 		daos.GetDBMainCtx(ctx),
@@ -426,6 +380,7 @@ func (s *Service) AgentFactoryAgentCreatedEvent(ctx context.Context, networkID u
 					map[string]any{
 						"agent_contract_address": agentAddress,
 						"agent_contract_id":      "0",
+						"agent_logic_address":    "",
 						"mint_hash":              event.Raw.TxHash.Hex(),
 						"status":                 models.AssistantStatusReady,
 						"reply_enabled":          true,
