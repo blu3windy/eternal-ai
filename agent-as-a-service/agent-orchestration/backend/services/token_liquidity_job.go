@@ -1600,6 +1600,7 @@ func (s *Service) JobMemeBurnPositionUniswap(ctx context.Context) error {
 			memes, err := s.dao.FindMeme(
 				daos.GetDBMainCtx(ctx),
 				map[string][]any{
+					"factory_address is null or factory_address != ''": {},
 					"add_pool2_at <= ?":       {time.Now().Add(-24 * time.Hour)},
 					"status = ?":              {models.MemeStatusAddPoolLevel2},
 					"uniswap_position_id > 0": {},

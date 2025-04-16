@@ -52,8 +52,9 @@ type Meme struct {
 	Owner                 *User
 	AgentInfoID           uint `gorm:"unique_index"`
 	AgentInfo             *AgentInfo
-	TokenAddress          string           `gorm:"index"`
-	TokenId               string           `gorm:"index"`
+	TokenAddress          string `gorm:"index"`
+	TokenId               string `gorm:"index"`
+	FactoryAddress        string
 	TotalSuply            numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Decimals              uint64
 	Name                  string
