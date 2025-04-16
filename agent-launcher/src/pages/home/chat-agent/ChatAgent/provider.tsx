@@ -84,10 +84,7 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
    const threadId = `${selectedAgent?.id}-${selectedAgent?.agent_name}`;
    const refLoadChatItems = useRef(false);
 
-   const refInitialized = useRef(false);
    const isElectron = useRef(false);
-   const initTimeout = useRef<NodeJS.Timeout | null>(null);
-   const mountCount = useRef(0);
    const [isFirstChat, setIsFirstChat] = useState(true);
    const refEmptyMessage = useRef(true);
 
@@ -191,7 +188,6 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       }
 
       if (threadId) {
-         refInitialized.current = true;
          refLoadChatItems.current = true;
          initialLoadChatItems();
       }
