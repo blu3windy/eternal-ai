@@ -17,7 +17,7 @@ function SyncTaskFromStorage() {
             const data = Object.keys(storageAgentTasks).reduce(
                (acc, key) => ({
                   ...acc,
-                  [key]: (storageAgentTasks[key] || []).filter((item) => item.status === "processing").filter((item) => !!item.id),
+                  [key]: (storageAgentTasks[key] || []).filter((item) => !!item.id),
                }),
                {}
             );

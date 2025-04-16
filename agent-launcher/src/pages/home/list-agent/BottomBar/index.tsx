@@ -17,7 +17,7 @@ import { useAuth } from "@pages/authen/provider";
 import { totalPendingTasksSelector } from "@stores/states/agent-chat/selector";
 import { formatAddressCenter } from "@utils/format";
 import { useContext, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import AddTestAgent from "../AddTestAgent";
 import AgentMonitor from "../AgentMonitor";
@@ -26,6 +26,7 @@ import s from "./styles.module.scss";
 import NewsModal from "./NewsModal";
 import { MonitorContext } from "@providers/Monitor/MonitorContext";
 import SelectModel from "@pages/home/chat-agent/AgentTopInfo/SelectModel";
+import { changeLayout } from "@stores/states/layout-view/reducer";
 
 const ProcessingTaskIcon = () => {
    return (
@@ -69,11 +70,12 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
    const { onCopy } = useClipboard(signer?.address || "");
    const [isOpen, setIsOpen] = useState(false);
    const navigate = useNavigate();
+   const dispatch = useDispatch();
 
+   const totalPendingTasks = useSelector(totalPendingTasksSelector);
    const [isOpenProcessingTask, setIsOpenProcessingTask] = useState(false);
    const [isOpenNews, setIsOpenNews] = useState(false);
 
-   const totalPendingTasks = useSelector(totalPendingTasksSelector);
    const { updateAgents } = useContext(MonitorContext);
 
    // get wallet balance
@@ -115,26 +117,6 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
             </Box>
          </Flex>
          <Flex gap={"12px"}>
-            {!!totalPendingTasks && (
-               <Flex
-                  gap="4px"
-                  alignItems={"center"}
-                  borderRadius={"12px"}
-                  bg="rgba(255, 255, 255, 0.30)"
-                  px="8px"
-                  py="4px"
-                  onClick={() => {
-                     setIsOpenProcessingTask((prev) => !prev);
-                  }}
-                  cursor={"pointer"}
-               >
-                  <Loaders.Spinner size={16} color="#000" />
-                  <Text fontSize={"12px"} fontWeight={400} lineHeight={"120%"}>
-                     {totalPendingTasks} {totalPendingTasks === 1 ? "task" : "tasks"}
-                  </Text>
-               </Flex>
-            )}
-
             {updateAgents?.length > 0 && (
                <Flex
                   gap="4px"
@@ -261,13 +243,16 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                            padding="10px 20px"
                            gap="12px"
                            onClick={() => {
-                              setIsOpenProcessingTask((prev) => !prev);
+                              dispatch(changeLayout({
+                                 isOpenAgentBar: true,
+                                 isOpenRightBar: true,
+                                 rightBarView: <ProcessingTaskModal />
+                              }))
                            }}
                            className={s.menuItem}
                         >
                            <ProcessingTaskIcon />
-                           Task processing{" "}
-                           {totalPendingTasks ? `(${totalPendingTasks})` : ""}
+                           {totalPendingTasks > 0 ? `${totalPendingTasks} tasks processing` : 'Tasks processing'}
                         </Button>
                         <Box w="100%" height={'45px'}>
                            <SelectModel showDescription={false} />

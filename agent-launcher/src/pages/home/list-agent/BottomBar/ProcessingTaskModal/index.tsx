@@ -1,7 +1,7 @@
 import { Box, Button, Flex, Image, Text } from "@chakra-ui/react";
 import { CollapseIcon } from "@components/CustomMarkdown/Files/icons";
 import { DefaultAvatar } from "@components/DefaultAvatar";
-import { agentTasksProcessingSelector } from "@stores/states/agent-chat/selector";
+import { agentTasksProcessingSelector, totalPendingTasksSelector } from "@stores/states/agent-chat/selector";
 import { TaskItem } from "@stores/states/agent-chat/type";
 import { changeLayout } from "@stores/states/layout-view/reducer";
 import cx from "classnames";
@@ -11,6 +11,7 @@ import uniqBy from "lodash.uniqby";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import s from "./styles.module.scss";
+import { removeTaskItem } from "@stores/states/agent-chat/reducer";
 
 dayjs.extend(duration);
 
@@ -145,29 +146,16 @@ function TaskItemRenderer({ task, isLast, onRemoveTask }: { task: TaskItem; isLa
 function ProcessingTaskModal() {
    const dispatch = useDispatch();
    const pendingTasks = useSelector(agentTasksProcessingSelector);
+   const totalPendingTasks = useSelector(totalPendingTasksSelector);
 
-   const [renderTasks, setRenderTasks] = useState<TaskItem[]>(pendingTasks);
-
-   useEffect(() => {
-      setRenderTasks((prev) => {
-         const newTasks = prev.map((task) => {
-            const foundedIndex = pendingTasks.findIndex((t) => t.id === task.id);
-            if (foundedIndex !== -1) {
-               return {
-                  ...task,
-                  status: pendingTasks[foundedIndex].status,
-               };
-            }
-            return task;
-         });
-         return uniqBy([...newTasks, ...pendingTasks], "id");
-      });
-   }, [pendingTasks]);
-
-   const onRemoveTask = useCallback((taskId: string) => {
-      setRenderTasks((prev) => {
-         return prev.filter((task) => task.id !== taskId);
-      });
+   const onRemoveTask = useCallback((task: TaskItem) => {
+      const threadId = `${task?.agent?.id}-${task?.agent?.agent_name}`;
+      dispatch(
+         removeTaskItem({
+            id: threadId,
+            taskItem: task,
+         })
+      );
    }, []);
 
    return (
@@ -180,17 +168,17 @@ function ProcessingTaskModal() {
                   rightBarView: undefined
                }))
             }}>
-               {renderTasks.length > 0 ? `${renderTasks.length} tasks processing` : ''}
+               {totalPendingTasks > 0 ? `${totalPendingTasks} tasks processing` : ''}
             </Button>
          </Flex>
 
          <Box
             className={s.taskListScroll}
          >
-            {renderTasks.length ? (
+            {pendingTasks.length ? (
                <>
-                  {renderTasks.map((task, index) => (
-                     <TaskItemRenderer key={task.id} task={task} isLast={index === renderTasks.length - 1} onRemoveTask={onRemoveTask} />
+                  {pendingTasks.map((task, index) => (
+                     <TaskItemRenderer key={task.id} task={task} isLast={index === pendingTasks.length - 1} onRemoveTask={() => onRemoveTask(task)} />
                   ))}
                </>
             ) : (

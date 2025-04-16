@@ -28,13 +28,11 @@ import CAgentTokenAPI from '@services/api/agents-token';
 import { IAgentToken } from '@services/api/agents-token/interface';
 import localStorageService from '@storage/LocalStorageService';
 import storageModel from '@storage/StorageModel';
-import { agentTasksProcessingSelector } from '@stores/states/agent-chat/selector';
-import { TaskItem } from '@stores/states/agent-chat/type';
+import { agentTasksProcessingSelector, totalPendingTasksSelector } from '@stores/states/agent-chat/selector';
 import { changeLayout } from '@stores/states/layout-view/reducer';
 import { layoutViewSelector } from '@stores/states/layout-view/selector';
 import { compareString } from '@utils/string';
 import cx from 'clsx';
-import uniqBy from 'lodash.uniqby';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import SetupEnvModel from '../SetupEnvironment';
@@ -102,23 +100,7 @@ const AgentTopInfo = () => {
 
    const { isOpenRightBar } = useSelector(layoutViewSelector);
    const pendingTasks = useSelector(agentTasksProcessingSelector);
-   const [renderTasks, setRenderTasks] = useState<TaskItem[]>(pendingTasks);
-
-   useEffect(() => {
-      setRenderTasks((prev) => {
-         const newTasks = prev.map((task) => {
-            const foundedIndex = pendingTasks.findIndex((t) => t.id === task.id);
-            if (foundedIndex !== -1) {
-               return {
-                  ...task,
-                  status: pendingTasks[foundedIndex].status,
-               };
-            }
-            return task;
-         });
-         return uniqBy([...newTasks, ...pendingTasks], "id");
-      });
-   }, [pendingTasks]);
+   const totalPendingTasks = useSelector(totalPendingTasksSelector);
 
    const allowStopAgent = useMemo(() => {
       const isAgentSystem = (compareString(selectedAgent?.agent_name, currentActiveModel?.agent?.agent_name)
@@ -450,7 +432,7 @@ const AgentTopInfo = () => {
                            rightBarView: <ProcessingTaskModal />
                         }))
                      }}>
-                        {renderTasks.length > 0 ? `${renderTasks.length} tasks processing` : ''}
+                        {totalPendingTasks ? `${totalPendingTasks} tasks processing` : ''}
                      </Button>
                   </Flex>
                )
