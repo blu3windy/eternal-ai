@@ -363,6 +363,7 @@ func (s *Service) JobCreateTokenInfo(ctx context.Context) error {
 		ctx, "JobCreateTokenInfo",
 		func() error {
 			var retErr error
+			// create token info for normal agent
 			{
 				agents, err := s.dao.FindAgentInfoJoin(
 					daos.GetDBMainCtx(ctx),
@@ -408,6 +409,7 @@ func (s *Service) JobCreateTokenInfo(ctx context.Context) error {
 					}
 				}
 			}
+			// create token info for vibe agent
 			{
 				agents, err := s.dao.FindAgentInfo(
 					daos.GetDBMainCtx(ctx),
