@@ -114,13 +114,13 @@ func (s *Server) GetVibeDashBoardsDetail(c *gin.Context) {
 
 func (s *Server) VibeTokenGetDeployInfo(c *gin.Context) {
 	ctx := s.requestContext(c)
-	id := s.uintFromContextParam(c, "id")
+	agentID := s.uintFromContextParam(c, "agent_id")
 	userAddress, err := s.getUserAddressFromTK1Token(c)
 	if err != nil || userAddress == "" {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
 		return
 	}
-	resp, err := s.nls.VibeTokenGetDeployInfo(ctx, userAddress, id)
+	resp, err := s.nls.VibeTokenGetDeployInfo(ctx, userAddress, agentID)
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return

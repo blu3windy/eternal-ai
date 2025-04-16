@@ -1005,22 +1005,35 @@ func (s *Service) VibeTokenGetDeployInfo(ctx context.Context, address string, ag
 	if agentInfo.TokenName == "" {
 		return nil, errs.NewError(errs.ErrBadRequest)
 	}
-	_, err = s.CreateMeme(
-		ctx, agentInfo.Creator,
-		agentInfo.TokenNetworkID,
-		&serializers.MemeReq{
-			Name:            agentInfo.TokenName,
-			Ticker:          agentInfo.TokenSymbol,
-			Description:     agentInfo.TokenDesc,
-			Image:           agentInfo.TokenImageUrl,
-			Twitter:         fmt.Sprintf("https://x.com/%s", agentInfo.TwitterUsername),
-			AgentInfoID:     agentInfo.ID,
-			BaseTokenSymbol: string(models.BaseTokenSymbolEAI),
-		})
-	if err != nil {
-		return nil, errs.NewError(err)
-	}
 	vibeToken, err := s.dao.FirstMeme(
+		daos.GetDBMainCtx(ctx),
+		map[string][]any{
+			"agent_info_id = ?": {agentID},
+		},
+		map[string][]any{},
+		false,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if vibeToken == nil {
+		_, err = s.CreateMeme(
+			ctx, agentInfo.Creator,
+			agentInfo.TokenNetworkID,
+			&serializers.MemeReq{
+				Name:            agentInfo.TokenName,
+				Ticker:          agentInfo.TokenSymbol,
+				Description:     agentInfo.TokenDesc,
+				Image:           agentInfo.TokenImageUrl,
+				Twitter:         fmt.Sprintf("https://x.com/%s", agentInfo.TwitterUsername),
+				AgentInfoID:     agentInfo.ID,
+				BaseTokenSymbol: string(models.BaseTokenSymbolEAI),
+			})
+		if err != nil {
+			return nil, errs.NewError(err)
+		}
+	}
+	vibeToken, err = s.dao.FirstMeme(
 		daos.GetDBMainCtx(ctx),
 		map[string][]any{
 			"agent_info_id = ?": {agentID},
