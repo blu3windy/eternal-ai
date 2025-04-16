@@ -10,26 +10,23 @@ import {
    MenuButton,
    MenuItem,
    MenuList,
-   Popover,
-   PopoverContent,
-   PopoverTrigger,
    Text,
    useDisclosure
 } from '@chakra-ui/react';
 import BaseModal from "@components/BaseModal";
 import Loading from '@components/Loading';
+import DeleteAgentModal from '@pages/home/list-agent/AgentMonitor/DeleteAgentModal';
 import { AgentStatus, AgentStatusLabel, AgentType, SYSTEM_AGENTS } from '@pages/home/list-agent/constants';
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { IAgentToken } from "@services/api/agents-token/interface.ts";
 import storageModel from '@storage/StorageModel';
+import { compareString } from '@utils/string';
 import cs from 'classnames';
 import { useContext, useEffect, useMemo, useState } from 'react';
-import SetupEnvModel from '../../SetupEnvironment';
-import s from './styles.module.scss';
 import AgentDetail from '../../AgentDetail';
-import DeleteAgentModal from '@pages/home/list-agent/AgentMonitor/DeleteAgentModal';
-import { compareString } from '@utils/string';
+import SetupEnvModel from '../../SetupEnvironment';
 import { AgentDetailProvider } from './AgentDetailProvider';
+import s from './styles.module.scss';
 
 export const RenameModels: any = {
    'NousResearch/Hermes-3-Llama-3.1-70B-FP8': 'Hermes 3 70B',
@@ -257,8 +254,13 @@ const SelectModel = ({
    className,
    showDescription = true,
 }: Props) => {
-   const { installedModelAgents, availableModelAgents, startAgent, unInstallAgent, installAgent, agentStates } = useContext(AgentContext);
-   const {
+   const { 
+      installedModelAgents, 
+      availableModelAgents, 
+      startAgent, 
+      unInstallAgent, 
+      installAgent, 
+      agentStates,
       selectedAgent,
       isCanChat,
       agentWallet,
@@ -269,118 +271,80 @@ const SelectModel = ({
 
    const [activeModel, setActiveModel] = useState<any>(null);
    const [page, setPage] = useState<number>(0);
+   const [setupEnvAgent, setSetupEnvAgent] = useState<IAgentToken | null>(null);
+   const [agentDetail, setAgentDetail] = useState<IAgentToken | null>(null);
+   const [deleteAgent, setDeleteAgent] = useState<IAgentToken | undefined>();
+   
+   const { isOpen, onOpen, onClose } = useDisclosure();
 
-   // Filter out installed agents from available agents
    const filteredAvailableAgents = useMemo(() => {
       if (!installedModelAgents || !availableModelAgents) return [];
-      
       const installedIds = installedModelAgents.map(agent => agent.id);
       return availableModelAgents.filter(agent => !installedIds.includes(agent.id));
    }, [installedModelAgents, availableModelAgents]);
 
-   // Combine installed agents with available agents (up to PAGE_SIZE)
    const models = useMemo(() => {
       if (!installedModelAgents) return [];
-      
-      // Sort installed agents: ModelOnline first, then by prompt_calls (descending)
+
       const sortedInstalledAgents = [...installedModelAgents].sort((a, b) => {
-         // ModelOnline agents come first
          if (a.agent_type === AgentType.ModelOnline && b.agent_type !== AgentType.ModelOnline) return -1;
          if (a.agent_type !== AgentType.ModelOnline && b.agent_type === AgentType.ModelOnline) return 1;
-         
-         // If both are ModelOnline or both are not, sort by prompt_calls
+
          const aCalls = a.prompt_calls || 0;
          const bCalls = b.prompt_calls || 0;
-         return bCalls - aCalls; // Descending order
+         return bCalls - aCalls;
       });
-      
-      // Always show all installed agents
+
       const result = [...sortedInstalledAgents];
-      
-      // If we have less than PAGE_SIZE installed agents, add from available
+
       if (result.length < PAGE_SIZE) {
          const remainingCount = PAGE_SIZE - result.length;
          const availableToShow = filteredAvailableAgents.slice(0, remainingCount);
          result.push(...availableToShow);
       }
-      
+
       return result;
    }, [installedModelAgents, filteredAvailableAgents]);
 
-   // For load more functionality
    const additionalModels = useMemo(() => {
       if (page === 0) return [];
-      
-      // Calculate how many installed agents we've already shown
+
       const shownInstalledCount = Math.min(installedModelAgents?.length || 0, PAGE_SIZE);
-      
-      // Calculate how many available agents we've already shown
+
       const shownAvailableCount = Math.min(
          filteredAvailableAgents.length,
          Math.max(0, PAGE_SIZE - shownInstalledCount) + (page - 1) * PAGE_SIZE
       );
-      
-      // Get the next batch of available agents
+
       return filteredAvailableAgents.slice(shownAvailableCount, shownAvailableCount + PAGE_SIZE);
    }, [page, installedModelAgents, filteredAvailableAgents]);
 
-   // Determine if we should show load more button
    const showLoadMore = useMemo(() => {
       const totalShown = models.length + additionalModels.length;
       const totalAvailable = (installedModelAgents?.length || 0) + filteredAvailableAgents.length;
       return totalShown < totalAvailable;
    }, [models, additionalModels, installedModelAgents, filteredAvailableAgents]);
 
-   const checkActiveModel = async () => {
-      const model = await storageModel.getActiveModel();
-      if (model?.id !== activeModel?.id) {
-         setActiveModel(model);
-      }
-   };
-
-   useEffect(() => {
-      checkActiveModel();
-
-      const intervalId = setInterval(checkActiveModel, 2000);
-
-      return () => {
-         clearInterval(intervalId);
-      };
-   }, []);
-
-   const showBackupPrvKey = selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
+   const showBackupPrvKey = useMemo(() => {
+      return selectedAgent?.required_wallet && !!agentWallet && !isBackupedPrvKey;
+   }, [selectedAgent, agentWallet, isBackupedPrvKey]);
 
    const showSetup = useMemo(() => {
       return requireInstall && !isRunning;
    }, [requireInstall, isRunning]);
 
    const color = useMemo(() => {
-      return showSetup || (!isCanChat && !showBackupPrvKey) ? 'white' : 'black';
+      return showSetup || (!isCanChat && !showBackupPrvKey) ? 'white' : 'white';
    }, [isCanChat, showBackupPrvKey, showSetup]);
 
-   const { isOpen, onOpen, onClose } = useDisclosure();
-
    const isDisabled = useMemo(() => {
-      return disabled; // || Object.keys(supportModelObj || {}).length <= 1;
+      return disabled;
    }, [disabled]);
 
    const isAnyInstalledAgentStarting = useMemo(() => {
       if (!agentStates || !installedModelAgents) return false;
-      
       return installedModelAgents.some(agent => agentStates[agent.id]?.isStarting);
    }, [agentStates, installedModelAgents]);
-
-   if (!availableModelAgents || availableModelAgents.length === 0) {
-      return null;
-   }
-
-   const handleLoadMore = () => {
-      setPage(page + 1);
-   }
-
-   const [setupEnvAgent, setSetupEnvAgent] = useState<IAgentToken | null>(null);
-   const [agentDetail, setAgentDetail] = useState<IAgentToken | null>(null);
-   const [deleteAgent, setDeleteAgent] = useState<IAgentToken | undefined>();
 
    const isInstalled = useMemo(() => {
       return agentDetail ? agentStates[agentDetail.id]?.isInstalled : false;
@@ -394,9 +358,32 @@ const SelectModel = ({
       return agentDetail ? !SYSTEM_AGENTS.some(id => compareString(id, agentDetail?.id)) : false;
    }, [agentDetail]);
 
+   useEffect(() => {
+      checkActiveModel();
+      const intervalId = setInterval(checkActiveModel, 2000);
+      return () => {
+         clearInterval(intervalId);
+      };
+   }, []);
+
+   const checkActiveModel = async () => {
+      const model = await storageModel.getActiveModel();
+      if (model?.id !== activeModel?.id) {
+         setActiveModel(model);
+      }
+   };
+
+   const handleLoadMore = () => {
+      setPage(page + 1);
+   };
+
+   if (!availableModelAgents || availableModelAgents.length === 0) {
+      return null;
+   }
+
    return (
       <>
-         <Box className={cs(s.container, className)}>
+         {/* <Box className={cs(s.container, className)}>
             <Popover placement="bottom-start" isOpen={isOpen} onClose={onClose}>
                <PopoverTrigger>
                   <Flex
@@ -419,7 +406,6 @@ const SelectModel = ({
                   </Flex>
                </PopoverTrigger>
                <PopoverContent className={s.poperContainer}>
-                  {/* Show installed and initial available agents */}
                   {models.map((t, _i) => (
                      <>
                         <ItemToken
@@ -443,8 +429,7 @@ const SelectModel = ({
                         <Divider color={'#E2E4E8'} my={'0px'} />
                      </>
                   ))}
-                  
-                  {/* Show additional available agents when load more is clicked */}
+
                   {additionalModels.map((t, _i) => (
                      <>
                         <ItemToken
@@ -468,15 +453,92 @@ const SelectModel = ({
                         <Divider color={'#E2E4E8'} my={'0px'} />
                      </>
                   ))}
-                  
-                  {/* Show load more button if there are more agents to load */}
+
                   {showLoadMore && (
                      <AddMoreRow onClose={onClose} onLoadMore={handleLoadMore} />
                   )}
                </PopoverContent>
             </Popover>
-         </Box>
+         </Box> */}
+         <Box className={cs(s.container, className)}>
+            <Flex
+               className={s.dropboxButton}
+               onClick={onOpen}
+               cursor={'pointer'}
+            >
+               <Box>
+                  <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                     <path d="M12 4.5L14.5263 9.97368L20 12.5L14.5263 15.0263L12 20.5L9.47368 15.0263L4 12.5L9.47368 9.97368L12 4.5Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                     <path d="M5.55 3.95L4.5 1.5L3.45 3.95L1 5L3.45 6.05L4.5 8.5L5.55 6.05L8 5L5.55 3.95Z" fill="white" />
+                  </svg>
 
+               </Box>
+               <Box flex={1}>
+                  <Text className={s.title} color={color}>
+                     Model
+                  </Text>
+               </Box>
+            </Flex>
+         </Box>
+         <BaseModal
+            isShow={isOpen}
+            onHide={onClose}
+            className={s.poperContainer}
+         >
+            <Box>
+               {models.map((t, _i) => (
+                  <>
+                     <ItemToken
+                        key={t.id}
+                        agent={t}
+                        onSelect={async (agent: IAgentToken) => {
+                           if (isAnyInstalledAgentStarting) {
+                              return;
+                           }
+                           await startAgent(agent);
+                        }}
+                        onClose={onClose}
+                        isSelected={activeModel?.id === t.id}
+                        onDelete={(agent: IAgentToken) => {
+                           setDeleteAgent(agent);
+                        }}
+                        onShowSetupEnv={(agent) => setSetupEnvAgent(agent)}
+                        onShowAgentDetail={(agent) => setAgentDetail(agent)}
+                        isDisabled={isAnyInstalledAgentStarting}
+                     />
+                     <Divider color={'#E2E4E8'} my={'0px'} />
+                  </>
+               ))}
+
+               {additionalModels.map((t, _i) => (
+                  <>
+                     <ItemToken
+                        key={t.id}
+                        agent={t}
+                        onSelect={async (agent: IAgentToken) => {
+                           if (isAnyInstalledAgentStarting) {
+                              return;
+                           }
+                           await startAgent(agent);
+                        }}
+                        onClose={onClose}
+                        isSelected={activeModel?.id === t.id}
+                        onDelete={(agent: IAgentToken) => {
+                           setDeleteAgent(agent);
+                        }}
+                        onShowSetupEnv={(agent) => setSetupEnvAgent(agent)}
+                        onShowAgentDetail={(agent) => setAgentDetail(agent)}
+                        isDisabled={isAnyInstalledAgentStarting}
+                     />
+                     <Divider color={'#E2E4E8'} my={'0px'} />
+                  </>
+               ))}
+
+               {showLoadMore && (
+                  <AddMoreRow onClose={onClose} onLoadMore={handleLoadMore} />
+               )}
+            </Box>
+         </BaseModal>
          {setupEnvAgent && (
             <BaseModal
                isShow={!!setupEnvAgent}
@@ -537,7 +599,7 @@ const SelectModel = ({
                         </Menu>
                      </Flex>
                   )}
-                  <AgentDetailProvider 
+                  <AgentDetailProvider
                      agent={agentDetail}
                      agentStates={agentStates}
                   >
