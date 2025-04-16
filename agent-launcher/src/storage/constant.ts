@@ -3,7 +3,7 @@ const STORAGE_KEYS = {
    DOCKER_DID_SETUP: 'DOCKER_DID_SETUP',
 }
 
-const ROUTER_VERSION = '0.0.20';
+const ROUTER_VERSION = '0.0.25';
 
 export {
    ROUTER_VERSION,
