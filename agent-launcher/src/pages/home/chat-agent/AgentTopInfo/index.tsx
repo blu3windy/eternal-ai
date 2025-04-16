@@ -240,6 +240,11 @@ const AgentTopInfo = () => {
                      selectedAgent?.agent_type as AgentType
                   ) && <SelectModel showDescription={false} />}
             </Flex> */}
+            {
+               !isOpenRightBar && (
+                  <Box w={"40px"}/>
+               )
+            }
             <Flex
                gap={'6px'}
                justifyContent={'space-between'}
