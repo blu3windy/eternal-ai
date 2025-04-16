@@ -29,7 +29,10 @@ function ChatAgent() {
 
    if (isSearchMode && showSearchDetail) {
       return (
-         <Box className={s.container}>
+         <Box className={s.container}
+            w="clamp(600px, 81%, 1200px)"
+            mx={'auto'}
+         >
             <AgentDetail />
          </Box>
       );
@@ -44,7 +47,10 @@ function ChatAgent() {
                <ChatBox />
             </Box>
          ) : (
-            <>
+            <Box
+               w="clamp(600px, 81%, 1200px)"
+               mx={'auto'}
+            >
                {
                   showBackupPrvKey ? (
                      <BackupPrivateKey />
@@ -60,7 +66,7 @@ function ChatAgent() {
                      </>
                   )
                }
-            </>
+            </Box>
          )}
       </Box>
    );
