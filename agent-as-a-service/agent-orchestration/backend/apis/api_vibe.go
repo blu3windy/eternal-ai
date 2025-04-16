@@ -105,12 +105,20 @@ func (s *Server) GetVibeDashBoardsDetail(c *gin.Context) {
 	ctx := s.requestContext(c)
 	agentID := s.stringFromContextParam(c, "agent_id")
 	ms, err := s.nls.GetVibeDashboardsDetail(ctx, agentID)
-
 	if err != nil || ms == nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
 		return
 	}
-
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentInfoResp(ms)})
-	return
+}
+
+func (s *Server) VibeTokenGetDeployInfo(c *gin.Context) {
+	ctx := s.requestContext(c)
+	id := s.uintFromContextParam(c, "id")
+	resp, err := s.nls.VibeTokenGetDeployInfo(ctx, id)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
 }

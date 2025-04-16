@@ -37,3 +37,14 @@ func NewAgentUserCommentArray(arr []*models.AgentUserComment) []*AgentUserCommen
 	}
 	return resps
 }
+
+type VibeTokenDeployInfoResp struct {
+	NonceHex  string `json:"nonce_hex" swaggertype:"string" example:"1"`
+	Name      string `json:"name" swaggertype:"string" example:"My Token"`
+	Symbol    string `json:"symbol" swaggertype:"string" example:"MYT"`
+	Creator   string `json:"creator" swaggertype:"string" example:"0x123...abc"`
+	LowerTick int64  `json:"lower_tick" swaggertype:"integer" example:"1000"`
+	UpperTick int64  `json:"upper_tick" swaggertype:"integer" example:"2000"`
+	Deadline  int64  `json:"deadline" swaggertype:"integer" example:"1716153600"`
+	Signature string `json:"signature" swaggertype:"string" example:"0x123...abc"`
+}

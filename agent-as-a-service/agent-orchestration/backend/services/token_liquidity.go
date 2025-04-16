@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 	"time"
@@ -981,4 +982,69 @@ func (s *Service) ShareMeme(ctx context.Context, address, memAddress string) (bo
 	}
 	return true, nil
 
+}
+
+func (s *Service) VibeTokenGetDeployInfo(ctx context.Context, id uint) (*serializers.VibeTokenDeployInfoResp, error) {
+	vibeToken, err := s.dao.FirstMemeByID(daos.GetDBMainCtx(ctx), id, nil, false)
+	if err != nil {
+		return nil, err
+	}
+	if vibeToken == nil {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	if vibeToken.TokenAddress != "" {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	agentInfo, err := s.dao.FirstAgentInfoByID(
+		daos.GetDBMainCtx(ctx),
+		vibeToken.AgentInfoID,
+		map[string][]interface{}{},
+		false,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if agentInfo == nil {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	baseTokenPrice := s.GetTokenMarketPrice(daos.GetDBMainCtx(ctx), vibeToken.BaseTokenSymbol)
+	lowerPrice, _ := models.QuoBigFloats(
+		big.NewFloat(models.LOWER_PRICE_USD),
+		big.NewFloat(models.TOKEN_SUPPLY),
+		baseTokenPrice,
+	).Float64()
+	upperPrice, _ := models.QuoBigFloats(
+		big.NewFloat(models.UPPER_PRICE_USD),
+		big.NewFloat(models.TOKEN_SUPPLY),
+		baseTokenPrice,
+	).Float64()
+	lowerTick := models.PriceToTick(lowerPrice, 1200)
+	upperTick := models.PriceToTick(upperPrice, 1200)
+	// calculate lower and upper tick base on EAI price
+	deadline := time.Now().Add(time.Minute * 10).Unix()
+	signature, err := s.GetEthereumClient(ctx, vibeToken.NetworkID).GetSignatureForDeployToken(
+		s.GetAddressPrk(s.conf.GetConfigKeyString(uint64(vibeToken.NetworkID), "vibe_token_factory_admin")),
+		helpers.HexToAddress(s.conf.GetConfigKeyString(uint64(vibeToken.NetworkID), "vibe_token_factory_address")),
+		vibeToken.NetworkID,
+		helpers.HexToBytes32(agentInfo.AgentID),
+		vibeToken.Name,
+		vibeToken.Ticker,
+		helpers.HexToAddress(agentInfo.Creator),
+		big.NewInt(int64(lowerTick)),
+		big.NewInt(int64(upperTick)),
+		big.NewInt(deadline),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &serializers.VibeTokenDeployInfoResp{
+		NonceHex:  agentInfo.AgentID,
+		Name:      vibeToken.Name,
+		Symbol:    vibeToken.Ticker,
+		Creator:   agentInfo.Creator,
+		LowerTick: lowerTick,
+		UpperTick: upperTick,
+		Deadline:  deadline,
+		Signature: signature,
+	}, nil
 }
