@@ -1236,7 +1236,7 @@ const AgentProvider: React.FC<
       const values = await localStorageService.getItem(agent.agent_contract_address);
       const oldCodeVersion = values ? Number(values) : undefined;
 
-      if (!oldCodeVersion || (codeVersion > 1 && codeVersion > oldCodeVersion)) {
+      if (!oldCodeVersion || (codeVersion >= 1 && codeVersion !== oldCodeVersion)) {
          updateAgentState(agent.id, {
             data: agent,
             isStarting: true,
