@@ -363,45 +363,87 @@ func (s *Service) JobCreateTokenInfo(ctx context.Context) error {
 		ctx, "JobCreateTokenInfo",
 		func() error {
 			var retErr error
-			agents, err := s.dao.FindAgentInfoJoin(
-				daos.GetDBMainCtx(ctx),
-				map[string][]any{
-					"join agent_chain_fees on agent_chain_fees.network_id = agent_infos.token_network_id": {},
-				},
-				map[string][]any{
-					`agent_infos.token_status in (?) or (agent_infos.agent_type=2 and agent_infos.status="ready")`: {[]string{"pending", "etching"}},
-					"agent_infos.agent_nft_minted = ?":                                      {true},
-					`(agent_infos.token_address is null or agent_infos.token_address = "")`: {},
-					`agent_infos.token_network_id > 0`:                                      {},
-					`(
-						(agent_infos.eai_balance > 0 and agent_infos.eai_balance >= agent_chain_fees.token_fee) 
-						or agent_infos.ref_tweet_id > 0
-						or agent_infos.agent_type in (?)
-					)`: {
-						[]models.AgentInfoAgentType{
-							models.AgentInfoAgentTypeModel,
-							models.AgentInfoAgentTypeModelOnline,
-							models.AgentInfoAgentTypeJs,
-							models.AgentInfoAgentTypePython,
-							models.AgentInfoAgentTypeInfa,
-							models.AgentInfoAgentTypeCustomUi,
-							models.AgentInfoAgentTypeCustomPrompt,
-						}},
-				},
-				map[string][]any{},
-				[]string{
-					"rand()",
-				},
-				0,
-				50,
-			)
-			if err != nil {
-				return errs.NewError(err)
-			}
-			for _, agent := range agents {
-				err = s.CreateTokenInfo(ctx, agent.ID)
+			{
+				agents, err := s.dao.FindAgentInfoJoin(
+					daos.GetDBMainCtx(ctx),
+					map[string][]any{
+						"join agent_chain_fees on agent_chain_fees.network_id = agent_infos.token_network_id": {},
+					},
+					map[string][]any{
+						`agent_infos.token_status in (?) or (agent_infos.agent_type=2 and agent_infos.status="ready")`: {[]string{"pending", "etching"}},
+						"agent_infos.agent_nft_minted = ?":                                      {true},
+						`(agent_infos.token_address is null or agent_infos.token_address = "")`: {},
+						`agent_infos.token_network_id > 0`:                                      {},
+						`(
+							(agent_infos.eai_balance > 0 and agent_infos.eai_balance >= agent_chain_fees.token_fee)
+							or agent_infos.ref_tweet_id > 0
+							or agent_infos.agent_type in (?)
+						)`: {
+							[]models.AgentInfoAgentType{
+								models.AgentInfoAgentTypeModel,
+								models.AgentInfoAgentTypeModelOnline,
+								models.AgentInfoAgentTypeJs,
+								models.AgentInfoAgentTypePython,
+								models.AgentInfoAgentTypeInfa,
+								models.AgentInfoAgentTypeCustomUi,
+								models.AgentInfoAgentTypeCustomPrompt,
+							},
+						},
+						"agent_infos.system_prompt != ''": {},
+					},
+					map[string][]any{},
+					[]string{
+						"rand()",
+					},
+					0,
+					50,
+				)
 				if err != nil {
-					retErr = errs.MergeError(retErr, errs.NewError(err))
+					return errs.NewError(err)
+				}
+				for _, agent := range agents {
+					err = s.CreateTokenInfo(ctx, agent.ID)
+					if err != nil {
+						retErr = errs.MergeError(retErr, errs.NewError(err))
+					}
+				}
+			}
+			{
+				agents, err := s.dao.FindAgentInfo(
+					daos.GetDBMainCtx(ctx),
+					map[string][]any{
+						`status = ?`:           {models.AssistantStatusReady},
+						`agent_nft_minted = ?`: {true},
+						`token_address = ''`:   {},
+						`token_name = '' or token_image_url = '' or token_image_url = ''`: {},
+						`agent_type in (?)`: {
+							[]models.AgentInfoAgentType{
+								models.AgentInfoAgentTypeModel,
+								models.AgentInfoAgentTypeModelOnline,
+								models.AgentInfoAgentTypeJs,
+								models.AgentInfoAgentTypePython,
+								models.AgentInfoAgentTypeInfa,
+								models.AgentInfoAgentTypeCustomUi,
+								models.AgentInfoAgentTypeCustomPrompt,
+							},
+						},
+						`system_prompt != ''`: {},
+					},
+					map[string][]any{},
+					[]string{
+						"rand()",
+					},
+					0,
+					50,
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				for _, agent := range agents {
+					err = s.CreateTokenInfoVibe(ctx, agent.ID)
+					if err != nil {
+						retErr = errs.MergeError(retErr, errs.NewError(err))
+					}
 				}
 			}
 			return retErr
@@ -616,6 +658,96 @@ func (s *Service) CreateTokenInfo(ctx context.Context, agentID uint) error {
 								).Error
 							}
 						}
+					}
+				}
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
+
+func (s *Service) CreateTokenInfoVibe(ctx context.Context, agentID uint) error {
+	err := s.JobRunCheck(
+		ctx, fmt.Sprintf("CreateTokenInfoVibe_%d", agentID),
+		func() error {
+			agentInfo, err := s.dao.FirstAgentInfoByID(daos.GetDBMainCtx(ctx),
+				agentID,
+				map[string][]any{},
+				false,
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+			if agentInfo == nil {
+				return errs.NewError(errs.ErrBadRequest)
+			}
+			if !agentInfo.IsVibeAgent() {
+				return errs.NewError(errs.ErrBadRequest)
+			}
+			if agentInfo.SystemPrompt != "" {
+				if agentInfo.TokenSymbol == "" || agentInfo.TokenName == "" {
+					promptGenerateToken := fmt.Sprintf(`
+									I want to generate my token base on this info
+									'%s'
+			
+									token-name (generate if not provided, make sure it not empty)
+									token-symbol (generate if not provided, make sure it not empty)
+									token-story (generate if not provided, make sure it not empty)
+			
+									Please return in string in json format including token-name, token-symbol, token-story, just only json without explanation  and token name limit with 15 characters
+								`, agentInfo.SystemPrompt)
+					aiStr, err := s.openais["Lama"].ChatMessage(promptGenerateToken)
+					if err != nil {
+						return errs.NewError(err)
+					}
+					if aiStr != "" {
+						mapInfo := helpers.ExtractMapInfoFromOpenAI(aiStr)
+						tokenName := ""
+						tokenSymbol := ""
+						tokenDesc := ""
+						if mapInfo != nil {
+							if v, ok := mapInfo["token-name"]; ok {
+								tokenName = fmt.Sprintf(`%v`, v)
+							}
+							if v, ok := mapInfo["token-symbol"]; ok {
+								tokenSymbol = fmt.Sprintf(`%v`, v)
+							}
+							if v, ok := mapInfo["token-story"]; ok {
+								tokenDesc = fmt.Sprintf(`%v`, v)
+							}
+						}
+						if tokenDesc != "" && tokenName != "" && tokenSymbol != "" {
+							updateFields := map[string]any{
+								"token_name": tokenName,
+								"token_desc": tokenDesc,
+							}
+							if agentInfo.TokenSymbol == "" {
+								updateFields["token_symbol"] = tokenSymbol
+							}
+							err := daos.GetDBMainCtx(ctx).Model(agentInfo).Updates(
+								updateFields,
+							).Error
+							if err != nil {
+								return errs.NewError(err)
+							}
+						}
+					}
+				} else if agentInfo.TokenImageUrl == "" {
+					imageUrl, err := s.GetGifImageUrlFromTokenInfo(agentInfo.TokenSymbol, agentInfo.TokenName, agentInfo.TokenDesc)
+					if err != nil {
+						return errs.NewError(err)
+					}
+					err = daos.GetDBMainCtx(ctx).Model(agentInfo).Updates(
+						map[string]any{
+							"token_image_url": imageUrl,
+						},
+					).Error
+					if err != nil {
+						return errs.NewError(err)
 					}
 				}
 			}

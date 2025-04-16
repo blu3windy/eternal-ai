@@ -313,6 +313,10 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		s.KnowledgeUsecase.SendMessage(ctx, fmt.Sprintf("Create KB Agent DONE  %s (%d)", agent.AgentName, agent.ID), 0)
 	}
 
+	if agent.IsVibeAgent() {
+		go s.CreateTokenInfoVibe(context.Background(), agent.ID)
+	}
+
 	return agent, nil
 }
 
