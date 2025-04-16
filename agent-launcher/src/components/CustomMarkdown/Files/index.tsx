@@ -43,6 +43,7 @@ const SUPPORTED_FILE_TYPE = {
    'jpeg': 'image',
    'png': 'image',
    'webp': 'image',
+   'csv': 'csv',
 }
 
 const RAW_FILE_TYPE: Record<string, string> = {

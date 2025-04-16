@@ -13,6 +13,8 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from 'remark-breaks'
 import usePrevious from 'react-use/lib/usePrevious';
+import Loading from '@components/Loading';
+import { Image } from '@chakra-ui/react';
 
 type TaskItem = TaskType | string;
 
@@ -100,7 +102,12 @@ function DeepThinking({
       <div className={cx(s.deepthinking)}>
          <div className={s.title} onClick={() => setIsExpanded(!isExpanded)}>
             {(status === "receiving" || status === "sync-receiving") ? (
-               <span className={cx(s.titleText, s.thinking)}>Thinking...</span>
+               <div className={s.thinking}>
+                  <span>
+                     <Image src="icons/ic-loading-bar.gif" alt="loading" width="14px" bg="transparent" />
+                  </span>
+                  <span className={cx(s.titleText, s.thinkingText)}>Thinking...</span>
+               </div>
             ) : (
                <span className={s.titleText}>Think</span>
             )}

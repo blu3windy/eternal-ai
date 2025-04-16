@@ -20,6 +20,8 @@ import { motion } from "framer-motion";
 import { useDispatch } from "react-redux";
 import { IChatMessage } from "src/services/api/agent/types.ts";
 import { changeLayout } from "@stores/states/layout-view/reducer";
+import DeepThinking from "@components/CustomMarkdown/DeepThinking";
+import Loading from "@components/Loading";
 
 dayjs.extend(duration);
 
@@ -127,20 +129,35 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
       }
    }, [message]);
 
-   const renderMessage = useMemo(() => {
-      // const textStr = removeInvalidTags(message.msg || '')
+   // const thinkTag = useMemo(() => {
+   //    try {
+   //       return processedContent.match(THINK_TAG_REGEX)?.[0]?.replace(/<\/?think>/g, '');
+   //    } catch (error) {
+   //       return null;
+   //    }
+   // }, [processedContent]);
+
+   const messageContent = useMemo(() => {
       const textStr = message.msg || '';
       if (message.status === "receiving" || message.status === "sync-receiving") {
-         return (textStr || ''); // replace computer use tag;
+         return (textStr || '');
       }
       return `${textStr || ''}`
-         .replace(COMPUTER_USE_TAG_REGEX, ''); // replace computer use tag
-   }, [message?.msg, message?.status]);
+         .replace(COMPUTER_USE_TAG_REGEX, '');
+   }, [message.msg, message.status]);
 
-   const resultMessage = useMemo(() => {
-      return `${renderMessage || ''}`
-         .replace(THINK_TAG_REGEX, '');
-   }, [renderMessage])
+   const thinkingContent = useMemo(() => {
+      try {
+         return messageContent.match(THINK_TAG_REGEX)?.[0]?.replace(/<\/?think>/g, '');
+      } catch (error) {
+         return null;
+      }
+   }, [messageContent]);
+
+   const renderMessage = useMemo(() => {
+      return messageContent
+         .replace(THINK_TAG_REGEX, "");
+   }, [messageContent]);
 
    const processingWebViewUrl = useMemo(() => {
       try {
@@ -156,6 +173,21 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          return null;
       }
    }, [renderMessage, message.status]);
+
+   const renderThinkingContent = () => {
+      if (thinkingContent) {
+         return (
+            <div className={cs(s.content, s.reply)}>
+               <div className={cs(s.markdown, "markdown-body", {
+                  [s.markdown__thinking]: true
+               })}>
+                  <DeepThinking content={thinkingContent} status={message.status} />
+               </div>
+            </div>
+         );
+      }
+      return <></>
+   }
 
    const renderContent = () => {
       return (
@@ -233,13 +265,17 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          return renderWaitingMessage();
       }
 
+      if (!renderMessage) {
+         return <></>
+      }
+
       if ((message.status === "receiving" || message.status === "sync-receiving") && !!processingWebViewUrl) {
          return (
             <div
                className={cs(s.markdown, "markdown-body", {
                })}
             >
-               <CustomMarkdown id={message.id} status={message.status} content={renderMessage.replace(COMPUTER_USE_TAG_REGEX, '')} />
+               <CustomMarkdown id={message.id} content={renderMessage.replace(COMPUTER_USE_TAG_REGEX, '')} />
             </div>
          );
       }
@@ -266,7 +302,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
          );
       }
 
-      const isPdfExport = message.status === "received" && message.type === "ai" && !!resultMessage;
+      const isPdfExport = message.status === "received" && message.type === "ai";
       return (
          <div
             className={cs(s.markdown, "markdown-body", {
@@ -309,7 +345,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                   </motion.div>
                </div>
             )}
-            <CustomMarkdown id={message.id} status={message.status} content={renderMessage} />
+            <CustomMarkdown id={message.id} content={renderMessage} />
          </div>
       );
    };
@@ -333,65 +369,50 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                   </Flex>
                </Flex>
             )}
-            <Box
-               className={cs(s.content, { [s.question]: !message?.is_reply }, { [s.reply]: message?.is_reply }, { [s.failed]: message?.status === "failed" })}
-               alignSelf={message?.is_reply ? "flex-start" : "flex-end"}
-               position={"relative"}
-            >
-               {renderContent()}
-               {processingWebViewUrl && (
-                  <Box
-                     as="div"
-                     position={"absolute"}
-                     right={"-40px"}
-                     bottom={0}
-                     borderRadius={"50%"}
-                     border="1px solid #F4F4F4"
-                     background={"white"}
-                     boxShadow={"2px 2px 8px 0px rgba(0, 0, 0, 0.15)"}
-                     width={"32px"}
-                     height={"32px"}
-                     minW={"32px"}
-                     minH={"32px"}
-                     display={"flex"}
-                     alignItems={"center"}
-                     justifyContent={"center"}
-                     transition={"all 0.2s ease-in-out"}
-                     zIndex={1000}
-                     _hover={{
-                        cursor: "pointer",
-                        // transform: "translateY(-2px)",
-                        // transition: "transform 0.2s ease-in-out",
-                     }}
-                     onMouseDown={() => {
-                        console.log('__________processingWebViewUrl__________', {
-                           processingWebViewUrl,
-                           message,
-                        })
-                        const replyToMessage = messages.find(item => item.id === message.replyTo);
-                        dispatch(openWithUrl({
-                           url: processingWebViewUrl,
-                           task: 'Searching',
-                           taskProcessing: replyToMessage?.msg || ''
-                        }))
-                     }}
-                     // onClick={() => {
-                     //    console.log('__________processingWebViewUrl__________', {
-                     //       processingWebViewUrl,
-                     //       message,
-                     //    })
-                     //    const replyToMessage = messages.find(item => item.id === message.replyTo);
-                     //    dispatch(openWithUrl({
-                     //       url: processingWebViewUrl,
-                     //       task: 'Searching',
-                     //       taskProcessing: replyToMessage?.msg || ''
-                     //    }))
-                     // }}
-                  >
-                     <SvgInset svgUrl="icons/ic-computer.svg" size={16} />
-                  </Box>
-               )}
-            </Box>
+            {renderThinkingContent()}
+            {message.type === 'human' || !!renderMessage && (
+               <Box
+                  className={cs(s.content, { [s.question]: !message?.is_reply }, { [s.reply]: message?.is_reply }, { [s.failed]: message?.status === "failed" })}
+                  alignSelf={message?.is_reply ? "flex-start" : "flex-end"}
+                  position={"relative"}
+               >
+                  {renderContent()}
+                  {processingWebViewUrl && (
+                     <Box
+                        as="div"
+                        position={"absolute"}
+                        right={"-40px"}
+                        bottom={0}
+                        borderRadius={"50%"}
+                        border="1px solid #F4F4F4"
+                        background={"white"}
+                        boxShadow={"2px 2px 8px 0px rgba(0, 0, 0, 0.15)"}
+                        width={"32px"}
+                        height={"32px"}
+                        minW={"32px"}
+                        minH={"32px"}
+                        display={"flex"}
+                        alignItems={"center"}
+                        justifyContent={"center"}
+                        transition={"all 0.2s ease-in-out"}
+                        zIndex={1000}
+                        _hover={{
+                           cursor: "pointer",
+                        }}
+                        onMouseDown={() => {
+                           const replyToMessage = messages.find(item => item.id === message.replyTo);
+                           dispatch(openWithUrl({
+                              url: processingWebViewUrl,
+                              task: 'Searching',
+                              taskProcessing: replyToMessage?.msg || ''
+                           }))
+                        }}
+                     >
+                        <SvgInset svgUrl="icons/ic-computer.svg" size={16} />
+                     </Box>
+                  )}
+               </Box>
+            )}
 
             {(message.status === "receiving" || message.status === "waiting") && message.queryMessageState && !compareString(message.queryMessageState, "DONE") && (
                <Box paddingLeft={"12px"}>
