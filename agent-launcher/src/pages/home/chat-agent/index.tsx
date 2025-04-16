@@ -64,14 +64,14 @@ function ChatAgent() {
                }
             </>
          )}
-         <BaseModal
+         {/* <BaseModal
             isShow={true}
             onHide={() => {}}
          >
             <RatingForm
                onClose={() => {}}
             />
-         </BaseModal>
+         </BaseModal> */}
       </Box>
    );
 }
