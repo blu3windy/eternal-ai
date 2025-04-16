@@ -100,17 +100,19 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       setMessages([]);
       setSessionId(undefined);
 
-      const threadItems = await chatAgentDatabase.getSessions(threadId);
+      if (selectedAgent && selectedAgent?.agent_type !== AgentType.CustomUI) {
+         const threadItems = await chatAgentDatabase.getSessions(threadId);
 
-      setIsFirstChat(threadItems?.length === 1);
-
-      if (threadItems?.length === 0) {
-         const sessionId = await chatAgentDatabase.createSession(threadId);
-         setSessionId(sessionId);
-         await chatAgentDatabase.migrateMessages(threadId);
-      } else {
-         const lastSessionActive = await chatAgentDatabase.getLastSessionActive(threadId);
-         setSessionId(lastSessionActive?.id);
+         setIsFirstChat(threadItems?.length === 1);
+   
+         if (threadItems?.length === 0) {
+            const sessionId = await chatAgentDatabase.createSession(threadId);
+            setSessionId(sessionId);
+            await chatAgentDatabase.migrateMessages(threadId);
+         } else {
+            const lastSessionActive = await chatAgentDatabase.getLastSessionActive(threadId);
+            setSessionId(lastSessionActive?.id);
+         }
       }
    }, [selectedAgent]);
 
