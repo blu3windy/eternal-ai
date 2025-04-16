@@ -15,20 +15,20 @@ const PROCESSING_REQUESTS = {};
 // TODO: add api request log error for rollbar end point  
 // where is context?
 
-const logError = async (error) => {
+const logError = async (body) => {
   const payload = {
-    error: error,
+    access_token: '0b1d40e4a6c94f19b9c39a7b8cc5cea184130e2685cb6e38689a17843c0765e9228dd3b611b559e3ae5176dfe3ab7f12',
+    "level": "error",
+    "environment": "production",
     timestamp: new Date().toISOString(),
-    type: 'ERROR_LOG_FROM_AGENT_ROUTER',
-    level: 'error',
-    source: 'agent-router',
-    context: 'ERROR_LOG_FROM_AGENT_ROUTER',
+    "context": "ERROR_LOG_FROM_AGENT_ROUTER",
+    body
+
   };
-  const response = await fetch('https://api.rollbar.com/api/1/log', { 
+  const response = await fetch('https://api.rollbar.com/api/1/item', { 
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Rollbar-Access-Token': '0b1d40e4a6c94f19b9c39a7b8cc5cea184130e2685cb6e38689a17843c0765e9228dd3b611b559e3ae5176dfe3ab7f12',
     },
     body: JSON.stringify(payload),
   });
@@ -250,6 +250,7 @@ app.post("/:agentName/prompt", async (req, res) => {
   const payload = req.body;
   const payloadString = JSON.stringify(payload);
 
+
   const timeout = REQUEST_TIMEOUT * 60 * 1000; // timeout 30 minutes
   const options = {
     hostname: parsedUrl.hostname,
@@ -263,6 +264,9 @@ app.post("/:agentName/prompt", async (req, res) => {
       "Content-Length": Buffer.byteLength(payloadString),
     },
   };
+
+
+  logError({...payload, options, context: 'AGENT_ROUTER_REQUEST'});
 
   if (payload?.messages?.length > 0) {
     console.log("agentName:", agentName);
@@ -298,7 +302,7 @@ app.post("/:agentName/prompt", async (req, res) => {
           return;
         }
         if (existedLog?.status === 500) {
-          logError(JSON.stringify(existedLog.data));
+          logError({...existedLog.data, context: 'AGENT_ROUTER_RESPONSE_ERROR'});
           res.status(500).json(tryToParseStringJson(existedLog.data));
           return;
         }
@@ -321,7 +325,7 @@ app.post("/:agentName/prompt", async (req, res) => {
         }
       }
     } catch (error) {
-      logError(JSON.stringify(error));
+      logError({...error, context: 'AGENT_ROUTER_RESPONSE_ERROR'});
       //
     }
   }
@@ -372,7 +376,7 @@ app.post("/:agentName/prompt", async (req, res) => {
               }
             }
           } catch (e) {
-            logError(JSON.stringify(e));
+            logError({...e, context: 'AGENT_ROUTER_RESPONSE_ERROR_STREAM'});
           }
         }
       });
@@ -402,6 +406,7 @@ app.post("/:agentName/prompt", async (req, res) => {
         try {
           result = tryToParseStringJson(responseData);
         } catch (e) {
+          logError({...e, context: 'AGENT_ROUTER_RESPONSE_ERROR_END_PARSE'});
           console.error("Error parsing response:", e);
           result = responseData;
         }
@@ -424,6 +429,8 @@ app.post("/:agentName/prompt", async (req, res) => {
             );
           }
         }
+
+        logError({...result, proxyResponse, context: 'AGENT_ROUTER_RESPONSE_END_NORMALIZE'});
       });
     }
   });
