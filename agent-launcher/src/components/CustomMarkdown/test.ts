@@ -1,15 +1,18 @@
-export const MSG_WITH_IMAGE_LINK = `<image-link>
-   <image-src>https://www.tripadvisor.com/Hotel_Review-g293925-d302784-Reviews-New_World_Saigon_Hotel-Ho_Chi_Minh_City.html?m=66827</image-src>
-   <image-alt>See more details and reviews</image-alt>
-</image-link>
+export const MSG_WITH_IMAGE_LINK = `<iframe-link>
+   <iframe-src>
+   https://www.tripadvisor.com/Hotel_Review-g293925-d302784-Reviews-New_World_Saigon_Hotel-Ho_Chi_Minh_City.html?m=66827</iframe-src>
+   <iframe-alt>See more details and reviews</image-alt>
+</iframe-link>
 
 your chunk content (markdown)
 
 Link for More Info: 
-<image-link>
-   <image-src>https://www.tripadvisor.com/Hotel_Review-g293925-d302784-Reviews-New_World_Saigon_Hotel-Ho_Chi_Minh_City.html?m=66827</image-src>
-   <image-alt>See more details and reviews</image-alt>
-</image-link>
+<iframe-link>
+   <iframe-src>
+   https://www.tripadvisor.com/Hotel_Review-g293925-d302784-Reviews-New_World_Saigon_Hotel-Ho_Chi_Minh_City.html?m=66827
+   </iframe-src>
+   <iframe-alt>See more details and reviews</iframe-alt>
+</iframe-link>
 
 `
 
