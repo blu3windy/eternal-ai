@@ -211,8 +211,10 @@ const AgentDetail = () => {
                                     ? <Button
                                        className={s.btnInstall}
                                        onClick={()=> {
-                                          setIsSearchMode(false);
-                                          setSelectedAgent(selectedAgent);
+                                          handleStartAgent();
+                                          setTimeout(() => {
+                                             setIsSearchMode(false);
+                                          }, 300);
                                        }}
                                     >
                                        Open

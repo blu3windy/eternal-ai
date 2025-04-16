@@ -10,7 +10,9 @@ type Props = React.ComponentPropsWithRef<'div'> & CustomComponentProps;
 
 function ImageSlider({ node, children, ...props }: Props) {
    const images = useMemo(() => {
-      return (children as any[]).map(item => item?.props?.children?.props?.src) as string[];
+      return (children as any[])
+         .filter(item => typeof item !== 'string')
+         .map(item => item?.props?.children?.props?.src?.trim()) as string[];
    }, [children]);
 
    const settings = useMemo(() => ({
