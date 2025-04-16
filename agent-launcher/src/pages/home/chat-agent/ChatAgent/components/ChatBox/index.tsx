@@ -1,18 +1,22 @@
-import { motion } from "framer-motion";
-import React, { useContext, useMemo } from "react";
-import s from "./styles.module.scss";
-import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
+import { Box, Flex, HStack, Image, Text, useClipboard, useToast } from "@chakra-ui/react";
+import AgentWallet from "@components/AgentWallet";
+import WebView from "@components/WebView";
 import ChatList from "@pages/home/chat-agent/ChatAgent/components/ChatList";
 import InputText from "@pages/home/chat-agent/ChatAgent/components/InputText";
+import { useChatAgentProvider } from "@pages/home/chat-agent/ChatAgent/provider.tsx";
 import { AgentContext } from "@pages/home/provider/AgentContext";
-import { Box, Button, Flex, Text, Image } from "@chakra-ui/react";
-import WebView from "@components/WebView";
+import AgentTradeProvider from "@pages/home/trade-agent/provider";
+import { motion } from "framer-motion";
+import { useContext, useMemo } from "react";
+import s from "./styles.module.scss";
 
 const ChatBox = () => {
    const { loading, onRetryErrorMessage } = useChatAgentProvider();
 
-   const { isRunning, requireInstall, selectedAgent, isCustomUI, customUIPort, agentWallet } = useContext(AgentContext);
+   const { isRunning, requireInstall, selectedAgent, isCustomUI, customUIPort, agentWallet, isBackupedPrvKey } = useContext(AgentContext);
 
+   const { onCopy: onCopyAddress } = useClipboard(agentWallet?.address || '');
+   const toast = useToast();
 
    const containerMaxHeight = useMemo(() => {
       const element = document.getElementById("detailContainer");
@@ -29,11 +33,11 @@ const ChatBox = () => {
    }, [requireInstall, isRunning]);
 
    const avatarUrl
-    = selectedAgent?.thumbnail
-    || selectedAgent?.token_image_url
-    || selectedAgent?.twitter_info?.twitter_avatar;
+      = selectedAgent?.thumbnail
+      || selectedAgent?.token_image_url
+      || selectedAgent?.twitter_info?.twitter_avatar;
 
-    const params = useMemo(() => {
+   const params = useMemo(() => {
       if (!selectedAgent?.required_wallet) {
          return '';
       }
@@ -47,7 +51,20 @@ const ChatBox = () => {
       return queryParams;
    }, [selectedAgent?.required_wallet, agentWallet?.privateKey, agentWallet?.address]);
 
-   const isRequireWallet = selectedAgent?.required_wallet && !!agentWallet;
+   const isShowWallet = useMemo(() => {
+      return selectedAgent?.required_wallet && !!agentWallet && isBackupedPrvKey;
+   }, [selectedAgent, agentWallet, isBackupedPrvKey]);
+
+   const handleCopyAddress = () => {
+      onCopyAddress();
+      toast({
+        description: "Address copied to clipboard",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+        position: "bottom",
+      });
+    };
 
    return (
       <motion.div
@@ -59,22 +76,38 @@ const ChatBox = () => {
          }
       >
          <div
-            // className={s.chatList}
-            // style={
-            //   {
-            //     // maxHeight: innerMaxHeight,
-            //     // minHeight: innerMaxHeight,
-            //   }
-            // }
+         // className={s.chatList}
+         // style={
+         //   {
+         //     // maxHeight: innerMaxHeight,
+         //     // minHeight: innerMaxHeight,
+         //   }
+         // }
          >
             {
                isCustomUI ? (
                   <Box width="100%">
-                     <WebView 
+                     <WebView
                         url={`http://localhost:${customUIPort}${params ? `?${params}` : ''}`}
-                        height="calc(100vh - 100px)"
+                        height={`calc(100vh - ${isShowWallet ? '150px' : '100px'})`}
                         width="100%"
                      />
+                     <>
+                        {isShowWallet && (
+                           <Flex className={s.walletWrapper}>
+                              <HStack>
+                                 <Text fontSize={'14px'} fontWeight={400} color={'#000'} opacity={0.6}>{selectedAgent?.display_name || selectedAgent?.agent_name} Wallet: </Text>
+                                 <Text fontSize={'14px'} fontWeight={400} color={'#000'}>{(agentWallet?.address || '').slice(0, 10)}...{(agentWallet?.address || '').slice(-4)}</Text>
+                                 <Box cursor={'pointer'} onClick={handleCopyAddress}>
+                                    <Image src={'icons/ic-copy-gray.svg'} width={'16px'} height={'16px'} />
+                                 </Box>
+                              </HStack>
+                              <AgentTradeProvider>
+                                 <AgentWallet color={'black'} />
+                              </AgentTradeProvider>
+                           </Flex>
+                        )}
+                     </>
                   </Box>
                ) : (
                   <>

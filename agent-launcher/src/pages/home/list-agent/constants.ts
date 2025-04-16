@@ -290,14 +290,15 @@ export const Models = [
 ];
 
 export enum SortOption {
-   MarketCap = 'meme_market_cap',
-   Percent = 'meme_percent',
-   LastReply = 'reply_latest_time',
-   Price = 'meme_price',
-   Volume24h = 'meme_volume_last24h',
-   CreatedAt = 'created_at',
-   Popuplar = 'prompt_calls',
-   Installed = 'installed_count',
+  MarketCap = "meme_market_cap",
+  Percent = "meme_percent",
+  LastReply = "reply_latest_time",
+  Price = "meme_price",
+  Volume24h = "meme_volume_last24h",
+  CreatedAt = "created_at",
+  Popuplar = "prompt_calls",
+  Installed = "installed_count",
+  RecentChat = "recent_chat_time",
 }
 
 export const SortBy = [

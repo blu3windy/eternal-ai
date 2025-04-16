@@ -1,0 +1,132 @@
+.files {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 10px;
+   max-width: 600px;
+}
+
+.file {
+   width: calc(50% - 5px);
+   height: 72px;
+   border-radius: 12px;
+   border: 1px solid #E5E7EB;
+   background: #F8F9FA;
+   padding: 12px;
+   display: flex;
+   align-items: center;
+   justify-content: flex-start;
+   gap: 8px;
+
+   &:hover {
+      background: #F8F9FA;
+      cursor: pointer;
+   }
+
+   .fileicon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+   }
+
+   .fileinfo {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .filename {
+         color: #000;
+         font-size: 16px;
+         font-style: normal;
+         font-weight: 500;
+         line-height: 24px; /* 150% */
+      }
+
+      .filetype {
+         color: var(--Color-newsystem-Black-40, #898989);
+         font-size: 14px;
+         font-style: normal;
+         font-weight: 500;
+         line-height: 20px; /* 142.857% */
+
+         display: flex;
+         gap: 4px;
+      }
+   }
+}
+
+.more {
+   width: calc(50% - 5px);
+   height: 72px;
+   border-radius: 12px;
+   border: 1px solid #E5E7EB;
+   background: #F8F9FA;
+   padding: 12px;
+   display: flex;
+
+   &:hover {
+      background: #F8F9FA;
+      cursor: pointer;
+   }
+
+   .fileicon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+
+      .fileicon__more__behind {
+         position: absolute;
+         top: 0px;
+         left: 0px;
+         width: 40px;
+         height: 40px;
+         display: flex;
+         align-items: center;
+      }
+
+      .fileicon__more {
+         position: absolute;
+         bottom: 2px;
+         right: 2px;
+         width: 32px;
+         height: 32px;
+         display: flex;
+         align-items: center;
+
+         filter: drop-shadow(0 0 2px #555);
+      }
+   }
+
+   .fileinfo {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      color: #000;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: 24px; /* 150% */
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+   }
+}
+
+
+.modalFiles {
+   max-height: 450px;
+   overflow-y: auto;
+
+   &::-webkit-scrollbar {
+      display: none;
+   }
+
+   .modalFile {
+      width: 100% !important;
+   }
+}

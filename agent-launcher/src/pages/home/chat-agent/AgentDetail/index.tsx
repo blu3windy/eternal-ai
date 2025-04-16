@@ -113,7 +113,7 @@ const AgentDetail = () => {
 
    const { currentStep, totalStep } = useMemo(() => {
       if (parsedLog?.values['step']) {
-         const steps = parsedLog?.values['step'].split('-');
+         const steps = parsedLog?.values['step'].split('/');
 
          return {
             currentStep: parseInt(steps[0]),
@@ -211,8 +211,10 @@ const AgentDetail = () => {
                                     ? <Button
                                        className={s.btnInstall}
                                        onClick={()=> {
-                                          setIsSearchMode(false);
-                                          setSelectedAgent(selectedAgent);
+                                          handleStartAgent();
+                                          setTimeout(() => {
+                                             setIsSearchMode(false);
+                                          }, 300);
                                        }}
                                     >
                                        Open
@@ -242,7 +244,7 @@ const AgentDetail = () => {
                                  onClick={handleInstall}
                                  isLoading={isInstalling}
                                  isDisabled={isInstalling}
-                                 loadingText={totalStep > 0 ? `${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : 'Installing...'}
+                                 loadingText={totalStep > 0 ? `Installing... ${formatCurrency(currentStep / (totalStep + 3) * 100, 0, 0)}%` : 'Installing...'}
                               >
                                  Get
                               </Button>

@@ -5,6 +5,13 @@ export const IMAGE_SLIDER_TAG_REGEX = /<image-slider>([\s\S]*?)(?:<\/image-slide
 
 export const IMAGE_SLIDE_ITEM_TAG_REGEX = /<slide-item>([\s\S]*?)(?:<\/slide-item>|$)/g
 
+export const FILES_TAG_REGEX = /<files>([\s\S]*?)(?:<\/files>|$)/g
+export const FILE_TAG_REGEX = /<file>([\s\S]*?)(?:<\/file>|$)/g
+export const FILE_NAME_REGEX = /<filename>([\s\S]*?)(?:<\/filename>|$)/g
+export const FILE_DATA_REGEX = /<filedata>([\s\S]*?)(?:<\/filedata>|$)/g
+
+// export const IMAGE_LINK_DATA_REGEX = /<image-link>([\s\S]*?)(?:<\/image-link>|$)/g
+export const IFRAME_LINK_DATA_REGEX = /<iframe-link>([\s\S]*?)(?:<\/iframe-link>|$)/g
 
 
 export const MARKDOWN_TAGS = {
@@ -12,4 +19,12 @@ export const MARKDOWN_TAGS = {
    COMPUTER_USE: 'computer-use',
    TASK: 'task',
    IMAGE_SLIDER: 'image-slider',
+
+   // Files
+   FILES: 'files',
+   FILE: 'file',
+   FILE_NAME: 'filename',
+   FILE_DATA: 'filedata',
+
+   IFRAME_LINK: 'iframe-link'
 }
