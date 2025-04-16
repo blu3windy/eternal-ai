@@ -399,7 +399,7 @@ app.post("/:agentName/prompt", async (req, res) => {
               }
             }
           } catch (e) {
-            logError('AGENT_ROUTER_RESPONSE_ERROR_STREAM', {...e}, 'error');
+            logError('AGENT_ROUTER_RESPONSE_ERROR_STREAM', {agentName, e}, 'error');
           }
         }
       });
@@ -453,7 +453,6 @@ app.post("/:agentName/prompt", async (req, res) => {
           }
         }
 
-        logError('AGENT_ROUTER_RESPONSE_END_NORMALIZE', {...result}, 'info');
       });
     }
   });
