@@ -16,32 +16,38 @@ const PROCESSING_REQUESTS = {};
 // where is context?
 
 const logError = async (title, body) => {
-  const payload = {
-    access_token: '0b1d40e4a6c94f19b9c39a7b8cc5cea184130e2685cb6e38689a17843c0765e9228dd3b611b559e3ae5176dfe3ab7f12',
-    "level": "error",
-    "environment": "production",
-    timestamp: new Date().toISOString(),
-    "context": "ERROR_LOG_FROM_AGENT_ROUTER",
-    tracking_data:{
-      ...body,
-      "trace": {
-        "exception": {
-          "class": "AGENT_ROUTER",
-          "message": title
+  try {
+    const payload = {
+      access_token: '0b1d40e4a6c94f19b9c39a7b8cc5cea184130e2685cb6e38689a17843c0765e9228dd3b611b559e3ae5176dfe3ab7f12',
+      data: {
+        level: "error",
+        environment: "production",
+        timestamp: new Date().toISOString(),
+        context: "ERROR_LOG_FROM_AGENT_ROUTER",
+        body: {
+          message: {
+            body: title
+          }
+        },
+        custom: {
+          tracking_data: body
         }
       }
-    }
-
-  };
-  console.log("payload", payload);
-  const response = await fetch('https://api.rollbar.com/api/1/item', { 
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: payload,
-  });
-  return response;
+      
+  
+    };
+    const response = await fetch('https://api.rollbar.com/api/1/item', { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    console.log("response", response);
+    return response;
+  } catch (error) {
+    console.log("Error logging error:", error);
+  }
 };
 
 // Enable CORS for all origins
