@@ -20,6 +20,8 @@ interface AgentState {
 
     isSearchMode: boolean;
     setIsSearchMode: (isSearchMode: boolean) => void;
+    showSearchDetail: boolean;
+    setShowSearchDetail: (isSearchMode: boolean) => void;
 }
 
 const useAgentState = create<AgentState>((set) => ({
@@ -88,7 +90,15 @@ const useAgentState = create<AgentState>((set) => ({
 
    isSearchMode: false,
    setIsSearchMode: (isSearchMode) => {
+      if (!isSearchMode) {
+         set({ isSearchMode, showSearchDetail: false });
+         return;
+      }
       set({ isSearchMode });
+   },
+   showSearchDetail: false,
+   setShowSearchDetail: (showSearchDetail) => {
+      set({ showSearchDetail });
    },
 }));
 
