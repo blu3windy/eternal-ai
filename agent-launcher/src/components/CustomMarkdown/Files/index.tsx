@@ -24,10 +24,14 @@ const readRawFile = (filedata: string) => {
    // const base64 = filedata.split(',')[1];
    // const text = atob(base64);
    // return text;
-   const base64 = filedata.split(',')[1];
-   const binary = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-   const text = new TextDecoder('utf-8').decode(binary);
-   return text;
+   try {
+      const base64 = filedata.split(',')[1];
+      const binary = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+      const text = new TextDecoder('utf-8').decode(binary);
+      return text;
+   } catch (error) {
+      return filedata;
+   }
 }
 
 const SUPPORTED_FILE_TYPE = {
@@ -135,10 +139,14 @@ function FileViewer({ filename, filedata }: FileType) {
       }
    }, [filedata]);
 
+   const fileContent = useMemo(() => {
+      return readRawFile(filedata);
+   }, [filedata]);
+
    useEffect(() => {
       setTimeout(() => {
          setIsViewer(true);
-      }, 0);
+      }, 100);
    }, []);
 
    const renderFileContent = () => {
@@ -156,14 +164,13 @@ function FileViewer({ filename, filedata }: FileType) {
                   >
                      <Markdown
                         remarkPlugins={[remarkGfm, remarkBreaks]}
-                        children={readRawFile(filedata) as string}
+                        children={fileContent}
                      />
                   </Box>
                )
             }
             return (
                <Flex
-                  
                   gap={'12px'}
                   height={'100%'}
                   width={'100%'}
@@ -175,7 +182,7 @@ function FileViewer({ filename, filedata }: FileType) {
                         wordBreak: 'break-word',
                         whiteSpace: 'pre-wrap',
                      }}
-                  >{readRawFile(filedata)}</p>
+                  >{fileContent}</p>
                </Flex>
             )
          }
