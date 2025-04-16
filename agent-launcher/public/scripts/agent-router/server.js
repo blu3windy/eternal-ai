@@ -15,39 +15,46 @@ const PROCESSING_REQUESTS = {};
 // TODO: add api request log error for rollbar end point  
 // where is context?
 
-const logError = async (title, body) => {
-  try {
-    const payload = {
-      access_token: '0b1d40e4a6c94f19b9c39a7b8cc5cea184130e2685cb6e38689a17843c0765e9228dd3b611b559e3ae5176dfe3ab7f12',
-      data: {
-        level: "error",
-        environment: "production",
-        timestamp: new Date().toISOString(),
-        context: "ERROR_LOG_FROM_AGENT_ROUTER",
-        body: {
-          message: {
-            body: title
+const logError = async (title, body, level = 'error') => {
+    console.log('logError', title, body, level);
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    const raw = JSON.stringify({
+      "access_token": "0b1d40e4a6c94f19b9c39a7b8cc5cea184130e2685cb6e38689a17843c0765e9228dd3b611b559e3ae5176dfe3ab7f12",
+      "data": {
+        "environment": "production",
+        "body": {
+          "message": {
+            "body": title
           }
         },
-        custom: {
+        "level": level,
+        "timestamp": new Date().getTime(),
+        "platform": "browser",
+        "language": "javascript",
+        "framework": "react",
+        "custom": {
           tracking_data: body
         }
       }
-      
-  
-    };
-    const response = await fetch('https://api.rollbar.com/api/1/item', { 
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
     });
-    console.log("response", response);
-    return response;
-  } catch (error) {
-    console.log("Error logging error:", error);
-  }
+
+    const requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow"
+    };
+
+    fetch("https://api.rollbar.com/api/1/item", requestOptions)
+      .then((response) => response.text())
+      .then((result) => {
+        console.log("result", result);
+      })
+      .catch((error) => {
+        console.log("error", error);
+      });
 };
 
 // Enable CORS for all origins
@@ -281,7 +288,8 @@ app.post("/:agentName/prompt", async (req, res) => {
   };
 
 
-  logError('AGENT_ROUTER_REQUEST', {...payload, options});
+  logError('AGENT_ROUTER_REQUEST', {...payload}, 'info');
+
 
   if (payload?.messages?.length > 0) {
     console.log("agentName:", agentName);
@@ -317,7 +325,7 @@ app.post("/:agentName/prompt", async (req, res) => {
           return;
         }
         if (existedLog?.status === 500) {
-          logError('AGENT_ROUTER_RESPONSE_ERROR', {...existedLog.data});
+          logError('AGENT_ROUTER_RESPONSE_ERROR', {...tryToParseStringJson(existedLog.data)}, 'error');
           res.status(500).json(tryToParseStringJson(existedLog.data));
           return;
         }
@@ -340,7 +348,7 @@ app.post("/:agentName/prompt", async (req, res) => {
         }
       }
     } catch (error) {
-      logError('AGENT_ROUTER_RESPONSE_ERROR', {...error});
+      logError('AGENT_ROUTER_RESPONSE_ERROR', {...error}, 'error');
       //
     }
   }
@@ -391,7 +399,7 @@ app.post("/:agentName/prompt", async (req, res) => {
               }
             }
           } catch (e) {
-            logError('AGENT_ROUTER_RESPONSE_ERROR_STREAM', {...e});
+            logError('AGENT_ROUTER_RESPONSE_ERROR_STREAM', {...e}, 'error');
           }
         }
       });
@@ -421,7 +429,7 @@ app.post("/:agentName/prompt", async (req, res) => {
         try {
           result = tryToParseStringJson(responseData);
         } catch (e) {
-          logError('AGENT_ROUTER_RESPONSE_ERROR_END_PARSE', {...e});
+          logError('AGENT_ROUTER_RESPONSE_ERROR_END_PARSE', {...e}, 'error');
           console.error("Error parsing response:", e);
           result = responseData;
         }
@@ -445,7 +453,7 @@ app.post("/:agentName/prompt", async (req, res) => {
           }
         }
 
-        logError('AGENT_ROUTER_RESPONSE_END_NORMALIZE', {...result, proxyResponse});
+        logError('AGENT_ROUTER_RESPONSE_END_NORMALIZE', {...result}, 'info');
       });
     }
   });
