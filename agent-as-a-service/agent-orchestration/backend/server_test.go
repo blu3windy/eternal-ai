@@ -12,6 +12,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/daos"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/databases"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/logger"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/models"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services"
 )
 
@@ -45,7 +46,9 @@ func init() {
 
 func Test_JOB(t *testing.T) {
 
-	fmt.Println()
+	fmt.Println(
+		ts.MemeEventsByTransaction(context.Background(), models.BASE_SEPOLIA_CHAIN_ID, "0x265e2817807c7c8d45f2783e34b075b7b2dda4bab3638a19a4c4db9592884ce2"),
+	)
 
 	// data, err := ts.ValidateTweetContentGenerateVideoWithLLM2(context.Background(), "man opens shirt and shows his fat belly")
 	// fmt.Println(data, err)

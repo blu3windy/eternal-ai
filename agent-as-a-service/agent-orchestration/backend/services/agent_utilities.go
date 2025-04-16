@@ -56,7 +56,7 @@ func (s *Service) DeployAgentUpgradeableAddress(
 	pointers []agentupgradeable.IAgentCodePointer,
 	depsAgents []common.Address,
 	agentOwner common.Address,
-) (string, string, string, error) {
+) (string, error) {
 	memePoolAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "meme_pool_address"))
 	agentFactoryAddress := strings.ToLower(s.conf.GetConfigKeyString(networkID, "agent_factory_address"))
 	txHash, err := s.GetEthereumClient(ctx, networkID).
@@ -72,9 +72,9 @@ func (s *Service) DeployAgentUpgradeableAddress(
 			agentOwner,
 		)
 	if err != nil {
-		return "", "", "", errs.NewError(err)
+		return "", errs.NewError(err)
 	}
-	return "", "", txHash, nil
+	return txHash, nil
 }
 
 func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) error {
@@ -100,24 +100,7 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 		if agentInfo.MintHash == "" {
 			switch agentInfo.NetworkID {
 			case models.ETHEREUM_CHAIN_ID,
-				models.BITTENSOR_CHAIN_ID,
 				models.BASE_CHAIN_ID,
-				models.HERMES_CHAIN_ID,
-				models.ARBITRUM_CHAIN_ID,
-				models.ZKSYNC_CHAIN_ID,
-				models.POLYGON_CHAIN_ID,
-				models.BSC_CHAIN_ID,
-				models.APE_CHAIN_ID,
-				models.AVALANCHE_C_CHAIN_ID,
-				models.ABSTRACT_TESTNET_CHAIN_ID,
-				models.DUCK_CHAIN_ID,
-				models.MODE_CHAIN_ID,
-				models.ZETA_CHAIN_ID,
-				models.STORY_CHAIN_ID,
-				models.HYPE_CHAIN_ID,
-				models.MONAD_TESTNET_CHAIN_ID,
-				models.MEGAETH_TESTNET_CHAIN_ID,
-				models.CELO_CHAIN_ID,
 				models.BASE_SEPOLIA_CHAIN_ID:
 				{
 					if agentInfo.SourceUrl == "" {
@@ -168,7 +151,7 @@ func (s *Service) DeployAgentUpgradeable(ctx context.Context, agentInfoID uint) 
 					if codeLanguage == "" {
 						return errs.NewError(errs.ErrBadRequest)
 					}
-					_, _, txHash, err := s.DeployAgentUpgradeableAddress(
+					txHash, err := s.DeployAgentUpgradeableAddress(
 						ctx,
 						agentInfo.NetworkID,
 						agentInfo.AgentID,
@@ -345,8 +328,8 @@ func (s *Service) AgentFactoryAgentCreatedEvent(ctx context.Context, networkID u
 		if err != nil {
 			return errs.NewError(err)
 		}
-		if agentInfo != nil && agentInfo.AgentContractAddress == "" {
-			agentAddress := strings.ToLower(event.Agent.Hex())
+		agentAddress := strings.ToLower(event.Agent.Hex())
+		if agentInfo != nil && !strings.EqualFold(agentAddress, agentInfo.AgentContractAddress) {
 			err = daos.GetDBMainCtx(ctx).
 				Model(agentInfo).
 				Updates(
