@@ -985,13 +985,47 @@ func (s *Service) ShareMeme(ctx context.Context, address, memAddress string) (bo
 
 }
 
-func (s *Service) VibeTokenGetDeployInfo(ctx context.Context, address string, id uint) (*serializers.VibeTokenDeployInfoResp, error) {
-	vibeToken, err := s.dao.FirstMemeByID(
+func (s *Service) VibeTokenGetDeployInfo(ctx context.Context, address string, agentID uint) (*serializers.VibeTokenDeployInfoResp, error) {
+	agentInfo, err := s.dao.FirstAgentInfoByID(daos.GetDBMainCtx(ctx), agentID, map[string][]any{}, false)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	if !strings.EqualFold(address, agentInfo.Creator) {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	if !agentInfo.IsVibeAgent() {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	if agentInfo.TokenNetworkID == 0 {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	if agentInfo.TokenSymbol == "" {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	if agentInfo.TokenName == "" {
+		return nil, errs.NewError(errs.ErrBadRequest)
+	}
+	_, err = s.CreateMeme(
+		ctx, agentInfo.Creator,
+		agentInfo.TokenNetworkID,
+		&serializers.MemeReq{
+			Name:            agentInfo.TokenName,
+			Ticker:          agentInfo.TokenSymbol,
+			Description:     agentInfo.TokenDesc,
+			Image:           agentInfo.TokenImageUrl,
+			Twitter:         fmt.Sprintf("https://x.com/%s", agentInfo.TwitterUsername),
+			AgentInfoID:     agentInfo.ID,
+			BaseTokenSymbol: string(models.BaseTokenSymbolEAI),
+		})
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	vibeToken, err := s.dao.FirstMeme(
 		daos.GetDBMainCtx(ctx),
-		id,
 		map[string][]any{
-			"AgentInfo": {},
+			"agent_info_id = ?": {agentID},
 		},
+		map[string][]any{},
 		false,
 	)
 	if err != nil {
@@ -1001,16 +1035,6 @@ func (s *Service) VibeTokenGetDeployInfo(ctx context.Context, address string, id
 		return nil, errs.NewError(errs.ErrBadRequest)
 	}
 	if vibeToken.TokenAddress != "" {
-		return nil, errs.NewError(errs.ErrBadRequest)
-	}
-	agentInfo := vibeToken.AgentInfo
-	if agentInfo == nil {
-		return nil, errs.NewError(errs.ErrBadRequest)
-	}
-	if !strings.EqualFold(address, agentInfo.Creator) {
-		return nil, errs.NewError(errs.ErrBadRequest)
-	}
-	if !agentInfo.IsVibeAgent() {
 		return nil, errs.NewError(errs.ErrBadRequest)
 	}
 	baseTokenPrice := s.GetTokenMarketPrice(daos.GetDBMainCtx(ctx), vibeToken.BaseTokenSymbol)
