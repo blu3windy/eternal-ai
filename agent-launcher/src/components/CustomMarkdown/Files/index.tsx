@@ -12,15 +12,26 @@ import { changeLayout } from "@stores/states/layout-view/reducer";
 import { convertBase64ToFileSize, downloadFile } from "@utils/file";
 import "@cyntler/react-doc-viewer/dist/index.css";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from 'remark-breaks'
 
 type Props = React.ComponentPropsWithRef<'div'> & CustomComponentProps;
 
 const MAX_VIEW_FILE = 5;
 
-const readTxtFile = (filedata: string) => {
-   const base64 = filedata.split(',')[1];
-   const text = atob(base64);
-   return text;
+const readRawFile = (filedata: string) => {
+   // const base64 = filedata.split(',')[1];
+   // const text = atob(base64);
+   // return text;
+   try {
+      const base64 = filedata.split(',')[1];
+      const binary = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+      const text = new TextDecoder('utf-8').decode(binary);
+      return text;
+   } catch (error) {
+      return filedata;
+   }
 }
 
 const SUPPORTED_FILE_TYPE = {
@@ -32,6 +43,13 @@ const SUPPORTED_FILE_TYPE = {
    'png': 'image',
    'webp': 'image',
 }
+
+const RAW_FILE_TYPE: Record<string, string> = {
+   'txt': 'text',
+   'md': 'markdown',
+   'json': 'json',
+}
+
 type FileType = {
    filename: string;
    filedata: string;
@@ -121,20 +139,38 @@ function FileViewer({ filename, filedata }: FileType) {
       }
    }, [filedata]);
 
+   const fileContent = useMemo(() => {
+      return readRawFile(filedata);
+   }, [filedata]);
+
    useEffect(() => {
       setTimeout(() => {
          setIsViewer(true);
-      }, 0);
+      }, 100);
    }, []);
 
    const renderFileContent = () => {
       if (!isSupportedFile) {
-         if (fileExtension === 'txt') {
+         if (fileExtension && RAW_FILE_TYPE[fileExtension]) {
+            if (fileExtension === 'md') {
+               return (
+                  <Box
+                     gap={'12px'}
+                     height={'100%'}
+                     width={'100%'}
+                     padding={"24px"}
+                     overflowY={"auto"}
+                     className="markdown-body"
+                  >
+                     <Markdown
+                        remarkPlugins={[remarkGfm, remarkBreaks]}
+                        children={fileContent}
+                     />
+                  </Box>
+               )
+            }
             return (
                <Flex
-                  flexDir={'column'}
-                  justifyContent={'center'}
-                  alignItems={'center'}
                   gap={'12px'}
                   height={'100%'}
                   width={'100%'}
@@ -146,7 +182,7 @@ function FileViewer({ filename, filedata }: FileType) {
                         wordBreak: 'break-word',
                         whiteSpace: 'pre-wrap',
                      }}
-                  >{readTxtFile(filedata)}</p>
+                  >{fileContent}</p>
                </Flex>
             )
          }
