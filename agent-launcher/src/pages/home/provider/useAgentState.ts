@@ -30,7 +30,7 @@ const useAgentState = create<AgentState>((set) => ({
       set((state) => {
          const updatedActiveAgents = new Set(state.activeAgents);
          updatedActiveAgents.forEach((activeAgent) => {
-            if (compareString(activeAgent.agent.agent_id, agentId)) {
+            if (compareString(activeAgent.agent?.agent_id, agentId)) {
                updatedActiveAgents.delete(activeAgent);
             }
          });
@@ -46,7 +46,7 @@ const useAgentState = create<AgentState>((set) => ({
          const activeAgents = new Set(state.activeAgents);
          let agentFound = false;
          activeAgents.forEach((activeAgent) => {
-            if (compareString(activeAgent.agent.agent_id, agent?.agent_id)) {
+            if (compareString(activeAgent.agent?.agent_id, agent?.agent_id)) {
                activeAgent.agent = agent;
                activeAgent.timestamp = Date.now();
                agentFound = true;
@@ -68,7 +68,7 @@ const useAgentState = create<AgentState>((set) => ({
             }
             let agentFound = false;
             activeAgents.forEach((activeAgent) => {
-               if (compareString(activeAgent.agent.agent_id, agent?.agent_id)) {
+               if (compareString(activeAgent.agent?.agent_id, agent?.agent_id)) {
                   activeAgent.agent = agent;
                   activeAgent.timestamp = Date.now();
                   agentFound = true;

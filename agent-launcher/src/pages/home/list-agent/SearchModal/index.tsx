@@ -18,7 +18,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import debounce from 'lodash.debounce';
 import throttle from 'lodash.throttle';
 import uniqBy from 'lodash.uniqby';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import AppLoading from "../../../../components/AppLoading";
 import CAgentTokenAPI from "../../../../services/api/agents-token";
@@ -63,6 +63,10 @@ const SearchModal = (props: SearchModalProps) => {
    const cPumpAPI = new CAgentTokenAPI();
 
    const [hasMore, setHasMore] = useState(true);
+
+   const isShowClear = useMemo(() => {
+      return refParams.current.category !== 0 || sort !== SortOption.Installed;
+   }, [refParams.current.category, sort])
 
    const getTokens = async (isNew: boolean, isNoLoading?: boolean) => {
       if (refLoading.current) return;
@@ -151,6 +155,16 @@ const SearchModal = (props: SearchModalProps) => {
          refInput?.current?.focus();
       }
    }, [props.isOpen])
+
+   const handleClearFilter = () => {
+      refParams.current.category = 0;
+      setSort(SortOption.Installed);
+      refParams.current = {
+         ...refParams.current,
+         sort: SortOption.Installed,
+      };
+      throttleGetTokens(true);
+   }
 
    const renderSearch = () => {
       return (
@@ -447,10 +461,11 @@ const SearchModal = (props: SearchModalProps) => {
             </Flex>
          </Flex>
          <Box>
-            <Flex p="0 24px 20px" gap="24px">
+            <Flex p="0 24px 20px" gap="20px" alignItems={'center'}>
                {renderCategoryMenu()}
                <Box w="1px" h="20px" bg="#000" opacity="0.2" margin={"auto 0"} />
                {renderSortMenu()}
+               {isShowClear && <Text cursor={'pointer'} textDecoration={'underline'} fontSize={'14px'} fontWeight={'500'} onClick={handleClearFilter}>Clear</Text>}
             </Flex>
             {renderSearchResults()}
          </Box>

@@ -1,7 +1,7 @@
 import { AgentType } from "@pages/home/list-agent/constants";
 import AgentAPI from "@services/api/agent";
 import { RootState } from "@stores/index";
-import { removeTaskItem } from "@stores/states/agent-chat/reducer";
+import { removeTaskItem, addOrUpdateTaskItem } from "@stores/states/agent-chat/reducer";
 import { agentsChatSelector, agentTasksSelector } from "@stores/states/agent-chat/selector";
 import { TaskItem } from "@stores/states/agent-chat/type";
 import { useEffect, useMemo } from "react";
@@ -24,10 +24,11 @@ function ProcessingItem({ data }: { data: TaskItem }) {
 
                   if (res?.status !== 102) {
                      dispatch(
-                        removeTaskItem({
+                        addOrUpdateTaskItem({
                            id: threadId,
                            taskItem: {
                               ...data,
+                              status: "done",
                            },
                         })
                      );
@@ -38,10 +39,11 @@ function ProcessingItem({ data }: { data: TaskItem }) {
                   }
                } catch (e) {
                   dispatch(
-                     removeTaskItem({
+                     addOrUpdateTaskItem({
                         id: threadId,
                         taskItem: {
                            ...data,
+                           status: "failed",
                         },
                      })
                   );

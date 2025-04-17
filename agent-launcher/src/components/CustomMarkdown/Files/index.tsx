@@ -43,6 +43,7 @@ const SUPPORTED_FILE_TYPE = {
    'jpeg': 'image',
    'png': 'image',
    'webp': 'image',
+   'csv': 'csv',
 }
 
 const RAW_FILE_TYPE: Record<string, string> = {
@@ -250,14 +251,14 @@ function FileViewer({ filename, filedata }: FileType) {
             height={"100%"}
          >
             <Flex
-               padding={"16px 24px"}
-               background="linear-gradient(180deg, rgba(228, 229, 216, 0.60) 0%, rgba(203, 214, 232, 0.60) 100%)"
+               padding={"14px 24px"}
+               background="linear-gradient(180deg, rgba(228, 229, 216, 0.6) 0%, rgba(203, 214, 232, 0.6) 100%)"
                backdropFilter="blur(15px)"
                justifyContent={"space-between"}
                alignItems={"center"}
             >
                <Flex gap={"8px"} alignItems={"center"}>
-                  <TxtIcon />
+                  <TxtIcon size={32} />
                   <Text
                      fontSize={"16px"}
                      fontWeight={"500"}

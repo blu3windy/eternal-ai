@@ -42,9 +42,9 @@ const ChooseModel = ({ onNext }: IProps) => {
             throw new Error('Model hash not found');
          }
          await storageModel.setActiveModel({
-            id: selectedAgent.id,
-            agent_id: selectedAgent.agent_id,
-            agent_type: selectedAgent.agent_type,
+            id: selectedAgent?.id,
+            agent_id: selectedAgent?.agent_id,
+            agent_type: selectedAgent?.agent_type,
             hash: hash,
          } as any)
 

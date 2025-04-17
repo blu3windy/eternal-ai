@@ -9,6 +9,8 @@ import AgentTradeProvider from "@pages/home/trade-agent/provider";
 import { motion } from "framer-motion";
 import { useContext, useMemo } from "react";
 import s from "./styles.module.scss";
+import { useSelector } from "react-redux";
+import { layoutViewSelector } from "@stores/states/layout-view/selector";
 
 const ChatBox = () => {
    const { loading, onRetryErrorMessage } = useChatAgentProvider();
@@ -17,6 +19,8 @@ const ChatBox = () => {
 
    const { onCopy: onCopyAddress } = useClipboard(agentWallet?.address || '');
    const toast = useToast();
+
+   const { isOpenRightBar } = useSelector(layoutViewSelector);
 
    const containerMaxHeight = useMemo(() => {
       const element = document.getElementById("detailContainer");
@@ -58,13 +62,13 @@ const ChatBox = () => {
    const handleCopyAddress = () => {
       onCopyAddress();
       toast({
-        description: "Address copied to clipboard",
-        status: "success",
-        duration: 2000,
-        isClosable: true,
-        position: "bottom",
+         description: "Address copied to clipboard",
+         status: "success",
+         duration: 2000,
+         isClosable: true,
+         position: "bottom",
       });
-    };
+   };
 
    return (
       <motion.div
@@ -75,7 +79,9 @@ const ChatBox = () => {
             }
          }
       >
-         <div
+         <Box
+            w="clamp(600px, 100%, 1200px)"
+            mx={'auto'}
          // className={s.chatList}
          // style={
          //   {
@@ -84,6 +90,11 @@ const ChatBox = () => {
          //   }
          // }
          >
+            {
+               !isOpenRightBar && (
+                  <Box w={"40px"} />
+               )
+            }
             {
                isCustomUI ? (
                   <Box width="100%">
@@ -128,7 +139,12 @@ const ChatBox = () => {
                   </>
                )
             }
-         </div>
+            {
+               !isOpenRightBar && (
+                  <Box w={"40px"} />
+               )
+            }
+         </Box>
       </motion.div>
    );
 };

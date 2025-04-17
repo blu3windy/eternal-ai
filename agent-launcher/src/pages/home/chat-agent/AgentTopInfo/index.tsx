@@ -12,14 +12,13 @@ import {
    Text,
    useDisclosure,
 } from '@chakra-ui/react';
-import Avatar from '@components/Avatar';
 import BaseModal from '@components/BaseModal';
+import { CollapseIcon } from '@components/CustomMarkdown/Files/icons';
 import InfoTooltip from '@components/InfoTooltip';
-import Percent24h from '@components/Percent';
 import { BASE_CHAIN_ID } from '@constants/chains';
 import CAgentContract from '@contract/agent';
-import SelectModel from '@pages/home/chat-agent/AgentTopInfo/SelectModel';
 import DeleteAgentModal from '@pages/home/list-agent/AgentMonitor/DeleteAgentModal';
+import ProcessingTaskModal, { ProcessingTaskModalId } from '@pages/home/list-agent/BottomBar/ProcessingTaskModal';
 import { AgentType, SYSTEM_AGENTS } from '@pages/home/list-agent/constants';
 import { AgentContext } from '@pages/home/provider/AgentContext';
 import TradeAgent from '@pages/home/trade-agent';
@@ -29,16 +28,19 @@ import CAgentTokenAPI from '@services/api/agents-token';
 import { IAgentToken } from '@services/api/agents-token/interface';
 import localStorageService from '@storage/LocalStorageService';
 import storageModel from '@storage/StorageModel';
-import { formatCurrency } from '@utils/format.ts';
-import { addressFormater, compareString } from '@utils/string';
+import { agentTasksProcessingSelector, totalPendingTasksSelector } from '@stores/states/agent-chat/selector';
+import { changeLayout } from '@stores/states/layout-view/reducer';
+import { layoutViewSelector } from '@stores/states/layout-view/selector';
+import { compareString } from '@utils/string';
 import cx from 'clsx';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
+import { useDispatch, useSelector } from 'react-redux';
 import SetupEnvModel from '../SetupEnvironment';
-import s from './styles.module.scss';
-import debounce from 'lodash.debounce';
-import ButtonChatHistory from "./ButtonChatHistory";
 import ButtonChatCreate from "./ButtonChatCreate";
+import ButtonChatHistory from "./ButtonChatHistory";
+import AgentHeaderInfo from './Header/HeaderInfo';
+import s from './styles.module.scss';
+import { labelAmountOrNumberAdds } from '@utils/format';
 
 const AgentTopInfo = () => {
    const {
@@ -62,6 +64,10 @@ const AgentTopInfo = () => {
    const [infoTooltipKey, setInfoTooltipKey] = useState(0);
    const [isShowSetupEnvModel, setIsShowSetupEnvModel] = useState(false);
    const [environments, setEnvironments] = useState<JSON>();
+   const dispatch = useDispatch();
+
+   console.log("selectedAgent", selectedAgent);
+   
 
    const { isOpen, onOpen, onClose } = useDisclosure();
    const { isOpen: isOpenDrawer, onOpen: onOpenDrawer, onClose: onCloseDrawer } = useDisclosure();
@@ -91,6 +97,11 @@ const AgentTopInfo = () => {
    }, [isCanChat, showBackupPrvKey, showSetup, hasNewVersionCode, isInstalled]);
 
    const description = selectedAgent?.token_desc || selectedAgent?.twitter_info?.description;
+
+
+   const { isOpenRightBar } = useSelector(layoutViewSelector);
+   const pendingTasks = useSelector(agentTasksProcessingSelector);
+   const totalPendingTasks = useSelector(totalPendingTasksSelector);
 
    const allowStopAgent = useMemo(() => {
       const isAgentSystem = (compareString(selectedAgent?.agent_name, currentActiveModel?.agent?.agent_name)
@@ -179,13 +190,6 @@ const AgentTopInfo = () => {
       unInstallAgent(selectedAgent);
    };
 
-   const handleClickCreator = (e: any) => {
-      e?.preventDefault();
-      e?.stopPropagation();
-      if (selectedAgent?.tmp_twitter_info?.twitter_username)
-         window.open(`https://x.com/${selectedAgent?.tmp_twitter_info?.twitter_username}`);
-   };
-
    const handleClearHistory = useCallback(() => {
       // TODO: clear history
       // TODO: need refactor chat to global state
@@ -210,6 +214,11 @@ const AgentTopInfo = () => {
                      selectedAgent?.agent_type as AgentType
                   ) && <SelectModel showDescription={false} />}
             </Flex> */}
+            {
+               !isOpenRightBar && (
+                  <Box w={"40px"}/>
+               )
+            }
             <Flex
                gap={'6px'}
                justifyContent={'space-between'}
@@ -236,69 +245,12 @@ const AgentTopInfo = () => {
                         iconSize="20px"
                         label={
                            <Flex direction={'column'} p={'8px'}>
-                              <Flex direction={'column'} gap={'8px'}>
-                                 <Flex
-                                    alignItems={'center'}
-                                    gap={'8px'}
-                                    justifyContent={'space-between'}
-                                 >
-                                    <Flex direction={'column'} gap={'8px'}>
-                                       <Text fontSize={'16px'} fontWeight={500}>
-                                          {selectedAgent?.display_name || selectedAgent?.agent_name}
-                                       </Text>
-                                       <Flex
-                                          alignItems="center"
-                                          gap="4px"
-                                          onClick={handleClickCreator}
-                                       >
-                                          <Text
-                                             color="#000000"
-                                             fontSize="12px"
-                                             fontWeight="400"
-                                             opacity={0.7}
-                                          >
-                                             by
-                                          </Text>
-                                          {selectedAgent?.tmp_twitter_info?.twitter_avatar ? (
-                                             <Avatar
-                                                url={
-                                                   selectedAgent?.tmp_twitter_info?.twitter_avatar
-                                                }
-                                                width={16}
-                                             />
-                                          ) : (
-                                             <Jazzicon
-                                                diameter={16}
-                                                seed={jsNumberForAddress(
-                                                   selectedAgent?.creator || ''
-                                                )}
-                                             />
-                                          )}
-                                          <Text
-                                             color="#000000"
-                                             fontSize="12px"
-                                             fontWeight="400"
-                                             opacity={0.7}
-                                          >
-                                             {selectedAgent?.tmp_twitter_info?.twitter_username
-                                                ? `@${selectedAgent?.tmp_twitter_info?.twitter_username}`
-                                                : addressFormater(selectedAgent?.creator)}
-                                          </Text>
-                                       </Flex>
-                                    </Flex>
-                                    <Image
-                                       src={`icons/${isLiked ? 'ic-liked.svg' : 'ic-like.svg'}`}
-                                       width={'28px'}
-                                       height={'28px'}
-                                       onClick={handleLikeAgent}
-                                       cursor={isLiked ? 'not-allowed' : 'pointer'}
-                                    />
-                                 </Flex>
-
-                                 {/* <Text fontSize={'14px'} fontWeight={400} opacity={0.7}>
-                                    {description}
-                                 </Text> */}
-                              </Flex>
+                              {/* {selectedAgent?.rating ? (
+                                 <AgentHeaderRate />
+                              ) : (
+                                 <AgentHeaderInfo />
+                              )} */}
+                              <AgentHeaderInfo />
                               <Divider color={'#E2E4E8'} my={'16px'} />
                               <AgentOnChainInfo />
                               {!!environments && selectedAgent?.env_example && (
@@ -471,6 +423,23 @@ const AgentTopInfo = () => {
             {/* <Flex justifyContent={"flex-end"} position={"absolute"} right={"16px"}>
                <HeaderWallet color={color} />
             </Flex> */}
+            {
+               !isOpenRightBar && (
+                  <Flex>
+                     <Button className={cx(s.btnTaskProcessing)} leftIcon={<CollapseIcon />} onClick={() => {
+                        dispatch(changeLayout({
+                           isOpenAgentBar: true,
+                           isOpenRightBar: true,
+                           rightBarView: <ProcessingTaskModal />,
+                           rightBarId: ProcessingTaskModalId
+                        }))
+                     }}>
+                        {totalPendingTasks ? `${totalPendingTasks} task${labelAmountOrNumberAdds(totalPendingTasks)} processing` : ''}
+                     </Button>
+                  </Flex>
+               )
+            }
+
          </Flex>
          <Drawer isOpen={isOpenDrawer} placement="right" onClose={onCloseDrawer}>
             <DrawerOverlay />

@@ -100,17 +100,19 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
       setMessages([]);
       setSessionId(undefined);
 
-      const threadItems = await chatAgentDatabase.getSessions(threadId);
+      if (selectedAgent && selectedAgent?.agent_type !== AgentType.CustomUI) {
+         const threadItems = await chatAgentDatabase.getSessions(threadId);
 
-      setIsFirstChat(threadItems?.length === 1);
-
-      if (threadItems?.length === 0) {
-         const sessionId = await chatAgentDatabase.createSession(threadId);
-         setSessionId(sessionId);
-         await chatAgentDatabase.migrateMessages(threadId);
-      } else {
-         const lastSessionActive = await chatAgentDatabase.getLastSessionActive(threadId);
-         setSessionId(lastSessionActive?.id);
+         setIsFirstChat(threadItems?.length === 1);
+   
+         if (threadItems?.length === 0) {
+            const sessionId = await chatAgentDatabase.createSession(threadId);
+            setSessionId(sessionId);
+            await chatAgentDatabase.migrateMessages(threadId);
+         } else {
+            const lastSessionActive = await chatAgentDatabase.getLastSessionActive(threadId);
+            setSessionId(lastSessionActive?.id);
+         }
       }
    }, [selectedAgent]);
 
@@ -123,9 +125,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             if (items.length > 0) {
                refEmptyMessage.current = false;
             }
-            if (items?.length === 0 && isFirstChat) {
-               publishEvent(INIT_WELCOME_MESSAGE);
-            } else {
+            // if (items?.length === 0 && isFirstChat) {
+            //    publishEvent(INIT_WELCOME_MESSAGE);
+            // } else {
                const filterMessages = items
                   .filter((item) => item.createdAt)
                   .map((item) => {
@@ -176,10 +178,25 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   });
 
                setMessages(filterMessages as any);
-            }
+            // }
          })();
       }
    }, [sessionId]);
+   
+   useEffect(() => {
+      if (sessionId) {
+         (async () => {
+            const items = await chatAgentDatabase.loadChatItems(sessionId);
+
+            if (items?.length === 0 && isFirstChat && isRunning) {
+               setTimeout(() => {
+                  publishEvent(INIT_WELCOME_MESSAGE);
+               }, 2000);
+            }
+         })();
+      }
+   }, [sessionId, isRunning]);
+   
 
    useEffect(() => {
       // Check if we're in Electron
@@ -187,14 +204,11 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isElectron.current = true;
       }
 
-      if (threadId && isRunning) {
+      if (threadId) {
          refLoadChatItems.current = true;
-
-         setTimeout(() => {
-            initialLoadChatItems();
-         }, 3000);
+         initialLoadChatItems();
       }
-   }, [threadId, isRunning]);
+   }, [threadId]);
 
    const lastMessage = messages[messages.length - 1];
    const isStopReceiving = lastMessage?.status === "receiving" || lastMessage?.status === "waiting";
@@ -280,14 +294,14 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          //       })
          //    );
          // }, 5000);
-         setTimeout(() => {
-            dispatch(
-               removeTaskItem({
-                  id: threadId,
-                  taskItem: task,
-               })
-            );
-         }, 0);
+         // setTimeout(() => {
+         //    dispatch(
+         //       removeTaskItem({
+         //          id: threadId,
+         //          taskItem: task,
+         //       })
+         //    );
+         // }, 0);
          // dispatch(
          //    removeTaskItem({
          //       id: threadId,

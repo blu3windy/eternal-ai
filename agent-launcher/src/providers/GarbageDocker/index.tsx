@@ -74,9 +74,9 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
    const shouldSkipAgent = async (activeAgent: ActiveAgent, selectedAgent?: IAgentToken) => {
       const containerName = getAgentContainerName(activeAgent.agent);
       const isInWhiteList = await isContainerInWhiteList(containerName);
-      const isSelectedAgent = compareString(activeAgent.agent.agent_id, selectedAgent?.agent_id);
+      const isSelectedAgent = compareString(activeAgent.agent?.agent_id, selectedAgent?.agent_id);
       const hasPendingTasks = pendingTasksRef.current.find(task => 
-         compareString(task.agent.agent_id, activeAgent.agent.agent_id) 
+         compareString(task.agent?.agent_id, activeAgent.agent?.agent_id) 
          && task.status === 'processing'
       );
       return Boolean(isInWhiteList || isSelectedAgent || hasPendingTasks);
@@ -129,7 +129,7 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
                }
             } else if (remandTimeMinutes < -10) {
                console.log('LEON checkInactiveContainers remove agent: ', getAgentContainerName(activeAgent.agent));
-               removeActiveAgent(activeAgent.agent.agent_id);
+               removeActiveAgent(activeAgent.agent?.agent_id);
             }
          } else {
             runningAgents.push(activeAgent.agent);
@@ -152,13 +152,13 @@ const GarbageProvider: React.FC<PropsWithChildren> = ({ children }) => {
       const dependRunningAgents: IAgentToken[] = uniqBy(tasks.flat(), 'agent_id');
 
       const requestStopAgentsFilter = requestStopAgents.filter(agent => {
-         const isDepend = dependRunningAgents.some(dependAgent => compareString(dependAgent.agent_id, agent.agent_id));
+         const isDepend = dependRunningAgents.some(dependAgent => compareString(dependAgent?.agent_id, agent?.agent_id));
          return !isDepend;
       });
 
       for (const agent of requestStopAgentsFilter) {
          await stopAgent(agent);
-         removeActiveAgent(agent.agent_id);
+         removeActiveAgent(agent?.agent_id);
       }
    };
 

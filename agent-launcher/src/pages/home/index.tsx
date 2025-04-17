@@ -64,8 +64,8 @@ const HandleHome = () => {
          >
             <Flex
                as={motion.div}
-               w={"clamp(600px, 81%, 1200px)"}
-               mx={"auto"}
+               // w={"clamp(600px, 81%, 1200px)"}
+               // mx={"auto"}
                // initial={{ opacity: 0 }}
                animate={{ opacity: 1 }}
             >

@@ -1,4 +1,4 @@
-import { Box } from "@chakra-ui/react";
+import { Box, Flex } from "@chakra-ui/react";
 import AgentDetail from "@pages/home/chat-agent/AgentDetail";
 import BackupPrivateKey from "@pages/home/chat-agent/BackupPrivateKey";
 import ChatBox from "@pages/home/chat-agent/ChatAgent/components/ChatBox";
@@ -9,6 +9,8 @@ import { useContext } from "react";
 import s from "./styles.module.scss";
 import AgentTopInfo from "./AgentTopInfo";
 import useAgentState from "../provider/useAgentState";
+import BaseModal from "@components/BaseModal";
+import RatingForm from "./Rating/RatingForm";
 
 function ChatAgent() {
    const {
@@ -29,7 +31,10 @@ function ChatAgent() {
 
    if (isSearchMode && showSearchDetail) {
       return (
-         <Box className={s.container}>
+         <Box className={s.container}
+            w="clamp(600px, 81%, 1200px)"
+            mx={'auto'}
+         >
             <AgentDetail />
          </Box>
       );
@@ -44,7 +49,10 @@ function ChatAgent() {
                <ChatBox />
             </Box>
          ) : (
-            <>
+            <Box
+               w="clamp(600px, 81%, 1200px)"
+               mx={'auto'}
+            >
                {
                   showBackupPrvKey ? (
                      <BackupPrivateKey />
@@ -60,8 +68,16 @@ function ChatAgent() {
                      </>
                   )
                }
-            </>
+            </Box>
          )}
+         {/* <BaseModal
+            isShow={true}
+            onHide={() => {}}
+         >
+            <RatingForm
+               onClose={() => {}}
+            />
+         </BaseModal> */}
       </Box>
    );
 }

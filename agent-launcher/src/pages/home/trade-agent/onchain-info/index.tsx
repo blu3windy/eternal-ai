@@ -70,7 +70,7 @@ const AgentOnChainInfo = () => {
                {"AI-721"}
             </Text>
          </Flex>
-         <Flex className={s.rowData}>
+         {/* <Flex className={s.rowData}>
             <Text className={s.left}>Token Contract Address</Text>
             <Text
                target="_blank"
@@ -84,7 +84,7 @@ const AgentOnChainInfo = () => {
             >
                {formatAddressCenter(selectedAgent?.token_address!)}
             </Text>
-         </Flex>
+         </Flex> */}
          <Flex className={s.rowData}>
             <Text className={s.left}>Chain</Text>
             <Text className={s.right}>{selectedAgent?.token_network_name}</Text>
