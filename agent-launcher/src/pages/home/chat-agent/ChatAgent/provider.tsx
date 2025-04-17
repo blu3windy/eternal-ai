@@ -125,9 +125,9 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
             if (items.length > 0) {
                refEmptyMessage.current = false;
             }
-            if (items?.length === 0 && isFirstChat) {
-               publishEvent(INIT_WELCOME_MESSAGE);
-            } else {
+            // if (items?.length === 0 && isFirstChat) {
+            //    publishEvent(INIT_WELCOME_MESSAGE);
+            // } else {
                const filterMessages = items
                   .filter((item) => item.createdAt)
                   .map((item) => {
@@ -178,10 +178,25 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
                   });
 
                setMessages(filterMessages as any);
-            }
+            // }
          })();
       }
    }, [sessionId]);
+   
+   useEffect(() => {
+      if (sessionId) {
+         (async () => {
+            const items = await chatAgentDatabase.loadChatItems(sessionId);
+
+            if (items?.length === 0 && isFirstChat && isRunning) {
+               setTimeout(() => {
+                  publishEvent(INIT_WELCOME_MESSAGE);
+               }, 2000);
+            }
+         })();
+      }
+   }, [sessionId, isRunning]);
+   
 
    useEffect(() => {
       // Check if we're in Electron
@@ -189,14 +204,11 @@ export const ChatAgentProvider = ({ children }: PropsWithChildren) => {
          isElectron.current = true;
       }
 
-      if (threadId && isRunning) {
+      if (threadId) {
          refLoadChatItems.current = true;
-
-         setTimeout(() => {
-            initialLoadChatItems();
-         }, 3000);
+         initialLoadChatItems();
       }
-   }, [threadId, isRunning]);
+   }, [threadId]);
 
    const lastMessage = messages[messages.length - 1];
    const isStopReceiving = lastMessage?.status === "receiving" || lastMessage?.status === "waiting";
