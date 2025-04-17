@@ -148,11 +148,11 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
 
    const thinkingContent = useMemo(() => {
       try {
-         return messageContent.match(THINK_TAG_REGEX)?.[0]?.replace(/<\/?think>/g, '');
+         return message.type === 'ai' ? messageContent.match(THINK_TAG_REGEX)?.[0]?.replace(/<\/?think>/g, '') : null;
       } catch (error) {
          return null;
       }
-   }, [messageContent]);
+   }, [messageContent, message.type]);
 
    const renderMessage = useMemo(() => {
       return messageContent
@@ -370,8 +370,8 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                   </Flex>
                </Flex>
             )}
-            {renderThinkingContent()}
-            {message.type === 'human' || !!renderMessage && (
+            {message.type === 'ai' && renderThinkingContent()}
+            {!!renderMessage && (
                <Box
                   className={cs(s.content, { [s.question]: !message?.is_reply }, { [s.reply]: message?.is_reply }, { [s.failed]: message?.status === "failed" })}
                   alignSelf={message?.is_reply ? "flex-start" : "flex-end"}
