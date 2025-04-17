@@ -10,7 +10,7 @@ import s from "./ChatMessage.module.scss";
 import { WaitingAnimation } from "@components/ChatMessage/WaitingForGenerate/WaitingForGenerateText";
 import CustomMarkdown from "@components/CustomMarkdown";
 import { COMPUTER_USE_TAG_REGEX, FILES_TAG_REGEX, IFRAME_LINK_DATA_REGEX, IMAGE_SLIDER_TAG_REGEX, IMAGE_SLIDE_ITEM_TAG_REGEX, MARKDOWN_TAGS, THINK_TAG_REGEX } from "@components/CustomMarkdown/constants";
-import ProcessingTaskModal from "@pages/home/list-agent/BottomBar/ProcessingTaskModal";
+import ProcessingTaskModal, { ProcessingTaskModalId } from "@pages/home/list-agent/BottomBar/ProcessingTaskModal";
 import { AgentContext } from "@pages/home/provider/AgentContext";
 import { openWithUrl } from "@stores/states/floating-web-view/reducer";
 import { compareString } from "@utils/string.ts";
@@ -229,7 +229,8 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                   dispatch(changeLayout({
                      isOpenAgentBar: true,
                      isOpenRightBar: true,
-                     rightBarView: <ProcessingTaskModal />
+                     rightBarView: <ProcessingTaskModal />,
+                     rightBarId: ProcessingTaskModalId
                   }))
                }}>here</Text>.</Text>
             )}

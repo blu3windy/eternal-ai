@@ -27,6 +27,8 @@ const TaskStatusText = {
    [TaskStatus.Failed]: 'Failed',
 };
 
+export const ProcessingTaskModalId = 'processing-task-modal';
+
 function TaskItemRenderer({ task, isLast, onRemoveTask }: { task: TaskItem; isLast: boolean; onRemoveTask: (taskId: string) => void }) {
    // useEffect(() => {
    //    if (task.status === "done" || task.status === "failed") {
@@ -165,7 +167,8 @@ function ProcessingTaskModal() {
                dispatch(changeLayout({
                   isOpenAgentBar: true,
                   isOpenRightBar: false,
-                  rightBarView: undefined
+                  rightBarView: undefined,
+                  rightBarId: undefined
                }))
             }}>
                {totalPendingTasks > 0 ? `${totalPendingTasks} tasks processing` : ''}

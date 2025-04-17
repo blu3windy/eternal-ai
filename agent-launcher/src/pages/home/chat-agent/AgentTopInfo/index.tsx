@@ -18,7 +18,7 @@ import InfoTooltip from '@components/InfoTooltip';
 import { BASE_CHAIN_ID } from '@constants/chains';
 import CAgentContract from '@contract/agent';
 import DeleteAgentModal from '@pages/home/list-agent/AgentMonitor/DeleteAgentModal';
-import ProcessingTaskModal from '@pages/home/list-agent/BottomBar/ProcessingTaskModal';
+import ProcessingTaskModal, { ProcessingTaskModalId } from '@pages/home/list-agent/BottomBar/ProcessingTaskModal';
 import { AgentType, SYSTEM_AGENTS } from '@pages/home/list-agent/constants';
 import { AgentContext } from '@pages/home/provider/AgentContext';
 import TradeAgent from '@pages/home/trade-agent';
@@ -429,7 +429,8 @@ const AgentTopInfo = () => {
                         dispatch(changeLayout({
                            isOpenAgentBar: true,
                            isOpenRightBar: true,
-                           rightBarView: <ProcessingTaskModal />
+                           rightBarView: <ProcessingTaskModal />,
+                           rightBarId: ProcessingTaskModalId
                         }))
                      }}>
                         {totalPendingTasks ? `${totalPendingTasks} tasks processing` : ''}

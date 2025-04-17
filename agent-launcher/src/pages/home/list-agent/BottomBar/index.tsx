@@ -21,7 +21,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import AddTestAgent from "../AddTestAgent";
 import AgentMonitor from "../AgentMonitor";
-import ProcessingTaskModal from "./ProcessingTaskModal";
+import ProcessingTaskModal, { ProcessingTaskModalId } from "./ProcessingTaskModal";
 import s from "./styles.module.scss";
 import NewsModal from "./NewsModal";
 import { MonitorContext } from "@providers/Monitor/MonitorContext";
@@ -246,13 +246,14 @@ const BottomBar = ({ onAddAgentSuccess }: { onAddAgentSuccess: (address: string)
                               dispatch(changeLayout({
                                  isOpenAgentBar: true,
                                  isOpenRightBar: true,
-                                 rightBarView: <ProcessingTaskModal />
+                                 rightBarView: <ProcessingTaskModal />,
+                                 rightBarId: ProcessingTaskModalId
                               }))
                            }}
                            className={s.menuItem}
                         >
                            <ProcessingTaskIcon />
-                           {totalPendingTasks > 0 ? `${totalPendingTasks} tasks processing` : 'Tasks processing'}
+                           Task processing{totalPendingTasks > 0 ? ` (${totalPendingTasks})` : ''}
                         </Button>
                         <Box w="100%" height={'45px'}>
                            <SelectModel showDescription={false} />
