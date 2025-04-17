@@ -371,7 +371,7 @@ const ChatMessage = ({ messages, message, ref, isLast, onRetryErrorMessage, isSe
                </Flex>
             )}
             {message.type === 'ai' && renderThinkingContent()}
-            {!!renderMessage && (
+            {(message.type === 'human' || !!renderMessage) && (
                <Box
                   className={cs(s.content, { [s.question]: !message?.is_reply }, { [s.reply]: message?.is_reply }, { [s.failed]: message?.status === "failed" })}
                   alignSelf={message?.is_reply ? "flex-start" : "flex-end"}
