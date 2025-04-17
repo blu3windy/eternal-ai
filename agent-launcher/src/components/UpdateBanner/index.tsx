@@ -61,8 +61,8 @@ const UpdateBanner = () => {
         
                 🎉
                 <Box>
-                   <Text fontWeight={700} fontSize={"16px"}>Update completed!</Text>
-                   <Text fontSize={"12px"} opacity={0.7}>Click to restart and apply the latest changes.</Text>
+                   <Text fontWeight={700} fontSize={"16px"}>NEW UPDATES AVAILABLE</Text>
+                   <Text fontSize={"12px"} opacity={0.7}>Click To restart and apply the latest changes</Text>
                 </Box>
            
 
