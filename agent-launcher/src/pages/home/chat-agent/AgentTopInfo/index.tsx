@@ -40,6 +40,7 @@ import ButtonChatCreate from "./ButtonChatCreate";
 import ButtonChatHistory from "./ButtonChatHistory";
 import AgentHeaderInfo from './Header/HeaderInfo';
 import s from './styles.module.scss';
+import { labelAmountOrNumberAdds } from '@utils/format';
 
 const AgentTopInfo = () => {
    const {
@@ -433,7 +434,7 @@ const AgentTopInfo = () => {
                            rightBarId: ProcessingTaskModalId
                         }))
                      }}>
-                        {totalPendingTasks ? `${totalPendingTasks} tasks processing` : ''}
+                        {totalPendingTasks ? `${totalPendingTasks} task${labelAmountOrNumberAdds(totalPendingTasks)} processing` : ''}
                      </Button>
                   </Flex>
                )

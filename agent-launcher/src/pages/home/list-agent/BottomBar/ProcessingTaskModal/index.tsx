@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import s from "./styles.module.scss";
 import { removeTaskItem } from "@stores/states/agent-chat/reducer";
+import { labelAmountOrNumberAdds } from "@utils/format";
 
 dayjs.extend(duration);
 
@@ -171,7 +172,7 @@ function ProcessingTaskModal() {
                   rightBarId: undefined
                }))
             }}>
-               {totalPendingTasks > 0 ? `${totalPendingTasks} tasks processing` : ''}
+               {totalPendingTasks > 0 ? `${totalPendingTasks} task${labelAmountOrNumberAdds(totalPendingTasks)} processing` : ''}
             </Button>
          </Flex>
 
