@@ -147,7 +147,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			eventResp.Transfer = eventTransfers
 			eventResp.NftTransfer = []*ethapi.NftTransferEventResp{}
 			eventResp.ERC1155Transfer = []*ethapi.ERC1155ransferEventResp{}
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				err := s.TokenTransferEventsByTransactionV2(
 					ctx,
 					networkID,
@@ -216,45 +216,54 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 				}
 			}
 		}
-		{
-			poolMap := map[string]bool{}
-			for _, event := range eventResp.Transfer {
-				poolMap[strings.ToLower(event.To)] = true
-			}
-			poolArr := []string{}
-			for pool := range poolMap {
-				poolArr = append(poolArr, pool)
-			}
-			if len(poolArr) > 0 {
-				lps, err := s.dao.FindLaunchpad(
-					daos.GetDBMainCtx(ctx),
-					map[string][]any{
-						"address in (?)": {poolArr},
-					},
-					map[string][]any{},
-					[]string{},
-					0,
-					999999,
-				)
-				if err != nil {
-					return errs.NewError(err)
-				}
-				poolMap = map[string]bool{}
-				for _, lp := range lps {
-					poolMap[strings.ToLower(lp.Address)] = true
-				}
-			}
-			for _, event := range eventResp.Transfer {
-				if poolMap[strings.ToLower(event.To)] {
-					err := s.CreateErc20TokenTransferEventLaunchpad(ctx, networkID, event)
-					if err != nil {
-						return errs.NewError(err)
-					}
-				}
+		// {
+		// 	poolMap := map[string]bool{}
+		// 	for _, event := range eventResp.Transfer {
+		// 		poolMap[strings.ToLower(event.To)] = true
+		// 	}
+		// 	poolArr := []string{}
+		// 	for pool := range poolMap {
+		// 		poolArr = append(poolArr, pool)
+		// 	}
+		// 	if len(poolArr) > 0 {
+		// 		lps, err := s.dao.FindLaunchpad(
+		// 			daos.GetDBMainCtx(ctx),
+		// 			map[string][]any{
+		// 				"address in (?)": {poolArr},
+		// 			},
+		// 			map[string][]any{},
+		// 			[]string{},
+		// 			0,
+		// 			999999,
+		// 		)
+		// 		if err != nil {
+		// 			return errs.NewError(err)
+		// 		}
+		// 		poolMap = map[string]bool{}
+		// 		for _, lp := range lps {
+		// 			poolMap[strings.ToLower(lp.Address)] = true
+		// 		}
+		// 	}
+		// 	for _, event := range eventResp.Transfer {
+		// 		if poolMap[strings.ToLower(event.To)] {
+		// 			err := s.CreateErc20TokenTransferEventLaunchpad(ctx, networkID, event)
+		// 			if err != nil {
+		// 				return errs.NewError(err)
+		// 			}
+		// 		}
+		// 	}
+		// }
+	}
+	// handle vibe token factory token deployed events
+	{
+		for _, event := range eventResp.VibeTokenFactoryTokenDeployed {
+			err := s.VibeTokenFactoryTokenDeployedEvent(ctx, networkID, event)
+			if err != nil {
+				retErr = errs.MergeError(retErr, err)
 			}
 		}
 	}
-	//
+	// handle meme pool created events
 	{
 		var baseTokenETH, baseTokenEAI string
 		if s.conf.ExistsedConfigKey(networkID, "weth9_contract_address") {
@@ -308,6 +317,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			}
 		}
 	}
+	// handle meme swap events
 	{
 		poolMap := map[string]bool{}
 		for _, event := range eventResp.MemeSwap {
@@ -351,6 +361,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 		}
 	}
 	if !forScan {
+		// handle meme increase liquidity events
 		for _, event := range eventResp.MemeIncreaseLiquidity {
 			err := s.UpdateMemeLiquidityPosition(
 				ctx, networkID, event,
@@ -360,6 +371,7 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			}
 		}
 	}
+	// handle system prompt manager new tokens events
 	{
 		for _, event := range eventResp.SystemPromptManagerNewTokens {
 			err := s.SystemPromptManagerNewTokenEvent(
@@ -386,17 +398,24 @@ func (s *Service) MemeEventsByTransactionEventResp(ctx context.Context, networkI
 			}
 		}
 	}
+	// handle agent created events
 	{
-		for _, event := range eventResp.OrderpaymentOrderPaids {
-			err := s.OrderpaymentOrderPaidEvent(
-				ctx, networkID, event,
-			)
+		for _, event := range eventResp.AgentCreated {
+			err := s.AgentFactoryAgentCreatedEvent(ctx, networkID, event)
 			if err != nil {
 				retErr = errs.MergeError(retErr, err)
 			}
 		}
 	}
-
+	// handle agent upgradeable code pointer created events
+	{
+		for _, event := range eventResp.CodePointerCreated {
+			err := s.HandleAgentUpgradeableCodePointerCreated(ctx, event)
+			if err != nil {
+				retErr = errs.MergeError(retErr, err)
+			}
+		}
+	}
 	return retErr
 }
 
@@ -835,25 +854,36 @@ func (s *Service) CreateErc20TokenTransferEvent(ctx context.Context, networkID u
 						}
 					}
 					{
-						err = s.LaunchpadErc20TokenTransferEvent(tx, networkID, event)
-						if err != nil {
-							return errs.NewError(err)
-						}
-					}
-					{
 						switch networkID {
-						case models.ETHEREUM_CHAIN_ID,
-							models.BASE_CHAIN_ID:
+						case models.BASE_CHAIN_ID:
 							{
-								eventId := fmt.Sprintf("%d_%s_%d", networkID, event.TxHash, event.Index)
-								s.ProcessDeposit(ctx, networkID, eventId, event.TxHash, toAddress, event.Value)
-								err = s.LaunchpadErc20TokenTransferEvent(tx, networkID, event)
+								err = s.UtilityTwitterHandleDeposit(tx, networkID, event)
 								if err != nil {
 									return errs.NewError(err)
 								}
 							}
 						}
 					}
+					// {
+					// 	err = s.LaunchpadErc20TokenTransferEvent(tx, networkID, event)
+					// 	if err != nil {
+					// 		return errs.NewError(err)
+					// 	}
+					// }
+					// {
+					// 	switch networkID {
+					// 	case models.ETHEREUM_CHAIN_ID,
+					// 		models.BASE_CHAIN_ID:
+					// 		{
+					// 			eventId := fmt.Sprintf("%d_%s_%d", networkID, event.TxHash, event.Index)
+					// 			s.ProcessDeposit(ctx, networkID, eventId, event.TxHash, toAddress, event.Value)
+					// 			err = s.LaunchpadErc20TokenTransferEvent(tx, networkID, event)
+					// 			if err != nil {
+					// 				return errs.NewError(err)
+					// 			}
+					// 		}
+					// 	}
+					// }
 					{
 						user, err := s.dao.FirstUser(
 							tx,
@@ -1097,7 +1127,7 @@ func (s *Service) CreateSolanaTokenTransferEvent(ctx context.Context, networkID 
 }
 
 func (s *Service) DeleteFilterAddrs(ctx context.Context, networkID uint64) error {
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		err := s.DeleteRedisCachedWithKey(fmt.Sprintf("GetFilterAddrs_%d", networkID))
 		if err == nil {
 			break
@@ -1109,36 +1139,20 @@ func (s *Service) DeleteFilterAddrs(ctx context.Context, networkID uint64) error
 func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]string, error) {
 	addrs := []string{}
 	err := s.RedisCached(
-		fmt.Sprintf("GetFilterAddrs_%d", networkID),
+		fmt.Sprintf("GetFilterAddrsV1_%d", networkID),
 		true,
 		5*time.Minute,
 		&addrs,
 		func() (any, error) {
 			addrs := []string{}
-			memes, err := s.dao.FindMeme(
+			memeAddresses, err := s.dao.FindAllMemeTokenAddress(
 				daos.GetDBMainCtx(ctx),
-				map[string][]any{
-					"network_id = ?": {networkID},
-				},
-				map[string][]any{},
-				[]string{},
-				0,
-				999999,
+				networkID,
 			)
 			if err != nil {
 				return nil, errs.NewError(err)
 			}
-			for _, v := range memes {
-				if v.TokenAddress != "" {
-					addrs = append(addrs, v.TokenAddress)
-				}
-				if v.Pool != "" {
-					addrs = append(addrs, v.Pool)
-				}
-				if v.UniswapPool != "" {
-					addrs = append(addrs, v.UniswapPool)
-				}
-			}
+			addrs = append(addrs, memeAddresses...)
 			if s.conf.ExistsedConfigKey(networkID, "meme_position_mamanger_address") {
 				addrs = append(addrs, s.conf.GetConfigKeyString(networkID, "meme_position_mamanger_address"))
 			}
@@ -1160,8 +1174,24 @@ func (s *Service) GetFilterAddrs(ctx context.Context, networkID uint64) ([]strin
 			if s.conf.ExistsedConfigKey(networkID, "order_payment_contract_address") {
 				addrs = append(addrs, s.conf.GetConfigKeyString(networkID, "order_payment_contract_address"))
 			}
+			if s.conf.ExistsedConfigKey(networkID, "agent_factory_address") {
+				address := s.conf.GetConfigKeyString(networkID, "agent_factory_address")
+				if address != "" {
+					addrs = append(addrs, address)
+				}
+			}
+			if s.conf.ExistsedConfigKey(networkID, "vibe_token_factory_address") {
+				addrs = append(addrs, s.conf.GetConfigKeyString(networkID, "vibe_token_factory_address"))
+			}
+			agentAddresses, err := s.dao.FindAllAgentAddress(
+				daos.GetDBMainCtx(ctx),
+				networkID,
+			)
+			if err != nil {
+				return nil, errs.NewError(err)
+			}
+			addrs = append(addrs, agentAddresses...)
 			return addrs, nil
-
 		},
 	)
 	if err != nil {

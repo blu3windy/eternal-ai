@@ -283,9 +283,16 @@ type Config struct {
 		CreatorRewardsAdmin      string  `json:"creator_rewards_admin"`
 	} `json:"clanker"`
 	Privy struct {
-		AppID     string `json:"app_id"`
-		AppSecret string `json:"app_secret"`
+		AppID     string   `json:"app_id"`
+		AppSecret string   `json:"app_secret"`
+		AppIDList []string `json:"app_id_list"`
 	} `json:"privy"`
+	PrivyEx map[string]string `json:"privy_ex"`
+	Robot   struct {
+		TokenAdminAddress string `json:"token_admin_address"`
+		TokenSupply       uint64 `json:"token_supply"`
+	} `json:"robot"`
+	LighthouseUploadBinaryUrl string `json:"lighthouse_upload_binary_url"`
 }
 
 func (cf *Config) ExistsedConfigKey(networkID uint64, name string) bool {
@@ -308,14 +315,14 @@ func (cf *Config) GetConfigKeyString(networkID uint64, name string) string {
 	networkIDStr := fmt.Sprintf("%d", networkID)
 	n, ok := cf.Networks[networkIDStr]
 	if !ok {
-		panic("not found")
+		panic(fmt.Sprintf("not found %d %s", networkID, name))
 	}
 	v, ok := n[name]
 	if !ok {
-		panic("not found")
+		panic(fmt.Sprintf("not found %d %s", networkID, name))
 	}
 	if v == "" {
-		panic("not found")
+		panic(fmt.Sprintf("not found %d %s", networkID, name))
 	}
 	return v
 }
@@ -324,7 +331,7 @@ func (cf *Config) GetConfigKeyBool(networkID uint64, name string) bool {
 	networkIDStr := fmt.Sprintf("%d", networkID)
 	n, ok := cf.Networks[networkIDStr]
 	if !ok {
-		panic("not found")
+		panic(fmt.Sprintf("not found %d %s", networkID, name))
 	}
 	v, ok := n[name]
 	if !ok {

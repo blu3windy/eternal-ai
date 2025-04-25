@@ -1,10 +1,15 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/jpeg"
 	io "io"
 	"net/http"
 	"regexp"
@@ -26,6 +31,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/twitter"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
+	"github.com/nfnt/resize"
 )
 
 // func (s *Service) JobScanAgentTwitterPostForCreateAgent(ctx context.Context) error {
@@ -166,11 +172,35 @@ func (s *Service) ScanAgentTwitterPostForGenerateVideo(ctx context.Context, agen
 	}
 	if twitterInfo != nil {
 		err = func() error {
-			tweetMentions, err := s.twitterWrapAPI.GetListUserMentions(agent.TwitterID, "", twitterInfo.AccessToken, 50)
+			tweetMentions, err := s.twitterWrapAPI.GetListUserMentions(agent.TwitterID, "", twitterInfo.AccessToken, 100)
 			if err != nil {
 				return errs.NewError(err)
 			}
-
+			recentSearch, err := s.twitterWrapAPI.SearchRecentTweet(fmt.Sprintf("@%v", agent.TwitterUsername), "", twitterInfo.AccessToken, 100)
+			mentionIds := map[string]bool{}
+			for _, v := range tweetMentions.Tweets {
+				mentionIds[v.ID] = true
+			}
+			if err == nil {
+				for _, v := range recentSearch.LookUps {
+					if len(v.Tweet.ReferencedTweets) > 0 {
+						retweeted := false
+						for _, tweetType := range v.Tweet.ReferencedTweets {
+							if tweetType.Type == "retweeted" {
+								retweeted = true
+								break
+							}
+						}
+						if retweeted {
+							continue
+						}
+					}
+					if v.Tweet.AuthorID != twitterInfo.TwitterID && !mentionIds[v.Tweet.ID] {
+						tweetMentions.Tweets = append(tweetMentions.Tweets, v.Tweet)
+						mentionIds[v.Tweet.ID] = true
+					}
+				}
+			}
 			sort.Slice(tweetMentions.Tweets, func(i, j int) bool {
 				return tweetMentions.Tweets[i].CreatedAt < tweetMentions.Tweets[j].CreatedAt
 			})
@@ -519,6 +549,27 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 			tweetId, v.User.UserName, fullText), s.conf.VideoFailSyntaxTelegramAlert)
 		return nil, nil
 	}
+	if source != "admin_api" {
+		limitPost, err := s.dao.FindAgentTwitterPost(
+			tx,
+			map[string][]interface{}{
+				"twitter_id = ?":  {v.User.ID},
+				"created_at >= ?": {time.Now().Add(-24 * time.Hour)},
+			},
+			map[string][]interface{}{},
+			[]string{},
+			0, 10,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if len(limitPost) >= 10 {
+			s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[SKIP_LIMIT_GEN_VIDEO] gen video, "+
+				"twitter_user=%v tweet_id=%v,  total_24h :%v,post :%v ",
+				v.User.UserName, v.Tweet.ID, fullText, len(limitPost)))
+			return nil, nil
+		}
+	}
 
 	imageToVideoInfo := s.DetectTweetIsImageToVideo(twitterInfo, v)
 	entityType := models.AgentTwitterPostTypeText2Video
@@ -534,6 +585,10 @@ func (s *Service) HandleGenerateVideoWithSpecificTweet(tx *gorm.DB, handleReques
 			} else {
 				break
 			}
+		}
+		extractMediaContent, err = s.ModifyTwitterImageRatio(extractMediaContent)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -630,7 +685,7 @@ func (s *Service) CreateAgentTwitterPostForGenerateVideo(tx *gorm.DB, agentInfoI
 		_ = s.SetRedisCachedWithKey(
 			redisKeyToCheckHandled,
 			tweetId,
-			24*time.Hour,
+			1*time.Hour,
 		)
 	}
 
@@ -654,7 +709,7 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideo(ctx context.Context) er
 					map[string][]interface{}{},
 					[]string{},
 					0,
-					5,
+					100,
 				)
 				if err != nil {
 					return errs.NewError(err)
@@ -794,6 +849,56 @@ func (s *Service) JobAgentTwitterScanResultGenerateVideoMagicPrompt(ctx context.
 	}
 	return nil
 }
+
+func (s *Service) JobAgentTwitterPostCreateClankerToken(ctx context.Context) error {
+	err := s.JobRunCheck(
+		ctx,
+		"JobAgentTwitterPostCreateClankerToken",
+		func() error {
+			var retErr error
+			{
+				twitterPosts, err := s.dao.FindAgentTwitterPost(
+					daos.GetDBMainCtx(ctx),
+					map[string][]interface{}{
+						"agent_info_id in (?)": {[]uint{s.conf.VideoAiAgentInfoId}},
+						"status = ?":           {models.AgentTwitterPostStatusNew},
+						"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
+						"token_address = ?":    {""},
+					},
+					map[string][]interface{}{
+						"AgentInfo":             {},
+						"AgentInfo.TwitterInfo": {},
+					},
+					[]string{
+						"post_at desc",
+					},
+					0,
+					5,
+				)
+				if err != nil {
+					return errs.NewError(err)
+				}
+				if len(twitterPosts) > 0 {
+					for _, twitterPost := range twitterPosts {
+						var err error
+						if s.conf.Clanker.IsCreateToken {
+							err = s.CreateClankerTokenForVideoByPostID(ctx, twitterPost.ID)
+							if err != nil {
+								retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
+							}
+						}
+					}
+				}
+			}
+			return retErr
+		},
+	)
+	if err != nil {
+		return errs.NewError(err)
+	}
+	return nil
+}
+
 func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 	err := s.JobRunCheck(
 		ctx,
@@ -807,8 +912,12 @@ func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 						"agent_info_id in (?)": {[]uint{s.conf.VideoAiAgentInfoId}},
 						"status = ?":           {models.AgentTwitterPostStatusNew},
 						"post_type = ?":        {models.AgentSnapshotPostActionTypeGenerateVideo},
+						"token_address != '' and token_address is not null": {},
 					},
-					map[string][]interface{}{},
+					map[string][]interface{}{
+						"AgentInfo":             {},
+						"AgentInfo.TwitterInfo": {},
+					},
 					[]string{
 						"post_at desc",
 					},
@@ -818,17 +927,15 @@ func (s *Service) JobAgentTwitterPostGenerateVideo(ctx context.Context) error {
 				if err != nil {
 					return errs.NewError(err)
 				}
-				for _, twitterPost := range twitterPosts {
-					if s.conf.Clanker.IsCreateToken {
-						err = s.CreateClankerTokenForVideoByPostID(ctx, twitterPost.ID)
+				if len(twitterPosts) > 0 {
+					s.UpdateTwitterAccessToken(ctx, twitterPosts[0].AgentInfo.TwitterInfo.ID)
+
+					for _, twitterPost := range twitterPosts {
+						err := s.AgentTwitterPostGenerateVideoByUserTweetId(ctx, twitterPost.ID)
 						if err != nil {
 							retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
 						}
-					}
 
-					err = s.AgentTwitterPostGenerateVideoByUserTweetId(ctx, twitterPost.ID)
-					if err != nil {
-						retErr = errs.MergeError(retErr, errs.NewErrorWithId(err, twitterPost.ID))
 					}
 				}
 			}
@@ -864,14 +971,15 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 
 					if twitterPost.Status == models.AgentTwitterPostStatusNew &&
 						twitterPost.PostType == models.AgentSnapshotPostActionTypeGenerateVideo &&
-						twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil {
+						twitterPost.AgentInfo != nil && twitterPost.AgentInfo.TwitterInfo != nil &&
+						twitterPost.TokenAddress != "" {
 
 						videoUrl := twitterPost.ImageUrl
 						mediaID := ""
 						if videoUrl != "" {
 							mediaID, err = s.twitterAPI.UploadVideo(models.GetImageUrl(videoUrl), []string{twitterPost.AgentInfo.TwitterID})
 							if err != nil {
-								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL] upload video to twitter err: %v ", err))
+								s.SendTeleVideoActivitiesAlert(fmt.Sprintf("[FAIL] upload video to twitter db_id:%v , err: %v ", twitterPost.ID, err))
 							}
 						}
 
@@ -886,7 +994,7 @@ func (s *Service) AgentTwitterPostGenerateVideoByUserTweetId(ctx context.Context
 
 									if s.conf.Clanker.IsCreateToken && twitterPost.TokenAddress != "" &&
 										twitterPost.TokenName != "" && twitterPost.TokenSymbol != "" {
-										contentReply = fmt.Sprintf("Hey @%v, here is your decentralized video.\n\nOnchain Video: basescan.org/tx/%v\n\nTicker $%s has been deployed.\n\n Contract address: %s\n\n Trade here: www.clanker.world/clanker/%s",
+										contentReply = fmt.Sprintf("Hey @%v, here is your decentralized video.\n\nOnchain Video: basescan.org/tx/%v\n\nTicker $%s has been deployed.\n\n Contract address: %s\n\n Trade here: https://www.clanker.world/clanker/%s",
 											twitterPost.TwitterUsername, twitterPost.SubmitSolutionTxHash, twitterPost.TokenSymbol, twitterPost.TokenAddress, twitterPost.TokenAddress)
 									}
 
@@ -1015,14 +1123,14 @@ func (s *Service) AgentTwitterPostSubmitVideoInferByID(ctx context.Context, agen
 							prompt := twitterPost.ExtractContent
 							if twitterPost.Type == models.AgentTwitterPostTypeImage2video {
 								model = "Wan-I2V"
-								if !strings.Contains(twitterPost.Content, "create video:") &&
+								/*if !strings.Contains(twitterPost.Content, "create video:") &&
 									!strings.Contains(twitterPost.Content, "create video :") {
 									videoMagicPrompt, err := s.GetVideoMagicPromptFromImage(ctx, twitterPost.ExtractContent, twitterPost.ExtractMediaContent)
 									if err != nil {
 										videoMagicPrompt = prompt
 									}
 									prompt = videoMagicPrompt
-								}
+								}*/
 								promptByte, _ := json.Marshal(map[string]interface{}{
 									"prompt": prompt,
 									"url":    twitterPost.ExtractMediaContent,
@@ -1422,9 +1530,15 @@ func (s *Service) ValidateTweetContentGenerateVideo(ctx context.Context, userNam
 		isGenerateVideo = true
 		index := strings.Index(inferContent, "create video :")
 		inferContent = fullText[index+len("create video :"):]
+	} else if strings.Contains(inferContent, fmt.Sprintf("%v", "create video")) {
+		isGenerateVideo = true
+		index := strings.Index(inferContent, "create video")
+		inferContent = fullText[index+len("create video"):]
 	}
 	inferContent = strings.TrimSpace(inferContent)
-
+	if len(inferContent) == 0 && isGenerateVideo {
+		inferContent = fullText
+	}
 	return &models.TweetParseInfo{
 		IsGenerateVideo:      isGenerateVideo,
 		GenerateVideoContent: strings.TrimSpace(inferContent),
@@ -1508,7 +1622,7 @@ func (s *Service) ValidateTweetContentGenerateVideoWithLLM2(ctx context.Context,
 		},
 		{
 			Role:    "user",
-			Content: fmt.Sprintf("Please think carefully and determine whether the content of the tweet/prompt is relevant to a request to create a video/animation/GIF. A tweet/prompt is considered a request to create a video when the content of the tweet/prompt clearly states the INTENT TO CREATE A VIDEO/ANIMATION/GIF for a specific content. NOTE: Link do not affect the content of the tweet/prompt.\r\n\r\n- If not, return: 'NONE'\r\n- If yes, extract only the most important content in the tweet/prompt while keeping the original content intact. If the content cannot be extracted, return to the original prompt:\r\n\r\n**RULES:**\r\n1.  **Focus on the core subject:** Identify the main object or scene in the prompt.\r\n2.  **Remove unnecessary descriptions:** Eliminate vague, redundant, or irrelevant words that do not significantly affect the generated video.\r\n3.  **Retain critical elements:** Keep essential aspects such as objects, style, lighting, colors, and composition.\r\n4.  **Use concise and clear language:** Rewrite the prompt in a clear and effective way that maximizes model accuracy.\r\n5.  The content of the extracted tweet MUST be the same as the original tweet content.\r\n6.  Return the result in JSON format with the \"optimized_prompt\" key.\r\n\r\n**EXAMPLE:**\r\nINPUT 1: \"create video the man in the photo smile in the rain\"\r\n\r\nOUTPUT 1: {\"optimized_prompt\": \"Man in the photo smiling in the rain\"}\r\n\r\n\r\nINPUT 2: \"the character fighting the monster is a woman\"\r\nOUTPUT 2: {\"optimized_prompt\": \"NONE\"}\r\n\r\nApply these rules to optimize prompts effectively.\r\n\r\n**Response Format**:\r\n- The answer should always be returned in the following **JSON format**:\r\n{\r\n  \"optimized_prompt\": \"\"\r\n}\r\nUser Query: %v", fullText),
+			Content: fmt.Sprintf("Please think carefully and determine whether the content of the tweet/prompt is relevant to a request to create a video/animation/GIF. A tweet/prompt is considered a request to create a video when the content of the tweet/prompt clearly states the INTENT TO CREATE A VIDEO/ANIMATION/GIF for a specific content. NOTE: Link do not affect the content of the tweet/prompt.\n\n- If not, return: 'NONE'\n- If yes, extract only the most important content in the tweet/prompt while keeping the original content intact. If the content cannot be extracted, return to the original prompt:\n\n**RULES:**\n1.  **Focus on the core subject:** Identify the main object or scene in the prompt.\n2.  **Remove unnecessary descriptions:** Eliminate vague, redundant, or irrelevant words that do not significantly affect the generated video.\n3.  **Retain critical elements:** Keep essential aspects such as objects, style, lighting, colors, and composition.\n4.  **Use concise and clear language:** Rewrite the prompt in a clear and effective way that maximizes model accuracy.\n5.  The content of the extracted tweet MUST be the same as the original tweet content.\n6.  If the specific content cannot be extracted from the prompt, return the original prompt.\n7.  Return the result in JSON format with the \"optimized_prompt\" key.\n\n**EXAMPLE:**\nINPUT 1: \"create video the man in the photo smile in the rain\"\n\nOUTPUT 1: {\"optimized_prompt\": \"Man in the photo smiling in the rain\"}\n\n\nINPUT 2: \"the character fighting the monster is a woman\"\nOUTPUT 2: {\"optimized_prompt\": \"NONE\"}\n\nApply these rules to optimize prompts effectively.\n\n**Response Format**:\n- The answer should always be returned in the following **JSON format**:\n{\n  \"optimized_prompt\": \"\"\n}\r\nUser Query: %v", fullText),
 		},
 	})
 
@@ -1662,6 +1776,77 @@ func (s *Service) DetectTweetIsImageToVideo(twitterInfo *models.TwitterInfo, ite
 		IsImageToVideo:     isImageToVideo,
 		LighthouseImageUrl: lighthouse.IPFSGateway + cid,
 	}
+}
+
+func (s *Service) ModifyTwitterImageRatio(imageUrl string) (string, error) {
+	res, err := http.Get(imageUrl)
+	if err != nil {
+		return "", err
+	}
+	if res.StatusCode != http.StatusOK {
+		return "", errors.New(res.Status)
+	}
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+	imageInfo, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return imageUrl, nil
+	}
+	width := float64(imageInfo.Bounds().Dx())
+	height := float64(imageInfo.Bounds().Dy())
+	ratio := height / width
+	if ratio <= 2.5 && ratio >= 0.4 {
+		return imageUrl, nil
+	}
+	newWidth := imageInfo.Bounds().Dx()
+	newHeight := newWidth * 2 / 5 // height = width/2.5
+	if width < height {
+		newHeight = imageInfo.Bounds().Dy()
+		newWidth = newHeight * 2 / 5 // width = height/2.5
+	}
+	resizedImg := resize.Resize(uint(newWidth), uint(newHeight), imageInfo, resize.Lanczos3)
+
+	filledImg := image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
+
+	dstRect := image.Rect(0, 0, resizedImg.Bounds().Dx(), resizedImg.Bounds().Dy())
+	draw.Draw(filledImg, filledImg.Bounds(), &image.Uniform{C: color.White}, image.Point{}, draw.Src) // Fill with white
+	draw.Draw(filledImg, dstRect, resizedImg, image.Point{}, draw.Over)
+	var buf bytes.Buffer
+	err = jpeg.Encode(&buf, filledImg, nil)
+	if err != nil {
+		return "", err
+	}
+	response, err := http.Post(s.conf.LighthouseUploadBinaryUrl, "", bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return "", errors.New(res.Status)
+	}
+	output, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+	type LightHouseResult struct {
+		Error string `json:"error"`
+		Data  string `json:"data"`
+	}
+	var result LightHouseResult
+	err = json.Unmarshal(output, &result)
+	if err != nil {
+		return "", err
+	}
+	if len(result.Error) > 0 {
+		return "", errors.New(result.Error)
+	}
+	if len(result.Data) == 0 {
+		return "", errors.New("can not upload image to lighthouse")
+	}
+	return strings.ReplaceAll(result.Data, "ipfs://", "https://gateway.lighthouse.storage/ipfs/"), err
 }
 
 func (s *Service) GetFirstImageFromTweet(twitterInfo *models.TwitterInfo, tweetID string) (*TweetImageToVideo, error) {

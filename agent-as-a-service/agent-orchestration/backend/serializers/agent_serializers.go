@@ -65,9 +65,34 @@ type AgentSnapshotMissionInfo struct {
 	LookupInterval      int                       `json:"lookup_interval"`
 }
 
+type AgentCategoryResp struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+func NewAgentCategoryResp(m *models.AgentCategory) *AgentCategoryResp {
+	if m == nil {
+		return nil
+	}
+	return &AgentCategoryResp{
+		ID:   m.ID,
+		Name: m.Name,
+	}
+}
+
+func NewAgentCategoryRespArry(arr []*models.AgentCategory) []*AgentCategoryResp {
+	resp := make([]*AgentCategoryResp, len(arr))
+	for i, m := range arr {
+		resp[i] = NewAgentCategoryResp(m)
+	}
+	return resp
+}
+
 type AgentInfoResp struct {
 	ID                        uint                        `json:"id"`
 	CreatedAt                 time.Time                   `json:"created_at"`
+	AgentCategoryID           uint                        `json:"agent_category_id"`
+	AgentCategory             *AgentCategoryResp          `json:"agent_category"`
 	TwitterInfoID             uint                        `json:"twitter_info_id"`
 	TwitterInfo               *TwitterInfoResp            `json:"twitter_info"`
 	AgentID                   string                      `json:"agent_id"`
@@ -134,6 +159,7 @@ type AgentInfoResp struct {
 	AgentKBId                 uint                      `json:"kb_id"`
 	DependAgents              string                    `json:"depend_agents"`
 	RequiredWallet            bool                      `json:"required_wallet"`
+	RequiredEnv               bool                      `json:"required_env"`
 	IsOnchain                 bool                      `json:"is_onchain"`
 	IsStreaming               bool                      `json:"is_streaming"`
 	IsCustomUi                bool                      `json:"is_custom_ui"`
@@ -141,6 +167,22 @@ type AgentInfoResp struct {
 	IsPublic                  bool                      `json:"is_public"`
 	DockerPort                string                    `json:"docker_port"`
 	RequiredInfo              string                    `json:"required_info"`
+	InstalledCount            int64                     `json:"installed_count"`
+	EnvExample                string                    `json:"env_example"`
+	DisplayName               string                    `json:"display_name"`
+	ShortDescription          string                    `json:"short_description"`
+	IsForceUpdate             bool                      `json:"is_force_update"`
+	CodeVersion               int                       `json:"code_version"`
+	RunStatus                 string                    `json:"run_status"`
+	Author                    string                    `json:"author"`
+	Rating                    float64                   `json:"rating"`
+	NumOfRating               int64                     `json:"num_of_rating"`
+	NumOfOneStar              int64                     `json:"num_of_one_star"`
+	NumOfTwoStar              int64                     `json:"num_of_two_star"`
+	NumOfThreeStar            int64                     `json:"num_of_three_star"`
+	NumOfFourStar             int64                     `json:"num_of_four_star"`
+	NumOfFiveStar             int64                     `json:"num_of_five_star"`
+	CodeLanguage              string                    `json:"code_language"`
 }
 
 type AgentTwitterPostResp struct {
@@ -252,6 +294,8 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 	resp := &AgentInfoResp{
 		ID:                   m.ID,
 		CreatedAt:            m.CreatedAt,
+		AgentCategoryID:      m.AgentCategoryID,
+		AgentCategory:        NewAgentCategoryResp(m.AgentCategory),
 		TwitterInfoID:        m.TwitterInfoID,
 		TwitterInfo:          NewTwitterInfoResp(m.TwitterInfo),
 		AgentContractID:      m.AgentContractID,
@@ -311,6 +355,23 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 		IsPublic:             m.IsPublic,
 		DockerPort:           m.DockerPort,
 		RequiredInfo:         m.RequiredInfo,
+		InstalledCount:       m.InstalledCount,
+		RequiredEnv:          m.RequiredEnv,
+		EnvExample:           m.EnvExample,
+		DisplayName:          m.DisplayName,
+		ShortDescription:     m.ShortDescription,
+		IsForceUpdate:        m.IsForceUpdate,
+		CodeVersion:          m.CodeVersion,
+		RunStatus:            m.RunStatus,
+		Author:               m.Author,
+		Rating:               m.Rating,
+		NumOfRating:          m.NumOfRating,
+		NumOfOneStar:         m.NumOfOneStar,
+		NumOfTwoStar:         m.NumOfTwoStar,
+		NumOfThreeStar:       m.NumOfThreeStar,
+		NumOfFourStar:        m.NumOfFourStar,
+		NumOfFiveStar:        m.NumOfFiveStar,
+		CodeLanguage:         m.GetCodeLanguage(),
 	}
 
 	if m.NftTokenImage != "" {
@@ -401,6 +462,16 @@ func NewAgentInfoResp(m *models.AgentInfo) *AgentInfoResp {
 	if len(m.AgentSnapshotMission) > 0 {
 		for _, item := range m.AgentSnapshotMission {
 			resp.AgentSnapshotMission = append(resp.AgentSnapshotMission, NewAgentSnapshotMissionResp(item))
+		}
+	}
+	switch m.AgentType {
+	case models.AgentInfoAgentTypeModel:
+		{
+			resp.RunStatus = "local"
+		}
+	case models.AgentInfoAgentTypeModelOnline:
+		{
+			resp.RunStatus = "online"
 		}
 	}
 	return resp

@@ -162,7 +162,7 @@ func (c *Client) MemeNonfungiblePositionManagerMint(contractAddr string, prkHex 
 	if err != nil {
 		return "", err
 	}
-	nonceAt, err := client.PendingNonceAt(context.Background(), pbkHex)
+	nonceAt, err := c.PendingNonceAt(context.Background(), pbkHex)
 	if err != nil {
 		return "", err
 	}
@@ -269,7 +269,7 @@ func (c *Client) MemeNonfungiblePositionManagerBurn(contractAddr string, adminPr
 	if err != nil {
 		return "", err
 	}
-	nonceAt, err := client.PendingNonceAt(context.Background(), pbkHex)
+	nonceAt, err := c.PendingNonceAt(context.Background(), pbkHex)
 	if err != nil {
 		return "", err
 	}
@@ -573,7 +573,7 @@ func (c *Client) MemeSwapRouterExactInputSingle(contractAddr, privateHex string,
 	if err != nil {
 		return "", err
 	}
-	nonceAt, err := client.PendingNonceAt(context.Background(), addressHex)
+	nonceAt, err := c.PendingNonceAt(context.Background(), addressHex)
 	if err != nil {
 		return "", err
 	}

@@ -100,6 +100,12 @@ type SocialInfo struct {
 	Fee         float64 `json:"fee"`
 }
 
+type AgentCategory struct {
+	gorm.Model
+	Name     string `gorm:"unique_index"`
+	Priority int    `gorm:"default:0"`
+}
+
 type AgentInfo struct {
 	gorm.Model
 	Version              string `gorm:"default:'1'"`
@@ -107,6 +113,8 @@ type AgentInfo struct {
 	NetworkName          string
 	OauthClientId        string
 	OauthClientSecret    string
+	AgentCategoryID      uint `gorm:"index"`
+	AgentCategory        *AgentCategory
 	AgentID              string             `gorm:"unique_index"`
 	AgentType            AgentInfoAgentType `gorm:"default:0"`
 	TwitterInfoID        uint               `gorm:"index"`
@@ -194,11 +202,13 @@ type AgentInfo struct {
 	SocialInfo           string `gorm:"type:longtext"`
 	InferenceCalls       int64
 	PromptCalls          int64
+	InstalledCount       int64 `gorm:"default:0"`
 	ExternalChartUrl     string
 	MissionTopics        string `gorm:"type:longtext"`
 	GraphData            string `gorm:"type:longtext"`
 	ConfigData           string `gorm:"type:longtext"`
 	DeployedRefID        string
+	FactoryAddress       string
 
 	TwinTwitterUsernames    string           `gorm:"index"` // multiple twitter usernames, split by ,
 	TwinStatus              TwinStatus       `gorm:"index"`
@@ -211,17 +221,32 @@ type AgentInfo struct {
 	TwinTrainingProgress    float64 `json:"twin_training_progress"`
 	TwinTrainingMessage     string  `gorm:"type:longtext"`
 
-	SourceUrl      string `gorm:"type:text"` //ipfs_ || ethfs_
-	AuthenUrl      string `gorm:"type:text"`
-	DependAgents   string `gorm:"type:longtext"`
-	RequiredWallet bool   `gorm:"default:0"`
-	IsOnchain      bool   `gorm:"default:0"`
-	IsCustomUi     bool   `gorm:"default:0"`
-	Likes          int64  `gorm:"default:0"`
-	IsPublic       bool   `gorm:"default:1"`
-	IsStreaming    bool   `gorm:"default:1"`
-	DockerPort     string
-	RequiredInfo   string `gorm:"type:longtext"`
+	SourceUrl        string `gorm:"type:text"` //ipfs_ || ethfs_
+	AuthenUrl        string `gorm:"type:text"`
+	DependAgents     string `gorm:"type:longtext"`
+	RequiredWallet   bool   `gorm:"default:0"`
+	RequiredEnv      bool   `gorm:"default:0"`
+	IsOnchain        bool   `gorm:"default:0"`
+	IsCustomUi       bool   `gorm:"default:0"`
+	Likes            int64  `gorm:"default:0"`
+	IsPublic         bool   `gorm:"default:1"`
+	IsStreaming      bool   `gorm:"default:1"`
+	DockerPort       string
+	RequiredInfo     string `gorm:"type:longtext"`
+	EnvExample       string `gorm:"type:longtext"`
+	ShortDescription string `gorm:"type:longtext"`
+	DisplayName      string `gorm:"type:longtext"`
+	IsForceUpdate    bool   `gorm:"default:0"`
+	CodeVersion      int    `gorm:"default:0"`
+	RunStatus        string
+	Author           string
+	Rating           float64 `gorm:"default:0"`
+	NumOfRating      int64   `gorm:"default:0"`
+	NumOfOneStar     int64   `gorm:"default:0"`
+	NumOfTwoStar     int64   `gorm:"default:0"`
+	NumOfThreeStar   int64   `gorm:"default:0"`
+	NumOfFourStar    int64   `gorm:"default:0"`
+	NumOfFiveStar    int64   `gorm:"default:0"`
 
 	MinFeeToUse numeric.BigFloat `gorm:"type:decimal(36,18);default:0"`
 	Worker      string
@@ -234,6 +259,57 @@ type AgentInfo struct {
 	Counts                    int64            `gorm:"-"`
 	AgentKBId                 uint             `json:"agent_kb_id"`
 	KnowledgeBase             *KnowledgeBase   `json:"knowledge_base" gorm:"foreignKey:AgentKBId;references:AgentInfoId"`
+}
+
+func (m *AgentInfo) IsVibeAgent() bool {
+	switch m.AgentType {
+	case AgentInfoAgentTypeModel,
+		AgentInfoAgentTypeJs,
+		AgentInfoAgentTypePython,
+		AgentInfoAgentTypeInfa,
+		AgentInfoAgentTypeCustomUi,
+		AgentInfoAgentTypeCustomPrompt,
+		AgentInfoAgentTypeModelOnline:
+		{
+			return true
+		}
+	}
+	return false
+}
+
+func (m *AgentInfo) GetCodeLanguage() string {
+	var codeLanguage string
+	switch m.AgentType {
+	case AgentInfoAgentTypeJs,
+		AgentInfoAgentTypeInfa:
+		{
+			codeLanguage = "javascript"
+		}
+	case AgentInfoAgentTypePython:
+		{
+			codeLanguage = "python"
+			if m.IsCustomUi {
+				codeLanguage = "python_custom_ui"
+			}
+		}
+	case AgentInfoAgentTypeModel:
+		{
+			codeLanguage = "model"
+		}
+	case AgentInfoAgentTypeModelOnline:
+		{
+			codeLanguage = "model_online"
+		}
+	case AgentInfoAgentTypeCustomUi:
+		{
+			codeLanguage = "custom_ui"
+		}
+	case AgentInfoAgentTypeCustomPrompt:
+		{
+			codeLanguage = "custom_prompt"
+		}
+	}
+	return codeLanguage
 }
 
 func (m *AgentInfo) GetCharacterArrayString(charactor string) []string {
@@ -705,11 +781,22 @@ type AgentUtilityRecentChat struct {
 	AgentInfoID uint   `gorm:"unique_index:agent_utility_recent_chat_main_idx"`
 }
 
+type (
+	WalletType string
+)
+
+const (
+	WalletTypePrivy    WalletType = "privy"
+	WalletTypeInternal WalletType = "internal"
+)
+
 type PrivyWallet struct {
 	gorm.Model
-	PrivyID   string `gorm:"unique_index"`
-	TwitterID string `gorm:"unique_index"`
-	Address   string `gorm:"index"`
+	PrivyID     string     `gorm:"unique_index"`
+	TwitterID   string     `gorm:"unique_index"`
+	Address     string     `gorm:"index"`
+	UserAddress string     `gorm:"index"`
+	WalletType  WalletType `gorm:"default:'privy'"`
 }
 
 type ClankerVideoToken struct {

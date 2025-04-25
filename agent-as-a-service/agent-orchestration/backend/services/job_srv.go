@@ -156,16 +156,33 @@ func (s *Service) RunJobs(ctx context.Context) error {
 	})
 
 	// scan events by chain
+	var networkIDs []uint64
 	for networkIDStr := range s.conf.Networks {
 		networkID, err := strconv.ParseUint(networkIDStr, 10, 64)
 		if err != nil {
 			panic(err)
 		}
-		gocron.Every(30).Second().Do(func() {
-			s.ScanEventsByChain(context.Background(), networkID)
-		})
+		if networkID > 0 {
+			networkIDs = append(networkIDs, networkID)
+		}
+	}
+	for i := range 4 {
+		gocron.Every(30).Second().
+			From(helpers.GetNextScheduleTime(30*time.Second, time.Duration(i)*7*time.Second)).
+			Do(
+				func(rangeIndex int) {
+					for idx, networkID := range networkIDs {
+						if idx%4 == rangeIndex {
+							fmt.Printf("ScanEventsByChainRange_%d_%d\n", rangeIndex, networkID)
+							s.ScanEventsByChain(context.Background(), networkID)
+						}
+					}
+				},
+				i,
+			)
 	}
 
+	// agent mint nft
 	gocron.Every(1).Minute().Do(
 		func() error {
 			s.JobAgentMintNft(context.Background())
@@ -185,16 +202,13 @@ func (s *Service) RunJobs(ctx context.Context) error {
 	gocron.Every(1).Minute().Do(s.JobUpdateTwitterAccessToken, context.Background())
 	gocron.Every(1).Minute().Do(s.JobCreateTokenInfo, context.Background())
 	gocron.Every(7).Minute().Do(s.JobUpdateTokenPriceInfo, context.Background())
-
-	// create agent
-	// gocron.Every(5).Minute().Do(s.JobScanAgentTwitterPostForCreateAgent, context.Background())
-	// gocron.Every(1).Minute().Do(s.JobAgentTwitterPostCreateAgent, context.Background())
+	// gocron.Every(5).Minute().Do(s.JobUpdateTrendingTokens, context.Background())
 
 	// generate video
 	gocron.Every(5).Minutes().Do(s.JobScanAgentTwitterPostForGenerateVideo, context.Background())
 	gocron.Every(15).Seconds().Do(s.JobAgentTwitterPostSubmitVideoInfer, context.Background())
-	gocron.Every(2).Minutes().Do(s.JobAgentTwitterPostCreateTokenForImage2Video, context.Background())
 	gocron.Every(30).Seconds().Do(s.JobAgentTwitterScanResultGenerateVideo, context.Background())
+	gocron.Every(2).Minutes().Do(s.JobAgentTwitterPostCreateClankerToken, context.Background())
 	gocron.Every(1).Minutes().Do(s.JobAgentTwitterPostGenerateVideo, context.Background())
 	//gocron.Every(1).Minutes().Do(s.JobAgentTwitterScanResultGenerateVideoMagicPrompt, context.Background())
 
@@ -256,13 +270,13 @@ func (s *Service) RunJobs(ctx context.Context) error {
 				"JobAgentLiquidity",
 				func() error {
 					s.JobAgentDeployToken(context.Background())
+					s.JobRetryAgentDeployToken(context.Background())
 					s.JobMemeAddPositionInternal(context.Background())
 					s.JobMemeRemovePositionInternal(context.Background())
 					s.JobCheckMemeReachMarketCap(context.Background())
 					s.JobMemeAddPositionUniswap(context.Background())
 					s.JobRetryAddPool1(context.Background())
 					s.JobRetryAddPool2(context.Background())
-					s.JobRetryAgentDeployToken(context.Background())
 					s.JobMemeBurnPositionUniswap(context.Background())
 					return nil
 				},
@@ -276,31 +290,10 @@ func (s *Service) RunJobs(ctx context.Context) error {
 		},
 	)
 
-	// create launchpad
-	// gocron.Every(5).Minute().Do(s.JobScanAgentTwitterPostForCreateLaunchpad, context.Background())
-	// gocron.Every(30).Second().Do(
-	// 	func() {
-	// 		s.JobRunCheck(
-	// 			context.Background(),
-	// 			"JobAgentLaunchpad",
-	// 			func() error {
-	// 				s.JobAgentTwitterPostCreateLaunchpad(context.Background())
-	// 				s.JobAgentLaunchpadEnd(context.Background())
-	// 				s.JobAgentDeployDAOToken(context.Background())
-	// 				s.JobAgentSettleDAOToken(context.Background())
-	// 				s.JobAgentTgeTransferDAOToken(context.Background())
-	// 				s.JobAgentAddLiquidityDAOToken(context.Background())
-	// 				s.JobAgentTgeRefundBaseToken(context.Background())
-	// 				return nil
-	// 			},
-	// 		)
-	// 	},
-	// )
-	// gocron.Every(1).Minutes().Do(
-	// 	func() {
-	// 		s.JobScanRepliesByLaunchpadTweetID(context.Background())
-	// 	},
-	// )
+	// scan robot sale wallet balance
+	gocron.Every(30).Second().Do(func() {
+		s.JobRobotScanBalanceSOL(context.Background())
+	})
 
 	<-gocron.Start()
 	return nil

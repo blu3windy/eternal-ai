@@ -324,9 +324,9 @@ func (c *Client) SolanaComputeRaydiumToken(req *SolanaTradeRaydiumTokenReq) (*So
 }
 
 type SolanaTransferReq struct {
-	ToAddress string `json:"to_address"`
-	Mint      string `json:"mint"`
-	Amount    uint64 `json:"amount"`
+	ToAddress string  `json:"to_address"`
+	Mint      string  `json:"mint"`
+	Amount    float64 `json:"amount"`
 }
 
 func (c *Client) SolanaTransfer(address string, req *SolanaTransferReq) (string, error) {
@@ -412,6 +412,37 @@ func (c *Client) ZoraCreateCoin(req *ZoraCreateCoinReq) (*ZoraCreateCoinResp, er
 	err := c.methodJSON(
 		http.MethodPost,
 		c.buildUrl("/zora/create-coin"),
+		req,
+		&resp,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Result, nil
+}
+
+type SolanaCreateTokenReq struct {
+	ProjectID   string `json:"project_id"`
+	Address     string `json:"address"`
+	Name        string `json:"name"`
+	Symbol      string `json:"symbol"`
+	Description string `json:"description"`
+	Uri         string `json:"uri"`
+	Amount      uint64 `json:"amount"`
+}
+
+type SolanaCreateTokenResp struct {
+	Signature interface{} `json:"signature"`
+	Mint      string      `json:"mint"`
+}
+
+func (c *Client) SolanaCreateToken(req *SolanaCreateTokenReq) (*SolanaCreateTokenResp, error) {
+	resp := struct {
+		Result *SolanaCreateTokenResp `json:"result"`
+	}{}
+	err := c.methodJSON(
+		http.MethodPost,
+		c.buildUrl("solana/create-token"),
 		req,
 		&resp,
 	)

@@ -12,6 +12,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func (s *Server) GetListAgentCategory(c *gin.Context) {
+	ctx := s.requestContext(c)
+	page, limit := s.pagingFromContext(c)
+	ms, err := s.nls.GetListAgentCategory(ctx, page, limit)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewAgentCategoryRespArry(ms)})
+}
+
 func (s *Server) GetListAgent(c *gin.Context) {
 	ctx := s.requestContext(c)
 	page, limit := s.pagingFromContext(c)
@@ -394,8 +405,11 @@ func (s *Server) GetDashBoardAgent(c *gin.Context) {
 	search := s.stringFromContextQuery(c, "search")
 	agentType := s.intFromContextQuery(c, "agent_type")
 	agentTypes := s.stringFromContextQuery(c, "agent_types")
+	categoryIds := s.stringArrayFromContextQuery(c, "category_ids")
 
 	agentTypesStr := strings.Split(agentTypes, ",")
+
+	includeHidden, _ := s.boolFromContextQuery(c, "include_hidden")
 
 	var agentTypesInt []int
 
@@ -407,18 +421,20 @@ func (s *Server) GetDashBoardAgent(c *gin.Context) {
 		agentTypesInt = append(agentTypesInt, num)
 	}
 
-	contractAddressesStr := s.stringFromContextParam(c, "contract_addresses")
+	contractAddressesStr := s.stringFromContextQuery(c, "contract_addresses")
 	contractAddresses := []string{}
 	if contractAddressesStr != "" {
 		contractAddresses = strings.Split(contractAddressesStr, ",")
 	}
 
 	model := s.stringFromContextQuery(c, "model")
-	userAddress, err := s.getUserAddressFromTK1Token(c)
+	userAddress, _ := s.getUserAddressFromTK1Token(c)
 	installed, _ := s.boolFromContextQuery(c, "installed")
 	ids, _ := s.uintArrayFromContextQuery(c, "ids")
+	exludeIds, _ := s.uintArrayFromContextQuery(c, "exlude_ids")
+
 	ms, count, err := s.nls.GetDashboardAgentInfos(ctx, contractAddresses, userAddress, chain, agentType, agentTypesInt, "", search, model,
-		installed, ids, sortStr, page, limit)
+		installed, ids, exludeIds, categoryIds, includeHidden, sortStr, page, limit)
 
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
@@ -438,9 +454,10 @@ func (s *Server) GetDashBoardAgentDetail(c *gin.Context) {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrBadRequest)})
 		return
 	}
-	userAddress, err := s.getUserAddressFromTK1Token(c)
+	userAddress, _ := s.getUserAddressFromTK1Token(c)
+	includeHidden, _ := s.boolFromContextQuery(c, "include_hidden")
 	ms, _, err := s.nls.GetDashboardAgentInfos(ctx, []string{}, userAddress, chain, -1, []int{}, tokenAddress, search, "",
-		nil, []uint{}, sortStr, page, limit)
+		nil, []uint{}, []uint{}, []string{}, includeHidden, sortStr, page, limit)
 
 	if err != nil {
 		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
@@ -451,7 +468,6 @@ func (s *Server) GetDashBoardAgentDetail(c *gin.Context) {
 		return
 	}
 	ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrTokenNotFound)})
-	return
 }
 
 func (s *Server) GetTokenInfoByContract(c *gin.Context) {
@@ -690,4 +706,41 @@ func (s *Server) GetListUserVideo(c *gin.Context) {
 		return
 	}
 	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewUserVideoRespArray(insts)})
+}
+
+func (s *Server) UpdateAgentCodeVersion(c *gin.Context) {
+	ctx := s.requestContext(c)
+	agentID := s.uintFromContextParam(c, "id")
+	err := s.nls.UpdateAgentUpgradeableCodeVersion(ctx, agentID)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: true})
+}
+
+func (s *Server) ExportUserPrivateKeyForClaimVideoReward(c *gin.Context) {
+	ctx := s.requestContext(c)
+	userAddress, err := s.getUserAddressFromTK1Token(c)
+	if err != nil || userAddress == "" {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(errs.ErrUnAuthorization)})
+		return
+	}
+	resp, err := s.nls.ExportUserPrivateKeyForClaimVideoReward(ctx, userAddress)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: resp})
+}
+
+func (s *Server) GetVideoUserInfo(c *gin.Context) {
+	ctx := s.requestContext(c)
+	creator := s.stringFromContextQuery(c, "creator")
+	insts, err := s.nls.GetVideoUserInfo(ctx, creator)
+	if err != nil {
+		ctxAbortWithStatusJSON(c, http.StatusBadRequest, &serializers.Resp{Error: errs.NewError(err)})
+		return
+	}
+	ctxJSON(c, http.StatusOK, &serializers.Resp{Result: serializers.NewUserVideoInfoResp(insts)})
 }

@@ -187,3 +187,35 @@ func (d *DAO) FindClankerVideoToken(tx *gorm.DB, joins map[string][]interface{},
 	}
 	return ms, nil
 }
+
+func (d *DAO) FindAgentCategory(tx *gorm.DB, filters map[string][]interface{}, preloads map[string][]interface{}, orders []string, page int, limit int) ([]*models.AgentCategory, error) {
+	offset := (page - 1) * limit
+	var ms []*models.AgentCategory
+	err := d.find(tx, &ms, filters, preloads, orders, offset, limit, false)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return ms, nil
+}
+
+func (d *DAO) FindAllAgentAddress(tx *gorm.DB, networkID uint64) ([]string, error) {
+	var ms []*struct {
+		AgentContractAddress string
+	}
+	err := tx.Raw(`
+	select distinct agent_contract_address
+	from agent_infos
+	where 1 = 1
+		and agent_contract_address != ''
+		and agent_contract_id != ''
+		and network_id = ?
+	`, networkID).Scan(&ms).Error
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	addresses := make([]string, len(ms))
+	for i, v := range ms {
+		addresses[i] = v.AgentContractAddress
+	}
+	return addresses, nil
+}

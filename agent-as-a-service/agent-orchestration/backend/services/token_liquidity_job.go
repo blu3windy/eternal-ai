@@ -39,6 +39,15 @@ func (s *Service) JobAgentDeployToken(ctx context.Context) error {
 					"memes.status = ?": {models.MemeStatusNew},
 					"memes.fee = 0 or agent_infos.eai_balance >= memes.fee or agent_infos.ref_tweet_id > 0": {},
 					"memes.num_retries < 3": {},
+					"agent_infos.agent_type in (?)": {
+						[]models.AgentInfoAgentType{
+							models.AgentInfoAgentTypeNormal,
+							models.AgentInfoAgentTypeReasoning,
+							models.AgentInfoAgentTypeKnowledgeBase,
+							models.AgentInfoAgentTypeEliza,
+							models.AgentInfoAgentTypeZerepy,
+						},
+					},
 				},
 				map[string][]any{},
 				[]string{
@@ -103,6 +112,9 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 				return errs.NewError(err)
 			}
 			if m == nil {
+				return errs.NewError(errs.ErrBadRequest)
+			}
+			if m.AgentInfo.IsVibeAgent() {
 				return errs.NewError(errs.ErrBadRequest)
 			}
 			if m.TokenAddress == "" {
@@ -210,6 +222,23 @@ func (s *Service) AgentDeployToken(ctx context.Context, memeID uint) error {
 								status = models.MemeStatusAddPoolLevel2
 							}
 						}
+						// check token address exist in db
+						{
+							memeCheck, err := s.dao.FirstMeme(
+								daos.GetDBMainCtx(ctx),
+								map[string][]any{
+									"token_address = ?": {strings.ToLower(tokenAddress)},
+								},
+								map[string][]any{},
+								false,
+							)
+							if err != nil {
+								return errs.NewError(err)
+							}
+							if memeCheck != nil {
+								return errs.NewError(errs.ErrBadRequest)
+							}
+						}
 						err = daos.GetDBMainCtx(ctx).Model(&m).
 							Updates(
 								map[string]any{
@@ -274,7 +303,7 @@ func (s *Service) JobRetryAgentDeployToken(ctx context.Context) error {
 					"updated_at <= ?":       {time.Now().Add(-120 * time.Minute)},
 					"status = ?":            {models.MemeStatusCreated},
 					"add_pool1_tx_hash = ?": {""},
-					"num_retries < 3":       {},
+					"num_retries < 6":       {},
 					"network_id in (?)": {
 						[]uint64{
 							models.BASE_CHAIN_ID,
@@ -360,6 +389,9 @@ func (s *Service) RetryAgentDeployToken(ctx context.Context, memeID uint) error 
 					models.AVALANCHE_C_CHAIN_ID,
 					models.CELO_CHAIN_ID:
 					{
+						if m.AgentInfo.IsVibeAgent() {
+							return errs.NewError(errs.ErrBadRequest)
+						}
 						isContact, err := s.GetEthereumClient(ctx, m.NetworkID).IsContract(m.TokenAddress)
 						if err != nil {
 							return errs.NewError(err)
@@ -380,6 +412,23 @@ func (s *Service) RetryAgentDeployToken(ctx context.Context, memeID uint) error 
 								)
 							if err != nil {
 								return errs.NewError(err)
+							}
+							// check token address exist in db
+							{
+								memeCheck, err := s.dao.FirstMeme(
+									daos.GetDBMainCtx(ctx),
+									map[string][]any{
+										"token_address = ?": {strings.ToLower(tokenAddress)},
+									},
+									map[string][]any{},
+									false,
+								)
+								if err != nil {
+									return errs.NewError(err)
+								}
+								if memeCheck != nil {
+									return errs.NewError(errs.ErrBadRequest)
+								}
 							}
 							err = daos.GetDBMainCtx(ctx).Model(&m).
 								Updates(
@@ -1558,6 +1607,7 @@ func (s *Service) JobMemeBurnPositionUniswap(ctx context.Context) error {
 			memes, err := s.dao.FindMeme(
 				daos.GetDBMainCtx(ctx),
 				map[string][]any{
+					"factory_address is null or factory_address != ''": {},
 					"add_pool2_at <= ?":       {time.Now().Add(-24 * time.Hour)},
 					"status = ?":              {models.MemeStatusAddPoolLevel2},
 					"uniswap_position_id > 0": {},

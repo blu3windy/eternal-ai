@@ -35,6 +35,7 @@ import (
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/dexscreener"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/ethapi"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/googlestorage"
+	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/moralis"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/openai"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/opensea"
 	"github.com/eternalai-org/eternal-ai/agent-as-a-service/agent-orchestration/backend/services/3rd/privy"
@@ -79,6 +80,7 @@ type Service struct {
 	taapi           *taapi.TaApi
 	clanker         *clanker.Client
 	privyClient     *privy.Client
+	moralisClient   *moralis.Client
 	// daos
 	dao *daos.DAO
 
@@ -153,6 +155,9 @@ func NewService(conf *configs.Config) *Service {
 		taapi:          taapi.NewTaApi(conf.TaApiKey),
 		clanker:        clanker.NewClankerClient(conf.Clanker.ApiKey, conf.Clanker.ApiUrl),
 		privyClient:    privy.NewPrivyClient(conf.Privy.AppID, conf.Privy.AppSecret),
+		moralisClient: &moralis.Client{
+			APIKey: conf.MoralisApiKey,
+		},
 	}
 
 	gormDB := mysql.NewDefaultMysqlGormConn(nil, s.conf.DbURL, s.conf.Debug)
@@ -219,7 +224,9 @@ func (s *Service) GetAddressPrk(address string) string {
 	}
 	return prkHex
 }
-
+func (s *Service) GetTwitterWrapAPI() *twitter.Client {
+	return s.twitterWrapAPI
+}
 func (s *Service) JobRunCheck(ctx context.Context, jobId string, jobFunc func() error) error {
 	s.jobMutex.Lock()
 	isRun := s.jobRunMap[jobId]

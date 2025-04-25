@@ -26,6 +26,7 @@ type AssistantCharacter struct {
 
 type AssistantsReq struct {
 	ID                   uint                       `json:"id"`
+	CategoryID           uint                       `json:"category_id"`
 	AgentID              string                     `json:"agent_id"`
 	AgentName            string                     `json:"agent_name"`
 	Creator              string                     `json:"creator"`
@@ -72,13 +73,19 @@ type AssistantsReq struct {
 	MinFeeToUse numeric.BigFloat `json:"min_fee_to_use"`
 	Worker      string           `json:"worker"`
 
-	DependAgents   string  `json:"depend_agents"`
-	RequiredWallet *bool   `json:"required_wallet"`
-	IsOnchain      *bool   `json:"is_onchain"`
-	IsStreaming    *bool   `json:"is_streaming"`
-	IsCustomUi     *bool   `json:"is_custom_ui"`
-	RequiredInfo   *string `json:"required_info"`
-	InferFee       *string `json:"infer_fee"`
+	DependAgents     string  `json:"depend_agents"`
+	RequiredWallet   *bool   `json:"required_wallet"`
+	RequiredEnv      *bool   `json:"required_env"`
+	EnvExample       string  `json:"env_example"`
+	IsOnchain        *bool   `json:"is_onchain"`
+	IsStreaming      *bool   `json:"is_streaming"`
+	IsCustomUi       *bool   `json:"is_custom_ui"`
+	RequiredInfo     *string `json:"required_info"`
+	InferFee         *string `json:"infer_fee"`
+	DisplayName      string  `json:"display_name"`
+	ShortDescription string  `json:"short_description"`
+	IsForceUpdate    *bool   `json:"is_force_update"`
+	Author           string  `json:"author"`
 }
 
 func (m *AssistantsReq) GetAssistantCharacter(character interface{}) string {
@@ -265,4 +272,9 @@ type AgentActionReq struct {
 	Action          string   `json:"action"`
 	Ids             []uint   `json:"ids"`
 	ContractAddress []string `json:"contract_address"`
+}
+
+type AgentCommentReq struct {
+	Comment string  `json:"comment"`
+	Rating  float64 `json:"rating"`
 }

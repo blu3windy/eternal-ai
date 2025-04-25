@@ -26,6 +26,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/jinzhu/gorm"
+	"github.com/sashabaranov/go-openai"
 )
 
 func (s *Service) GetModelDefaultByChainID(chainID uint64) string {
@@ -59,6 +60,7 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 	}
 	agent := &models.AgentInfo{
 		Version:          "2",
+		AgentCategoryID:  req.CategoryID,
 		AgentType:        models.AgentInfoAgentTypeReasoning,
 		AgentID:          helpers.RandomBigInt(12).Text(16),
 		Status:           models.AssistantStatusPending,
@@ -91,7 +93,14 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		SourceUrl:        req.SourceUrl,
 		AuthenUrl:        req.AuthenUrl,
 		DependAgents:     req.DependAgents,
+		EnvExample:       req.EnvExample,
+		CodeVersion:      1,
+		Author:           req.Author,
 	}
+	if req.RequiredEnv != nil {
+		agent.RequiredEnv = *req.RequiredEnv
+	}
+
 	if req.RequiredWallet != nil {
 		agent.RequiredWallet = *req.RequiredWallet
 	}
@@ -111,8 +120,17 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		inferFee := numeric.NewBigFloatFromString(*req.InferFee)
 		agent.InferFee = inferFee
 	}
+	if req.DisplayName != "" {
+		agent.DisplayName = req.DisplayName
+	}
+	if req.ShortDescription != "" {
+		agent.ShortDescription = req.ShortDescription
+	}
 	agent.MinFeeToUse = req.MinFeeToUse
 	agent.Worker = req.Worker
+	if req.IsForceUpdate != nil {
+		agent.IsForceUpdate = *req.IsForceUpdate
+	}
 
 	tokenInfo, _ := s.GenerateTokenInfoFromSystemPrompt(ctx, req.AgentName, req.SystemContent)
 	if tokenInfo != nil && tokenInfo.TokenSymbol != "" {
@@ -122,6 +140,9 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		if req.TokenImageUrl == "" {
 			agent.TokenImageUrl = tokenInfo.TokenImageUrl
 		}
+	} else {
+		agent.TokenName = req.AgentName
+		agent.TokenSymbol = helpers.GenerateTokenSymbol(req.AgentName)
 	}
 
 	if req.CreateTokenMode == models.CreateTokenModeTypeLinkExisting {
@@ -290,6 +311,10 @@ func (s *Service) AgentCreateAgentAssistant(ctx context.Context, address string,
 		oKb, _ := s.KnowledgeUsecase.GetKnowledgeBaseById(ctx, kb.ID)
 		agent.KnowledgeBase = oKb
 		s.KnowledgeUsecase.SendMessage(ctx, fmt.Sprintf("Create KB Agent DONE  %s (%d)", agent.AgentName, agent.ID), 0)
+	}
+
+	if agent.IsVibeAgent() {
+		go s.CreateTokenInfoVibe(context.Background(), agent.ID)
 	}
 
 	return agent, nil
@@ -477,6 +502,15 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				agent.Style = req.GetAssistantCharacter(req.Style)
 				agent.Adjectives = req.GetAssistantCharacter(req.Adjectives)
 				agent.SocialInfo = req.GetAssistantCharacter(req.SocialInfo)
+
+				if req.EnvExample != "" {
+					agent.EnvExample = req.EnvExample
+				}
+
+				if req.RequiredEnv != nil {
+					agent.RequiredEnv = *req.RequiredEnv
+				}
+
 				if req.SourceUrl != "" {
 					agent.SourceUrl = req.SourceUrl
 				}
@@ -513,6 +547,22 @@ func (s *Service) AgentUpdateAgentAssistant(ctx context.Context, address string,
 				}
 				if req.TokenImageUrl != "" {
 					agent.TokenImageUrl = req.TokenImageUrl
+				}
+				if req.DisplayName != "" {
+					agent.DisplayName = req.DisplayName
+				}
+				if req.ShortDescription != "" {
+					agent.ShortDescription = req.ShortDescription
+				}
+				if req.CategoryID != 0 {
+					agent.AgentCategoryID = req.CategoryID
+				}
+				if req.IsForceUpdate != nil {
+					agent.IsForceUpdate = *req.IsForceUpdate
+				}
+
+				if req.Author != "" {
+					agent.Author = req.Author
 				}
 
 				if agent.TokenStatus == "" && agent.TokenAddress == "" {
@@ -717,7 +767,21 @@ func (s *Service) GenerateTokenInfoFromSystemPrompt(ctx context.Context, tokenNa
 
 						Please return in string in json format including token-name, token-symbol, token-story, just only json without explanation  and token name limit with 15 characters
 					`, sysPrompt)
-	aiStr, err := s.openais["Lama"].ChatMessage(promptGenerateToken)
+	// aiStr, err := s.openais["Lama"].ChatMessage(promptGenerateToken)
+	// if err != nil {
+	// 	return nil, errs.NewError(err)
+	// }
+	message := []openai.ChatCompletionMessage{
+		openai.ChatCompletionMessage{
+			Role:    "system",
+			Content: "You are a helpful assistant",
+		},
+		openai.ChatCompletionMessage{
+			Role:    "user",
+			Content: promptGenerateToken,
+		},
+	}
+	aiStr, err := s.openais["Agent"].CallStreamDirectlyEternalLLMV2(ctx, message, "Qwen/QwQ-32B", s.conf.KnowledgeBaseConfig.DirectServiceUrl, nil)
 	if err != nil {
 		return nil, errs.NewError(err)
 	}
@@ -1473,7 +1537,14 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 							Address:     strings.ToLower(address),
 							AgentInfoID: agentInfo.ID,
 						}
-						_ = s.dao.Create(tx, inst)
+						err = s.dao.Create(tx, inst)
+						if err == nil {
+							err = tx.Model(agentInfo).Update("installed_count", gorm.Expr("installed_count + 1")).Error
+							if err != nil {
+								return errs.NewError(err)
+							}
+						}
+
 					}
 					resp = append(resp, agentInfo.ID)
 				}
@@ -1494,8 +1565,15 @@ func (s *Service) MarkInstalledUtilityAgent(ctx context.Context, address string,
 							Address:     strings.ToLower(address),
 							AgentInfoID: agentID,
 						}
-						_ = s.dao.Create(tx, inst)
+						err := s.dao.Create(tx, inst)
+						if err == nil {
+							err = tx.Model(&models.AgentInfo{}).Where("id = ?", agentID).Update("installed_count", gorm.Expr("installed_count + 1")).Error
+							if err != nil {
+								return errs.NewError(err)
+							}
+						}
 						resp = append(resp, agentID)
+
 					}
 				}
 			}
@@ -1515,11 +1593,16 @@ func (s *Service) MarkRecentChatUtilityAgent(ctx context.Context, address string
 		daos.GetDBMainCtx(ctx),
 		func(tx *gorm.DB) error {
 			for _, agentID := range req.Ids {
+				now := helpers.TimeNow()
 				inst := &models.AgentUtilityRecentChat{
 					Address:     strings.ToLower(address),
 					AgentInfoID: agentID,
 				}
-				_ = s.dao.Create(tx, inst)
+				inst.UpdatedAt = *now
+				err := s.dao.Save(tx, inst)
+				if err != nil {
+					_ = tx.Model(&models.AgentUtilityRecentChat{}).Where("address = ? and agent_info_id = ?", strings.ToLower(address), agentID).Update("updated_at", now).Error
+				}
 			}
 			return nil
 		},
@@ -1688,4 +1771,87 @@ func (s *Service) PublicAgent(ctx context.Context, address string, agentID uint)
 	}
 
 	return true, nil
+}
+
+func (s *Service) AgentComment(ctx context.Context, address string, agentID uint, req *serializers.AgentCommentReq) (*models.AgentUserComment, error) {
+	var agentUserComment *models.AgentUserComment
+	err := daos.WithTransaction(
+		daos.GetDBMainCtx(ctx),
+		func(tx *gorm.DB) error {
+			agentInfo, err := s.dao.FirstAgentInfoByID(
+				tx, agentID,
+				map[string][]any{},
+				true,
+			)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			if agentInfo == nil {
+				return errs.NewError(errs.ErrAgentNotFound)
+			}
+
+			agentUserComment = &models.AgentUserComment{
+				AgentInfoID: agentID,
+				UserAddress: strings.ToLower(address),
+				Comment:     req.Comment,
+				Rating:      req.Rating,
+			}
+
+			err = s.dao.Create(tx, agentUserComment)
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			switch req.Rating {
+			case 1:
+				err = tx.Model(agentInfo).UpdateColumn("num_of_one_star", gorm.Expr("num_of_one_star + 1")).
+					UpdateColumn("num_of_rating", gorm.Expr("num_of_rating + 1")).Error
+			case 2:
+				err = tx.Model(agentInfo).UpdateColumn("num_of_two_star", gorm.Expr("num_of_two_star + 1")).
+					UpdateColumn("num_of_rating", gorm.Expr("num_of_rating + 1")).Error
+			case 3:
+				err = tx.Model(agentInfo).UpdateColumn("num_of_three_star", gorm.Expr("num_of_three_star + 1")).
+					UpdateColumn("num_of_rating", gorm.Expr("num_of_rating + 1")).Error
+			case 4:
+				err = tx.Model(agentInfo).UpdateColumn("num_of_four_star", gorm.Expr("num_of_four_star + 1")).
+					UpdateColumn("num_of_rating", gorm.Expr("num_of_rating + 1")).Error
+			case 5:
+				err = tx.Model(agentInfo).UpdateColumn("num_of_five_star", gorm.Expr("num_of_five_star + 1")).
+					UpdateColumn("num_of_rating", gorm.Expr("num_of_rating + 1")).Error
+			}
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			agentInfo.Rating = (agentInfo.Rating*float64(agentInfo.NumOfRating) + req.Rating) / float64(agentInfo.NumOfRating+1)
+			err = tx.Model(agentInfo).Update("rating", agentInfo.Rating).Error
+			if err != nil {
+				return errs.NewError(err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+
+	return agentUserComment, nil
+}
+
+func (s *Service) GetListAgentComment(ctx context.Context, agentID uint, page, limit int) ([]*models.AgentUserComment, error) {
+	agentUserComments, err := s.dao.AgentUserComment4Page(
+		daos.GetDBMainCtx(ctx),
+		map[string][]any{"agent_info_id = ?": {agentID}},
+		map[string][]any{},
+		[]string{"created_at desc"},
+		page,
+		limit,
+	)
+	if err != nil {
+		return nil, errs.NewError(err)
+	}
+	return agentUserComments, nil
 }

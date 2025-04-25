@@ -480,23 +480,23 @@ Provide your response in the following JSON format:
 
 {
   "hashtags": {
-    "included": [true/false],
-    "excluded": [true/false],
+    "included": <true or false>,
+    "excluded": <true or false>,
     "reason": "Explain why hashtags are/are not required to be included or excluded."
   },
   "urls": {
-    "included": [true/false],
-    "excluded": [true/false],
+    "included": <true or false>,
+    "excluded": <true or false>,
     "reason": "Explain why URLs are/are not required to be included or excluded."
   },
   "emojis": {
-    "included": [true/false],
-    "excluded": [true/false],
+    "included": <true or false>,
+    "excluded": <true or false>,
     "reason": "Explain why emojis are/are not required to be included or excluded."
   },
   "mentions": {
-    "included": [true/false],
-    "excluded": [true/false],
+    "included": <true or false>,
+    "excluded": <true or false>,
     "reason": "Explain why mentions are/are not required to be included or excluded."
   }
 }
@@ -539,6 +539,8 @@ Task prompt: {task_prompt}
         )
         result = model.generate(messages).generations[0].text
         result = repair_json(result, return_objects=True)
+
+        print("result:", result)
 
         obj = IncludeExcludeInfo.model_validate(result)
         return obj
