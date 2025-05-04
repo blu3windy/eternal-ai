@@ -1,0 +1,14 @@
+{
+  "name": "rock-paper-scissors-contract",
+  "version": "1.0.0",
+  "description": "Rock Paper Scissors Smart Contract",
+  "main": "truffle-config.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "truffle test"
+  },
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^2.1.11",
+    "dotenv": "^16.3.1"
+  }
+} 
